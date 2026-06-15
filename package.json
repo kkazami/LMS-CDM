@@ -1,0 +1,22 @@
+{
+  "name": "lms-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "dev:desktop": "pnpm --filter desktop dev",
+    "build:web": "pnpm --filter web build",
+    "build:mobile": "pnpm --filter mobile build",
+    "build:desktop": "pnpm --filter desktop build"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  }
+}

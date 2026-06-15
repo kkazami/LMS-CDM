@@ -1,0 +1,12 @@
+{
+  "name": "desktop",
+  "private": true,
+  "main": "electron/main.ts",
+  "scripts": {
+    "dev": "electron .",
+    "build": "echo build desktop"
+  },
+  "devDependencies": {
+    "electron": "^41.0.3"
+  }
+}
