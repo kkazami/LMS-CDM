@@ -60,7 +60,18 @@ export default function LoginForm({
         throw new Error(data.message || "Unable to sign in.");
       }
 
-      router.push(`/${data.user.institute.code}`);
+      const role = data.user.role.toUpperCase();
+      let targetPath = `/${data.user.institute.code}`;
+
+      if (role === "STUDENT") {
+        targetPath += "/students";
+      } else if (role === "PROFESSOR" || role === "TEACHER") {
+        targetPath += "/teachers";
+      } else if (role === "ADMIN") {
+        targetPath += "/admin";
+      }
+
+      router.push(targetPath);
       router.refresh();
     } catch (error) {
       setErrorMessage(

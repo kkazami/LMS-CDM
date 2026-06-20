@@ -60,3 +60,21 @@ export async function getSession() {
     return null;
   }
 }
+
+/**
+ * Deletes the session from the database and clears the lumina_session cookie.
+ */
+export async function deleteSession() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("lumina_session")?.value;
+
+  if (sessionId) {
+    try {
+      await db.session.delete({ where: { id: sessionId } });
+    } catch (error) {
+      console.error("Error deleting session from DB:", error);
+    }
+  }
+
+  cookieStore.delete("lumina_session");
+}

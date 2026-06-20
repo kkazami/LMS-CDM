@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
+import { createSession } from "@/lib/auth-session";
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    await createSession(user.id);
 
     return NextResponse.json(
       {

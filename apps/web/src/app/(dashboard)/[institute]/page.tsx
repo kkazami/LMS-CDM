@@ -1,5 +1,5 @@
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { getInstituteTheme } from "@/lib/get-institute-theme";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth-session";
 
 type PageProps = {
   params: Promise<{
@@ -9,17 +9,22 @@ type PageProps = {
 
 export default async function InstituteDashboardPage({ params }: PageProps) {
   const { institute } = await params;
-  const theme = getInstituteTheme(institute);
+  const session = await getSession();
 
-  return (
-    <DashboardLayout
-      instituteCode={theme.code}
-      instituteName={theme.name}
-      pageTitle="Student Dashboard"
-      userName="Kirby"
-      theme={theme}
-    >
-      <div>Dashboard content</div>
-    </DashboardLayout>
-  );
+  if (!session) {
+    redirect(`/login?institute=${institute}`);
+  }
+
+  const role = session.user.role.toUpperCase();
+
+  if (role === "STUDENT") {
+    redirect(`/${institute}/students`);
+  } else if (role === "PROFESSOR" || role === "TEACHER") {
+    redirect(`/${institute}/teachers`);
+  } else if (role === "ADMIN") {
+    redirect(`/${institute}/admin`);
+  }
+
+  // Fallback if role is unknown
+  return <div>Unknown role</div>;
 }

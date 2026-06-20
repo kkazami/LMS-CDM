@@ -8,8 +8,8 @@ import type { InstituteTheme } from "@/lib/theme";
 type DashboardLayoutProps = {
   instituteCode: string;
   instituteName: string;
-  pageTitle: string;
   userName: string;
+  userRole: string;
   theme: InstituteTheme;
   children: React.ReactNode;
 };
@@ -17,23 +17,35 @@ type DashboardLayoutProps = {
 export default function DashboardLayout({
   instituteCode,
   instituteName,
-  pageTitle,
   userName,
+  userRole,
   theme,
   children,
 }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background }}>
       <div className="flex">
-        <Sidebar instituteCode={instituteCode} theme={theme} />
+        <Sidebar 
+          instituteCode={instituteCode} 
+          theme={theme}
+          userRole={userRole}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
 
         {mobileOpen ? (
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-            <div className="relative z-50">
-              <Sidebar instituteCode={instituteCode} theme={theme} />
+            <div className="relative z-50 flex">
+              <Sidebar 
+                instituteCode={instituteCode} 
+                theme={theme}
+                userRole={userRole}
+                isCollapsed={false}
+              />
             </div>
           </div>
         ) : null}
@@ -42,8 +54,9 @@ export default function DashboardLayout({
           <Topbar
             theme={theme}
             instituteName={instituteName}
-            pageTitle={pageTitle}
             userName={userName}
+            userRole={userRole}
+            instituteCode={instituteCode}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
           <main className="p-4 lg:p-8">{children}</main>
