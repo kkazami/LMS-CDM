@@ -38,6 +38,7 @@ type SidebarProps = {
 const getStudentLinks = (code: string): NavLink[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen },
+  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Assignments", href: `/${code}/assignments`, icon: ClipboardList },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
@@ -47,6 +48,7 @@ const getStudentLinks = (code: string): NavLink[] => [
 const getProfessorLinks = (code: string): NavLink[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/classes`, icon: GraduationCap },
+  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
   { label: "Create Tasks", href: `/${code}/create-tasks`, icon: PlusSquare },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },

@@ -77,6 +77,7 @@ export default function Topbar({
     settings: "Settings",
     profile: "Profile",
     privacy: "Privacy Settings",
+    "learning-materials": "Learning Materials",
     help: "Help & Support",
   };
 
