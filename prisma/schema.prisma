@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 model Institute {
@@ -13,8 +12,11 @@ model Institute {
   name      String
   createdAt DateTime @default(now())
 
-  users     User[]
-  courses   Course[]
+  users           User[]
+  courses         Course[]
+  notes           Note[]
+  taskItems       TaskItem[]
+  calendarEvents  CalendarEvent[]
 }
 
 model User {
@@ -28,6 +30,9 @@ model User {
 
   institute   Institute @relation(fields: [instituteId], references: [id])
   sessions    Session[]
+  notes       Note[]
+  taskItems   TaskItem[]
+  calendarEvents CalendarEvent[]
 }
 
 model Session {
@@ -47,4 +52,73 @@ model Course {
   createdAt   DateTime  @default(now())
 
   institute   Institute @relation(fields: [instituteId], references: [id])
+  taskItems   TaskItem[]
+  calendarEvents CalendarEvent[]
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  title       String    @default("")
+  content     String    @default("")
+  category    String    @default("General")
+  color       String    @default("#ffffff")
+  pinned      Boolean   @default(false)
+  archived    Boolean   @default(false)
+  orderIndex  Int       @default(0)
+  creatorId   String
+  instituteId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@index([instituteId, creatorId])
+  @@index([instituteId, archived, pinned, orderIndex])
+}
+
+model TaskItem {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @default("")
+  priority    String    @default("medium")
+  dueDate     DateTime?
+  courseId    String?
+  completed   Boolean   @default(false)
+  archived    Boolean   @default(false)
+  orderIndex  Int       @default(0)
+  creatorId   String
+  instituteId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  course      Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([instituteId, creatorId])
+  @@index([instituteId, completed, orderIndex])
+}
+
+model CalendarEvent {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @default("")
+  professorName String    @default("")
+  maxPoints     Int?
+  eventDate     DateTime
+  eventType     String    @default("assignment")
+  deepLink      String    @default("#")
+  courseId      String?
+  creatorId     String
+  instituteId   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  creator       User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute     Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  course        Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([instituteId, eventDate])
+  @@index([instituteId, creatorId])
 }

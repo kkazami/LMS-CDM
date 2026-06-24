@@ -27,7 +27,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.colors.background }}>
-      <div className="flex">
+      <div className="flex items-start">
         <Sidebar 
           instituteCode={instituteCode} 
           theme={theme}

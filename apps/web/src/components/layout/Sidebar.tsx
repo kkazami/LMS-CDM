@@ -75,7 +75,7 @@ export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, o
 
   return (
     <aside
-      className={`hidden h-screen shrink-0 border-r flex-col lg:flex transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? "w-[72px]" : "w-72"}`}
+      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? "w-[72px]" : "w-72"}`}
       style={{ backgroundColor: theme.colors.sidebar, borderColor: theme.colors.sidebarMuted }}
     >
       {/* Header with logo + collapse toggle always visible */}
