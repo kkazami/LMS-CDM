@@ -73,6 +73,11 @@ export default function Topbar({
     logs: "Logs",
     backup: "Backup & Recovery",
     security: "Security Tools",
+    // Course Management
+    "course-management": "Course Management",
+    stream: "Stream",
+    classwork: "Classwork",
+    people: "People",
     // Shared
     settings: "Settings",
     profile: "Profile",

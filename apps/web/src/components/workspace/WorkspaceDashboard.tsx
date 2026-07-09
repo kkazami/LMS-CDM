@@ -320,7 +320,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
     }
   }
 
-  function handleRichFormat(action: "bold" | "italic" | "underline" | "strikeThrough" | "code", targetRef: React.RefObject<HTMLDivElement>) {
+  function handleRichFormat(action: "bold" | "italic" | "underline" | "strikeThrough" | "code", targetRef: React.RefObject<HTMLDivElement | null>) {
     if (action === "code") {
       document.execCommand("insertHTML", false, "<code class='rounded bg-slate-900 px-1.5 py-0.5 font-mono text-xs text-white'>code</code>");
       targetRef.current?.focus();
@@ -333,13 +333,13 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
     updateEditorFormatState();
   }
 
-  function handleListFormat(type: "insertUnorderedList" | "insertOrderedList", targetRef: React.RefObject<HTMLDivElement>) {
+  function handleListFormat(type: "insertUnorderedList" | "insertOrderedList", targetRef: React.RefObject<HTMLDivElement | null>) {
     document.execCommand(type, false);
     targetRef.current?.focus();
     updateEditorFormatState();
   }
 
-  function handleChecklist(targetRef: React.RefObject<HTMLDivElement>) {
+  function handleChecklist(targetRef: React.RefObject<HTMLDivElement | null>) {
     document.execCommand("insertUnorderedList", false);
     targetRef.current?.focus();
     updateEditorFormatState();

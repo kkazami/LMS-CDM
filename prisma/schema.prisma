@@ -13,27 +13,35 @@ model Institute {
   name      String
   createdAt DateTime @default(now())
 
-  users           User[]
-  courses         Course[]
-  notes           Note[]
-  taskItems       TaskItem[]
-  calendarEvents  CalendarEvent[]
+  users          User[]
+  courses        Course[]
+  notes          Note[]
+  taskItems      TaskItem[]
+  calendarEvents CalendarEvent[]
 }
 
 model User {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  email       String    @unique
+  email       String   @unique
   password    String
-  role        String    @default("STUDENT") // Roles: "STUDENT", "PROFESSOR", "ADMIN"
+  role        String   @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
   instituteId String
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
-  institute   Institute @relation(fields: [instituteId], references: [id])
-  sessions    Session[]
-  notes       Note[]
-  taskItems   TaskItem[]
-  calendarEvents CalendarEvent[]
+  institute          Institute            @relation(fields: [instituteId], references: [id])
+  sessions           Session[]
+  notes              Note[]
+  taskItems          TaskItem[]
+  calendarEvents     CalendarEvent[]
+  taughtCourses      Course[]             @relation("CourseInstructor")
+  enrollments        Enrollment[]
+  groupMemberships   StudentGroupMember[]
+  announcements      Announcement[]
+  sentComments       PrivateComment[]     @relation("CommentSender")
+  receivedComments   PrivateComment[]     @relation("CommentRecipient")
+  submissions        StudentSubmission[]
+  dashboardLayouts   DashboardLayout[]
 }
 
 model Session {
@@ -42,37 +50,226 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Course {
-  id          String    @id @default(cuid())
-  code        String
-  title       String
-  instituteId String
-  createdAt   DateTime  @default(now())
+  id           String   @id @default(cuid())
+  code         String                          // Course code like "CS101"
+  courseCode   String   @unique @default("")   // 6-char alphanumeric join code (auto-generated)
+  title        String
+  section      String   @default("")
+  subject      String   @default("")
+  room         String   @default("")
+  description  String   @default("")
+  instructorId String?
+  instituteId  String
+  isArchived   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
-  institute   Institute @relation(fields: [instituteId], references: [id])
-  taskItems   TaskItem[]
-  calendarEvents CalendarEvent[]
+  institute        Institute          @relation(fields: [instituteId], references: [id])
+  instructor       User?              @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
+  enrollments      Enrollment[]
+  syllabusItems    SyllabusItem[]
+  studentGroups    StudentGroup[]
+  announcements    Announcement[]
+  privateComments  PrivateComment[]
+  taskItems        TaskItem[]
+  calendarEvents   CalendarEvent[]
+  dashboardLayouts DashboardLayout[]
+  gradingPolicy    GradingPolicy?
+
+  @@index([instituteId])
+  @@index([instructorId])
 }
 
-model Note {
+model Enrollment {
+  id                String   @id @default(cuid())
+  courseId          String
+  studentId         String
+  status            String   @default("PENDING") // PENDING | APPROVED | DECLINED
+  displayOrderIndex Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([courseId, status])
+  @@index([studentId])
+}
+
+model SyllabusItem {
   id          String    @id @default(cuid())
-  title       String    @default("")
-  content     String    @default("")
-  category    String    @default("General")
-  color       String    @default("#ffffff")
-  pinned      Boolean   @default(false)
-  archived    Boolean   @default(false)
+  courseId    String
+  type        String    @default("MATERIAL") // ASSIGNMENT | QUIZ | MATERIAL
+  title       String
+  description String    @default("")
+  dueDate     DateTime?
+  maxPoints   Int?
   orderIndex  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  course       Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  targetGroups SyllabusTargetGroup[]
+  attachments  Attachment[]
+  submissions  StudentSubmission[]
+
+  @@index([courseId, type])
+  @@index([courseId, orderIndex])
+}
+
+model StudentGroup {
+  id        String   @id @default(cuid())
+  courseId   String
+  groupName String
+  createdAt DateTime @default(now())
+
+  course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  members       StudentGroupMember[]
+  targetedItems SyllabusTargetGroup[]
+
+  @@index([courseId])
+}
+
+model StudentGroupMember {
+  id        String @id @default(cuid())
+  groupId   String
+  studentId String
+
+  group   StudentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+  @@index([studentId])
+}
+
+model SyllabusTargetGroup {
+  id             String @id @default(cuid())
+  syllabusItemId String
+  groupId        String
+
+  syllabusItem SyllabusItem @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  group        StudentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([syllabusItemId, groupId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  courseId   String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, createdAt])
+}
+
+model PrivateComment {
+  id          String   @id @default(cuid())
+  courseId     String
+  senderId    String
+  recipientId String
+  content     String
+  sentiment   String?  // Flagged sentiment: "positive" | "negative" | "neutral" | null
+  createdAt   DateTime @default(now())
+
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sender    User   @relation("CommentSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User   @relation("CommentRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, recipientId])
+  @@index([senderId])
+}
+
+// ─── Phase 5–7 Models ───
+
+model Attachment {
+  id             String  @id @default(cuid())
+  syllabusItemId String
+  type           String  @default("FILE") // FILE | LINK
+  url            String
+  fileName       String  @default("")
+  fileSize       Int?
+  createdAt      DateTime @default(now())
+
+  syllabusItem SyllabusItem @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+
+  @@index([syllabusItemId])
+}
+
+model StudentSubmission {
+  id             String    @id @default(cuid())
+  syllabusItemId String
+  studentId      String
+  status         String    @default("DRAFT") // DRAFT | SUBMITTED | GRADED | RETURNED
+  grade          Float?
+  isReturned     Boolean   @default(false)
+  submittedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+
+  syllabusItem SyllabusItem          @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  student      User                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attachments  SubmissionAttachment[]
+
+  @@unique([syllabusItemId, studentId])
+  @@index([syllabusItemId])
+  @@index([studentId])
+}
+
+model SubmissionAttachment {
+  id           String   @id @default(cuid())
+  submissionId String
+  type         String   @default("FILE") // FILE | LINK
+  url          String
+  fileName     String   @default("")
+  createdAt    DateTime @default(now())
+
+  submission StudentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+model DashboardLayout {
+  id                String   @id @default(cuid())
+  userId            String
+  courseId          String
+  displayOrderIndex Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+// ─── Existing models below (unchanged) ───
+
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String   @default("")
+  content     String   @default("")
+  category    String   @default("General")
+  color       String   @default("#ffffff")
+  pinned      Boolean  @default(false)
+  archived    Boolean  @default(false)
+  orderIndex  Int      @default(0)
   creatorId   String
   instituteId String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
 
   @@index([instituteId, creatorId])
   @@index([instituteId, archived, pinned, orderIndex])
@@ -84,7 +281,7 @@ model TaskItem {
   description String    @default("")
   priority    String    @default("medium")
   dueDate     DateTime?
-  courseId    String?
+  courseId     String?
   completed   Boolean   @default(false)
   archived    Boolean   @default(false)
   orderIndex  Int       @default(0)
@@ -93,33 +290,54 @@ model TaskItem {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-  course      Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([instituteId, creatorId])
   @@index([instituteId, completed, orderIndex])
 }
 
 model CalendarEvent {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   title         String
-  description   String    @default("")
-  professorName String    @default("")
+  description   String   @default("")
+  professorName String   @default("")
   maxPoints     Int?
   eventDate     DateTime
-  eventType     String    @default("assignment")
-  deepLink      String    @default("#")
-  courseId      String?
+  eventType     String   @default("assignment")
+  deepLink      String   @default("#")
+  courseId       String?
   creatorId     String
   instituteId   String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  creator       User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  institute     Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-  course        Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([instituteId, eventDate])
   @@index([instituteId, creatorId])
+}
+
+model GradingPolicy {
+  id        String   @id @default(cuid())
+  courseId  String   @unique
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  weights   CategoryWeight[]
+}
+
+model CategoryWeight {
+  id              String   @id @default(cuid())
+  gradingPolicyId String
+  category        String   // Matches SystemClassworkType (e.g., ASSIGNMENT, QUIZ, or custom)
+  weightPercentage Float
+  
+  gradingPolicy   GradingPolicy @relation(fields: [gradingPolicyId], references: [id], onDelete: Cascade)
+
+  @@unique([gradingPolicyId, category])
 }
