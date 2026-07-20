@@ -23,8 +23,9 @@ export default async function InstituteLayout({
     <DashboardLayout
       instituteCode={theme.code}
       instituteName={theme.name}
-      userName={session.user.name}
-      userRole={session.user.role}
+      userName={session.user.name as string}
+      userRole={session.user.role as string}
+      studentNumber={(session.user.studentNumber as string | undefined) || null}
       theme={theme}
     >
       {children}

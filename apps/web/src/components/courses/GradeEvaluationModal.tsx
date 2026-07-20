@@ -84,7 +84,7 @@ export default function GradeEvaluationModal({
       {/* Modal */}
       <div className="relative z-10 w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Grade Submission</h2>
             <p className="text-sm text-gray-500 mt-0.5">{submission.student.name}</p>
@@ -99,7 +99,7 @@ export default function GradeEvaluationModal({
 
         <div className="grid lg:grid-cols-[1fr_260px]">
           {/* Left: Student's submitted work */}
-          <div className="p-6 border-r border-gray-100">
+          <div className="p-6 border-r border-gray-200">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Submitted Files & Links
             </h3>
@@ -119,7 +119,7 @@ export default function GradeEvaluationModal({
                       href={att.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
+                      className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 group-hover:bg-indigo-100 shrink-0">
                         <Icon className="h-4 w-4 text-indigo-600" />
@@ -168,7 +168,7 @@ export default function GradeEvaluationModal({
                   placeholder={`/ ${maxPoints ?? "∞"}`}
                   value={grade}
                   onChange={(e) => { setGrade(e.target.value); setError(""); }}
-                  className="w-full rounded-xl border border-gray-200 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full rounded-xl border border-gray-300 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
               {maxPoints && (

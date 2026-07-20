@@ -96,17 +96,28 @@ export default function LoginForm({
         required
       />
 
-      <Input
-        id="password"
-        name="password"
-        label="Password"
-        type="password"
-        placeholder="Enter your password"
-        value={values.password}
-        onChange={(event) => updateField("password", event.target.value)}
-        theme={theme}
-        required
-      />
+      <div className="grid gap-1">
+        <Input
+          id="password"
+          name="password"
+          label="Password"
+          type="password"
+          placeholder="Enter your password"
+          value={values.password}
+          onChange={(event) => updateField("password", event.target.value)}
+          theme={theme}
+          required
+        />
+        <div className="flex justify-end mt-1">
+          <Link
+            href={`/forgot-password?institute=${instituteCode}`}
+            className="text-xs font-medium text-gray-600 hover:underline"
+            style={{ color: theme.colors.primary }}
+          >
+            Forgot Password?
+          </Link>
+        </div>
+      </div>
 
       {errorMessage ? (
         <p className="text-sm font-medium text-red-600">{errorMessage}</p>

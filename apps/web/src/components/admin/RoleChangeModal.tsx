@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, ShieldAlert, AlertTriangle } from "lucide-react";
+import Input from "@/components/common/Input";
 import type { InstituteTheme } from "@/lib/theme";
 import type { LMSUser } from "@/lib/admin-types";
 
@@ -59,7 +60,7 @@ export default function RoleChangeModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#2C2727]">
             <ShieldAlert className="h-5 w-5" style={{ color: theme.colors.primary }} />
@@ -74,7 +75,7 @@ export default function RoleChangeModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-gray-50 p-4">
             <div
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-semibold text-white"
               style={{ backgroundColor: theme.colors.primary }}
@@ -95,7 +96,7 @@ export default function RoleChangeModal({
               id="new-role"
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-300"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-300"
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = theme.colors.ring;
                 e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
@@ -120,28 +121,16 @@ export default function RoleChangeModal({
             </p>
           </div>
 
-          <div>
-            <label htmlFor="admin-pass" className="mb-1.5 block text-sm font-medium text-gray-700">
-              Admin Password
-            </label>
-            <input
-              id="admin-pass"
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
-              placeholder="Confirm your password..."
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-          </div>
+          <Input
+            id="admin-pass"
+            type="password"
+            label="Admin Password"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            required
+            theme={theme}
+            placeholder="Confirm your password..."
+          />
 
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
@@ -149,11 +138,11 @@ export default function RoleChangeModal({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Cancel
             </button>

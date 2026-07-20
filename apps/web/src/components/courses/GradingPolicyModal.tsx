@@ -98,7 +98,7 @@ export default function GradingPolicyModal({
       <div className="relative w-full max-w-md rounded-2xl bg-white shadow-xl flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-gray-500" style={{ color: theme.colors.primary }} />
             <h2 className="text-lg font-semibold text-gray-900">Grading Policy</h2>
@@ -136,7 +136,7 @@ export default function GradingPolicyModal({
                       step={0.5}
                       value={weights[category]}
                       onChange={(e) => setWeights({ ...weights, [category]: e.target.value })}
-                      className="w-20 rounded-lg border border-gray-200 px-3 py-1.5 text-right text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-right text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                     <span className="text-gray-400 text-sm font-medium w-4">%</span>
                   </div>
@@ -147,7 +147,7 @@ export default function GradingPolicyModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 rounded-b-2xl shrink-0 space-y-4">
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 rounded-b-2xl shrink-0 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-gray-700">Total Allocation</span>
             <div className={`text-lg font-bold flex items-center gap-1 transition-colors ${isValidTotal ? 'text-emerald-600' : 'text-red-600'}`}>

@@ -41,6 +41,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@lms/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -50,6 +53,9 @@ importers:
       next:
         specifier: ^16.2.0
         version: 16.2.0(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      nodemailer:
+        specifier: ^9.0.3
+        version: 9.0.3
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -66,6 +72,9 @@ importers:
       '@types/node':
         specifier: 25.5.0
         version: 25.5.0
+      '@types/nodemailer':
+        specifier: ^8.0.1
+        version: 8.0.1
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
@@ -1278,6 +1287,9 @@ packages:
 
   '@types/node@25.5.0':
     resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
+
+  '@types/nodemailer@8.0.1':
+    resolution: {integrity: sha512-PxpaInm8V1JQDd4j0ds5HfvWQk8JupS1C0Picb96QJsrrRDjBH+DlK7L4ZdNSqNULhiZRQHc40nLVShaGxXAMw==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -2529,6 +2541,10 @@ packages:
 
   node-releases@2.0.36:
     resolution: {integrity: sha512-TdC8FSgHz8Mwtw9g5L4gR/Sh9XhSP/0DEkQxfEFXOpiul5IiHgHan2VhYYb6agDSfp4KuvltmGApc8HMgUrIkA==}
+
+  nodemailer@9.0.3:
+    resolution: {integrity: sha512-n+YP+NKwR5zRWa60k3GiQ6Q3B4KXCoAw40dAKeCtYn020iNN74aWK2liXIC3ZEATeGql7we3tE3t8QwhY0eskw==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -4694,6 +4710,10 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/nodemailer@8.0.1':
+    dependencies:
+      '@types/node': 25.5.0
+
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
@@ -6203,6 +6223,8 @@ snapshots:
   node-int64@0.4.0: {}
 
   node-releases@2.0.36: {}
+
+  nodemailer@9.0.3: {}
 
   normalize-path@3.0.0: {}
 

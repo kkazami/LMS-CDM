@@ -193,7 +193,7 @@ export default function CoursesClient({
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={handleDrop}
-                className="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing select-none"
+                className="group block overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing select-none"
               >
                 <Link
                   href={`/${instituteCode}/courses/${course.id}`}
@@ -293,7 +293,7 @@ export default function CoursesClient({
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmUnenroll(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

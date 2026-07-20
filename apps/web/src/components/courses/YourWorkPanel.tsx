@@ -237,8 +237,8 @@ export default function YourWorkPanel({
 
 
       {/* Your work card */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+      <div className="rounded-2xl border border-gray-300 bg-white shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-800">Your work</h3>
           {canEdit && (
             <button
@@ -305,7 +305,7 @@ export default function YourWorkPanel({
               <button
                 onClick={handleUnsubmit}
                 disabled={isPending || isPastDeadline}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-all"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-all"
               >
                 <RotateCcw className="h-4 w-4" />
                 Unsubmit

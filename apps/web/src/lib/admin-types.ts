@@ -27,6 +27,7 @@ export interface LMSUser {
   email: string;
   name: string;
   uniqueId: string;
+  studentNumber?: string | null;
   role: UserRole;
   isActive: boolean;
   permissions: string[];

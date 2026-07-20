@@ -31,7 +31,7 @@ export default function CourseTabs({
   ];
 
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="border-b border-gray-300 bg-white">
       <nav className="flex gap-0 max-w-5xl mx-auto px-4 md:px-8" aria-label="Course tabs">
         {TABS.map((tab) => {
           const href = `/${instituteCode}/courses/${courseId}/${tab.key}`;

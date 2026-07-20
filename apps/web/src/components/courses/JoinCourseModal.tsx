@@ -99,9 +99,9 @@ export default function JoinCourseModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-xl">
+      <div className="w-full max-w-lg rounded-xl border border-gray-300 bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-300 px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Join a Course</h2>
           <button
             onClick={onClose}
@@ -113,7 +113,7 @@ export default function JoinCourseModal({
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-300">
           <button
             onClick={() => { setMode("code"); setFeedback(null); }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition"
@@ -170,7 +170,7 @@ export default function JoinCourseModal({
                   }}
                   placeholder="ABC123"
                   maxLength={6}
-                  className="flex-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-center font-mono text-xl tracking-[0.3em] outline-none transition placeholder:text-gray-300 placeholder:tracking-[0.3em]"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-mono text-xl tracking-[0.3em] outline-none transition placeholder:text-gray-300 placeholder:tracking-[0.3em]"
                   style={{ borderColor: theme.colors.border }}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = theme.colors.ring;
@@ -202,7 +202,7 @@ export default function JoinCourseModal({
           ) : (
             /* ─── Browse Mode ─── */
             <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2">
                 <Search className="h-4 w-4 text-gray-400" />
                 <input
                   value={searchQuery}
@@ -229,7 +229,7 @@ export default function JoinCourseModal({
                     return (
                       <div
                         key={course.id}
-                        className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50 transition"
+                        className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50 transition"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-900 truncate">

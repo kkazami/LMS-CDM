@@ -14,7 +14,7 @@ export default function Card({
   rightSlot,
 }: CardProps) {
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-6">
+    <section className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm">
       {(title || description || rightSlot) && (
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>

@@ -24,9 +24,10 @@ model User {
   id          String   @id @default(cuid())
   name        String
   email       String   @unique
-  password    String
-  uniqueId    String   @default("")         // Student Number or Employee ID
-  role        String   @default("STUDENT")  // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  password      String
+  uniqueId      String   @default("")         // Employee ID or general identifier
+  studentNumber String?                       // Regex pattern: /^\d{2}-\d{3}$/ (e.g., "24-101")
+  role          String   @default("STUDENT")  // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
   isActive    Boolean  @default(true)
   permissions String   @default("[]")       // JSON array of permission strings
   instituteId String
@@ -47,6 +48,7 @@ model User {
   dashboardLayouts   DashboardLayout[]
   auditLogsAsAdmin   AuditLog[]           @relation("AuditAdmin")
   auditLogsAsTarget  AuditLog[]           @relation("AuditTarget")
+  passwordResetOtps  PasswordResetOtp[]
 }
 
 model Session {
@@ -364,4 +366,17 @@ model AuditLog {
   @@index([adminId])
   @@index([targetId])
   @@index([createdAt])
+}
+
+model PasswordResetOtp {
+  id          String   @id @default(cuid())
+  userId      String
+  otpCodeHash String
+  expiresAt   DateTime
+  isUsed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

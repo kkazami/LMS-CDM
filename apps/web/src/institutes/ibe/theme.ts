@@ -11,7 +11,7 @@ export const ibeTheme: InstituteTheme = {
     background: "#FAF8F1",
     card: "#FFFFFF",
     text: "#2C2727",
-    border: "#E5E7EB",
+    border: "#D1D5DB",
     ring: "#D4A017",
   },
 };

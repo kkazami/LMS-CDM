@@ -132,7 +132,7 @@ export default function PrivateCommentDrawer({
                     className={`max-w-[85%] rounded-xl px-4 py-2.5 ${
                       isOwnMessage
                         ? "rounded-br-sm text-white"
-                        : "rounded-bl-sm border border-gray-200 bg-gray-50 text-gray-800"
+                        : "rounded-bl-sm border border-gray-300 bg-gray-50 text-gray-800"
                     }`}
                     style={
                       isOwnMessage
@@ -171,13 +171,13 @@ export default function PrivateCommentDrawer({
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="border-t border-gray-200 p-4 flex gap-2"
+          className="border-t border-gray-300 p-4 flex gap-2"
         >
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Write private feedback..."
-            className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
             style={{ borderColor: theme.colors.border }}
             disabled={sending}
           />

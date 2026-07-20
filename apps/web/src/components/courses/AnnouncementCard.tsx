@@ -35,7 +35,7 @@ export default function AnnouncementCard({
   const initial = announcement.author.name.charAt(0).toUpperCase();
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 transition-shadow hover:shadow-sm">
+    <div className="rounded-lg border border-gray-300 bg-white p-5 transition-shadow hover:shadow-sm">
       <div className="flex gap-3">
         <div
           className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white"

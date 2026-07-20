@@ -75,7 +75,7 @@ function AttachmentChip({ attachment }: { attachment: Attachment }) {
       href={attachment.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 hover:bg-gray-50 hover:border-indigo-200 hover:shadow-sm transition-all group"
+      className="flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 hover:bg-gray-50 hover:border-indigo-200 hover:shadow-sm transition-all group"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
         <Icon className="h-4 w-4 text-indigo-600" />
@@ -113,7 +113,7 @@ export default function AssignmentDetailClient({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-300 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Link
             href={`/${instituteCode}/courses/${courseId}/classwork`}
@@ -134,7 +134,7 @@ export default function AssignmentDetailClient({
           {/* Left: Assignment details */}
           <div className="space-y-6 min-w-0">
             {/* Header card */}
-            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-6">
+            <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
               <div className="flex items-start gap-3 mb-4">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
                   {typeMeta.label}
@@ -168,7 +168,7 @@ export default function AssignmentDetailClient({
 
             {/* Description */}
             {item.description && (
-              <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-6">
+              <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Instructions</h2>
                 <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{item.description}</div>
               </div>
@@ -176,7 +176,7 @@ export default function AssignmentDetailClient({
 
             {/* Instructor attachments */}
             {item.attachments.length > 0 && (
-              <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-6">
+              <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Materials & Resources
                 </h2>

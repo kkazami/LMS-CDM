@@ -46,7 +46,7 @@ export default function StreamClient({
           <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="instituteCode" value={instituteCode} />
 
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="rounded-lg border border-gray-300 bg-white p-4">
             <textarea
               name="content"
               required

@@ -102,7 +102,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none"
         >
           <option value="">All Actions</option>
           <option value="ACCOUNT_CREATED">Account Created</option>
@@ -119,7 +119,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
       </div>
 
       {/* Timeline */}
-      <div className="rounded-xl border border-gray-200 bg-white">
+      <div className="rounded-xl border border-gray-300 bg-white">
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -214,7 +214,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
+          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
             <p className="text-xs text-gray-500">
               Page {page} of {totalPages}
             </p>
@@ -222,14 +222,14 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -239,7 +239,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
       </div>
 
       {/* Security Notice */}
-      <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-400">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-400">
         This audit log is an immutable ledger. Entries cannot be edited or deleted. All timestamps are in UTC.
       </div>
     </div>

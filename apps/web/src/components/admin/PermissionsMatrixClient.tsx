@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Save, Lock } from "lucide-react";
+import { Save, AlertCircle, Shield, Key, Lock, Check } from "lucide-react";
+import Input from "@/components/common/Input";
 import type { InstituteTheme } from "@/lib/theme";
 import { SYSTEM_PERMISSIONS, type SystemPermission, type UserRole } from "@/lib/admin-types";
 
@@ -164,10 +165,10 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
       </div>
 
       {/* Matrix Grid */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
         <table className="min-w-full">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/60">
+            <tr className="border-b border-gray-200 bg-gray-50/60">
               <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 Capability
               </th>
@@ -246,7 +247,7 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
       {/* Re-Auth Dialog */}
       {showReAuth && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center gap-2">
               <Lock className="h-5 w-5" style={{ color: theme.colors.primary }} />
               <h3 className="text-lg font-semibold text-[#2C2727]">Confirm Changes</h3>
@@ -254,31 +255,26 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
             <p className="mb-4 text-sm text-gray-600">
               Re-enter your admin password to update the permission matrix.
             </p>
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Admin password"
-              className="mb-4 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none"
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-              }}
-            />
+            <div className="mb-4">
+              <Input
+                id="admin-pass-matrix"
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Admin password"
+                theme={theme}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
                   setShowReAuth(false);
                   setAdminPassword("");
                 }}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>

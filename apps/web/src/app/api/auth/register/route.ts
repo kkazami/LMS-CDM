@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, password, instituteCode } = parsed.data;
+    const { name, email, studentNumber, password, instituteCode } = parsed.data;
 
     const existingUser = await db.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -48,8 +48,9 @@ export async function POST(request: Request) {
       data: {
         name,
         email: email.toLowerCase(),
+        studentNumber,
         password: hashedPassword,
-        role: "student",
+        role: "STUDENT", // using uppercase "STUDENT" to match schema
         instituteId: institute.id,
       },
       select: {

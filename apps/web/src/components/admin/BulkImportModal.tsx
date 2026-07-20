@@ -132,9 +132,9 @@ export default function BulkImportModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-gray-200 bg-white shadow-xl">
+      <div className="w-full max-w-2xl rounded-xl border border-gray-300 bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5" style={{ color: theme.colors.primary }} />
             <h3 className="text-lg font-semibold text-[#2C2727]">Bulk User Import</h3>
@@ -159,7 +159,7 @@ export default function BulkImportModal({
 
               {/* File upload */}
               <div className="flex items-center gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
                   <FileText className="h-4 w-4" />
                   Upload CSV File
                   <input
@@ -177,7 +177,7 @@ export default function BulkImportModal({
                 onChange={(e) => setCsvText(e.target.value)}
                 placeholder={`name,email,uniqueId,role\nJohn Doe,john@school.edu,2024-001,STUDENT\nJane Smith,jane@school.edu,EMP-042,INSTRUCTOR`}
                 rows={10}
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 font-mono text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = theme.colors.ring;
                   e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
@@ -198,7 +198,7 @@ export default function BulkImportModal({
               <div className="flex justify-end gap-2">
                 <button
                   onClick={handleClose}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -221,7 +221,7 @@ export default function BulkImportModal({
                 Review <strong>{parsedRows.length}</strong> rows before importing:
               </p>
 
-              <div className="max-h-[300px] overflow-auto rounded-lg border border-gray-200">
+              <div className="max-h-[300px] overflow-auto rounded-lg border border-gray-300">
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
@@ -260,7 +260,7 @@ export default function BulkImportModal({
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setStage("input")}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Back
                 </button>
@@ -281,7 +281,7 @@ export default function BulkImportModal({
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
+                <div className="rounded-lg border border-gray-300 bg-gray-50 p-3 text-center">
                   <p className="text-2xl font-bold text-[#2C2727]">{summary.total}</p>
                   <p className="text-xs text-gray-500">Total</p>
                 </div>
@@ -296,7 +296,7 @@ export default function BulkImportModal({
               </div>
 
               {/* Results list */}
-              <div className="max-h-[250px] overflow-auto rounded-lg border border-gray-200">
+              <div className="max-h-[250px] overflow-auto rounded-lg border border-gray-300">
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>

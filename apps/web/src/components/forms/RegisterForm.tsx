@@ -10,6 +10,7 @@ import type { InstituteTheme } from "@/lib/theme";
 type RegisterFormValues = {
   name: string;
   email: string;
+  studentNumber: string;
   password: string;
   confirmPassword: string;
 };
@@ -28,6 +29,7 @@ export default function RegisterForm({
   const [values, setValues] = useState<RegisterFormValues>({
     name: "",
     email: "",
+    studentNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -50,6 +52,12 @@ export default function RegisterForm({
 
     if (values.password !== values.confirmPassword) {
       setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    const studentNumberRegex = /^\d{2}-\d{5}$/;
+    if (!studentNumberRegex.test(values.studentNumber)) {
+      setErrorMessage("Student number must be in the format XX-XXXXX (e.g. 23-00875).");
       return;
     }
 
@@ -108,6 +116,28 @@ export default function RegisterForm({
         theme={theme}
         required
       />
+
+      <div className="grid gap-1">
+        <Input
+          id="studentNumber"
+          name="studentNumber"
+          label="Student Number"
+          type="text"
+          placeholder="e.g. 23-00875"
+          value={values.studentNumber}
+          onChange={(event) => {
+            // Optional: Auto-format XX-XXXXX
+            let val = event.target.value.replace(/[^\d-]/g, "");
+            if (val.length === 2 && !val.includes("-") && event.target.value.length > values.studentNumber.length) {
+              val = val + "-";
+            }
+            updateField("studentNumber", val.slice(0, 8));
+          }}
+          theme={theme}
+          required
+        />
+        <p className="text-xs text-gray-500">Format: XX-XXXXX (e.g. 23-00875)</p>
+      </div>
 
       <Input
         id="password"

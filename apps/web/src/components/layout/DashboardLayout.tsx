@@ -10,6 +10,7 @@ type DashboardLayoutProps = {
   instituteName: string;
   userName: string;
   userRole: string;
+  studentNumber?: string | null;
   theme: InstituteTheme;
   children: React.ReactNode;
 };
@@ -19,6 +20,7 @@ export default function DashboardLayout({
   instituteName,
   userName,
   userRole,
+  studentNumber,
   theme,
   children,
 }: DashboardLayoutProps) {
@@ -56,6 +58,7 @@ export default function DashboardLayout({
             instituteName={instituteName}
             userName={userName}
             userRole={userRole}
+            studentNumber={studentNumber}
             instituteCode={instituteCode}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />

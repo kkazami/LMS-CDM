@@ -126,7 +126,7 @@ export default function SyllabusAccordion({
         return (
           <div
             key={type}
-            className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+            className="overflow-hidden rounded-lg border border-gray-300 bg-white"
           >
             {/* Section Header */}
             <button
@@ -149,7 +149,7 @@ export default function SyllabusAccordion({
 
             {/* Section Items */}
             {isExpanded && (
-              <div className="border-t border-gray-100">
+              <div className="border-t border-gray-200">
                 {typeItems.length === 0 ? (
                   <p className="px-4 py-6 text-center text-sm text-gray-400">
                     No {config.label.toLowerCase()} yet.

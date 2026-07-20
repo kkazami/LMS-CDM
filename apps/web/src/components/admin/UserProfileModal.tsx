@@ -27,6 +27,7 @@ export default function UserProfileModal({
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [uniqueId, setUniqueId] = useState(user?.uniqueId ?? "");
+  const [studentNumber, setStudentNumber] = useState(user?.studentNumber ?? "");
   const [role, setRole] = useState(user?.role ?? "STUDENT");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -45,7 +46,7 @@ export default function UserProfileModal({
         const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId, role, instituteCode }),
+          body: JSON.stringify({ name, email, uniqueId, studentNumber, role, instituteCode }),
         });
 
         const data = await res.json();
@@ -61,7 +62,7 @@ export default function UserProfileModal({
         const res = await fetch(`/api/admin/users/${user?.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId }),
+          body: JSON.stringify({ name, email, uniqueId, studentNumber }),
         });
 
         const data = await res.json();
@@ -80,7 +81,7 @@ export default function UserProfileModal({
   if (tempPassword) {
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+        <div className="w-full max-w-md rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-[#2C2727]">Account Created</h3>
             <button
@@ -124,7 +125,7 @@ export default function UserProfileModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+      <div className="w-full max-w-lg rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[#2C2727]">
             {mode === "create" ? "Create New User" : "Edit User Profile"}
@@ -150,7 +151,7 @@ export default function UserProfileModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
               placeholder="e.g. Juan Dela Cruz"
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = theme.colors.ring;
@@ -174,7 +175,7 @@ export default function UserProfileModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
               placeholder="e.g. jdelacruz@university.edu"
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = theme.colors.ring;
@@ -190,14 +191,14 @@ export default function UserProfileModal({
           {/* Unique ID */}
           <div>
             <label htmlFor="user-uniqueid" className="mb-1.5 block text-sm font-medium text-gray-700">
-              {mode === "create" && role === "STUDENT" ? "Student Number" : "Employee / Student ID"}
+              {role === "STUDENT" ? "Student ID / Internal Reference" : "Employee / User ID"}
             </label>
             <input
               id="user-uniqueid"
               type="text"
               value={uniqueId}
               onChange={(e) => setUniqueId(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
               placeholder="e.g. 24-00123 or EMP-042"
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = theme.colors.ring;
@@ -210,6 +211,37 @@ export default function UserProfileModal({
             />
           </div>
 
+          {role === "STUDENT" && (
+            <div>
+              <label htmlFor="user-studentnumber" className="mb-1.5 block text-sm font-medium text-gray-700">
+                Official Student Number
+              </label>
+              <input
+                id="user-studentnumber"
+                type="text"
+                value={studentNumber}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^\d-]/g, "");
+                  if (val.length === 2 && !val.includes("-") && e.target.value.length > studentNumber.length) {
+                    val = val + "-";
+                  }
+                  setStudentNumber(val.slice(0, 8));
+                }}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+                placeholder="Format: XX-XXXXX (e.g. 23-00875)"
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = theme.colors.ring;
+                  e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#E5E7EB";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+              <p className="mt-1.5 text-xs text-gray-500">Must be in the format XX-XXXXX (e.g. 23-00875)</p>
+            </div>
+          )}
+
           {/* Role — only on create */}
           {mode === "create" && (
             <div>
@@ -220,7 +252,7 @@ export default function UserProfileModal({
                 id="user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "ADMIN" | "INSTRUCTOR" | "STUDENT")}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none"
               >
                 <option value="STUDENT">Student</option>
                 <option value="INSTRUCTOR">Instructor</option>
@@ -248,7 +280,7 @@ export default function UserProfileModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Cancel
             </button>

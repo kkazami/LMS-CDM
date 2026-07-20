@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   // Dashboard routes are anything besides /login, /register, or the root /
   // Let's assume all /something/something... are dashboard routes (e.g. /[institute]/...)
   // Except for specific public routes.
-  const isPublicRoute = pathname === "/" || pathname === "/login" || pathname === "/register";
+  const isPublicRoute = pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
 
   if (!isPublicRoute && !sessionId) {
     // If we're on a non-public route without a session, we redirect to login

@@ -268,7 +268,7 @@ export default function AdminCoursesClient({
               defaultValue={editingCourse?.description}
               placeholder="Course description (optional)"
               rows={3}
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               style={{ borderColor: theme.colors.border }}
             />
           </div>
@@ -281,7 +281,7 @@ export default function AdminCoursesClient({
             <select
               name="instructorId"
               defaultValue={editingCourse?.instructorId || ""}
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               style={{ borderColor: theme.colors.border }}
             >
               <option value="">— No instructor assigned —</option>

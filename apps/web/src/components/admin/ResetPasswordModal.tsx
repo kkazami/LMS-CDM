@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, KeyRound, CheckCircle2 } from "lucide-react";
+import Input from "@/components/common/Input";
 import type { InstituteTheme } from "@/lib/theme";
 import type { LMSUser } from "@/lib/admin-types";
 
@@ -70,7 +71,7 @@ export default function ResetPasswordModal({
   if (tempPassword) {
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+        <div className="w-full max-w-md rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-[#2C2727]">Password Reset</h3>
             <button
@@ -119,7 +120,7 @@ export default function ResetPasswordModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#2C2727]">
             <KeyRound className="h-5 w-5" style={{ color: theme.colors.primary }} />
@@ -141,32 +142,20 @@ export default function ResetPasswordModal({
             This action will immediately terminate all active sessions for this user.
           </div>
 
-          <div>
-            <label htmlFor="custom-password" className="mb-1.5 block text-sm font-medium text-gray-700">
-              New Password <span className="text-gray-400 font-normal">(Optional)</span>
-            </label>
-            <input
-              id="custom-password"
-              type="text"
-              value={customPassword}
-              onChange={(e) => setCustomPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
-              placeholder="Leave blank to auto-generate securely..."
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-            {customPassword.length > 0 && customPassword.length < 6 && (
-              <p className="mt-1.5 text-xs text-amber-600">
-                Password must be at least 6 characters.
-              </p>
-            )}
-          </div>
+          <Input
+            id="custom-password"
+            type="password"
+            label="New Password (Optional)"
+            value={customPassword}
+            onChange={(e) => setCustomPassword(e.target.value)}
+            theme={theme}
+            placeholder="Leave blank to auto-generate securely..."
+          />
+          {customPassword.length > 0 && customPassword.length < 6 && (
+            <p className="mt-1.5 text-xs text-amber-600">
+              Password must be at least 6 characters.
+            </p>
+          )}
 
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
@@ -174,11 +163,11 @@ export default function ResetPasswordModal({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Cancel
             </button>

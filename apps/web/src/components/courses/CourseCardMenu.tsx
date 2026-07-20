@@ -48,7 +48,7 @@ export default function CourseCardMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-gray-200 bg-white shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-gray-300 bg-white shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
           {isStudent ? (
             <button
               onClick={(e) => {

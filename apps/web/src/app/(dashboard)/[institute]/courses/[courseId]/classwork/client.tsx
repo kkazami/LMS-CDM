@@ -241,7 +241,7 @@ export default function ClassworkClient({
                   setSelectedType(e.target.value);
                 }
               }}
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none"
               style={{ borderColor: theme.colors.border }}
             >
               <option value="ASSIGNMENT">Assignment</option>
@@ -286,7 +286,7 @@ export default function ClassworkClient({
               defaultValue={editingItem?.description}
               rows={3}
               placeholder="Optional description or instructions"
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400"
               style={{ borderColor: theme.colors.border }}
             />
           </div>
@@ -320,7 +320,7 @@ export default function ClassworkClient({
             </label>
 
             {attachments.length > 0 && (
-              <div className="space-y-1.5 rounded-md border border-gray-200 p-2 max-h-28 overflow-y-auto">
+              <div className="space-y-1.5 rounded-md border border-gray-300 p-2 max-h-28 overflow-y-auto">
                 {attachments.map((att, idx) => {
                   const isLink = att.type === "LINK";
                   const Icon = isLink ? Link2 : FileText;
@@ -363,7 +363,7 @@ export default function ClassworkClient({
               <p className="text-xs text-gray-500">
                 Leave all unchecked to make visible to all students
               </p>
-              <div className="space-y-1.5 rounded-md border border-gray-200 p-3 max-h-32 overflow-y-auto">
+              <div className="space-y-1.5 rounded-md border border-gray-300 p-3 max-h-32 overflow-y-auto">
                 {studentGroups.map((group) => (
                   <label
                     key={group.id}

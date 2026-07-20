@@ -166,7 +166,7 @@ export default function AccountsManagementClient({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowBulkModal(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             <Upload className="h-4 w-4" />
             Bulk Import
@@ -183,7 +183,7 @@ export default function AccountsManagementClient({
       </div>
 
       {/* Tab Bar */}
-      <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div className="flex gap-1 rounded-lg border border-gray-300 bg-gray-50 p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -214,7 +214,7 @@ export default function AccountsManagementClient({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by name, email, or ID..."
-            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300"
             style={{ boxShadow: "none" }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = theme.colors.ring;
@@ -230,7 +230,7 @@ export default function AccountsManagementClient({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none"
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none"
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
@@ -243,11 +243,11 @@ export default function AccountsManagementClient({
       </div>
 
       {/* Data Table */}
-      <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="rounded-lg border border-gray-300 bg-white">
         <div className="overflow-visible">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/60">
+              <tr className="border-b border-gray-200 bg-gray-50/60">
                 <th className="px-4 py-3 font-medium text-gray-500 uppercase text-xs tracking-wider">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-500 uppercase text-xs tracking-wider">Email</th>
                 <th className="px-4 py-3 font-medium text-gray-500 uppercase text-xs tracking-wider">
@@ -295,10 +295,12 @@ export default function AccountsManagementClient({
                     {/* Email */}
                     <td className="px-4 py-3.5 text-gray-600">{user.email}</td>
 
-                    {/* Unique ID */}
+                    {/* Unique ID / Student Number */}
                     <td className="px-4 py-3.5">
                       <span className="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-600">
-                        {user.uniqueId || "—"}
+                        {activeTab === "students" 
+                          ? (user.studentNumber || "—") 
+                          : (user.uniqueId || "—")}
                       </span>
                     </td>
 
@@ -344,7 +346,7 @@ export default function AccountsManagementClient({
 
                         {actionMenuUser === user.id && (
                           <div
-                            className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                            className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-300 bg-white py-1 shadow-lg"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button
@@ -383,7 +385,7 @@ export default function AccountsManagementClient({
                               <KeyRound className="h-3.5 w-3.5" />
                               Reset Password
                             </button>
-                            <div className="my-1 border-t border-gray-100" />
+                            <div className="my-1 border-t border-gray-200" />
                             <button
                               onClick={() => {
                                 setRoleChangeUser(user);
@@ -407,7 +409,7 @@ export default function AccountsManagementClient({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
+          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
             <p className="text-xs text-gray-500">
               Page {page} of {totalPages} · {total} total records
             </p>
@@ -415,7 +417,7 @@ export default function AccountsManagementClient({
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -449,7 +451,7 @@ export default function AccountsManagementClient({
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-40"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

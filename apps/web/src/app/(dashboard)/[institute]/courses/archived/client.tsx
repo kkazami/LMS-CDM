@@ -80,7 +80,7 @@ export default function ArchivedCoursesClient({
             return (
               <div
                 key={course.id}
-                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm opacity-80 hover:opacity-100 transition-opacity"
+                className="overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm opacity-80 hover:opacity-100 transition-opacity"
               >
                 {/* Card Header */}
                 <div className="relative px-5 py-6" style={{ background: bg }}>
@@ -128,7 +128,7 @@ export default function ArchivedCoursesClient({
                     </span>
                   </div>
                   <div className="pt-1">
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 bg-gray-50 rounded-full px-2.5 py-0.5 border border-gray-100">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 bg-gray-50 rounded-full px-2.5 py-0.5 border border-gray-200">
                       <Archive className="h-3 w-3" /> Archived
                     </span>
                   </div>

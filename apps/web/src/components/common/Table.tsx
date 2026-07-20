@@ -20,9 +20,9 @@ export default function Table<T extends Record<string, unknown>>({
   theme,
 }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-gray-300 bg-white">
       <table className="min-w-full text-left text-sm">
-        <thead className={theme ? "" : "border-b border-gray-200 bg-gray-50"}>
+        <thead className={theme ? "" : "border-b border-gray-300 bg-gray-50"}>
           <tr>
             {columns.map((column) => (
               <th
@@ -48,7 +48,7 @@ export default function Table<T extends Record<string, unknown>>({
             </tr>
           ) : (
             rows.map((row, index) => (
-              <tr key={index} className="border-b border-gray-100 last:border-0">
+              <tr key={index} className="border-b border-gray-200 last:border-0">
                 {columns.map((column) => (
                   <td key={String(column.key)} className="px-4 py-3 text-gray-700">
                     {column.render

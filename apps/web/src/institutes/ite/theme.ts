@@ -11,7 +11,7 @@ export const iteTheme: InstituteTheme = {
     background: "#F5F7FB",
     card: "#FFFFFF",
     text: "#1F2937",
-    border: "#E5E7EB",
+    border: "#D1D5DB",
     ring: "#2563EB",
   },
 };

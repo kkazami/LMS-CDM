@@ -172,7 +172,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-300 px-6 py-4">
         <div className="max-w-full mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
@@ -188,7 +188,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsPolicyModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
             >
               <Settings className="h-4 w-4" />
               Grading Policy
@@ -210,14 +210,14 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-white border-b border-gray-200 sticky top-0 z-10">
-              <th className="sticky left-0 bg-white z-20 px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-r border-gray-100 min-w-[200px]">
+            <tr className="bg-white border-b border-gray-300 sticky top-0 z-10">
+              <th className="sticky left-0 bg-white z-20 px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-r border-gray-200 min-w-[200px]">
                 Student
               </th>
               {data.assignments.map((a) => (
                 <th
                   key={a.id}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide border-r border-gray-100 min-w-[140px]"
+                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide border-r border-gray-200 min-w-[140px]"
                 >
                   <div className="truncate max-w-[130px]" title={a.title}>{a.title}</div>
                   {a.maxPoints && (
@@ -238,7 +238,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                 key={student.id}
                 className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
               >
-                <td className="sticky left-0 bg-inherit z-10 px-5 py-3 border-r border-gray-100">
+                <td className="sticky left-0 bg-inherit z-10 px-5 py-3 border-r border-gray-200">
                   <div>
                     <p className="text-sm font-semibold text-gray-800">{student.name}</p>
                     <p className="text-xs text-gray-400">{student.email}</p>
@@ -255,7 +255,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                   return (
                     <td
                       key={assignment.id}
-                      className={`px-4 py-3 border-r border-gray-100 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50 border-indigo-200 outline outline-2 outline-indigo-500 -outline-offset-2 relative z-10" : "hover:bg-gray-50/80"}`}
+                      className={`px-4 py-3 border-r border-gray-200 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50 border-indigo-200 outline outline-2 outline-indigo-500 -outline-offset-2 relative z-10" : "hover:bg-gray-50/80"}`}
                       onClick={() => {
                         setSelectedCell({ studentId: student.id, assignmentId: assignment.id });
                         setEditingCell({ studentId: student.id, assignmentId: assignment.id });
@@ -345,12 +345,12 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       </div>
 
       {/* Color legend */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-3 flex items-center gap-6 text-xs text-gray-500">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center gap-6 text-xs text-gray-500">
         <span className="font-semibold">Legend:</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-emerald-50 border border-emerald-200" /> ≥ 80%</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-50 border border-amber-200" /> ≥ 50%</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-50 border border-red-200" /> &lt; 50%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-gray-100 border border-gray-200" /> Not graded</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-gray-100 border border-gray-300" /> Not graded</span>
         <span className="ml-2 text-gray-400 italic">Click a cell to edit grade inline</span>
       </div>
 

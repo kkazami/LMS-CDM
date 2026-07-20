@@ -192,7 +192,7 @@ export default function PeopleClient({
           Instructor
         </h2>
         {instructor ? (
-          <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white p-4">
             <div
               className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white"
               style={{ backgroundColor: theme.colors.primary }}
@@ -286,13 +286,13 @@ export default function PeopleClient({
             No students enrolled yet.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
             {enrolledStudents.map((student, i) => (
               <div
                 key={student.id}
                 className={`flex items-center justify-between px-4 py-3 ${
                   i < enrolledStudents.length - 1
-                    ? "border-b border-gray-100"
+                    ? "border-b border-gray-200"
                     : ""
                 }`}
               >
@@ -353,7 +353,7 @@ export default function PeopleClient({
               {studentGroups.map((group) => (
                 <div
                   key={group.id}
-                  className="rounded-lg border border-gray-200 bg-white p-4"
+                  className="rounded-lg border border-gray-300 bg-white p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -409,7 +409,7 @@ export default function PeopleClient({
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               placeholder="e.g. Project Team A"
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400"
               style={{ borderColor: theme.colors.border }}
             />
           </div>
@@ -418,7 +418,7 @@ export default function PeopleClient({
             <label className="text-sm font-medium text-gray-800">
               Select Students ({selectedStudentIds.size} selected)
             </label>
-            <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200 divide-y divide-gray-100">
+            <div className="max-h-48 overflow-y-auto rounded-md border border-gray-300 divide-y divide-gray-100">
               {enrolledStudents.map((student) => (
                 <label
                   key={student.id}

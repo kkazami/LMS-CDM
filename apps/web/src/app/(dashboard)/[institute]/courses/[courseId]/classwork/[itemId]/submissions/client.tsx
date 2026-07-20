@@ -77,7 +77,7 @@ export default function SubmissionsClient({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-300 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Link
             href={`/${instituteCode}/courses/${courseId}/classwork/${itemId}`}
@@ -99,7 +99,7 @@ export default function SubmissionsClient({
             { label: "Submitted", value: submittedCount, color: "text-emerald-700", bg: "bg-emerald-50" },
             { label: "Graded", value: gradedCount, color: "text-purple-700", bg: "bg-purple-50" },
           ].map(({ label, value, color, bg }) => (
-            <div key={label} className={`rounded-2xl ${bg} border border-gray-200 p-5 text-center shadow-sm`}>
+            <div key={label} className={`rounded-2xl ${bg} border border-gray-300 p-5 text-center shadow-sm`}>
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
               <p className="text-sm text-gray-500 mt-1">{label}</p>
             </div>
@@ -110,7 +110,7 @@ export default function SubmissionsClient({
         <div className="flex justify-end">
           <a
             href={`/api/courses/${courseId}/gradebook/export`}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-all shadow-sm"
+            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-all shadow-sm"
           >
             <Download className="h-4 w-4 text-indigo-500" />
             Export grades (CSV)
@@ -118,10 +118,10 @@ export default function SubmissionsClient({
         </div>
 
         {/* Submissions table */}
-        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+        <div className="rounded-2xl bg-white border border-gray-300 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
+              <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Student</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Submitted</th>

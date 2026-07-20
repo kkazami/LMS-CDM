@@ -93,7 +93,7 @@ function AttachmentChip({
   const Icon = isLink ? Link2 : getFileIcon(attachment.fileName);
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-sm">
+    <div className="group flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-sm">
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
           isLink
@@ -300,7 +300,7 @@ export default function AttachmentModal({
               className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 transition-all duration-200 ${
                 isDragging
                   ? "border-indigo-400 bg-indigo-50"
-                  : "border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"
+                  : "border-gray-300 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"
               } ${uploading ? "pointer-events-none opacity-60" : ""}`}
             >
               {uploading ? (
@@ -362,7 +362,7 @@ export default function AttachmentModal({
                 value={linkUrl}
                 onChange={(e) => { setLinkUrl(e.target.value); setLinkError(""); }}
                 placeholder="https://docs.google.com/document/d/..."
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
                 style={{ borderColor: linkError ? "#ef4444" : undefined }}
               />
             </div>
@@ -376,7 +376,7 @@ export default function AttachmentModal({
                 value={linkName}
                 onChange={(e) => setLinkName(e.target.value)}
                 placeholder="e.g. Lecture Notes - Chapter 3"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -430,11 +430,11 @@ export default function AttachmentModal({
         )}
 
         {/* ─── Footer Actions ─── */}
-        <div className="flex gap-2 pt-2 border-t border-gray-100">
+        <div className="flex gap-2 pt-2 border-t border-gray-200">
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
           >
             Cancel
           </button>

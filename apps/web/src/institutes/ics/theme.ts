@@ -11,7 +11,7 @@ export const icsTheme: InstituteTheme = {
     background: "#F6F4F4",
     card: "#FFFFFF",
     text: "#2C2727",
-    border: "#E5E7EB",
+    border: "#D1D5DB",
     ring: "#FF7517",
   },
 };
