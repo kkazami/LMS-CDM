@@ -25,7 +25,10 @@ model User {
   name        String
   email       String   @unique
   password    String
-  role        String   @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  uniqueId    String   @default("")         // Student Number or Employee ID
+  role        String   @default("STUDENT")  // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  isActive    Boolean  @default(true)
+  permissions String   @default("[]")       // JSON array of permission strings
   instituteId String
   createdAt   DateTime @default(now())
 
@@ -42,6 +45,8 @@ model User {
   receivedComments   PrivateComment[]     @relation("CommentRecipient")
   submissions        StudentSubmission[]
   dashboardLayouts   DashboardLayout[]
+  auditLogsAsAdmin   AuditLog[]           @relation("AuditAdmin")
+  auditLogsAsTarget  AuditLog[]           @relation("AuditTarget")
 }
 
 model Session {
@@ -340,4 +345,23 @@ model CategoryWeight {
   gradingPolicy   GradingPolicy @relation(fields: [gradingPolicyId], references: [id], onDelete: Cascade)
 
   @@unique([gradingPolicyId, category])
+}
+
+// ─── Admin & Audit Models ───
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  targetId  String
+  action    String   // e.g., 'ROLE_CHANGE_TO_INSTRUCTOR', 'ACCOUNT_SUSPENSION'
+  ipAddress String   @default("")
+  metadata  String   @default("{}") // JSON for additional context
+  createdAt DateTime @default(now())
+
+  admin  User @relation("AuditAdmin", fields: [adminId], references: [id])
+  target User @relation("AuditTarget", fields: [targetId], references: [id])
+
+  @@index([adminId])
+  @@index([targetId])
+  @@index([createdAt])
 }

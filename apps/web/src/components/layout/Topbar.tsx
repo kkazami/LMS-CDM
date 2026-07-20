@@ -70,7 +70,8 @@ export default function Topbar({
     // Admin
     admin: "Admin Dashboard",
     accounts: "Account Management",
-    logs: "Logs",
+    permissions: "Permission Matrix",
+    logs: "Audit Logs",
     backup: "Backup & Recovery",
     security: "Security Tools",
     // Course Management

@@ -63,4 +63,4 @@ export { enrollmentManager } from "./enrollment-manager";
 export { flagSentiment } from "./sentiment-flagger";
 export { resolveGroupPermissions } from "./group-permission-resolver";
 export { exportGradebookSkill } from "./gradebook-exporter";
-
+export { bulkUserIngestion } from "./bulk-user-ingestion";

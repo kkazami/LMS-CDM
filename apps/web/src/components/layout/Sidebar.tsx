@@ -62,7 +62,8 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Dashboard", href: `/${code}/admin`, icon: LayoutDashboard },
   { label: "Course Management", href: `/${code}/admin/courses`, icon: Library },
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
-  { label: "Logs", href: `/${code}/logs`, icon: FileText },
+  { label: "Permissions", href: `/${code}/accounts/permissions`, icon: ShieldCheck },
+  { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
   { label: "Backup & Recovery", href: `/${code}/backup`, icon: HardDrive },
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
 ];
@@ -77,6 +78,13 @@ function getLinks(instituteCode: string, role: string): NavLink[] {
 export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const links = getLinks(instituteCode, userRole);
+
+  // Find the active link by getting the longest href that matches the current pathname
+  const activeLink = [...links]
+    .sort((a, b) => b.href.length - a.href.length)
+    .find(
+      (link) => pathname === link.href || pathname.startsWith(link.href + "/")
+    );
 
   return (
     <aside
@@ -119,9 +127,7 @@ export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, o
       <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
         {links.map((item) => {
           const Icon = item.icon;
-          const active =
-            pathname === item.href ||
-            (item.href !== `/${instituteCode}` && pathname.startsWith(item.href));
+          const active = activeLink?.href === item.href;
 
           return (
             <Link

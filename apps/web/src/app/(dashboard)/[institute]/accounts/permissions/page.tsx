@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
-import AuditLogClient from "@/components/admin/AuditLogClient";
+import PermissionsMatrixClient from "@/components/admin/PermissionsMatrixClient";
 
 type PageProps = {
   params: Promise<{ institute: string }>;
 };
 
-export default async function LogsPage({ params }: PageProps) {
+export default async function PermissionsPage({ params }: PageProps) {
   const { institute } = await params;
   const session = await getSession();
 
@@ -21,5 +21,5 @@ export default async function LogsPage({ params }: PageProps) {
 
   const theme = getInstituteTheme(institute);
 
-  return <AuditLogClient theme={theme} />;
+  return <PermissionsMatrixClient theme={theme} />;
 }

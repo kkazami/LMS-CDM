@@ -44,6 +44,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if the account is deactivated
+    if (user.isActive === false) {
+      return NextResponse.json(
+        { message: "Your account has been deactivated. Please contact administration." },
+        { status: 403 }
+      );
+    }
+
     await createSession(user.id);
 
     return NextResponse.json(

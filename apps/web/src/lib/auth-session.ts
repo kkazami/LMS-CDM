@@ -54,6 +54,15 @@ export async function getSession() {
       return null;
     }
 
+    // Check if the user account has been deactivated
+    const user = session.user as Record<string, unknown>;
+    if (user.isActive === false) {
+      // Purge session for deactivated user
+      await db.session.delete({ where: { id: session.id } });
+      cookieStore.delete("lumina_session");
+      return null;
+    }
+
     return session;
   } catch (error) {
     console.error("Session lookup error", error);

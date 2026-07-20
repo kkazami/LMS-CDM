@@ -1,8 +1,30 @@
-export default function AccountManagementPage() {
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth-session";
+import { getInstituteTheme } from "@/lib/get-institute-theme";
+import AccountsManagementClient from "@/components/admin/AccountsManagementClient";
+
+type PageProps = {
+  params: Promise<{ institute: string }>;
+};
+
+export default async function AccountManagementPage({ params }: PageProps) {
+  const { institute } = await params;
+  const session = await getSession();
+
+  if (!session) {
+    redirect(`/login?institute=${institute}`);
+  }
+
+  if (session.user.role.toUpperCase() !== "ADMIN") {
+    redirect(`/${institute}`);
+  }
+
+  const theme = getInstituteTheme(institute);
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold">Account Management</h2>
-      <p className="mt-4 text-gray-600">Create, manage, and deactivate user accounts across the institute.</p>
-    </div>
+    <AccountsManagementClient
+      theme={theme}
+      instituteCode={institute}
+    />
   );
 }
