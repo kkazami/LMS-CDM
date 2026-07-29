@@ -19,6 +19,8 @@ import { activitySubmissionSchema } from "@/features/interactive-activities/shar
 import { db } from "@/lib/db";
 import { processGamificationEvent } from "@/features/interactive-activities/gamification/engine";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     // 1. Auth + eligibility check
