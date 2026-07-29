@@ -4,6 +4,8 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleForActivities } from "@/lib/activity-eligibility";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
+export const dynamic = "force-dynamic";
+
 export default async function InstituteLayout({ 
   children, 
   params 
