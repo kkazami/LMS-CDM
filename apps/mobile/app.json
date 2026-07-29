@@ -1,6 +1,29 @@
 {
   "expo": {
-    "name": "LMS Mobile",
-    "slug": "lms-mobile"
+    "name": "Lumina LMS",
+    "slug": "lumina-lms",
+    "scheme": "lumina-lms",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "com.lumina.lms",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.lumina.lms",
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2C2727"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ]
   }
 }

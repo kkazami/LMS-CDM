@@ -1,0 +1,85 @@
+# Judge0 CE — Local Development Setup
+#
+# This docker-compose stands up Judge0 Community Edition for the CodeLab
+# activity module. Sprint 0 only proves it boots and responds; actual
+# CodeLab integration happens in Sprint 5.
+#
+# Usage:
+#   docker compose -f docker/docker-compose.judge0.yml up -d
+#
+# Test it works:
+#   curl -X POST http://localhost:2358/submissions \
+#     -H "Content-Type: application/json" \
+#     -d '{"source_code":"print(\"hello\")", "language_id": 71}' \
+#     | jq .token
+#
+#   curl http://localhost:2358/submissions/<TOKEN>?fields=stdout,stderr,status
+#
+# Judge0 API docs: https://ce.judge0.com/
+
+services:
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    ports:
+      - "2358:2358"
+    privileged: true
+    environment:
+      - REDIS_HOST=judge0-redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=judge0
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0_dev_password
+      # Disable auth for local dev — DO NOT use in production
+      - AUTHN_HEADER=
+      - AUTHN_TOKEN=
+      - AUTHZ_HEADER=
+      - AUTHZ_TOKEN=
+    depends_on:
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_started
+    restart: unless-stopped
+
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    command: ["./scripts/workers"]
+    privileged: true
+    environment:
+      - REDIS_HOST=judge0-redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=judge0
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0_dev_password
+    depends_on:
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_started
+    restart: unless-stopped
+
+  judge0-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=judge0
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0_dev_password
+    volumes:
+      - judge0-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U judge0"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  judge0-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  judge0-db-data:

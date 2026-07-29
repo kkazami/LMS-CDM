@@ -1,1 +1,1 @@
-export const getGrades = async () => [];
+export {};

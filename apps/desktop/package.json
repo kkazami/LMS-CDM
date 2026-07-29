@@ -1,12 +1,15 @@
 {
   "name": "desktop",
   "private": true,
+  "version": "1.0.0",
   "main": "electron/main.ts",
   "scripts": {
-    "dev": "electron .",
-    "build": "echo build desktop"
+    "dev": "npx tsx electron/main.ts",
+    "build": "echo 'Build desktop app'",
+    "pack": "echo 'Package desktop app'"
   },
   "devDependencies": {
-    "electron": "^41.0.3"
+    "electron": "^41.0.3",
+    "tsx": "^4.19.0"
   }
 }

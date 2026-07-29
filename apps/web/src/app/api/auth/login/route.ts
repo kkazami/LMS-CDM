@@ -52,16 +52,18 @@ export async function POST(request: Request) {
       );
     }
 
-    await createSession(user.id);
+    const session = await createSession(user.id);
 
     return NextResponse.json(
       {
         message: "Login successful.",
+        token: session.id,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
+          studentNumber: (user as Record<string, unknown>).studentNumber as string | undefined || null,
           institute: {
             code: user.institute.code,
             name: user.institute.name,

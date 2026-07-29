@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Library,
   Archive,
+  FlaskConical,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 
@@ -35,6 +36,8 @@ type SidebarProps = {
   userRole: string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
+  isEligibleForActivities?: boolean;
 };
 
 const getStudentLinks = (code: string): NavLink[] => [
@@ -75,9 +78,14 @@ function getLinks(instituteCode: string, role: string): NavLink[] {
   return getStudentLinks(instituteCode);
 }
 
-export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, onToggleCollapse, isEligibleForActivities }: SidebarProps) {
   const pathname = usePathname();
-  const links = getLinks(instituteCode, userRole);
+  // Build the link list, then conditionally append Interactive Labs if eligible.
+  // The entry is NOT rendered at all (absent from DOM) for ineligible users.
+  const baseLinks = getLinks(instituteCode, userRole);
+  const links: NavLink[] = isEligibleForActivities
+    ? [...baseLinks, { label: "Interactive Labs", href: `/${instituteCode}/activities`, icon: FlaskConical }]
+    : baseLinks;
 
   // Find the active link by getting the longest href that matches the current pathname
   const activeLink = [...links]

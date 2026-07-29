@@ -12,6 +12,8 @@ type DashboardLayoutProps = {
   userRole: string;
   studentNumber?: string | null;
   theme: InstituteTheme;
+  /** Whether this user qualifies for ICS Interactive Activities. Controls sidebar entry visibility. */
+  isEligibleForActivities?: boolean;
   children: React.ReactNode;
 };
 
@@ -22,6 +24,7 @@ export default function DashboardLayout({
   userRole,
   studentNumber,
   theme,
+  isEligibleForActivities,
   children,
 }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -36,6 +39,7 @@ export default function DashboardLayout({
           userRole={userRole}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          isEligibleForActivities={isEligibleForActivities}
         />
 
         {mobileOpen ? (
@@ -47,6 +51,7 @@ export default function DashboardLayout({
                 theme={theme}
                 userRole={userRole}
                 isCollapsed={false}
+                isEligibleForActivities={isEligibleForActivities}
               />
             </div>
           </div>

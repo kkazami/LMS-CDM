@@ -1,15 +1,38 @@
 {
   "name": "mobile",
   "private": true,
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "lint": "echo lint mobile"
   },
   "dependencies": {
-    "expo": "^55.0.8",
-    "react-native": "^0.84.1",
+    "@lms/api-client": "workspace:*",
+    "@lms/types": "workspace:*",
+    "@lms/config": "workspace:*",
+    "expo": "~55.0.28",
+    "expo-font": "~55.0.8",
+    "expo-linear-gradient": "~55.0.16",
+    "expo-router": "~55.0.17",
+    "expo-secure-store": "~55.0.16",
+    "expo-splash-screen": "~55.0.23",
+    "expo-status-bar": "~55.0.6",
+    "lucide-react-native": "^0.468.0",
+    "react": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.2",
-    "react-native-screens": "~4.23.0"
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "15.15.3",
+    "zustand": "^5.0.14",
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "@expo/ngrok": "^4.1.0",
+    "@types/react": "~19.2.10",
+    "typescript": "~5.9.2"
   }
 }

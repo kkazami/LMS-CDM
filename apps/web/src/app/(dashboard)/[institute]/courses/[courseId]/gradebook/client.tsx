@@ -247,7 +247,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                 {data.assignments.map((assignment) => {
                   const cell = data.grades[student.id]?.[assignment.id];
                   const localVal = localGrades[student.id]?.[assignment.id];
-                  const displayGrade = localVal !== undefined ? parseFloat(localVal) : cell?.grade;
+                  const parsedLocal = localVal !== undefined ? parseFloat(localVal) : undefined;
+                  const displayGrade = localVal !== undefined ? (isNaN(parsedLocal!) ? "" : parsedLocal) : cell?.grade;
                   const isEditing = editingCell?.studentId === student.id && editingCell?.assignmentId === assignment.id;
 
                   const isSelected = selectedCell?.studentId === student.id && selectedCell?.assignmentId === assignment.id;
@@ -304,14 +305,14 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                       ) : (
                         <span
                           className={`inline-block rounded-lg px-2.5 py-1 text-sm transition-colors ${
-                            displayGrade !== null && displayGrade !== undefined
-                              ? gradeColor(displayGrade ?? null, assignment.maxPoints)
+                            displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
+                              ? gradeColor(displayGrade as number | null, assignment.maxPoints)
                               : cell?.submissionId
                               ? "text-gray-500 bg-gray-50"
                               : "text-gray-300"
                           }`}
                         >
-                          {displayGrade !== null && displayGrade !== undefined
+                          {displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
                             ? `${displayGrade}${assignment.maxPoints ? `/${assignment.maxPoints}` : ""}`
                             : cell?.submissionId
                             ? "—"

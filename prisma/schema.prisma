@@ -49,6 +49,11 @@ model User {
   auditLogsAsAdmin   AuditLog[]           @relation("AuditAdmin")
   auditLogsAsTarget  AuditLog[]           @relation("AuditTarget")
   passwordResetOtps  PasswordResetOtp[]
+  // ─── Interactive Activities relations (Sprint 0) ───
+  activityTemplates     ActivityTemplate[]    @relation("ActivityTemplateCreator")
+  activitySubmissions   ActivitySubmission[]  @relation("ActivitySubmissions")
+  activitySessions      ActivitySession[]     @relation("ActivitySessions")
+  gamificationProfile   GamificationProfile?
 }
 
 model Session {
@@ -86,6 +91,10 @@ model Course {
   calendarEvents   CalendarEvent[]
   dashboardLayouts DashboardLayout[]
   gradingPolicy    GradingPolicy?
+  // ─── Interactive Activities relation (Sprint 0) ───
+  activityTemplates ActivityTemplate[]
+  weeklyChallenges  WeeklyChallenge[]
+  leaderboardCaches ActivityLeaderboardCache[]
 
   @@index([instituteId])
   @@index([instructorId])
@@ -379,4 +388,142 @@ model PasswordResetOtp {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Interactive Activities Models (Sprint 0) ───
+// These tables support the ICS-exclusive Interactive Activities feature suite:
+// 3D hardware simulations (PC building, Arduino/IoT, server racks, logic gates)
+// and the multi-language auto-graded CodeLab.
+
+/// Instructor-defined problem template that drives activity randomization.
+/// Each template defines a "problem shape" with variables substituted per-student.
+model ActivityTemplate {
+  id           String   @id @default(cuid())
+  activityType String                          // "pc-build" | "arduino" | "server-rack" | "logic-gate" | "codelab"
+  title        String   @default("Interactive Activity")
+  courseId     String
+  syllabusItemId String?
+  difficulty   Int      @default(1)            // 1 = introductory, 2 = intermediate, 3 = advanced
+  variables    String   @default("{}")         // JSON: placeholder variables for randomization
+  faultPool    String   @default("[]")         // JSON array: fault IDs for troubleshooting activities
+  hiddenTestCases String @default("[]")        // JSON array: hidden test cases for CodeLab
+  createdBy    String                          // Instructor user ID
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  creator      User     @relation("ActivityTemplateCreator", fields: [createdBy], references: [id])
+  submissions  ActivitySubmission[]
+  sessions     ActivitySession[]
+  weeklyChallenges WeeklyChallenge[]
+
+  @@index([courseId, activityType])
+  @@index([createdBy])
+}
+
+/// Student submission record for a completed activity attempt.
+/// Contains the full grading payload so the activity can be graded
+/// without replaying the 3D scene.
+model ActivitySubmission {
+  id                    String   @id @default(cuid())
+  studentId             String
+  templateId            String
+  activityType          String                          // Denormalized from template for query convenience
+  variantSeed           String                          // Deterministic seed for reproducible grading
+  startedAt             DateTime
+  completionTimeSeconds Int
+  attempts              Int      @default(1)
+  stateCheck            String   @default("{}")         // JSON: activity-specific key-value state
+  score                 Float    @default(0)            // 0–100
+  maxScore              Float    @default(100)
+  passed                Boolean  @default(false)
+  errorLog              String   @default("[]")         // JSON array: student-visible diagnostic hints
+  submittedAt           DateTime @default(now())
+
+  student  User              @relation("ActivitySubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+  template ActivityTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, activityType])
+  @@index([templateId])
+  @@index([submittedAt])
+}
+
+/// Registry of 3D model assets used by activity modules.
+/// Tracks paths, versions, and Draco compression status.
+model ActivityAsset {
+  id                String   @id @default(cuid())
+  path              String   @unique                    // Path relative to public/models/
+  name              String                              // Human-readable asset name
+  version           String   @default("1.0.0")
+  isDracoCompressed Boolean  @default(true)
+  activityTypes     String   @default("[]")             // JSON array of activity type strings
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+}
+
+/// Tracks an in-progress activity attempt before submission.
+/// Created when a student opens an activity, finalized on submit or timeout.
+model ActivitySession {
+  id          String   @id @default(cuid())
+  studentId   String
+  templateId  String
+  variantSeed String
+  status      String   @default("in_progress")          // "in_progress" | "submitted" | "timed_out" | "abandoned"
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  student  User             @relation("ActivitySessions", fields: [studentId], references: [id], onDelete: Cascade)
+  template ActivityTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, status])
+  @@index([templateId])
+}
+
+// ─── Interactive Activities Gamification (Sprint 7) ───
+
+model GamificationProfile {
+  id                    String   @id @default(cuid())
+  studentId             String   @unique
+  currentStreak         Int      @default(0)
+  longestStreak         Int      @default(0)
+  lastActivityDate      DateTime?
+  totalPoints           Int      @default(0)
+  isLeaderboardAnonymized Boolean @default(true) // Privacy default: opt-in to public
+  student               User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badges                StudentBadge[]
+}
+
+model StudentBadge {
+  id          String   @id @default(cuid())
+  profileId   String
+  badgeRuleId String
+  earnedAt    DateTime @default(now())
+
+  profile   GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  @@unique([profileId, badgeRuleId])
+}
+
+model ActivityLeaderboardCache {
+  id           String   @id @default(cuid())
+  courseId     String?  // null means global institute leaderboard
+  activityType String?  // null means overall points across all activities
+  rankings     String   @default("[]") // JSON string of { studentId, displayName, points }
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  course       Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, activityType])
+}
+
+model WeeklyChallenge {
+  id         String   @id @default(cuid())
+  courseId   String
+  templateId String
+  startDate  DateTime
+  endDate    DateTime
+  isOptIn    Boolean  @default(true)
+  
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  template   ActivityTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }

@@ -1,1 +1,103 @@
-<!doctype html><html><body><h1>LMS Desktop Shell</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lumina LMS — Connection Error</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #F6F4F4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #2C2727;
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: #FEE2E2;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6B7280;
+      max-width: 360px;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    button {
+      padding: 10px 24px;
+      background: #FF7517;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #FC8236;
+    }
+
+    .hint {
+      margin-top: 24px;
+      padding: 16px;
+      background: #FFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+
+    .hint p {
+      margin-bottom: 8px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .hint code {
+      background: #F3F4F6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">⚡</div>
+  <h1>Cannot Connect to Lumina LMS</h1>
+  <p>The application server is not reachable. Make sure the web server is running and try again.</p>
+  <button onclick="window.location.reload()">Retry Connection</button>
+
+  <div class="hint">
+    <p><strong>For developers:</strong></p>
+    <p>Start the web server first:</p>
+    <p><code>pnpm dev:web</code></p>
+    <p>Then restart the desktop app:</p>
+    <p><code>pnpm dev:desktop</code></p>
+  </div>
+</body>
+</html>

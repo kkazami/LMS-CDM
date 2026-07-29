@@ -9,6 +9,7 @@
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
     "dev:desktop": "pnpm --filter desktop dev",
+    "dev:all": "turbo dev start --parallel",
     "build:web": "pnpm --filter web build",
     "build:mobile": "pnpm --filter mobile build",
     "build:desktop": "pnpm --filter desktop build"
