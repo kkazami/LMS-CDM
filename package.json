@@ -1,6 +1,7 @@
 {
   "name": "lms-monorepo",
   "private": true,
+  "packageManager": "pnpm@10.32.1",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -15,7 +16,8 @@
     "build:desktop": "pnpm --filter desktop build"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "turbo": "^2.4.0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
