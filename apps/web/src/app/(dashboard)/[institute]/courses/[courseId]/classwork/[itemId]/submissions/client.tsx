@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, CheckCircle2, Clock, FileText, Star, Download } from "lucide-react";
+import { ArrowLeft, ChevronRight, CheckCircle2, Clock, FileText, Star, Download, type LucideIcon } from "lucide-react";
 import GradeEvaluationModal from "@/components/courses/GradeEvaluationModal";
 
 interface SubmissionAttachment {
@@ -32,7 +32,7 @@ interface SubmissionsClientProps {
   itemId: string;
 }
 
-const STATUS_STYLES: Record<string, { label: string; classes: string; Icon: React.ElementType }> = {
+const STATUS_STYLES: Record<string, { label: string; classes: string; Icon: LucideIcon }> = {
   SUBMITTED: { label: "Submitted", classes: "bg-emerald-50 text-emerald-700", Icon: CheckCircle2 },
   RETURNED: { label: "Returned", classes: "bg-purple-50 text-purple-700", Icon: CheckCircle2 },
   GRADED: { label: "Graded", classes: "bg-blue-50 text-blue-700", Icon: CheckCircle2 },

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { InstituteTheme } from "@/lib/theme";
-import { MessageSquare, BookOpen, Users, BarChart2 } from "lucide-react";
+import { MessageSquare, BookOpen, Users, BarChart2, type LucideIcon } from "lucide-react";
 
 interface CourseTabsProps {
   courseId: string;
@@ -22,7 +22,7 @@ export default function CourseTabs({
 }: CourseTabsProps) {
   const pathname = usePathname();
 
-  type Tab = { key: string; label: string; icon: React.ElementType };
+  type Tab = { key: string; label: string; icon: LucideIcon };
   const TABS: Tab[] = [
     { key: "stream", label: "Stream", icon: MessageSquare },
     { key: "classwork", label: "Classwork", icon: BookOpen },

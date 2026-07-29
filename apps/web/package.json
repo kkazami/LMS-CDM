@@ -9,6 +9,7 @@
   "dependencies": {
     "@lms/types": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.52.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "bcryptjs": "^3.0.3",

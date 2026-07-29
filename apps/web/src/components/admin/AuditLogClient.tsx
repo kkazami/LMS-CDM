@@ -12,6 +12,7 @@ import {
   Settings,
   Upload,
   Clock,
+  type LucideIcon,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import type { AuditLogEntry, PaginatedResponse } from "@/lib/admin-types";
@@ -20,7 +21,7 @@ interface AuditLogClientProps {
   theme: InstituteTheme;
 }
 
-const ACTION_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
+const ACTION_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
   ACCOUNT_CREATED: { icon: UserCheck, color: "#10B981" },
   ACCOUNT_UPDATED: { icon: Settings, color: "#6366F1" },
   ACCOUNT_DELETED: { icon: UserX, color: "#EF4444" },

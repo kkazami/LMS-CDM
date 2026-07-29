@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       announcements: announcements.map((a) => ({
         id: a.id,
-        title: a.title,
+        title: a.content.slice(0, 40) || 'Announcement',
         content: a.content,
         authorName: a.author?.name || 'Unknown',
         courseName: a.course?.title || null,

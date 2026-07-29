@@ -175,7 +175,7 @@ export function Cooler() {
 }
 
 // ─── RAM Stick ───
-export function RAM({ id, initialPos }: { id: "ram1"|"ram2", initialPos: [number, number, number] }) {
+export function RAM({ id, initialPos }: { id: "ram1" | "ram2" | "ram3" | "ram4", initialPos: [number, number, number] }) {
   const { ramSticks, placeComponent } = usePCBuildStore();
   const getClosestZone = useSnapStore((s) => s.getClosestZone);
   const [pos, setPos] = useState<THREE.Vector3>(new THREE.Vector3(...initialPos));

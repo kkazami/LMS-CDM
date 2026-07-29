@@ -20,8 +20,8 @@ export default async function SubmissionReplayPage({
 
   if (!submission) notFound();
 
-  let stateCheck = {};
-  let errorLog = [];
+  let stateCheck: Record<string, unknown> = {};
+  let errorLog: string[] = [];
 
   try { stateCheck = JSON.parse(submission.stateCheck); } catch(e) {}
   try { errorLog = JSON.parse(submission.errorLog); } catch(e) {}

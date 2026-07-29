@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLogicStore, LogicFaultType, TargetTruthTable } from "../stores/logic-store";
 
 export default function LogicSceneFallback2D({ faults = [], targetTable = null }: { faults?: LogicFaultType[], targetTable?: TargetTruthTable | null }) {
-  const { initialize, gates, toggleGateInput, connectWire } = useLogicStore();
+  const { initialize, gates, toggleInput, startWiring, finishWiring } = useLogicStore();
   const [wireSource, setWireSource] = useState<{gateId: string, outputIdx: number} | null>(null);
 
   useEffect(() => {
@@ -14,8 +14,9 @@ export default function LogicSceneFallback2D({ faults = [], targetTable = null }
   const handlePinClick = (gateId: string, type: 'in' | 'out', idx: number) => {
     if (type === 'out') {
       setWireSource({ gateId, outputIdx: idx });
+      startWiring(`${gateId}-out`);
     } else if (type === 'in' && wireSource) {
-      connectWire(wireSource.gateId, wireSource.outputIdx, gateId, idx);
+      finishWiring(`${gateId}-in${idx}`);
       setWireSource(null);
     }
   };
@@ -30,14 +31,14 @@ export default function LogicSceneFallback2D({ faults = [], targetTable = null }
             
             {/* Inputs */}
             <div className="flex justify-around mb-2">
-              {gate.inputs.map((val, i) => (
+              {[0, 1].map((i) => (
                 <button 
                   key={`in-${i}`}
-                  onClick={() => gate.type === 'INPUT' ? toggleGateInput(id) : handlePinClick(id, 'in', i)}
-                  className={`w-6 h-6 rounded-full border-2 ${val ? 'bg-green-500 border-green-300' : 'bg-slate-900 border-slate-500'} ${wireSource ? 'ring-2 ring-indigo-500 animate-pulse cursor-crosshair' : 'cursor-pointer'}`}
+                  onClick={() => gate.type === 'INPUT' ? toggleInput(id) : handlePinClick(id, 'in', i)}
+                  className={`w-6 h-6 rounded-full border-2 ${gate.state ? 'bg-green-500 border-green-300' : 'bg-slate-900 border-slate-500'} ${wireSource ? 'ring-2 ring-indigo-500 animate-pulse cursor-crosshair' : 'cursor-pointer'}`}
                   aria-label={`Input ${i} for ${gate.type}`}
                 >
-                  {gate.type === 'INPUT' && <span className="text-[10px] text-white font-bold">{val ? '1' : '0'}</span>}
+                  {gate.type === 'INPUT' && <span className="text-[10px] text-white font-bold">{gate.state ? '1' : '0'}</span>}
                 </button>
               ))}
             </div>
@@ -50,7 +51,7 @@ export default function LogicSceneFallback2D({ faults = [], targetTable = null }
             <div className="flex justify-around mt-2">
               <button 
                 onClick={() => handlePinClick(id, 'out', 0)}
-                className={`w-6 h-6 rounded-full border-2 ${gate.output ? 'bg-green-500 border-green-300' : 'bg-slate-900 border-slate-500'} cursor-pointer hover:scale-110 transition-transform`}
+                className={`w-6 h-6 rounded-full border-2 ${gate.state ? 'bg-green-500 border-green-300' : 'bg-slate-900 border-slate-500'} cursor-pointer hover:scale-110 transition-transform`}
                 aria-label={`Output for ${gate.type}`}
               >
                 {wireSource?.gateId === id && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-1 animate-ping" />}

@@ -37,7 +37,7 @@ export default async function ActivitiesPage({
 
   const isProfessor = session?.user?.role === "PROFESSOR" || session?.user?.role === "ADMIN" || session?.user?.role === "TEACHER";
   
-  let taughtCourses = [];
+  let taughtCourses: { id: string; title: string }[] = [];
   if (isProfessor) {
     taughtCourses = await db.course.findMany({
       where: { instructorId: session?.user?.id },

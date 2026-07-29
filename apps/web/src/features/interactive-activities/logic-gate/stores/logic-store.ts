@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { evaluateLogicGraph } from "../utils/logic-solver";
 import { LogicFaultType } from "../utils/fault-engine";
+export type { LogicFaultType };
 
 export type LogicGateType = "AND" | "OR" | "NOT" | "XOR" | "NAND" | "NOR" | "INPUT" | "OUTPUT" | "D_FF";
 

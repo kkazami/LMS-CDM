@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { Box, Html } from "@react-three/drei";
+import { Box, Sphere, Html } from "@react-three/drei";
 import { useArduinoStore } from "../stores/arduino-store";
 
 // Helper to render a clickable Socket

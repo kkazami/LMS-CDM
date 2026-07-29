@@ -24,10 +24,10 @@ export async function GET(request: Request) {
     // Get leaderboard from gamification profiles
     const profiles = await db.gamificationProfile.findMany({
       where: {
-        user: { instituteId: institute.id },
+        student: { instituteId: institute.id },
       },
       include: {
-        user: { select: { id: true, name: true } },
+        student: { select: { id: true, name: true } },
       },
       orderBy: { totalPoints: 'desc' },
       take: 50,
@@ -36,8 +36,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       entries: profiles.map((p, index) => ({
         rank: index + 1,
-        userId: p.user.id,
-        userName: p.user.name,
+        userId: p.student.id,
+        userName: p.student.name,
         totalPoints: p.totalPoints,
         currentStreak: p.currentStreak,
       })),

@@ -21,13 +21,14 @@ import {
   Library,
   Archive,
   FlaskConical,
+  type LucideIcon,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 
 type NavLink = {
   label: string;
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 };
 
 type SidebarProps = {

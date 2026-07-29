@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Users,
   GraduationCap,
+  type LucideIcon,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import type { LMSUser, PaginatedResponse } from "@/lib/admin-types";
@@ -135,7 +136,7 @@ export default function AccountsManagementClient({
     }
   }, [actionMenuUser]);
 
-  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+  const tabs: { key: Tab; label: string; icon: LucideIcon }[] = [
     { key: "students", label: "Student Directory", icon: GraduationCap },
     { key: "instructors", label: "Instructor Directory", icon: Users },
   ];
