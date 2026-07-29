@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { sendEmail } from "@/lib/mailer";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();

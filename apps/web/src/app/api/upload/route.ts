@@ -5,6 +5,8 @@ import { getSession } from "@/lib/auth-session";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 
+export const dynamic = "force-dynamic";
+
 const ALLOWED_MIME_TYPES = new Set([
   // Documents
   "application/pdf",

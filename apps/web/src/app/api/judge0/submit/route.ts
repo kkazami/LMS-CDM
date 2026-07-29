@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
 
+export const dynamic = "force-dynamic";
+
 // We assume Judge0 is running on localhost:2358 in dev (as per docker-compose).
 // In production, this would be an environment variable.
 const JUDGE0_BASE_URL = process.env.JUDGE0_URL || "http://localhost:2358";

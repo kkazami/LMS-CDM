@@ -15,6 +15,8 @@ import {
 } from '@/lib/rbac';
 import { AUDIT_ACTIONS } from '@/lib/admin-types';
 
+export const dynamic = "force-dynamic";
+
 type RouteContext = {
   params: Promise<{ userId: string }>;
 };

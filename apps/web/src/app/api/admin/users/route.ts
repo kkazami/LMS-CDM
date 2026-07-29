@@ -22,6 +22,8 @@ import {
   type PaginatedResponse,
 } from '@/lib/admin-types';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     await requireAdmin();

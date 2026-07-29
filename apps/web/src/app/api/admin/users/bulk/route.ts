@@ -18,6 +18,8 @@ import {
   AUDIT_ACTIONS,
 } from '@/lib/admin-types';
 
+export const dynamic = "force-dynamic";
+
 interface BulkUserInput {
   name: string;
   email: string;

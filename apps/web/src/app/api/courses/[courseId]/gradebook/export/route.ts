@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth-session";
 import { executeSkill } from "@/lib/skills";
 import { exportGradebookSkill } from "@/lib/skills/gradebook-exporter";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }

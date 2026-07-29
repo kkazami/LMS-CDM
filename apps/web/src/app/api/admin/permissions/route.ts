@@ -21,6 +21,8 @@ import {
   type SystemPermission,
 } from '@/lib/admin-types';
 
+export const dynamic = "force-dynamic";
+
 // In-memory mutable copy of permission defaults
 // In production, this would be stored in the database
 let currentPermissionMatrix: Record<UserRole, SystemPermission[]> = {

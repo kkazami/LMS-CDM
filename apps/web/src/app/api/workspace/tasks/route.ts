@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession, getQueryId } from "../_shared";
 
+export const dynamic = "force-dynamic";
+
 const taskSchema = z.object({
   title: z.string().min(1),
   description: z.string().default(""),

@@ -9,6 +9,8 @@ import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/rbac';
 import type { AuditLogEntry, PaginatedResponse } from '@/lib/admin-types';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     await requireAdmin();
