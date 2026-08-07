@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
-  ClipboardList,
+  ClipboardCheck,
   Megaphone,
   ListTodo,
   Trophy,
@@ -21,17 +22,25 @@ import {
   Library,
   Archive,
   FlaskConical,
+  ChevronDown,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 
-type NavLink = {
+interface NavLink {
   label: string;
   href: string;
   icon: LucideIcon;
-};
+}
 
-type SidebarProps = {
+export interface EnrolledCourseSummary {
+  id: string;
+  title: string;
+  code: string;
+}
+
+interface SidebarProps {
   instituteCode: string;
   theme: InstituteTheme;
   userRole: string;
@@ -39,14 +48,18 @@ type SidebarProps = {
   onToggleCollapse?: () => void;
   /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
   isEligibleForActivities?: boolean;
-};
+  /** Enrolled courses for the student to render under the "My Courses" accordion. */
+  enrolledCourses?: EnrolledCourseSummary[];
+}
 
-const getStudentLinks = (code: string): NavLink[] => [
+/** Sidebar link ID for "My Courses" — used to detect the accordion item. */
+const MY_COURSES_KEY = "my-courses";
+
+const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
-  { label: "My Courses", href: `/${code}/courses`, icon: BookOpen },
+  { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
-  { label: "Assignments", href: `/${code}/assignments`, icon: ClipboardList },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
@@ -72,19 +85,31 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
 ];
 
-function getLinks(instituteCode: string, role: string): NavLink[] {
+function getLinks(instituteCode: string, role: string): (NavLink & { key?: string })[] {
   const r = role.toUpperCase();
   if (r === "PROFESSOR" || r === "TEACHER") return getProfessorLinks(instituteCode);
   if (r === "ADMIN") return getAdminLinks(instituteCode);
   return getStudentLinks(instituteCode);
 }
 
-export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, onToggleCollapse, isEligibleForActivities }: SidebarProps) {
+export default function Sidebar({
+  instituteCode,
+  theme,
+  userRole,
+  isCollapsed,
+  onToggleCollapse,
+  isEligibleForActivities,
+  enrolledCourses,
+}: SidebarProps) {
   const pathname = usePathname();
+  const [isMyCoursesOpen, setIsMyCoursesOpen] = useState(false);
+
+  const isStudent = userRole.toUpperCase() === "STUDENT";
+
   // Build the link list, then conditionally append Interactive Labs if eligible.
   // The entry is NOT rendered at all (absent from DOM) for ineligible users.
   const baseLinks = getLinks(instituteCode, userRole);
-  const links: NavLink[] = isEligibleForActivities
+  const links = isEligibleForActivities
     ? [...baseLinks, { label: "Interactive Labs", href: `/${instituteCode}/activities`, icon: FlaskConical }]
     : baseLinks;
 
@@ -94,6 +119,17 @@ export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, o
     .find(
       (link) => pathname === link.href || pathname.startsWith(link.href + "/")
     );
+
+  const handleMyCoursesToggle = () => {
+    setIsMyCoursesOpen((prev) => !prev);
+  };
+
+  const handleMyCoursesKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleMyCoursesToggle();
+    }
+  };
 
   return (
     <aside
@@ -137,7 +173,113 @@ export default function Sidebar({ instituteCode, theme, userRole, isCollapsed, o
         {links.map((item) => {
           const Icon = item.icon;
           const active = activeLink?.href === item.href;
+          const itemKey = "key" in item ? item.key : undefined;
 
+          // Render "My Courses" as an accordion for students
+          if (isStudent && itemKey === MY_COURSES_KEY) {
+            const isSubActive =
+              pathname === `/${instituteCode}/courses` ||
+              pathname.startsWith(`/${instituteCode}/courses/`);
+
+            return (
+              <div key={item.href} id="sidebar-my-courses-accordion">
+                {/* Accordion header */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  id="sidebar-my-courses-toggle"
+                  aria-expanded={isMyCoursesOpen}
+                  onClick={handleMyCoursesToggle}
+                  onKeyDown={handleMyCoursesKeyDown}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer select-none"
+                  style={{
+                    backgroundColor: isSubActive && !isMyCoursesOpen ? theme.colors.sidebarMuted : "transparent",
+                    color: isSubActive ? theme.colors.primary : "#E5E7EB",
+                  }}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span
+                    className={`overflow-hidden whitespace-nowrap transition-all duration-300 flex-1 min-w-0 ${
+                      isCollapsed ? "w-0 opacity-0" : "opacity-100"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  {!isCollapsed && (
+                    <span className="shrink-0">
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-200 ${
+                          isMyCoursesOpen ? "rotate-0" : "-rotate-90"
+                        }`}
+                      />
+                    </span>
+                  )}
+                </div>
+
+                {/* Accordion content */}
+                {!isCollapsed && (
+                  <div
+                    className="overflow-hidden transition-all duration-300 ease-in-out"
+                    style={{
+                      maxHeight: isMyCoursesOpen ? `${((enrolledCourses?.length ?? 0) + 2) * 40}px` : "0px",
+                      opacity: isMyCoursesOpen ? 1 : 0,
+                    }}
+                  >
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      {/* To-do sub-link */}
+                      <Link
+                        id="sidebar-my-courses-todo"
+                        href={`/${instituteCode}/assignments`}
+                        className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
+                        style={{
+                          backgroundColor:
+                            pathname === `/${instituteCode}/assignments` ||
+                            pathname.startsWith(`/${instituteCode}/assignments/`)
+                              ? theme.colors.sidebarMuted
+                              : "transparent",
+                          color:
+                            pathname === `/${instituteCode}/assignments` ||
+                            pathname.startsWith(`/${instituteCode}/assignments/`)
+                              ? theme.colors.primary
+                              : "#D1D5DB",
+                        }}
+                      >
+                        <ClipboardCheck className="h-4 w-4 shrink-0" />
+                        <span className="truncate">To-do</span>
+                      </Link>
+
+                      {/* Enrolled course sub-links */}
+                      {enrolledCourses?.map((course) => {
+                        const courseHref = `/${instituteCode}/courses/${course.id}`;
+                        const isCourseActive =
+                          pathname === courseHref || pathname.startsWith(courseHref + "/");
+
+                        return (
+                          <Link
+                            key={course.id}
+                            id={`sidebar-course-${course.id}`}
+                            href={courseHref}
+                            className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
+                            style={{
+                              backgroundColor: isCourseActive
+                                ? theme.colors.sidebarMuted
+                                : "transparent",
+                              color: isCourseActive ? theme.colors.primary : "#D1D5DB",
+                            }}
+                          >
+                            <BookOpen className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{course.code}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Regular flat nav link
           return (
             <Link
               key={item.href}

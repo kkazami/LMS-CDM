@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
+import type { EnrolledCourseSummary } from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import type { InstituteTheme } from "@/lib/theme";
 
-type DashboardLayoutProps = {
+interface DashboardLayoutProps {
   instituteCode: string;
   instituteName: string;
   userName: string;
@@ -14,8 +15,10 @@ type DashboardLayoutProps = {
   theme: InstituteTheme;
   /** Whether this user qualifies for ICS Interactive Activities. Controls sidebar entry visibility. */
   isEligibleForActivities?: boolean;
+  /** Enrolled courses for student sidebar accordion. */
+  enrolledCourses?: EnrolledCourseSummary[];
   children: React.ReactNode;
-};
+}
 
 export default function DashboardLayout({
   instituteCode,
@@ -25,6 +28,7 @@ export default function DashboardLayout({
   studentNumber,
   theme,
   isEligibleForActivities,
+  enrolledCourses,
   children,
 }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,6 +44,7 @@ export default function DashboardLayout({
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           isEligibleForActivities={isEligibleForActivities}
+          enrolledCourses={enrolledCourses}
         />
 
         {mobileOpen ? (
@@ -52,6 +57,7 @@ export default function DashboardLayout({
                 userRole={userRole}
                 isCollapsed={false}
                 isEligibleForActivities={isEligibleForActivities}
+                enrolledCourses={enrolledCourses}
               />
             </div>
           </div>
