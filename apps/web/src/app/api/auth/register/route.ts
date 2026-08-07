@@ -33,15 +33,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const institute = await db.institute.findUnique({
+    let institute = await db.institute.findUnique({
       where: { code: instituteCode },
     });
 
     if (!institute) {
-      return NextResponse.json(
-        { message: "Institute not found." },
-        { status: 404 }
-      );
+      institute = await db.institute.create({
+        data: {
+          code: instituteCode,
+          name: `${instituteCode.toUpperCase()} Institute`,
+        },
+      });
     }
 
     const hashedPassword = await hash(password, 10);
