@@ -3,13 +3,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "prisma generate --schema=../../prisma/schema.prisma && next build",
+    "postinstall": "prisma generate --schema=../../prisma/schema.prisma",
     "start": "next start -H 0.0.0.0"
   },
   "dependencies": {
     "@lms/types": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.52.2",
+    "@prisma/client": "^5.22.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "bcryptjs": "^3.0.3",
@@ -31,6 +33,7 @@
     "@types/three": "^0.185.1",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4.2.2",
     "typescript": "5.9.3"
   }

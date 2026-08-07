@@ -11,9 +11,10 @@
     "dev:mobile": "pnpm --filter mobile start",
     "dev:desktop": "pnpm --filter desktop dev",
     "dev:all": "turbo dev start --parallel",
-    "build:web": "pnpm --filter web build",
+    "build:web": "prisma generate && pnpm --filter web build",
     "build:mobile": "pnpm --filter mobile build",
-    "build:desktop": "pnpm --filter desktop build"
+    "build:desktop": "pnpm --filter desktop build",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "prisma": "^5.22.0",
