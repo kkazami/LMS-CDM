@@ -75,6 +75,7 @@ function AttachmentChip({ attachment }: { attachment: Attachment }) {
       href={attachment.url}
       target="_blank"
       rel="noopener noreferrer"
+      download={attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
       className="flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 hover:bg-gray-50 hover:border-indigo-200 hover:shadow-sm transition-all group"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 group-hover:bg-indigo-100 transition-colors">

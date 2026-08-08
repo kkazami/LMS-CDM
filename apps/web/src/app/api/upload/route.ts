@@ -75,20 +75,55 @@ export async function POST(req: NextRequest) {
     const safeName = sanitizeFileName(file.name);
     const uniqueName = `${timestamp}-${safeName}`;
 
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
+    // 1. Try Vercel Blob if BLOB_READ_WRITE_TOKEN environment variable is present
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      try {
+        const { put } = await import("@vercel/blob");
+        const blob = await put(`uploads/${uniqueName}`, file, {
+          access: "public",
+        });
+        return NextResponse.json({
+          url: blob.url,
+          fileName: file.name,
+          fileSize: file.size,
+        });
+      } catch (blobErr) {
+        console.error("Vercel Blob upload failed, trying fallback strategy:", blobErr);
+      }
+    }
 
-    // Write the file
-    const filePath = path.join(uploadDir, uniqueName);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
+    // 2. Try writing to local filesystem (works in local development environment)
+    try {
+      const uploadDir = path.join(process.cwd(), "public", "uploads");
+      await mkdir(uploadDir, { recursive: true });
 
-    return NextResponse.json({
-      url: `/uploads/${uniqueName}`,
-      fileName: file.name,
-      fileSize: file.size,
-    });
+      const filePath = path.join(uploadDir, uniqueName);
+      const buffer = Buffer.from(await file.arrayBuffer());
+      await writeFile(filePath, buffer);
+
+      return NextResponse.json({
+        url: `/uploads/${uniqueName}`,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } catch (fsErr) {
+      console.warn(
+        "Local filesystem write failed (read-only filesystem on Vercel), falling back to Data URL:",
+        fsErr
+      );
+
+      // 3. Fallback for read-only serverless environment (Vercel without Vercel Blob configured)
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const base64 = buffer.toString("base64");
+      const mimeType = file.type || "application/octet-stream";
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+
+      return NextResponse.json({
+        url: dataUrl,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    }
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(

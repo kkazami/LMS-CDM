@@ -273,6 +273,7 @@ export default function YourWorkPanel({
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  download={att.url.startsWith("data:") ? (att.fileName || "file") : undefined}
                   className="text-sm text-blue-600 hover:underline truncate flex-1 min-w-0"
                 >
                   {att.fileName || att.url}
