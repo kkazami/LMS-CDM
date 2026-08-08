@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="800" height="250">
+  <defs>
+    <linearGradient id="bg-db" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F4C81"/>
+      <stop offset="100%" stop-color="#0B2545"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="250" fill="url(#bg-db)"/>
+  <!-- 3D Database Cylinder -->
+  <g transform="translate(620, 45)">
+    <!-- Top cylinder -->
+    <path d="M0,30 C0,13.4 26.8,0 60,0 C93.2,0 120,13.4 120,30 L120,50 C120,66.6 93.2,80 60,80 C26.8,80 0,66.6 0,50 Z" fill="#1D63B8"/>
+    <ellipse cx="60" cy="30" rx="60" ry="30" fill="#3B82F6"/>
+    <circle cx="100" cy="30" r="4" fill="#10B981"/>
+    <!-- Middle cylinder -->
+    <path d="M0,70 C0,86.6 26.8,100 60,100 C93.2,100 120,86.6 120,70 L120,90 C120,106.6 93.2,120 60,120 C26.8,120 0,106.6 0,90 Z" fill="#1E40AF"/>
+    <ellipse cx="60" cy="70" rx="60" ry="25" fill="#2563EB"/>
+    <circle cx="100" cy="70" r="4" fill="#10B981"/>
+    <!-- Bottom cylinder -->
+    <path d="M0,110 C0,126.6 26.8,140 60,140 C93.2,140 120,126.6 120,110 L120,130 C120,146.6 93.2,160 60,160 C26.8,160 0,146.6 0,130 Z" fill="#1E3A8A"/>
+    <ellipse cx="60" cy="110" rx="60" ry="25" fill="#1D4ED8"/>
+    <circle cx="100" cy="110" r="4" fill="#10B981"/>
+  </g>
+</svg>

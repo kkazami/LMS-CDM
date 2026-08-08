@@ -118,8 +118,8 @@ export default function SyllabusAccordion({
         const isExpanded = expandedSections.has(type);
         const Icon = config.icon;
 
-        // Skip rendering if it's a non-default type with no items
-        if (typeItems.length === 0 && !["ASSIGNMENT", "QUIZ", "MATERIAL"].includes(type)) {
+        // Skip rendering if there are no items for this type
+        if (typeItems.length === 0) {
           return null;
         }
 
@@ -164,6 +164,10 @@ export default function SyllabusAccordion({
                           ? "border-b border-gray-50"
                           : ""
                       }`}
+                      style={{
+                        animation: `staggerFadeIn 0.2s ease-out both`,
+                        animationDelay: `${Math.min(index, 10) * 40}ms`,
+                      }}
                     >
                       <div
                         className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full"

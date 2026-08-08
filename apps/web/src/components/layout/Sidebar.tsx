@@ -64,14 +64,12 @@ const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
 
-const getProfessorLinks = (code: string): NavLink[] => [
+const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
-  { label: "My Courses", href: `/${code}/courses`, icon: BookOpen },
+  { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
-  { label: "My Classes", href: `/${code}/classes`, icon: GraduationCap },
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
-  { label: "Create Tasks", href: `/${code}/create-tasks`, icon: PlusSquare },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },
 ];
 
@@ -105,6 +103,7 @@ export default function Sidebar({
   const [isMyCoursesOpen, setIsMyCoursesOpen] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
+  const isProfessor = userRole.toUpperCase() === "PROFESSOR" || userRole.toUpperCase() === "TEACHER";
 
   // Build the link list, then conditionally append Interactive Labs if eligible.
   // The entry is NOT rendered at all (absent from DOM) for ineligible users.
@@ -146,11 +145,13 @@ export default function Sidebar({
             isCollapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          <span className="text-xl font-semibold text-white whitespace-nowrap">Lumina LMS</span>
-          <span
-            className="h-2.5 w-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: theme.colors.primary }}
-          />
+          <Link href={`/${instituteCode}`} className="flex items-center gap-2">
+            <span className="text-xl font-semibold text-white whitespace-nowrap hover:text-gray-200 transition-colors">Lumina LMS</span>
+            <span
+              className="h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: theme.colors.primary }}
+            />
+          </Link>
         </div>
 
         {onToggleCollapse && (
@@ -175,11 +176,12 @@ export default function Sidebar({
           const active = activeLink?.href === item.href;
           const itemKey = "key" in item ? item.key : undefined;
 
-          // Render "My Courses" as an accordion for students
-          if (isStudent && itemKey === MY_COURSES_KEY) {
+          // Render "My Courses" as an accordion for students and professors
+          if ((isStudent || isProfessor) && itemKey === MY_COURSES_KEY) {
             const isSubActive =
-              pathname === `/${instituteCode}/courses` ||
-              pathname.startsWith(`/${instituteCode}/courses/`);
+              (pathname === `/${instituteCode}/courses` ||
+                pathname.startsWith(`/${instituteCode}/courses/`)) &&
+              !pathname.startsWith(`/${instituteCode}/courses/archived`);
 
             return (
               <div key={item.href} id="sidebar-my-courses-accordion">
@@ -226,27 +228,29 @@ export default function Sidebar({
                     }}
                   >
                     <div className="flex flex-col gap-0.5 mt-1">
-                      {/* To-do sub-link */}
-                      <Link
-                        id="sidebar-my-courses-todo"
-                        href={`/${instituteCode}/assignments`}
-                        className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
-                        style={{
-                          backgroundColor:
-                            pathname === `/${instituteCode}/assignments` ||
-                            pathname.startsWith(`/${instituteCode}/assignments/`)
-                              ? theme.colors.sidebarMuted
-                              : "transparent",
-                          color:
-                            pathname === `/${instituteCode}/assignments` ||
-                            pathname.startsWith(`/${instituteCode}/assignments/`)
-                              ? theme.colors.primary
-                              : "#D1D5DB",
-                        }}
-                      >
-                        <ClipboardCheck className="h-4 w-4 shrink-0" />
-                        <span className="truncate">To-do</span>
-                      </Link>
+                      {/* To-do sub-link (Students only) */}
+                      {isStudent && (
+                        <Link
+                          id="sidebar-my-courses-todo"
+                          href={`/${instituteCode}/assignments`}
+                          className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
+                          style={{
+                            backgroundColor:
+                              pathname === `/${instituteCode}/assignments` ||
+                              pathname.startsWith(`/${instituteCode}/assignments/`)
+                                ? theme.colors.sidebarMuted
+                                : "transparent",
+                            color:
+                              pathname === `/${instituteCode}/assignments` ||
+                              pathname.startsWith(`/${instituteCode}/assignments/`)
+                                ? theme.colors.primary
+                                : "#D1D5DB",
+                          }}
+                        >
+                          <ClipboardCheck className="h-4 w-4 shrink-0" />
+                          <span className="truncate">To-do</span>
+                        </Link>
+                      )}
 
                       {/* Enrolled course sub-links */}
                       {enrolledCourses?.map((course) => {

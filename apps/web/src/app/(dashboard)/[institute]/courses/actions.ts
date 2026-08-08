@@ -4,6 +4,148 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
+import { generateCourseCode, bulkAssignInstructor } from "@/lib/skills";
+
+const instructorCreateCourseSchema = z.object({
+  id: z.string().optional(),
+  code: z.string().min(2, "Code must be at least 2 characters."),
+  title: z.string().min(3, "Title must be at least 3 characters."),
+  section: z.string().optional().default(""),
+  subject: z.string().min(1, "Subject is required."),
+  room: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  instituteCode: z.string(),
+});
+
+export async function instructorCreateCourse(
+  prevState: { message: string; errors?: Record<string, string[]> },
+  formData: FormData
+) {
+  const user = await ensureRole(["PROFESSOR", "ADMIN"]);
+
+  const parse = instructorCreateCourseSchema.safeParse({
+    code: formData.get("code"),
+    title: formData.get("title"),
+    section: formData.get("section") || "",
+    subject: formData.get("subject"),
+    room: formData.get("room") || "",
+    description: formData.get("description") || "",
+    instituteCode: formData.get("instituteCode"),
+  });
+
+  if (!parse.success) {
+    return {
+      errors: parse.error.flatten().fieldErrors,
+      message: "Validation failed.",
+    };
+  }
+
+  const data = parse.data;
+
+  try {
+    const institute = await db.institute.findUnique({
+      where: { code: data.instituteCode },
+    });
+    if (!institute) return { message: "Institute not found." };
+
+    const codeResult = await generateCourseCode();
+    if (!codeResult.success || !codeResult.data) {
+      return { message: "Failed to generate course code." };
+    }
+
+    const course = await db.course.create({
+      data: {
+        code: data.code,
+        courseCode: codeResult.data,
+        title: data.title,
+        section: data.section,
+        subject: data.subject,
+        room: data.room,
+        description: data.description,
+        instructorId: user.id, // Automatically assign to the creator
+        instituteId: institute.id,
+      },
+    });
+
+    // Auto-assign the instructor using the skill logic as well to keep relations clean
+    await bulkAssignInstructor({
+      assignments: [{ courseId: course.id, instructorId: user.id }],
+      instituteId: institute.id,
+    });
+
+    revalidatePath(`/(dashboard)/${data.instituteCode}/courses`);
+    return { message: "success" };
+  } catch (error) {
+    console.error("instructorCreateCourse error:", error);
+    return { message: "Failed to create course." };
+  }
+}
+
+export async function instructorUpdateCourse(
+  prevState: { message: string; errors?: Record<string, string[]> },
+  formData: FormData
+) {
+  const user = await ensureRole(["PROFESSOR", "ADMIN"]);
+
+  const parse = instructorCreateCourseSchema.safeParse({
+    id: formData.get("id"),
+    code: formData.get("code"),
+    title: formData.get("title"),
+    section: formData.get("section") || "",
+    subject: formData.get("subject"),
+    room: formData.get("room") || "",
+    description: formData.get("description") || "",
+    instituteCode: formData.get("instituteCode"),
+  });
+
+  if (!parse.success || !parse.data.id) {
+    return {
+      errors: parse.error?.flatten().fieldErrors,
+      message: "Validation failed.",
+    };
+  }
+
+  const data = parse.data;
+
+  try {
+    const institute = await db.institute.findUnique({
+      where: { code: data.instituteCode },
+    });
+    if (!institute) return { message: "Institute not found." };
+
+    // Verify ownership or admin
+    const existingCourse = await db.course.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!existingCourse || existingCourse.instituteId !== institute.id) {
+      return { message: "Course not found or unauthorized for this institute." };
+    }
+
+    if (user.role !== "ADMIN" && existingCourse.instructorId !== user.id) {
+      return { message: "Unauthorized to edit this course." };
+    }
+
+    await db.course.update({
+      where: { id: data.id },
+      data: {
+        code: data.code,
+        title: data.title,
+        section: data.section,
+        subject: data.subject,
+        room: data.room,
+        description: data.description,
+      },
+    });
+
+    revalidatePath(`/(dashboard)/${data.instituteCode}/courses`);
+    revalidatePath(`/(dashboard)/${data.instituteCode}/teachers`);
+    return { message: "success" };
+  } catch (error) {
+    console.error("instructorUpdateCourse error:", error);
+    return { message: "Failed to update course." };
+  }
+}
 
 async function ensureRole(allowedRoles: string[]) {
   const session = await getSession();
@@ -47,7 +189,7 @@ export async function createCourse(prevState: { message: string; errors?: Record
       },
     });
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { message: "success" };
   } catch (error) {
     return { message: "Failed to create course." };
@@ -85,7 +227,7 @@ export async function updateCourse(prevState: { message: string; errors?: Record
       data: { code, title },
     });
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { message: "success" };
   } catch (error) {
     return { message: "Failed to update course." };
@@ -106,7 +248,7 @@ export async function deleteCourse(courseId: string, instituteCode: string) {
     }
 
     await db.course.delete({ where: { id: courseId } });
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
     return { success: false, error: "Failed to delete course." };
@@ -147,7 +289,7 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
           where: { id: existing.id },
           data: { status: "PENDING" },
         });
-        revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+        revalidatePath(`/${instituteCode}/courses`);
         return { success: true };
       }
     }
@@ -160,7 +302,7 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
       },
     });
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
     console.error("requestEnrollment error:", error);
@@ -231,7 +373,8 @@ export async function joinWithCode(courseCode: string, instituteCode: string) {
       },
     });
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/students`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
     console.error("joinWithCode error:", error);
@@ -293,7 +436,8 @@ export async function unenrollFromCourse(courseId: string, instituteCode: string
       where: { userId: session.user.id, courseId },
     });
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/students`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
     console.error("unenrollFromCourse error:", error);
@@ -312,8 +456,9 @@ export async function archiveCourse(courseId: string, instituteCode: string) {
 
   try {
     await db.course.update({ where: { id: courseId }, data: { isArchived: true } });
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
-    revalidatePath(`/(dashboard)/${instituteCode}/courses/archived`);
+    revalidatePath(`/${instituteCode}/teachers`);
+    revalidatePath(`/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses/archived`);
     return { success: true };
   } catch (error) {
     return { success: false, error: "Failed to archive course." };
@@ -331,8 +476,8 @@ export async function unarchiveCourse(courseId: string, instituteCode: string) {
 
   try {
     await db.course.update({ where: { id: courseId }, data: { isArchived: false } });
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
-    revalidatePath(`/(dashboard)/${instituteCode}/courses/archived`);
+    revalidatePath(`/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/courses/archived`);
     return { success: true };
   } catch (error) {
     return { success: false, error: "Failed to unarchive course." };
@@ -371,11 +516,41 @@ export async function reorderCourseCards(
       );
     }
 
-    revalidatePath(`/(dashboard)/${instituteCode}/courses`);
+    revalidatePath(`/${instituteCode}/students`);
+    revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
     console.error("reorderCourseCards error:", error);
     return { success: false, error: "Failed to reorder." };
+  }
+}
+
+export async function updateCourseCoverImage(
+  courseId: string,
+  coverImage: string,
+  instituteCode: string
+) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const role = session.user.role.toUpperCase();
+  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    return { success: false, error: "Only instructors can customize course cards." };
+  }
+
+  try {
+    await db.course.update({
+      where: { id: courseId },
+      data: { coverImage },
+    });
+
+    revalidatePath(`/${instituteCode}/teachers`);
+    revalidatePath(`/${instituteCode}/students`);
+    revalidatePath(`/${instituteCode}/courses`);
+    return { success: true };
+  } catch (error) {
+    console.error("updateCourseCoverImage error:", error);
+    return { success: false, error: "Failed to update course cover image." };
   }
 }
 

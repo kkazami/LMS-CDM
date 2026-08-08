@@ -3,11 +3,14 @@
 import { cn } from "@/lib/utils";
 import type { InstituteTheme } from "@/lib/theme";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
   theme: InstituteTheme;
   variant?: "primary" | "secondary" | "ghost";
+  /** Shows a spinner and disables the button. */
+  loading?: boolean;
 };
 
 export default function Button({
@@ -15,6 +18,8 @@ export default function Button({
   theme,
   variant = "primary",
   className,
+  loading = false,
+  disabled,
   ...props
 }: ButtonProps) {
   const styles = {
@@ -38,10 +43,12 @@ export default function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60",
+        loading && "cursor-wait opacity-80",
         className
       )}
       style={styles}
+      disabled={loading || disabled}
       onMouseEnter={(e) => {
         if (variant === "primary") {
           e.currentTarget.style.backgroundColor = theme.colors.primaryHover;
@@ -56,6 +63,7 @@ export default function Button({
       }}
       {...props}
     >
+      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />}
       {children}
     </button>
   );

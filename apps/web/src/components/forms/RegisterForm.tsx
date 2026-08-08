@@ -81,8 +81,7 @@ export default function RegisterForm({
         throw new Error(data.message || "Unable to register.");
       }
 
-      router.push(`/login?institute=${instituteCode}`);
-      router.refresh();
+      window.location.href = `/login?institute=${instituteCode}`;
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to register."

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="800" height="250">
+  <defs>
+    <linearGradient id="bg-net" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B4D3E"/>
+      <stop offset="100%" stop-color="#0F2D24"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="250" fill="url(#bg-net)"/>
+  <!-- Wifi Signal Lines -->
+  <g opacity="0.25" stroke="#10B981" stroke-width="4" fill="none">
+    <path d="M480,140 A60,60 0 0,1 560,140" />
+    <path d="M460,120 A90,90 0 0,1 580,120" />
+    <path d="M440,100 A120,120 0 0,1 600,100" />
+  </g>
+  <!-- Router Box -->
+  <g transform="translate(560, 80)">
+    <!-- Antennas -->
+    <rect x="20" y="-40" width="6" height="50" rx="3" fill="#34D399"/>
+    <rect x="150" y="-40" width="6" height="50" rx="3" fill="#34D399"/>
+    <rect x="85" y="-50" width="6" height="60" rx="3" fill="#34D399"/>
+    <!-- Router Body -->
+    <rect x="0" y="10" width="180" height="55" rx="10" fill="#E2E8F0"/>
+    <rect x="10" y="22" width="160" height="30" rx="6" fill="#1E293B"/>
+    <!-- LED Indicators -->
+    <circle cx="30" cy="37" r="4" fill="#10B981"/>
+    <circle cx="45" cy="37" r="4" fill="#10B981"/>
+    <circle cx="60" cy="37" r="4" fill="#10B981"/>
+    <circle cx="75" cy="37" r="4" fill="#F59E0B"/>
+    <circle cx="140" cy="37" r="4" fill="#10B981"/>
+    <circle cx="155" cy="37" r="4" fill="#10B981"/>
+  </g>
+</svg>

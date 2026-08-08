@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="800" height="250">
+  <defs>
+    <linearGradient id="bg-web" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C1D95"/>
+      <stop offset="100%" stop-color="#2E1065"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="250" fill="url(#bg-web)"/>
+  <!-- Browser Window -->
+  <g transform="translate(550, 45)">
+    <rect x="0" y="0" width="200" height="150" rx="10" fill="#FFFFFF" shadow="lg"/>
+    <path d="M0,0 L200,0 L200,30 L0,30 Z" fill="#F1F5F9" rx="10"/>
+    <circle cx="15" cy="15" r="4" fill="#EF4444"/>
+    <circle cx="30" cy="15" r="4" fill="#F59E0B"/>
+    <circle cx="45" cy="15" r="4" fill="#10B981"/>
+    <!-- Image placeholder inside browser -->
+    <rect x="20" y="45" width="70" height="50" rx="4" fill="#CBD5E1"/>
+    <path d="M25,85 L45,65 L60,80 L75,70 L85,85 Z" fill="#94A3B8"/>
+    <circle cx="35" cy="55" r="5" fill="#F8FAFC"/>
+    <!-- Text lines -->
+    <rect x="105" y="45" width="75" height="10" rx="3" fill="#94A3B8"/>
+    <rect x="105" y="62" width="60" height="8" rx="3" fill="#CBD5E1"/>
+    <rect x="105" y="76" width="65" height="8" rx="3" fill="#CBD5E1"/>
+    <rect x="20" y="105" width="160" height="30" rx="4" fill="#A855F7"/>
+  </g>
+</svg>

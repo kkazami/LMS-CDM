@@ -23,8 +23,7 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
-  // Compute activity eligibility for the sidebar — this check is fast
-  // (single DB lookup for institute code) and cached per request via Prisma.
+  // Compute activity eligibility for the sidebar
   const activityEligible = await isEligibleForActivities({
     user: {
       id: session.user.id,
@@ -33,18 +32,18 @@ export default async function InstituteLayout({
     },
   });
 
-  // Fetch enrolled courses for the student sidebar accordion.
-  // Only query if the user is a student to avoid unnecessary DB calls.
-  const isStudent = (session.user.role as string).toUpperCase() === "STUDENT";
+  const role = (session.user.role as string).toUpperCase();
+  const isStudent = role === "STUDENT";
+  const isProfessor = role === "PROFESSOR" || role === "TEACHER";
   let enrolledCourses: { id: string; title: string; code: string }[] = [];
 
-  if (isStudent) {
-    const instituteRecord = await db.institute.findUnique({
-      where: { code: institute.toLowerCase() },
-      select: { id: true },
-    });
+  const instituteRecord = await db.institute.findUnique({
+    where: { code: institute.toLowerCase() },
+    select: { id: true },
+  });
 
-    if (instituteRecord) {
+  if (instituteRecord) {
+    if (isStudent) {
       const enrollments = await db.enrollment.findMany({
         where: {
           studentId: session.user.id,
@@ -67,6 +66,22 @@ export default async function InstituteLayout({
       });
 
       enrolledCourses = enrollments.map((e) => e.course);
+    } else if (isProfessor) {
+      const taught = await db.course.findMany({
+        where: {
+          instructorId: session.user.id,
+          instituteId: instituteRecord.id,
+          isArchived: false,
+        },
+        select: {
+          id: true,
+          title: true,
+          code: true,
+        },
+        orderBy: { code: "asc" },
+      });
+
+      enrolledCourses = taught;
     }
   }
 

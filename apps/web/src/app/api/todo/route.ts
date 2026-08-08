@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 interface TodoItem {
   id: string;
   title: string;
-  type: "ASSIGNMENT" | "QUIZ";
+  type: string;
   dueDate: string | null;
   createdAt: string;
   courseId: string;
@@ -69,7 +69,7 @@ function bucketItems(
     const serialized: TodoItem = {
       id: item.id,
       title: item.title,
-      type: item.type as "ASSIGNMENT" | "QUIZ",
+      type: item.type,
       dueDate: item.dueDate ? item.dueDate.toISOString() : null,
       createdAt: item.createdAt.toISOString(),
       courseId: item.course.id,
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
   const rawItems = await db.syllabusItem.findMany({
     where: {
       courseId: { in: courseIds },
-      type: { in: ["ASSIGNMENT", "QUIZ"] },
+      type: { not: "MATERIAL" },
       id: { notIn: [...submittedIds] },
     },
     include: {

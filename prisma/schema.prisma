@@ -75,6 +75,7 @@ model Course {
   subject      String   @default("")
   room         String   @default("")
   description  String   @default("")
+  coverImage   String   @default("")
   instructorId String?
   instituteId  String
   isArchived   Boolean  @default(false)

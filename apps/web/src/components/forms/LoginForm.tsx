@@ -71,8 +71,7 @@ export default function LoginForm({
         targetPath += "/admin";
       }
 
-      router.push(targetPath);
-      router.refresh();
+      window.location.href = targetPath;
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to sign in."

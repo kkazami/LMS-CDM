@@ -189,7 +189,7 @@ function TodoSection({
                 {idx > 0 && <hr className="border-gray-100" />}
                 <Link
                   id={`todo-item-${item.id}`}
-                  href={`/${instituteCode}/courses/${item.courseId}/classwork`}
+                  href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
                   className="flex items-center gap-4 py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-50 transition-colors group/item"
                 >
                   {/* Icon avatar */}
@@ -275,7 +275,7 @@ export default function TodoClient({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto page-enter">
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">To-do</h1>

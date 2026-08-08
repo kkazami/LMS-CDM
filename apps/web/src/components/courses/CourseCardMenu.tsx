@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { MoreVertical, LogOut, Archive, ArchiveRestore } from "lucide-react";
+import { MoreVertical, LogOut, Archive, ArchiveRestore, Image as ImageIcon, Edit2 } from "lucide-react";
 
 interface CourseCardMenuProps {
   courseId: string;
@@ -10,6 +10,8 @@ interface CourseCardMenuProps {
   onUnenroll?: () => void;
   onArchive?: () => void;
   onUnarchive?: () => void;
+  onCustomizeCard?: () => void;
+  onEdit?: () => void;
 }
 
 export default function CourseCardMenu({
@@ -19,6 +21,8 @@ export default function CourseCardMenu({
   onUnenroll,
   onArchive,
   onUnarchive,
+  onCustomizeCard,
+  onEdit,
 }: CourseCardMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -33,65 +37,132 @@ export default function CourseCardMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  const stopEvent = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
-    <div ref={menuRef} className="relative z-10">
+    <div
+      ref={menuRef}
+      className="relative z-20 shrink-0"
+      onClick={stopEvent}
+      onMouseDown={stopEvent}
+      onPointerDown={stopEvent}
+    >
       <button
+        type="button"
         onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
+          stopEvent(e);
           setOpen((prev) => !prev);
         }}
-        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 hover:bg-white/25 transition-colors"
+        onMouseDown={stopEvent}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors shadow-xs backdrop-blur-xs"
         aria-label="Course options"
       >
-        <MoreVertical className="h-4 w-4 text-white" />
+        <MoreVertical className="h-4 w-4" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-gray-300 bg-white shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-          {isStudent ? (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }}
+          />
+          <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-gray-200 bg-white shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+            {isStudent ? (
             <button
+              type="button"
               onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                stopEvent(e);
                 setOpen(false);
                 onUnenroll?.();
               }}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              onMouseDown={stopEvent}
+              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut className="h-4 w-4" />
               Unenroll
             </button>
           ) : (
-            isArchived ? (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setOpen(false);
-                  onUnarchive?.();
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <ArchiveRestore className="h-4 w-4 text-indigo-500" />
-                Unarchive
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setOpen(false);
-                  onArchive?.();
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Archive className="h-4 w-4 text-gray-400" />
-                Archive
-              </button>
-            )
+            <>
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    stopEvent(e);
+                    setOpen(false);
+                    onEdit();
+                  }}
+                  onMouseDown={stopEvent}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Edit2 className="h-4 w-4 text-blue-600" />
+                  Edit
+                </button>
+              )}
+              {onCustomizeCard && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    stopEvent(e);
+                    setOpen(false);
+                    onCustomizeCard();
+                  }}
+                  onMouseDown={stopEvent}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <ImageIcon className="h-4 w-4 text-blue-500" />
+                  Customize Card
+                </button>
+              )}
+              {isArchived ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    stopEvent(e);
+                    setOpen(false);
+                    onUnarchive?.();
+                  }}
+                  onMouseDown={stopEvent}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <ArchiveRestore className="h-4 w-4 text-indigo-500" />
+                  Unarchive
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    stopEvent(e);
+                    setOpen(false);
+                    onArchive?.();
+                  }}
+                  onMouseDown={stopEvent}
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Archive className="h-4 w-4 text-gray-400" />
+                  Archive
+                </button>
+              )}
+            </>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

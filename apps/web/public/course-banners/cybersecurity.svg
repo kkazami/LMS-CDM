@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="800" height="250">
+  <defs>
+    <linearGradient id="bg-cyber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F2942"/>
+      <stop offset="100%" stop-color="#081422"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="250" fill="url(#bg-cyber)"/>
+  <!-- Shield Icon -->
+  <g transform="translate(590, 40)">
+    <path d="M60,0 L120,25 L120,70 C120,115 60,150 60,150 C60,150 0,115 0,70 L0,25 Z" fill="#1E3A8A" stroke="#3B82F6" stroke-width="4"/>
+    <path d="M60,12 L108,32 L108,68 C108,104 60,134 60,134 C60,134 12,104 12,68 L12,32 Z" fill="#2563EB"/>
+    <!-- Lock -->
+    <rect x="42" y="70" width="36" height="30" rx="4" fill="#FFFFFF"/>
+    <path d="M48,70 L48,55 C48,45 72,45 72,55 L72,70" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="60" cy="82" r="3" fill="#1E3A8A"/>
+    <line x1="60" y1="85" x2="60" y2="92" stroke="#1E3A8A" stroke-width="2"/>
+  </g>
+</svg>

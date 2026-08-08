@@ -12,28 +12,42 @@ interface CourseHeaderProps {
     section: string;
     subject: string;
     room: string;
+    coverImage?: string | null;
     instructor: { name: string } | null;
   };
   theme: InstituteTheme;
 }
 
 export default function CourseHeader({ course, theme }: CourseHeaderProps) {
+  const hasCover = Boolean(course.coverImage);
+
   return (
     <div
-      className="relative overflow-hidden rounded-xl px-6 py-8 md:px-10 md:py-10"
-      style={{
-        background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`,
-      }}
+      className="relative overflow-hidden rounded-xl px-6 py-8 md:px-10 md:py-10 bg-cover bg-center"
+      style={
+        hasCover
+          ? { backgroundImage: `url("${course.coverImage}")` }
+          : { background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})` }
+      }
     >
-      {/* Decorative circles */}
-      <div
-        className="absolute -right-8 -top-8 h-40 w-40 rounded-full opacity-10"
-        style={{ backgroundColor: "#fff" }}
-      />
-      <div
-        className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full opacity-10"
-        style={{ backgroundColor: "#fff" }}
-      />
+      {/* Dark overlay for text readability when there's an image */}
+      {hasCover && (
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20 z-0" />
+      )}
+
+      {/* Decorative circles (only show if no cover) */}
+      {!hasCover && (
+        <>
+          <div
+            className="absolute -right-8 -top-8 h-40 w-40 rounded-full opacity-10"
+            style={{ backgroundColor: "#fff" }}
+          />
+          <div
+            className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full opacity-10"
+            style={{ backgroundColor: "#fff" }}
+          />
+        </>
+      )}
 
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-4">

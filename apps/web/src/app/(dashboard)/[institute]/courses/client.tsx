@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
 import JoinCourseModal from "@/components/courses/JoinCourseModal";
+import InstructorCreateCourseModal from "@/components/courses/InstructorCreateCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
 import {
   Plus,
@@ -65,6 +66,7 @@ export default function CoursesClient({
   pendingCount?: number;
 }) {
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [courses, setCourses] = useState(
     [...initialCourses].sort(
       (a, b) => (a.displayOrderIndex ?? 0) - (b.displayOrderIndex ?? 0)
@@ -132,11 +134,12 @@ export default function CoursesClient({
 
   return (
     <>
+      <div className="page-enter">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isStudent ? "My Courses" : "Courses"}
+            {isStudent ? "My Courses" : "My Classes"}
           </h1>
           {isStudent && pendingCount > 0 && (
             <p className="mt-1 text-sm text-gray-500">
@@ -150,6 +153,12 @@ export default function CoursesClient({
           <Button theme={theme} onClick={() => setJoinModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Join Course
+          </Button>
+        )}
+        {userRole === "PROFESSOR" && (
+          <Button theme={theme} onClick={() => setCreateModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Class
           </Button>
         )}
       </div>
@@ -168,17 +177,23 @@ export default function CoursesClient({
             <BookOpen className="h-10 w-10 text-gray-400" />
           </div>
           <h3 className="text-lg font-semibold text-gray-700">
-            {isStudent ? "No courses yet" : "No courses assigned"}
+            {isStudent ? "No courses yet" : "No classes yet"}
           </h3>
           <p className="mt-2 text-sm text-gray-400 max-w-sm">
             {isStudent
               ? "Join a course using a course code or browse available courses."
-              : "Courses will appear here once they are assigned to you by an administrator."}
+              : "You haven't created or been assigned any classes yet."}
           </p>
           {isStudent && (
             <Button theme={theme} onClick={() => setJoinModalOpen(true)} className="mt-4">
               <Plus className="mr-2 h-4 w-4" />
               Join Your First Course
+            </Button>
+          )}
+          {userRole === "PROFESSOR" && (
+            <Button theme={theme} onClick={() => setCreateModalOpen(true)} className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Your First Class
             </Button>
           )}
         </div>
@@ -193,7 +208,11 @@ export default function CoursesClient({
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={handleDrop}
-                className="group block overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing select-none"
+                className="group block overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-[0.99] cursor-grab active:cursor-grabbing select-none"
+                style={{
+                  animation: `staggerFadeIn 0.2s ease-out both`,
+                  animationDelay: `${Math.min(index, 10) * 40}ms`,
+                }}
               >
                 <Link
                   href={`/${instituteCode}/courses/${course.id}`}
@@ -268,11 +287,23 @@ export default function CoursesClient({
         </div>
       )}
 
+      </div>
+
       {/* Join Course Modal */}
       {isStudent && (
         <JoinCourseModal
           open={joinModalOpen}
           onClose={() => setJoinModalOpen(false)}
+          theme={theme}
+          instituteCode={instituteCode}
+        />
+      )}
+
+      {/* Instructor Create Course Modal */}
+      {userRole === "PROFESSOR" && (
+        <InstructorCreateCourseModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
           theme={theme}
           instituteCode={instituteCode}
         />

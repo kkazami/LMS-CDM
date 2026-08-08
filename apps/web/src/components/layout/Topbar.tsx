@@ -45,8 +45,7 @@ export default function Topbar({
   async function handleLogout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push(`/login?institute=${instituteCode}`);
-      router.refresh();
+      window.location.href = `/login?institute=${instituteCode}`;
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -60,7 +59,7 @@ export default function Topbar({
     students: "Student Dashboard",
     courses: "My Courses",
     announcements: "Announcements",
-    assignments: "Assignments",
+    assignments: "To-do",
     tasks: "Tasks",
     leaderboards: "Leaderboards",
     // Professor
@@ -184,8 +183,14 @@ export default function Topbar({
               </div>
             </button>
 
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div
+              className={`absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 origin-top-right ${
+                isDropdownOpen
+                  ? "opacity-100 scale-100 pointer-events-auto"
+                  : "opacity-0 scale-95 pointer-events-none"
+              }`}
+              style={{ transformOrigin: "top right" }}
+            >
                 <Link
                   href={`/${instituteCode}/profile`}
                   onClick={() => setIsDropdownOpen(false)}
@@ -217,8 +222,7 @@ export default function Topbar({
                   <LogOut className="mr-3 h-4 w-4 text-red-500" aria-hidden="true" />
                   Logout
                 </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

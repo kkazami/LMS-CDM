@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import type { EnrolledCourseSummary } from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import NavigationProgress from "@/components/layout/NavigationProgress";
+import Toaster from "@/components/common/Toast";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface DashboardLayoutProps {
@@ -35,7 +37,18 @@ export default function DashboardLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.colors.background }}>
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: theme.colors.background,
+        "--focus-ring": theme.colors.primary,
+      } as React.CSSProperties}
+    >
+      {/* Navigation Progress Bar */}
+      <Suspense fallback={null}>
+        <NavigationProgress color={theme.colors.primary} />
+      </Suspense>
+
       <div className="flex items-start">
         <Sidebar 
           instituteCode={instituteCode} 
@@ -76,6 +89,9 @@ export default function DashboardLayout({
           <main className="p-4 lg:p-8">{children}</main>
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

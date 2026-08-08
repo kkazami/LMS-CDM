@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="800" height="250">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#263238"/>
+      <stop offset="100%" stop-color="#102A43"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="250" fill="url(#bg)"/>
+  <g opacity="0.15" stroke="#FFFFFF" stroke-width="3" fill="none">
+    <path d="M500,180 L540,140 L500,100" />
+    <path d="M460,180 L420,140 L460,100" />
+  </g>
+  <!-- Laptop Illustration -->
+  <g transform="translate(560, 50)">
+    <!-- Screen -->
+    <rect x="0" y="0" width="180" height="120" rx="8" fill="#1E293B" stroke="#475569" stroke-width="4"/>
+    <rect x="10" y="10" width="160" height="100" rx="4" fill="#0F172A"/>
+    <!-- Code Symbol on Screen -->
+    <path d="M60,60 L40,50 L60,40" fill="none" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M100,60 L120,50 L100,40" fill="none" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="85" y1="35" x2="75" y2="65" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>
+    <!-- Base -->
+    <path d="M-20,120 L200,120 C205,120 205,132 195,132 L-15,132 C-25,132 -25,120 -20,120 Z" fill="#475569"/>
+    <rect x="75" y="122" width="30" height="4" rx="2" fill="#94A3B8"/>
+  </g>
+</svg>

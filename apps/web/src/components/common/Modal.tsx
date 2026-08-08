@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
@@ -10,17 +11,46 @@ type ModalProps = {
   children: ReactNode;
 };
 
-export default function Modal({
-  open,
-  title,
-  onClose,
-  children,
-}: ModalProps) {
-  if (!open) return null;
+export default function Modal({ open, title, onClose, children }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      // Small delay to trigger CSS transition after mount
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setVisible(true);
+        });
+      });
+    } else {
+      setVisible(false);
+      const timer = setTimeout(() => setMounted(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-lg border border-gray-300 bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 grid place-items-center p-4">
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div
+        className={`relative w-full max-w-lg rounded-lg border border-gray-300 bg-white p-6 shadow-xl transition-all duration-200 ease-out ${
+          visible
+            ? "opacity-100 scale-100"
+            : "opacity-0 scale-95"
+        }`}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[#2C2727]">{title}</h3>
           <button

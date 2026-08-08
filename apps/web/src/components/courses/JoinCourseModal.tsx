@@ -6,6 +6,7 @@ import Button from "@/components/common/Button";
 import Badge from "@/components/common/Badge";
 import { X, Search, Hash, BookOpen, User, Users, Loader2, CheckCircle } from "lucide-react";
 import { requestEnrollment, joinWithCode, getDiscoverableCourses } from "@/app/(dashboard)/[institute]/courses/actions";
+import { toast } from "@/components/common/Toast";
 
 interface DiscoverableCourse {
   id: string;
@@ -34,7 +35,6 @@ export default function JoinCourseModal({
   const [courses, setCourses] = useState<DiscoverableCourse[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -50,41 +50,38 @@ export default function JoinCourseModal({
     if (!open) {
       setCourseCode("");
       setSearchQuery("");
-      setFeedback(null);
       setRequestedIds(new Set());
     }
   }, [open]);
 
   const handleJoinWithCode = async () => {
     if (courseCode.length !== 6) {
-      setFeedback({ type: "error", message: "Course code must be exactly 6 characters." });
+      toast.error("Invalid code", "Course code must be exactly 6 characters.");
       return;
     }
 
     setSubmitting(true);
-    setFeedback(null);
 
     const result = await joinWithCode(courseCode.toUpperCase(), instituteCode);
 
     if (result.success) {
-      setFeedback({ type: "success", message: "Enrollment request submitted! Waiting for instructor approval." });
+      toast.success("Request submitted!", "Waiting for instructor approval.");
       setCourseCode("");
     } else {
-      setFeedback({ type: "error", message: result.error || "Failed to join course." });
+      toast.error("Failed to join", result.error || "Failed to join course.");
     }
 
     setSubmitting(false);
   };
 
   const handleRequestEnrollment = async (courseId: string) => {
-    setFeedback(null);
     const result = await requestEnrollment(courseId, instituteCode);
 
     if (result.success) {
       setRequestedIds((prev) => new Set([...prev, courseId]));
-      setFeedback({ type: "success", message: "Enrollment request sent!" });
+      toast.success("Request sent!", "Enrollment request submitted.");
     } else {
-      setFeedback({ type: "error", message: result.error || "Failed to request enrollment." });
+      toast.error("Request failed", result.error || "Failed to request enrollment.");
     }
   };
 
@@ -115,7 +112,7 @@ export default function JoinCourseModal({
         {/* Tab Switcher */}
         <div className="flex border-b border-gray-300">
           <button
-            onClick={() => { setMode("code"); setFeedback(null); }}
+            onClick={() => { setMode("code"); }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition"
             style={{
               color: mode === "code" ? theme.colors.primary : "#6B7280",
@@ -126,7 +123,7 @@ export default function JoinCourseModal({
             Join with Code
           </button>
           <button
-            onClick={() => { setMode("browse"); setFeedback(null); }}
+            onClick={() => { setMode("browse"); }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition"
             style={{
               color: mode === "browse" ? theme.colors.primary : "#6B7280",
@@ -140,19 +137,6 @@ export default function JoinCourseModal({
 
         {/* Content */}
         <div className="px-6 py-5">
-          {/* Feedback */}
-          {feedback && (
-            <div
-              className={`mb-4 rounded-lg px-4 py-3 text-sm ${
-                feedback.type === "success"
-                  ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-red-700 border border-red-200"
-              }`}
-            >
-              {feedback.message}
-            </div>
-          )}
-
           {mode === "code" ? (
             /* ─── Code Mode ─── */
             <div className="space-y-4">
@@ -166,7 +150,6 @@ export default function JoinCourseModal({
                   onChange={(e) => {
                     const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
                     setCourseCode(val);
-                    setFeedback(null);
                   }}
                   placeholder="ABC123"
                   maxLength={6}
