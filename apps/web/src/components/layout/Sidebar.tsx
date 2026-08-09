@@ -60,6 +60,7 @@ const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
+  { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
