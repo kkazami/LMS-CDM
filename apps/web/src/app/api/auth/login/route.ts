@@ -37,6 +37,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        { message: "Invalid email or password." },
+        { status: 401 }
+      );
+    }
+
     const passwordMatches = await compare(password, user.password);
 
     if (!passwordMatches) {
@@ -56,6 +63,9 @@ export async function POST(request: Request) {
 
     const session = await createSession(user.id);
 
+    const instituteCode = user.institute?.code || "ics";
+    const instituteName = user.institute?.name || "Institute of Computer Studies";
+
     return NextResponse.json(
       {
         message: "Login successful.",
@@ -67,18 +77,21 @@ export async function POST(request: Request) {
           role: user.role,
           studentNumber: (user as Record<string, unknown>).studentNumber as string | undefined || null,
           institute: {
-            code: user.institute.code,
-            name: user.institute.name,
+            code: instituteCode,
+            name: instituteName,
           },
         },
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("LOGIN_ERROR", error);
+  } catch (error: any) {
+    console.error("LOGIN_ERROR:", error?.message || error, error?.stack);
 
     return NextResponse.json(
-      { message: "Something went wrong during login." },
+      {
+        message: "Something went wrong during login.",
+        detail: process.env.NODE_ENV !== "production" ? error?.message : undefined,
+      },
       { status: 500 }
     );
   }
