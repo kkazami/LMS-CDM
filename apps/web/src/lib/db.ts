@@ -5,7 +5,15 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  return new PrismaClient();
+  return new PrismaClient({
+    datasources: process.env.DATABASE_URL
+      ? {
+          db: {
+            url: process.env.DATABASE_URL,
+          },
+        }
+      : undefined,
+  });
 }
 
 function hasWorkspaceModels(client: PrismaClient) {
