@@ -5,6 +5,28 @@
       "dependsOn": [
         "^build"
       ],
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "PGDATABASE",
+        "PGHOST_UNPOOLED",
+        "PGUSER",
+        "POSTGRES_HOST",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_PRISMA_URL",
+        "POSTGRES_URL",
+        "POSTGRES_URL_NON_POOLING",
+        "POSTGRES_USER",
+        "NEON_AUTH_BASE_URL",
+        "NEON_PROJECT_ID",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_SECURE",
+        "SMTP_USER",
+        "SMTP_PASS",
+        "SMTP_FROM"
+      ],
       "outputs": [
         "dist/**",
         ".next/**"
