@@ -19,7 +19,7 @@ interface UserAvatarProps {
   /** Additional Tailwind classes */
   className?: string;
   /** Called when the avatar is clicked */
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const SIZE_CLASSES: Record<AvatarSize, { container: string; text: string; px: number }> = {

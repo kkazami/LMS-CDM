@@ -29,7 +29,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
       department: true,
       yearLevel: true,
       coverColor: true,
-      coverColor: true,
       createdAt: true,
       instituteId: true,
       institute: { select: { code: true, name: true } },
