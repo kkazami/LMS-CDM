@@ -2,16 +2,16 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
-import ProfileEditClient from "./client";
+import PublicProfileClient from "./client";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: Promise<{ institute: string }>;
+  params: Promise<{ institute: string; userId: string }>;
 };
 
-export default async function ProfilePage({ params }: PageProps) {
-  const { institute } = await params;
+export default async function PublicProfilePage({ params }: PageProps) {
+  const { institute, userId } = await params;
   const session = await getSession();
 
   if (!session) redirect(`/login?institute=${institute}`);
@@ -19,7 +19,7 @@ export default async function ProfilePage({ params }: PageProps) {
   const theme = getInstituteTheme(institute);
 
   const user = await db.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: userId },
     select: {
       id: true,
       name: true,
@@ -48,16 +48,22 @@ export default async function ProfilePage({ params }: PageProps) {
     },
   });
 
-  if (!user) redirect(`/${institute}`);
+  if (!user || user.institute.code !== institute) {
+    redirect(`/${institute}`);
+  }
 
+  const isOwnProfile = session.user.id === userId;
+
+  // Serialize dates
   const serializedUser = {
     ...user,
     createdAt: user.createdAt.toISOString(),
   };
 
   return (
-    <ProfileEditClient
+    <PublicProfileClient
       user={serializedUser}
+      isOwnProfile={isOwnProfile}
       instituteCode={institute}
       theme={theme}
     />

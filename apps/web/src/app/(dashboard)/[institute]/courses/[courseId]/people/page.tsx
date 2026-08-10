@@ -21,7 +21,7 @@ export default async function PeoplePage({ params }: PageProps) {
     where: { id: courseId },
     include: {
       instructor: {
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, avatarUrl: true },
       },
     },
   });
@@ -37,7 +37,7 @@ export default async function PeoplePage({ params }: PageProps) {
     where: { courseId, status: "APPROVED" },
     include: {
       student: {
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, avatarUrl: true },
       },
     },
     orderBy: { student: { name: "asc" } },
@@ -49,7 +49,7 @@ export default async function PeoplePage({ params }: PageProps) {
         where: { courseId, status: "PENDING" },
         include: {
           student: {
-            select: { id: true, name: true, email: true },
+            select: { id: true, name: true, email: true, avatarUrl: true },
           },
         },
         orderBy: { createdAt: "asc" },

@@ -34,6 +34,14 @@ model User {
   instituteId String
   createdAt   DateTime @default(now())
 
+  // ── Profile fields ──
+  avatarUrl   String?                        // URL to uploaded avatar image (null = initials fallback)
+  bio         String   @default("")          // Short biography / description
+  phone       String   @default("")          // Contact phone number
+  department  String   @default("")          // e.g. "Computer Science", "Business Administration"
+  yearLevel   String   @default("")          // For students: "1st Year", "2nd Year", etc.
+  coverColor  String   @default("#1E88E5")   // Profile page banner accent color (hex)
+
   institute          Institute            @relation(fields: [instituteId], references: [id])
   sessions           Session[]
   notes              Note[]

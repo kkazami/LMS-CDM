@@ -27,6 +27,12 @@ export async function GET(request: Request) {
         email: user.email,
         role: user.role,
         studentNumber: (user as Record<string, unknown>).studentNumber || null,
+        avatarUrl: user.avatarUrl ?? null,
+        bio: user.bio,
+        phone: user.phone,
+        department: user.department,
+        yearLevel: user.yearLevel,
+        coverColor: user.coverColor,
         instituteId: user.instituteId,
         institute: {
           code: user.institute.code,
@@ -48,11 +54,25 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name } = body;
+    const { name, bio, phone, department, yearLevel, coverColor } = body as {
+      name?: string;
+      bio?: string;
+      phone?: string;
+      department?: string;
+      yearLevel?: string;
+      coverColor?: string;
+    };
 
     const updated = await db.user.update({
       where: { id: session.user.id },
-      data: { ...(name ? { name } : {}) },
+      data: {
+        ...(name ? { name } : {}),
+        ...(bio !== undefined ? { bio } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(department !== undefined ? { department } : {}),
+        ...(yearLevel !== undefined ? { yearLevel } : {}),
+        ...(coverColor !== undefined ? { coverColor } : {}),
+      },
       include: { institute: true },
     });
 
@@ -63,6 +83,12 @@ export async function PUT(request: Request) {
         email: updated.email,
         role: updated.role,
         studentNumber: (updated as Record<string, unknown>).studentNumber || null,
+        avatarUrl: updated.avatarUrl ?? null,
+        bio: updated.bio,
+        phone: updated.phone,
+        department: updated.department,
+        yearLevel: updated.yearLevel,
+        coverColor: updated.coverColor,
         instituteId: updated.instituteId,
         institute: {
           code: updated.institute.code,

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
+import UserAvatar from "@/components/common/UserAvatar";
 import { X, Send, AlertTriangle, Clock } from "lucide-react";
 
 interface Comment {
@@ -19,6 +20,7 @@ interface PrivateCommentDrawerProps {
   theme: InstituteTheme;
   studentName: string;
   studentId: string;
+  studentAvatarUrl?: string | null;
   comments: Comment[];
   currentUserId: string;
   onSend: (content: string) => void;
@@ -46,6 +48,7 @@ export default function PrivateCommentDrawer({
   theme,
   studentName,
   studentId,
+  studentAvatarUrl,
   comments,
   currentUserId,
   onSend,
@@ -86,12 +89,12 @@ export default function PrivateCommentDrawer({
           style={{ borderColor: theme.colors.border }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {studentName.charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar
+              name={studentName}
+              avatarUrl={studentAvatarUrl}
+              size="md"
+              color={theme.colors.primary}
+            />
             <div>
               <h3 className="text-sm font-semibold text-gray-900">
                 {studentName}

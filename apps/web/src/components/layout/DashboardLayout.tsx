@@ -6,6 +6,7 @@ import type { EnrolledCourseSummary } from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import NavigationProgress from "@/components/layout/NavigationProgress";
 import Toaster from "@/components/common/Toast";
+import { AvatarProvider } from "@/lib/avatar-context";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface DashboardLayoutProps {
@@ -14,6 +15,7 @@ interface DashboardLayoutProps {
   userName: string;
   userRole: string;
   studentNumber?: string | null;
+  avatarUrl?: string | null;
   theme: InstituteTheme;
   /** Whether this user qualifies for ICS Interactive Activities. Controls sidebar entry visibility. */
   isEligibleForActivities?: boolean;
@@ -28,6 +30,7 @@ export default function DashboardLayout({
   userName,
   userRole,
   studentNumber,
+  avatarUrl,
   theme,
   isEligibleForActivities,
   enrolledCourses,
@@ -83,10 +86,15 @@ export default function DashboardLayout({
             userName={userName}
             userRole={userRole}
             studentNumber={studentNumber}
+            avatarUrl={avatarUrl ?? null}
             instituteCode={instituteCode}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
-          <main className="p-4 lg:p-8">{children}</main>
+          <main className="p-4 lg:p-8">
+            <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
+              {children}
+            </AvatarProvider>
+          </main>
         </div>
       </div>
 

@@ -11,7 +11,7 @@ interface Announcement {
   id: string;
   content: string;
   createdAt: string;
-  author: { name: string };
+  author: { id: string; name: string; avatarUrl: string | null };
 }
 
 const initialState = { message: "" };

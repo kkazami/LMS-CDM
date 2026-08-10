@@ -5,6 +5,8 @@ import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
 import Modal from "@/components/common/Modal";
 import Badge from "@/components/common/Badge";
+import UserAvatar from "@/components/common/UserAvatar";
+import UserMiniCard from "@/components/common/UserMiniCard";
 import PrivateCommentDrawer from "@/components/courses/PrivateCommentDrawer";
 import {
   approveEnrollment,
@@ -32,6 +34,7 @@ interface Student {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
 }
 
 interface PendingRequest {
@@ -39,6 +42,7 @@ interface PendingRequest {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   createdAt: string;
 }
 
@@ -70,7 +74,7 @@ export default function PeopleClient({
   courseId: string;
   instituteCode: string;
   theme: InstituteTheme;
-  instructor: { id: string; name: string; email: string } | null;
+  instructor: { id: string; name: string; email: string; avatarUrl: string | null } | null;
   enrolledStudents: Student[];
   pendingRequests: PendingRequest[];
   studentGroups: StudentGroupData[];
@@ -89,6 +93,9 @@ export default function PeopleClient({
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(
     new Set()
   );
+
+  // MiniCard state
+  const [miniCard, setMiniCard] = useState<{ userId: string; anchorRect: DOMRect } | null>(null);
 
   const openCommentDrawer = async (student: Student) => {
     setSelectedStudent(student);
@@ -193,12 +200,16 @@ export default function PeopleClient({
         </h2>
         {instructor ? (
           <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white p-4">
-            <div
-              className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {instructor.name.charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar
+              name={instructor.name}
+              avatarUrl={instructor.avatarUrl}
+              size="md"
+              color={theme.colors.primary}
+              onClick={(e: React.MouseEvent) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMiniCard({ userId: instructor.id, anchorRect: rect });
+              }}
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-900">
@@ -240,9 +251,16 @@ export default function PeopleClient({
                 className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="grid h-8 w-8 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
-                    {req.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={req.name}
+                    avatarUrl={req.avatarUrl}
+                    size="sm"
+                    color="#F59E0B" // amber-500
+                    onClick={(e: React.MouseEvent) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMiniCard({ userId: req.id, anchorRect: rect });
+                    }}
+                  />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {req.name}
@@ -297,12 +315,16 @@ export default function PeopleClient({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white"
-                    style={{ backgroundColor: theme.colors.primary }}
-                  >
-                    {student.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={student.name}
+                    avatarUrl={student.avatarUrl}
+                    size="sm"
+                    color={theme.colors.primary}
+                    onClick={(e: React.MouseEvent) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMiniCard({ userId: student.id, anchorRect: rect });
+                    }}
+                  />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {student.name}
@@ -460,6 +482,17 @@ export default function PeopleClient({
         onSend={handleSendComment}
         sending={sendingComment}
       />
+
+      {/* ─── MiniCard Popover ─── */}
+      {miniCard && (
+        <UserMiniCard
+          userId={miniCard.userId}
+          instituteCode={instituteCode}
+          anchorRect={miniCard.anchorRect}
+          onClose={() => setMiniCard(null)}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }

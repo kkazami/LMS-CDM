@@ -30,7 +30,7 @@ export default async function StreamPage({ params }: PageProps) {
   const announcements = await db.announcement.findMany({
     where: { courseId },
     include: {
-      author: { select: { name: true } },
+      author: { select: { id: true, name: true, avatarUrl: true } },
     },
     orderBy: { createdAt: "desc" },
   });

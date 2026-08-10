@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, Menu, Search, Settings, User, Shield, HelpCircle, LogOut } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import UserAvatar from "@/components/common/UserAvatar";
 
 type TopbarProps = {
   theme: InstituteTheme;
@@ -13,6 +14,7 @@ type TopbarProps = {
   userRole: string;
   instituteCode: string;
   studentNumber?: string | null;
+  avatarUrl?: string | null;
   notificationCount?: number;
   onOpenMobileMenu?: () => void;
 };
@@ -24,6 +26,7 @@ export default function Topbar({
   userRole,
   instituteCode,
   studentNumber,
+  avatarUrl,
   notificationCount = 3,
   onOpenMobileMenu,
 }: TopbarProps) {
@@ -175,12 +178,12 @@ export default function Topbar({
                   )}
                 </div>
               </div>
-              <div
-                className="grid h-9 w-9 place-items-center rounded-full text-sm font-semibold text-white"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
-                {userName.charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar
+                name={userName}
+                avatarUrl={avatarUrl}
+                size="md"
+                color={theme.colors.primary}
+              />
             </button>
 
             <div

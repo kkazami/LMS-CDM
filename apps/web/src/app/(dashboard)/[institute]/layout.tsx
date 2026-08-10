@@ -92,6 +92,7 @@ export default async function InstituteLayout({
       userName={session.user.name as string}
       userRole={session.user.role as string}
       studentNumber={(session.user.studentNumber as string | undefined) || null}
+      avatarUrl={(session.user as Record<string, unknown>).avatarUrl as string | null ?? null}
       theme={theme}
       isEligibleForActivities={activityEligible}
       enrolledCourses={enrolledCourses}

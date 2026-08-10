@@ -2,13 +2,17 @@
 
 import type { InstituteTheme } from "@/lib/theme";
 import { Clock } from "lucide-react";
+import UserAvatar from "@/components/common/UserAvatar";
+import UserMiniCard from "@/components/common/UserMiniCard";
+import { useState } from "react";
+import { useParams } from "next/navigation";
 
 interface AnnouncementCardProps {
   announcement: {
     id: string;
     content: string;
     createdAt: string | Date;
-    author: { name: string };
+    author: { id: string; name: string; avatarUrl: string | null };
   };
   theme: InstituteTheme;
 }
@@ -32,17 +36,23 @@ export default function AnnouncementCard({
   announcement,
   theme,
 }: AnnouncementCardProps) {
-  const initial = announcement.author.name.charAt(0).toUpperCase();
+  const [miniCard, setMiniCard] = useState<{ userId: string; anchorRect: DOMRect } | null>(null);
+  const params = useParams();
+  const instituteCode = params.institute as string;
 
   return (
     <div className="rounded-lg border border-gray-300 bg-white p-5 transition-shadow hover:shadow-sm">
       <div className="flex gap-3">
-        <div
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
-          style={{ backgroundColor: theme.colors.primary }}
-        >
-          {initial}
-        </div>
+        <UserAvatar
+          name={announcement.author.name}
+          avatarUrl={announcement.author.avatarUrl}
+          size="md"
+          color={theme.colors.primary}
+          onClick={(e: React.MouseEvent) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMiniCard({ userId: announcement.author.id, anchorRect: rect });
+          }}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-gray-900">
@@ -58,6 +68,16 @@ export default function AnnouncementCard({
           </p>
         </div>
       </div>
+      
+      {miniCard && (
+        <UserMiniCard
+          userId={miniCard.userId}
+          instituteCode={instituteCode}
+          anchorRect={miniCard.anchorRect}
+          onClose={() => setMiniCard(null)}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }
