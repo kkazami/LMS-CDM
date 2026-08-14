@@ -5,3 +5,7 @@ build
 .turbo
 .next
 .expo
+
+# Ignore uploads
+apps/web/public/uploads/*
+*.backup

@@ -66,16 +66,34 @@ function formatDueDate(dueDate: Date | null): string {
   });
 }
 
-function AttachmentChip({ attachment }: { attachment: Attachment }) {
+function AttachmentChip({ 
+  attachment, 
+  item, 
+  instituteCode, 
+  isStudent 
+}: { 
+  attachment: Attachment;
+  item: SyllabusItem;
+  instituteCode: string;
+  isStudent: boolean;
+}) {
   const isLink = attachment.type === "LINK";
   const Icon = isLink ? Link2 : FileText;
 
+  const isMaterialFile = isStudent && item.type === "MATERIAL" && !isLink;
+  const href = isMaterialFile
+    ? `/${instituteCode}/learning-materials/${item.course.id}/${item.id}/read?attachmentId=${attachment.id}`
+    : attachment.url;
+
+  // Use Link for internal navigation, otherwise use 'a'
+  const Component = isMaterialFile ? Link : "a";
+
   return (
-    <a
-      href={attachment.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      download={attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
+    <Component
+      href={href}
+      target={isMaterialFile ? undefined : "_blank"}
+      rel={isMaterialFile ? undefined : "noopener noreferrer"}
+      download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
       className="flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 hover:bg-gray-50 hover:border-indigo-200 hover:shadow-sm transition-all group"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
@@ -88,7 +106,7 @@ function AttachmentChip({ attachment }: { attachment: Attachment }) {
         <p className="text-xs text-gray-400">{isLink ? "Link" : "File"}</p>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 group-hover:text-indigo-400 transition-colors" />
-    </a>
+    </Component>
   );
 }
 
@@ -124,7 +142,7 @@ export default function AssignmentDetailClient({
             {item.course.title}
           </Link>
           <ChevronRight className="h-4 w-4 text-gray-300" />
-          <span className="text-sm font-medium text-gray-800 truncate max-w-[300px]">
+          <span className="text-sm font-medium text-gray-800 truncate max-w-75">
             {item.title}
           </span>
         </div>
@@ -183,7 +201,13 @@ export default function AssignmentDetailClient({
                 </h2>
                 <div className="space-y-2">
                   {item.attachments.map((att) => (
-                    <AttachmentChip key={att.id} attachment={att} />
+                    <AttachmentChip 
+                      key={att.id} 
+                      attachment={att} 
+                      item={item}
+                      instituteCode={instituteCode}
+                      isStudent={isStudent}
+                    />
                   ))}
                 </div>
               </div>
@@ -193,7 +217,7 @@ export default function AssignmentDetailClient({
             {isInstructor && (
               <Link
                 href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}/submissions`}
-                className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 p-4 hover:from-indigo-100 hover:to-purple-100 transition-all group"
+                className="flex items-center justify-between rounded-2xl bg-linear-to-r from-indigo-50 to-purple-50 border border-indigo-100 p-4 hover:from-indigo-100 hover:to-purple-100 transition-all group"
               >
                 <div>
                   <p className="font-semibold text-indigo-800">Student Submissions</p>

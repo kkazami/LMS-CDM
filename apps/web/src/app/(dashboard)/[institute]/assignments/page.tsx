@@ -24,6 +24,7 @@ interface BucketedItems {
   thisWeek: TodoItem[];
   nextWeek: TodoItem[];
   later: TodoItem[];
+  done: TodoItem[];
 }
 
 /**
@@ -56,6 +57,7 @@ function bucketItems(
       section: string;
       instructor: { name: string } | null;
     };
+    isDone?: boolean;
   }[]
 ): BucketedItems {
   const now = new Date(Date.now());
@@ -70,6 +72,7 @@ function bucketItems(
     thisWeek: [],
     nextWeek: [],
     later: [],
+    done: [],
   };
 
   for (const item of items) {
@@ -86,7 +89,9 @@ function bucketItems(
       instructorName: item.course.instructor?.name ?? null,
     };
 
-    if (!item.dueDate) {
+    if (item.isDone) {
+      result.done.push(serialized);
+    } else if (!item.dueDate) {
       result.noDueDate.push(serialized);
     } else if (item.dueDate >= thisWeekStart && item.dueDate < thisWeekEnd) {
       result.thisWeek.push(serialized);
@@ -167,12 +172,11 @@ export default async function TodoPage({
       .map((s) => s.syllabusItemId)
   );
 
-  // 3. Fetch pending syllabus items (ASSIGNMENT or QUIZ) not yet submitted
+  // 3. Fetch all syllabus items (ASSIGNMENT or QUIZ)
   const rawItems = await db.syllabusItem.findMany({
     where: {
       courseId: { in: courseIds },
       type: { not: "MATERIAL" },
-      id: { notIn: [...submittedIds] },
     },
     include: {
       course: {
@@ -188,8 +192,14 @@ export default async function TodoPage({
     orderBy: { createdAt: "desc" },
   });
 
-  // 4. Bucket by due date
-  const buckets = bucketItems(rawItems);
+  // Map isDone flag to items
+  const itemsWithStatus = rawItems.map((item) => ({
+    ...item,
+    isDone: submittedIds.has(item.id),
+  }));
+
+  // 4. Bucket by due date and status
+  const buckets = bucketItems(itemsWithStatus);
 
   // 5. Enrolled courses for the filter dropdown
   const enrolledCourses = enrollments.map((e) => ({

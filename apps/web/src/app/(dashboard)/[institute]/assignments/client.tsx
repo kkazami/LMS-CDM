@@ -38,6 +38,7 @@ interface TodoClientProps {
     thisWeek: TodoItem[];
     nextWeek: TodoItem[];
     later: TodoItem[];
+    done: TodoItem[];
   };
   enrolledCourses: EnrolledCourse[];
   instituteCode: string;
@@ -177,12 +178,13 @@ function TodoSection({
               ? getDueBadgeVariant(item.dueDate, serverNow)
               : null;
 
-            const dueBadgeBg =
-              dueBadgeVariant === "red"
-                ? "bg-red-50 text-red-600"
+            const dueBadgeBg = id === "section-done" 
+                ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
+                : dueBadgeVariant === "red"
+                ? "bg-red-50 text-red-600 border-red-200"
                 : dueBadgeVariant === "amber"
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-gray-100 text-gray-600";
+                  ? "bg-amber-50 text-amber-600 border-amber-200"
+                  : "bg-gray-100 text-gray-600 border-gray-200";
 
             return (
               <div key={item.id}>
@@ -217,14 +219,16 @@ function TodoSection({
                     </p>
                   </div>
 
-                  {/* Due date badge */}
-                  {item.dueDate && (
-                    <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 ${dueBadgeBg}`}
-                    >
+                  {/* Due date / Status badge */}
+                  {id === "section-done" ? (
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 border ${dueBadgeBg}`}>
+                      Submitted
+                    </span>
+                  ) : item.dueDate ? (
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 border ${dueBadgeBg}`}>
                       {formatDueDate(item.dueDate)}
                     </span>
-                  )}
+                  ) : null}
                 </Link>
               </div>
             );
@@ -258,6 +262,7 @@ export default function TodoClient({
       thisWeek: filterBucket(items.thisWeek),
       nextWeek: filterBucket(items.nextWeek),
       later: filterBucket(items.later),
+      done: filterBucket(items.done),
     };
   }, [items, selectedCourseId]);
 
@@ -265,13 +270,15 @@ export default function TodoClient({
     filteredItems.noDueDate.length +
     filteredItems.thisWeek.length +
     filteredItems.nextWeek.length +
-    filteredItems.later.length;
+    filteredItems.later.length +
+    filteredItems.done.length;
 
   const sections: { id: string; label: string; items: TodoItem[] }[] = [
     { id: "section-no-due-date", label: "No due date", items: filteredItems.noDueDate },
     { id: "section-this-week", label: "This week", items: filteredItems.thisWeek },
     { id: "section-next-week", label: "Next week", items: filteredItems.nextWeek },
     { id: "section-later", label: "Later", items: filteredItems.later },
+    { id: "section-done", label: "Completed", items: filteredItems.done },
   ];
 
   return (
@@ -290,7 +297,7 @@ export default function TodoClient({
           id="todo-course-filter"
           value={selectedCourseId}
           onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="w-full sm:w-auto min-w-[200px] px-4 py-2.5 text-sm font-medium bg-white border rounded-full appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2"
+          className="w-full sm:w-auto min-w-50 px-4 py-2.5 text-sm font-medium bg-white border rounded-full appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2"
           style={{
             borderColor: theme.colors.border,
             color: theme.colors.text,
