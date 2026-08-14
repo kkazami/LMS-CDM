@@ -24,14 +24,19 @@ import {
   FlaskConical,
   ChevronDown,
   ChevronRight,
+  PenTool,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
+import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
+
+import type { ElementType } from "react";
 
 interface NavLink {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: ElementType;
 }
 
 export interface EnrolledCourseSummary {
@@ -62,6 +67,7 @@ const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
+  { label: "Flashcards", href: `/${code}/flashcards`, icon: FlashcardIcon },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
 
@@ -69,7 +75,7 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
-  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
+
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },
 ];
@@ -133,7 +139,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? "w-[72px]" : "w-72"}`}
+      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? "w-18" : "w-72"}`}
       style={{ backgroundColor: theme.colors.sidebar, borderColor: theme.colors.sidebarMuted }}
     >
       {/* Header with logo + collapse toggle always visible */}
@@ -200,7 +206,10 @@ export default function Sidebar({
                     color: isSubActive ? theme.colors.primary : "#E5E7EB",
                   }}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
+                  {(() => {
+                    const ResolvedIcon = item.icon as React.FC<{ className?: string }>;
+                    return <ResolvedIcon className="h-5 w-5 shrink-0" />;
+                  })()}
                   <span
                     className={`overflow-hidden whitespace-nowrap transition-all duration-300 flex-1 min-w-0 ${
                       isCollapsed ? "w-0 opacity-0" : "opacity-100"
@@ -296,7 +305,10 @@ export default function Sidebar({
                 color: active ? theme.colors.primary : "#E5E7EB",
               }}
             >
-              <Icon className="h-5 w-5 shrink-0" />
+              {(() => {
+                const ResolvedIcon = item.icon as React.FC<{ className?: string }>;
+                return <ResolvedIcon className="h-5 w-5 shrink-0" />;
+              })()}
               <span
                 className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
                   isCollapsed ? "w-0 opacity-0" : "opacity-100"

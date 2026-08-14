@@ -9,5 +9,7 @@ try {
   console.error("Failed to generate Prisma client in next.config.ts:", e);
 }
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  serverExternalPackages: ["officeparser"],
+};
 export default nextConfig;

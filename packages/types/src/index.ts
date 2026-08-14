@@ -10,3 +10,4 @@ export * from './attendance';
 export * from './note';
 export * from './task';
 export * from './calendar-event';
+export * from './flashcard';
