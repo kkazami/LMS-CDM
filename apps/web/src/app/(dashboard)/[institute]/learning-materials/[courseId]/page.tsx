@@ -60,11 +60,22 @@ export default async function CourseMaterialsPage({ params }: Props) {
   return (
     <div className="page-enter pb-12">
       {/* Hero Header */}
-      <div className="relative mb-8 overflow-hidden rounded-[2.5rem] p-8 text-white shadow-xl sm:p-12" style={{ background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }}>
+      <div 
+        className="relative mb-8 overflow-hidden rounded-[2.5rem] p-8 text-white shadow-xl sm:p-12 bg-cover bg-center" 
+        style={
+          course.coverImage 
+            ? { backgroundImage: `url("${course.coverImage}")` }
+            : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
+        }
+      >
         {/* Subtle Premium Background */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/10" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        <div className={`pointer-events-none absolute inset-0 ${course.coverImage ? 'bg-linear-to-r from-black/80 via-black/50 to-black/20' : 'bg-linear-to-r from-black/20 via-transparent to-black/10'}`} />
+        {!course.coverImage && (
+          <>
+            <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
+            <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          </>
+        )}
         
         <div className="relative z-10 max-w-4xl">
           <div className="mb-6 flex flex-wrap items-center gap-3">

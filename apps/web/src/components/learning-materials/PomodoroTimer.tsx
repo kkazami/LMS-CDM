@@ -9,12 +9,20 @@ interface PomodoroTimerProps {
 }
 
 export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTimerProps) {
+  const [targetTimeMinutes, setTargetTimeMinutes] = useState(25);
   const [timeElapsed, setTimeElapsed] = useState(0); // counts up from 0
   const [isActive, setIsActive] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
   const [sessionStartedAt, setSessionStartedAt] = useState<Date | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Stop and finish when target time is reached
+  useEffect(() => {
+    if (isActive && timeElapsed >= targetTimeMinutes * 60) {
+      finishSession();
+    }
+  }, [timeElapsed, isActive, targetTimeMinutes]);
 
   useEffect(() => {
     if (isActive) {
@@ -83,8 +91,8 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  // An infinite spinning progress bar for the stopwatch
-  const progressPercentage = (timeElapsed % 60) * (100 / 60);
+  const remainingSeconds = Math.max(0, targetTimeMinutes * 60 - timeElapsed);
+  const progressPercentage = (timeElapsed / (targetTimeMinutes * 60)) * 100;
 
   return (
     <div className="rounded-3xl bg-white border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col transition-all duration-500 relative">
@@ -125,7 +133,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
 
           <div className="flex flex-col items-center z-10">
             <span className="text-5xl font-black tracking-tighter text-indigo-950 tabular-nums">
-              {formatTime(timeElapsed)}
+              {formatTime(remainingSeconds)}
             </span>
             <span className="text-[10px] font-bold mt-2 uppercase tracking-[0.2em] text-indigo-600 opacity-80">
               {isActive ? "Studying" : timeElapsed > 0 ? "Paused" : "Ready"}
@@ -134,8 +142,34 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
         </div>
       </div>
 
+      {/* Target Time Slider */}
+      {!isActive && timeElapsed === 0 && (
+        <div className="px-8 pb-2 z-10 w-full flex flex-col items-center">
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            Set Focus Time: {targetTimeMinutes} mins
+          </label>
+          <input 
+            type="range" 
+            min="5" 
+            max="30" 
+            step="5" 
+            value={targetTimeMinutes}
+            onChange={(e) => setTargetTimeMinutes(Number(e.target.value))}
+            className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+          />
+          <div className="flex justify-between w-full mt-2 text-xs text-gray-400 font-semibold px-1">
+            <span>5</span>
+            <span>10</span>
+            <span>15</span>
+            <span>20</span>
+            <span>25</span>
+            <span>30</span>
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
-      <div className="p-6 pt-2 pb-8 flex flex-col items-center gap-4 z-10">
+      <div className="p-6 pt-4 pb-8 flex flex-col items-center gap-4 z-10">
         <div className="flex justify-center gap-4">
           <button
             onClick={toggleTimer}

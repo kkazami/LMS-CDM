@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { Loader2, ChevronLeft, ChevronRight, MessageSquare, ZoomIn, ZoomOut, Download, FileText } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, MessageSquare, ZoomIn, ZoomOut, Download, FileText, ExternalLink } from "lucide-react";
 
 // Initialize pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -276,11 +276,25 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
           {/* 2. Link (General Website) */}
           {isLink && !youtubeUrl && (
-            <div className="w-full h-full p-4">
-              <iframe
-                src={url}
-                className="w-full h-full rounded-2xl shadow-sm border border-gray-200 bg-white"
-              />
+            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gray-50">
+              <div className="bg-white p-10 rounded-4xl shadow-sm border border-gray-200 max-w-md w-full transition-all duration-300 hover:shadow-xl hover:border-indigo-200">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 ring-8 ring-indigo-50/50 mb-6 transition-transform duration-300 hover:scale-110">
+                  <ExternalLink className="h-10 w-10" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">External Resource</h2>
+                <p className="text-sm text-gray-500 mb-8 leading-relaxed font-medium">
+                  This learning material is hosted externally. For the best experience and security, please open it in a new tab.
+                </p>
+                <a 
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-sm font-bold text-white shadow-md transition-all duration-300 hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] focus:ring-4 focus:ring-indigo-100"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Open Link Securely
+                </a>
+              </div>
             </div>
           )}
 
