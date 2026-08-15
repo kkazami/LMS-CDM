@@ -55,7 +55,7 @@ export default function InstructorCreateCourseModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Class Code *
             </label>
             <Input
@@ -70,7 +70,7 @@ export default function InstructorCreateCourseModal({
             )}
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Subject *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Subject *</label>
             <Input
               name="subject"
               placeholder="e.g. Computer Science"
@@ -85,7 +85,7 @@ export default function InstructorCreateCourseModal({
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Title *</label>
+          <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Title *</label>
           <Input
             name="title"
             placeholder="e.g. Intro to Programming"
@@ -100,23 +100,23 @@ export default function InstructorCreateCourseModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Section</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Section</label>
             <Input name="section" placeholder="e.g. A" theme={theme} />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Room</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Room</label>
             <Input name="room" placeholder="e.g. Room 302" theme={theme} />
           </div>
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
             Description
           </label>
           <textarea
             name="description"
             rows={3}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 focus:border-orange-500"
             placeholder="Enter class description..."
           />
         </div>

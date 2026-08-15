@@ -45,17 +45,17 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-lg rounded-lg border border-gray-300 bg-white p-6 shadow-xl transition-all duration-200 ease-out ${
+        className={`relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl transition-all duration-200 ease-out ${
           visible
             ? "opacity-100 scale-100"
             : "opacity-0 scale-95"
         }`}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#2C2727]">{title}</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            className="rounded-lg p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" />

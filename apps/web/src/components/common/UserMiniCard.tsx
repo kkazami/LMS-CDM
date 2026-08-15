@@ -146,7 +146,7 @@ export default function UserMiniCard({
   return createPortal(
     <div
       ref={cardRef}
-      className={`absolute z-[9999] w-80 rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-150 ease-out ${
+      className={`absolute z-[9999] w-80 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-2xl transition-all duration-150 ease-out ${
         visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
       }`}
       style={{
@@ -156,14 +156,14 @@ export default function UserMiniCard({
     >
       {loading ? (
         <div className="flex items-center justify-center p-10">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400 dark:text-slate-500" />
         </div>
       ) : error || !user ? (
         <div className="p-6 text-center">
-          <p className="text-sm text-gray-500">Could not load profile.</p>
+          <p className="text-sm text-slate-500 dark:text-[#8B92A5]">Could not load profile.</p>
           <button
             onClick={onClose}
-            className="mt-3 text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
+            className="mt-3 text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             Close
           </button>
@@ -180,7 +180,7 @@ export default function UserMiniCard({
             />
             <button
               onClick={onClose}
-              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
               aria-label="Close profile card"
             >
               <X className="h-4 w-4" />
@@ -188,8 +188,8 @@ export default function UserMiniCard({
           </div>
 
           {/* Name + role */}
-          <h3 className="text-base font-semibold text-gray-900">{user.name}</h3>
-          <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">{user.name}</h3>
+          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-[#8B92A5]">
             <span
               className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
               style={{
@@ -201,55 +201,55 @@ export default function UserMiniCard({
             </span>
             {user.studentNumber && (
               <>
-                <span className="h-1 w-1 rounded-full bg-gray-300" />
+                <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
                 <span className="font-mono">{user.studentNumber}</span>
               </>
             )}
             {user.uniqueId && user.role !== "STUDENT" && (
               <>
-                <span className="h-1 w-1 rounded-full bg-gray-300" />
+                <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
                 <span className="font-mono">{user.uniqueId}</span>
               </>
             )}
           </div>
 
           {user.department && (
-            <p className="mt-1.5 text-xs text-gray-500">{user.department}</p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-[#8B92A5]">{user.department}</p>
           )}
           {user.yearLevel && user.role === "STUDENT" && (
-            <p className="mt-0.5 text-xs text-gray-400">{user.yearLevel}</p>
+            <p className="mt-0.5 text-xs text-slate-400 dark:text-[#8B92A5]">{user.yearLevel}</p>
           )}
 
           {/* Divider */}
-          <hr className="my-3 border-gray-200" />
+          <hr className="my-3 border-slate-100 dark:border-white/5" />
 
           {/* Contact info */}
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
+              <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
               <span className="truncate">{user.email}</span>
             </div>
             {user.phone && (
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
+                <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                 <span>{user.phone}</span>
               </div>
             )}
             {user.bio && (
-              <div className="flex items-start gap-2 text-xs text-gray-600">
-                <BookOpen className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
+                <BookOpen className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
                 <span className="line-clamp-2">{user.bio}</span>
               </div>
             )}
           </div>
 
           {/* Divider */}
-          <hr className="my-3 border-gray-200" />
+          <hr className="my-3 border-slate-100 dark:border-white/5" />
 
           {/* View Full Profile */}
           <Link
             href={`/${instituteCode}/users/${user.id}`}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
             style={{ color: theme.colors.primary }}
             onClick={onClose}
           >

@@ -4,9 +4,7 @@ export default function TeacherDashboardLoading() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Welcome Banner Skeleton */}
-      <div className="rounded-2xl p-6 sm:p-8 overflow-hidden">
-        <Skeleton className="h-28 w-full rounded-2xl" shimmer />
-      </div>
+      <Skeleton className="h-32 w-full rounded-2xl" shimmer />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -27,13 +25,13 @@ export default function TeacherDashboardLoading() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden"
               >
                 <Skeleton className="h-28 w-full rounded-none" shimmer />
                 <div className="p-4 space-y-2">
                   <Skeleton className="h-4 w-3/4" shimmer />
                   <Skeleton className="h-3 w-1/2" shimmer />
-                  <div className="pt-3 border-t border-gray-100 mt-3 flex justify-between">
+                  <div className="pt-3 border-t border-slate-100 dark:border-white/5 mt-3 flex justify-between">
                     <div className="flex gap-3">
                       <Skeleton className="h-3 w-16" shimmer />
                       <Skeleton className="h-3 w-16" shimmer />
@@ -58,11 +56,11 @@ export default function TeacherDashboardLoading() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 shadow-xs space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-3 rounded-xl border border-gray-100"
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5"
               >
                 <div className="space-y-1.5 flex-1">
                   <Skeleton className="h-4 w-32" shimmer />

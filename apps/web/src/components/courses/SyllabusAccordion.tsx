@@ -126,32 +126,32 @@ export default function SyllabusAccordion({
         return (
           <div
             key={type}
-            className="overflow-hidden rounded-lg border border-gray-300 bg-white"
+            className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs"
           >
             {/* Section Header */}
             <button
               onClick={() => toggleSection(type)}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
+              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer"
             >
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               )}
               <Icon className="h-5 w-5" style={{ color: config.color }} />
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
                 {config.label}
               </span>
-              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+              <span className="ml-auto rounded-full bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:text-[#8B92A5]">
                 {typeItems.length}
               </span>
             </button>
 
             {/* Section Items */}
             {isExpanded && (
-              <div className="border-t border-gray-200">
+              <div className="border-t border-slate-100 dark:border-white/5 divide-y divide-slate-100 dark:divide-white/5">
                 {typeItems.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-sm text-gray-400">
+                  <p className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     No {config.label.toLowerCase()} yet.
                   </p>
                 ) : (
@@ -159,18 +159,14 @@ export default function SyllabusAccordion({
                     <Link
                       href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}`}
                       key={item.id}
-                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-gray-50 ${
-                        index < typeItems.length - 1
-                          ? "border-b border-gray-50"
-                          : ""
-                      }`}
+                      className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.02] group"
                       style={{
                         animation: `staggerFadeIn 0.2s ease-out both`,
                         animationDelay: `${Math.min(index, 10) * 40}ms`,
                       }}
                     >
                       <div
-                        className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full"
+                        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl"
                         style={{
                           backgroundColor: `${config.color}15`,
                           color: config.color,
@@ -180,28 +176,28 @@ export default function SyllabusAccordion({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] group-hover:text-[#F97316] transition-colors">
                           {item.title}
                         </p>
                         {item.description && (
-                          <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-[#8B92A5] line-clamp-2">
                             {item.description}
                           </p>
                         )}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           {item.dueDate && (
-                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-[#8B92A5]">
                               <Calendar className="h-3 w-3" />
                               Due {formatDate(item.dueDate)}
                             </span>
                           )}
                           {item.maxPoints !== null && item.maxPoints !== undefined && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-slate-400 dark:text-[#8B92A5]">
                               {item.maxPoints} pts
                             </span>
                           )}
                           {item.targetGroups.length > 0 && (
-                            <span className="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                            <span className="inline-flex items-center rounded-md bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
                               {item.targetGroups.length === 1
                                 ? item.targetGroups[0].group.groupName
                                 : `${item.targetGroups.length} groups`}
@@ -214,14 +210,14 @@ export default function SyllabusAccordion({
                         <div className="flex shrink-0 items-center gap-1.5">
                           <button
                             onClick={(e) => { e.preventDefault(); onEdit?.(item); }}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer"
                             aria-label={`Edit ${item.title}`}
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={(e) => { e.preventDefault(); onDelete?.(item.id); }}
-                            className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition"
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition cursor-pointer"
                             aria-label={`Delete ${item.title}`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

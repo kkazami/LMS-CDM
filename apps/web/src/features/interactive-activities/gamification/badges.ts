@@ -47,6 +47,58 @@ export const BADGE_RULES: BadgeRule[] = [
       const state = JSON.parse(submission.stateCheck || "{}");
       return state.language === "python" && submission.passed;
     }
+  },
+  {
+    id: "codelab_first_solve",
+    name: "First CodeLab Solve",
+    description: "Solve your first CodeLab algorithmic problem with 100% score.",
+    icon: "Award",
+    evaluate: (submission) => {
+      return submission.activityType === "codelab" && (submission.score === 100 || submission.passed);
+    }
+  },
+  {
+    id: "codelab_hard_solver",
+    name: "Hard Problem Master",
+    description: "Successfully solve a hard tier CodeLab problem (Level 21+).",
+    icon: "Flame",
+    evaluate: (submission) => {
+      if (submission.activityType !== "codelab" || (!submission.passed && submission.score < 100)) return false;
+      try {
+        const state = JSON.parse(submission.stateCheck || "{}");
+        const level = typeof state.level === "number" ? state.level : 0;
+        return level >= 21;
+      } catch {
+        return false;
+      }
+    }
+  },
+  {
+    id: "codelab_champion",
+    name: "CodeLab Champion",
+    description: "Solve all 30 problems in the CodeLab problem bank.",
+    icon: "Trophy",
+    evaluate: (submission, profile, history) => {
+      if (submission.activityType !== "codelab") return false;
+      const passedProblems = new Set(
+        history
+          .filter((h) => h.activityType === "codelab" && (h.passed || h.score === 100))
+          .map((h) => h.templateId)
+      );
+      if (submission.passed || submission.score === 100) {
+        passedProblems.add(submission.templateId);
+      }
+      return passedProblems.size >= 30;
+    }
+  },
+  {
+    id: "codelab_streak",
+    name: "CodeLab 5-Day Streak",
+    description: "Maintain a 5-day active problem solving streak in CodeLab.",
+    icon: "Zap",
+    evaluate: (submission, profile) => {
+      return submission.activityType === "codelab" && profile.currentStreak >= 5;
+    }
   }
 ];
 

@@ -133,7 +133,7 @@ function TodoSection({
   };
 
   return (
-    <div id={id} className="mb-2">
+    <div id={id} className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-4 sm:p-5 shadow-xs mb-3">
       {/* Section Header */}
       <div
         id={`${id}-header`}
@@ -142,59 +142,66 @@ function TodoSection({
         aria-expanded={isOpen}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="flex items-center justify-between cursor-pointer select-none border-b border-gray-200 pb-3 mb-0 group"
+        className="flex items-center justify-between cursor-pointer select-none group"
       >
-        <h2 className="text-lg font-semibold text-gray-800">{label}</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">{label}</h2>
           <span
-            className="text-sm font-semibold"
-            style={{ color: theme.colors.primary }}
+            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: `${theme.colors.primary}1A`,
+              color: theme.colors.primary,
+            }}
           >
             {items.length}
           </span>
-          {isOpen ? (
-            <ChevronUp className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
-          )}
         </div>
+        {isOpen ? (
+          <ChevronUp className="h-5 w-5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-[#F0F2F8] transition-colors" />
+        ) : (
+          <ChevronDown className="h-5 w-5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-[#F0F2F8] transition-colors" />
+        )}
       </div>
 
       {/* Section Content — animated expand/collapse */}
       <div
         className="transition-all duration-300 ease-in-out overflow-hidden"
         style={{
-          maxHeight: isOpen ? `${items.length * 100 + 20}px` : "0px",
+          maxHeight: isOpen ? `${items.length * 120 + 20}px` : "0px",
           opacity: isOpen ? 1 : 0,
         }}
       >
-        <div className="pt-2">
-          {items.map((item, idx) => {
-            const isAssignment = item.type === "ASSIGNMENT";
-            const IconComponent = isAssignment ? ClipboardList : BookOpenCheck;
+        <div className="pt-3 space-y-1.5">
+          {items.length === 0 ? (
+            <p className="text-xs text-slate-400 dark:text-[#555C72] py-2">
+              No items in this section.
+            </p>
+          ) : (
+            items.map((item) => {
+              const isAssignment = item.type === "ASSIGNMENT";
+              const IconComponent = isAssignment ? ClipboardList : BookOpenCheck;
 
-            const dueBadgeVariant = item.dueDate
-              ? getDueBadgeVariant(item.dueDate, serverNow)
-              : null;
+              const dueBadgeVariant = item.dueDate
+                ? getDueBadgeVariant(item.dueDate, serverNow)
+                : null;
 
-            const dueBadgeBg =
-              dueBadgeVariant === "red"
-                ? "bg-red-50 text-red-600"
-                : dueBadgeVariant === "amber"
-                  ? "bg-amber-50 text-amber-600"
-                  : "bg-gray-100 text-gray-600";
+              const dueBadgeBg =
+                dueBadgeVariant === "red"
+                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                  : dueBadgeVariant === "amber"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#8B92A5]";
 
-            return (
-              <div key={item.id}>
-                {idx > 0 && <hr className="border-gray-100" />}
+              return (
                 <Link
+                  key={item.id}
                   id={`todo-item-${item.id}`}
                   href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-                  className="flex items-center gap-4 py-4 px-4 sm:px-6 rounded-lg hover:bg-gray-50 transition-colors group/item"
+                  className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group/item border border-transparent hover:border-slate-200 dark:hover:border-white/5"
                 >
                   {/* Icon avatar */}
                   <div
-                    className="flex items-center justify-center h-10 w-10 rounded-full shrink-0"
+                    className="flex items-center justify-center h-10 w-10 rounded-xl shrink-0"
                     style={{
                       backgroundColor: iconColors.bg,
                       color: iconColors.text,
@@ -205,14 +212,14 @@ function TodoSection({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate group-hover/item:text-[#F97316] transition-colors">
                       {item.title}
                     </p>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#8B92A5] truncate mt-0.5">
                       {item.courseCode}
                       {item.courseSection ? ` • ${item.courseSection}` : ""}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-[11px] text-slate-400 dark:text-[#555C72] mt-0.5">
                       {formatPostedDate(item.createdAt)}
                     </p>
                   </div>
@@ -220,15 +227,15 @@ function TodoSection({
                   {/* Due date badge */}
                   {item.dueDate && (
                     <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 ${dueBadgeBg}`}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 ${dueBadgeBg}`}
                     >
                       {formatDueDate(item.dueDate)}
                     </span>
                   )}
                 </Link>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>
@@ -275,35 +282,22 @@ export default function TodoClient({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto page-enter">
+    <div className="max-w-4xl mx-auto page-enter space-y-6">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">To-do</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">To-do</h1>
+        <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
           Assignments and quizzes across your enrolled courses
         </p>
       </div>
 
       {/* Filter Bar */}
-      <div className="mb-6">
+      <div>
         <select
           id="todo-course-filter"
           value={selectedCourseId}
           onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="w-full sm:w-auto min-w-[200px] px-4 py-2.5 text-sm font-medium bg-white border rounded-full appearance-none cursor-pointer transition-all focus:outline-none focus:ring-2"
-          style={{
-            borderColor: theme.colors.border,
-            color: theme.colors.text,
-            // Using ring as a CSS variable for focus state
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = theme.colors.primary;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = theme.colors.border;
-            e.currentTarget.style.boxShadow = "none";
-          }}
+          className="w-full sm:w-auto min-w-[220px] px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-slate-800 dark:text-[#F0F2F8] cursor-pointer shadow-xs outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
         >
           <option value="all">All classes</option>
           {enrolledCourses.map((course) => (
@@ -318,13 +312,13 @@ export default function TodoClient({
       {totalFiltered === 0 ? (
         <div
           id="todo-empty-state"
-          className="flex flex-col items-center justify-center py-20"
+          className="flex flex-col items-center justify-center py-20 rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-8 shadow-xs text-center"
         >
-          <ClipboardCheck className="h-16 w-16 text-gray-300 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-1">
+          <ClipboardCheck className="h-16 w-16 text-emerald-500 mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 dark:text-[#F0F2F8] mb-1">
             You&apos;re all caught up!
           </h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-500 dark:text-[#8B92A5]">
             No assignments or quizzes are pending.
           </p>
         </div>

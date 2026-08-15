@@ -92,8 +92,8 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[#2C2727]">Audit Log</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Audit Log</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">
           Immutable ledger of all administrative actions. This log cannot be modified or deleted.
         </p>
       </div>
@@ -103,7 +103,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none"
+          className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none"
         >
           <option value="">All Actions</option>
           <option value="ACCOUNT_CREATED">Account Created</option>
@@ -116,44 +116,42 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
           <option value="PERMISSION_MATRIX">Permission Matrix</option>
         </select>
 
-        <span className="text-sm text-gray-400">{total} entries</span>
+        <span className="text-xs text-slate-400 dark:text-[#8B92A5]">{total} entries</span>
       </div>
 
       {/* Timeline */}
-      <div className="rounded-xl border border-gray-300 bg-white">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden">
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-start gap-4 border-b border-gray-50 px-6 py-4">
-                <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
+              <div key={i} className="flex items-start gap-4 border-b border-slate-100 dark:border-white/5 px-6 py-4">
+                <div className="h-9 w-9 animate-pulse rounded-full bg-slate-100 dark:bg-white/5" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
-                  <div className="h-3 w-32 animate-pulse rounded bg-gray-50" />
+                  <div className="h-4 w-48 animate-pulse rounded bg-slate-100 dark:bg-white/5" />
+                  <div className="h-3 w-32 animate-pulse rounded bg-slate-50 dark:bg-white/[0.02]" />
                 </div>
               </div>
             ))}
           </div>
         ) : logs.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">
+          <div className="py-16 text-center text-slate-400 dark:text-slate-500">
             <FileText className="mx-auto h-8 w-8 mb-2 opacity-40" />
-            <p className="text-sm">No audit entries found.</p>
+            <p className="text-xs font-medium">No audit entries found.</p>
           </div>
         ) : (
-          <div>
-            {logs.map((log, i) => {
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {logs.map((log) => {
               const display = getActionDisplay(log.action);
               const Icon = display.icon;
 
               return (
                 <div
                   key={log.id}
-                  className={`flex items-start gap-4 px-6 py-4 transition-colors hover:bg-gray-50/50 ${
-                    i < logs.length - 1 ? "border-b border-gray-50" : ""
-                  }`}
+                  className="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
                 >
                   {/* Icon */}
                   <div
-                    className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                    className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl"
                     style={{ backgroundColor: `${display.color}15`, color: display.color }}
                   >
                     <Icon className="h-4 w-4" />
@@ -162,20 +160,20 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-[#2C2727]">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">
                         {formatActionLabel(log.action)}
                       </span>
-                      <span className="text-xs text-gray-400">
-                        by <span className="font-medium text-gray-600">{log.adminName ?? "System"}</span>
+                      <span className="text-xs text-slate-400 dark:text-[#8B92A5]">
+                        by <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">{log.adminName ?? "System"}</span>
                       </span>
                     </div>
 
-                    <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-[#8B92A5]">
                       <span>
-                        Target: <span className="font-medium">{log.targetName ?? log.targetId}</span>
+                        Target: <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">{log.targetName ?? log.targetId}</span>
                       </span>
                       {log.ipAddress && log.ipAddress !== "" && (
-                        <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px]">
+                        <span className="rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:text-[#8B92A5]">
                           {log.ipAddress}
                         </span>
                       )}
@@ -183,7 +181,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
 
                     {/* Metadata preview */}
                     {log.metadata && Object.keys(log.metadata).length > 0 && (
-                      <div className="mt-2 rounded-md bg-gray-50 px-2.5 py-1.5 font-mono text-[10px] text-gray-400 max-w-full overflow-x-auto">
+                      <div className="mt-2 rounded-xl bg-slate-50 dark:bg-[#1E2132] border border-slate-200/50 dark:border-white/5 px-3 py-2 font-mono text-[10px] text-slate-600 dark:text-[#8B92A5] max-w-full overflow-x-auto">
                         {JSON.stringify(log.metadata, null, 0).slice(0, 200)}
                       </div>
                     )}
@@ -191,7 +189,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
 
                   {/* Timestamp */}
                   <div className="shrink-0 text-right">
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-[#8B92A5]">
                       <Clock className="h-3 w-3" />
                       {new Date(log.createdAt).toLocaleDateString("en-US", {
                         month: "short",
@@ -199,7 +197,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
                         year: "numeric",
                       })}
                     </div>
-                    <div className="mt-0.5 text-[10px] text-gray-300">
+                    <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-600">
                       {new Date(log.createdAt).toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -215,22 +213,22 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
-            <p className="text-xs text-gray-500">
+          <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 px-6 py-3 bg-slate-50/30 dark:bg-white/[0.01]">
+            <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
               Page {page} of {totalPages}
             </p>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 text-slate-500 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 text-slate-500 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -240,7 +238,7 @@ export default function AuditLogClient({ theme }: AuditLogClientProps) {
       </div>
 
       {/* Security Notice */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-400">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] px-4 py-3 text-xs text-slate-500 dark:text-[#8B92A5]">
         This audit log is an immutable ledger. Entries cannot be edited or deleted. All timestamps are in UTC.
       </div>
     </div>

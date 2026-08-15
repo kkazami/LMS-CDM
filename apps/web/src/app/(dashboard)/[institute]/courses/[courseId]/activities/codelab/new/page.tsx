@@ -122,85 +122,85 @@ export default async function NewCodeLabActivityPage({
 ]`;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create CodeLab Assignment</h1>
-        <p className="text-gray-500 text-sm mt-1">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Create CodeLab Assignment</h1>
+        <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1">
           Configure a multi-language programming assignment with auto-grading.
         </p>
       </div>
 
-      <form action={createTemplate} className="space-y-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <form action={createTemplate} className="space-y-8 bg-white dark:bg-[#141721] p-6 rounded-2xl border border-slate-200/80 dark:border-white/5 shadow-xs">
         
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Assignment Basics</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Assignment Basics</h2>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-indigo-600" />
-              <span className="text-sm font-medium">Difficulty 1 (Beginner)</span>
+              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Difficulty 1 (Beginner)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="2" className="accent-indigo-600" />
-              <span className="text-sm font-medium">Difficulty 2 (Intermediate)</span>
+              <input type="radio" name="difficulty" value="2" className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Difficulty 2 (Intermediate)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="3" className="accent-indigo-600" />
-              <span className="text-sm font-medium">Difficulty 3 (Advanced)</span>
+              <input type="radio" name="difficulty" value="3" className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Difficulty 3 (Advanced)</span>
             </label>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Description Template (Markdown)</h2>
-          <p className="text-xs text-gray-500">Use <code>{`{{VARIABLE_NAME}}`}</code> to inject randomized variables.</p>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Description Template (Markdown)</h2>
+          <p className="text-xs text-slate-400 dark:text-[#8B92A5]">Use <code>{`{{VARIABLE_NAME}}`}</code> to inject randomized variables.</p>
           <textarea 
             name="descriptionTemplate" 
             defaultValue={defaultDesc}
             rows={3}
-            className="w-full font-mono text-sm p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Variables Config (JSON Array)</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Variables Config (JSON Array)</h2>
             <textarea 
               name="variablesConfig" 
               defaultValue={defaultVars}
               rows={6}
-              className="w-full font-mono text-xs p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
             />
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Function Signature (JSON Object)</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Function Signature (JSON Object)</h2>
             <textarea 
               name="signatureConfig" 
               defaultValue={defaultSig}
               rows={6}
-              className="w-full font-mono text-xs p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Public Test Cases (JSON Array)</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Public Test Cases (JSON Array)</h2>
             <textarea 
               name="publicTestCases" 
               defaultValue={defaultPublicTests}
               rows={6}
-              className="w-full font-mono text-xs p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
             />
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Hidden Test Cases (JSON Array)</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Hidden Test Cases (JSON Array)</h2>
             <textarea 
               name="hiddenTestCases" 
               defaultValue={defaultHiddenTests}
               rows={6}
-              className="w-full font-mono text-xs p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
             />
           </div>
         </div>
@@ -208,10 +208,10 @@ export default async function NewCodeLabActivityPage({
         <div className="pt-4 flex justify-end">
           <button 
             type="submit"
-            className="px-6 py-2.5 rounded-lg text-white font-medium transition-colors hover:opacity-90"
+            className="px-6 py-2.5 rounded-xl text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             style={{ backgroundColor: theme.colors.primary }}
           >
-            Create CodeLab Template
+            Create Assignment Template
           </button>
         </div>
       </form>

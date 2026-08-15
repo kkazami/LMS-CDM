@@ -94,18 +94,18 @@ export default function GradingPolicyModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#1A1D27] border border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-6 py-4 shrink-0">
           <div className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-gray-500" style={{ color: theme.colors.primary }} />
-            <h2 className="text-lg font-semibold text-gray-900">Grading Policy</h2>
+            <Calculator className="h-5 w-5" style={{ color: theme.colors.primary }} />
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-[#F0F2F8]">Grading Policy</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors"
+            className="rounded-full p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -113,19 +113,19 @@ export default function GradingPolicyModal({
 
         {/* Body */}
         <div className="p-6 overflow-y-auto">
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-slate-500 dark:text-[#8B92A5] mb-6">
             Configure the percentage weight for each classwork category. The total must exactly equal 100%.
           </p>
 
           <div className="space-y-4">
             {Object.keys(weights).length === 0 ? (
-              <p className="text-sm text-gray-400 italic text-center py-4">
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">
                 No gradable categories found. Create assignments or quizzes first.
               </p>
             ) : (
               Object.keys(weights).sort().map((category) => (
                 <div key={category} className="flex items-center justify-between gap-4">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">
                     {formatCategoryName(category)}
                   </label>
                   <div className="flex items-center gap-2 shrink-0">
@@ -136,9 +136,9 @@ export default function GradingPolicyModal({
                       step={0.5}
                       value={weights[category]}
                       onChange={(e) => setWeights({ ...weights, [category]: e.target.value })}
-                      className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-right text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      className="w-20 rounded-lg border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-1.5 text-right text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                     />
-                    <span className="text-gray-400 text-sm font-medium w-4">%</span>
+                    <span className="text-slate-400 dark:text-slate-500 text-sm font-medium w-4">%</span>
                   </div>
                 </div>
               ))
@@ -147,36 +147,36 @@ export default function GradingPolicyModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 rounded-b-2xl shrink-0 space-y-4">
+        <div className="border-t border-slate-200/80 dark:border-white/10 px-6 py-4 bg-slate-50/50 dark:bg-[#141721] rounded-b-2xl shrink-0 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-700">Total Allocation</span>
-            <div className={`text-lg font-bold flex items-center gap-1 transition-colors ${isValidTotal ? 'text-emerald-600' : 'text-red-600'}`}>
+            <span className="text-sm font-semibold text-slate-700 dark:text-[#F0F2F8]">Total Allocation</span>
+            <div className={`text-lg font-bold flex items-center gap-1 transition-colors ${isValidTotal ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {currentTotal.toFixed(1)}%
             </div>
           </div>
 
           {!isValidTotal && (
-            <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-600">
+            <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-600 dark:text-red-400">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <span>Total weight allocation must equal exactly 100% to save.</span>
             </div>
           )}
 
           {error && (
-            <div className="text-sm text-red-600 text-center">{error}</div>
+            <div className="text-sm text-red-600 dark:text-red-400 text-center">{error}</div>
           )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+              className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={!isValidTotal || isSaving}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               style={{
                 backgroundColor: theme.colors.primary,
               }}
