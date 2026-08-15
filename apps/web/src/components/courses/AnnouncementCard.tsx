@@ -40,9 +40,17 @@ export default function AnnouncementCard({
   const params = useParams();
   const instituteCode = params.institute as string;
 
+  const isCodeLabMilestone = announcement.content.includes("CodeLab Milestone");
+
   return (
-    <div className="rounded-lg border border-gray-300 bg-white p-5 transition-shadow hover:shadow-sm">
-      <div className="flex gap-3">
+    <div
+      className={`rounded-2xl border p-5 transition-all shadow-xs ${
+        isCodeLabMilestone
+          ? "bg-gradient-to-br from-indigo-500/10 via-white dark:via-[#141721] to-amber-500/10 border-indigo-500/30"
+          : "bg-white dark:bg-[#141721] border-slate-200/80 dark:border-white/5"
+      }`}
+    >
+      <div className="flex gap-3.5">
         <UserAvatar
           name={announcement.author.name}
           avatarUrl={announcement.author.avatarUrl}
@@ -55,17 +63,22 @@ export default function AnnouncementCard({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
               {announcement.author.name}
             </span>
-            <span className="flex items-center gap-1 text-xs text-gray-400">
+            {isCodeLabMilestone && (
+              <span className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/20">
+                CodeLab Milestone
+              </span>
+            )}
+            <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-[#8B92A5]">
               <Clock className="h-3 w-3" />
               {timeAgo(announcement.createdAt)}
             </span>
           </div>
-          <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+          <div className="mt-2 text-sm text-slate-700 dark:text-[#D1D5DB] whitespace-pre-wrap leading-relaxed">
             {announcement.content}
-          </p>
+          </div>
         </div>
       </div>
       

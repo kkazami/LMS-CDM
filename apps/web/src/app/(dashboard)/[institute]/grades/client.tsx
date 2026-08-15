@@ -38,7 +38,6 @@ export default function GradesClient({
   const {
     isEnrolled,
     hasGradedWork,
-    filteredRows,
     allRows,
     gpa,
     letterGrade,
@@ -50,17 +49,17 @@ export default function GradesClient({
   const hasEnoughDataForCharts = perCourseStats.length >= 1 && allRows.length >= 2;
 
   return (
-    <div className="max-w-5xl mx-auto page-enter">
+    <div className="max-w-6xl mx-auto page-enter space-y-7">
       {/* ── Page Header ── */}
-      <div className="mb-7">
-        <h1 className="text-2xl font-bold text-gray-900">Grades</h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Grades</h1>
+        <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
           View and track your academic performance across all your classes
         </p>
       </div>
 
       {/* ── Tab Bar ── */}
-      <div className="flex items-end gap-0 border-b border-gray-200 mb-8 overflow-x-auto">
+      <div className="flex items-end gap-1 border-b border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -69,11 +68,11 @@ export default function GradesClient({
               key={tab.key}
               id={`grades-tab-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className="flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-              style={{
-                borderColor: isActive ? theme.colors.primary : "transparent",
-                color: isActive ? theme.colors.primary : "#6B7280",
-              }}
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
+                isActive
+                  ? "border-[#F97316] text-[#F97316]"
+                  : "border-transparent text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
+              }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span>{tab.label}</span>
@@ -83,13 +82,10 @@ export default function GradesClient({
       </div>
 
       {/* ── Tab Content ── */}
-
       {activeTab === "dashboard" && (
         !isEnrolled ? (
-          // Not enrolled in any class at all
           <GradesEmptyState tab="dashboard" theme={theme} />
         ) : !hasGradedWork ? (
-          // Enrolled but instructor hasn't graded anything yet
           <GradesNoGradedWork theme={theme} />
         ) : (
           <GradesDashboard
@@ -106,7 +102,6 @@ export default function GradesClient({
         !isEnrolled ? (
           <GradesEmptyState tab="analytics" theme={theme} />
         ) : !hasEnoughDataForCharts ? (
-          // Enrolled but insufficient graded data for meaningful charts
           <GradesNoGradedWork tab="analytics" theme={theme} />
         ) : (
           <GradesAnalytics

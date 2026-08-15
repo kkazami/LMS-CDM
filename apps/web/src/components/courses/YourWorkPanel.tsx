@@ -86,17 +86,17 @@ export default function YourWorkPanel({
   const canEdit = !isPastDeadline && !isSubmitted;
 
   const statusConfig = {
-    DRAFT: { label: "Not submitted", color: "text-gray-500", bg: "bg-gray-100", Icon: FileText },
+    DRAFT: { label: "Not submitted", color: "text-slate-500 dark:text-[#8B92A5]", bg: "bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5", Icon: FileText },
     SUBMITTED: {
       label: submission.submittedAt
         ? `Submitted ${new Date(submission.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
         : "Submitted",
-      color: "text-emerald-700",
-      bg: "bg-emerald-50",
+      color: "text-emerald-700 dark:text-emerald-400",
+      bg: "bg-emerald-500/10 border border-emerald-500/20",
       Icon: CheckCircle2,
     },
-    GRADED: { label: "Graded", color: "text-blue-700", bg: "bg-blue-50", Icon: CheckCircle2 },
-    RETURNED: { label: "Returned with grade", color: "text-purple-700", bg: "bg-purple-50", Icon: CheckCircle2 },
+    GRADED: { label: "Graded", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-500/10 border border-blue-500/20", Icon: CheckCircle2 },
+    RETURNED: { label: "Returned with grade", color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-500/10 border border-purple-500/20", Icon: CheckCircle2 },
   };
 
   const status = statusConfig[submission.status as keyof typeof statusConfig] ?? statusConfig.DRAFT;
@@ -208,43 +208,41 @@ export default function YourWorkPanel({
   }
 
   return (
-    <div className="sticky top-6">
+    <div className="sticky top-6 space-y-4">
       {/* Status Badge */}
-      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium mb-4 ${status.bg} ${status.color}`}>
-        <status.Icon className="h-4 w-4" />
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${status.bg} ${status.color}`}>
+        <status.Icon className="h-3.5 w-3.5" />
         {status.label}
       </div>
 
       {/* Grade display (returned) */}
       {isReturned && submission.grade !== null && (
-        <div className="mb-4 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 p-4 text-center">
-          <p className="text-3xl font-bold text-purple-700">
+        <div className="rounded-2xl bg-purple-500/10 border border-purple-500/20 p-4 text-center">
+          <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
             {submission.grade}
             {maxPoints && <span className="text-lg text-purple-400">/{maxPoints}</span>}
           </p>
-          <p className="text-xs text-purple-500 mt-0.5">Grade received</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5 font-medium">Grade received</p>
         </div>
       )}
 
       {/* Deadline-passed lock notice */}
       {isLocked && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-600">
+        <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-600 dark:text-red-400">
           <Lock className="h-4 w-4 shrink-0" />
           <span>The deadline has passed. Submission is locked.</span>
         </div>
       )}
 
-
-
       {/* Your work card */}
-      <div className="rounded-2xl border border-gray-300 bg-white shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-800">Your work</h3>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">Your work</h3>
           {canEdit && (
             <button
               onClick={() => setIsAttachModalOpen(true)}
               disabled={isPending}
-              className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold text-[#F97316] hover:text-[#EA580C] transition-colors cursor-pointer"
             >
               <Paperclip className="h-3.5 w-3.5" />
               Add or create
@@ -253,9 +251,9 @@ export default function YourWorkPanel({
         </div>
 
         {/* Attachment list */}
-        <div className="p-3 min-h-[80px]">
+        <div className="p-3 min-h-[80px] space-y-1.5">
           {submission.attachments.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-4">
+            <p className="text-xs text-slate-400 dark:text-[#8B92A5] text-center py-6">
               {canEdit ? "Attach files or links to your work" : "No attachments"}
             </p>
           )}
@@ -266,26 +264,26 @@ export default function YourWorkPanel({
             return (
               <div
                 key={att.id}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 group"
+                className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group"
               >
-                <Icon className="h-4 w-4 text-gray-400 shrink-0" />
+                <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 <a
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   download={att.url.startsWith("data:") ? (att.fileName || "file") : undefined}
-                  className="text-sm text-blue-600 hover:underline truncate flex-1 min-w-0"
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline truncate flex-1 min-w-0"
                 >
                   {att.fileName || att.url}
                 </a>
-                <span className="text-[10px] text-gray-400 shrink-0">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
                   {isLink ? "Link" : "File"}
                 </span>
                 {canEdit && (
                   <button
                     onClick={() => handleRemove(att.id)}
                     disabled={isPending}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 shrink-0"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 shrink-0 cursor-pointer"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -300,24 +298,24 @@ export default function YourWorkPanel({
         )}
 
         {/* Action buttons */}
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 pt-1">
           {!isLocked && !isReturned && (
             isSubmitted ? (
               <button
                 onClick={handleUnsubmit}
                 disabled={isPending || isPastDeadline}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-all"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-all cursor-pointer"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Unsubmit
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F97316] hover:bg-[#EA580C] py-2.5 text-xs font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
                 {isPending ? "Submitting..." : "Turn in"}
               </button>
             )

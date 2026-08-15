@@ -1,43 +1,46 @@
+import Skeleton from "@/components/common/Skeleton";
+
 export default function PublicProfileLoading() {
   return (
-    <div className="mx-auto max-w-3xl animate-pulse">
+    <div className="mx-auto max-w-3xl space-y-6">
       {/* Banner skeleton */}
-      <div className="h-36 rounded-t-2xl bg-gray-200 sm:h-44" />
+      <Skeleton className="h-36 rounded-2xl sm:h-44 w-full" shimmer />
 
       <div className="relative px-6">
         {/* Avatar skeleton */}
-        <div className="-mt-12 mb-4">
-          <div className="h-20 w-20 rounded-full bg-gray-300 ring-4 ring-white" />
+        <div className="-mt-14 mb-4">
+          <Skeleton className="h-24 w-24 rounded-full ring-4 ring-white dark:ring-[#0B0D13]" shimmer />
         </div>
 
         {/* Name skeleton */}
-        <div className="h-7 w-48 rounded bg-gray-200" />
+        <Skeleton className="h-7 w-48" shimmer />
         <div className="mt-2 flex items-center gap-2">
-          <div className="h-5 w-16 rounded-full bg-gray-200" />
-          <div className="h-4 w-32 rounded bg-gray-200" />
+          <Skeleton className="h-5 w-20 rounded-full" shimmer />
+          <Skeleton className="h-4 w-36" shimmer />
         </div>
       </div>
 
       {/* About section skeleton */}
-      <div className="mt-8 px-6">
-        <div className="h-4 w-24 rounded bg-gray-200 mb-3" />
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
-          <div className="h-4 w-full rounded bg-gray-100" />
-          <div className="h-4 w-3/4 rounded bg-gray-100" />
-          <hr className="border-gray-100" />
-          <div className="h-4 w-48 rounded bg-gray-100" />
-          <div className="h-4 w-40 rounded bg-gray-100" />
+      <div className="px-6">
+        <Skeleton className="h-5 w-24 mb-3" shimmer />
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-3 shadow-xs">
+          <Skeleton className="h-4 w-full" shimmer />
+          <Skeleton className="h-4 w-3/4" shimmer />
+          <div className="border-t border-slate-100 dark:border-white/5 pt-3 space-y-2">
+            <Skeleton className="h-4 w-48" shimmer />
+            <Skeleton className="h-4 w-40" shimmer />
+          </div>
         </div>
       </div>
 
       {/* Courses section skeleton */}
-      <div className="mt-6 px-6 pb-8">
-        <div className="h-4 w-28 rounded bg-gray-200 mb-3" />
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="px-6 pb-8">
+        <Skeleton className="h-5 w-28 mb-3" shimmer />
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 shadow-xs">
           <div className="flex flex-wrap gap-2">
-            <div className="h-8 w-32 rounded-full bg-gray-100" />
-            <div className="h-8 w-40 rounded-full bg-gray-100" />
-            <div className="h-8 w-36 rounded-full bg-gray-100" />
+            <Skeleton className="h-8 w-32 rounded-full" shimmer />
+            <Skeleton className="h-8 w-40 rounded-full" shimmer />
+            <Skeleton className="h-8 w-36 rounded-full" shimmer />
           </div>
         </div>
       </div>

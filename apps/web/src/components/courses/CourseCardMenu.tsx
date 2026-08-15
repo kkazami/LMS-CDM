@@ -83,7 +83,7 @@ export default function CourseCardMenu({
               setOpen(false);
             }}
           />
-          <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-gray-200 bg-white shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+          <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#22263A] shadow-xl py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-100 text-slate-700 dark:text-[#F0F2F8]">
             {isStudent ? (
             <button
               type="button"
@@ -93,7 +93,7 @@ export default function CourseCardMenu({
                 onUnenroll?.();
               }}
               onMouseDown={stopEvent}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               Unenroll
@@ -109,9 +109,9 @@ export default function CourseCardMenu({
                     onEdit();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <Edit2 className="h-4 w-4 text-blue-600" />
+                  <Edit2 className="h-4 w-4 text-blue-500" />
                   Edit
                 </button>
               )}
@@ -124,7 +124,7 @@ export default function CourseCardMenu({
                     onCustomizeCard();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <ImageIcon className="h-4 w-4 text-blue-500" />
                   Customize Card
@@ -139,7 +139,7 @@ export default function CourseCardMenu({
                     onUnarchive?.();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <ArchiveRestore className="h-4 w-4 text-indigo-500" />
                   Unarchive
@@ -153,9 +153,9 @@ export default function CourseCardMenu({
                     onArchive?.();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <Archive className="h-4 w-4 text-gray-400" />
+                  <Archive className="h-4 w-4 text-slate-400 dark:text-[#8B92A5]" />
                   Archive
                 </button>
               )}

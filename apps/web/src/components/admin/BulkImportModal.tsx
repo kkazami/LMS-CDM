@@ -131,17 +131,17 @@ export default function BulkImportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-gray-300 bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-6 py-4">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5" style={{ color: theme.colors.primary }} />
-            <h3 className="text-lg font-semibold text-[#2C2727]">Bulk User Import</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">Bulk User Import</h3>
           </div>
           <button
             onClick={handleClose}
-            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -151,15 +151,15 @@ export default function BulkImportModal({
           {/* Stage: Input */}
           {stage === "input" && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-600">
-                <p className="font-medium">CSV Format Required</p>
-                <p className="mt-1">Headers: <code className="rounded bg-blue-100 px-1">name,email,uniqueId,role</code></p>
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-xs text-blue-700 dark:text-blue-300">
+                <p className="font-semibold">CSV Format Required</p>
+                <p className="mt-1">Headers: <code className="rounded bg-blue-500/20 px-1 py-0.5 font-mono">name,email,uniqueId,role</code></p>
                 <p className="mt-1">Roles: STUDENT, INSTRUCTOR, ADMIN. Default is STUDENT if omitted.</p>
               </div>
 
               {/* File upload */}
               <div className="flex items-center gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 shadow-xs">
                   <FileText className="h-4 w-4" />
                   Upload CSV File
                   <input
@@ -169,7 +169,7 @@ export default function BulkImportModal({
                     className="hidden"
                   />
                 </label>
-                <span className="text-xs text-gray-400">or paste below</span>
+                <span className="text-xs text-slate-400 dark:text-[#8B92A5]">or paste below</span>
               </div>
 
               <textarea
@@ -177,19 +177,11 @@ export default function BulkImportModal({
                 onChange={(e) => setCsvText(e.target.value)}
                 placeholder={`name,email,uniqueId,role\nJohn Doe,john@school.edu,2024-001,STUDENT\nJane Smith,jane@school.edu,EMP-042,INSTRUCTOR`}
                 rows={10}
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 font-mono text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = theme.colors.ring;
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#E5E7EB";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-50/50 dark:bg-[#1E2132] p-3 font-mono text-xs text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               />
 
               {error && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {error}
                 </div>
@@ -198,14 +190,14 @@ export default function BulkImportModal({
               <div className="flex justify-end gap-2">
                 <button
                   onClick={handleClose}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePreview}
                   disabled={!csvText.trim()}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
                 >
                   Preview Import
@@ -217,31 +209,31 @@ export default function BulkImportModal({
           {/* Stage: Preview */}
           {stage === "preview" && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Review <strong>{parsedRows.length}</strong> rows before importing:
+              <p className="text-xs text-slate-600 dark:text-[#8B92A5]">
+                Review <strong className="text-slate-900 dark:text-[#F0F2F8]">{parsedRows.length}</strong> rows before importing:
               </p>
 
-              <div className="max-h-[300px] overflow-auto rounded-lg border border-gray-300">
+              <div className="max-h-[300px] overflow-auto rounded-xl border border-slate-200/80 dark:border-white/10">
                 <table className="min-w-full text-left text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
+                  <thead className="bg-slate-50 dark:bg-[#181B26] sticky top-0 border-b border-slate-200/80 dark:border-white/5">
                     <tr>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">#</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">ID</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Role</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">#</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Name</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Email</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">ID</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Role</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                     {parsedRows.map((row, i) => (
-                      <tr key={i} className="border-t border-gray-50">
-                        <td className="px-3 py-2 text-xs text-gray-400">{i + 1}</td>
-                        <td className="px-3 py-2 text-gray-700">{row.name || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{row.email || "—"}</td>
-                        <td className="px-3 py-2 font-mono text-xs text-gray-500">
+                      <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500">{i + 1}</td>
+                        <td className="px-3 py-2 text-xs font-medium text-slate-800 dark:text-[#F0F2F8]">{row.name || "—"}</td>
+                        <td className="px-3 py-2 text-xs text-slate-600 dark:text-[#8B92A5]">{row.email || "—"}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-slate-500 dark:text-[#8B92A5]">
                           {row.uniqueid || row.uniqueId || "—"}
                         </td>
-                        <td className="px-3 py-2 text-xs text-gray-500 uppercase">
+                        <td className="px-3 py-2 text-xs text-slate-500 dark:text-[#8B92A5] uppercase font-semibold">
                           {row.role || "STUDENT"}
                         </td>
                       </tr>
@@ -251,7 +243,7 @@ export default function BulkImportModal({
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {error}
                 </div>
@@ -260,14 +252,14 @@ export default function BulkImportModal({
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setStage("input")}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
                 >
                   {loading ? "Importing..." : `Import ${parsedRows.length} Users`}
@@ -281,33 +273,33 @@ export default function BulkImportModal({
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-gray-300 bg-gray-50 p-3 text-center">
-                  <p className="text-2xl font-bold text-[#2C2727]">{summary.total}</p>
-                  <p className="text-xs text-gray-500">Total</p>
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-3 text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">{summary.total}</p>
+                  <p className="text-xs text-slate-500 dark:text-[#8B92A5]">Total</p>
                 </div>
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-700">{summary.created}</p>
-                  <p className="text-xs text-emerald-600">Created</p>
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{summary.created}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">Created</p>
                 </div>
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
-                  <p className="text-2xl font-bold text-red-600">{summary.failed}</p>
-                  <p className="text-xs text-red-500">Failed</p>
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-center">
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{summary.failed}</p>
+                  <p className="text-xs text-red-500 dark:text-red-400">Failed</p>
                 </div>
               </div>
 
               {/* Results list */}
-              <div className="max-h-[250px] overflow-auto rounded-lg border border-gray-300">
+              <div className="max-h-[250px] overflow-auto rounded-xl border border-slate-200/80 dark:border-white/10">
                 <table className="min-w-full text-left text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
+                  <thead className="bg-slate-50 dark:bg-[#181B26] sticky top-0 border-b border-slate-200/80 dark:border-white/5">
                     <tr>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Details</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Status</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Email</th>
+                      <th className="px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase">Details</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                     {results.map((r, i) => (
-                      <tr key={i} className="border-t border-gray-50">
+                      <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                         <td className="px-3 py-2">
                           {r.success ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -315,14 +307,14 @@ export default function BulkImportModal({
                             <XCircle className="h-4 w-4 text-red-400" />
                           )}
                         </td>
-                        <td className="px-3 py-2 text-gray-700">{r.email}</td>
+                        <td className="px-3 py-2 text-xs font-medium text-slate-800 dark:text-[#F0F2F8]">{r.email}</td>
                         <td className="px-3 py-2 text-xs">
                           {r.success ? (
-                            <span className="text-gray-500">
-                              Temp pass: <code className="rounded bg-gray-100 px-1">{r.temporaryPassword}</code>
+                            <span className="text-slate-500 dark:text-[#8B92A5]">
+                              Temp pass: <code className="rounded bg-slate-100 dark:bg-white/10 px-1 py-0.5 font-mono">{r.temporaryPassword}</code>
                             </span>
                           ) : (
-                            <span className="text-red-500">{r.error}</span>
+                            <span className="text-red-500 dark:text-red-400">{r.error}</span>
                           )}
                         </td>
                       </tr>
@@ -337,7 +329,7 @@ export default function BulkImportModal({
                     handleReset();
                     onSuccess(`${summary.created} users imported successfully.`);
                   }}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
                 >
                   Done

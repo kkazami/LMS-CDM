@@ -153,8 +153,8 @@ function toolbarButtonClass(active = false) {
   return [
     "inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400/60",
     active
-      ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+      ? "border-slate-900 dark:border-white/20 bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+      : "border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] text-slate-600 dark:text-[#8B92A5] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/5",
   ].join(" ");
 }
 
@@ -583,18 +583,18 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
   }
 
   return (
-    <div className="space-y-8 pb-12 text-slate-900">
-      <section className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+    <div className="space-y-8 pb-12 text-slate-900 dark:text-[#F0F2F8]">
+      <section className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#141721] p-5 shadow-xs backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Student Workspace</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">Notes, tasks, and deadlines in one quiet surface.</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-[#8B92A5]">Student Workspace</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Notes, tasks, and deadlines in one quiet surface.</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-[#8B92A5]">
               Designed for fast capture, calm scanning, and instant edits without losing your place.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+          <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-1">
             {[
               { id: "notes", label: "Notes", icon: Highlighter },
               { id: "tasks", label: "To-Do List", icon: ListTodo },
@@ -608,8 +608,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   key={item.id}
                   onClick={() => setModuleTab(item.id as ModuleTab)}
                   className={[
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-slate-400/60",
-                    active ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900",
+                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                    active ? "bg-white dark:bg-[#1E2132] text-slate-900 dark:text-[#F0F2F8] shadow-xs" : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]",
                   ].join(" ")}
                 >
                   <Icon className="h-4 w-4" />
@@ -623,16 +623,16 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
 
       {moduleTab === "notes" ? (
         <section className="space-y-5">
-          <div className="sticky top-4 z-10 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur transition-transform focus-within:-translate-y-0.5 focus-within:shadow-md">
+          <div className="sticky top-4 z-10 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white/90 dark:bg-[#141721] p-4 shadow-xs backdrop-blur transition-transform focus-within:-translate-y-0.5 focus-within:shadow-md">
             <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-              <div className="flex min-h-16 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-left text-slate-500 transition-all">
+              <div className="flex min-h-16 items-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] px-4 text-left text-slate-500 dark:text-[#8B92A5] transition-all">
                 Take Note...
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowArchivedNotes((current) => !current)}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
                 >
                   {showArchivedNotes ? "Hide archived" : "Archived"}
                 </button>
@@ -641,7 +641,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                     if (!noteDraft.content.trim()) return;
                     void createNote();
                   }}
-                  className="rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/60 disabled:opacity-50"
+                  className="rounded-full bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 disabled:opacity-50 cursor-pointer"
                   disabled={isSaving}
                 >
                   Save note
@@ -665,12 +665,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   setNoteDraft((current) => ({ ...current, content: readNoteEditorContent() }));
                   updateEditorFormatState();
                 }}
-                className="min-h-44 max-h-80 overflow-y-auto overflow-x-hidden wrap-break-word whitespace-pre-wrap rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700 outline-none transition focus:border-slate-400"
-                style={{ backgroundColor: noteDraft.color, scrollbarGutter: "stable" }}
+                className="min-h-44 max-h-80 overflow-y-auto overflow-x-hidden wrap-break-word whitespace-pre-wrap rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-4 text-sm leading-6 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+                style={{ backgroundColor: noteDraft.color === "#ffffff" ? undefined : noteDraft.color, scrollbarGutter: "stable" }}
                 data-placeholder="Write something useful"
               />
 
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="space-y-3 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-3">
                 <div className="flex flex-wrap gap-2">
                   <button className={toolbarButtonClass(editorFormatState.bold)} onClick={() => handleRichFormat("bold", noteDraftEditorRef)} aria-label="Bold"><Bold className="h-4 w-4" /></button>
                   <button className={toolbarButtonClass(editorFormatState.italic)} onClick={() => handleRichFormat("italic", noteDraftEditorRef)} aria-label="Italic"><Italic className="h-4 w-4" /></button>
@@ -685,7 +685,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   value={noteDraft.title}
                   onChange={(event) => setNoteDraft((current) => ({ ...current, title: event.target.value }))}
                   placeholder="Title"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                 />
 
                 <div className="flex flex-wrap gap-2">
@@ -697,8 +697,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                         setNoteDraft((current) => ({ ...current, category: nextCategory }));
                       }}
                       className={[
-                        "rounded-full px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60",
-                        noteDraft.category === category ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-100",
+                        "rounded-full px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                        noteDraft.category === category ? "bg-slate-900 dark:bg-[#F97316] text-white" : "bg-white dark:bg-[#1E2132] border border-slate-200/80 dark:border-white/5 text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5",
                       ].join(" ")}
                     >
                       {category}
@@ -718,21 +718,21 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                     }
                   }}
                   placeholder="Custom category"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/60"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                 />
 
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <button
                       onClick={() => setShowColorPicker((current) => !current)}
-                      className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                      className="flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-3 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
                     >
                       <Palette className="h-4 w-4" />
-                      <span className="h-4 w-4 rounded-full border border-slate-300" style={{ backgroundColor: noteDraft.color }} />
+                      <span className="h-4 w-4 rounded-full border border-slate-300 dark:border-white/20" style={{ backgroundColor: noteDraft.color }} />
                     </button>
 
                     {showColorPicker ? (
-                      <div className="absolute left-0 top-12 z-20 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
+                      <div className="absolute left-0 top-12 z-20 w-72 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-3 shadow-xl">
                         <div className="grid grid-cols-2 gap-2">
                           {NOTE_COVER_OPTIONS.map((cover) => (
                             <button
@@ -741,18 +741,18 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                                 setNoteDraft((current) => ({ ...current, color: cover.color }));
                                 setShowColorPicker(false);
                               }}
-                              className="rounded-2xl border border-slate-200 p-2 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                              className="rounded-2xl border border-slate-200/80 dark:border-white/5 p-2 text-left transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
                             >
-                              <div className="relative h-16 overflow-hidden rounded-xl border border-slate-100" style={{ background: cover.image }}>
+                              <div className="relative h-16 overflow-hidden rounded-xl border border-slate-100 dark:border-white/5" style={{ background: cover.image }}>
                                 <div className="absolute inset-0 bg-white/10" />
                                 <div className="absolute inset-x-0 bottom-0 h-8 bg-white/20 backdrop-blur-[1px]" />
                               </div>
-                              <p className="mt-2 text-[11px] font-semibold text-slate-700">{cover.label}</p>
+                              <p className="mt-2 text-[11px] font-semibold text-slate-700 dark:text-[#F0F2F8]">{cover.label}</p>
                             </button>
                           ))}
                         </div>
                         <div className="mt-3">
-                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">Solid colors</p>
+                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 dark:text-[#8B92A5]">Solid colors</p>
                           <div className="grid grid-cols-6 gap-2">
                             {NOTE_COLORS.map((color) => (
                               <button
@@ -761,7 +761,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                                   setNoteDraft((current) => ({ ...current, color }));
                                   setShowColorPicker(false);
                                 }}
-                                className="h-8 w-8 rounded-full border border-slate-200 transition hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                                className="h-8 w-8 rounded-full border border-slate-200/80 dark:border-white/10 transition hover:scale-[1.05] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
                                 style={{ backgroundColor: color }}
                                 aria-label={`Select note color ${color}`}
                               />
@@ -780,23 +780,23 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
             {notesGrid.map((note) => (
               <article
                 key={note.id}
-                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 p-4 shadow-xs transition hover:-translate-y-1 hover:shadow-lg"
                 style={{ backgroundColor: note.color }}
                 onClick={() => setActiveNoteId(note.id)}
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-slate-700">{note.category}</span>
+                  <span className="rounded-full bg-white/70 dark:bg-black/40 px-3 py-1 text-xs font-medium text-slate-700 dark:text-white/90">{note.category}</span>
                   <div className="flex items-center gap-2 opacity-0 transition group-hover:opacity-100">
-                    <button onClick={(event) => { event.stopPropagation(); void toggleNotePin(note); }} className="rounded-full bg-white/80 p-2 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Pin note">
+                    <button onClick={(event) => { event.stopPropagation(); void toggleNotePin(note); }} className="rounded-full bg-white/80 dark:bg-black/60 p-2 text-slate-700 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Pin note">
                       <Pin className={[
                         "h-4 w-4",
                         note.pinned ? "fill-current" : "",
                       ].join(" ")} />
                     </button>
-                    <button onClick={(event) => { event.stopPropagation(); void archiveNote(note); }} className="rounded-full bg-white/80 p-2 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Archive note">
+                    <button onClick={(event) => { event.stopPropagation(); void archiveNote(note); }} className="rounded-full bg-white/80 dark:bg-black/60 p-2 text-slate-700 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Archive note">
                       <Archive className="h-4 w-4" />
                     </button>
-                    <button onClick={(event) => { event.stopPropagation(); void deleteNote(note); }} className="rounded-full bg-white/80 p-2 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Delete note">
+                    <button onClick={(event) => { event.stopPropagation(); void deleteNote(note); }} className="rounded-full bg-white/80 dark:bg-black/60 p-2 text-slate-700 dark:text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Delete note">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -808,22 +808,22 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
           </div>
 
           {showArchivedNotes && archivedNotes.length ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#141721] p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Archived Notes</h3>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">{archivedNotes.length}</span>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-[#8B92A5]">Archived Notes</h3>
+                <span className="rounded-full bg-white dark:bg-[#1E2132] px-3 py-1 text-xs font-medium text-slate-600 dark:text-[#F0F2F8]">{archivedNotes.length}</span>
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {archivedNotes.map((note) => (
                   <article
                     key={note.id}
-                    className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-sm"
+                    className="rounded-3xl border border-slate-200/80 dark:border-white/5 p-4 shadow-xs"
                     style={{ backgroundColor: note.color }}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-slate-700">{note.category}</span>
-                      <button onClick={() => void restoreNote(note)} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60">
+                      <span className="rounded-full bg-white/70 dark:bg-black/40 px-3 py-1 text-xs font-medium text-slate-700 dark:text-white/90">{note.category}</span>
+                      <button onClick={() => void restoreNote(note)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-black/60 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-white transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer">
                         Restore
                       </button>
                     </div>
@@ -839,30 +839,30 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
 
       {moduleTab === "tasks" ? (
         <section className="space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h3 className="text-xl font-semibold tracking-tight">To-Do List</h3>
-                <p className="mt-1 text-sm text-slate-600">Capture fast, then move into priority without friction.</p>
+                <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">To-Do List</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">Capture fast, then move into priority without friction.</p>
               </div>
 
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+              <div className="flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-1">
                 <button onClick={() => setViewMode("grid")} className={[
-                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60",
-                  viewMode === "grid" ? "bg-white shadow-sm" : "text-slate-500",
+                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                  viewMode === "grid" ? "bg-white dark:bg-[#1E2132] text-slate-900 dark:text-[#F0F2F8] shadow-xs" : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]",
                 ].join(" ")}>
                   <LayoutGrid className="h-4 w-4" /> Grid
                 </button>
                 <button onClick={() => setViewMode("list")} className={[
-                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60",
-                  viewMode === "list" ? "bg-white shadow-sm" : "text-slate-500",
+                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                  viewMode === "list" ? "bg-white dark:bg-[#1E2132] text-slate-900 dark:text-[#F0F2F8] shadow-xs" : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]",
                 ].join(" ")}>
                   <ListTodo className="h-4 w-4" /> List
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_220px_180px_220px_auto]">
+            <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_200px_180px_220px_auto]">
               <input
                 ref={taskInputRef}
                 value={taskDraft.title}
@@ -874,12 +874,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   }
                 }}
                 placeholder="Add a task and press Enter"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-400/40"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
               />
               <select
                 value={taskDraft.priority}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, priority: event.target.value as Task["priority"] }))}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-400/40"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -889,12 +889,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 type="date"
                 value={taskDraft.dueDate}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, dueDate: event.target.value }))}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-400/40"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
               />
               <select
                 value={taskDraft.courseId}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, courseId: event.target.value }))}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-400/40"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
               >
                 <option value="">Associate course</option>
                 {courseOptions.map((course) => (
@@ -905,7 +905,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
               </select>
               <button
                 onClick={() => void createTask()}
-                className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                className="rounded-2xl bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs"
               >
                 Add
               </button>
@@ -913,65 +913,65 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
           </div>
 
           <div className={viewMode === "grid" ? "grid gap-5 xl:grid-cols-2" : "space-y-5"}>
-            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
               <div className="mb-4 flex items-center justify-between">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pending Tasks</h4>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{pendingTasks.length}</span>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-[#8B92A5]">Pending Tasks</h4>
+                <span className="rounded-full bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-600 dark:text-[#F0F2F8]">{pendingTasks.length}</span>
               </div>
 
               <div className={viewMode === "grid" ? "grid gap-3 md:grid-cols-2" : "space-y-3"}>
-                {pendingTasks.map((task, index) => (
-                  <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:bg-white">
+                {pendingTasks.map((task) => (
+                  <div key={task.id} className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#181B26] p-4 transition hover:bg-white dark:hover:bg-[#1E2132]">
                     <div className="flex items-start gap-3">
-                      <button onClick={() => void toggleTaskCompletion(task)} className="mt-1 rounded-full border border-slate-300 bg-white p-1 text-slate-500 transition hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Complete task">
+                      <button onClick={() => void toggleTaskCompletion(task)} className="mt-1 rounded-full border border-slate-300 dark:border-white/20 bg-white dark:bg-[#141721] p-1 text-slate-500 dark:text-[#8B92A5] transition hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Complete task">
                         <CircleCheckBig className="h-4 w-4" />
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
-                          <h5 className="truncate text-sm font-semibold text-slate-900">{task.title}</h5>
+                          <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{task.title}</h5>
                           <span className={[
-                            "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
-                            task.priority === "high" ? "bg-rose-100 text-rose-700" : task.priority === "medium" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700",
+                            "rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                            task.priority === "high" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" : task.priority === "medium" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
                           ].join(" ")}>{task.priority}</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-600">{task.description || "No description"}</p>
-                        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <p className="mt-2 text-xs text-slate-600 dark:text-[#8B92A5]">{task.description || "No description"}</p>
+                        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-[#8B92A5]">
                           <span>{formatRelativeDueDate(task.dueDate)}</span>
                           {task.courseTitle ? <span>• {task.courseTitle}</span> : null}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => moveTask(task, -1)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Move up"><ChevronLeft className="h-4 w-4" /></button>
-                        <button onClick={() => moveTask(task, 1)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Move down"><ChevronRight className="h-4 w-4" /></button>
+                        <button onClick={() => moveTask(task, -1)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-2 text-slate-500 dark:text-[#8B92A5] transition hover:text-slate-900 dark:hover:text-[#F0F2F8] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Move up"><ChevronLeft className="h-4 w-4" /></button>
+                        <button onClick={() => moveTask(task, 1)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-2 text-slate-500 dark:text-[#8B92A5] transition hover:text-slate-900 dark:hover:text-[#F0F2F8] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Move down"><ChevronRight className="h-4 w-4" /></button>
                       </div>
-                      <button onClick={() => void deleteTask(task)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Delete task"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => void deleteTask(task)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-2 text-slate-500 dark:text-[#8B92A5] transition hover:text-rose-600 dark:hover:text-rose-400 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Delete task"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
               <div className="mb-4 flex items-center justify-between">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Completed Tasks</h4>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{completedTasks.length}</span>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-[#8B92A5]">Completed Tasks</h4>
+                <span className="rounded-full bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-600 dark:text-[#F0F2F8]">{completedTasks.length}</span>
               </div>
 
               <div className="space-y-3">
                 {completedTasks.map((task) => (
-                  <div key={task.id} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                  <div key={task.id} className="rounded-2xl border border-emerald-200/60 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-950/20 p-4">
                     <div className="flex items-start gap-3">
-                      <button onClick={() => void toggleTaskCompletion(task)} className="mt-1 rounded-full border border-emerald-300 bg-white p-1 text-emerald-600 transition focus:outline-none focus:ring-2 focus:ring-emerald-400/60" aria-label="Reopen task">
+                      <button onClick={() => void toggleTaskCompletion(task)} className="mt-1 rounded-full border border-emerald-300 dark:border-emerald-500/30 bg-white dark:bg-[#141721] p-1 text-emerald-600 dark:text-emerald-400 transition focus:outline-none focus:ring-2 focus:ring-emerald-400/60 cursor-pointer" aria-label="Reopen task">
                         <Check className="h-4 w-4" />
                       </button>
                       <div className="min-w-0 flex-1">
-                        <h5 className="text-sm font-semibold text-slate-900 line-through decoration-emerald-500/60">{task.title}</h5>
-                        <p className="mt-1 text-sm text-slate-600">{task.description || "No description"}</p>
+                        <h5 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] line-through decoration-emerald-500/60 opacity-80">{task.title}</h5>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-[#8B92A5]">{task.description || "No description"}</p>
                       </div>
-                      <button onClick={() => void toggleTaskArchive(task)} className="rounded-full border border-emerald-200 bg-white p-2 text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-400/60" aria-label="Archive task">
+                      <button onClick={() => void toggleTaskArchive(task)} className="rounded-full border border-emerald-200/80 dark:border-emerald-500/30 bg-white dark:bg-[#141721] p-2 text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-100 dark:hover:bg-emerald-950/50 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 cursor-pointer" aria-label="Archive task">
                         <Archive className="h-4 w-4" />
                       </button>
                     </div>
@@ -985,19 +985,19 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
 
       {moduleTab === "calendar" ? (
         <section className="space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h3 className="text-xl font-semibold tracking-tight">Monthly Calendar</h3>
-                <p className="mt-1 text-sm text-slate-600">Deadlines update from backend events and open into a detail drawer.</p>
+                <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Monthly Calendar</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">Deadlines update from backend events and open into a detail drawer.</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => setCalendarMonth(new Date())} className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60">Today</button>
+                <button onClick={() => setCalendarMonth(new Date())} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] transition hover:bg-white dark:hover:bg-[#1E2132] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer">Today</button>
                 <select
                   value={calendarMonth.getMonth()}
                   onChange={(event) => setCalendarMonth((current) => new Date(current.getFullYear(), Number(event.target.value), 1))}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
+                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
                   aria-label="Select month"
                 >
                   {CALENDAR_MONTHS.map((month, index) => (
@@ -1009,7 +1009,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 <select
                   value={calendarMonth.getFullYear()}
                   onChange={(event) => setCalendarMonth((current) => new Date(Number(event.target.value), current.getMonth(), 1))}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
+                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
                   aria-label="Select year"
                 >
                   {yearOptions.map((year) => (
@@ -1018,11 +1018,11 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                     </option>
                   ))}
                 </select>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-500">{calendarMonthLabel}</span>
+                <span className="rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] px-4 py-2 text-sm font-medium text-slate-500 dark:text-[#8B92A5]">{calendarMonthLabel}</span>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <div className="mt-6 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">
               { ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label) => <div key={label} className="py-2">{label}</div>) }
             </div>
 
@@ -1039,18 +1039,18 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                         key={day.isoDate}
                         onClick={() => handleCalendarDaySelect(day)}
                         className={[
-                          "min-h-28 rounded-3xl border p-3 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400/60",
-                          day.isCurrentMonth ? "border-slate-200" : "border-slate-100 bg-slate-100/60 text-slate-400",
-                          day.isToday ? "bg-amber-50/80 border-amber-200" : isCurrentWeek ? "bg-slate-50/80" : "bg-white",
-                          isSelected ? "shadow-inner ring-2 ring-slate-300/70" : "",
+                          "min-h-28 rounded-3xl border p-3 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                          day.isCurrentMonth ? "border-slate-200/80 dark:border-white/5" : "border-slate-100 dark:border-white/[0.02] bg-slate-100/60 dark:bg-white/[0.01] text-slate-400 dark:text-slate-600",
+                          day.isToday ? "bg-amber-50/80 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" : isCurrentWeek ? "bg-slate-50/80 dark:bg-[#181B26]" : "bg-white dark:bg-[#141721]",
+                          isSelected ? "shadow-inner ring-2 ring-orange-500/50" : "",
                         ].join(" ")}
                       >
                         <div className="flex items-center justify-between">
                           <span className={[
                             "text-sm font-medium",
-                            day.isToday ? "text-slate-900" : "",
+                            day.isToday ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-900 dark:text-[#F0F2F8]",
                           ].join(" ")}>{day.day}</span>
-                          {dayEvents.length ? <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white">{dayEvents.length}</span> : null}
+                          {dayEvents.length ? <span className="rounded-full bg-slate-900 dark:bg-[#F97316] px-2 py-0.5 text-[10px] font-semibold text-white">{dayEvents.length}</span> : null}
                         </div>
 
                         <div className="mt-3 space-y-2">
@@ -1061,7 +1061,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                                 eventClick.stopPropagation();
                                 setActiveEventId(event.id);
                               }}
-                              className="block w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400/60"
+                              className="block w-full rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#1E2132] px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition hover:border-slate-300 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
                             >
                               {event.title}
                             </button>
@@ -1075,15 +1075,15 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
             </div>
 
             {selectedCalendarDate ? (
-              <div ref={calendarNotePanelRef} className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <div ref={calendarNotePanelRef} className="mt-5 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Day note</p>
-                    <h4 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Day note</p>
+                    <h4 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
                       {new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${selectedCalendarDate}T00:00:00`))}
                     </h4>
                   </div>
-                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                  <span className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] px-3 py-1 text-xs font-medium text-slate-500 dark:text-[#8B92A5]">
                     {calendarDayNotes[selectedCalendarDate] ? "Saved locally" : "Quick note"}
                   </span>
                 </div>
@@ -1092,7 +1092,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   value={calendarDayNotes[selectedCalendarDate] ?? ""}
                   onChange={(event) => setCalendarDayNotes((current) => ({ ...current, [selectedCalendarDate]: event.target.value }))}
                   placeholder="Add a reminder, reflection, or study note for this day..."
-                  className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
+                  className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#141721] px-4 py-3 text-sm leading-6 text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
             ) : null}
@@ -1102,29 +1102,29 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
 
       {activeNote ? (
         <div className="fixed inset-0 z-50">
-          <button className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm transition-opacity" onClick={() => setActiveNoteId(null)} aria-label="Close note editor" />
-          <div className="absolute right-0 top-0 h-full w-full max-w-2xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-2xl transition-transform">
+          <button className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" onClick={() => setActiveNoteId(null)} aria-label="Close note editor" />
+          <div className="absolute right-0 top-0 h-full w-full max-w-2xl overflow-y-auto border-l border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-6 shadow-2xl transition-transform">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Deep Edit</p>
-                <h3 className="mt-2 text-2xl font-semibold tracking-tight">{activeNote.title || "Untitled note"}</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Deep Edit</p>
+                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">{activeNote.title || "Untitled note"}</h3>
               </div>
-              <button onClick={() => setActiveNoteId(null)} className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Close panel"><X className="h-4 w-4" /></button>
+              <button onClick={() => setActiveNoteId(null)} className="rounded-full border border-slate-200/80 dark:border-white/10 p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Close panel"><X className="h-4 w-4" /></button>
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="rounded-3xl border border-slate-200 p-4" style={{ backgroundColor: activeNote.color }}>
+              <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 p-4" style={{ backgroundColor: activeNote.color }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600">Theme</p>
                     <p className="mt-1 text-sm font-medium text-slate-700">{NOTE_COVER_OPTIONS.find((cover) => cover.color === activeNote.color)?.label ?? "Custom"}</p>
                   </div>
                   <div className="relative">
-                    <button onClick={() => setShowExpandedColorPicker((current) => !current)} className="rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60">
+                    <button onClick={() => setShowExpandedColorPicker((current) => !current)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-black/60 px-3 py-2 text-sm font-medium text-slate-700 dark:text-white transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer">
                       Change theme
                     </button>
                     {showExpandedColorPicker ? (
-                      <div className="absolute right-0 top-12 z-20 w-64 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
+                      <div className="absolute right-0 top-12 z-20 w-64 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-3 shadow-xl">
                         <div className="grid grid-cols-2 gap-2">
                           {NOTE_COVER_OPTIONS.map((cover) => (
                             <button
@@ -1135,10 +1135,10 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                                 void saveNote(nextNote);
                                 setShowExpandedColorPicker(false);
                               }}
-                              className="rounded-2xl border border-slate-200 p-2 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                              className="rounded-2xl border border-slate-200/80 dark:border-white/5 p-2 text-left transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
                             >
-                              <div className="h-12 rounded-xl border border-slate-100" style={{ background: cover.image }} />
-                              <p className="mt-2 text-[11px] font-semibold text-slate-700">{cover.label}</p>
+                              <div className="h-12 rounded-xl border border-slate-100 dark:border-white/5" style={{ background: cover.image }} />
+                              <p className="mt-2 text-[11px] font-semibold text-slate-700 dark:text-[#F0F2F8]">{cover.label}</p>
                             </button>
                           ))}
                         </div>
@@ -1161,7 +1161,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   updateLocalNote(nextNote);
                   void saveNote(nextNote);
                 }}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
+                className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               />
 
               <div className="flex flex-wrap gap-2">
@@ -1193,14 +1193,14 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   updateLocalNote(nextNote);
                   void saveNote(nextNote);
                 }}
-                className="min-h-64 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden whitespace-pre-wrap rounded-3xl border border-slate-200 bg-white/70 p-4 text-sm leading-7 text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400/40"
-                style={{ backgroundColor: activeNote.color, scrollbarGutter: "stable" }}
+                className="min-h-64 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden whitespace-pre-wrap rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-[#1E2132] p-4 text-sm leading-7 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                style={{ backgroundColor: activeNote.color === "#ffffff" ? undefined : activeNote.color, scrollbarGutter: "stable" }}
                 data-placeholder="Write your note here..."
               />
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => void toggleNotePin(activeNote)} className="rounded-full border border-slate-200 px-4 py-2 text-sm">{activeNote.pinned ? "Unpin" : "Pin"}</button>
-                <button onClick={() => void archiveNote(activeNote)} className="rounded-full border border-slate-200 px-4 py-2 text-sm">Archive</button>
-                <button onClick={() => void deleteNote(activeNote)} className="rounded-full border border-rose-200 px-4 py-2 text-sm text-rose-700">Delete</button>
+                <button onClick={() => void toggleNotePin(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">{activeNote.pinned ? "Unpin" : "Pin"}</button>
+                <button onClick={() => void archiveNote(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">Archive</button>
+                <button onClick={() => void deleteNote(activeNote)} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/20">Delete</button>
               </div>
             </div>
           </div>
@@ -1209,40 +1209,40 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
 
       {activeEvent ? (
         <div className="fixed inset-0 z-50">
-          <button className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm transition-opacity" onClick={() => setActiveEventId(null)} aria-label="Close event drawer" />
-          <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-2xl">
+          <button className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" onClick={() => setActiveEventId(null)} aria-label="Close event drawer" />
+          <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Assignment Details</p>
-                <h3 className="mt-2 text-2xl font-semibold tracking-tight">{activeEvent.title}</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Assignment Details</p>
+                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">{activeEvent.title}</h3>
               </div>
-              <button onClick={() => setActiveEventId(null)} className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400/60" aria-label="Close event panel"><X className="h-4 w-4" /></button>
+              <button onClick={() => setActiveEventId(null)} className="rounded-full border border-slate-200/80 dark:border-white/10 p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Close event panel"><X className="h-4 w-4" /></button>
             </div>
 
-            <div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="mt-6 space-y-4 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Title</p>
-                <p className="mt-1 text-sm text-slate-700">{activeEvent.title}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Title</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.title}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Description</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700">{activeEvent.description}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Description</p>
+                <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-[#8B92A5]">{activeEvent.description}</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Professor</p>
-                  <p className="mt-1 text-sm text-slate-700">{activeEvent.professorName || "TBD"}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Professor</p>
+                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.professorName || "TBD"}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Max Points</p>
-                  <p className="mt-1 text-sm text-slate-700">{activeEvent.maxPoints ?? "-"}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Max Points</p>
+                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.maxPoints ?? "-"}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Due</p>
-                <p className="mt-1 text-sm text-slate-700">{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(activeEvent.eventDate))}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Due</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(activeEvent.eventDate))}</p>
               </div>
-              <a href={activeEvent.deepLink} className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/60">
+              <a href={activeEvent.deepLink} className="inline-flex items-center justify-center rounded-2xl bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs">
                 Go to Assignment Submission
               </a>
             </div>

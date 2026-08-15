@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
+import { executeLocally } from "@/features/interactive-activities/codelab/utils/local-runner";
+import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +10,59 @@ export const dynamic = "force-dynamic";
 // In production, this would be an environment variable.
 const JUDGE0_BASE_URL = process.env.JUDGE0_URL || "http://localhost:2358";
 const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || "";
+
+// ─── Security Constants ───
+
+/** Maximum source code size in bytes (64 KB) */
+const MAX_SOURCE_CODE_BYTES = 64 * 1024;
+
+/** Maximum submissions per user within the rate limit window */
+const RATE_LIMIT_MAX = 30;
+
+/** Rate limit window in milliseconds (5 minutes) */
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Allowed Judge0 language IDs — reject anything not in this set.
+ * Maps to: Python 3 (71), C++ (54), C# (51), Java (62), JS/Node 18 (93), SQL (82)
+ */
+const ALLOWED_LANGUAGE_IDS = new Set<number>([71, 54, 51, 62, 93, 82]);
+
+// ─── In-Memory Rate Limiter ───
+
+interface RateLimitEntry {
+  timestamps: number[];
+}
+
+/** Per-user submission timestamps for rate limiting. */
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+/**
+ * Checks whether a user has exceeded the submission rate limit.
+ * Prunes expired timestamps on each check.
+ *
+ * @returns true if the user is within limits; false if rate-limited
+ */
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+
+  let entry = rateLimitMap.get(userId);
+  if (!entry) {
+    entry = { timestamps: [] };
+    rateLimitMap.set(userId, entry);
+  }
+
+  // Prune timestamps older than the window
+  entry.timestamps = entry.timestamps.filter((ts) => ts > cutoff);
+
+  if (entry.timestamps.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  entry.timestamps.push(now);
+  return true;
+}
 
 export async function POST(req: Request) {
   try {
@@ -23,15 +78,69 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden: Not eligible for activities" }, { status: 403 });
     }
 
-    // 3. Parse input
-    const body = await req.json();
-    const { source_code, language_id, stdin } = body;
-
-    if (!source_code || !language_id) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    // 3. Per-user rate limit
+    const userId = session.user.id;
+    if (!checkRateLimit(userId)) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded. Maximum 30 submissions per 5 minutes.",
+          retryAfterSeconds: 300,
+        },
+        { status: 429 }
+      );
     }
 
-    // 4. Submit to Judge0
+    // 4. Parse input
+    const body = await req.json();
+    const { source_code, language_id, stdin } = body as {
+      source_code: string | undefined;
+      language_id: number | undefined;
+      stdin: string | undefined;
+    };
+
+    if (!source_code || !language_id) {
+      return NextResponse.json({ error: "Missing required fields: source_code and language_id" }, { status: 400 });
+    }
+
+    // 5. Payload size check (64 KB max)
+    const sourceBytes = new TextEncoder().encode(source_code).length;
+    if (sourceBytes > MAX_SOURCE_CODE_BYTES) {
+      return NextResponse.json(
+        {
+          error: `Source code exceeds maximum size of ${MAX_SOURCE_CODE_BYTES / 1024} KB.`,
+          maxBytes: MAX_SOURCE_CODE_BYTES,
+          actualBytes: sourceBytes,
+        },
+        { status: 413 }
+      );
+    }
+
+    // 6. Language allowlist check
+    if (!ALLOWED_LANGUAGE_IDS.has(language_id)) {
+      return NextResponse.json(
+        {
+          error: `Unsupported language_id: ${language_id}. Allowed IDs: ${Array.from(ALLOWED_LANGUAGE_IDS).join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 7. Submit to Judge0 with timeout, connection & local fallback handling
+    function getLanguageFromId(id: number): WrapperLanguage {
+      switch (id) {
+        case 71: return "python";
+        case 93: return "javascript";
+        case 54: return "cpp";
+        case 62: return "java";
+        case 51: return "csharp";
+        case 82: return "sql";
+        default: return "python";
+      }
+    }
+
+    const wrapperLang = getLanguageFromId(language_id);
+    const executableCode = wrapStudentCode(wrapperLang, source_code, null, stdin || "");
+
     const submitHeaders: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -39,31 +148,35 @@ export async function POST(req: Request) {
       submitHeaders["X-Auth-Token"] = JUDGE0_AUTH_TOKEN;
     }
 
-    const submitRes = await fetch(`${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=true`, {
-      method: "POST",
-      headers: submitHeaders,
-      body: JSON.stringify({
-        source_code,
-        language_id,
-        stdin: stdin || "",
-        // Defaults as per implementation plan:
-        cpu_time_limit: 5.0,
-        memory_limit: 128000,
-      }),
-    });
+    try {
+      const submitRes = await fetch(`${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=true`, {
+        method: "POST",
+        headers: submitHeaders,
+        body: JSON.stringify({
+          source_code: executableCode,
+          language_id,
+          stdin: stdin || "",
+          cpu_time_limit: 5.0,
+          memory_limit: 128000,
+        }),
+      });
 
-    if (!submitRes.ok) {
-      console.error("Judge0 Submission Error:", await submitRes.text());
-      return NextResponse.json({ error: "Failed to submit to execution engine" }, { status: 502 });
+      if (submitRes.ok) {
+        const result = await submitRes.json();
+        // If Judge0 succeeded, return result
+        if (result.status?.id !== 13) {
+          return NextResponse.json(result);
+        }
+        console.warn("Judge0 returned internal error, falling back to local runner:", result.message);
+      }
+    } catch (netErr: unknown) {
+      console.warn("Judge0 is unreachable, falling back to local runner:", netErr);
     }
 
-    const result = await submitRes.json();
-
-    // The token-based wait=true already gives us the result. 
-    // If it didn't (e.g. timeout on wait), we would poll, but wait=true is sufficient for our 5s limit.
-    
-    return NextResponse.json(result);
-  } catch (error: any) {
+    // Seamless Local Runner Fallback for dev / Windows environments
+    const localResult = await executeLocally(executableCode, language_id, stdin || "");
+    return NextResponse.json(localResult);
+  } catch (error: unknown) {
     console.error("Judge0 API Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

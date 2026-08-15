@@ -93,28 +93,28 @@ function AttachmentChip({
   const Icon = isLink ? Link2 : getFileIcon(attachment.fileName);
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-sm">
+    <div className="group flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-3 py-2.5 transition-all hover:border-orange-500/30 hover:shadow-xs">
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
           isLink
-            ? "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
-            : "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100"
+            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20"
+            : "bg-orange-500/10 text-[#F97316] group-hover:bg-orange-500/20"
         }`}
       >
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-gray-800">
+        <p className="truncate text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
           {attachment.fileName || attachment.url}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
           {isLink ? "Link" : attachment.fileSize ? formatFileSize(attachment.fileSize) : "File"}
         </p>
       </div>
       <button
         type="button"
         onClick={onRemove}
-        className="shrink-0 rounded-md p-1 text-gray-300 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+        className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all cursor-pointer"
         aria-label={`Remove ${attachment.fileName || "attachment"}`}
       >
         <X className="h-3.5 w-3.5" />
@@ -218,30 +218,27 @@ export default function AttachmentModal({
 
   const handleAddLink = () => {
     setLinkError("");
-    const trimmedUrl = linkUrl.trim();
 
-    if (!trimmedUrl) {
+    if (!linkUrl.trim()) {
       setLinkError("Please enter a URL.");
       return;
     }
 
-    if (!isValidUrl(trimmedUrl)) {
-      setLinkError("Please enter a valid URL starting with http:// or https://");
+    if (!isValidUrl(linkUrl.trim())) {
+      setLinkError("Please enter a valid URL (starting with http:// or https://).");
       return;
     }
 
     const newAttachment: AttachmentItem = {
       type: "LINK",
-      url: trimmedUrl,
-      fileName: linkName.trim() || trimmedUrl,
+      url: linkUrl.trim(),
+      fileName: linkName.trim() || linkUrl.trim(),
     };
 
     setAttachments((prev) => [...prev, newAttachment]);
     setLinkUrl("");
     setLinkName("");
   };
-
-  // ─── Remove attachment ───
 
   const handleRemove = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
@@ -255,23 +252,23 @@ export default function AttachmentModal({
   };
 
   const tabBaseClass =
-    "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200";
+    "flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer";
 
   return (
     <Modal open={open} title={title} onClose={handleClose}>
       <div className="space-y-5">
         {/* Tab switcher */}
-        <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+        <div className="flex gap-1 rounded-xl bg-slate-100 dark:bg-[#1E2132] p-1 border border-slate-200/80 dark:border-white/5">
           <button
             type="button"
             onClick={() => { setActiveTab("file"); setLinkError(""); }}
             className={`${tabBaseClass} flex items-center justify-center gap-2 ${
               activeTab === "file"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white dark:bg-[#2A2F45] text-slate-900 dark:text-[#F0F2F8] shadow-xs"
+                : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
             }`}
           >
-            <Upload className="h-4 w-4" />
+            <Upload className="h-3.5 w-3.5" />
             Upload File
           </button>
           <button
@@ -279,11 +276,11 @@ export default function AttachmentModal({
             onClick={() => { setActiveTab("link"); setUploadError(""); }}
             className={`${tabBaseClass} flex items-center justify-center gap-2 ${
               activeTab === "link"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white dark:bg-[#2A2F45] text-slate-900 dark:text-[#F0F2F8] shadow-xs"
+                : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
             }`}
           >
-            <Link2 className="h-4 w-4" />
+            <Link2 className="h-3.5 w-3.5" />
             Add Link
           </button>
         </div>
@@ -297,14 +294,14 @@ export default function AttachmentModal({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => !uploading && fileInputRef.current?.click()}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 transition-all duration-200 ${
+              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 transition-all duration-200 ${
                 isDragging
-                  ? "border-indigo-400 bg-indigo-50"
-                  : "border-gray-300 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50"
+                  ? "border-orange-400 bg-orange-500/10"
+                  : "border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5"
               } ${uploading ? "pointer-events-none opacity-60" : ""}`}
             >
               {uploading ? (
-                <Loader2 className="mb-2 h-8 w-8 animate-spin text-indigo-500" />
+                <Loader2 className="mb-2 h-8 w-8 animate-spin text-[#F97316]" />
               ) : (
                 <div
                   className="mb-2 flex h-12 w-12 items-center justify-center rounded-full transition-colors"
@@ -316,18 +313,18 @@ export default function AttachmentModal({
                   <Upload className="h-5 w-5" />
                 </div>
               )}
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 {uploading ? "Uploading..." : "Drag & drop a file here, or click to browse"}
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-slate-400 dark:text-[#8B92A5]">
                 Maximum file size: 25 MB
               </p>
             </div>
 
             {/* Accepted formats info */}
-            <div className="rounded-lg bg-blue-50/70 border border-blue-100 px-3 py-2.5">
-              <p className="text-xs font-medium text-blue-700 mb-1">Accepted file types:</p>
-              <p className="text-xs text-blue-600/80 leading-relaxed">
+            <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-3 py-2.5">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-0.5">Accepted file types:</p>
+              <p className="text-[11px] text-blue-600/90 dark:text-blue-300/80 leading-relaxed">
                 PDF, DOCX, PPTX, XLSX, JPG, PNG, GIF, WEBP, ZIP, TXT, CSV
               </p>
             </div>
@@ -342,7 +339,7 @@ export default function AttachmentModal({
 
             {/* Upload error */}
             {uploadError && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-sm text-red-600">
+              <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-600 dark:text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {uploadError}
               </div>
@@ -354,7 +351,7 @@ export default function AttachmentModal({
         {activeTab === "link" && (
           <div className="space-y-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 URL <span className="text-red-400">*</span>
               </label>
               <input
@@ -362,44 +359,44 @@ export default function AttachmentModal({
                 value={linkUrl}
                 onChange={(e) => { setLinkUrl(e.target.value); setLinkError(""); }}
                 placeholder="https://docs.google.com/document/d/..."
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:border-orange-500"
                 style={{ borderColor: linkError ? "#ef4444" : undefined }}
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Display name <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
+                Display name <span className="text-slate-400 dark:text-[#8B92A5] font-normal">(optional)</span>
               </label>
               <input
                 type="text"
                 value={linkName}
                 onChange={(e) => setLinkName(e.target.value)}
                 placeholder="e.g. Lecture Notes - Chapter 3"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 transition-colors focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:border-orange-500"
               />
             </div>
 
             <button
               type="button"
               onClick={handleAddLink}
-              className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+              className="w-full rounded-xl py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer"
               style={{ backgroundColor: theme.colors.primary }}
             >
               Add Link
             </button>
 
             {linkError && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-sm text-red-600">
+              <div className="flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-600 dark:text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {linkError}
               </div>
             )}
 
             {/* Link guidance */}
-            <div className="rounded-lg bg-amber-50/70 border border-amber-100 px-3 py-2.5">
-              <p className="text-xs font-medium text-amber-700 mb-1">Accepted link types:</p>
-              <ul className="space-y-0.5 text-xs text-amber-600/80">
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5">
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Accepted link types:</p>
+              <ul className="space-y-0.5 text-[11px] text-amber-600/90 dark:text-amber-300/80">
                 <li>• Google Docs, Sheets, or Slides share link</li>
                 <li>• Google Drive file link</li>
                 <li>• YouTube video URL</li>
@@ -413,11 +410,11 @@ export default function AttachmentModal({
         {attachments.length > 0 && (
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-700">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
                 Attached ({attachments.length})
               </h4>
             </div>
-            <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg">
+            <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl">
               {attachments.map((att, idx) => (
                 <AttachmentChip
                   key={`${att.type}-${att.url}-${idx}`}
@@ -430,18 +427,18 @@ export default function AttachmentModal({
         )}
 
         {/* ─── Footer Actions ─── */}
-        <div className="flex gap-2 pt-2 border-t border-gray-200">
+        <div className="flex gap-2 pt-3 border-t border-slate-200/80 dark:border-white/10">
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer shadow-xs"
             style={{ backgroundColor: theme.colors.primary }}
           >
             <CheckCircle2 className="h-4 w-4" />

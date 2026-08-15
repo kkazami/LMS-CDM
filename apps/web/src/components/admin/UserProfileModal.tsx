@@ -80,28 +80,28 @@ export default function UserProfileModal({
   // If we're showing the temp password after creation
   if (tempPassword) {
     return (
-      <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
+      <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-[#2C2727]">Account Created</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">Account Created</h3>
             <button
               onClick={() => {
                 setTempPassword("");
                 onSuccess("User created successfully.");
               }}
-              className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-medium text-amber-800">Temporary Password</p>
-              <p className="mt-1 text-xs text-amber-600">
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Temporary Password</p>
+              <p className="mt-1 text-[11px] text-amber-600/90 dark:text-amber-300/80">
                 This password is shown only once. Share it securely with the user.
               </p>
-              <div className="mt-3 rounded-md bg-white px-3 py-2 font-mono text-sm text-[#2C2727] border border-amber-200">
+              <div className="mt-3 rounded-xl bg-white dark:bg-[#1E2132] px-3 py-2 font-mono text-sm text-slate-900 dark:text-[#F0F2F8] border border-amber-500/30 text-center font-bold tracking-wider">
                 {tempPassword}
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function UserProfileModal({
                 setTempPassword("");
                 onSuccess("User created. Password copied to clipboard.");
               }}
-              className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              className="w-full rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
               style={{ backgroundColor: theme.colors.primary }}
             >
               Copy & Close
@@ -124,15 +124,15 @@ export default function UserProfileModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#2C2727]">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">
             {mode === "create" ? "Create New User" : "Edit User Profile"}
           </h3>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function UserProfileModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <label htmlFor="user-name" className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label htmlFor="user-name" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Full Name
             </label>
             <input
@@ -151,22 +151,14 @@ export default function UserProfileModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="e.g. Juan Dela Cruz"
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
           </div>
 
           {/* Email */}
           <div>
-            <label htmlFor="user-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label htmlFor="user-email" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Institutional Email
             </label>
             <input
@@ -175,22 +167,14 @@ export default function UserProfileModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="e.g. jdelacruz@university.edu"
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
           </div>
 
           {/* Unique ID */}
           <div>
-            <label htmlFor="user-uniqueid" className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label htmlFor="user-uniqueid" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               {role === "STUDENT" ? "Student ID / Internal Reference" : "Employee / User ID"}
             </label>
             <input
@@ -198,22 +182,14 @@ export default function UserProfileModal({
               type="text"
               value={uniqueId}
               onChange={(e) => setUniqueId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="e.g. 24-00123 or EMP-042"
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.colors.ring;
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
           </div>
 
           {role === "STUDENT" && (
             <div>
-              <label htmlFor="user-studentnumber" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="user-studentnumber" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 Official Student Number
               </label>
               <input
@@ -227,32 +203,24 @@ export default function UserProfileModal({
                   }
                   setStudentNumber(val.slice(0, 8));
                 }}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
                 placeholder="Format: XX-XXXXX (e.g. 23-00875)"
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = theme.colors.ring;
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#E5E7EB";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
               />
-              <p className="mt-1.5 text-xs text-gray-500">Must be in the format XX-XXXXX (e.g. 23-00875)</p>
+              <p className="mt-1.5 text-[11px] text-slate-400 dark:text-[#8B92A5]">Must be in the format XX-XXXXX (e.g. 23-00875)</p>
             </div>
           )}
 
           {/* Role — only on create */}
           {mode === "create" && (
             <div>
-              <label htmlFor="user-role" className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label htmlFor="user-role" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 Role
               </label>
               <select
                 id="user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "ADMIN" | "INSTRUCTOR" | "STUDENT")}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
               >
                 <option value="STUDENT">Student</option>
                 <option value="INSTRUCTOR">Instructor</option>
@@ -263,31 +231,31 @@ export default function UserProfileModal({
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
               {error}
             </div>
           )}
 
           {/* Info for create */}
           {mode === "create" && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-600">
+            <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-700 dark:text-blue-300">
               A temporary password will be auto-generated and displayed after creation.
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/80 dark:border-white/10">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs"
               style={{ backgroundColor: theme.colors.primary }}
             >
               {loading ? "Saving..." : mode === "create" ? "Create User" : "Save Changes"}

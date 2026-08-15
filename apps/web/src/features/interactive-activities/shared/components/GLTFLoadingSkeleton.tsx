@@ -26,13 +26,13 @@ export default function GLTFLoadingSkeleton({
 }: GLTFLoadingSkeletonProps) {
   return (
     <div
-      className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50"
+      className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-[#141721]"
       style={{ height }}
       role="status"
       aria-label="Loading 3D model"
     >
-      <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-3" />
-      <p className="text-sm text-gray-500 animate-pulse">{message}</p>
+      <Loader2 className="h-8 w-8 animate-spin text-slate-400 dark:text-[#8B92A5] mb-3" />
+      <p className="text-xs text-slate-500 dark:text-[#8B92A5] animate-pulse">{message}</p>
     </div>
   );
 }

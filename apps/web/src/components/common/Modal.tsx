@@ -46,17 +46,17 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-2xl rounded-4xl border border-white/20 bg-white p-8 shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl transition-all duration-200 ease-out ${
           visible
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-8 scale-95"
         }`}
       >
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-full bg-slate-100 p-2.5 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="rounded-lg p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

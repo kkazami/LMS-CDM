@@ -299,7 +299,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
             <span className="inline-flex rounded-full bg-black/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
               {note.category}
             </span>
-            <h3 className="text-base font-semibold text-slate-900">{note.title || "Untitled note"}</h3>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-[#F0F2F8]">{note.title || "Untitled note"}</h3>
           </div>
 
           <button
@@ -309,8 +309,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
               void patchNote(note.id, (current) => ({ ...current, pinned: !current.pinned }));
             }}
             className={cn(
-              "rounded-full border p-2 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
-              note.pinned ? "border-sky-300 bg-sky-100 text-sky-700" : "border-transparent bg-white/70 text-slate-400"
+              "rounded-full border p-2 transition focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer",
+              note.pinned ? "border-sky-300 dark:border-sky-500/30 bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400" : "border-transparent bg-white/70 dark:bg-black/40 text-slate-400"
             )}
             aria-label={note.pinned ? "Unpin note" : "Pin note"}
           >
@@ -319,7 +319,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
         </div>
 
         <div
-          className="line-clamp-5 text-sm leading-6 text-slate-700"
+          className="line-clamp-5 text-sm leading-6 text-slate-700 dark:text-[#8B92A5]"
           dangerouslySetInnerHTML={{ __html: note.content || "<p>Open to add details.</p>" }}
         />
 
@@ -330,7 +330,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
               event.stopPropagation();
               void patchNote(note.id, (current) => ({ ...current, archived: !current.archived }));
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-black/50 px-3 py-2 text-xs font-medium text-slate-700 dark:text-[#F0F2F8] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer"
           >
             <Archive className="h-3.5 w-3.5" />
             {note.archived ? "Restore" : "Archive"}
@@ -342,7 +342,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
               event.stopPropagation();
               void removeNote(note.id);
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white/80 px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="inline-flex items-center gap-2 rounded-full border border-rose-200/80 dark:border-rose-500/20 bg-white/80 dark:bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 transition hover:bg-rose-50 dark:hover:bg-rose-500/20 focus:outline-none focus:ring-2 focus:ring-rose-400 cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
@@ -355,36 +355,36 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
   const editorMarkup = editorHtml || editorNote?.content || "";
 
   return (
-    <section className="space-y-6 rounded-[2rem] border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur sm:p-6">
+    <section className="space-y-6 rounded-[2rem] border border-slate-200/80 dark:border-white/5 bg-white/85 dark:bg-[#141721] p-4 shadow-xs backdrop-blur sm:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Notes</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Keep-style study notes</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Notes</p>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Keep-style study notes</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-[#8B92A5]">
             Capture quick thoughts, pin what matters, and keep editing friction low with a clean expanded note view.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-          <span className="rounded-full bg-slate-100 px-3 py-1">{activeCount} active</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1">{archivedCount} archived</span>
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-[#8B92A5]">
+          <span className="rounded-full bg-slate-100 dark:bg-white/5 px-3 py-1 text-slate-600 dark:text-[#F0F2F8]">{activeCount} active</span>
+          <span className="rounded-full bg-slate-100 dark:bg-white/5 px-3 py-1 text-slate-600 dark:text-[#F0F2F8]">{archivedCount} archived</span>
         </div>
       </div>
 
-      <div className={cn("rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300", composerOpen && "ring-2 ring-sky-400/30") }>
+      <div className={cn("rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#1A1D27] p-4 shadow-xs transition-all duration-300", composerOpen && "ring-2 ring-orange-500/20") }>
         <div className="flex items-center gap-3">
           <input
             value={composerTitle}
             onChange={(event) => setComposerTitle(event.target.value)}
             onFocus={() => setComposerOpen(true)}
             placeholder="Take a note..."
-            className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            className="w-full bg-transparent text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none"
           />
 
           <button
             type="button"
             onClick={() => setComposerOpen((value) => !value)}
-            className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="rounded-full border border-slate-200/80 dark:border-white/10 p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer"
             aria-label={composerOpen ? "Collapse composer" : "Expand composer"}
           >
             <Palette className="h-4 w-4" />
@@ -398,7 +398,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
               onChange={(event) => setComposerContent(event.target.value)}
               rows={3}
               placeholder="Add a quick detail, a quote, or a checklist starter..."
-              className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+              className="w-full resize-none rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm leading-6 text-slate-700 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:outline-none focus:ring-2 focus:ring-orange-500/20"
             />
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -409,10 +409,10 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                     type="button"
                     onClick={() => setComposerCategory(option)}
                     className={cn(
-                      "rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                      "rounded-full border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-orange-500/40 cursor-pointer",
                       composerCategory === option
-                        ? "border-sky-200 bg-sky-50 text-sky-700"
-                        : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                        ? "border-orange-500/30 bg-orange-500/10 text-[#F97316]"
+                        : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] text-slate-500 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-white/5"
                     )}
                   >
                     {option}
@@ -428,8 +428,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                     title={theme.label}
                     onClick={() => setComposerColor(theme.value)}
                     className={cn(
-                      "h-8 w-8 rounded-full border transition focus:outline-none focus:ring-2 focus:ring-sky-400",
-                      composerColor === theme.value ? "border-slate-900" : "border-slate-200"
+                      "h-8 w-8 rounded-full border transition focus:outline-none focus:ring-2 focus:ring-orange-500/40 cursor-pointer",
+                      composerColor === theme.value ? "border-slate-900 dark:border-white" : "border-slate-200 dark:border-white/10"
                     )}
                     style={{ backgroundColor: theme.value }}
                   />
@@ -438,7 +438,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                 <button
                   type="button"
                   onClick={() => void createNote()}
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-[#F97316] px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs"
                 >
                   <Save className="h-4 w-4" />
                   Save note
@@ -450,15 +450,15 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
       </div>
 
       <div className="flex items-center justify-between gap-3 text-sm">
-        <div className="flex items-center gap-2 text-slate-500">
-          <span className="inline-flex h-2 w-2 rounded-full bg-sky-400" />
+        <div className="flex items-center gap-2 text-slate-500 dark:text-[#8B92A5]">
+          <span className="inline-flex h-2 w-2 rounded-full bg-orange-400" />
           Drag cards to reorder your study stack.
         </div>
 
         <button
           type="button"
           onClick={() => setShowArchived((value) => !value)}
-          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+          className="rounded-full border border-slate-200/80 dark:border-white/10 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
         >
           {showArchived ? "Hide archived" : "Show archived"}
         </button>
@@ -468,7 +468,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
         {visibleNotes.map((note) => renderNoteCard(note))}
 
         {visibleNotes.length === 0 ? (
-          <div className="col-span-full rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">
+          <div className="col-span-full rounded-3xl border border-dashed border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] p-10 text-center text-sm text-slate-500 dark:text-[#8B92A5]">
             No notes yet. Start with a quick thought or a lecture highlight.
           </div>
         ) : null}
@@ -477,8 +477,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
       {editorNote && editorId ? (
         <div
           className={cn(
-            "fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 transition-all duration-200",
-            editorVisible ? "opacity-100 backdrop-blur-sm" : "pointer-events-none opacity-0"
+            "fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 transition-all duration-200",
+            editorVisible ? "opacity-100 backdrop-blur-xs" : "pointer-events-none opacity-0"
           )}
           onClick={closeEditor}
         >
@@ -487,28 +487,28 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
             className={cn(
-              "flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl transition-transform duration-200",
+              "flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] text-slate-900 dark:text-[#F0F2F8] shadow-2xl transition-transform duration-200",
               editorVisible ? "translate-y-0 scale-100" : "translate-y-3 scale-[0.98]"
             )}
-            style={{ backgroundColor: editorColor }}
+            style={{ backgroundColor: editorColor === "#ffffff" ? undefined : editorColor }}
           >
-            <div className="flex items-center justify-between gap-4 border-b border-black/5 px-5 py-4">
+            <div className="flex items-center justify-between gap-4 border-b border-black/5 dark:border-white/5 px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Deep edit</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">{editorTitle || "Untitled note"}</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-[#8B92A5]">Deep edit</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">{editorTitle || "Untitled note"}</h3>
               </div>
 
               <button
                 type="button"
                 onClick={closeEditor}
-                className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
                 aria-label="Close editor"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="border-b border-black/5 px-5 py-3">
+            <div className="border-b border-black/5 dark:border-white/5 px-5 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <EditorButton onClick={() => applyFormatting("bold")} icon={<Bold className="h-4 w-4" />} />
                 <EditorButton onClick={() => applyFormatting("italic")} icon={<Italic className="h-4 w-4" />} />
@@ -518,7 +518,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   onClick={() =>
                     applyFormatting(
                       "insertHTML",
-                      "<code class='rounded bg-slate-900 px-1.5 py-0.5 font-mono text-xs text-white'>code</code>"
+                      "<code class='rounded bg-slate-900 dark:bg-black/50 px-1.5 py-0.5 font-mono text-xs text-white'>code</code>"
                     )
                   }
                   icon={<Code2 className="h-4 w-4" />}
@@ -528,7 +528,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   onClick={() =>
                     applyFormatting(
                       "insertHTML",
-                      "<ul class='list-none space-y-2'><li class='flex items-start gap-2'><input type='checkbox' class='mt-1 h-4 w-4 rounded border-slate-300 text-sky-500' /><span>Checklist item</span></li></ul>"
+                      "<ul class='list-none space-y-2'><li class='flex items-start gap-2'><input type='checkbox' class='mt-1 h-4 w-4 rounded border-slate-300 text-orange-500' /><span>Checklist item</span></li></ul>"
                     )
                   }
                   icon={<ListChecks className="h-4 w-4" />}
@@ -537,7 +537,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   onClick={() =>
                     applyFormatting(
                       "insertHTML",
-                      "<span class='inline-flex items-center gap-2 rounded-full bg-slate-900 px-2 py-1 text-xs font-medium text-white'><input type='checkbox' checked disabled class='h-3.5 w-3.5 rounded border-white/40 text-white' />Done</span>"
+                      "<span class='inline-flex items-center gap-2 rounded-full bg-slate-900 dark:bg-orange-500 px-2 py-1 text-xs font-medium text-white'><input type='checkbox' checked disabled class='h-3.5 w-3.5 rounded border-white/40 text-white' />Done</span>"
                     )
                   }
                   icon={<CheckSquare className="h-4 w-4" />}
@@ -550,7 +550,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                 <input
                   value={editorTitle}
                   onChange={(event) => setEditorTitle(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-lg font-semibold text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-lg font-semibold text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                   placeholder="Note title"
                 />
 
@@ -559,20 +559,20 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   contentEditable
                   suppressContentEditableWarning
                   onInput={(event) => setEditorHtml((event.currentTarget as HTMLDivElement).innerHTML)}
-                  className="min-h-[320px] rounded-3xl border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-700 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+                  className="min-h-[320px] rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-4 text-sm leading-7 text-slate-700 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
                   Rich text stays local until you press save, so the UI remains instant even on slower networks.
                 </p>
               </div>
 
-              <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4">
+              <div className="space-y-4 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#181B26] p-4">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Category</label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#8B92A5]">Category</label>
                   <select
                     value={editorCategory}
                     onChange={(event) => setEditorCategory(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                   >
                     {categoryOptions.map((option) => (
                       <option key={option} value={option}>
@@ -583,7 +583,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Theme</label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#8B92A5]">Theme</label>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {colorThemes.map((theme) => (
                       <button
@@ -591,8 +591,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                         type="button"
                         onClick={() => setEditorColor(theme.value)}
                         className={cn(
-                          "h-12 rounded-2xl border transition focus:outline-none focus:ring-2 focus:ring-sky-400",
-                          editorColor === theme.value ? "border-slate-900" : "border-slate-200"
+                          "h-12 rounded-2xl border transition focus:outline-none focus:ring-2 focus:ring-orange-500/40 cursor-pointer",
+                          editorColor === theme.value ? "border-slate-900 dark:border-white" : "border-slate-200 dark:border-white/10"
                         )}
                         style={{ backgroundColor: theme.value }}
                         aria-label={theme.label}
@@ -605,8 +605,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   type="button"
                   onClick={() => setEditorPinned((value) => !value)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-400",
-                    editorPinned ? "border-sky-200 bg-sky-50 text-sky-700" : "border-slate-200 bg-slate-50 text-slate-600"
+                    "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-orange-500/40 cursor-pointer",
+                    editorPinned ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400" : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#1E2132] text-slate-600 dark:text-[#8B92A5]"
                   )}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -620,8 +620,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   type="button"
                   onClick={() => setEditorArchived((value) => !value)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-400",
-                    editorArchived ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-600"
+                    "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-orange-500/40 cursor-pointer",
+                    editorArchived ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400" : "border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#1E2132] text-slate-600 dark:text-[#8B92A5]"
                   )}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -631,7 +631,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   <span>{editorArchived ? "Yes" : "No"}</span>
                 </button>
 
-                <div className="space-y-2 border-t border-slate-200 pt-4">
+                <div className="space-y-2 border-t border-slate-200/80 dark:border-white/5 pt-4">
                   <button
                     type="button"
                     onClick={async () => {
@@ -660,7 +660,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                         updateLocalNotes(previous);
                       }
                     }}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-[#F97316] px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs"
                   >
                     <Save className="h-4 w-4" />
                     Save changes
@@ -669,7 +669,7 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                   <button
                     type="button"
                     onClick={() => editorId && void removeNote(editorId).then(closeEditor)}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-600 dark:text-rose-400 transition hover:bg-rose-500/20 focus:outline-none focus:ring-2 focus:ring-rose-400 cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete note
@@ -708,7 +708,7 @@ function EditorButton({
     <button
       type="button"
       onClick={onClick}
-      className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+      className="grid h-10 w-10 place-items-center rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] text-slate-600 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
     >
       {icon}
     </button>

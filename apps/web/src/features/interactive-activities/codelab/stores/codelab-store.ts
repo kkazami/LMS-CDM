@@ -15,6 +15,13 @@ export interface TestCaseResult {
   time?: string;
 }
 
+/** Forensic paste event — logged silently for instructor review, never blocks the student. */
+export interface PasteEvent {
+  timestamp: string;
+  charCount: number;
+  language: CodeLabLanguage;
+}
+
 interface CodeLabState {
   // Config
   language: CodeLabLanguage;
@@ -30,6 +37,18 @@ interface CodeLabState {
   testResults: TestCaseResult[];
   activeTab: "editor" | "console" | "tests";
 
+  // Paste Detection & Keystroke Velocity
+  pasteCount: number;
+  pasteEvents: PasteEvent[];
+  typedCharCount: number;
+  sessionStartMs: number;
+
+  // Submission tracking (client-side awareness of rate limit)
+  submissionCount: number;
+
+  // Timer reference
+  startedAt: string;
+
   // Actions
   initialize: (lang: CodeLabLanguage, sig: FuncSignature, tests: TestCase[]) => void;
   setLanguage: (lang: CodeLabLanguage) => void;
@@ -38,31 +57,48 @@ interface CodeLabState {
   setConsoleOutput: (out: CodeSubmissionResponse | null) => void;
   setTestResults: (results: TestCaseResult[]) => void;
   setActiveTab: (tab: "editor" | "console" | "tests") => void;
+  addPasteEvent: (event: PasteEvent) => void;
+  incrementPasteCount: () => void;
+  incrementTypedChars: (count: number) => void;
+  incrementSubmission: () => void;
+  setStartedAt: (iso: string) => void;
 }
 
-export const useCodeLabStore = create<CodeLabState>((set, get) => ({
-  language: "python",
-  signature: null,
-  testCases: [],
-  codeByLanguage: {
+const ALL_LANGUAGES: CodeLabLanguage[] = ["python", "java", "c", "cpp", "javascript", "csharp", "sql"];
+
+function buildEmptyCodeMap(): Record<CodeLabLanguage, string> {
+  return {
     python: "",
     java: "",
     c: "",
     cpp: "",
     javascript: "",
     csharp: "",
-  },
+    sql: "",
+  };
+}
+
+export const useCodeLabStore = create<CodeLabState>((set, get) => ({
+  language: "python",
+  signature: null,
+  testCases: [],
+  codeByLanguage: buildEmptyCodeMap(),
   isExecuting: false,
   consoleOutput: null,
   testResults: [],
   activeTab: "editor",
+  pasteCount: 0,
+  pasteEvents: [],
+  typedCharCount: 0,
+  sessionStartMs: Date.now(),
+  submissionCount: 0,
+  startedAt: "",
 
   initialize: (lang, sig, tests) => {
     // Generate starter code for all supported languages if not already present
     const codes = { ...get().codeByLanguage };
-    const langs: CodeLabLanguage[] = ["python", "java", "c", "cpp", "javascript", "csharp"];
     
-    langs.forEach(l => {
+    ALL_LANGUAGES.forEach(l => {
       if (!codes[l]) {
         codes[l] = generateStarterCode(l, sig);
       }
@@ -76,6 +112,12 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
       consoleOutput: null,
       testResults: [],
       activeTab: "editor",
+      pasteCount: 0,
+      pasteEvents: [],
+      typedCharCount: 0,
+      sessionStartMs: Date.now(),
+      submissionCount: 0,
+      startedAt: new Date().toISOString(),
     });
   },
 
@@ -92,4 +134,23 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
   setConsoleOutput: (out) => set({ consoleOutput: out }),
   setTestResults: (results) => set({ testResults: results }),
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  addPasteEvent: (event) => set((state) => ({
+    pasteEvents: [...state.pasteEvents, event],
+    pasteCount: state.pasteCount + 1,
+  })),
+
+  incrementPasteCount: () => set((state) => ({
+    pasteCount: state.pasteCount + 1,
+  })),
+
+  incrementTypedChars: (count: number) => set((state) => ({
+    typedCharCount: state.typedCharCount + count,
+  })),
+
+  incrementSubmission: () => set((state) => ({
+    submissionCount: state.submissionCount + 1,
+  })),
+
+  setStartedAt: (iso) => set({ startedAt: iso }),
 }));

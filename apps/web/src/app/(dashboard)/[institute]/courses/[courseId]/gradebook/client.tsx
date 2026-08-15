@@ -161,34 +161,35 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
 
   if (data.assignments.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center p-8">
-        <Star className="h-12 w-12 text-gray-300 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-700">No gradable items yet</h2>
-        <p className="text-sm text-gray-400 mt-1">Create assignments or quizzes with point values to see the gradebook.</p>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] flex flex-col items-center justify-center text-center p-12 shadow-xs">
+        <Star className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-[#F0F2F8]">No gradable items yet</h2>
+        <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">Create assignments or quizzes with point values to see the gradebook.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] overflow-hidden shadow-xs transition-colors">
       {/* Header */}
-      <div className="bg-white border-b border-gray-300 px-6 py-4">
+      <div className="bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/5 px-6 py-4">
         <div className="max-w-full mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href={`/${instituteCode}/courses/${courseId}`}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               {courseTitle}
             </Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-sm font-semibold text-gray-800">Gradebook</span>
+            <span className="text-slate-300 dark:text-white/10">/</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Gradebook</span>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsPolicyModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#1C2030] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all shadow-xs cursor-pointer"
             >
               <Settings className="h-4 w-4" />
               Grading Policy
@@ -198,7 +199,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
             </button>
             <a
               href={`/api/courses/${courseId}/gradebook/export`}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-all shadow-sm"
+              className="flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition-all shadow-xs"
             >
               <Download className="h-4 w-4" />
               Export CSV
@@ -210,38 +211,38 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-white border-b border-gray-300 sticky top-0 z-10">
-              <th className="sticky left-0 bg-white z-20 px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-r border-gray-200 min-w-[200px]">
+            <tr className="bg-slate-50/70 dark:bg-[#181B26] border-b border-slate-200/80 dark:border-white/5 sticky top-0 z-10">
+              <th className="sticky left-0 bg-slate-50/90 dark:bg-[#181B26] z-20 px-5 py-3 text-left text-xs font-semibold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wide border-r border-slate-200/80 dark:border-white/5 min-w-[200px]">
                 Student
               </th>
               {data.assignments.map((a) => (
                 <th
                   key={a.id}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide border-r border-gray-200 min-w-[140px]"
+                  className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-[#8B92A5] uppercase tracking-wide border-r border-slate-200/80 dark:border-white/5 min-w-[140px]"
                 >
-                  <div className="truncate max-w-[130px]" title={a.title}>{a.title}</div>
+                  <div className="truncate max-w-[130px] text-slate-900 dark:text-[#F0F2F8]" title={a.title}>{a.title}</div>
                   {a.maxPoints && (
-                    <div className="text-gray-400 font-normal normal-case">{a.maxPoints} pts</div>
+                    <div className="text-slate-400 dark:text-slate-500 font-normal normal-case">{a.maxPoints} pts</div>
                   )}
                 </th>
               ))}
               {hasValidPolicy && (
-                <th className="sticky right-0 bg-indigo-50 z-20 px-5 py-3 text-right text-xs font-bold text-indigo-900 uppercase tracking-wide border-l border-indigo-100 min-w-[120px] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
+                <th className="sticky right-0 bg-orange-50/50 dark:bg-orange-950/20 z-20 px-5 py-3 text-right text-xs font-bold text-orange-900 dark:text-orange-300 uppercase tracking-wide border-l border-orange-200/50 dark:border-orange-900/30 min-w-[120px] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
                   Final Grade
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {data.students.map((student, idx) => (
               <tr
                 key={student.id}
-                className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                className={idx % 2 === 0 ? "bg-white dark:bg-[#141721]" : "bg-slate-50/40 dark:bg-[#181B26]/50"}
               >
-                <td className="sticky left-0 bg-inherit z-10 px-5 py-3 border-r border-gray-200">
+                <td className="sticky left-0 bg-inherit z-10 px-5 py-3 border-r border-slate-200/80 dark:border-white/5">
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">{student.name}</p>
-                    <p className="text-xs text-gray-400">{student.email}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{student.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-[#8B92A5]">{student.email}</p>
                   </div>
                 </td>
                 {data.assignments.map((assignment) => {
@@ -256,7 +257,11 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                   return (
                     <td
                       key={assignment.id}
-                      className={`px-4 py-3 border-r border-gray-200 cursor-pointer transition-colors ${isSelected ? "bg-indigo-50 border-indigo-200 outline outline-2 outline-indigo-500 -outline-offset-2 relative z-10" : "hover:bg-gray-50/80"}`}
+                      className={`px-4 py-3 border-r border-slate-200/80 dark:border-white/5 cursor-pointer transition-colors ${
+                        isSelected 
+                          ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/40 outline outline-2 outline-[#F97316] -outline-offset-2 relative z-10" 
+                          : "hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
+                      }`}
                       onClick={() => {
                         setSelectedCell({ studentId: student.id, assignmentId: assignment.id });
                         setEditingCell({ studentId: student.id, assignmentId: assignment.id });
@@ -300,7 +305,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                               }
                             }
                           }}
-                          className="w-16 rounded border border-indigo-300 px-1.5 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                          className="w-16 rounded-lg border border-orange-400 bg-white dark:bg-[#1E2132] px-1.5 py-0.5 text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none focus:ring-1 focus:ring-orange-500"
                         />
                       ) : (
                         <span
@@ -308,8 +313,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                             displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
                               ? gradeColor(displayGrade as number | null, assignment.maxPoints)
                               : cell?.submissionId
-                              ? "text-gray-500 bg-gray-50"
-                              : "text-gray-300"
+                              ? "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5"
+                              : "text-slate-300 dark:text-slate-600"
                           }`}
                         >
                           {displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
@@ -323,17 +328,17 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                   );
                 })}
                 {hasValidPolicy && (
-                  <td className="sticky right-0 bg-indigo-50/50 z-10 px-5 py-3 border-l border-indigo-100 text-right shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
+                  <td className="sticky right-0 bg-orange-50/30 dark:bg-orange-950/10 z-10 px-5 py-3 border-l border-orange-200/40 dark:border-orange-900/30 text-right shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
                     {(() => {
                       const final = computeFinalGrade(student.id);
-                      if (final === null) return <span className="text-gray-400">—</span>;
+                      if (final === null) return <span className="text-slate-400 dark:text-slate-600">—</span>;
                       const eq = getGradingScaleEquivalent(final);
                       return (
                         <div className="flex flex-col items-end">
-                          <span className={`font-bold text-lg ${final >= 75 ? 'text-emerald-700' : 'text-red-700'}`}>
+                          <span className={`font-bold text-lg ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                             {eq}
                           </span>
-                          <span className="text-xs text-gray-500">{final.toFixed(1)}%</span>
+                          <span className="text-xs text-slate-500 dark:text-[#8B92A5]">{final.toFixed(1)}%</span>
                         </div>
                       );
                     })()}
@@ -346,14 +351,15 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       </div>
 
       {/* Color legend */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center gap-6 text-xs text-gray-500">
-        <span className="font-semibold">Legend:</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-emerald-50 border border-emerald-200" /> ≥ 80%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-50 border border-amber-200" /> ≥ 50%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-50 border border-red-200" /> &lt; 50%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-gray-100 border border-gray-300" /> Not graded</span>
-        <span className="ml-2 text-gray-400 italic">Click a cell to edit grade inline</span>
+      <div className="sticky bottom-0 bg-white dark:bg-[#141721] border-t border-slate-200/80 dark:border-white/5 px-6 py-3 flex items-center gap-6 text-xs text-slate-500 dark:text-[#8B92A5]">
+        <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">Legend:</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-emerald-500/20 border border-emerald-500/40" /> ≥ 80%</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500/20 border border-amber-500/40" /> ≥ 50%</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-500/20 border border-red-500/40" /> &lt; 50%</span>
+        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20" /> Not graded</span>
+        <span className="ml-2 text-slate-400 dark:text-slate-500 italic">Click a cell to edit grade inline</span>
       </div>
+    </div>
 
       <GradingPolicyModal
         open={isPolicyModalOpen}
@@ -377,6 +383,6 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
           }
         }}
       />
-    </div>
+    </>
   );
 }

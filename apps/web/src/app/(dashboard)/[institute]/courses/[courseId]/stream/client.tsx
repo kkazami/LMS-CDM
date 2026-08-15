@@ -46,13 +46,13 @@ export default function StreamClient({
           <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="instituteCode" value={instituteCode} />
 
-          <div className="rounded-lg border border-gray-300 bg-white p-4">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs transition-colors">
             <textarea
               name="content"
               required
               rows={3}
               placeholder="Announce something to your class..."
-              className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-gray-400"
+              className="w-full resize-none bg-transparent text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400"
             />
             <div className="mt-3 flex justify-end">
               <Button theme={theme} type="submit">
@@ -63,21 +63,21 @@ export default function StreamClient({
           </div>
 
           {state.message && state.message !== "success" && (
-            <p className="text-sm text-red-600">{state.message}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.message}</p>
           )}
         </form>
       )}
 
       {/* Announcements feed */}
       {announcements.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="rounded-full bg-gray-100 p-5 mb-4">
-            <MessageSquare className="h-8 w-8 text-gray-400" />
+        <div className="flex flex-col items-center py-16 text-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-8 shadow-xs">
+          <div className="rounded-full bg-slate-100 dark:bg-white/5 p-5 mb-4">
+            <MessageSquare className="h-8 w-8 text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700">
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">
             No announcements yet
           </h3>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm">
             {canPost
               ? "Share updates, reminders, or resources with your class."
               : "Your instructor hasn't posted any announcements yet."}

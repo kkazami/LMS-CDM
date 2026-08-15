@@ -318,18 +318,18 @@ export default function AvatarUploadModal({
       {/* Panel */}
       <div
         className={cn(
-          "relative w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-2xl transition-all duration-200 ease-out",
+          "relative w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl transition-all duration-200 ease-out",
           visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
         )}
       >
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">
             {phase === "select" ? "Upload Profile Photo" : "Crop your profile photo"}
           </h3>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" />
@@ -344,21 +344,21 @@ export default function AvatarUploadModal({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-10 transition-colors hover:border-gray-400 hover:bg-gray-100"
+              className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-10 transition-colors hover:border-orange-500/50 hover:bg-orange-500/5"
             >
               <div
-                className="mb-3 rounded-full p-3"
+                className="mb-3 rounded-2xl p-3.5"
                 style={{ backgroundColor: `${theme.colors.primary}1A` }}
               >
                 <Upload className="h-6 w-6" style={{ color: theme.colors.primary }} />
               </div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 Drag & drop your photo here
               </p>
-              <p className="mt-1 text-xs text-gray-400">— or —</p>
+              <p className="mt-1 text-xs text-slate-400 dark:text-[#8B92A5]">— or —</p>
               <button
                 type="button"
-                className="mt-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                className="mt-2 rounded-xl px-4 py-2 text-xs font-semibold text-white transition-colors cursor-pointer"
                 style={{ backgroundColor: theme.colors.primary }}
               >
                 Choose File
@@ -374,10 +374,10 @@ export default function AvatarUploadModal({
             />
 
             {fileError && (
-              <p className="mt-3 text-sm text-red-600 text-center">{fileError}</p>
+              <p className="mt-3 text-xs text-red-600 dark:text-red-400 text-center font-medium">{fileError}</p>
             )}
 
-            <div className="mt-4 space-y-1 text-xs text-gray-400">
+            <div className="mt-4 space-y-1 text-xs text-slate-400 dark:text-[#8B92A5]">
               <p>✅ Accepted formats: JPG, PNG, WEBP</p>
               <p>✅ Maximum file size: 5 MB</p>
               <p>✅ Minimum dimensions: 100 × 100 px</p>
@@ -386,7 +386,7 @@ export default function AvatarUploadModal({
             {currentAvatarUrl && (
               <button
                 onClick={handleRemovePhoto}
-                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold text-red-500 dark:text-red-400 transition-colors hover:bg-red-500/10 cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Remove current photo
@@ -404,7 +404,7 @@ export default function AvatarUploadModal({
                 width={CANVAS_SIZE}
                 height={CANVAS_SIZE}
                 className={cn(
-                  "rounded-xl cursor-grab active:cursor-grabbing",
+                  "rounded-2xl cursor-grab active:cursor-grabbing border border-slate-200 dark:border-white/10",
                   isDragging && "cursor-grabbing"
                 )}
                 style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
@@ -415,7 +415,7 @@ export default function AvatarUploadModal({
 
             {/* Zoom slider */}
             <div className="mt-4 flex items-center gap-3 px-2">
-              <ZoomIn className="h-4 w-4 text-gray-400 shrink-0" />
+              <ZoomIn className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <input
                 type="range"
                 min="0.5"
@@ -423,13 +423,13 @@ export default function AvatarUploadModal({
                 step="0.01"
                 value={scale}
                 onChange={(e) => setScale(parseFloat(e.target.value))}
-                className="w-full accent-blue-500"
+                className="w-full accent-orange-500"
                 style={{ accentColor: theme.colors.primary }}
                 disabled={phase === "uploading"}
               />
             </div>
 
-            <p className="mt-2 text-center text-xs text-gray-400">
+            <p className="mt-2 text-center text-xs text-slate-400 dark:text-[#8B92A5]">
               Drag the image to reposition it
             </p>
 
@@ -443,7 +443,7 @@ export default function AvatarUploadModal({
                   setScale(1);
                   setOffset({ x: 0, y: 0 });
                 }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
                 disabled={phase === "uploading"}
               >
                 Cancel
@@ -451,7 +451,7 @@ export default function AvatarUploadModal({
               <button
                 onClick={handleSave}
                 disabled={phase === "uploading"}
-                className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium text-white transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-semibold text-white transition-colors disabled:opacity-60 cursor-pointer shadow-xs"
                 style={{ backgroundColor: theme.colors.primary }}
               >
                 {phase === "uploading" && (

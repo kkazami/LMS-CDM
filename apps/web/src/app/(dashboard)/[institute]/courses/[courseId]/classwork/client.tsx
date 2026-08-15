@@ -229,7 +229,7 @@ export default function ClassworkClient({
           )}
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">Type</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">Type</label>
             <select
               value={isCustomType ? "CUSTOM" : selectedType}
               onChange={(e) => {
@@ -241,8 +241,7 @@ export default function ClassworkClient({
                   setSelectedType(e.target.value);
                 }
               }}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none"
-              style={{ borderColor: theme.colors.border }}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none"
             >
               <option value="ASSIGNMENT">Assignment</option>
               <option value="QUIZ">Quiz</option>
@@ -278,7 +277,7 @@ export default function ClassworkClient({
           />
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">
               Description
             </label>
             <textarea
@@ -286,8 +285,7 @@ export default function ClassworkClient({
               defaultValue={editingItem?.description}
               rows={3}
               placeholder="Optional description or instructions"
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-              style={{ borderColor: theme.colors.border }}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400"
             />
           </div>
 
@@ -315,25 +313,25 @@ export default function ClassworkClient({
 
           {/* Attachments section */}
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">
               Attachments
             </label>
 
             {attachments.length > 0 && (
-              <div className="space-y-1.5 rounded-md border border-gray-300 p-2 max-h-28 overflow-y-auto">
+              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-2 max-h-28 overflow-y-auto bg-slate-50/50 dark:bg-white/[0.02]">
                 {attachments.map((att, idx) => {
                   const isLink = att.type === "LINK";
                   const Icon = isLink ? Link2 : FileText;
                   return (
                     <div
                       key={`${att.type}-${att.url}-${idx}`}
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 bg-gray-50 text-sm"
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-white dark:bg-[#1E2132] border border-slate-100 dark:border-white/5 text-sm"
                     >
-                      <Icon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                      <span className="truncate flex-1 text-gray-700">
+                      <Icon className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <span className="truncate flex-1 text-slate-700 dark:text-[#F0F2F8] text-xs">
                         {att.fileName || att.url}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {isLink ? "Link" : "File"}
                       </span>
                     </div>
@@ -345,7 +343,7 @@ export default function ClassworkClient({
             <button
               type="button"
               onClick={() => setIsAttachModalOpen(true)}
-              className="flex items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50"
+              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-white/15 py-2.5 text-xs font-semibold text-slate-600 dark:text-[#8B92A5] transition-colors hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 cursor-pointer"
             >
               <Paperclip className="h-4 w-4" />
               {attachments.length > 0
@@ -357,23 +355,23 @@ export default function ClassworkClient({
           {/* Target Group Selector */}
           {studentGroups.length > 0 && (
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-gray-800">
+              <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">
                 Target Audience
               </label>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
                 Leave all unchecked to make visible to all students
               </p>
-              <div className="space-y-1.5 rounded-md border border-gray-300 p-3 max-h-32 overflow-y-auto">
+              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-3 max-h-32 overflow-y-auto bg-slate-50/50 dark:bg-white/[0.02]">
                 {studentGroups.map((group) => (
                   <label
                     key={group.id}
-                    className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-gray-900"
+                    className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700 dark:text-[#F0F2F8] hover:text-slate-900"
                   >
                     <input
                       type="checkbox"
                       checked={selectedGroups.includes(group.id)}
                       onChange={() => toggleGroup(group.id)}
-                      className="rounded border-gray-300"
+                      className="rounded border-slate-300 dark:border-white/20 text-[#F97316]"
                     />
                     {group.groupName}
                   </label>

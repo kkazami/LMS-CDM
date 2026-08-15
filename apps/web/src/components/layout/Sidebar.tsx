@@ -22,6 +22,8 @@ import {
   Library,
   Archive,
   FlaskConical,
+  Code2,
+  Terminal,
   ChevronDown,
   ChevronRight,
   PenTool,
@@ -112,12 +114,24 @@ export default function Sidebar({
   const isStudent = userRole.toUpperCase() === "STUDENT";
   const isProfessor = userRole.toUpperCase() === "PROFESSOR" || userRole.toUpperCase() === "TEACHER";
 
-  // Build the link list, then conditionally append Interactive Labs if eligible.
-  // The entry is NOT rendered at all (absent from DOM) for ineligible users.
+  // Build the link list, then conditionally append CodeLab if eligible.
   const baseLinks = getLinks(instituteCode, userRole);
-  const links = isEligibleForActivities
-    ? [...baseLinks, { label: "Interactive Labs", href: `/${instituteCode}/activities`, icon: FlaskConical }]
-    : baseLinks;
+  let links = baseLinks;
+
+  if (isEligibleForActivities) {
+    if (isProfessor) {
+      links = [
+        ...baseLinks,
+        { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
+        { label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal },
+      ];
+    } else {
+      links = [
+        ...baseLinks,
+        { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
+      ];
+    }
+  }
 
   // Find the active link by getting the longest href that matches the current pathname
   const activeLink = [...links]
@@ -139,24 +153,23 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? "w-18" : "w-72"}`}
-      style={{ backgroundColor: theme.colors.sidebar, borderColor: theme.colors.sidebarMuted }}
+      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
+        isCollapsed ? "w-[72px]" : "w-72"
+      }`}
     >
-      {/* Header with logo + collapse toggle always visible */}
-      <div
-        className="flex items-center h-16 shrink-0 border-b px-3 gap-2"
-        style={{ borderColor: theme.colors.sidebarMuted }}
-      >
+      {/* Header with logo + collapse toggle */}
+      <div className="flex items-center h-16 shrink-0 border-b border-slate-200/80 dark:border-white/5 bg-transparent px-4 gap-2">
         <div
           className={`flex items-center gap-2 overflow-hidden transition-all duration-300 flex-1 min-w-0 ${
             isCollapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          <Link href={`/${instituteCode}`} className="flex items-center gap-2">
-            <span className="text-xl font-semibold text-white whitespace-nowrap hover:text-gray-200 transition-colors">Lumina LMS</span>
+          <Link href={`/${instituteCode}`} className="flex items-center gap-2 group">
+            <span className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap group-hover:text-[#F97316] transition-colors">
+              Lumina LMS
+            </span>
             <span
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="h-2 w-2 rounded-full shrink-0 animate-pulse bg-[#F97316]"
             />
           </Link>
         </div>
@@ -164,7 +177,7 @@ export default function Sidebar({
         {onToggleCollapse && (
           <button
             onClick={onToggleCollapse}
-            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
@@ -200,16 +213,13 @@ export default function Sidebar({
                   aria-expanded={isMyCoursesOpen}
                   onClick={handleMyCoursesToggle}
                   onKeyDown={handleMyCoursesKeyDown}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer select-none"
-                  style={{
-                    backgroundColor: isSubActive && !isMyCoursesOpen ? theme.colors.sidebarMuted : "transparent",
-                    color: isSubActive ? theme.colors.primary : "#E5E7EB",
-                  }}
+                  className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
+                    isSubActive && !isMyCoursesOpen
+                      ? "border-l-[3px] border-[#F97316] bg-orange-500/10 text-[#F97316] font-semibold rounded-r-xl rounded-l-none"
+                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+                  }`}
                 >
-                  {(() => {
-                    const ResolvedIcon = item.icon as React.FC<{ className?: string }>;
-                    return <ResolvedIcon className="h-5 w-5 shrink-0" />;
-                  })()}
+                  <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
                   <span
                     className={`overflow-hidden whitespace-nowrap transition-all duration-300 flex-1 min-w-0 ${
                       isCollapsed ? "w-0 opacity-0" : "opacity-100"
@@ -220,7 +230,7 @@ export default function Sidebar({
                   {!isCollapsed && (
                     <span className="shrink-0">
                       <ChevronDown
-                        className={`h-4 w-4 transition-transform duration-200 ${
+                        className={`h-4 w-4 transition-transform duration-200 text-slate-400 dark:text-[#555C72] ${
                           isMyCoursesOpen ? "rotate-0" : "-rotate-90"
                         }`}
                       />
@@ -233,7 +243,7 @@ export default function Sidebar({
                   <div
                     className="overflow-hidden transition-all duration-300 ease-in-out"
                     style={{
-                      maxHeight: isMyCoursesOpen ? `${((enrolledCourses?.length ?? 0) + 2) * 40}px` : "0px",
+                      maxHeight: isMyCoursesOpen ? `${((enrolledCourses?.length ?? 0) + 2) * 44}px` : "0px",
                       opacity: isMyCoursesOpen ? 1 : 0,
                     }}
                   >
@@ -243,19 +253,12 @@ export default function Sidebar({
                         <Link
                           id="sidebar-my-courses-todo"
                           href={`/${instituteCode}/assignments`}
-                          className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
-                          style={{
-                            backgroundColor:
-                              pathname === `/${instituteCode}/assignments` ||
-                              pathname.startsWith(`/${instituteCode}/assignments/`)
-                                ? theme.colors.sidebarMuted
-                                : "transparent",
-                            color:
-                              pathname === `/${instituteCode}/assignments` ||
-                              pathname.startsWith(`/${instituteCode}/assignments/`)
-                                ? theme.colors.primary
-                                : "#D1D5DB",
-                          }}
+                          className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
+                            pathname === `/${instituteCode}/assignments` ||
+                            pathname.startsWith(`/${instituteCode}/assignments/`)
+                              ? "bg-orange-500/10 text-[#F97316] font-semibold"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                          }`}
                         >
                           <ClipboardCheck className="h-4 w-4 shrink-0" />
                           <span className="truncate">To-do</span>
@@ -273,13 +276,11 @@ export default function Sidebar({
                             key={course.id}
                             id={`sidebar-course-${course.id}`}
                             href={courseHref}
-                            className="flex items-center gap-2.5 rounded-md pl-8 pr-3 py-2 text-xs font-medium transition-colors"
-                            style={{
-                              backgroundColor: isCourseActive
-                                ? theme.colors.sidebarMuted
-                                : "transparent",
-                              color: isCourseActive ? theme.colors.primary : "#D1D5DB",
-                            }}
+                            className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
+                              isCourseActive
+                                ? "bg-orange-500/10 text-[#F97316] font-semibold"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                            }`}
                           >
                             <BookOpen className="h-4 w-4 shrink-0" />
                             <span className="truncate">{course.code}</span>
@@ -299,16 +300,13 @@ export default function Sidebar({
               key={item.href}
               href={item.href}
               title={isCollapsed ? item.label : undefined}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: active ? theme.colors.sidebarMuted : "transparent",
-                color: active ? theme.colors.primary : "#E5E7EB",
-              }}
+              className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                active
+                  ? "border-l-[3px] border-[#F97316] bg-orange-500/10 text-[#F97316] font-semibold rounded-r-xl rounded-l-none"
+                  : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+              }`}
             >
-              {(() => {
-                const ResolvedIcon = item.icon as React.FC<{ className?: string }>;
-                return <ResolvedIcon className="h-5 w-5 shrink-0" />;
-              })()}
+              <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
               <span
                 className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
                   isCollapsed ? "w-0 opacity-0" : "opacity-100"

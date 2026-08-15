@@ -102,28 +102,28 @@ export default async function TemplateEditorPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">{isNew ? "Create New Scenario" : "Edit Scenario"}</h2>
-        <p className="text-gray-500">Define the problem variables, hidden test cases, or faults.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">{isNew ? "Create New Scenario" : "Edit Scenario"}</h2>
+        <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">Define the problem variables, hidden test cases, or faults.</p>
       </div>
 
-      <form action={saveTemplate} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+      <form action={saveTemplate} className="bg-white dark:bg-[#141721] p-6 rounded-2xl border border-slate-200/80 dark:border-white/5 shadow-xs space-y-6">
         
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="font-semibold text-sm">Title</label>
+            <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Title</label>
             <input 
               name="title" 
               defaultValue={template?.title || ""} 
               required
-              className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none" 
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500" 
             />
           </div>
           <div className="space-y-2">
-            <label className="font-semibold text-sm">Activity Type</label>
+            <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Activity Type</label>
             <select 
               name="activityType" 
               defaultValue={template?.activityType || "codelab"}
-              className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
             >
               <option value="codelab">CodeLab</option>
               <option value="pc-build">PC Build</option>
@@ -135,16 +135,16 @@ export default async function TemplateEditorPage({
         </div>
 
         <div className="space-y-2">
-          <label className="font-semibold text-sm">Difficulty Level</label>
+          <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Difficulty Level</label>
           <div className="flex gap-4">
             {[1, 2, 3].map(level => (
-              <label key={level} className="flex items-center gap-2">
+              <label key={level} className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-[#F0F2F8]">
                 <input 
                   type="radio" 
                   name="difficulty" 
                   value={level} 
                   defaultChecked={(template?.difficulty || 1) === level} 
-                  className="accent-indigo-600"
+                  className="accent-[#F97316]"
                 />
                 Level {level}
               </label>
@@ -153,44 +153,44 @@ export default async function TemplateEditorPage({
         </div>
 
         <div className="space-y-2">
-          <label className="font-semibold text-sm">Variables (JSON Object)</label>
-          <p className="text-xs text-gray-500">e.g., CodeLab variables or Arduino thresholds.</p>
+          <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Variables (JSON Object)</label>
+          <p className="text-[11px] text-slate-400 dark:text-[#8B92A5]">e.g., CodeLab variables or Arduino thresholds.</p>
           <textarea 
             name="variables" 
             defaultValue={template?.variables || "{}"}
             rows={5}
-            className="w-full font-mono text-sm border border-gray-300 rounded p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full font-mono text-xs rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-50/50 dark:bg-[#1E2132] p-3 text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="font-semibold text-sm">Fault Pool (JSON Array)</label>
-            <p className="text-xs text-gray-500">For 3D troubleshooting scenarios.</p>
+            <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Fault Pool (JSON Array)</label>
+            <p className="text-[11px] text-slate-400 dark:text-[#8B92A5]">For 3D troubleshooting scenarios.</p>
             <textarea 
               name="faultPool" 
               defaultValue={template?.faultPool || "[]"}
               rows={5}
-              className="w-full font-mono text-sm border border-gray-300 rounded p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-50/50 dark:bg-[#1E2132] p-3 text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="font-semibold text-sm">Hidden Test Cases (JSON Array)</label>
-            <p className="text-xs text-gray-500">For CodeLab grading.</p>
+            <label className="font-semibold text-xs text-slate-700 dark:text-[#F0F2F8]">Hidden Test Cases (JSON Array)</label>
+            <p className="text-[11px] text-slate-400 dark:text-[#8B92A5]">For CodeLab grading.</p>
             <textarea 
               name="hiddenTestCases" 
               defaultValue={template?.hiddenTestCases || "[]"}
               rows={5}
-              className="w-full font-mono text-sm border border-gray-300 rounded p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full font-mono text-xs rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-50/50 dark:bg-[#1E2132] p-3 text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
             />
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-gray-100">
+        <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">
           <button 
             type="submit" 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+            className="bg-[#F97316] hover:bg-orange-600 text-white font-semibold text-xs py-2 px-6 rounded-xl transition-colors cursor-pointer shadow-xs"
           >
             Save Template
           </button>
