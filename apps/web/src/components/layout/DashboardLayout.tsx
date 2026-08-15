@@ -7,6 +7,8 @@ import Topbar from "@/components/layout/Topbar";
 import NavigationProgress from "@/components/layout/NavigationProgress";
 import Toaster from "@/components/common/Toast";
 import { AvatarProvider } from "@/lib/avatar-context";
+import { ChatbotProvider } from "@/lib/chatbot-context";
+import ChatbotWidget from "@/components/common/ChatbotWidget";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface DashboardLayoutProps {
@@ -39,7 +41,9 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  return (
+  const isStudent = userRole.toUpperCase() === "STUDENT";
+
+  const layoutContent = (
     <div
       className="min-h-screen"
       style={{
@@ -100,6 +104,16 @@ export default function DashboardLayout({
 
       {/* Toast Notifications */}
       <Toaster />
+
+      {/* Chatbot Widget — STUDENT role only */}
+      {isStudent && <ChatbotWidget theme={theme} />}
     </div>
   );
+
+  // Wrap in ChatbotProvider for students so chat state persists across navigations
+  if (isStudent) {
+    return <ChatbotProvider>{layoutContent}</ChatbotProvider>;
+  }
+
+  return layoutContent;
 }

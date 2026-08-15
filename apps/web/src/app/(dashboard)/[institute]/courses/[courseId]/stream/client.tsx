@@ -5,7 +5,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import AnnouncementCard from "@/components/courses/AnnouncementCard";
 import Button from "@/components/common/Button";
 import { Send, MessageSquare } from "lucide-react";
-import { createAnnouncement } from "./actions";
+import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from "./actions";
 
 interface Announcement {
   id: string;
@@ -37,6 +37,14 @@ export default function StreamClient({
       formRef.current?.reset();
     }
   }, [state]);
+
+  const handleUpdate = async (id: string, newContent: string) => {
+    return await updateAnnouncement(id, newContent, courseId, instituteCode);
+  };
+
+  const handleDelete = async (id: string) => {
+    return await deleteAnnouncement(id, courseId, instituteCode);
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -86,7 +94,14 @@ export default function StreamClient({
       ) : (
         <div className="space-y-4">
           {announcements.map((a) => (
-            <AnnouncementCard key={a.id} announcement={a} theme={theme} />
+            <AnnouncementCard
+              key={a.id}
+              announcement={a}
+              theme={theme}
+              canEditDelete={canPost}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

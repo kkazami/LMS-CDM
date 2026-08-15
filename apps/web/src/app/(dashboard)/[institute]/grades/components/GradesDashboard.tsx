@@ -145,7 +145,7 @@ export default function GradesDashboard({
           id="grades-course-filter"
           value={selectedCourseId}
           onChange={(e) => onCourseChange(e.target.value)}
-          className="min-w-[200px] px-4 py-2.5 text-sm font-medium bg-white border rounded-full appearance-none cursor-pointer transition-all focus:outline-none"
+          className="min-w-50 px-4 py-2.5 text-sm font-medium bg-white border rounded-full appearance-none cursor-pointer transition-all focus:outline-none"
           style={{ borderColor: theme.colors.border, color: theme.colors.text }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = theme.colors.primary;
@@ -268,7 +268,7 @@ export default function GradesDashboard({
                         >
                           <Icon className="h-4 w-4" />
                         </div>
-                        <span className="text-sm font-medium text-gray-800 truncate max-w-[180px]">
+                        <span className="text-sm font-medium text-gray-800 truncate max-w-45">
                           {row.itemTitle}
                         </span>
                       </div>
@@ -280,7 +280,7 @@ export default function GradesDashboard({
                     </td>
                     <td className="px-4 py-3.5">
                       <p className="text-sm text-gray-700 font-medium">{row.courseCode}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-[140px]">{row.courseTitle}</p>
+                      <p className="text-xs text-gray-400 truncate max-w-35">{row.courseTitle}</p>
                     </td>
                     <td className="px-4 py-3.5 text-sm font-semibold text-gray-800">
                       {row.grade}

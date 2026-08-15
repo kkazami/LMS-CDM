@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, Menu, Search, Settings, User, Shield, HelpCircle, LogOut } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 type TopbarProps = {
   theme: InstituteTheme;
@@ -15,7 +16,6 @@ type TopbarProps = {
   instituteCode: string;
   studentNumber?: string | null;
   avatarUrl?: string | null;
-  notificationCount?: number;
   onOpenMobileMenu?: () => void;
 };
 
@@ -27,7 +27,6 @@ export default function Topbar({
   instituteCode,
   studentNumber,
   avatarUrl,
-  notificationCount = 3,
   onOpenMobileMenu,
 }: TopbarProps) {
   const pathname = usePathname();
@@ -142,20 +141,7 @@ export default function Topbar({
             <Settings className="h-5 w-5" />
           </Link>
 
-          <button
-            className="relative rounded-md border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 transition-colors"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-            {notificationCount > 0 ? (
-              <span
-                className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold text-white"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
-                {notificationCount}
-              </span>
-            ) : null}
-          </button>
+          <NotificationBell theme={theme} />
 
           <div className="relative" ref={dropdownRef}>
             <button

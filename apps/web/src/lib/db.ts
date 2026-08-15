@@ -19,7 +19,7 @@ function createPrismaClient() {
 function hasWorkspaceModels(client: PrismaClient) {
   const runtimeClient = client as PrismaClient & Record<string, unknown>;
 
-  return ["note", "taskItem", "calendarEvent"].every((delegate) => delegate in runtimeClient);
+  return ["note", "taskItem", "calendarEvent", "notification"].every((delegate) => delegate in runtimeClient);
 }
 
 export const db =

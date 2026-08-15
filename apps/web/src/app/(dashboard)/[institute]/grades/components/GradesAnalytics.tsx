@@ -53,7 +53,7 @@ const LineTooltip = ({
   if (!active || !payload?.length) return null;
   const pt = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-lg px-4 py-3 max-w-[200px]">
+    <div className="bg-white border border-gray-100 rounded-xl shadow-lg px-4 py-3 max-w-50">
       <p className="text-xs font-semibold text-gray-500 mb-1">{pt.date}</p>
       <p className="text-sm font-semibold text-gray-800 truncate">{pt.itemTitle}</p>
       <p className="text-xs text-gray-400 mb-1">{pt.courseCode}</p>
