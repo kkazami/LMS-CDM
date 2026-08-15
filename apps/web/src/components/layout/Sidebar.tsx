@@ -33,12 +33,12 @@ import {
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
 
-import type { ElementType } from "react";
+import type { ComponentType } from "react";
 
 interface NavLink {
   label: string;
   href: string;
-  icon: ElementType;
+  icon: ComponentType<{ className?: string }>;
 }
 
 export interface EnrolledCourseSummary {
