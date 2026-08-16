@@ -145,6 +145,13 @@ export async function POST(request: Request) {
     // 4. Resolve problem definition (from Problem Bank or DB)
     const problem = getProblemById(templateId);
 
+    if (problem && problem.executionMethod !== "judge0") {
+      return NextResponse.json(
+        { error: "This problem uses a non-Judge0 execution method (client-side browser sandbox)." },
+        { status: 400 }
+      );
+    }
+
     function getLanguageFromId(id: number): WrapperLanguage {
       switch (id) {
         case 71: return "python";

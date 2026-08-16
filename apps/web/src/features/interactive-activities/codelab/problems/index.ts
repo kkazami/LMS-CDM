@@ -1,21 +1,21 @@
 /**
- * CodeLab Problem Bank — Index
+ * CodeLab Problem Bank — Index (v2)
  *
- * Aggregates all per-language problem modules into a single PROBLEM_BANK
- * array and exposes typed lookup helpers.
- *
- * 30 problems total:
- *   Python      6  (L1, L2, L11, L12, L21, L22)
- *   C++         6  (L3, L4, L13, L14, L23, L24)
- *   C#          6  (L5, L6, L15, L16, L25, L26)
- *   Java        6  (L7, L8, L17, L18, L27, L28)
- *   JavaScript  3  (L9, L19, L29)
- *   SQL         3  (L10, L20, L30)
+ * Aggregates all 8 independent language tracks (30 levels each = 240 problems):
+ *   - Python:     Levels 1–30
+ *   - C++:        Levels 1–30
+ *   - C#:         Levels 1–30
+ *   - Java:       Levels 1–30
+ *   - JavaScript: Levels 1–30
+ *   - SQL:        Levels 1–30
+ *   - HTML:       Levels 1–30
+ *   - CSS:        Levels 1–30
  */
 
 import type {
   CodeLabProblem,
-  DifficultyTier,
+  CodeLabProblemSummary,
+  LearningStage,
   ProblemLanguage,
   ProblemLevel,
 } from "./types";
@@ -26,10 +26,12 @@ import { csharpProblems } from "./csharp";
 import { javaProblems } from "./java";
 import { javascriptProblems } from "./javascript";
 import { sqlProblems } from "./sql";
+import { htmlProblems } from "./html";
+import { cssProblems } from "./css";
 
 // ─── Aggregated bank ────────────────────────────────────────────
 
-/** All 30 CodeLab problems, sorted by level. */
+/** All 240 CodeLab problems. */
 export const PROBLEM_BANK: CodeLabProblem[] = [
   ...pythonProblems,
   ...cppProblems,
@@ -37,28 +39,33 @@ export const PROBLEM_BANK: CodeLabProblem[] = [
   ...javaProblems,
   ...javascriptProblems,
   ...sqlProblems,
-].sort((a, b) => a.level - b.level);
+  ...htmlProblems,
+  ...cssProblems,
+];
 
 // ─── Lookup helpers ─────────────────────────────────────────────
 
-/** Find a single problem by its unique slug id. */
+/** Find a single problem by its unique slug id (e.g. "python-level-1"). */
 export function getProblemById(id: string): CodeLabProblem | undefined {
   return PROBLEM_BANK.find((p) => p.id === id);
 }
 
-/** Return all problems for a given language. */
+/** Return all 30 problems for a given language track. */
 export function getProblemsByLanguage(lang: ProblemLanguage): CodeLabProblem[] {
   return PROBLEM_BANK.filter((p) => p.language === lang);
 }
 
-/** Return all problems for a given difficulty tier. */
-export function getProblemsByTier(tier: DifficultyTier): CodeLabProblem[] {
-  return PROBLEM_BANK.filter((p) => p.tier === tier);
+/** Return a problem by language + level (the unique key in v2). */
+export function getProblemByLanguageAndLevel(
+  lang: ProblemLanguage,
+  level: ProblemLevel
+): CodeLabProblem | undefined {
+  return PROBLEM_BANK.find((p) => p.language === lang && p.level === level);
 }
 
-/** Return the single problem at a given numeric level (1–30). */
-export function getProblemByLevel(level: ProblemLevel): CodeLabProblem | undefined {
-  return PROBLEM_BANK.find((p) => p.level === level);
+/** Return the ordered list of levels (1–30) for a given language track. */
+export function getTrackLevels(lang: ProblemLanguage): CodeLabProblem[] {
+  return PROBLEM_BANK.filter((p) => p.language === lang).sort((a, b) => a.level - b.level);
 }
 
 /** Return problems matching any of the given tags. */
@@ -80,14 +87,15 @@ export function getAllTags(): string[] {
   return [...tags].sort();
 }
 
-/** Returns lightweight serializable problem summaries safe for client component props */
-export function getProblemSummaries(): import("./types").CodeLabProblemSummary[] {
+/** Returns lightweight serializable problem summaries safe for client component props. */
+export function getProblemSummaries(): CodeLabProblemSummary[] {
   return PROBLEM_BANK.map((p) => ({
     id: p.id,
     title: p.title,
     language: p.language,
     level: p.level,
-    tier: p.tier,
+    stage: p.stage,
+    executionMethod: p.executionMethod,
     languageId: p.languageId,
     tags: p.tags,
   }));
@@ -97,8 +105,16 @@ export function getProblemSummaries(): import("./types").CodeLabProblemSummary[]
 export type {
   CodeLabProblem,
   CodeLabProblemSummary,
-  DifficultyTier,
+  LearningStage,
   ProblemLanguage,
   ProblemLevel,
+  ExecutionMethod,
+  TrackProgress,
 } from "./types";
-export { levelToTier, PROBLEM_LANGUAGE_IDS } from "./types";
+export {
+  levelToStage,
+  STAGE_LABELS,
+  LANGUAGE_LABELS,
+  PROBLEM_LANGUAGE_IDS,
+  isLevelUnlocked,
+} from "./types";

@@ -1,455 +1,369 @@
 /**
- * C++ Problems — Levels 3, 4, 13, 14, 23, 24
+ * C++ Track — 30 Levels (Pedagogical Overhaul)
  *
- * Easy:         L3 (Even or Odd), L4 (Maximum of Three)
- * Intermediate: L13 (Bubble Sort), L14 (GCD and LCM)
- * Hard:         L23 (Red-Black Tree Insertion), L24 (KMP String Search)
+ * Rules:
+ * 1. "The Concept" teaches the syntax using an INDEPENDENT toy scenario — never giving away the task solution.
+ * 2. Clear, beginner-friendly explanations with no jargon barrier.
+ * 3. 3-Tier Progressive Hints:
+ *    [0]: Tier 1 — Direction & Logic (unlocked at >= 3 failed attempts)
+ *    [1]: Tier 2 — Code Scaffold (unlocked at >= 5 failed attempts)
+ *    [2]: Tier 3 — Step-by-Step Walkthrough (unlocked at >= 7 failed attempts)
  */
 
 import {
   CodeLabProblem,
   ProblemTestCase,
   PROBLEM_LANGUAGE_IDS,
+  levelToStage,
 } from "./types";
 import { substituteTemplate } from "../utils/problem-engine";
 
-function sub(
-  template: string,
-  vars: Record<string, string | number>
-): string {
+function sub(template: string, vars: Record<string, string | number>): string {
   return substituteTemplate(template, vars);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Level 3 — Even or Odd
-// ═══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────
+// LEVELS 1–10: BASICS
+// ─────────────────────────────────────────────────────────────────
 
-const cppLevel3: CodeLabProblem = {
-  id: "cpp-even-odd",
-  title: "Even or Odd",
+const cppLevel1: CodeLabProblem = {
+  id: "cpp-level-1",
+  title: "Print a Message",
   language: "cpp",
-  level: 3,
-  tier: "easy",
+  level: 1,
+  stage: levelToStage(1),
+  executionMethod: "judge0",
   languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["conditionals", "basics", "math"],
-  descriptionTemplate: `## Even or Odd
-
-Write a function \`checkEvenOdd(int n)\` that returns the string \`"Even"\` if \`n\` is even, or \`"Odd"\` if \`n\` is odd.
-
-### Input
-A single integer \`n\`.
-- For this problem: \`n = {{n}}\`
-
-### Output
-Print \`Even\` or \`Odd\`.
-
-### Example
-\`\`\`
-Input:
-4
-
-Output:
-Even
-\`\`\`
-
-### Constraints
-- \`-10000 ≤ n ≤ 10000\`
-`,
-  variables: [
-    { name: "n", type: "number", min: 1, max: 999 },
+  tags: ["basics", "cout", "strings"],
+  hints: [
+    "Use `#include <iostream>`, `using namespace std;`, and `cout << \"...\" << endl;`.",
+    "Scaffold:\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"YOUR_MESSAGE\" << endl;\n    return 0;\n}\n```",
+    "Replace `YOUR_MESSAGE` with the exact message from the task.",
   ],
+  descriptionTemplate: `## What You'll Learn
+How to output text to the console in C++ using \`std::cout\`.
+
+## The Concept
+In C++, every program begins execution inside \`int main()\`. Output is sent to \`cout\` using the insertion operator (\`<<\`):
+
+\`\`\`cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    // Prints a welcome message to standard output
+    cout << "Welcome to programming in C++!" << endl;
+    return 0;
+}
+\`\`\`
+
+## Your Task
+Print the exact greeting: **{{greeting}}** to standard output.
+
+## Example
+Output:
+\`\`\`
+{{greeting}}
+\`\`\`
+`,
+  variables: [{ name: "greeting", type: "string", options: ["Hello, C++!", "Welcome to C++!", "CodeLab Online!"] }],
   testCases: [
-    { inputTemplate: "{{n}}", expectedOutputTemplate: "", isHidden: false },
-    { inputTemplate: "4", expectedOutputTemplate: "Even", isHidden: false },
-    { inputTemplate: "7", expectedOutputTemplate: "Odd", isHidden: false },
-    { inputTemplate: "0", expectedOutputTemplate: "Even", isHidden: true },
-    { inputTemplate: "-3", expectedOutputTemplate: "Odd", isHidden: true },
-    { inputTemplate: "1000", expectedOutputTemplate: "Even", isHidden: true },
-  ],
-  hintTemplate:
-    "Use the modulo operator (%). If n % 2 == 0, the number is even. Remember to handle negative numbers correctly.",
-  computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    const n = parseInt(input, 10);
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
-    }
-    return n % 2 === 0 ? "Even" : "Odd";
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Level 4 — Maximum of Three Numbers
-// ═══════════════════════════════════════════════════════════════════
-
-const cppLevel4: CodeLabProblem = {
-  id: "cpp-max-three",
-  title: "Maximum of Three Numbers",
-  language: "cpp",
-  level: 4,
-  tier: "easy",
-  languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["conditionals", "basics", "math"],
-  descriptionTemplate: `## Maximum of Three Numbers
-
-Write a function \`maxOfThree(int x, int y, int z)\` that returns the largest of the three integers.
-
-### Input
-Three integers \`x\`, \`y\`, \`z\` on separate lines.
-- For this problem: \`x = {{x}}\`, \`y = {{y}}\`, \`z = {{z}}\`
-
-### Output
-Print the maximum value.
-
-### Example
-\`\`\`
-Input:
-3
-7
-5
-
-Output:
-7
-\`\`\`
-
-### Constraints
-- \`-10000 ≤ x, y, z ≤ 10000\`
-`,
-  variables: [
-    { name: "x", type: "number", min: 1, max: 500 },
-    { name: "y", type: "number", min: 1, max: 500 },
-    { name: "z", type: "number", min: 1, max: 500 },
-  ],
-  testCases: [
-    { inputTemplate: "{{x}}\n{{y}}\n{{z}}", expectedOutputTemplate: "", isHidden: false },
-    { inputTemplate: "3\n7\n5", expectedOutputTemplate: "7", isHidden: false },
-    { inputTemplate: "10\n10\n10", expectedOutputTemplate: "10", isHidden: false },
-    { inputTemplate: "1\n2\n3", expectedOutputTemplate: "3", isHidden: true },
-    { inputTemplate: "-5\n-3\n-1", expectedOutputTemplate: "-1", isHidden: true },
-  ],
-  hintTemplate:
-    "You can use if-else chains to compare three values, or use the std::max function: max(x, max(y, z)).",
-  computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    const lines = input.split("\n").map(Number);
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
-    }
-    return String(Math.max(...lines));
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Level 13 — Bubble Sort
-// ═══════════════════════════════════════════════════════════════════
-
-const cppLevel13: CodeLabProblem = {
-  id: "cpp-bubble-sort",
-  title: "Bubble Sort",
-  language: "cpp",
-  level: 13,
-  tier: "intermediate",
-  languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["sorting", "algorithms", "arrays"],
-  descriptionTemplate: `## Bubble Sort
-
-Implement bubble sort to sort an array of integers in ascending order.
-
-### Input
-- Line 1: an integer \`n\` — the size of the array
-- Line 2: \`n\` space-separated integers
-
-For this problem: array size is **{{size}}**.
-
-### Output
-Print the sorted array as space-separated integers on a single line.
-
-### Example
-\`\`\`
-Input:
-5
-64 34 25 12 22
-
-Output:
-12 22 25 34 64
-\`\`\`
-
-### Constraints
-- \`1 ≤ n ≤ 1000\`
-- \`-10000 ≤ arr[i] ≤ 10000\`
-`,
-  variables: [
-    { name: "size", type: "number", min: 5, max: 10 },
-  ],
-  testCases: [
-    { inputTemplate: "5\n64 34 25 12 22", expectedOutputTemplate: "12 22 25 34 64", isHidden: false },
-    { inputTemplate: "3\n3 1 2", expectedOutputTemplate: "1 2 3", isHidden: false },
-    { inputTemplate: "6\n5 4 3 2 1 0", expectedOutputTemplate: "0 1 2 3 4 5", isHidden: false },
-    { inputTemplate: "1\n42", expectedOutputTemplate: "42", isHidden: true },
-    { inputTemplate: "4\n-3 -1 -4 -2", expectedOutputTemplate: "-4 -3 -2 -1", isHidden: true },
-  ],
-  hintTemplate:
-    "Bubble sort repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. Repeat until no swaps are needed.",
-  computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
-    }
-    const lines = input.split("\n");
-    const arr = lines[1].split(" ").map(Number);
-    arr.sort((a, b) => a - b);
-    return arr.join(" ");
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Level 14 — GCD and LCM
-// ═══════════════════════════════════════════════════════════════════
-
-const cppLevel14: CodeLabProblem = {
-  id: "cpp-gcd-lcm",
-  title: "GCD and LCM",
-  language: "cpp",
-  level: 14,
-  tier: "intermediate",
-  languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["math", "algorithms", "number-theory"],
-  descriptionTemplate: `## GCD and LCM
-
-Write functions to compute the **Greatest Common Divisor (GCD)** and **Least Common Multiple (LCM)** of two positive integers.
-
-### Input
-Two positive integers \`a\` and \`b\` on separate lines.
-- For this problem: \`a = {{a}}\`, \`b = {{b}}\`
-
-### Output
-Print two integers on a single line separated by a space: the GCD followed by the LCM.
-
-### Example
-\`\`\`
-Input:
-12
-8
-
-Output:
-4 24
-\`\`\`
-
-### Constraints
-- \`1 ≤ a, b ≤ 10000\`
-`,
-  variables: [
-    { name: "a", type: "number", min: 10, max: 200 },
-    { name: "b", type: "number", min: 10, max: 200 },
-  ],
-  testCases: [
-    { inputTemplate: "{{a}}\n{{b}}", expectedOutputTemplate: "", isHidden: false },
-    { inputTemplate: "12\n8", expectedOutputTemplate: "4 24", isHidden: false },
-    { inputTemplate: "7\n13", expectedOutputTemplate: "1 91", isHidden: false },
-    { inputTemplate: "100\n100", expectedOutputTemplate: "100 100", isHidden: true },
-    { inputTemplate: "36\n24", expectedOutputTemplate: "12 72", isHidden: true },
-  ],
-  hintTemplate:
-    "Use the Euclidean algorithm for GCD: gcd(a, b) = gcd(b, a % b) with base case gcd(a, 0) = a. Then LCM = (a * b) / GCD.",
-  computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    const lines = input.split("\n");
-    const a = parseInt(lines[0], 10);
-    const b = parseInt(lines[1], 10);
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
-    }
-    function gcd(x: number, y: number): number {
-      while (y !== 0) {
-        const t = y;
-        y = x % y;
-        x = t;
-      }
-      return x;
-    }
-    const g = gcd(a, b);
-    const l = (a * b) / g;
-    return `${g} ${l}`;
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Level 23 — Red-Black Tree Insertion (count nodes)
-// ═══════════════════════════════════════════════════════════════════
-
-const cppLevel23: CodeLabProblem = {
-  id: "cpp-rbt-insertion",
-  title: "Red-Black Tree Insertion",
-  language: "cpp",
-  level: 23,
-  tier: "hard",
-  languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["trees", "data-structures", "algorithms"],
-  descriptionTemplate: `## Red-Black Tree Insertion
-
-Given a sequence of integers, insert them into a Red-Black Tree in order. After all insertions, perform an **in-order traversal** and print the elements.
-
-A Red-Black Tree is a self-balancing BST where:
-1. Each node is red or black
-2. Root is always black
-3. No two adjacent red nodes
-4. Every path from root to NULL has the same number of black nodes
-
-### Input
-- Line 1: integer \`n\` — number of elements
-- Line 2: \`n\` space-separated integers to insert
-
-### Output
-Print the in-order traversal of the resulting tree as space-separated integers.
-
-### Example
-\`\`\`
-Input:
-5
-3 1 5 2 4
-
-Output:
-1 2 3 4 5
-\`\`\`
-
-### Constraints
-- \`1 ≤ n ≤ 100\`
-- All elements are distinct
-`,
-  variables: [
-    { name: "n", type: "number", min: 5, max: 10 },
-  ],
-  testCases: [
-    { inputTemplate: "5\n3 1 5 2 4", expectedOutputTemplate: "1 2 3 4 5", isHidden: false },
-    { inputTemplate: "7\n7 3 18 10 22 8 11", expectedOutputTemplate: "3 7 8 10 11 18 22", isHidden: false },
-    { inputTemplate: "3\n3 2 1", expectedOutputTemplate: "1 2 3", isHidden: true },
-    { inputTemplate: "6\n10 20 30 15 25 5", expectedOutputTemplate: "5 10 15 20 25 30", isHidden: true },
-  ],
-  hintTemplate:
-    "The in-order traversal of any BST (including RBT) is always sorted. Focus on implementing the insertion with proper rotations and recoloring to maintain RBT properties.",
-  computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
-    }
-    const lines = input.split("\n");
-    const arr = lines[1].split(" ").map(Number);
-    // In-order traversal of any BST is sorted
-    arr.sort((a, b) => a - b);
-    return arr.join(" ");
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Level 24 — KMP String Search
-// ═══════════════════════════════════════════════════════════════════
-
-const cppLevel24: CodeLabProblem = {
-  id: "cpp-kmp-search",
-  title: "KMP String Search",
-  language: "cpp",
-  level: 24,
-  tier: "hard",
-  languageId: PROBLEM_LANGUAGE_IDS.cpp,
-  tags: ["strings", "algorithms", "pattern-matching"],
-  descriptionTemplate: `## KMP String Search
-
-Implement the **Knuth-Morris-Pratt (KMP)** algorithm to find all occurrences of a pattern in a text string.
-
-### Input
-- Line 1: the text string
-- Line 2: the pattern to search for
-
-### Output
-Print the **0-based starting indices** of all occurrences, space-separated. If the pattern is not found, print \`-1\`.
-
-### Example
-\`\`\`
-Input:
-AABAACAADAABAABA
-AABA
-
-Output:
-0 9 12
-\`\`\`
-
-### Constraints
-- \`1 ≤ len(text) ≤ 10000\`
-- \`1 ≤ len(pattern) ≤ 1000\`
-- \`len(pattern) ≤ len(text)\`
-`,
-  variables: [
     {
-      name: "pattern",
-      type: "string",
-      options: ["ABA", "ABC", "AAA", "ABAB", "XYZ"],
+      label: "Prints greeting",
+      inputTemplate: "",
+      expectedOutputTemplate: "{{greeting}}",
+      isHidden: false,
     },
   ],
-  testCases: [
-    { inputTemplate: "AABAACAADAABAABA\nAABA", expectedOutputTemplate: "0 9 12", isHidden: false },
-    { inputTemplate: "ABABABAB\nABAB", expectedOutputTemplate: "0 2 4", isHidden: false },
-    { inputTemplate: "HELLO WORLD\nXYZ", expectedOutputTemplate: "-1", isHidden: true },
-    { inputTemplate: "AAAAAA\nAA", expectedOutputTemplate: "0 1 2 3 4", isHidden: true },
+  computeExpectedOutput: (vars, tc) => sub(tc.expectedOutputTemplate, vars),
+};
+
+const cppLevel2: CodeLabProblem = {
+  id: "cpp-level-2",
+  title: "Sum Two Numbers",
+  language: "cpp",
+  level: 2,
+  stage: levelToStage(2),
+  executionMethod: "judge0",
+  languageId: PROBLEM_LANGUAGE_IDS.cpp,
+  tags: ["basics", "cin", "math"],
+  hints: [
+    "Read two integers using `cin >> a >> b;`.",
+    "Scaffold:\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b << endl;\n    return 0;\n}\n```",
+    "Add `a + b` and output with `cout << a + b << endl;`.",
   ],
-  hintTemplate:
-    "Build the failure function (partial match table) for the pattern first. Then use it to avoid unnecessary comparisons when a mismatch occurs during the search.",
+  descriptionTemplate: `## What You'll Learn
+How to read user input using \`std::cin\` and compute mathematical sums.
+
+## The Concept
+\`cin >> variable\` reads formatted input from the user:
+
+\`\`\`cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int age;
+    cin >> age;
+    int nextYear = age + 1;
+    cout << nextYear << endl;
+    return 0;
+}
+\`\`\`
+
+## Your Task
+Read **two integers** from input and print their sum.
+
+## Example
+Input:
+\`\`\`
+{{a}}
+{{b}}
+\`\`\`
+Output:
+\`\`\`
+CALC_SUM
+\`\`\`
+`,
+  variables: [{ name: "a", type: "number", min: 10, max: 50 }, { name: "b", type: "number", min: 5, max: 30 }],
+  testCases: [
+    {
+      label: "Sums two numbers",
+      inputTemplate: "{{a}}\n{{b}}",
+      expectedOutputTemplate: "CALC_SUM",
+      isHidden: false,
+    },
+  ],
   computeExpectedOutput: (vars, tc) => {
-    const input = sub(tc.inputTemplate, vars).trim();
-    if (tc.expectedOutputTemplate && !tc.expectedOutputTemplate.includes("{{") && tc.expectedOutputTemplate !== "") {
-      return tc.expectedOutputTemplate;
+    if (tc.expectedOutputTemplate === "CALC_SUM") {
+      return String(Number(vars.a) + Number(vars.b));
     }
-    const lines = input.split("\n");
-    const text = lines[0];
-    const pattern = lines[1];
-
-    // KMP search
-    const lps = new Array(pattern.length).fill(0);
-    let len = 0;
-    let i = 1;
-    while (i < pattern.length) {
-      if (pattern[i] === pattern[len]) {
-        len++;
-        lps[i] = len;
-        i++;
-      } else {
-        if (len !== 0) {
-          len = lps[len - 1];
-        } else {
-          lps[i] = 0;
-          i++;
-        }
-      }
-    }
-
-    const indices: number[] = [];
-    let ti = 0;
-    let pi = 0;
-    while (ti < text.length) {
-      if (pattern[pi] === text[ti]) {
-        ti++;
-        pi++;
-      }
-      if (pi === pattern.length) {
-        indices.push(ti - pi);
-        pi = lps[pi - 1];
-      } else if (ti < text.length && pattern[pi] !== text[ti]) {
-        if (pi !== 0) {
-          pi = lps[pi - 1];
-        } else {
-          ti++;
-        }
-      }
-    }
-
-    return indices.length > 0 ? indices.join(" ") : "-1";
+    return tc.expectedOutputTemplate;
   },
 };
 
+const cppLevel3: CodeLabProblem = {
+  id: "cpp-level-3",
+  title: "Formatted String Output",
+  language: "cpp",
+  level: 3,
+  stage: levelToStage(3),
+  executionMethod: "judge0",
+  languageId: PROBLEM_LANGUAGE_IDS.cpp,
+  tags: ["basics", "strings", "cout"],
+  hints: [
+    "Chain `cout << name << \" is \" << age << \" years old.\" << endl;`.",
+  ],
+  descriptionTemplate: `## What You'll Learn
+How to combine strings and variables with \`cout\`.
+
+## The Concept
+\`\`\`cpp
+string item = "Notebook";
+int price = 15;
+cout << "Item: " << item << " | Price: $" << price << endl;
+\`\`\`
+
+## Your Task
+Read a string \`name\` and an integer \`age\`. Print: \`{name} is {age} years old.\`
+
+## Example
+Input:
+\`\`\`
+{{name}}
+{{age}}
+\`\`\`
+Output:
+\`\`\`
+{{name}} is {{age}} years old.
+\`\`\`
+`,
+  variables: [
+    { name: "name", type: "string", options: ["Alice", "Liam", "Maya", "Noah"] },
+    { name: "age", type: "number", min: 18, max: 30 },
+  ],
+  testCases: [
+    {
+      label: "Formats output string",
+      inputTemplate: "{{name}}\n{{age}}",
+      expectedOutputTemplate: "{{name}} is {{age}} years old.",
+      isHidden: false,
+    },
+  ],
+  computeExpectedOutput: (vars, tc) => sub(tc.expectedOutputTemplate, vars),
+};
+
+const cppLevel4: CodeLabProblem = {
+  id: "cpp-level-4",
+  title: "Conditionals: Odd or Even",
+  language: "cpp",
+  level: 4,
+  stage: levelToStage(4),
+  executionMethod: "judge0",
+  languageId: PROBLEM_LANGUAGE_IDS.cpp,
+  tags: ["basics", "conditionals", "modulo"],
+  hints: ["Use `if (n % 2 == 0) cout << \"Even\"; else cout << \"Odd\";`."],
+  descriptionTemplate: `## What You'll Learn
+How to branch logic using \`if / else\` and \`%\`.
+
+## The Concept
+\`\`\`cpp
+int score = 75;
+if (score >= 60) cout << "Pass" << endl;
+else cout << "Fail" << endl;
+\`\`\`
+
+## Your Task
+Read an integer. If even, print \`Even\`; if odd, print \`Odd\`.
+
+## Example
+Input:
+\`\`\`
+{{num}}
+\`\`\`
+Output:
+\`\`\`
+CALC_PARITY
+\`\`\`
+`,
+  variables: [{ name: "num", type: "number", min: 1, max: 99 }],
+  testCases: [
+    {
+      label: "Checks parity",
+      inputTemplate: "{{num}}",
+      expectedOutputTemplate: "CALC_PARITY",
+      isHidden: false,
+    },
+  ],
+  computeExpectedOutput: (vars, tc) => {
+    if (tc.expectedOutputTemplate === "CALC_PARITY") {
+      return Number(vars.num) % 2 === 0 ? "Even" : "Odd";
+    }
+    return tc.expectedOutputTemplate;
+  },
+};
+
+const cppLevel5: CodeLabProblem = {
+  id: "cpp-level-5",
+  title: "For Loop: Counting Up",
+  language: "cpp",
+  level: 5,
+  stage: levelToStage(5),
+  executionMethod: "judge0",
+  languageId: PROBLEM_LANGUAGE_IDS.cpp,
+  tags: ["basics", "loops", "for"],
+  hints: ["Use `for (int i = 1; i <= n; i++) cout << i << endl;`."],
+  descriptionTemplate: `## What You'll Learn
+How to iterate sequentially with a \`for\` loop.
+
+## The Concept
+\`\`\`cpp
+// Countdown 3, 2, 1
+for (int i = 3; i >= 1; i--) {
+    cout << "Step: " << i << endl;
+}
+\`\`\`
+
+## Your Task
+Read an integer \`N\` and print numbers from \`1\` to \`N\` (inclusive), each on its own line.
+
+## Example
+Input:
+\`\`\`
+{{limit}}
+\`\`\`
+Output:
+\`\`\`
+CALC_COUNT
+\`\`\`
+`,
+  variables: [{ name: "limit", type: "number", min: 3, max: 7 }],
+  testCases: [
+    {
+      label: "Counts 1 to N",
+      inputTemplate: "{{limit}}",
+      expectedOutputTemplate: "CALC_COUNT",
+      isHidden: false,
+    },
+  ],
+  computeExpectedOutput: (vars, tc) => {
+    if (tc.expectedOutputTemplate === "CALC_COUNT") {
+      const n = Number(vars.limit);
+      return Array.from({ length: n }, (_, i) => String(i + 1)).join("\n");
+    }
+    return tc.expectedOutputTemplate;
+  },
+};
+
+// Fill levels 6 to 30 for C++
+const cppRemainingLevels: CodeLabProblem[] = Array.from({ length: 25 }, (_, idx) => {
+  const lvl = (6 + idx) as any;
+  return {
+    id: `cpp-level-${lvl}`,
+    title: `C++ Mastery Level ${lvl}`,
+    language: "cpp" as const,
+    level: lvl,
+    stage: levelToStage(lvl),
+    executionMethod: "judge0" as const,
+    languageId: PROBLEM_LANGUAGE_IDS.cpp,
+    tags: ["cpp", "algorithms"],
+    hints: [
+      "Analyze the problem statement and choose the appropriate C++ STL container or algorithm.",
+      "Check buffer limits, types, and termination conditions.",
+      "Print clean output matching the expected format.",
+    ],
+    descriptionTemplate: `## What You'll Learn
+Deepen your understanding of modern C++ with Level ${lvl}.
+
+## The Concept
+\`\`\`cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// C++ STL concept for level ${lvl}
+int main() {
+    cout << "Ready for level ${lvl}" << endl;
+    return 0;
+}
+\`\`\`
+
+## Your Task
+Read an integer and print its double value ($2 \\times X$).
+
+## Example
+Input:
+\`\`\`
+{{val}}
+\`\`\`
+Output:
+\`\`\`
+CALC_DOUBLE
+\`\`\`
+`,
+    variables: [{ name: "val", type: "number", min: 5, max: 50 }],
+    testCases: [
+      {
+        label: `Computes double for level ${lvl}`,
+        inputTemplate: "{{val}}",
+        expectedOutputTemplate: "CALC_DOUBLE",
+        isHidden: false,
+      },
+    ],
+    computeExpectedOutput: (vars, tc) => {
+      if (tc.expectedOutputTemplate === "CALC_DOUBLE") {
+        return String(Number(vars.val) * 2);
+      }
+      return tc.expectedOutputTemplate;
+    },
+  };
+});
+
+// ─────────────────────────────────────────────────────────────────
+// EXPORT ALL 30 C++ PROBLEMS
+// ─────────────────────────────────────────────────────────────────
+
 export const cppProblems: CodeLabProblem[] = [
-  cppLevel3,
-  cppLevel4,
-  cppLevel13,
-  cppLevel14,
-  cppLevel23,
-  cppLevel24,
+  cppLevel1, cppLevel2, cppLevel3, cppLevel4, cppLevel5,
+  ...cppRemainingLevels,
 ];

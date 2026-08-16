@@ -1,31 +1,39 @@
 /**
- * CodeLab Problem Bank — Type Definitions
+ * CodeLab Problem Bank — Type Definitions (v2)
  *
- * These types define the structure of every problem in the CodeLab bank.
- * Each problem is self-contained: it carries its own description template,
- * variable definitions, test cases, and a computeExpectedOutput function
- * that the server component uses to generate deterministic answers.
- *
- * The problem bank is a static TypeScript module — no DB queries needed
- * to list problems. DB queries are only used for student submission history.
+ * Architecture: 8 language tracks × 30 levels each = 240 problems.
+ * Each track is independent. Level N is locked until Level N-1 is passed (score ≥ 60).
  */
 
-/** Languages supported by CodeLab problems. */
-export type ProblemLanguage = "python" | "cpp" | "csharp" | "java" | "javascript" | "sql";
+/** All supported language tracks. */
+export type ProblemLanguage =
+  | "python"
+  | "cpp"
+  | "csharp"
+  | "java"
+  | "javascript"
+  | "sql"
+  | "html"
+  | "css";
 
-/** Difficulty tier derived from the numeric level. */
-export type DifficultyTier = "easy" | "intermediate" | "hard";
+/** Learning stage — replaces "difficulty tier". Friendlier, less intimidating. */
+export type LearningStage = "basics" | "building-up" | "getting-good";
 
-/** Numeric level within tier: Easy = 1–10, Intermediate = 11–20, Hard = 21–30 */
+/** 1–30 per language track. Each track has its own 1–30 sequence. */
 export type ProblemLevel =
   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
   | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30;
 
 /**
- * A variable definition for problem randomization.
- * Used by evaluateVariables(seed, variables) from problem-engine.ts.
+ * Execution method determines how the student's code is run.
+ * - "judge0": submitted to Judge0, stdin/stdout tested
+ * - "html-preview": rendered in an iframe srcdoc
+ * - "css-preview": injected into an HTML template in an iframe srcdoc
  */
+export type ExecutionMethod = "judge0" | "html-preview" | "css-preview";
+
+/** Variable definition for seeded randomization. */
 export interface ProblemVariable {
   name: string;
   type: "number" | "string";
@@ -34,55 +42,78 @@ export interface ProblemVariable {
   options?: string[];
 }
 
-/**
- * A test case with template placeholders.
- * Templates are resolved server-side using evaluateVariables + substituteTemplate.
- */
+/** A single test case. For judge0 tracks, uses stdin/stdout. For HTML/CSS, uses visual check criteria. */
 export interface ProblemTestCase {
-  /** Input template — may contain {{variable}} placeholders */
+  /** Human-readable description of what this test checks. */
+  label: string;
+  /**
+   * For judge0: the stdin input (may have {{variable}} placeholders).
+   * For html-preview / css-preview: not used (set to "").
+   */
   inputTemplate: string;
-  /** Expected output template — may contain {{variable}} placeholders.
-   *  For computed outputs, use a placeholder that computeExpectedOutput resolves. */
+  /**
+   * For judge0: expected stdout (may have {{variable}} placeholders).
+   * For html-preview: a CSS selector that must exist in the rendered iframe DOM.
+   *   e.g. "h1" means there must be an <h1> element in the output.
+   * For css-preview: a CSS property check string.
+   *   e.g. "body:background-color:rgb(255, 0, 0)" means body's background-color must be rgb(255, 0, 0).
+   */
   expectedOutputTemplate: string;
-  /** If true, not shown to the student (only pass/fail returned) */
+  /** If true, pass/fail only — no details shown to student. */
   isHidden: boolean;
 }
 
-/**
- * A complete CodeLab problem definition.
- * Exported from the per-language modules and aggregated in index.ts.
- */
+/** Full problem definition. */
 export interface CodeLabProblem {
-  /** Unique slug (e.g. "py-sum-two-numbers") */
+  /** Unique slug. Pattern: "{lang}-level-{N}" e.g. "python-level-1" */
   id: string;
-  /** Display title */
+  /** Display title. Short and clear. */
   title: string;
-  /** Primary language this problem is designed for */
+  /** Which language track this belongs to. */
   language: ProblemLanguage;
-  /** 1–30 */
+  /** 1–30 within the language track. */
   level: ProblemLevel;
-  /** Derived from level: 1–10=easy, 11–20=intermediate, 21–30=hard */
-  tier: DifficultyTier;
-  /** Markdown description with {{variable}} placeholders */
-  descriptionTemplate: string;
-  /** Variables to randomize per student */
-  variables: ProblemVariable[];
-  /** Judge0 language ID */
-  languageId: number;
-  /** Public + hidden test cases */
-  testCases: ProblemTestCase[];
-  /** Tags for filtering (e.g. ["loops", "arrays", "math"]) */
-  tags: string[];
-  /** Hint to show after 3 failed attempts (no spoilers, just direction) */
-  hintTemplate: string;
+  /** Derived from level: 1-10=basics, 11-20=building-up, 21-30=getting-good */
+  stage: LearningStage;
+  /** How to execute and verify the student's code. */
+  executionMethod: ExecutionMethod;
   /**
-   * Computes the expected output for a test case given the evaluated variables.
-   * Called server-side — this function contains the "answer key" and never
-   * reaches the client.
-   *
-   * @param vars - The evaluated variables for this student's seed
-   * @param testCase - The specific test case being evaluated
-   * @returns The expected output string (trimmed)
+   * Judge0 language ID.
+   * For html/css tracks: 0 (not used).
+   */
+  languageId: number;
+  /**
+   * Markdown description. Must begin with a "## What You'll Learn" section.
+   * Then a "## Your Task" section. Then examples. Keep it short and friendly.
+   * May contain {{variable}} placeholders.
+   */
+  descriptionTemplate: string;
+  /** Variables randomized per student using evaluateVariables(seed, variables). */
+  variables: ProblemVariable[];
+  /** Test cases. For HTML/CSS tracks, see ProblemTestCase.expectedOutputTemplate docs. */
+  testCases: ProblemTestCase[];
+  /** Topic tags. */
+  tags: string[];
+  /**
+   * Educational hint — single fallback hint string.
+   */
+  hintTemplate?: string;
+  /**
+   * 3-Tier Progressive Hints:
+   *   [0]: Tier 1 — Direction & Logic (unlocked at >= 3 failed attempts)
+   *   [1]: Tier 2 — Code Scaffold / Structure (unlocked at >= 5 failed attempts)
+   *   [2]: Tier 3 — Step-by-Step Solution Breakdown (unlocked at >= 7 failed attempts)
+   */
+  hints?: string[];
+  /**
+   * For HTML/CSS tracks only: the full HTML template shown to the student
+   * in the problem description as a reference/starting point.
+   * For CSS track: the HTML that the student's CSS will be applied to.
+   */
+  htmlTemplate?: string;
+  /**
+   * Server-side expected output computation for judge0 tracks.
+   * Called in the page.tsx server component — never reaches the client.
    */
   computeExpectedOutput: (
     vars: Record<string, string | number>,
@@ -90,28 +121,54 @@ export interface CodeLabProblem {
   ) => string;
 }
 
-/**
- * Lightweight serializable problem summary without server-side compute functions.
- * Safe to pass as props from Server Components to Client Components.
- */
+/** Serializable summary safe for client component props. */
 export interface CodeLabProblemSummary {
   id: string;
   title: string;
   language: ProblemLanguage;
   level: ProblemLevel;
-  tier: DifficultyTier;
+  stage: LearningStage;
+  executionMethod: ExecutionMethod;
   languageId: number;
   tags: string[];
 }
 
-/** Maps a numeric level to its difficulty tier. */
-export function levelToTier(level: ProblemLevel): DifficultyTier {
-  if (level <= 10) return "easy";
-  if (level <= 20) return "intermediate";
-  return "hard";
+/** A student's progress record for a single language track. */
+export interface TrackProgress {
+  language: ProblemLanguage;
+  /** The highest level the student has passed (score ≥ 60). 0 = none passed yet. */
+  highestPassedLevel: number;
+  /** Map of level → best score. */
+  scores: Record<number, number>;
 }
 
-/** Judge0 language IDs for each problem language. */
+/** Maps a numeric level to its learning stage. */
+export function levelToStage(level: ProblemLevel): LearningStage {
+  if (level <= 10) return "basics";
+  if (level <= 20) return "building-up";
+  return "getting-good";
+}
+
+/** Friendly display names for stages. */
+export const STAGE_LABELS: Record<LearningStage, string> = {
+  basics: "Basics",
+  "building-up": "Building Up",
+  "getting-good": "Getting Good",
+};
+
+/** Friendly display names for languages. */
+export const LANGUAGE_LABELS: Record<ProblemLanguage, string> = {
+  python: "Python",
+  cpp: "C++",
+  csharp: "C#",
+  java: "Java",
+  javascript: "JavaScript",
+  sql: "SQL",
+  html: "HTML",
+  css: "CSS",
+};
+
+/** Judge0 language IDs. HTML and CSS use 0 (iframe preview, not Judge0). */
 export const PROBLEM_LANGUAGE_IDS: Record<ProblemLanguage, number> = {
   python: 71,
   cpp: 54,
@@ -119,4 +176,11 @@ export const PROBLEM_LANGUAGE_IDS: Record<ProblemLanguage, number> = {
   java: 62,
   javascript: 93,
   sql: 82,
+  html: 0,
+  css: 0,
 };
+
+/** Whether a level is unlocked given the student's highest passed level. */
+export function isLevelUnlocked(level: ProblemLevel, highestPassedLevel: number): boolean {
+  return level === 1 || level <= highestPassedLevel + 1;
+}

@@ -72,7 +72,7 @@ export default async function LearningMaterialsPage({ params }: Props) {
       {/* Hero Header */}
       <div className="relative mb-10 overflow-hidden rounded-[2.5rem] p-8 sm:p-12 text-white shadow-xl" style={{ background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }}>
         {/* Subtle Premium Background */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/10" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
         <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
         
@@ -98,8 +98,8 @@ export default async function LearningMaterialsPage({ params }: Props) {
             <Folder className="h-10 w-10 text-slate-400 dark:text-[#8B92A5]" />
           </div>
           <h3 className="mb-2 text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">No Materials Yet</h3>
-          <p className="text-base text-slate-500 dark:text-[#8B92A5] max-w-md">
-            You are not enrolled in any courses with published learning materials. Check back later.
+          <p className="text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm">
+            You don't have access to any course learning materials at this time. Check back once your classes begin!
           </p>
         </div>
       ) : (
@@ -128,7 +128,7 @@ export default async function LearningMaterialsPage({ params }: Props) {
                       : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
                   }
                 >
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
 
                   {/* Top row: Code badge & Material Count */}
                   <div className="relative z-20 flex items-center justify-between gap-2">

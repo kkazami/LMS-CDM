@@ -59,11 +59,17 @@ export default async function CodeLabInstructorPage({
     },
   });
 
-  // 3. Parse stateCheck for forensic integrity flags
+  // 3. Parse stateCheck for forensic integrity flags & analytics
   const submissions: InstructorSubmissionRecord[] = rawSubmissions.map((sub) => {
     let pasteCount = 0;
     let typingVelocityCpm = 0;
     let language = "python";
+    let level: number | undefined = undefined;
+    let hintUsed = false;
+    let errorTypes: string[] = [];
+    let attemptChurnCount = 0;
+    let firstRunMs = 0;
+    let totalEditingMs = 0;
 
     let isRejected = false;
     let rejectionReason: string | undefined = undefined;
@@ -76,6 +82,16 @@ export default async function CodeLabInstructorPage({
           ? stateObj.typingVelocityCharsPerMin
           : 0;
       language = typeof stateObj.language === "string" ? stateObj.language : "python";
+      level = typeof stateObj.level === "number" ? stateObj.level : undefined;
+      hintUsed = Boolean(stateObj.hintUsed);
+      errorTypes = Array.isArray(stateObj.errorTypes)
+        ? stateObj.errorTypes
+        : typeof stateObj.errorTypes === "string" && stateObj.errorTypes.length > 0
+        ? stateObj.errorTypes.split(",")
+        : [];
+      attemptChurnCount = typeof stateObj.attemptChurnCount === "number" ? stateObj.attemptChurnCount : 0;
+      firstRunMs = typeof stateObj.firstRunMs === "number" ? stateObj.firstRunMs : 0;
+      totalEditingMs = typeof stateObj.totalEditingMs === "number" ? stateObj.totalEditingMs : 0;
       isRejected = Boolean(stateObj.isRejected);
       rejectionReason = typeof stateObj.rejectionReason === "string" ? stateObj.rejectionReason : undefined;
     } catch {
@@ -101,6 +117,7 @@ export default async function CodeLabInstructorPage({
       templateId: sub.templateId,
       problemTitle,
       language,
+      level: level || problem?.level || 1,
       score: sub.score,
       attempts: sub.attempts,
       passed: sub.passed || sub.score === 100,
@@ -112,6 +129,11 @@ export default async function CodeLabInstructorPage({
       flagReasons,
       isRejected,
       rejectionReason,
+      hintUsed,
+      errorTypes,
+      attemptChurnCount,
+      firstRunMs,
+      totalEditingMs,
     };
   });
 

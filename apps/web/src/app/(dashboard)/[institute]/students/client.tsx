@@ -184,19 +184,15 @@ export default function StudentDashboardClient({
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
         {/* ─── 1. Welcome Banner ─── */}
         <div
-          className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-orange-950/20"
+          className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
           style={{
-            background: "linear-gradient(135deg, #C2410C 0%, #F97316 50%, #FB923C 100%)",
+            background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
           }}
         >
-          {/* Subtle Grain / Texture Overlay */}
-          <div
-            className="absolute inset-0 opacity-5 pointer-events-none"
-            style={{
-              backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
-              backgroundSize: "16px 16px",
-            }}
-          />
+          {/* Subtle Premium Background */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
