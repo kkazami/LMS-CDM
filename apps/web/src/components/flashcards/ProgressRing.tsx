@@ -43,7 +43,8 @@ export default function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#e5e7eb"
+          stroke="currentColor"
+          className="text-slate-200 dark:text-white/10"
           strokeWidth={strokeWidth}
         />
         {/* Progress ring */}

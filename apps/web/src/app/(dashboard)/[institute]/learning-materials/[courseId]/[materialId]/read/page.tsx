@@ -78,19 +78,19 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   return (
     <div className="page-enter flex flex-col h-[calc(100vh-8rem)]">
       {/* Header bar */}
-      <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4">
+      <div className="mb-4 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-4">
         <div className="flex items-center gap-4">
           <Link
             href={`/${institute}/learning-materials/${courseId}`}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#1E2132] text-slate-500 dark:text-[#8B92A5] transition-colors hover:bg-slate-200 dark:hover:bg-[#25293C] hover:text-slate-900 dark:hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8] leading-tight">
               {material.title}
             </h1>
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-sm font-medium text-slate-500 dark:text-[#8B92A5]">
               {enrollment.course.code} • {activeAttachment.fileName || "Document"}
             </p>
           </div>
@@ -113,7 +113,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
         <FocusSidebar>
           {/* Pomodoro Timer */}
           <div>
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-gray-500">
+            <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
               Focus Mode
             </h3>
             <PomodoroTimer 
@@ -124,8 +124,8 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
 
           {/* Module Resources List */}
           {material.attachments.length > 1 && (
-            <div className="rounded-3xl bg-gray-50 p-6 border border-gray-200">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">
+            <div className="rounded-3xl bg-white dark:bg-[#141721] p-6 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
                 Other Files in Module
               </h3>
               <div className="space-y-2">
@@ -135,8 +135,8 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
                     key={file.id}
                     className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                       file.id === activeAttachment.id
-                        ? "bg-indigo-600 text-white shadow-md"
-                        : "bg-white text-gray-700 shadow-sm hover:bg-gray-100"
+                        ? "bg-[#F97316] text-white shadow-xs"
+                        : "bg-slate-50 dark:bg-[#181B26] text-slate-700 dark:text-[#8B92A5] border border-slate-200/80 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-[#1E2132] hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     {file.fileName || "Document"}

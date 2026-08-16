@@ -95,9 +95,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
   const progressPercentage = (timeElapsed / (targetTimeMinutes * 60)) * 100;
 
   return (
-    <div className="rounded-3xl bg-white border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col transition-all duration-500 relative">
+    <div className="rounded-3xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs overflow-hidden flex flex-col transition-all duration-500 relative">
       {/* Dynamic Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 rounded-full transition-colors duration-1000 bg-indigo-600" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 rounded-full transition-colors duration-1000 bg-[#F97316]" />
 
       {/* Timer Display */}
       <div className="p-8 pb-4 flex flex-col items-center justify-center relative z-10">
@@ -105,7 +105,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           <svg className="absolute inset-0 w-full h-full -rotate-90 transform drop-shadow-sm" viewBox="0 0 100 100">
             {/* Background Track */}
             <circle
-              className="text-gray-100 stroke-current"
+              className="text-slate-100 dark:text-slate-800 stroke-current"
               strokeWidth="4"
               cx="50"
               cy="50"
@@ -114,7 +114,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
             />
             {/* Progress Track */}
             <circle
-              className="text-indigo-600 stroke-current transition-all duration-1000 ease-linear"
+              className="text-[#F97316] stroke-current transition-all duration-1000 ease-linear"
               strokeWidth="4"
               strokeLinecap="round"
               cx="50"
@@ -128,14 +128,14 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           
           {/* Pulsing effect when active */}
           {isActive && (
-            <div className="absolute inset-4 rounded-full bg-indigo-600 opacity-5 animate-ping" />
+            <div className="absolute inset-4 rounded-full bg-[#F97316] opacity-5 animate-ping" />
           )}
 
           <div className="flex flex-col items-center z-10">
-            <span className="text-5xl font-black tracking-tighter text-indigo-950 tabular-nums">
+            <span className="text-5xl font-black tracking-tighter text-slate-900 dark:text-[#F0F2F8] tabular-nums">
               {formatTime(remainingSeconds)}
             </span>
-            <span className="text-[10px] font-bold mt-2 uppercase tracking-[0.2em] text-indigo-600 opacity-80">
+            <span className="text-[10px] font-bold mt-2 uppercase tracking-[0.2em] text-[#F97316] opacity-90">
               {isActive ? "Studying" : timeElapsed > 0 ? "Paused" : "Ready"}
             </span>
           </div>
@@ -145,7 +145,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
       {/* Target Time Slider */}
       {!isActive && timeElapsed === 0 && (
         <div className="px-8 pb-2 z-10 w-full flex flex-col items-center">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+          <label className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">
             Set Focus Time: {targetTimeMinutes} mins
           </label>
           <input 
@@ -155,9 +155,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
             step="5" 
             value={targetTimeMinutes}
             onChange={(e) => setTargetTimeMinutes(Number(e.target.value))}
-            className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="w-full h-2 bg-slate-200 dark:bg-[#1E2132] rounded-lg appearance-none cursor-pointer accent-[#F97316]"
           />
-          <div className="flex justify-between w-full mt-2 text-xs text-gray-400 font-semibold px-1">
+          <div className="flex justify-between w-full mt-2 text-xs text-slate-400 dark:text-[#8B92A5] font-semibold px-1">
             <span>5</span>
             <span>10</span>
             <span>15</span>
@@ -174,10 +174,10 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           <button
             onClick={toggleTimer}
             disabled={isLogging}
-            className={`h-16 w-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
+            className={`h-16 w-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
               isActive 
-                ? "bg-indigo-50 text-indigo-600" 
-                : "bg-indigo-600 text-white hover:shadow-xl hover:shadow-indigo-600/20"
+                ? "bg-orange-500/10 text-[#F97316]" 
+                : "bg-[#F97316] text-white hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-500/20"
             }`}
           >
             {isLogging ? (
@@ -192,7 +192,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           <button
             onClick={resetTimer}
             disabled={isLogging}
-            className="h-16 w-16 rounded-full bg-gray-50 border border-gray-200 text-gray-500 flex items-center justify-center hover:bg-gray-100 hover:text-gray-700 transition-all duration-300 shadow-sm active:scale-95"
+            className="h-16 w-16 rounded-full bg-slate-50 dark:bg-[#181B26] border border-slate-200/80 dark:border-white/5 text-slate-500 dark:text-[#8B92A5] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#1E2132] hover:text-slate-700 dark:hover:text-white transition-all duration-300 shadow-xs active:scale-95 cursor-pointer"
             title="Reset Timer"
           >
             <RotateCcw className="h-6 w-6" />
@@ -204,7 +204,7 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           <button
             onClick={finishSession}
             disabled={isLogging}
-            className="mt-2 flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all bg-indigo-600 hover:bg-indigo-700 hover:scale-105 active:scale-95"
+            className="mt-2 flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition-all bg-[#F97316] hover:bg-orange-600 hover:scale-105 active:scale-95 cursor-pointer"
           >
             {isLogging ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             Save Session

@@ -26,7 +26,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
           onClick();
         }
       }}
-      className="group relative flex w-full min-h-55 flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 text-left shadow-sm transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:scale-[1.02] hover:border-gray-300 hover:shadow-2xl focus:outline-none"
+      className="group relative flex w-full min-h-55 flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 text-left shadow-xs transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-white/10 hover:shadow-xl focus:outline-none cursor-pointer"
     >
       {/* Inner Radial Glow on Hover */}
       <div 
@@ -52,7 +52,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
         {/* Header row with Icon and Progress */}
         <div className="flex items-start justify-between gap-3 mb-4 pt-1 relative">
           <div 
-            className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3" 
+            className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-xs transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3" 
             style={{ backgroundColor: `${deck.color}15`, color: deck.color }}
           >
             <FlashcardIcon className="h-6 w-6" />
@@ -65,7 +65,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
                   e.stopPropagation();
                   onDelete(deck.id);
                 }}
-                className="opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                className="opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl cursor-pointer"
                 title="Delete Flashcard"
               >
                 <Trash2 className="h-5 w-5" />
@@ -83,11 +83,11 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
         </div>
         
         {/* Title & Description */}
-        <h3 className="text-xl font-bold tracking-tight text-gray-900 transition-colors duration-300 group-hover:text-gray-700 mt-2">
+        <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] transition-colors duration-300 group-hover:text-slate-700 dark:group-hover:text-white mt-2">
           {deck.title}
         </h3>
         {deck.description && (
-          <p className="mt-2 text-sm text-gray-500 line-clamp-2 leading-relaxed">
+          <p className="mt-2 text-sm text-slate-500 dark:text-[#8B92A5] line-clamp-2 leading-relaxed">
             {deck.description}
           </p>
         )}
@@ -98,7 +98,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
             {deck.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold transition-all duration-300 group-hover:shadow-sm"
+                className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold transition-all duration-300 group-hover:shadow-xs"
                 style={{
                   backgroundColor: `${deck.color}15`,
                   color: deck.color,
@@ -108,7 +108,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
               </span>
             ))}
             {deck.tags.length > 3 && (
-              <span className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500">
+              <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-[#1E2132] px-2.5 py-1 text-xs font-bold text-slate-500 dark:text-[#8B92A5]">
                 +{deck.tags.length - 3}
               </span>
             )}
@@ -118,11 +118,11 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
         {/* Footer Stats & Animated Arrow */}
         <div className="mt-auto pt-6 flex items-center justify-between text-xs font-bold uppercase tracking-wider">
           <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-gray-600 border border-gray-200/60 transition-colors duration-300 group-hover:bg-white group-hover:border-gray-200">
+            <span className="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-[#1E2132] px-3 py-1.5 text-slate-600 dark:text-[#8B92A5] border border-slate-200/60 dark:border-white/5 transition-colors duration-300 group-hover:bg-white dark:group-hover:bg-[#141721] group-hover:border-slate-200 dark:group-hover:border-white/10">
               {deck.cardCount} {deck.cardCount === 1 ? "Card" : "Cards"}
             </span>
             {deck.courseTitle && (
-              <div className="flex items-center gap-1.5 truncate max-w-35 text-gray-400">
+              <div className="flex items-center gap-1.5 truncate max-w-35 text-slate-400 dark:text-[#8B92A5]">
                 <BookOpen className="h-4 w-4 shrink-0" />
                 <span className="truncate">{deck.courseTitle}</span>
               </div>

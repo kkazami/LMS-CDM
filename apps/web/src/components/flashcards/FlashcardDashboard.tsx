@@ -226,18 +226,18 @@ export default function FlashcardDashboard({
       {/* Search & Filters */}
       <div className="mb-8 flex flex-col sm:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-[#8B92A5]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your flashcards by title, topic, or tags..."
-            className="w-full rounded-2xl border border-gray-200 bg-white py-4 pl-14 pr-12 text-sm font-medium text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-4 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-gray-100 p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 dark:bg-[#1E2132] p-1.5 text-slate-500 dark:text-[#8B92A5] transition-colors hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -246,32 +246,32 @@ export default function FlashcardDashboard({
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex h-13.5 shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-sm ${
+          className={`inline-flex h-13.5 shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
             showFilters || filterCourse
-              ? "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+              ? "border-orange-500/20 bg-orange-500/10 text-[#F97316]"
+              : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-[#181B26] hover:border-slate-300 dark:hover:border-white/10"
           }`}
         >
           <SlidersHorizontal className="h-5 w-5" />
           Filters
           {filterCourse && (
-            <span className="ml-1.5 flex h-2 w-2 rounded-full bg-indigo-600 shadow-sm shadow-indigo-500/50" />
+            <span className="ml-1.5 flex h-2 w-2 rounded-full bg-[#F97316] shadow-xs shadow-orange-500/50" />
           )}
         </button>
       </div>
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="mb-8 rounded-4xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-8 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 shadow-xs">
           <div className="flex items-center gap-6 flex-wrap">
             <div className="flex-1 min-w-62.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-2">
                 Filter by Course
               </label>
               <select
                 value={filterCourse}
                 onChange={(e) => setFilterCourse(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:border-[#F97316] focus:bg-white dark:focus:bg-[#1E2132] focus:outline-none focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
               >
                 <option value="">All Courses</option>
                 {courseOptions.map((c) => (
@@ -284,7 +284,7 @@ export default function FlashcardDashboard({
             {filterCourse && (
               <button
                 onClick={() => setFilterCourse("")}
-                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
+                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold text-[#F97316] transition-colors hover:bg-orange-500/10 cursor-pointer"
               >
                 Clear filter
               </button>
@@ -295,14 +295,14 @@ export default function FlashcardDashboard({
 
       {/* Deck grid */}
       {filteredDecks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-gray-200 bg-gray-50/50 py-24 text-center mt-4">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-100/50 text-indigo-600 shadow-inner">
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center mt-4 shadow-xs">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] shadow-inner">
             <FlashcardIcon className="h-10 w-10" />
           </div>
-          <h3 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+          <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
             {searchQuery || filterCourse ? "No flashcards found" : "No flashcards yet"}
           </h3>
-          <p className="mb-8 max-w-md text-base text-gray-500">
+          <p className="mb-8 max-w-md text-base text-slate-500 dark:text-[#8B92A5]">
             {searchQuery || filterCourse
               ? "We couldn't find any flashcards matching your search. Try adjusting your filters or search query."
               : "You haven't created any flashcards yet. Get started by creating your first flashcard and mastering your courses!"}
@@ -310,7 +310,7 @@ export default function FlashcardDashboard({
           {!searchQuery && !filterCourse && (
             <button
               onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#F97316] px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 cursor-pointer"
             >
               <Plus className="h-5 w-5" />
               Create Your First Flashcard
@@ -347,27 +347,27 @@ export default function FlashcardDashboard({
       >
         <div className="space-y-6">
           {createError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 shadow-sm">
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-500 shadow-xs">
               {createError}
             </div>
           )}
 
-          <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/50 p-5 sm:p-6">
+          <div className="space-y-4 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Flashcard Title <span className="text-red-500">*</span>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+                Flashcard Title <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g., Midterms Prep, Vocabulary..."
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
                 Description
               </label>
               <textarea
@@ -375,31 +375,31 @@ export default function FlashcardDashboard({
                 onChange={(e) => setNewDescription(e.target.value)}
                 placeholder="Brief description of this flashcard..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
               />
             </div>
             
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Tags <span className="text-gray-400 font-normal normal-case">(comma-separated)</span>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+                Tags <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(comma-separated)</span>
               </label>
               <input
                 type="text"
                 value={newTags}
                 onChange={(e) => setNewTags(e.target.value)}
                 placeholder="e.g., Midterms, Chapter 5, Vocabulary"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
               />
             </div>
             
             <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-500">
-                Course <span className="text-gray-400 font-normal normal-case">(Optional)</span>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+                Course <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(Optional)</span>
               </label>
               <select
                 value={newCourseId}
                 onChange={(e) => setNewCourseId(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
               >
                 <option value="">No course linked</option>
                 {courseOptions.map((c) => (
@@ -411,8 +411,8 @@ export default function FlashcardDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/50 p-5 sm:p-6">
-            <label className="mb-4 block text-sm font-bold text-gray-900">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
+            <label className="mb-4 block text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
               Accent Color
             </label>
             <div className="flex flex-wrap gap-3">
@@ -421,9 +421,9 @@ export default function FlashcardDashboard({
                   key={c}
                   type="button"
                   onClick={() => setNewColor(c)}
-                  className={`h-10 w-10 rounded-full border-[3px] transition-all duration-300 ${
+                  className={`h-10 w-10 rounded-full border-[3px] transition-all duration-300 cursor-pointer ${
                     newColor === c
-                      ? "border-slate-800 scale-110 shadow-lg"
+                      ? "border-slate-900 dark:border-white scale-110 shadow-lg"
                       : "border-transparent hover:scale-110 hover:shadow-md"
                   }`}
                   style={{ backgroundColor: c }}
@@ -440,7 +440,7 @@ export default function FlashcardDashboard({
                 setCreateOpen(false);
                 resetCreateForm();
               }}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-100"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
             >
               Cancel
             </button>
@@ -448,7 +448,7 @@ export default function FlashcardDashboard({
               type="button"
               onClick={handleCreateDeck}
               disabled={creating}
-              className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+              className="rounded-xl bg-[#F97316] px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             >
               {creating ? "Creating..." : "Create Flashcard"}
             </button>

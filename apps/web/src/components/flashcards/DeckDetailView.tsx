@@ -218,7 +218,7 @@ export default function DeckDetailView({
         <button
           onClick={() => setStudyMode(true)}
           disabled={cards.length === 0}
-          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
           style={{ backgroundColor: deck.color }}
         >
           <Play className="h-5 w-5 fill-current" />
@@ -230,7 +230,7 @@ export default function DeckDetailView({
             setEditingCard(null);
             setEditorOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] px-5 py-3 text-sm font-bold text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#181B26] cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Add Card
@@ -239,34 +239,34 @@ export default function DeckDetailView({
         <div className="flex-1" />
 
         {batchMode ? (
-          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-1.5 shadow-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-1.5 shadow-xs">
             <button
               onClick={toggleSelectAll}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               {selectedIds.size === cards.length ? (
-                <CheckSquare className="h-4 w-4 text-indigo-600" />
+                <CheckSquare className="h-4 w-4 text-[#F97316]" />
               ) : (
-                <Square className="h-4 w-4 text-gray-400" />
+                <Square className="h-4 w-4 text-slate-400" />
               )}
               Select All
             </button>
-            <div className="h-4 w-px bg-gray-200" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
             <button
               onClick={handleDeleteSelected}
               disabled={selectedIds.size === 0 || deleting}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-40 cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Delete ({selectedIds.size})
             </button>
-            <div className="h-4 w-px bg-gray-200" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
             <button
               onClick={() => {
                 setBatchMode(false);
                 setSelectedIds(new Set());
               }}
-              className="rounded-lg px-3 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+              className="rounded-lg px-3 py-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -275,9 +275,9 @@ export default function DeckDetailView({
           <button
             onClick={() => setBatchMode(true)}
             disabled={cards.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#181B26] hover:text-slate-900 dark:hover:text-white disabled:opacity-40 cursor-pointer"
           >
-            <CheckSquare className="h-4 w-4 text-gray-400" />
+            <CheckSquare className="h-4 w-4 text-slate-400" />
             Batch Edit
           </button>
         )}
@@ -291,12 +291,12 @@ export default function DeckDetailView({
           ))}
         </div>
       ) : cards.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-gray-50/50 py-24 text-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-200">
-            <AlertCircle className="h-8 w-8 text-gray-400" />
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center shadow-xs">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 dark:bg-[#181B26] shadow-xs ring-1 ring-slate-100 dark:ring-white/5">
+            <AlertCircle className="h-8 w-8 text-slate-400 dark:text-[#8B92A5]" />
           </div>
-          <h3 className="mb-2 text-lg font-bold text-gray-900">No cards in this flashcard</h3>
-          <p className="mb-6 max-w-sm text-sm text-gray-500">
+          <h3 className="mb-2 text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">No cards in this flashcard</h3>
+          <p className="mb-6 max-w-sm text-sm text-slate-500 dark:text-[#8B92A5]">
             Get started by adding your first flashcard. The more cards you add, the better your study sessions will be.
           </p>
           <button
@@ -304,7 +304,7 @@ export default function DeckDetailView({
               setEditingCard(null);
               setEditorOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-xs transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
             style={{ backgroundColor: deck.color }}
           >
             <Plus className="h-4 w-4" />
@@ -316,16 +316,16 @@ export default function DeckDetailView({
           {cards.map((card, index) => {
             const status = card.progress?.status ?? "unseen";
             const statusColors: Record<string, { bg: string; text: string; label: string; border: string }> = {
-              correct: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Mastered", border: "bg-emerald-500" },
-              incorrect: { bg: "bg-red-50", text: "text-red-700", label: "Needs Review", border: "bg-red-500" },
-              unseen: { bg: "bg-gray-100", text: "text-gray-600", label: "Unseen", border: "bg-gray-300" },
+              correct: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", label: "Mastered", border: "bg-emerald-500" },
+              incorrect: { bg: "bg-rose-50 dark:bg-rose-950/30", text: "text-rose-700 dark:text-rose-400", label: "Needs Review", border: "bg-rose-500" },
+              unseen: { bg: "bg-slate-100 dark:bg-[#1E2132]", text: "text-slate-600 dark:text-[#8B92A5]", label: "Unseen", border: "bg-slate-300 dark:bg-slate-600" },
             };
             const statusInfo = statusColors[status] ?? statusColors.unseen;
 
             return (
               <div
                 key={card.id}
-                className="group relative flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-gray-300"
+                className="group relative flex items-center gap-4 rounded-2xl bg-white dark:bg-[#141721] p-5 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 dark:hover:border-white/10"
                 style={{
                   animation: `staggerFadeIn 0.3s ease-out ${index * 50}ms both`,
                 }}
@@ -339,10 +339,10 @@ export default function DeckDetailView({
                 {batchMode && (
                   <button
                     onClick={() => toggleSelect(card.id)}
-                    className="shrink-0 pl-2 text-gray-400 transition-colors hover:text-gray-600"
+                    className="shrink-0 pl-2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                   >
                     {selectedIds.has(card.id) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600" />
+                      <CheckSquare className="h-5 w-5 text-[#F97316]" />
                     ) : (
                       <Square className="h-5 w-5" />
                     )}
@@ -351,15 +351,15 @@ export default function DeckDetailView({
 
                 {/* Index & Content */}
                 <div className={`flex flex-1 min-w-0 items-center gap-4 ${!batchMode ? "pl-2" : ""}`}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-sm font-bold text-gray-400 ring-1 ring-gray-100">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 dark:bg-[#181B26] text-sm font-bold text-slate-400 dark:text-[#8B92A5] border border-slate-100 dark:border-white/5">
                     {index + 1}
                   </span>
 
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-base font-bold text-gray-900">
+                    <p className="truncate text-base font-bold text-slate-900 dark:text-[#F0F2F8]">
                       {card.front}
                     </p>
-                    <p className="mt-1 truncate text-sm text-gray-500">
+                    <p className="mt-1 truncate text-sm text-slate-500 dark:text-[#8B92A5]">
                       {card.back}
                     </p>
                   </div>
@@ -380,14 +380,14 @@ export default function DeckDetailView({
                         setEditingCard(card);
                         setEditorOpen(true);
                       }}
-                      className="rounded-xl p-2.5 text-gray-400 transition-all hover:bg-indigo-50 hover:text-indigo-600"
+                      className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-orange-500/10 hover:text-[#F97316] cursor-pointer"
                       title="Edit Card"
                     >
                       <Edit3 className="h-4.5 w-4.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteCard(card.id)}
-                      className="rounded-xl p-2.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600"
+                      className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-500 cursor-pointer"
                       title="Delete Card"
                     >
                       <Trash2 className="h-4.5 w-4.5" />
