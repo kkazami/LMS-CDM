@@ -36,7 +36,7 @@ export default function CourseTabs({
   ];
 
   return (
-    <div className="border-b border-gray-300 bg-white">
+    <div className="border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#12151E] transition-colors">
       <nav className="flex gap-0 max-w-5xl mx-auto px-4 md:px-8" aria-label="Course tabs">
         {TABS.map((tab) => {
           const href = `/${instituteCode}/courses/${courseId}/${tab.key}`;
@@ -47,9 +47,13 @@ export default function CourseTabs({
             <Link
               key={tab.key}
               href={href}
-              className="relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors"
+              className={`relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "font-semibold"
+                  : "text-slate-600 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
+              }`}
               style={{
-                color: isActive ? theme.colors.primary : "#6B7280",
+                color: isActive ? theme.colors.primary : undefined,
                 borderBottom: isActive
                   ? `3px solid ${theme.colors.primary}`
                   : "3px solid transparent",
@@ -59,7 +63,7 @@ export default function CourseTabs({
               {tab.label}
               {tab.key === "people" && pendingCount > 0 && (
                 <span
-                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
+                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
                 >
                   {pendingCount}

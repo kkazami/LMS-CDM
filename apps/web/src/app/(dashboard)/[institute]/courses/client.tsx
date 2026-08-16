@@ -138,11 +138,11 @@ export default function CoursesClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">
             {isStudent ? "My Courses" : "My Classes"}
           </h1>
           {isStudent && pendingCount > 0 && (
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">
               <Clock className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
               {pendingCount} enrollment request{pendingCount > 1 ? "s" : ""} pending
             </p>
@@ -165,21 +165,21 @@ export default function CoursesClient({
 
       {/* Drag-and-drop hint */}
       {courses.length > 1 && (
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-slate-400 dark:text-[#555C72] mt-1">
           Drag cards to reorder • changes are saved automatically
         </p>
       )}
 
       {/* Course Grid */}
       {courses.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-center">
-          <div className="rounded-full bg-gray-100 p-6 mb-4">
-            <BookOpen className="h-10 w-10 text-gray-400" />
+        <div className="flex flex-col items-center py-20 text-center rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-8 shadow-xs mt-4">
+          <div className="rounded-full bg-slate-100 dark:bg-white/5 p-6 mb-4">
+            <BookOpen className="h-10 w-10 text-slate-400 dark:text-[#555C72]" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-[#F0F2F8]">
             {isStudent ? "No courses yet" : "No classes yet"}
           </h3>
-          <p className="mt-2 text-sm text-gray-400 max-w-sm">
+          <p className="mt-2 text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm">
             {isStudent
               ? "Join a course using a course code or browse available courses."
               : "You haven't created or been assigned any classes yet."}
@@ -208,7 +208,7 @@ export default function CoursesClient({
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={handleDrop}
-                className="group block overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-[0.99] cursor-grab active:cursor-grabbing select-none"
+                className="group block overflow-hidden rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] shadow-xs transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/20 active:scale-[0.99] cursor-grab active:cursor-grabbing select-none"
                 style={{
                   animation: `staggerFadeIn 0.2s ease-out both`,
                   animationDelay: `${Math.min(index, 10) * 40}ms`,
@@ -253,13 +253,13 @@ export default function CoursesClient({
                   {/* Card Body */}
                   <div className="px-5 py-4 space-y-2">
                     {course.instructorName && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="h-3.5 w-3.5 text-gray-400" />
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-[#8B92A5]">
+                        <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72]" />
                         <span>{course.instructorName}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#8B92A5]">
                       {course.subject && (
                         <span className="flex items-center gap-1">
                           <BookOpen className="h-3 w-3" />
@@ -311,27 +311,27 @@ export default function CoursesClient({
 
       {/* Unenroll confirmation dialog */}
       {confirmUnenroll && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs"
             onClick={() => setConfirmUnenroll(null)}
           />
-          <div className="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Unenroll from course?</h2>
-            <p className="text-sm text-gray-500 mb-6">
+          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-2xl p-6">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] mb-2">Unenroll from course?</h2>
+            <p className="text-xs text-slate-500 dark:text-[#8B92A5] mb-6">
               You'll lose access to all course materials and your submission history. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmUnenroll(null)}
-                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] py-2.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUnenroll(confirmUnenroll)}
                 disabled={isPending}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors cursor-pointer shadow-xs"
               >
                 Unenroll
               </button>

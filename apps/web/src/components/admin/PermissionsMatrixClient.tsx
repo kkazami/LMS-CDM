@@ -123,8 +123,8 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-64 animate-pulse rounded bg-gray-100" />
-        <div className="h-64 animate-pulse rounded-lg bg-gray-50" />
+        <div className="h-8 w-64 animate-pulse rounded-xl bg-slate-200 dark:bg-white/10" />
+        <div className="h-64 animate-pulse rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5" />
       </div>
     );
   }
@@ -147,15 +147,15 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#2C2727]">Permission Matrix</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Permission Matrix</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">
             Configure fine-grained capability flags for each system role.
           </p>
         </div>
         {hasChanges && (
           <button
             onClick={() => setShowReAuth(true)}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 shadow-xs cursor-pointer"
             style={{ backgroundColor: theme.colors.primary }}
           >
             <Save className="h-4 w-4" />
@@ -165,17 +165,17 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
       </div>
 
       {/* Matrix Grid */}
-      <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs">
         <table className="min-w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/60">
-              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <tr className="border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26]">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
                 Capability
               </th>
               {ROLES.map((role) => (
                 <th
                   key={role}
-                  className="px-6 py-4 text-center text-xs font-medium uppercase tracking-wider"
+                  className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider"
                   style={{ color: theme.colors.primary }}
                 >
                   <div className="flex items-center justify-center gap-1.5">
@@ -186,16 +186,16 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {SYSTEM_PERMISSIONS.map((perm) => {
               const info = PERMISSION_LABELS[perm];
               return (
-                <tr key={perm} className="border-b border-gray-50 transition-colors hover:bg-gray-50/50">
+                <tr key={perm} className="transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="text-sm font-medium text-[#2C2727]">{info?.label ?? perm}</p>
-                      <p className="text-xs text-gray-400">{info?.description ?? ""}</p>
-                      <code className="mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-mono text-gray-500">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{info?.label ?? perm}</p>
+                      <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{info?.description ?? ""}</p>
+                      <code className="mt-1 inline-block rounded-md bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-mono text-slate-600 dark:text-[#8B92A5]">
                         {perm}
                       </code>
                     </div>
@@ -213,9 +213,9 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
                             isAdmin
                               ? "cursor-not-allowed opacity-70"
                               : "cursor-pointer"
-                          }`}
+                          } ${isEnabled ? "" : "bg-slate-200 dark:bg-white/10"}`}
                           style={{
-                            backgroundColor: isEnabled ? theme.colors.primary : "#E5E7EB",
+                            backgroundColor: isEnabled ? theme.colors.primary : undefined,
                           }}
                           title={isAdmin ? "Admin permissions cannot be reduced" : `Toggle ${perm} for ${role}`}
                         >
@@ -226,7 +226,7 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
                           />
                         </button>
                         {isAdmin && (
-                          <Lock className="mx-auto mt-1 h-3 w-3 text-gray-300" />
+                          <Lock className="mx-auto mt-1 h-3 w-3 text-slate-400 dark:text-slate-500" />
                         )}
                       </td>
                     );
@@ -239,20 +239,20 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
       </div>
 
       {/* Admin Note */}
-      <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-3.5 text-xs text-amber-700 dark:text-amber-400">
         <strong>Security Note:</strong> ADMIN role permissions are locked to prevent accidental privilege removal.
         Changes to INSTRUCTOR and STUDENT roles require password re-authentication and are audit-logged.
       </div>
 
       {/* Re-Auth Dialog */}
       {showReAuth && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-gray-300 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl">
             <div className="mb-4 flex items-center gap-2">
               <Lock className="h-5 w-5" style={{ color: theme.colors.primary }} />
-              <h3 className="text-lg font-semibold text-[#2C2727]">Confirm Changes</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">Confirm Changes</h3>
             </div>
-            <p className="mb-4 text-sm text-gray-600">
+            <p className="mb-4 text-xs text-slate-500 dark:text-[#8B92A5]">
               Re-enter your admin password to update the permission matrix.
             </p>
             <div className="mb-4">
@@ -274,14 +274,14 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
                   setShowReAuth(false);
                   setAdminPassword("");
                 }}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || !adminPassword}
-                className="rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs"
                 style={{ backgroundColor: theme.colors.primary }}
               >
                 {saving ? "Saving..." : "Confirm & Save"}

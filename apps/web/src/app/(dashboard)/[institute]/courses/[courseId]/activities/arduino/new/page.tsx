@@ -89,38 +89,38 @@ void loop() {
 }`;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create Arduino Assignment</h1>
-        <p className="text-gray-500 text-sm mt-1">
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Create Arduino Assignment</h1>
+        <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1">
           Configure a randomized IoT circuit assignment.
         </p>
       </div>
 
-      <form action={createTemplate} className="space-y-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <form action={createTemplate} className="space-y-8 bg-white dark:bg-[#141721] p-6 rounded-2xl border border-slate-200/80 dark:border-white/5 shadow-xs">
         
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Difficulty</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Difficulty</h2>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-blue-600" />
-              <span className="text-sm font-medium">Beginner (1 Fault)</span>
+              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Beginner (1 Fault)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="2" className="accent-blue-600" />
-              <span className="text-sm font-medium">Intermediate (2 Faults)</span>
+              <input type="radio" name="difficulty" value="2" className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Intermediate (2 Faults)</span>
             </label>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Eligible Faults Pool</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Eligible Faults Pool</h2>
           <div className="space-y-3">
             {availableFaults.map((fault) => (
-              <label key={fault.id} className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                <input type="checkbox" name="faultPool" value={fault.id} defaultChecked className="mt-1 accent-blue-600" />
+              <label key={fault.id} className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-slate-200/60 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                <input type="checkbox" name="faultPool" value={fault.id} defaultChecked className="mt-1 accent-[#F97316]" />
                 <div>
-                  <span className="block text-sm font-medium text-gray-900">{fault.label}</span>
+                  <span className="block text-xs font-semibold text-slate-900 dark:text-[#F0F2F8]">{fault.label}</span>
                 </div>
               </label>
             ))}
@@ -128,19 +128,19 @@ void loop() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Starter Code</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Starter Code</h2>
           <textarea 
             name="starterCode" 
             defaultValue={defaultStarterCode}
             rows={12}
-            className="w-full font-mono text-sm p-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full font-mono text-xs p-4 bg-slate-50/50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl text-slate-900 dark:text-[#F0F2F8] focus:border-orange-500 outline-none"
           />
         </div>
 
         <div className="pt-4 flex justify-end">
           <button 
             type="submit"
-            className="px-6 py-2.5 rounded-lg text-white font-medium transition-colors"
+            className="px-6 py-2.5 rounded-xl text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             style={{ backgroundColor: theme.colors.primary }}
           >
             Create Assignment Template

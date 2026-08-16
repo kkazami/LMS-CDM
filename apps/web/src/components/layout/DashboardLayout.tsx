@@ -7,6 +7,7 @@ import Topbar from "@/components/layout/Topbar";
 import NavigationProgress from "@/components/layout/NavigationProgress";
 import Toaster from "@/components/common/Toast";
 import { AvatarProvider } from "@/lib/avatar-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import { ChatbotProvider } from "@/lib/chatbot-context";
 import ChatbotWidget from "@/components/common/ChatbotWidget";
 import type { InstituteTheme } from "@/lib/theme";
@@ -45,9 +46,8 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-screen"
+      className="min-h-screen bg-canvas text-primary-theme transition-colors duration-200"
       style={{
-        backgroundColor: theme.colors.background,
         "--focus-ring": theme.colors.primary,
       } as React.CSSProperties}
     >
@@ -57,8 +57,8 @@ export default function DashboardLayout({
       </Suspense>
 
       <div className="flex items-start">
-        <Sidebar 
-          instituteCode={instituteCode} 
+        <Sidebar
+          instituteCode={instituteCode}
           theme={theme}
           userRole={userRole}
           isCollapsed={isSidebarCollapsed}
@@ -71,8 +71,8 @@ export default function DashboardLayout({
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
             <div className="relative z-50 flex">
-              <Sidebar 
-                instituteCode={instituteCode} 
+              <Sidebar
+                instituteCode={instituteCode}
                 theme={theme}
                 userRole={userRole}
                 isCollapsed={false}
@@ -110,10 +110,13 @@ export default function DashboardLayout({
     </div>
   );
 
-  // Wrap in ChatbotProvider for students so chat state persists across navigations
-  if (isStudent) {
-    return <ChatbotProvider>{layoutContent}</ChatbotProvider>;
-  }
-
-  return layoutContent;
+  return (
+    <ThemeProvider>
+      {isStudent ? (
+        <ChatbotProvider>{layoutContent}</ChatbotProvider>
+      ) : (
+        layoutContent
+      )}
+    </ThemeProvider>
+  );
 }

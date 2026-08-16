@@ -23,8 +23,8 @@ export default function Skeleton({
   return (
     <div
       className={cn(
-        shimmer ? "skeleton-shimmer" : "animate-pulse bg-gray-200",
-        rounded ? "rounded-full" : "rounded-md",
+        shimmer ? "skeleton-shimmer" : "animate-pulse bg-slate-200 dark:bg-white/10",
+        rounded ? "rounded-full" : "rounded-xl",
         className
       )}
       aria-hidden="true"

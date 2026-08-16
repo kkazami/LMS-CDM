@@ -93,19 +93,19 @@ export default async function LearningMaterialsPage({ params }: Props) {
       </div>
 
       {courses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-4xl border-2 border-dashed border-gray-200 bg-white py-24 text-center shadow-sm">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 mb-6 ring-8 ring-gray-50/50">
-            <Folder className="h-10 w-10 text-gray-400" />
+        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center shadow-xs">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 dark:bg-[#181B26] mb-6 ring-8 ring-slate-50/50 dark:ring-white/5">
+            <Folder className="h-10 w-10 text-slate-400 dark:text-[#8B92A5]" />
           </div>
-          <h3 className="mb-2 text-2xl font-bold text-gray-900">No Materials Yet</h3>
-          <p className="text-base text-gray-500 max-w-md">
+          <h3 className="mb-2 text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">No Materials Yet</h3>
+          <p className="text-base text-slate-500 dark:text-[#8B92A5] max-w-md">
             You are not enrolled in any courses with published learning materials. Check back later.
           </p>
         </div>
       ) : (
         <div className="space-y-6">
-          <h2 className="mb-6 flex items-center gap-3 text-2xl font-extrabold text-gray-900 tracking-tight">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+          <h2 className="mb-6 flex items-center gap-3 text-2xl font-extrabold text-slate-900 dark:text-[#F0F2F8] tracking-tight">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] ring-1 ring-orange-500/20">
               <BookOpen className="h-5 w-5" />
             </span>
             All Enrolled Courses
@@ -117,7 +117,7 @@ export default async function LearningMaterialsPage({ params }: Props) {
               return (
               <div
                 key={course.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-gray-300"
+                className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/10"
               >
                 {/* Header Banner Block with Customizable Image */}
                 <div
@@ -153,16 +153,16 @@ export default async function LearningMaterialsPage({ params }: Props) {
 
                 {/* Card Body & Footer */}
                 <div className="p-4 flex flex-col justify-between flex-1">
-                  <div className="space-y-1 text-xs text-gray-500">
+                  <div className="space-y-1 text-xs text-slate-500 dark:text-[#8B92A5]">
                     <div className="flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
                       <span className="truncate">Prof. {course.instructor?.name || "Unassigned"}</span>
                     </div>
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-600 dark:text-[#8B92A5]">
                       Learning Materials
                     </span>
                     <Link

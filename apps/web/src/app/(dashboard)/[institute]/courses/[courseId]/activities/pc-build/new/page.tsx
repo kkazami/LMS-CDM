@@ -78,52 +78,52 @@ export default async function NewPCBuildActivityPage({
   ];
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create PC Build Assignment</h1>
-        <p className="text-gray-500 text-sm mt-1">
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Create PC Build Assignment</h1>
+        <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1">
           Configure a randomized troubleshooting assignment.
         </p>
       </div>
 
-      <form action={createTemplate} className="space-y-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <form action={createTemplate} className="space-y-8 bg-white dark:bg-[#141721] p-6 rounded-2xl border border-slate-200/80 dark:border-white/5 shadow-xs">
         
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Difficulty</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Difficulty</h2>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-blue-600" />
-              <span className="text-sm font-medium">Beginner (1 Fault)</span>
+              <input type="radio" name="difficulty" value="1" defaultChecked className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Beginner (1 Fault)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="2" className="accent-blue-600" />
-              <span className="text-sm font-medium">Intermediate (2 Faults)</span>
+              <input type="radio" name="difficulty" value="2" className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Intermediate (2 Faults)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="difficulty" value="3" className="accent-blue-600" />
-              <span className="text-sm font-medium">Advanced (3 Faults)</span>
+              <input type="radio" name="difficulty" value="3" className="accent-[#F97316]" />
+              <span className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Advanced (3 Faults)</span>
             </label>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Eligible Faults Pool</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] border-b border-slate-100 dark:border-white/5 pb-2">Eligible Faults Pool</h2>
+          <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
             Select the faults that the system can randomly inject. The system will pick up to [Difficulty] faults from this pool per student.
           </p>
           <div className="space-y-3">
             {availableFaults.map((fault) => (
-              <label key={fault.id} className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+              <label key={fault.id} className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-slate-200/60 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                 <input 
                   type="checkbox" 
                   name="faultPool" 
                   value={fault.id} 
                   defaultChecked
-                  className="mt-1 accent-blue-600"
+                  className="mt-1 accent-[#F97316]"
                 />
                 <div>
-                  <span className="block text-sm font-medium text-gray-900">{fault.label}</span>
-                  <span className="block text-xs text-gray-500 font-mono mt-0.5">{fault.id}</span>
+                  <span className="block text-xs font-semibold text-slate-900 dark:text-[#F0F2F8]">{fault.label}</span>
+                  <span className="block text-[10px] text-slate-400 dark:text-[#8B92A5] font-mono mt-0.5">{fault.id}</span>
                 </div>
               </label>
             ))}
@@ -133,7 +133,7 @@ export default async function NewPCBuildActivityPage({
         <div className="pt-4 flex justify-end">
           <button 
             type="submit"
-            className="px-6 py-2.5 rounded-lg text-white font-medium transition-colors"
+            className="px-6 py-2.5 rounded-xl text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             style={{ backgroundColor: theme.colors.primary }}
           >
             Create Assignment Template

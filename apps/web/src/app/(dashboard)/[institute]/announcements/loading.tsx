@@ -5,15 +5,15 @@ export default function AnnouncementsLoadingSkeleton() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="mb-4">
-        <Skeleton className="h-8 w-40" shimmer />
-        <Skeleton className="h-4 w-56 mt-2" shimmer />
+        <Skeleton className="h-8 w-44" shimmer />
+        <Skeleton className="h-4 w-60 mt-2" shimmer />
       </div>
 
       {/* 4 announcement card skeletons */}
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-gray-200 bg-white p-5 space-y-3"
+          className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-4 shadow-xs"
         >
           <div className="flex items-start gap-3">
             <Skeleton className="h-10 w-10 shrink-0" rounded shimmer />

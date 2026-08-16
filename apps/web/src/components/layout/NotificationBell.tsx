@@ -169,7 +169,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
       <button
         id="notification-bell"
         onClick={handleToggle}
-        className="relative rounded-md border border-gray-300 bg-white p-2 text-gray-700 hover:bg-gray-50 transition-colors"
+        className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-w-[36px] min-h-[36px]"
         aria-label="Notifications"
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -177,7 +177,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold text-white animate-in"
+            className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold text-white shadow-xs animate-in"
             style={{ backgroundColor: theme.colors.primary }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}

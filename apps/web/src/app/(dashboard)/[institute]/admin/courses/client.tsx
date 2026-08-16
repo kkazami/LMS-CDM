@@ -69,14 +69,14 @@ function CopyCodeButton({ code }: { code: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-700 hover:bg-gray-200 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 px-2 py-0.5 font-mono text-xs text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
       title="Copy join code"
     >
       {code || "—"}
       {copied ? (
-        <Check className="h-3 w-3 text-green-600" />
+        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
       ) : (
-        <Copy className="h-3 w-3 text-gray-400" />
+        <Copy className="h-3 w-3 text-slate-400 dark:text-slate-500" />
       )}
     </button>
   );
@@ -149,9 +149,9 @@ export default function AdminCoursesClient({
       header: "Instructor",
       render: (row) =>
         row.instructor ? (
-          <span className="text-sm">{row.instructor.name}</span>
+          <span className="text-xs font-semibold text-slate-800 dark:text-[#F0F2F8]">{row.instructor.name}</span>
         ) : (
-          <span className="text-xs text-gray-400 italic">Unassigned</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500 italic">Unassigned</span>
         ),
     },
     {
@@ -168,14 +168,14 @@ export default function AdminCoursesClient({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleEdit(row)}
-            className="text-gray-500 hover:text-gray-900 transition"
+            className="text-slate-400 hover:text-slate-900 dark:hover:text-[#F0F2F8] transition cursor-pointer p-1"
             aria-label="Edit course"
           >
             <Edit2 className="h-4 w-4" />
           </button>
           <button
             onClick={() => handleDelete(row.id)}
-            className="text-red-500 hover:text-red-700 transition"
+            className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer p-1"
             aria-label="Delete course"
           >
             <Trash2 className="h-4 w-4" />
@@ -260,7 +260,7 @@ export default function AdminCoursesClient({
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Description
             </label>
             <textarea
@@ -268,21 +268,19 @@ export default function AdminCoursesClient({
               defaultValue={editingCourse?.description}
               placeholder="Course description (optional)"
               rows={3}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              style={{ borderColor: theme.colors.border }}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
             />
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               <UserPlus className="inline h-4 w-4 mr-1 -mt-0.5" />
               Assign Instructor
             </label>
             <select
               name="instructorId"
               defaultValue={editingCourse?.instructorId || ""}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              style={{ borderColor: theme.colors.border }}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
             >
               <option value="">— No instructor assigned —</option>
               {instructors.map((inst) => (

@@ -75,33 +75,33 @@ export default function SubmissionsClient({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border-b border-gray-300 px-6 py-4">
+      <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 px-6 py-4 shadow-xs">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Link
             href={`/${instituteCode}/courses/${courseId}/classwork/${itemId}`}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             {itemTitle}
           </Link>
-          <ChevronRight className="h-4 w-4 text-gray-300" />
-          <span className="text-sm font-medium text-gray-800">Submissions</span>
+          <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+          <span className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Submissions</span>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Assigned", value: allStudents.length, color: "text-gray-700", bg: "bg-white" },
-            { label: "Submitted", value: submittedCount, color: "text-emerald-700", bg: "bg-emerald-50" },
-            { label: "Graded", value: gradedCount, color: "text-purple-700", bg: "bg-purple-50" },
+            { label: "Assigned", value: allStudents.length, color: "text-slate-800 dark:text-[#F0F2F8]", bg: "bg-white dark:bg-[#141721]" },
+            { label: "Submitted", value: submittedCount, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+            { label: "Graded", value: gradedCount, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
           ].map(({ label, value, color, bg }) => (
-            <div key={label} className={`rounded-2xl ${bg} border border-gray-300 p-5 text-center shadow-sm`}>
+            <div key={label} className={`rounded-2xl ${bg} border border-slate-200/80 dark:border-white/5 p-5 text-center shadow-xs`}>
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
-              <p className="text-sm text-gray-500 mt-1">{label}</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -110,27 +110,27 @@ export default function SubmissionsClient({
         <div className="flex justify-end">
           <a
             href={`/api/courses/${courseId}/gradebook/export`}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-all shadow-sm"
+            className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs"
           >
-            <Download className="h-4 w-4 text-indigo-500" />
+            <Download className="h-4 w-4 text-[#F97316]" />
             Export grades (CSV)
           </a>
         </div>
 
         {/* Submissions table */}
-        <div className="rounded-2xl bg-white border border-gray-300 shadow-sm overflow-hidden">
+        <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Student</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Submitted</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Files</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Grade</th>
+              <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#181B26]">
+                <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">Student</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">Status</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">Submitted</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">Files</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">Grade</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {rows.map((row) => {
                 const statusDef = STATUS_STYLES[row.status] ?? STATUS_STYLES.MISSING;
                 const Icon = statusDef.Icon;
@@ -139,13 +139,13 @@ export default function SubmissionsClient({
                 return (
                   <tr
                     key={row.student.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
                     onClick={() => row.id.startsWith("missing-") ? null : setGradingSubmission(row as SubmissionRow)}
                   >
                     <td className="px-5 py-4">
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">{row.student.name}</p>
-                        <p className="text-xs text-gray-400">{row.student.email}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{row.student.name}</p>
+                        <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{row.student.email}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
@@ -154,14 +154,14 @@ export default function SubmissionsClient({
                         {statusDef.label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-sm text-gray-500">
+                    <td className="px-5 py-4 text-xs text-slate-500 dark:text-[#8B92A5]">
                       {row.submittedAt
                         ? new Date(row.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                         : "—"}
                     </td>
-                    <td className="px-5 py-4 text-sm text-gray-500">
+                    <td className="px-5 py-4 text-xs text-slate-500 dark:text-[#8B92A5]">
                       {row.attachments.length > 0 ? (
-                        <span className="flex items-center gap-1 text-indigo-600">
+                        <span className="flex items-center gap-1 text-[#F97316]">
                           <FileText className="h-3.5 w-3.5" />
                           {row.attachments.length}
                         </span>
@@ -169,15 +169,17 @@ export default function SubmissionsClient({
                     </td>
                     <td className="px-5 py-4">
                       {displayGrade !== null ? (
-                        <span className="flex items-center gap-1 text-sm font-semibold text-amber-600">
+                        <span className="flex items-center gap-1 text-xs font-bold text-amber-500 dark:text-amber-400">
                           <Star className="h-3.5 w-3.5" />
                           {displayGrade}{maxPoints ? `/${maxPoints}` : ""}
                         </span>
-                      ) : "—"}
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-600">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-right">
                       {!row.id.startsWith("missing-") && (
-                        <span className="text-xs font-medium text-indigo-600 hover:underline">
+                        <span className="text-xs font-semibold text-[#F97316] hover:underline">
                           {row.isReturned ? "Update grade" : "Grade"}
                         </span>
                       )}

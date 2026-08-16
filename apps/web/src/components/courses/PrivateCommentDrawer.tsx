@@ -77,17 +77,14 @@ export default function PrivateCommentDrawer({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-xl">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/5 shadow-2xl">
         {/* Header */}
-        <div
-          className="flex items-center justify-between border-b px-5 py-4"
-          style={{ borderColor: theme.colors.border }}
-        >
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/5 px-5 py-4">
           <div className="flex items-center gap-3">
             <UserAvatar
               name={studentName}
@@ -96,15 +93,15 @@ export default function PrivateCommentDrawer({
               color={theme.colors.primary}
             />
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
                 {studentName}
               </h3>
-              <p className="text-xs text-gray-500">Private feedback channel</p>
+              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">Private feedback channel</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition cursor-pointer"
             aria-label="Close drawer"
           >
             <X className="h-5 w-5" />
@@ -115,11 +112,11 @@ export default function PrivateCommentDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
           {comments.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="rounded-full bg-gray-100 p-4 mb-3">
-                <Send className="h-6 w-6 text-gray-400" />
+              <div className="rounded-full bg-slate-100 dark:bg-white/5 p-4 mb-3">
+                <Send className="h-6 w-6 text-slate-400 dark:text-slate-500" />
               </div>
-              <p className="text-sm text-gray-500">No messages yet</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">No messages yet</p>
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5] mt-1">
                 Send private feedback about this student's progress
               </p>
             </div>
@@ -132,10 +129,10 @@ export default function PrivateCommentDrawer({
                   className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-xl px-4 py-2.5 ${
+                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                       isOwnMessage
-                        ? "rounded-br-sm text-white"
-                        : "rounded-bl-sm border border-gray-300 bg-gray-50 text-gray-800"
+                        ? "rounded-br-xs text-white"
+                        : "rounded-bl-xs border border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#1E2132] text-slate-800 dark:text-[#F0F2F8]"
                     }`}
                     style={
                       isOwnMessage
@@ -144,7 +141,7 @@ export default function PrivateCommentDrawer({
                     }
                   >
                     {!isOwnMessage && (
-                      <p className="text-xs font-medium mb-1" style={{ color: theme.colors.primary }}>
+                      <p className="text-xs font-semibold mb-1" style={{ color: theme.colors.primary }}>
                         {comment.sender.name}
                       </p>
                     )}
@@ -157,7 +154,7 @@ export default function PrivateCommentDrawer({
                       )}
                       <span
                         className={`text-[10px] ${
-                          isOwnMessage ? "text-white/70" : "text-gray-400"
+                          isOwnMessage ? "text-white/70" : "text-slate-400 dark:text-[#8B92A5]"
                         }`}
                       >
                         {timeAgo(comment.createdAt)}
@@ -174,14 +171,13 @@ export default function PrivateCommentDrawer({
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="border-t border-gray-300 p-4 flex gap-2"
+          className="border-t border-slate-200/80 dark:border-white/5 p-4 flex gap-2 bg-slate-50/30 dark:bg-white/[0.01]"
         >
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Write private feedback..."
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
-            style={{ borderColor: theme.colors.border }}
+            className="flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
             disabled={sending}
           />
           <Button

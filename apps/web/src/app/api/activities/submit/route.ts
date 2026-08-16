@@ -18,6 +18,7 @@ import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { activitySubmissionSchema } from "@/features/interactive-activities/shared/schemas";
 import { db } from "@/lib/db";
 import { processGamificationEvent } from "@/features/interactive-activities/gamification/engine";
+import { getProblemById } from "@/features/interactive-activities/codelab/problems";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +73,45 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify the template exists (the assignmentId maps to a templateId)
-    const template = await db.activityTemplate.findUnique({
+    let template = await db.activityTemplate.findUnique({
       where: { id: payload.assignmentId },
       select: { id: true, activityType: true, courseId: true, syllabusItemId: true },
     });
+
+    if (!template && payload.activityType === "codelab") {
+      const problem = getProblemById(payload.assignmentId);
+      // Find an active course to bind the problem template
+      const enrollment = await db.enrollment.findFirst({
+        where: { studentId: payload.studentId, status: "ACTIVE" },
+        select: { courseId: true },
+      });
+
+      let courseId = enrollment?.courseId;
+      if (!courseId) {
+        const firstCourse = await db.course.findFirst({
+          select: { id: true },
+        });
+        courseId = firstCourse?.id;
+      }
+
+      if (courseId) {
+        template = await db.activityTemplate.upsert({
+          where: { id: payload.assignmentId },
+          update: {},
+          create: {
+            id: payload.assignmentId,
+            title: problem?.title || "CodeLab Problem",
+            activityType: "codelab",
+            courseId: courseId,
+            createdBy: eligibility.session.user.id,
+            difficulty: problem?.tier === "easy" ? 1 : problem?.tier === "intermediate" ? 2 : 3,
+            variables: JSON.stringify(problem?.variables || []),
+            hiddenTestCases: JSON.stringify(problem?.testCases.filter((tc) => tc.isHidden) || []),
+          },
+          select: { id: true, activityType: true, courseId: true, syllabusItemId: true },
+        });
+      }
+    }
 
     if (!template) {
       return NextResponse.json(

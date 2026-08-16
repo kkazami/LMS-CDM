@@ -152,8 +152,8 @@ export default function ProfileEditClient({
         </div>
 
         {/* Read-only info */}
-        <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">{user.name}</h1>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-[#8B92A5]">
           <span
             className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide"
             style={{
@@ -163,21 +163,21 @@ export default function ProfileEditClient({
           >
             {roleLabel}
           </span>
-          <span className="h-1 w-1 rounded-full bg-gray-300" />
+          <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
           <span>{user.institute.name}</span>
         </div>
       </div>
 
       {/* Edit Form */}
       <div className="mt-8 px-6 space-y-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
             Edit Profile
           </h2>
 
           {/* Name */}
           <div className="grid gap-1.5">
-            <label htmlFor="profile-name" className="text-sm font-medium text-gray-700">
+            <label htmlFor="profile-name" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Full Name
             </label>
             <input
@@ -185,7 +185,7 @@ export default function ProfileEditClient({
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="Your full name"
             />
           </div>
@@ -193,10 +193,10 @@ export default function ProfileEditClient({
           {/* Bio */}
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="profile-bio" className="text-sm font-medium text-gray-700">
+              <label htmlFor="profile-bio" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 Bio
               </label>
-              <span className="text-xs text-gray-400">{bio.length}/300</span>
+              <span className="text-xs text-slate-400 dark:text-[#8B92A5]">{bio.length}/300</span>
             </div>
             <textarea
               id="profile-bio"
@@ -204,14 +204,14 @@ export default function ProfileEditClient({
               onChange={(e) => setBio(e.target.value.slice(0, 300))}
               maxLength={300}
               rows={3}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none resize-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none resize-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="Tell people a little about yourself..."
             />
           </div>
 
           {/* Phone */}
           <div className="grid gap-1.5">
-            <label htmlFor="profile-phone" className="text-sm font-medium text-gray-700">
+            <label htmlFor="profile-phone" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Phone
             </label>
             <input
@@ -219,21 +219,21 @@ export default function ProfileEditClient({
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
               placeholder="+XX-XXX-XXXX"
             />
           </div>
 
           {/* Program */}
           <div className="grid gap-1.5">
-            <label htmlFor="profile-department" className="text-sm font-medium text-gray-700">
+            <label htmlFor="profile-department" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Program
             </label>
             <select
               id="profile-department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
             >
               <option value="">Select program</option>
               {PROGRAM_OPTIONS.map((opt) => (
@@ -247,14 +247,14 @@ export default function ProfileEditClient({
           {/* Year Level (students only) */}
           {isStudent && (
             <div className="grid gap-1.5">
-              <label htmlFor="profile-yearLevel" className="text-sm font-medium text-gray-700">
+              <label htmlFor="profile-yearLevel" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
                 Year Level
               </label>
               <select
                 id="profile-yearLevel"
                 value={yearLevel}
                 onChange={(e) => setYearLevel(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+                className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
               >
                 <option value="">Select year level</option>
                 {YEAR_OPTIONS.map((opt) => (
@@ -268,8 +268,8 @@ export default function ProfileEditClient({
 
           {/* Cover Color */}
           <div className="grid gap-2">
-            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-              <Palette className="h-4 w-4 text-gray-400" />
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
+              <Palette className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               Profile Banner Color
             </label>
             <div className="flex flex-wrap items-center gap-2">
@@ -278,10 +278,10 @@ export default function ProfileEditClient({
                   key={color}
                   type="button"
                   onClick={() => setCoverColor(color)}
-                  className="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110"
+                  className="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
                   style={{
                     backgroundColor: color,
-                    borderColor: coverColor === color ? "#1a1a1a" : "transparent",
+                    borderColor: coverColor === color ? (theme.colors.primary || "#F97316") : "transparent",
                   }}
                   aria-label={`Set banner color to ${color}`}
                 />
@@ -303,7 +303,7 @@ export default function ProfileEditClient({
                     }
                   }}
                   placeholder="#HEX"
-                  className="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-xs font-mono outline-none transition placeholder:text-gray-400 focus:border-blue-400"
+                  className="w-24 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
                 />
               </div>
             </div>
@@ -319,19 +319,19 @@ export default function ProfileEditClient({
         </div>
 
         {/* Read-only info section */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 space-y-3 shadow-xs">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
             <BookOpen className="h-4 w-4" />
             Contact & Info
           </h2>
 
           <div className="grid gap-2">
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <Mail className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-[#8B92A5]">
+              <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <span>{user.email}</span>
             </div>
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-[#8B92A5]">
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <span>
                 Member since{" "}
                 {new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -345,7 +345,7 @@ export default function ProfileEditClient({
 
         {/* Courses Section */}
         <div className="pb-8">
-          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3">
             {isStudent ? (
               <GraduationCap className="h-4 w-4" />
             ) : (
@@ -353,20 +353,20 @@ export default function ProfileEditClient({
             )}
             {courseLabel}
           </h2>
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
             {courses.length === 0 ? (
-              <p className="text-sm text-gray-400">No courses to display.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">No courses to display.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {courses.map((course) => (
                   <span
                     key={course.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-[#F0F2F8]"
                   >
-                    <span className="font-semibold" style={{ color: theme.colors.primary }}>
+                    <span className="font-bold text-[#F97316]">
                       {course.code}
                     </span>
-                    <span className="text-gray-400">·</span>
+                    <span className="text-slate-400 dark:text-slate-600">·</span>
                     <span className="max-w-[140px] truncate">{course.title}</span>
                   </span>
                 ))}

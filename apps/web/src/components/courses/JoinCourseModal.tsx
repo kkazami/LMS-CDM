@@ -95,14 +95,14 @@ export default function JoinCourseModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-gray-300 bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-xs p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-300 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Join a Course</h2>
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 px-6 py-4">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">Join a Course</h2>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition cursor-pointer"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -110,25 +110,25 @@ export default function JoinCourseModal({
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-gray-300">
+        <div className="flex border-b border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02]">
           <button
             onClick={() => { setMode("code"); }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition"
-            style={{
-              color: mode === "code" ? theme.colors.primary : "#6B7280",
-              borderBottom: mode === "code" ? `2px solid ${theme.colors.primary}` : "2px solid transparent",
-            }}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition cursor-pointer ${
+              mode === "code"
+                ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
+                : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
+            }`}
           >
             <Hash className="h-4 w-4" />
             Join with Code
           </button>
           <button
             onClick={() => { setMode("browse"); }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition"
-            style={{
-              color: mode === "browse" ? theme.colors.primary : "#6B7280",
-              borderBottom: mode === "browse" ? `2px solid ${theme.colors.primary}` : "2px solid transparent",
-            }}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition cursor-pointer ${
+              mode === "browse"
+                ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
+                : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
+            }`}
           >
             <Search className="h-4 w-4" />
             Browse Courses
@@ -140,7 +140,7 @@ export default function JoinCourseModal({
           {mode === "code" ? (
             /* ─── Code Mode ─── */
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
                 Ask your instructor for the 6-character course code and enter it below.
               </p>
 
@@ -153,20 +153,11 @@ export default function JoinCourseModal({
                   }}
                   placeholder="ABC123"
                   maxLength={6}
-                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-mono text-xl tracking-[0.3em] outline-none transition placeholder:text-gray-300 placeholder:tracking-[0.3em]"
-                  style={{ borderColor: theme.colors.border }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.ring;
-                    e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.ring}33`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = theme.colors.border;
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-center font-mono text-2xl tracking-[0.3em] font-bold text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-300 dark:placeholder:text-[#555C72] placeholder:tracking-[0.3em] focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
                 />
               </div>
 
-              <div className="text-center text-xs text-gray-400">
+              <div className="text-center text-xs text-slate-400 dark:text-[#555C72]">
                 {courseCode.length}/6 characters
               </div>
 
@@ -185,23 +176,23 @@ export default function JoinCourseModal({
           ) : (
             /* ─── Browse Mode ─── */
             <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2">
-                <Search className="h-4 w-4 text-gray-400" />
+              <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 shadow-xs">
+                <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5]" />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search courses..."
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
+                  className="flex-1 bg-transparent text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 dark:placeholder:text-[#555C72]"
                 />
               </div>
 
               <div className="max-h-72 overflow-y-auto space-y-2">
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                   </div>
                 ) : filteredCourses.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-gray-400">
+                  <p className="py-8 text-center text-xs text-slate-400 dark:text-[#555C72]">
                     {searchQuery
                       ? "No courses match your search."
                       : "No available courses found."}
@@ -212,14 +203,14 @@ export default function JoinCourseModal({
                     return (
                       <div
                         key={course.id}
-                        className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50 transition"
+                        className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] p-3.5 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
                             {course.title}
                           </p>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                            <span>{course.code}</span>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-[#8B92A5]">
+                            <span className="font-mono">{course.code}</span>
                             {course.subject && (
                               <>
                                 <span>•</span>
@@ -242,8 +233,8 @@ export default function JoinCourseModal({
                           </div>
                         </div>
                         {alreadyRequested ? (
-                          <span className="flex items-center gap-1 text-xs text-green-600">
-                            <CheckCircle className="h-4 w-4" />
+                          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                            <CheckCircle className="h-3.5 w-3.5" />
                             Requested
                           </span>
                         ) : (

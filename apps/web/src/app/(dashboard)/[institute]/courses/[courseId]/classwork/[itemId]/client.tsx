@@ -94,26 +94,26 @@ function AttachmentChip({
       target={isMaterialFile ? undefined : "_blank"}
       rel={isMaterialFile ? undefined : "noopener noreferrer"}
       download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
-      className="flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 hover:bg-gray-50 hover:border-indigo-200 hover:shadow-sm transition-all group"
+      className="flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:border-orange-500/30 hover:shadow-xs transition-all group"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
-        <Icon className="h-4 w-4 text-indigo-600" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] transition-colors">
+        <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">
+        <p className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate">
           {attachment.fileName || attachment.url}
         </p>
-        <p className="text-xs text-gray-400">{isLink ? "Link" : "File"}</p>
+        <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{isLink ? "Link" : "File"}</p>
       </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 group-hover:text-indigo-400 transition-colors" />
+      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-[#F97316] transition-colors" />
     </Component>
   );
 }
 
 const TYPE_META: Record<string, { label: string; color: string }> = {
-  ASSIGNMENT: { label: "Assignment", color: "bg-blue-100 text-blue-700" },
-  QUIZ: { label: "Quiz", color: "bg-amber-100 text-amber-700" },
-  MATERIAL: { label: "Material", color: "bg-gray-100 text-gray-600" },
+  ASSIGNMENT: { label: "Assignment", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/20" },
+  QUIZ: { label: "Quiz", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20" },
+  MATERIAL: { label: "Material", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20" },
 };
 
 export default function AssignmentDetailClient({
@@ -130,39 +130,39 @@ export default function AssignmentDetailClient({
   const typeMeta = TYPE_META[item.type] ?? TYPE_META.MATERIAL;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Breadcrumb header */}
-      <div className="bg-white border-b border-gray-300 px-6 py-4">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-6 py-4 mb-6 shadow-xs">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Link
             href={`/${instituteCode}/courses/${courseId}/classwork`}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             {item.course.title}
           </Link>
-          <ChevronRight className="h-4 w-4 text-gray-300" />
-          <span className="text-sm font-medium text-gray-800 truncate max-w-75">
+          <ChevronRight className="h-4 w-4 text-slate-300 dark:text-white/10" />
+          <span className="text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate max-w-[300px]">
             {item.title}
           </span>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* Left: Assignment details */}
           <div className="space-y-6 min-w-0">
             {/* Header card */}
-            <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
+            <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
               <div className="flex items-start gap-3 mb-4">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
                   {typeMeta.label}
                 </span>
               </div>
 
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">{item.title}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>
 
-              <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+              <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-[#8B92A5]">
                 {item.dueDate && (
                   <div className={`flex items-center gap-1.5 ${isPastDeadline ? "text-red-500 font-medium" : ""}`}>
                     <Calendar className="h-4 w-4" />
@@ -187,16 +187,16 @@ export default function AssignmentDetailClient({
 
             {/* Description */}
             {item.description && (
-              <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Instructions</h2>
-                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{item.description}</div>
+              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
+                <h2 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">Instructions</h2>
+                <div className="text-slate-700 dark:text-[#D1D5DB] leading-relaxed whitespace-pre-wrap">{item.description}</div>
               </div>
             )}
 
             {/* Instructor attachments */}
             {item.attachments.length > 0 && (
-              <div className="rounded-2xl bg-white border border-gray-300 shadow-sm p-6">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
+                <h2 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">
                   Materials & Resources
                 </h2>
                 <div className="space-y-2">
@@ -217,13 +217,13 @@ export default function AssignmentDetailClient({
             {isInstructor && (
               <Link
                 href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}/submissions`}
-                className="flex items-center justify-between rounded-2xl bg-linear-to-r from-indigo-50 to-purple-50 border border-indigo-100 p-4 hover:from-indigo-100 hover:to-purple-100 transition-all group"
+                className="flex items-center justify-between rounded-2xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 p-5 hover:bg-orange-500/20 transition-all group"
               >
                 <div>
-                  <p className="font-semibold text-indigo-800">Student Submissions</p>
-                  <p className="text-sm text-indigo-600 mt-0.5">View and grade submitted work</p>
+                  <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Student Submissions</p>
+                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-0.5">View and grade submitted work</p>
                 </div>
-                <ChevronRight className="h-5 w-5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="h-5 w-5 text-orange-500 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             )}
           </div>

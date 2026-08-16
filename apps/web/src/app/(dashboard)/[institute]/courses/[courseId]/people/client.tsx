@@ -195,11 +195,11 @@ export default function PeopleClient({
     <div className="max-w-4xl mx-auto space-y-8">
       {/* ─── Instructor Section ─── */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3">
           Instructor
         </h2>
         {instructor ? (
-          <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white p-4">
+          <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
             <UserAvatar
               name={instructor.name}
               avatarUrl={instructor.avatarUrl}
@@ -212,16 +212,16 @@ export default function PeopleClient({
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-900">
+                <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
                   {instructor.name}
                 </span>
                 <Crown className="h-3.5 w-3.5 text-amber-500" />
               </div>
-              <span className="text-xs text-gray-500">{instructor.email}</span>
+              <span className="text-xs text-slate-500 dark:text-[#8B92A5]">{instructor.email}</span>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-400 italic">No instructor assigned</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic">No instructor assigned</p>
         )}
       </section>
 
@@ -229,10 +229,10 @@ export default function PeopleClient({
       {canManage && pendingRequests.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] flex items-center gap-2">
               Pending Requests
               <Badge theme={theme}>
-                <span className="ml-1">{pendingRequests.length}</span>
+                <span>{pendingRequests.length}</span>
               </Badge>
             </h2>
             <Button
@@ -248,26 +248,26 @@ export default function PeopleClient({
             {pendingRequests.map((req) => (
               <div
                 key={req.enrollmentId}
-                className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+                className="flex items-center justify-between rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-3.5"
               >
                 <div className="flex items-center gap-3">
                   <UserAvatar
                     name={req.name}
                     avatarUrl={req.avatarUrl}
                     size="sm"
-                    color="#F59E0B" // amber-500
+                    color="#F59E0B"
                     onClick={(e: React.MouseEvent) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setMiniCard({ userId: req.id, anchorRect: rect });
                     }}
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
                       {req.name}
                     </p>
-                    <p className="text-xs text-gray-500">{req.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-[#8B92A5]">{req.email}</p>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                  <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-[#8B92A5]">
                     <Clock className="h-3 w-3" />
                     {new Date(req.createdAt).toLocaleDateString()}
                   </span>
@@ -275,14 +275,14 @@ export default function PeopleClient({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleApprove(req.enrollmentId)}
-                    className="rounded-md bg-green-600 p-1.5 text-white hover:bg-green-700 transition"
+                    className="rounded-xl bg-green-600 p-2 text-white hover:bg-green-700 transition cursor-pointer shadow-xs"
                     aria-label="Approve"
                   >
                     <Check className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDecline(req.enrollmentId)}
-                    className="rounded-md bg-red-500 p-1.5 text-white hover:bg-red-600 transition"
+                    className="rounded-xl bg-red-500 p-2 text-white hover:bg-red-600 transition cursor-pointer shadow-xs"
                     aria-label="Decline"
                   >
                     <X className="h-4 w-4" />
@@ -296,23 +296,19 @@ export default function PeopleClient({
 
       {/* ─── Enrolled Students ─── */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3">
           Students ({enrolledStudents.length})
         </h2>
         {enrolledStudents.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">
+          <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721]">
             No students enrolled yet.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-            {enrolledStudents.map((student, i) => (
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] divide-y divide-slate-100 dark:divide-white/5 shadow-xs">
+            {enrolledStudents.map((student) => (
               <div
                 key={student.id}
-                className={`flex items-center justify-between px-4 py-3 ${
-                  i < enrolledStudents.length - 1
-                    ? "border-b border-gray-200"
-                    : ""
-                }`}
+                className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
               >
                 <div className="flex items-center gap-3">
                   <UserAvatar
@@ -326,17 +322,17 @@ export default function PeopleClient({
                     }}
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">
                       {student.name}
                     </p>
-                    <p className="text-xs text-gray-500">{student.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-[#8B92A5]">{student.email}</p>
                   </div>
                 </div>
 
                 {canManage && (
                   <button
                     onClick={() => openCommentDrawer(student)}
-                    className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+                    className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer"
                     aria-label={`Private message ${student.name}`}
                   >
                     <MessageSquare className="h-4 w-4" />
@@ -352,7 +348,7 @@ export default function PeopleClient({
       {canManage && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
               Student Groups
             </h2>
             <Button
@@ -366,30 +362,29 @@ export default function PeopleClient({
           </div>
 
           {studentGroups.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">
-              No groups created. Create groups to target specific students with
-              classwork.
+            <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721]">
+              No groups created. Create groups to target specific students with classwork.
             </p>
           ) : (
             <div className="space-y-3">
               {studentGroups.map((group) => (
                 <div
                   key={group.id}
-                  className="rounded-lg border border-gray-300 bg-white p-4"
+                  className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
                         {group.groupName}
                       </h3>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-400 dark:text-[#8B92A5]">
                         ({group.members.length} students)
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeleteGroup(group.id)}
-                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition"
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition cursor-pointer"
                       aria-label={`Delete group ${group.groupName}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -399,7 +394,7 @@ export default function PeopleClient({
                     {group.members.map((m) => (
                       <span
                         key={m.id}
-                        className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600"
+                        className="rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-[#8B92A5]"
                       >
                         {m.name}
                       </span>
@@ -424,40 +419,39 @@ export default function PeopleClient({
       >
         <div className="space-y-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Group Name
             </label>
             <input
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               placeholder="e.g. Project Team A"
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400"
-              style={{ borderColor: theme.colors.border }}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 focus:border-orange-500"
             />
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Select Students ({selectedStudentIds.size} selected)
             </label>
-            <div className="max-h-48 overflow-y-auto rounded-md border border-gray-300 divide-y divide-gray-100">
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 dark:border-white/10 divide-y divide-slate-100 dark:divide-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
               {enrolledStudents.map((student) => (
                 <label
                   key={student.id}
-                  className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50"
+                  className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={selectedStudentIds.has(student.id)}
                     onChange={() => toggleStudentSelection(student.id)}
-                    className="rounded border-gray-300"
+                    className="rounded border-slate-300 dark:border-white/20 text-[#F97316]"
                   />
-                  <span className="text-sm text-gray-700">{student.name}</span>
-                  <span className="text-xs text-gray-400">{student.email}</span>
+                  <span className="text-xs font-medium text-slate-800 dark:text-[#F0F2F8]">{student.name}</span>
+                  <span className="text-[11px] text-slate-400 dark:text-[#8B92A5]">{student.email}</span>
                 </label>
               ))}
               {enrolledStudents.length === 0 && (
-                <p className="px-3 py-4 text-sm text-gray-400 text-center">
+                <p className="px-3 py-4 text-xs text-slate-400 dark:text-slate-500 text-center">
                   No students enrolled yet
                 </p>
               )}
