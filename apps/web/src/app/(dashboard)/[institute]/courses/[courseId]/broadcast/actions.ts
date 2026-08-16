@@ -62,7 +62,7 @@ export async function sendBroadcast(
   });
 
   if (!parse.success) {
-    const firstError = parse.error.errors[0]?.message || "Validation failed.";
+    const firstError = parse.error.issues[0]?.message || "Validation failed.";
     return { message: firstError };
   }
 

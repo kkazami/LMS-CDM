@@ -47,6 +47,7 @@ export interface RiskAnalysisResult {
     missedAssignments: { id: string; title: string; dueDate: string | null }[];
     gradedSubmissions: { id: string; title: string; score: number; maxPoints: number }[];
     gradeAverage: number | null;
+    lastActiveDate?: string | Date | null;
     daysInactive: number | null;
     incompleteModules: { id: string; title: string; type: string }[];
   };
@@ -135,6 +136,7 @@ export function calculateRiskLevel(studentData: StudentActivityData): RiskAnalys
       missedAssignments: studentData.missedAssignments,
       gradedSubmissions: studentData.gradedSubmissions,
       gradeAverage: studentData.gradeAverage,
+      lastActiveDate: studentData.lastActiveDate,
       daysInactive: studentData.daysInactive,
       incompleteModules: studentData.incompleteModules,
     },
