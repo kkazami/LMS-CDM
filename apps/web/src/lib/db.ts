@@ -1,19 +1,16 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
 function createPrismaClient() {
-  return new PrismaClient({
-    datasources: process.env.DATABASE_URL
-      ? {
-          db: {
-            url: process.env.DATABASE_URL,
-          },
-        }
-      : undefined,
-  });
+  const connectionString = process.env.DATABASE_URL;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({ adapter });
 }
 
 function hasWorkspaceModels(client: PrismaClient) {

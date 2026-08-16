@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Megaphone, Clock, ChevronDown, ChevronUp, Filter, Inbox, BookOpen } from "lucide-react";
+import { Clock, ChevronDown, ChevronUp, Filter, Inbox, BookOpen } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import type { AnnouncementItem, EnrolledCourseOption } from "./page";
 
 interface AnnouncementsClientProps {
@@ -65,6 +66,7 @@ export default function AnnouncementsClient({
   theme,
   instituteCode: _instituteCode,
 }: AnnouncementsClientProps) {
+  const { themeMode } = useTheme();
   const [selectedCourseId, setSelectedCourseId] = useState("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -95,8 +97,8 @@ export default function AnnouncementsClient({
     return (
       <div className="max-w-4xl mx-auto page-enter">
         <div className="mb-7">
-          <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Announcements</h1>
+          <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
             Stay updated with the latest news from your classes
           </p>
         </div>
@@ -110,8 +112,8 @@ export default function AnnouncementsClient({
           >
             <BookOpen className="w-10 h-10" style={{ color: theme.colors.primary }} />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Not enrolled in any classes</h2>
-          <p className="text-sm text-gray-400 max-w-sm">
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-[#F0F2F8] mb-2">Not enrolled in any classes</h2>
+          <p className="text-sm text-slate-400 dark:text-[#8B92A5] max-w-sm">
             Join a class using a class code to see announcements from your instructors here.
           </p>
         </div>
@@ -123,15 +125,15 @@ export default function AnnouncementsClient({
     <div className="max-w-4xl mx-auto page-enter">
       {/* ── Page Header ── */}
       <div className="mb-7">
-        <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Announcements</h1>
+        <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
           Stay updated with the latest news from your classes
         </p>
       </div>
 
       {/* ── Class Filter ── */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#8B92A5]">
           <Filter className="h-4 w-4" />
           <span>Filter by class:</span>
         </div>
@@ -139,7 +141,7 @@ export default function AnnouncementsClient({
           id="announcements-course-filter"
           value={selectedCourseId}
           onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 transition-shadow"
+          className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 transition-shadow"
           style={{ 
             // @ts-expect-error CSS custom property for focus ring
             "--tw-ring-color": `${theme.colors.primary}40`,
@@ -163,11 +165,11 @@ export default function AnnouncementsClient({
           id="announcements-empty"
           className="flex flex-col items-center justify-center py-24 text-center"
         >
-          <div className="flex items-center justify-center w-20 h-20 rounded-full mb-6 bg-gray-100">
-            <Inbox className="w-10 h-10 text-gray-400" />
+          <div className="flex items-center justify-center w-20 h-20 rounded-full mb-6 bg-slate-100 dark:bg-white/5">
+            <Inbox className="w-10 h-10 text-slate-400 dark:text-[#8B92A5]" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No announcements yet</h2>
-          <p className="text-sm text-gray-400 max-w-sm">
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-[#F0F2F8] mb-2">No announcements yet</h2>
+          <p className="text-sm text-slate-400 dark:text-[#8B92A5] max-w-sm">
             {selectedCourseId === "all"
               ? "Your instructors haven't posted any announcements yet. Check back later!"
               : "No announcements for this class yet. Check back later!"}
@@ -186,11 +188,19 @@ export default function AnnouncementsClient({
               <div
                 key={ann.id}
                 id={`announcement-${ann.id}`}
-                className="rounded-xl border bg-white transition-all duration-200 hover:shadow-md"
+                className="rounded-xl border bg-white dark:bg-[#141721] transition-all duration-200 hover:shadow-md dark:hover:shadow-black/40"
                 style={{
-                  borderColor: isRead ? "#E5E7EB" : `${theme.colors.primary}40`,
+                  borderColor: isRead
+                    ? themeMode === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "#E5E7EB"
+                    : `${theme.colors.primary}40`,
                   borderLeftWidth: "4px",
-                  borderLeftColor: isRead ? "#D1D5DB" : theme.colors.primary,
+                  borderLeftColor: isRead
+                    ? themeMode === "dark"
+                      ? "#3D4460"
+                      : "#D1D5DB"
+                    : theme.colors.primary,
                 }}
               >
                 <div className="p-5">
@@ -201,11 +211,11 @@ export default function AnnouncementsClient({
                       <img
                         src={ann.authorAvatarUrl}
                         alt={ann.authorName}
-                        className="h-10 w-10 rounded-full object-cover shrink-0"
+                        className="h-10 w-10 rounded-full object-cover shrink-0 ring-1 ring-black/5 dark:ring-white/10"
                       />
                     ) : (
                       <div
-                        className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold text-white"
+                        className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold text-white shadow-xs"
                         style={{ backgroundColor: theme.colors.primary }}
                       >
                         {getInitials(ann.authorName)}
@@ -215,12 +225,12 @@ export default function AnnouncementsClient({
                     <div className="flex-1 min-w-0">
                       {/* Title + unread indicator */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
                           {title}
                         </h3>
                         {!isRead && (
                           <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
                             style={{ backgroundColor: theme.colors.primary }}
                           >
                             NEW
@@ -229,19 +239,23 @@ export default function AnnouncementsClient({
                       </div>
 
                       {/* Meta: author, course, time */}
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 flex-wrap">
-                        <span className="font-medium">{ann.authorName}</span>
-                        <span className="h-1 w-1 rounded-full bg-gray-300" />
+                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-[#8B92A5] flex-wrap">
+                        <span className="font-semibold text-slate-700 dark:text-[#D1D5DB]">{ann.authorName}</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                         <span
-                          className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                          className="px-2 py-0.5 rounded text-[10px] font-bold border"
                           style={{
-                            backgroundColor: `${theme.colors.primary}14`,
+                            backgroundColor:
+                              themeMode === "dark"
+                                ? `${theme.colors.primary}20`
+                                : `${theme.colors.primary}14`,
                             color: theme.colors.primary,
+                            borderColor: `${theme.colors.primary}30`,
                           }}
                         >
                           {ann.courseCode}
                         </span>
-                        <span className="h-1 w-1 rounded-full bg-gray-300" />
+                        <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {timeAgo(ann.createdAt)}
@@ -250,7 +264,7 @@ export default function AnnouncementsClient({
 
                       {/* Body */}
                       <div className="mt-3">
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm text-slate-700 dark:text-[#D1D5DB] leading-relaxed whitespace-pre-wrap">
                           {isExpanded ? ann.content : truncated}
                         </p>
                       </div>
@@ -259,7 +273,7 @@ export default function AnnouncementsClient({
                       {isTruncated && (
                         <button
                           onClick={() => toggleExpand(ann.id)}
-                          className="mt-2 flex items-center gap-1 text-xs font-medium transition-colors hover:underline"
+                          className="mt-2 flex items-center gap-1 text-xs font-semibold transition-colors hover:underline"
                           style={{ color: theme.colors.primary }}
                         >
                           {isExpanded ? (

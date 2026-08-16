@@ -187,7 +187,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
 
       {/* Dropdown panel */}
       <div
-        className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white shadow-xl ring-1 ring-black/5 transition-all duration-200 origin-top-right z-50 ${
+        className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white dark:bg-[#1A1D27] shadow-xl border border-slate-200/80 dark:border-white/10 ring-1 ring-black/5 dark:ring-0 transition-all duration-200 origin-top-right z-50 ${
           isOpen
             ? "opacity-100 scale-100 pointer-events-auto"
             : "opacity-0 scale-95 pointer-events-none"
@@ -195,8 +195,8 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         style={{ transformOrigin: "top right" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Notifications</h3>
           {unreadCount > 0 && (
             <button
               id="notification-mark-all-read"
@@ -215,9 +215,9 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         <div className="max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center px-4">
-              <Inbox className="h-8 w-8 text-gray-300 mb-2" />
-              <p className="text-sm text-gray-400">No notifications yet</p>
-              <p className="text-xs text-gray-300 mt-1">
+              <Inbox className="h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
+              <p className="text-sm text-slate-400 dark:text-[#8B92A5]">No notifications yet</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 You&#39;ll be notified about announcements, grades, and new classwork
               </p>
             </div>
@@ -227,7 +227,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
                 key={n.id}
                 id={`notification-${n.id}`}
                 onClick={() => handleClickNotification(n)}
-                className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 border-b border-gray-50 last:border-b-0"
+                className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 last:border-b-0"
                 style={{
                   backgroundColor: n.isRead ? "transparent" : `${theme.colors.primary}06`,
                 }}
@@ -240,13 +240,13 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
                   <div className="flex items-center gap-2">
                     <p
                       className={`text-sm truncate ${
-                        n.isRead ? "text-gray-600" : "text-gray-900 font-medium"
+                        n.isRead ? "text-slate-600 dark:text-[#8B92A5]" : "text-slate-900 dark:text-[#F0F2F8] font-semibold"
                       }`}
                     >
                       {n.message}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{timeAgo(n.createdAt)}</p>
                 </div>
 
                 {/* Unread dot */}

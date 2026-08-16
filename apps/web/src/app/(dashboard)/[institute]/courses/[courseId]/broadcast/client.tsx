@@ -45,9 +45,9 @@ interface BroadcastClientProps {
 }
 
 const CATEGORIES = [
-  { value: "GENERAL", label: "General", icon: MessageCircle, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
-  { value: "REMINDER", label: "Reminder", icon: Clock, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
-  { value: "ALERT", label: "Alert", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+  { value: "GENERAL", label: "General", icon: MessageCircle, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/30", border: "border-purple-200 dark:border-purple-900/50" },
+  { value: "REMINDER", label: "Reminder", icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-900/50" },
+  { value: "ALERT", label: "Alert", icon: AlertTriangle, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-900/50" },
 ] as const;
 
 function timeAgo(date: string): string {
@@ -141,8 +141,8 @@ export default function BroadcastClient({
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       {/* ── Send Notification Form ── */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-sm">
+        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-white/10 px-5 py-4">
           <div
             className="flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ backgroundColor: `${theme.colors.primary}14` }}
@@ -150,8 +150,8 @@ export default function BroadcastClient({
             <Radio className="h-4 w-4" style={{ color: theme.colors.primary }} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Send Notification</h2>
-            <p className="text-xs text-gray-400">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Send Notification</h2>
+            <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
               Send a direct message to students in {courseCode}
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function BroadcastClient({
 
           {/* Category selector */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-[#8B92A5] mb-2">
               Category
             </label>
             <div className="flex gap-2">
@@ -177,11 +177,11 @@ export default function BroadcastClient({
                     key={cat.value}
                     type="button"
                     onClick={() => setCategory(cat.value)}
-                    className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-150"
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer bg-white dark:bg-[#1A1D27] text-slate-600 dark:text-[#8B92A5]"
                     style={{
-                      backgroundColor: isSelected ? `${theme.colors.primary}10` : "white",
-                      borderColor: isSelected ? theme.colors.primary : "#e5e7eb",
-                      color: isSelected ? theme.colors.primary : "#6b7280",
+                      backgroundColor: isSelected ? `${theme.colors.primary}14` : undefined,
+                      borderColor: isSelected ? theme.colors.primary : undefined,
+                      color: isSelected ? theme.colors.primary : undefined,
                     }}
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -194,18 +194,18 @@ export default function BroadcastClient({
 
           {/* Recipient scope */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-[#8B92A5] mb-2">
               Recipients
             </label>
             <div className="flex gap-2 mb-3">
               <button
                 type="button"
                 onClick={() => setScopeType("ALL")}
-                className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-150"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer bg-white dark:bg-[#1A1D27] text-slate-600 dark:text-[#8B92A5]"
                 style={{
-                  backgroundColor: scopeType === "ALL" ? `${theme.colors.primary}10` : "white",
-                  borderColor: scopeType === "ALL" ? theme.colors.primary : "#e5e7eb",
-                  color: scopeType === "ALL" ? theme.colors.primary : "#6b7280",
+                  backgroundColor: scopeType === "ALL" ? `${theme.colors.primary}14` : undefined,
+                  borderColor: scopeType === "ALL" ? theme.colors.primary : undefined,
+                  color: scopeType === "ALL" ? theme.colors.primary : undefined,
                 }}
               >
                 <Users className="h-3.5 w-3.5" />
@@ -214,11 +214,11 @@ export default function BroadcastClient({
               <button
                 type="button"
                 onClick={() => setScopeType("SELECT")}
-                className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-150"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer bg-white dark:bg-[#1A1D27] text-slate-600 dark:text-[#8B92A5]"
                 style={{
-                  backgroundColor: scopeType === "SELECT" ? `${theme.colors.primary}10` : "white",
-                  borderColor: scopeType === "SELECT" ? theme.colors.primary : "#e5e7eb",
-                  color: scopeType === "SELECT" ? theme.colors.primary : "#6b7280",
+                  backgroundColor: scopeType === "SELECT" ? `${theme.colors.primary}14` : undefined,
+                  borderColor: scopeType === "SELECT" ? theme.colors.primary : undefined,
+                  color: scopeType === "SELECT" ? theme.colors.primary : undefined,
                 }}
               >
                 <User className="h-3.5 w-3.5" />
@@ -228,30 +228,30 @@ export default function BroadcastClient({
 
             {/* Student multi-select */}
             {scopeType === "SELECT" && (
-              <div className="rounded-lg border border-gray-200 bg-gray-50/50">
+              <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26]">
                 {/* Search + select controls */}
-                <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2">
-                  <Search className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 px-3 py-2">
+                  <Search className="h-3.5 w-3.5 text-slate-400 dark:text-[#8B92A5] shrink-0" />
                   <input
                     type="text"
                     placeholder="Search students..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent text-xs outline-none placeholder:text-gray-400"
+                    className="flex-1 bg-transparent text-xs text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   <div className="flex gap-1.5 text-[10px] font-medium shrink-0">
                     <button
                       type="button"
                       onClick={selectAll}
-                      className="text-gray-500 hover:underline"
+                      className="text-slate-500 dark:text-[#8B92A5] hover:underline cursor-pointer"
                     >
                       All
                     </button>
-                    <span className="text-gray-300">|</span>
+                    <span className="text-slate-300 dark:text-slate-600">|</span>
                     <button
                       type="button"
                       onClick={deselectAll}
-                      className="text-gray-500 hover:underline"
+                      className="text-slate-500 dark:text-[#8B92A5] hover:underline cursor-pointer"
                     >
                       None
                     </button>
@@ -261,7 +261,7 @@ export default function BroadcastClient({
                 {/* Student list */}
                 <div className="max-h-48 overflow-y-auto p-1">
                   {filteredStudents.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-gray-400">
+                    <p className="py-4 text-center text-xs text-slate-400 dark:text-[#8B92A5]">
                       No students found
                     </p>
                   ) : (
@@ -272,14 +272,14 @@ export default function BroadcastClient({
                           key={student.id}
                           type="button"
                           onClick={() => toggleStudent(student.id)}
-                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-white"
+                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-white dark:hover:bg-white/5 cursor-pointer"
                         >
                           {/* Checkbox */}
                           <div
-                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
+                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors border-slate-300 dark:border-white/20 bg-white dark:bg-[#141721]"
                             style={{
-                              backgroundColor: isChecked ? theme.colors.primary : "white",
-                              borderColor: isChecked ? theme.colors.primary : "#d1d5db",
+                              backgroundColor: isChecked ? theme.colors.primary : undefined,
+                              borderColor: isChecked ? theme.colors.primary : undefined,
                             }}
                           >
                             {isChecked && <Check className="h-3 w-3 text-white" />}
@@ -291,10 +291,10 @@ export default function BroadcastClient({
                             color={theme.colors.primary}
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-medium text-gray-800">
+                            <p className="truncate text-xs font-medium text-slate-800 dark:text-[#F0F2F8]">
                               {student.name}
                             </p>
-                            <p className="truncate text-[10px] text-gray-400">
+                            <p className="truncate text-[10px] text-slate-400 dark:text-[#8B92A5]">
                               {student.email}
                             </p>
                           </div>
@@ -305,7 +305,7 @@ export default function BroadcastClient({
                 </div>
 
                 {selectedStudents.size > 0 && (
-                  <div className="border-t border-gray-200 px-3 py-2">
+                  <div className="border-t border-slate-200 dark:border-white/10 px-3 py-2">
                     <p className="text-[11px] font-medium" style={{ color: theme.colors.primary }}>
                       {selectedStudents.size} student{selectedStudents.size !== 1 ? "s" : ""} selected
                     </p>
@@ -317,7 +317,7 @@ export default function BroadcastClient({
 
           {/* Message */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-[#8B92A5] mb-2">
               Message
             </label>
             <textarea
@@ -326,18 +326,18 @@ export default function BroadcastClient({
               rows={3}
               maxLength={500}
               placeholder="Type your notification message..."
-              className="w-full resize-none rounded-lg border border-gray-200 bg-white p-3 text-sm outline-none transition-colors focus:border-gray-400 placeholder:text-gray-400"
+              className="w-full resize-none rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition-colors focus:border-slate-400 dark:focus:border-white/30 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
 
           {/* Error / Success */}
           {state.message && state.message !== "success" && (
-            <p className="text-sm text-red-600">{state.message}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.message}</p>
           )}
           {showSuccess && (
-            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-              <Check className="h-4 w-4 text-green-600" />
-              <p className="text-sm font-medium text-green-700">
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/30 px-3 py-2">
+              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <p className="text-sm font-medium text-green-700 dark:text-green-400">
                 Notification sent successfully!
               </p>
             </div>
@@ -358,12 +358,12 @@ export default function BroadcastClient({
       </div>
 
       {/* ── Broadcast History ── */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
-          <History className="h-4 w-4 text-gray-400" />
-          <h2 className="text-sm font-semibold text-gray-900">Broadcast History</h2>
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-sm">
+        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-white/10 px-5 py-4">
+          <History className="h-4 w-4 text-slate-400 dark:text-[#8B92A5]" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Broadcast History</h2>
           {broadcasts.length > 0 && (
-            <span className="ml-auto text-xs text-gray-400">
+            <span className="ml-auto text-xs text-slate-400 dark:text-[#8B92A5]">
               {broadcasts.length} sent
             </span>
           )}
@@ -371,32 +371,32 @@ export default function BroadcastClient({
 
         {broadcasts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <div className="rounded-full bg-gray-100 p-4 mb-3">
-              <Inbox className="h-6 w-6 text-gray-300" />
+            <div className="rounded-full bg-slate-100 dark:bg-white/5 p-4 mb-3">
+              <Inbox className="h-6 w-6 text-slate-300 dark:text-slate-600" />
             </div>
-            <p className="text-sm text-gray-400">No broadcasts sent yet</p>
-            <p className="text-xs text-gray-300 mt-1">
+            <p className="text-sm text-slate-400 dark:text-[#8B92A5]">No broadcasts sent yet</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
               Sent notifications will appear here
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
             {broadcasts.map((b) => (
-              <div key={b.id} className="px-5 py-4 hover:bg-gray-50/50 transition-colors">
+              <div key={b.id} className="px-5 py-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       {getCategoryBadge(b.category)}
                     </div>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-slate-800 dark:text-[#D1D5DB] whitespace-pre-wrap leading-relaxed">
                       {b.message}
                     </p>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
+                    <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 dark:text-[#8B92A5]">
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         Sent to: {b.scopeLabel}
                       </span>
-                      <span className="h-1 w-1 rounded-full bg-gray-300" />
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {timeAgo(b.createdAt)}
