@@ -1,6 +1,7 @@
 "use client";
 
 import type { InstituteTheme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import { Clock, Edit2, Trash2, Check, X } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import UserMiniCard from "@/components/common/UserMiniCard";
@@ -42,6 +43,7 @@ export default function AnnouncementCard({
   onUpdate,
   onDelete,
 }: AnnouncementCardProps) {
+  const { themeMode: _themeMode } = useTheme();
   const [miniCard, setMiniCard] = useState<{ userId: string; anchorRect: DOMRect } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(announcement.content);
