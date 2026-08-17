@@ -17,10 +17,10 @@ import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
 import { substituteTemplate, evaluateVariables, CodeLabVariable } from "@/features/interactive-activities/codelab/utils/problem-engine";
 
+import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+
 export const dynamic = "force-dynamic";
 
-const JUDGE0_BASE_URL = process.env.JUDGE0_URL || "http://localhost:2358";
-const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || "";
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
 interface RawTestCase {
@@ -48,40 +48,8 @@ async function executeOnJudge0(
   sourceCode: string,
   languageId: number,
   stdin: string
-): Promise<{
-  stdout: string | null;
-  stderr: string | null;
-  compile_output: string | null;
-  time: string;
-  memory: number;
-  status: { id: number; description: string };
-}> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (JUDGE0_AUTH_TOKEN) {
-    headers["X-Auth-Token"] = JUDGE0_AUTH_TOKEN;
-  }
-
-  const res = await fetch(
-    `${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=true`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        source_code: sourceCode,
-        language_id: languageId,
-        stdin: stdin || "",
-        cpu_time_limit: 5.0,
-        memory_limit: 128000,
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Judge0 error: ${text}`);
-  }
-
-  return res.json();
+) {
+  return executeJudge0Submission(sourceCode, languageId, stdin);
 }
 
 export async function POST(request: Request) {

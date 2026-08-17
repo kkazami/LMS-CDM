@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
-import { executeLocally } from "@/features/interactive-activities/codelab/utils/local-runner";
 import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activities/codelab/utils/code-wrappers";
+import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
 
 export const dynamic = "force-dynamic";
-
-// We assume Judge0 is running on localhost:2358 in dev (as per docker-compose).
-// In production, this would be an environment variable.
-const JUDGE0_BASE_URL = process.env.JUDGE0_URL || "http://localhost:2358";
-const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || "";
 
 // ─── Security Constants ───
 
@@ -125,7 +120,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 7. Submit to Judge0 with timeout, connection & local fallback handling
+    // 7. Submit to Judge0 with automatic cloud CE & in-process fallback handling
     function getLanguageFromId(id: number): WrapperLanguage {
       switch (id) {
         case 71: return "python";
@@ -141,41 +136,8 @@ export async function POST(req: Request) {
     const wrapperLang = getLanguageFromId(language_id);
     const executableCode = wrapStudentCode(wrapperLang, source_code, null, stdin || "");
 
-    const submitHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (JUDGE0_AUTH_TOKEN) {
-      submitHeaders["X-Auth-Token"] = JUDGE0_AUTH_TOKEN;
-    }
-
-    try {
-      const submitRes = await fetch(`${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=true`, {
-        method: "POST",
-        headers: submitHeaders,
-        body: JSON.stringify({
-          source_code: executableCode,
-          language_id,
-          stdin: stdin || "",
-          cpu_time_limit: 5.0,
-          memory_limit: 128000,
-        }),
-      });
-
-      if (submitRes.ok) {
-        const result = await submitRes.json();
-        // If Judge0 succeeded, return result
-        if (result.status?.id !== 13) {
-          return NextResponse.json(result);
-        }
-        console.warn("Judge0 returned internal error, falling back to local runner:", result.message);
-      }
-    } catch (netErr: unknown) {
-      console.warn("Judge0 is unreachable, falling back to local runner:", netErr);
-    }
-
-    // Seamless Local Runner Fallback for dev / Windows environments
-    const localResult = await executeLocally(executableCode, language_id, stdin || "");
-    return NextResponse.json(localResult);
+    const result = await executeJudge0Submission(executableCode, language_id, stdin || "");
+    return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Judge0 API Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

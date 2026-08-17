@@ -27,7 +27,7 @@ export interface LocalExecutionResult {
 }
 
 /**
- * Executes Python code locally using child_process.spawn with stdin piping.
+ * Executes Python code locally using child_process.spawn (python3/python) with cloud fallback.
  */
 export async function executePythonLocally(
   sourceCode: string,
@@ -35,88 +35,116 @@ export async function executePythonLocally(
 ): Promise<LocalExecutionResult> {
   const startTime = Date.now();
 
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-    let killed = false;
+  const runProcess = (cmd: string): Promise<LocalExecutionResult | null> => {
+    return new Promise((resolve) => {
+      let stdout = "";
+      let stderr = "";
+      let killed = false;
 
-    const child = spawn("python", ["-u", "-c", sourceCode], {
-      windowsHide: true,
-    });
-
-    const timeout = setTimeout(() => {
-      killed = true;
+      let child;
       try {
-        child.kill("SIGKILL");
+        child = spawn(cmd, ["-u", "-c", sourceCode], { windowsHide: true });
       } catch {
-        // ignore
+        return resolve(null);
       }
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
-      resolve({
-        stdout: stdout || null,
-        stderr: "Time Limit Exceeded (5.0s)",
-        compile_output: null,
-        time: elapsed,
-        memory: 15000,
-        status: { id: 5, description: "Time Limit Exceeded" },
-      });
-    }, 5000);
 
-    if (stdin) {
-      child.stdin.write(stdin);
-      child.stdin.end();
-    } else {
-      child.stdin.end();
-    }
-
-    child.stdout.on("data", (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
-
-    child.on("error", (err) => {
-      clearTimeout(timeout);
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
-      resolve({
-        stdout: null,
-        stderr: err.message,
-        compile_output: null,
-        time: elapsed,
-        memory: 0,
-        status: { id: 11, description: "Runtime Error" },
-      });
-    });
-
-    child.on("close", (code) => {
-      clearTimeout(timeout);
-      if (killed) return;
-
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
-
-      if (code === 0) {
+      const timeout = setTimeout(() => {
+        killed = true;
+        try { child.kill("SIGKILL"); } catch { /* ignore */ }
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
         resolve({
-          stdout: stdout.trimEnd() || null,
-          stderr: stderr.trimEnd() || null,
+          stdout: stdout || null,
+          stderr: "Time Limit Exceeded (5.0s)",
           compile_output: null,
           time: elapsed,
-          memory: 20000,
-          status: { id: 3, description: "Accepted" },
+          memory: 15000,
+          status: { id: 5, description: "Time Limit Exceeded" },
         });
+      }, 5000);
+
+      if (stdin) {
+        child.stdin.write(stdin);
+        child.stdin.end();
       } else {
-        resolve({
-          stdout: stdout.trimEnd() || null,
-          stderr: stderr.trimEnd() || `Process exited with code ${code}`,
-          compile_output: null,
-          time: elapsed,
-          memory: 20000,
-          status: { id: 11, description: "Runtime Error" },
-        });
+        child.stdin.end();
       }
+
+      child.stdout.on("data", (data) => { stdout += data.toString(); });
+      child.stderr.on("data", (data) => { stderr += data.toString(); });
+
+      child.on("error", () => {
+        clearTimeout(timeout);
+        resolve(null);
+      });
+
+      child.on("close", (code) => {
+        clearTimeout(timeout);
+        if (killed) return;
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
+        if (code === 0) {
+          resolve({
+            stdout: stdout.trimEnd() || null,
+            stderr: stderr.trimEnd() || null,
+            compile_output: null,
+            time: elapsed,
+            memory: 20000,
+            status: { id: 3, description: "Accepted" },
+          });
+        } else {
+          resolve({
+            stdout: stdout.trimEnd() || null,
+            stderr: stderr.trimEnd() || `Process exited with code ${code}`,
+            compile_output: null,
+            time: elapsed,
+            memory: 20000,
+            status: { id: 11, description: "Runtime Error" },
+          });
+        }
+      });
     });
-  });
+  };
+
+  // 1. Try local python binaries
+  const res1 = await runProcess("python3");
+  if (res1) return res1;
+  const res2 = await runProcess("python");
+  if (res2) return res2;
+
+  // 2. Cloud CE Fallback (for Vercel serverless functions without local python)
+  try {
+    const cloudRes = await fetch("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        language_id: 71,
+        stdin: stdin || "",
+      }),
+    });
+    if (cloudRes.ok) {
+      const data = await cloudRes.json();
+      return {
+        stdout: data.stdout?.trimEnd() || null,
+        stderr: data.stderr?.trimEnd() || null,
+        compile_output: data.compile_output || null,
+        time: data.time || "0.010",
+        memory: data.memory || 15000,
+        status: data.status || { id: 3, description: "Accepted" },
+      };
+    }
+  } catch {
+    // ignore
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
+  return {
+    stdout: null,
+    stderr: "Python execution requires either network access to Judge0 Cloud or local Python installed.",
+    compile_output: null,
+    time: elapsed,
+    memory: 0,
+    status: { id: 11, description: "Runtime Error" },
+  };
 }
 
 /**
@@ -355,23 +383,59 @@ except Exception as e:
       stderr += d.toString();
     });
 
-    child.on("close", (code) => {
+    child.on("close", async (code) => {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
-      resolve({
-        stdout: stdout.trimEnd() || null,
-        stderr: stderr.trimEnd() || null,
-        compile_output: null,
-        time: elapsed,
-        memory: 15000,
-        status: code === 0 ? { id: 3, description: "Accepted" } : { id: 11, description: "SQL Error" },
-      });
+      if (code === 0) {
+        resolve({
+          stdout: stdout.trimEnd() || null,
+          stderr: stderr.trimEnd() || null,
+          compile_output: null,
+          time: elapsed,
+          memory: 15000,
+          status: { id: 3, description: "Accepted" },
+        });
+      } else {
+        resolve({
+          stdout: stdout.trimEnd() || null,
+          stderr: stderr.trimEnd() || `SQL Error exited with code ${code}`,
+          compile_output: null,
+          time: elapsed,
+          memory: 15000,
+          status: { id: 11, description: "SQL Error" },
+        });
+      }
     });
 
-    child.on("error", (err) => {
+    child.on("error", async () => {
+      // Cloud fallback for SQLite if local Python is not installed
+      try {
+        const cloudRes = await fetch("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source_code: sqlSource,
+            language_id: 82,
+          }),
+        });
+        if (cloudRes.ok) {
+          const data = await cloudRes.json();
+          return resolve({
+            stdout: data.stdout?.trimEnd() || null,
+            stderr: data.stderr?.trimEnd() || null,
+            compile_output: data.compile_output || null,
+            time: data.time || "0.010",
+            memory: data.memory || 15000,
+            status: data.status || { id: 3, description: "Accepted" },
+          });
+        }
+      } catch {
+        // ignore
+      }
+
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(3);
       resolve({
         stdout: null,
-        stderr: err.message,
+        stderr: "SQL execution requires either network access to Judge0 Cloud or local Python SQLite engine.",
         compile_output: null,
         time: elapsed,
         memory: 0,
@@ -391,7 +455,7 @@ const LANGUAGE_NAMES: Record<number, string> = {
 };
 
 /**
- * Universal local execution router that handles Python, JavaScript, C#, SQL, and dev fallbacks.
+ * Universal local execution router that handles Python, JavaScript, C#, SQL, and cloud fallbacks.
  */
 export async function executeLocally(
   sourceCode: string,
@@ -404,13 +468,16 @@ export async function executeLocally(
   }
 
   if (languageId === 93) {
-    // JavaScript (Node 18)
+    // JavaScript (Node 18 vm sandbox)
     return executeJavaScriptLocally(sourceCode, stdin);
   }
 
   if (languageId === 51) {
     // C# (.NET)
-    return executeCSharpLocally(sourceCode, stdin);
+    const csharpLocal = await executeCSharpLocally(sourceCode, stdin);
+    if (csharpLocal.status.id !== 13 && !csharpLocal.stderr?.includes("dotnet error")) {
+      return csharpLocal;
+    }
   }
 
   if (languageId === 82) {
@@ -418,15 +485,43 @@ export async function executeLocally(
     return executeSqlLocally(sourceCode);
   }
 
+  // Cloud CE fallback for C++, Java, C#, or other tracks when running without local compilers
+  try {
+    const cloudRes = await fetch("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        language_id: languageId,
+        stdin: stdin || "",
+        cpu_time_limit: 5.0,
+        memory_limit: 128000,
+      }),
+    });
+
+    if (cloudRes.ok) {
+      const data = await cloudRes.json();
+      return {
+        stdout: data.stdout?.trimEnd() || null,
+        stderr: data.stderr?.trimEnd() || null,
+        compile_output: data.compile_output || null,
+        time: data.time || "0.010",
+        memory: data.memory || 20000,
+        status: data.status || { id: 3, description: "Accepted" },
+      };
+    }
+  } catch (cloudErr) {
+    console.warn("Public Judge0 fallback request failed:", cloudErr);
+  }
+
   const langName = LANGUAGE_NAMES[languageId] || `Language ID ${languageId}`;
 
-  // For compiled languages without local host toolchain or Docker cgroups v1
   return {
     stdout: null,
-    stderr: `[Local Dev Notice] ${langName} execution requires an active Linux sandbox or local ${langName} compiler (e.g. g++ for C++, javac for Java).\nCurrently supported direct local tracks: Python 3, JavaScript, C# (.NET), SQL, HTML, and CSS.`,
+    stderr: `Failed to execute ${langName}. Please ensure network connectivity to Judge0 Cloud or configure a local sandbox.`,
     compile_output: null,
     time: "0.010",
-    memory: 10000,
-    status: { id: 3, description: "Executed (Dev Fallback)" },
+    memory: 0,
+    status: { id: 11, description: "Runtime Error" },
   };
 }

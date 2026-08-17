@@ -13,11 +13,10 @@
 
 import { NextResponse } from "next/server";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
+import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
 
 export const dynamic = "force-dynamic";
 
-const JUDGE0_BASE_URL = process.env.JUDGE0_URL || "http://localhost:2358";
-const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || "";
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
 export async function POST(request: Request) {
@@ -56,33 +55,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Forward to Judge0
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (JUDGE0_AUTH_TOKEN) {
-      headers["X-Auth-Token"] = JUDGE0_AUTH_TOKEN;
-    }
-
-    const res = await fetch(
-      `${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=true`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          source_code: sourceCode,
-          language_id: languageId,
-          stdin: stdin || "",
-          cpu_time_limit: 5.0,
-          memory_limit: 128000,
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      console.error("Judge0 run error:", await res.text());
-      return NextResponse.json({ error: "Failed to execute code" }, { status: 502 });
-    }
-
-    const result = await res.json();
+    // 4. Forward to resilient Judge0 execution engine
+    const result = await executeJudge0Submission(sourceCode, languageId, stdin || "");
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("CODELAB_RUN_ERROR", error);
