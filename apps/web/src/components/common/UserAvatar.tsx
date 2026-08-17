@@ -85,7 +85,7 @@ export default function UserAvatar({
           {inner}
         </button>
         {showOnline && (
-          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white" />
+          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white dark:ring-[#141721]" />
         )}
       </div>
     );

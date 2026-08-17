@@ -230,7 +230,7 @@ export default function GradesProgress({
                   const color = getProgressBarColor(pct);
                   return (
                     <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="py-3 pr-4 text-sm text-gray-700 font-medium max-w-[160px] truncate">
+                      <td className="py-3 pr-4 text-sm text-gray-700 font-medium max-w-40 truncate">
                         {row.itemTitle}
                       </td>
                       <td className="py-3 pr-4 text-sm text-gray-500">
