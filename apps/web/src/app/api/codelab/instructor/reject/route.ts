@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,15 @@ export async function POST(request: Request) {
     if (action === "delete") {
       await db.activitySubmission.delete({
         where: { id: submissionId },
+      });
+
+      // Notify student that their attempt was reset
+      await createNotification({
+        userId: submission.studentId,
+        type: "REMINDER",
+        title: "CodeLab Attempt Reset",
+        message: "Your instructor reset a CodeLab submission attempt. You may now retake the challenge.",
+        link: `/${instituteCode || "ics"}/activities/codelab`,
       });
 
       if (instituteCode) {
@@ -103,6 +113,15 @@ export async function POST(request: Request) {
         }
       }
 
+      // Notify student that their attempt was restored
+      await createNotification({
+        userId: submission.studentId,
+        type: "GRADE",
+        title: "CodeLab Submission Restored",
+        message: `Your CodeLab submission has been restored by your instructor (Score: ${restoredScore}%).`,
+        link: `/${instituteCode || "ics"}/activities/codelab`,
+      });
+
       if (instituteCode) {
         revalidatePath(`/(dashboard)/${instituteCode}/activities/codelab/instructor`);
       }
@@ -154,6 +173,15 @@ export async function POST(request: Request) {
         console.error("Gradebook update error on rejection:", err);
       }
     }
+
+    // Notify student that their attempt was invalidated
+    await createNotification({
+      userId: submission.studentId,
+      type: "ALERT",
+      title: "CodeLab Submission Invalidated",
+      message: `Your CodeLab attempt was invalidated by your instructor: ${reason || "Academic integrity or requirement check failed."}`,
+      link: `/${instituteCode || "ics"}/activities/codelab`,
+    });
 
     if (instituteCode) {
       revalidatePath(`/(dashboard)/${instituteCode}/activities/codelab/instructor`);

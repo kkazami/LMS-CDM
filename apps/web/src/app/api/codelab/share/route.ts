@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { createNotificationsForCourseStudents } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,14 @@ ${customMessage ? `\n> "${customMessage}"\n` : ""}
         courseId,
         authorId: session.user.id,
       },
+    });
+
+    // Send course notifications to classmates
+    await createNotificationsForCourseStudents(courseId, {
+      type: "BROADCAST",
+      title: `CodeLab Milestone Reached!`,
+      message: `${session.user.name || "A student"} completed Level ${level} (${problemTitle}) in ${langName}!`,
+      link: `/${instituteCode}/courses/${courseId}/stream`,
     });
 
     revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/stream`);

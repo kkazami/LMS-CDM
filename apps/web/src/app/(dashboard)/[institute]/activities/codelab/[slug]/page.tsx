@@ -23,6 +23,9 @@ import {
 } from "@/features/interactive-activities/codelab/problems/types";
 import { getTrackLevels } from "@/features/interactive-activities/codelab/problems";
 import { LANGUAGE_LOGO_MAP } from "@/features/interactive-activities/codelab/components/LanguageLogos";
+import CodeLabAlertModal, {
+  type CodeLabAlertItem,
+} from "@/features/interactive-activities/codelab/components/CodeLabAlertModal";
 import {
   ChevronLeft,
   Lock,
@@ -253,8 +256,39 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
     );
   };
 
+  // Fetch student's CodeLab alert notifications
+  const alertNotifications = await db.notification.findMany({
+    where: {
+      userId: session.user.id,
+      OR: [
+        { type: "ALERT" },
+        { link: { contains: "/activities/codelab" } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      title: true,
+      message: true,
+      createdAt: true,
+      isRead: true,
+    },
+  });
+
+  const formattedAlerts: CodeLabAlertItem[] = alertNotifications.map((n) => ({
+    id: n.id,
+    title: n.title,
+    message: n.message,
+    createdAt: n.createdAt.toISOString(),
+    isRead: n.isRead,
+  }));
+
   return (
     <div className="space-y-8 pb-12 page-enter max-w-7xl mx-auto">
+      {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
+      <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
+
       {/* ─── 1. Top Breadcrumb & Stats ─── */}
       <div className="flex items-center justify-between">
         <Link

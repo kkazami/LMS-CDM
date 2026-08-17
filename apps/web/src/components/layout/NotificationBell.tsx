@@ -159,7 +159,11 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
 
     // Navigate if link is provided
     if (notification.link) {
-      router.push(notification.link);
+      let targetLink = notification.link;
+      if (targetLink.includes("/activities/codelab") && !targetLink.includes("alertId=")) {
+        targetLink += (targetLink.includes("?") ? "&" : "?") + `alertId=${notification.id}`;
+      }
+      router.push(targetLink);
     }
   };
 
@@ -233,20 +237,25 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
                 }}
               >
                 {/* Type icon */}
-                <div className="mt-0.5 shrink-0">{getNotificationIcon(n.type)}</div>
+                <div className="mt-1 shrink-0">{getNotificationIcon(n.type)}</div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p
-                      className={`text-sm truncate ${
-                        n.isRead ? "text-slate-600 dark:text-[#8B92A5]" : "text-slate-900 dark:text-[#F0F2F8] font-semibold"
-                      }`}
-                    >
-                      {n.message}
-                    </p>
-                  </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{timeAgo(n.createdAt)}</p>
+                  <p
+                    className={`text-xs font-bold ${
+                      n.isRead ? "text-slate-600 dark:text-[#8B92A5]" : "text-slate-900 dark:text-[#F0F2F8]"
+                    }`}
+                  >
+                    {n.title || n.type}
+                  </p>
+                  <p
+                    className={`text-xs mt-0.5 line-clamp-2 leading-relaxed ${
+                      n.isRead ? "text-slate-500 dark:text-[#8B92A5]" : "text-slate-800 dark:text-[#D1D5DB] font-medium"
+                    }`}
+                  >
+                    {n.message}
+                  </p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-mono">{timeAgo(n.createdAt)}</p>
                 </div>
 
                 {/* Unread dot */}

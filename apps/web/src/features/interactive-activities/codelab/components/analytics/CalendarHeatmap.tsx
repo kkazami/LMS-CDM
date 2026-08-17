@@ -60,8 +60,8 @@ export default function CalendarHeatmap({ submissions }: CalendarHeatmapProps) {
             <div className="w-10 shrink-0" />
             <div className="grid grid-cols-24 flex-1 gap-1">
               {HOURS.map((h) => (
-                <div key={h} className="text-center">
-                  {h % 3 === 0 ? (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`) : ""}
+                <div key={h} className="text-center whitespace-nowrap text-[9px] sm:text-[10px]">
+                  {h % 3 === 0 ? (h === 0 ? "12am" : h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm`) : ""}
                 </div>
               ))}
             </div>

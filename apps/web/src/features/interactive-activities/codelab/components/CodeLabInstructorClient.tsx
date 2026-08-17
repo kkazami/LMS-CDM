@@ -37,6 +37,7 @@ import AnimatedDonut from "./analytics/AnimatedDonut";
 import MasteryHeatmap from "./analytics/MasteryHeatmap";
 import FunnelChart from "./analytics/FunnelChart";
 import CalendarHeatmap from "./analytics/CalendarHeatmap";
+import { toast } from "@/components/common/Toast";
 
 export interface InstructorSubmissionRecord {
   id: string;
@@ -401,6 +402,8 @@ export function CodeLabInstructorClient({
     return { pasteUsers, velocityUsers, multiFlagUsers };
   }, [records]);
 
+  const [isSendingAlert, setIsSendingAlert] = useState<string | null>(null);
+
   const handleProcessAction = async () => {
     if (!selectedSub) return;
     setIsProcessing(true);
@@ -411,7 +414,7 @@ export function CodeLabInstructorClient({
       : rejectReasonPreset;
 
     try {
-      const res = await fetch("/api/activities/codelab/invalidate", {
+      const res = await fetch("/api/codelab/instructor/reject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -425,6 +428,14 @@ export function CodeLabInstructorClient({
       if (res.ok) {
         const data = await res.json();
         setStatusMsg(data.message);
+        toast.success(
+          rejectAction === "reject"
+            ? "Submission Invalidated"
+            : rejectAction === "restore"
+            ? "Submission Restored"
+            : "Attempt Deleted",
+          `Student ${selectedSub.studentName} has been notified.`
+        );
 
         // Optimistic state updates
         if (rejectAction === "delete") {
@@ -464,19 +475,54 @@ export function CodeLabInstructorClient({
           setStatusMsg(null);
           setRejectCustomNote("");
         }, 1200);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Action Failed", data.error || "Could not process submission change.");
       }
     } catch (err) {
       console.error("Action failed:", err);
+      toast.error("Network Error", "Could not communicate with the server.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSendAlert = (studentId: string) => {
-    setAlertSentStudentId(studentId);
-    setTimeout(() => {
-      setAlertSentStudentId(null);
-    }, 2500);
+  const handleSendAlert = async (st: {
+    studentId: string;
+    studentName: string;
+    riskLevel: "high" | "medium" | "low";
+    avgScore: number;
+  }) => {
+    setIsSendingAlert(st.studentId);
+    try {
+      const res = await fetch("/api/codelab/instructor/alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: st.studentId,
+          studentName: st.studentName,
+          riskLevel: st.riskLevel,
+          avgScore: st.avgScore,
+          instituteCode: institute,
+        }),
+      });
+
+      if (res.ok) {
+        setAlertSentStudentId(st.studentId);
+        toast.success("Alert Sent Successfully", `Delivered academic alert to ${st.studentName}'s Notification Bell.`);
+        setTimeout(() => {
+          setAlertSentStudentId(null);
+        }, 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error("Failed to Send Alert", data.error || "Please try again.");
+      }
+    } catch (err) {
+      console.error("Alert failed:", err);
+      toast.error("Network Error", "Could not dispatch alert notification.");
+    } finally {
+      setIsSendingAlert(null);
+    }
   };
 
   return (
@@ -1157,13 +1203,19 @@ export function CodeLabInstructorClient({
                         <td className="py-3 px-3 text-right">
                           <button
                             type="button"
-                            onClick={() => handleSendAlert(st.studentId)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-[#F97316] hover:text-white dark:hover:bg-[#F97316] text-slate-700 dark:text-[#F0F2F8] transition-all cursor-pointer"
+                            disabled={isSendingAlert === st.studentId}
+                            onClick={() => handleSendAlert(st)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-[#F97316] hover:text-white dark:hover:bg-[#F97316] text-slate-700 dark:text-[#F0F2F8] transition-all cursor-pointer disabled:opacity-50"
                           >
-                            {alertSentStudentId === st.studentId ? (
+                            {isSendingAlert === st.studentId ? (
                               <>
-                                <Check className="w-3 h-3 text-emerald-400" />
-                                <span>Alert Queued</span>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Sending...</span>
+                              </>
+                            ) : alertSentStudentId === st.studentId ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-500" />
+                                <span className="text-emerald-600 dark:text-emerald-400">Alert Sent!</span>
                               </>
                             ) : (
                               <>
