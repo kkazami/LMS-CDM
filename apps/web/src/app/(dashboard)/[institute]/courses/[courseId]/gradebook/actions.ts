@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { executeSkill } from "@/lib/skills";
+import { createNotification } from "@/lib/notifications";
 
 async function ensureInstructor(courseId: string) {
   const session = await getSession();
@@ -115,10 +116,29 @@ export async function updateGrade(submissionId: string, grade: number) {
   const role = session.user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
 
-  await db.studentSubmission.update({
+  const submission = await db.studentSubmission.update({
     where: { id: submissionId },
     data: { grade, status: "RETURNED", isReturned: true },
+    select: {
+      studentId: true,
+      syllabusItem: {
+        select: { title: true, type: true, course: { select: { code: true, instituteId: true } } },
+      },
+    },
   });
+
+  // ── Notify the student about the new grade ──
+  const itemLabel = submission.syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
+  const institute = await db.institute.findFirst({ where: { id: submission.syllabusItem.course.instituteId }, select: { code: true } });
+  const instCode = institute?.code || "ics";
+  await createNotification({
+    userId: submission.studentId,
+    type: "GRADE",
+    title: "Grade posted",
+    message: `New grade for ${itemLabel}: ${submission.syllabusItem.title} in ${submission.syllabusItem.course.code}`,
+    link: `/${instCode}/grades`,
+  });
+
   return { success: true };
 }
 
@@ -148,6 +168,25 @@ export async function upsertGrade(syllabusItemId: string, studentId: string, gra
       isReturned: true,
     },
   });
+
+  // ── Notify the student about the new grade ──
+  const syllabusItem = await db.syllabusItem.findUnique({
+    where: { id: syllabusItemId },
+    select: { title: true, type: true, course: { select: { code: true, instituteId: true } } },
+  });
+  if (syllabusItem) {
+    const itemLabel = syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
+    const institute = await db.institute.findFirst({ where: { id: syllabusItem.course.instituteId }, select: { code: true } });
+    const instCode = institute?.code || "ics";
+    await createNotification({
+      userId: studentId,
+      type: "GRADE",
+      title: "Grade posted",
+      message: `New grade for ${itemLabel}: ${syllabusItem.title} in ${syllabusItem.course.code}`,
+      link: `/${instCode}/grades`,
+    });
+  }
+
   return { success: true };
 }
 

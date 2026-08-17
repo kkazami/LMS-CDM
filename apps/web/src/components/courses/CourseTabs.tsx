@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { InstituteTheme } from "@/lib/theme";
-import { MessageSquare, BookOpen, Users, BarChart2, type LucideIcon } from "lucide-react";
+import { MessageSquare, BookOpen, Users, BarChart2, Radio, type LucideIcon } from "lucide-react";
 
 interface CourseTabsProps {
   courseId: string;
@@ -27,7 +27,12 @@ export default function CourseTabs({
     { key: "stream", label: "Stream", icon: MessageSquare },
     { key: "classwork", label: "Classwork", icon: BookOpen },
     { key: "people", label: "People", icon: Users },
-    ...(isInstructor ? [{ key: "gradebook", label: "Gradebook", icon: BarChart2 }] : []),
+    ...(isInstructor
+      ? [
+          { key: "broadcast", label: "Broadcast", icon: Radio },
+          { key: "gradebook", label: "Gradebook", icon: BarChart2 },
+        ]
+      : []),
   ];
 
   return (
@@ -58,7 +63,7 @@ export default function CourseTabs({
               {tab.label}
               {tab.key === "people" && pendingCount > 0 && (
                 <span
-                  className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white shadow-xs"
+                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
                 >
                   {pendingCount}

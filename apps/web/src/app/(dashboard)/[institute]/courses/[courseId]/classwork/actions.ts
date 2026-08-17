@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
+import { createNotificationsForCourseStudents } from "@/lib/notifications";
 
 async function ensureCourseInstructor(courseId: string) {
   const session = await getSession();
@@ -130,6 +131,23 @@ export async function createSyllabusItem(
       }
     } catch {
       // Invalid JSON — skip attachments silently
+    }
+
+    // ── Notify enrolled students about new classwork (ASSIGNMENT/QUIZ only) ──
+    const itemType = data.type.toUpperCase();
+    if (itemType === "ASSIGNMENT" || itemType === "QUIZ") {
+      // Fetch course code for notification message
+      const courseInfo = await db.course.findUnique({
+        where: { id: data.courseId },
+        select: { code: true },
+      });
+      const typeLabel = itemType === "QUIZ" ? "quiz" : "assignment";
+      await createNotificationsForCourseStudents(data.courseId, {
+        type: "CLASSWORK",
+        title: `New ${typeLabel} posted`,
+        message: `New ${typeLabel} in ${courseInfo?.code || "your class"}: ${data.title}`,
+        link: `/${data.instituteCode}/courses/${data.courseId}/classwork`,
+      });
     }
 
     revalidatePath(

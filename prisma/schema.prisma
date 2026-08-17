@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Institute {
@@ -22,47 +21,53 @@ model Institute {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String
-  email               String               @unique
-  password            String
-  uniqueId            String               @default("")
-  studentNumber       String?
-  role                String               @default("STUDENT")
-  isActive            Boolean              @default(true)
-  permissions         String               @default("[]")
-  instituteId         String
-  createdAt           DateTime             @default(now())
-  avatarUrl           String?
-  bio                 String               @default("")
-  coverColor          String               @default("#1E88E5")
-  department          String               @default("")
-  phone               String               @default("")
-  yearLevel           String               @default("")
-  activitySessions    ActivitySession[]    @relation("ActivitySessions")
-  activitySubmissions ActivitySubmission[] @relation("ActivitySubmissions")
-  activityTemplates   ActivityTemplate[]   @relation("ActivityTemplateCreator")
-  announcements       Announcement[]
-  auditLogsAsAdmin    AuditLog[]           @relation("AuditAdmin")
-  auditLogsAsTarget   AuditLog[]           @relation("AuditTarget")
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  uniqueId      String   @default("") // Employee ID or general identifier
+  studentNumber String? // Regex pattern: /^\d{2}-\d{3}$/ (e.g., "24-101")
+  role          String   @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  isActive      Boolean  @default(true)
+  permissions   String   @default("[]") // JSON array of permission strings
+  instituteId   String
+  createdAt     DateTime @default(now())
+
+  // ── Profile fields ──
+  avatarUrl  String? // URL to uploaded avatar image (null = initials fallback)
+  bio        String  @default("") // Short biography / description
+  phone      String  @default("") // Contact phone number
+  department String  @default("") // e.g. "Computer Science", "Business Administration"
+  yearLevel  String  @default("") // For students: "1st Year", "2nd Year", etc.
+  coverColor String  @default("#1E88E5") // Profile page banner accent color (hex)
+
+  institute           Institute            @relation(fields: [instituteId], references: [id])
+  sessions            Session[]
+  notes               Note[]
+  taskItems           TaskItem[]
   calendarEvents      CalendarEvent[]
   taughtCourses       Course[]             @relation("CourseInstructor")
-  dashboardLayouts    DashboardLayout[]
   enrollments         Enrollment[]
-  flashcardDecks      FlashcardDeck[]      @relation("FlashcardDeckCreator")
-  flashcardProgress   FlashcardProgress[]  @relation("FlashcardProgressUser")
-  gamificationProfile GamificationProfile?
-  materialAnnotations MaterialAnnotation[]
-  notes               Note[]
-  passwordResetOtps   PasswordResetOtp[]
-  receivedComments    PrivateComment[]     @relation("CommentRecipient")
-  sentComments        PrivateComment[]     @relation("CommentSender")
-  sessions            Session[]
   groupMemberships    StudentGroupMember[]
+  announcements       Announcement[]
+  sentComments        PrivateComment[]     @relation("CommentSender")
+  receivedComments    PrivateComment[]     @relation("CommentRecipient")
   submissions         StudentSubmission[]
-  studySessions       StudySessionLog[]
-  taskItems           TaskItem[]
-  institute           Institute            @relation(fields: [instituteId], references: [id])
+  dashboardLayouts    DashboardLayout[]
+  auditLogsAsAdmin    AuditLog[]           @relation("AuditAdmin")
+  auditLogsAsTarget   AuditLog[]           @relation("AuditTarget")
+  passwordResetOtps   PasswordResetOtp[]
+  // ─── Interactive Activities relations (Sprint 0) ───
+  activityTemplates   ActivityTemplate[]   @relation("ActivityTemplateCreator")
+  activitySubmissions ActivitySubmission[] @relation("ActivitySubmissions")
+  activitySessions    ActivitySession[]    @relation("ActivitySessions")
+  gamificationProfile GamificationProfile?
+  flashcardDecks      FlashcardDeck[]      @relation("FlashcardDeckCreator")
+  flashcardProgresses FlashcardProgress[]  @relation("FlashcardProgressUser")
+  studySessionLogs    StudySessionLog[]
+  materialAnnotations MaterialAnnotation[]
+  notifications       Notification[]
+  sentBroadcasts      NotificationBroadcast[] @relation("BroadcastSender")
 }
 
 model Session {
@@ -104,6 +109,7 @@ model Course {
   syllabusItems     SyllabusItem[]
   taskItems         TaskItem[]
   weeklyChallenges  WeeklyChallenge[]
+  broadcasts        NotificationBroadcast[]
 
   @@index([instituteId])
   @@index([instructorId])
@@ -188,6 +194,37 @@ model Announcement {
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   @default("ANNOUNCEMENT") // "ANNOUNCEMENT" | "GRADE" | "CLASSWORK" | "REMINDER" | "ALERT" | "BROADCAST"
+  title     String
+  message   String
+  link      String   @default("")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model NotificationBroadcast {
+  id             String   @id @default(cuid())
+  courseId       String
+  senderId       String
+  message        String
+  category       String   @default("GENERAL") // "REMINDER" | "ALERT" | "GENERAL"
+  scope          String   @default("ALL")     // "ALL" or JSON array of student IDs
+  recipientCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sender         User     @relation("BroadcastSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, createdAt])
+  @@index([senderId])
 }
 
 model PrivateComment {
@@ -375,6 +412,11 @@ model PasswordResetOtp {
 
   @@index([userId])
 }
+
+// ─── Interactive Activities Models (Sprint 0) ───
+// These tables support the ICS-exclusive Interactive Activities feature suite:
+// 3D hardware simulations (PC building, Arduino/IoT, server racks, logic gates)
+// and the multi-language auto-graded CodeLab.
 
 /// Instructor-defined problem template that drives activity randomization.
 /// Each template defines a "problem shape" with variables substituted per-student.

@@ -1,5 +1,3 @@
-import { db } from "@/lib/db";
-
 export interface BadgeRule {
   id: string;
   name: string;
@@ -101,35 +99,3 @@ export const BADGE_RULES: BadgeRule[] = [
     }
   }
 ];
-
-export async function evaluateBadges(
-  studentId: string, 
-  profileId: string, 
-  submission: any, 
-  profile: any
-) {
-  // Get history
-  const history = await db.activitySubmission.findMany({
-    where: { studentId },
-    orderBy: { submittedAt: 'asc' }
-  });
-
-  const earnedBadges = await db.studentBadge.findMany({
-    where: { profileId }
-  });
-  const earnedSet = new Set(earnedBadges.map(b => b.badgeRuleId));
-
-  for (const rule of BADGE_RULES) {
-    if (!earnedSet.has(rule.id)) {
-      const qualifies = rule.evaluate(submission, profile, history);
-      if (qualifies) {
-        await db.studentBadge.create({
-          data: {
-            profileId,
-            badgeRuleId: rule.id
-          }
-        });
-      }
-    }
-  }
-}

@@ -1,7 +1,39 @@
 import { db } from "@/lib/db";
 import { calculateStreak } from "./streak";
-import { evaluateBadges } from "./badges";
+import { BADGE_RULES } from "./badges";
 import { refreshLeaderboardCache, refreshCodeLabLeaderboardCache } from "./leaderboard-cache";
+
+export async function evaluateBadges(
+  studentId: string, 
+  profileId: string, 
+  submission: any, 
+  profile: any
+) {
+  // Get history
+  const history = await db.activitySubmission.findMany({
+    where: { studentId },
+    orderBy: { submittedAt: 'asc' }
+  });
+
+  const earnedBadges = await db.studentBadge.findMany({
+    where: { profileId }
+  });
+  const earnedSet = new Set(earnedBadges.map(b => b.badgeRuleId));
+
+  for (const rule of BADGE_RULES) {
+    if (!earnedSet.has(rule.id)) {
+      const qualifies = rule.evaluate(submission, profile, history);
+      if (qualifies) {
+        await db.studentBadge.create({
+          data: {
+            profileId,
+            badgeRuleId: rule.id
+          }
+        });
+      }
+    }
+  }
+}
 
 export async function processGamificationEvent(
   submission: any, 
