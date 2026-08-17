@@ -4,6 +4,7 @@
 
 /* ─── UI UX Pro Max: Lumina LMS Theme Tokens ─── */
 :root {
+  color-scheme: light;
   --bg-canvas: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-elevated: #FFFFFF;
@@ -20,6 +21,7 @@
 
 [data-theme="dark"],
 .dark {
+  color-scheme: dark;
   --bg-canvas: #0B0D13;
   --bg-surface: #141721;
   --bg-elevated: #1C2030;
@@ -32,6 +34,55 @@
   --accent-orange-hover: #FB923C;
   --accent-orange-subtle: rgba(249, 115, 22, 0.12);
   --focus-ring: #F97316;
+}
+
+/* ─── Scrollbar Theming (Adaptive Light & Dark) ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+.dark,
+[data-theme="dark"],
+.dark *,
+[data-theme="dark"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.dark ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ─── Base Reset & Theme Application ─── */
@@ -140,6 +191,46 @@ html {
   }
 }
 
+/* ─── CodeLab Marquee Sideways Scrolling Animation ─── */
+@keyframes marqueeScrollLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marqueeScrollRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScrollLeft 22s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScrollRight 26s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation: none !important;
+  }
+}
+
 /* ─── Flashcard 3D Flip ─── */
 .flashcard-scene {
   perspective: 1000px;
@@ -222,6 +313,11 @@ html {
   color: #334155;
   line-height: 1.5;
 }
+.codelab-prose {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+}
 .codelab-prose code {
   background-color: #f1f5f9;
   color: #ea580c;
@@ -231,20 +327,34 @@ html {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.85em;
   font-weight: 600;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
 }
 .codelab-prose pre {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
-  overflow-x: auto;
   margin-bottom: 0.75rem;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  overflow-x: hidden !important;
+  max-width: 100% !important;
 }
 .codelab-prose pre code {
   background-color: transparent;
   color: #0f172a;
   border: none;
   padding: 0;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
 }
 .codelab-prose table {
   width: 100%;
@@ -284,14 +394,29 @@ html {
   background-color: #22263A;
   color: #FB923C;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: 100% !important;
 }
 .dark .codelab-prose pre {
   background-color: #141721;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  overflow-x: hidden !important;
+  max-width: 100% !important;
 }
 .dark .codelab-prose pre code {
   background-color: transparent;
   color: #F0F2F8;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
 }
 .dark .codelab-prose th,
 .dark .codelab-prose td {
@@ -300,6 +425,42 @@ html {
 .dark .codelab-prose th {
   background-color: #22263A;
   color: #F0F2F8;
+}
+
+/* ─── CodeLab Ambient Particle Animations ─── */
+@keyframes particleDrift {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  50% {
+    transform: translate(1.5px, -2px);
+  }
+  100% {
+    transform: translate(-1.5px, 1.5px);
+  }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes barGrow {
+  from { width: 0; }
+}
+
+@keyframes donutDraw {
+  from { stroke-dasharray: 0 1000; }
+}
+
+@keyframes calendarFadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes funnelSlideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 /* ─── Micro-Interactions & Transitions ─── */

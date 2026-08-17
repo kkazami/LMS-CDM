@@ -1,9 +1,12 @@
+"use client";
+
 import React, { useRef } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { useCodeLabStore } from "../stores/codelab-store";
 import { CodeLabLanguage } from "../utils/starter-code";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Code2 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
+import { LANGUAGE_LABELS } from "../problems/types";
 
 /** Maps our language keys to Monaco editor language identifiers. */
 const MONACO_LANGUAGE_MAP: Record<CodeLabLanguage, string> = {
@@ -14,31 +17,17 @@ const MONACO_LANGUAGE_MAP: Record<CodeLabLanguage, string> = {
   javascript: "javascript",
   csharp: "csharp",
   sql: "sql",
-};
-
-/** Display labels for the language selector. */
-const LANGUAGE_LABELS: Record<CodeLabLanguage, string> = {
-  python: "Python 3",
-  javascript: "JavaScript (Node 18)",
-  java: "Java",
-  c: "C",
-  cpp: "C++",
-  csharp: "C#",
-  sql: "SQL (SQLite)",
+  html: "html",
+  css: "css",
 };
 
 export function CodeEditor() {
   const language = useCodeLabStore((s) => s.language);
   const code = useCodeLabStore((s) => s.codeByLanguage[language] || "");
   const updateCode = useCodeLabStore((s) => s.updateCode);
-  const setLanguage = useCodeLabStore((s) => s.setLanguage);
   const pasteCount = useCodeLabStore((s) => s.pasteCount);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const { themeMode } = useTheme();
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(e.target.value as CodeLabLanguage);
-  };
 
   const handleEditorMount: OnMount = (editor) => {
     // Disable the built-in context menu to reduce right-click confusion
@@ -64,6 +53,8 @@ export function CodeEditor() {
     });
   };
 
+  const displayLanguage = (LANGUAGE_LABELS as Record<string, string>)[language] || language.toUpperCase();
+
   return (
     <div ref={editorContainerRef} className="flex flex-col h-full bg-white dark:bg-[#1e1e1e]">
       {/* Subtle paste warning banner */}
@@ -74,22 +65,13 @@ export function CodeEditor() {
         </div>
       )}
 
-      <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-[#161b22] border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2.5">
-          <label className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">
-            Language
-          </label>
-          <select
-            value={language}
-            onChange={handleLanguageChange}
-            className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs transition-colors cursor-pointer"
-          >
-            {(Object.keys(LANGUAGE_LABELS) as CodeLabLanguage[]).map((lang) => (
-              <option key={lang} value={lang}>
-                {LANGUAGE_LABELS[lang]}
-              </option>
-            ))}
-          </select>
+      {/* Editor Header: Fixed Track Indicator */}
+      <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-[#161b22] border-b border-slate-200 dark:border-slate-800 flex-none">
+        <div className="flex items-center gap-2">
+          <Code2 className="w-3.5 h-3.5 text-orange-500" />
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 shadow-2xs">
+            {displayLanguage}
+          </span>
         </div>
 
         <div className="text-[11px] text-slate-400 font-mono font-medium">
@@ -97,7 +79,7 @@ export function CodeEditor() {
         </div>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         <Editor
           height="100%"
           language={MONACO_LANGUAGE_MAP[language] || "python"}

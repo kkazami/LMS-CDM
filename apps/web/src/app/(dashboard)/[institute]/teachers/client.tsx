@@ -172,21 +172,32 @@ export default function TeacherDashboardClient({
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
       {/* Welcome Banner */}
       <div
-        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white shadow-sm"
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
         style={{
           background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
         }}
       >
+        {/* Subtle Premium Background */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md mb-3 text-white/90">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md mb-3 text-white border border-white/20">
               <Sparkles className="h-3.5 w-3.5" />
               <span>{instituteName} • Teacher Dashboard</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1
+              className="text-2xl sm:text-3xl font-black tracking-tight"
+              style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)" }}
+            >
               Welcome back, Professor {userName}! 👨‍🏫
             </h1>
-            <p className="mt-1 text-sm sm:text-base text-white/80">
+            <p
+              className="mt-1 text-sm sm:text-base text-white/90 font-medium"
+              style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.15)" }}
+            >
               Manage your assigned classes and pending student enrollments.
             </p>
           </div>

@@ -5,7 +5,16 @@
  * instructor's defined function signature and parameter types.
  */
 
-export type CodeLabLanguage = "python" | "java" | "c" | "cpp" | "javascript" | "csharp" | "sql";
+export type CodeLabLanguage =
+  | "python"
+  | "java"
+  | "c"
+  | "cpp"
+  | "javascript"
+  | "csharp"
+  | "sql"
+  | "html"
+  | "css";
 
 export const JUDGE0_LANGUAGE_IDS: Record<CodeLabLanguage, number> = {
   python: 71,     // Python (3.8.1)
@@ -15,6 +24,8 @@ export const JUDGE0_LANGUAGE_IDS: Record<CodeLabLanguage, number> = {
   javascript: 93, // Node.js (18.15.0)
   csharp: 51,     // C# (Mono 6.6.0.161)
   sql: 82,        // SQLite (3.31.1)
+  html: 0,        // Browser sandbox iframe preview
+  css: 0,         // Browser sandbox iframe preview
 };
 
 export interface FuncParam {
@@ -28,30 +39,61 @@ export interface FuncSignature {
   params: FuncParam[];
 }
 
-export function generateStarterCode(lang: CodeLabLanguage, sig: FuncSignature): string {
+export function generateStarterCode(lang: CodeLabLanguage, sig?: FuncSignature | null): string {
   switch (lang) {
+    case "html":
+      return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>My Page</title>\n</head>\n<body>\n  <!-- Write your HTML here -->\n\n</body>\n</html>\n`;
+
+    case "css":
+      return `/* Write your CSS here */\nbody {\n  \n}\n`;
+
     case "python":
+      if (!sig || sig.params.length === 0) {
+        return `# Write your Python code here\n`;
+      }
       return `def ${sig.name}(${sig.params.map(p => p.name).join(", ")}):\n    # Write your code here\n    pass\n`;
+
     case "javascript":
+      if (!sig || sig.params.length === 0) {
+        return `// Write your JavaScript code here\n`;
+      }
       return `function ${sig.name}(${sig.params.map(p => p.name).join(", ")}) {\n    // Write your code here\n}\n`;
+
     case "java": {
+      if (!sig || sig.params.length === 0) {
+        return `public class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}\n`;
+      }
       const javaParams = sig.params.map(p => `${mapType(lang, p.type)} ${p.name}`).join(", ");
       return `public class Main {\n    public static ${mapType(lang, sig.returnType)} ${sig.name}(${javaParams}) {\n        // Write your code here\n        return ${getDefaultReturn(lang, sig.returnType)};\n    }\n}\n`;
     }
+
     case "c": {
+      if (!sig || sig.params.length === 0) {
+        return `#include <stdio.h>\n\nint main() {\n    // Write your code here\n    return 0;\n}\n`;
+      }
       const cParams = sig.params.map(p => `${mapType(lang, p.type)} ${p.name}`).join(", ");
       return `#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#include <string.h>\n\n${mapType(lang, sig.returnType)} ${sig.name}(${cParams}) {\n    // Write your code here\n    return ${getDefaultReturn(lang, sig.returnType)};\n}\n`;
     }
+
     case "cpp": {
+      if (!sig || sig.params.length === 0) {
+        return `#include <iostream>\n\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}\n`;
+      }
       const cppParams = sig.params.map(p => `${mapType(lang, p.type)} ${p.name}`).join(", ");
       return `#include <iostream>\n#include <vector>\n#include <string>\n\nusing namespace std;\n\n${mapType(lang, sig.returnType)} ${sig.name}(${cppParams}) {\n    // Write your code here\n    return ${getDefaultReturn(lang, sig.returnType)};\n}\n`;
     }
+
     case "csharp": {
+      if (!sig || sig.params.length === 0) {
+        return `using System;\n\npublic class Program {\n    public static void Main() {\n        // Write your code here\n    }\n}\n`;
+      }
       const csharpParams = sig.params.map(p => `${mapType(lang, p.type)} ${p.name}`).join(", ");
       return `using System;\n\npublic class Program {\n    public static ${mapType(lang, sig.returnType)} ${sig.name}(${csharpParams}) {\n        // Write your code here\n        return ${getDefaultReturn(lang, sig.returnType)};\n    }\n}\n`;
     }
+
     case "sql":
       return `-- Write your SQL query below\nSELECT * FROM table_name;\n`;
+
     default:
       return "";
   }
@@ -106,7 +148,6 @@ function mapType(lang: CodeLabLanguage, type: string): string {
       default: return "void";
     }
   }
-  // SQL and others — type mapping not applicable
   return type;
 }
 

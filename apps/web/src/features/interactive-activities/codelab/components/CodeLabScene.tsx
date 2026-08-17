@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { marked } from "marked";
 import { CodeEditor } from "./CodeEditor";
+import HTMLPreviewEditor from "./HTMLPreviewEditor";
 import {
   useCodeLabStore,
   TestCase,
@@ -15,6 +16,13 @@ import {
   FuncSignature,
   JUDGE0_LANGUAGE_IDS,
 } from "../utils/starter-code";
+import {
+  ProblemLanguage,
+  ExecutionMethod,
+  STAGE_LABELS,
+  LANGUAGE_LABELS,
+} from "../problems/types";
+import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
 import {
@@ -23,19 +31,18 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Zap,
   ChevronLeft,
   ChevronDown,
   ChevronRight,
   Code2,
   FileText,
-  AlertTriangle,
-  Lock,
   Lightbulb,
   Sparkles,
   Loader2,
   Send,
   AlertOctagon,
+  ArrowRight,
+  Trophy,
 } from "lucide-react";
 
 export interface RejectionWarningInfo {
@@ -50,40 +57,29 @@ interface CodeLabSceneProps {
   variantSeed: string;
   startedAt: string;
   descriptionMarkdown: string;
-  signature: FuncSignature;
+  signature?: FuncSignature | null;
   publicTestCases: TestCase[];
   templateTitle?: string;
-  difficulty?: number;
   level?: number;
   tags?: string[];
   hintTemplate?: string;
+  hints?: string[];
   institute?: string;
   rejectionWarning?: RejectionWarningInfo | null;
+  fixedLanguage?: ProblemLanguage;
+  fixedLanguageId?: number;
+  executionMethod?: ExecutionMethod;
+  htmlTemplate?: string;
 }
 
-const TIER_CONFIG: Record<
-  string,
-  { label: string; color: string; bg: string; border: string }
-> = {
-  easy: {
-    label: "Easy",
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/20",
-  },
-  intermediate: {
-    label: "Intermediate",
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-  },
-  hard: {
-    label: "Hard",
-    color: "text-rose-400",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-  },
-};
+function statusIdToErrorType(statusId: number): string {
+  if (statusId === 6) return "compile";
+  if (statusId === 7 || statusId === 8) return "runtime";
+  if (statusId === 5) return "tle";
+  if (statusId === 4) return "assertion";
+  if (statusId === 11) return "runtime";
+  return "syntax";
+}
 
 export default function CodeLabScene({
   assignmentId,
@@ -91,17 +87,22 @@ export default function CodeLabScene({
   variantSeed,
   startedAt,
   descriptionMarkdown,
-  signature,
+  signature = null,
   publicTestCases,
   templateTitle = "CodeLab Problem",
-  difficulty = 1,
   level = 1,
   tags = [],
   hintTemplate = "",
+  hints = [],
   institute = "ics",
   rejectionWarning = null,
+  fixedLanguage = "python",
+  fixedLanguageId = 71,
+  executionMethod = "judge0",
+  htmlTemplate = "",
 }: CodeLabSceneProps) {
   const initialize = useCodeLabStore((s) => s.initialize);
+  const updateCode = useCodeLabStore((s) => s.updateCode);
   const {
     language,
     codeByLanguage,
@@ -117,6 +118,15 @@ export default function CodeLabScene({
     submissionCount,
     pasteCount,
     typedCharCount,
+    hintWasShown,
+    collectedErrorTypes,
+    failedRunCount,
+    firstRunTimestampMs,
+    sessionStartMs,
+    setHintShown,
+    addErrorType,
+    incrementFailedRun,
+    recordFirstRun,
   } = useCodeLabStore();
 
   const {
@@ -125,6 +135,7 @@ export default function CodeLabScene({
     markComplete,
     elapsedSeconds,
     startTimer,
+    resetActivity,
     score: currentScore,
   } = useActivityStore();
 
@@ -133,13 +144,21 @@ export default function CodeLabScene({
   const [showHint, setShowHint] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [hiddenResults, setHiddenResults] = useState<Array<{ passed: boolean; error?: string }>>([]);
-  const [showRejectionWarning, setShowRejectionWarning] = useState<boolean>(
+  const [showRejectionWarning] = useState<boolean>(
     Boolean(rejectionWarning?.isRejected)
   );
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const [openHintIndex, setOpenHintIndex] = useState<number | null>(null);
+
+  const progressiveHints: string[] = useMemo(() => {
+    if (hints && hints.length > 0) return hints;
+    if (hintTemplate) return [hintTemplate];
+    return [];
+  }, [hints, hintTemplate]);
 
   // Parse markdown description securely using marked
   const parsedDescription = useMemo(() => {
@@ -151,9 +170,10 @@ export default function CodeLabScene({
   }, [descriptionMarkdown]);
 
   useEffect(() => {
-    initialize("python", signature, publicTestCases);
+    resetActivity();
+    initialize(fixedLanguage as CodeLabLanguage, signature, publicTestCases);
     startTimer();
-  }, [initialize, signature, publicTestCases, startTimer]);
+  }, [assignmentId, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
 
   // Format timer as MM:SS
   const formatTime = (seconds: number): string => {
@@ -164,9 +184,8 @@ export default function CodeLabScene({
 
   const isTimeLong = elapsedSeconds > 30 * 60;
 
-  // Derive tier name from level
-  const tierKey = level <= 10 ? "easy" : level <= 20 ? "intermediate" : "hard";
-  const tierMeta = TIER_CONFIG[tierKey] || TIER_CONFIG.easy;
+  // Stage stage label
+  const stageName = level <= 10 ? "Basics" : level <= 20 ? "Building Up" : "Getting Good";
 
   // Toggle individual test case accordion
   const toggleTest = (index: number) => {
@@ -178,16 +197,106 @@ export default function CodeLabScene({
     });
   };
 
-  /** Run single test (Freeform execution with stdout/stderr) */
+  /** Client-side evaluation for HTML/CSS preview tracks */
+  const handleHTMLCSSEvaluation = useCallback(async () => {
+    if (isExecuting) return;
+    setExecuting(true);
+    setActiveTab("tests");
+    incrementSubmission();
+
+    const code = codeByLanguage[fixedLanguage as CodeLabLanguage] || "";
+    let rawResults: Array<{ label: string; passed: boolean; error?: string }> = [];
+
+    if (executionMethod === "html-preview") {
+      rawResults = await runHtmlTests(
+        code,
+        publicTestCases.map((tc, idx) => ({
+          label: `Test ${idx + 1}`,
+          expectedOutputTemplate: tc.expectedOutput,
+          isHidden: tc.isHidden,
+        }))
+      );
+    } else {
+      rawResults = await runCssTests(
+        code,
+        htmlTemplate,
+        publicTestCases.map((tc, idx) => ({
+          label: `Test ${idx + 1}`,
+          expectedOutputTemplate: tc.expectedOutput,
+          isHidden: tc.isHidden,
+        }))
+      );
+    }
+
+    const passedCount = rawResults.filter((r) => r.passed).length;
+    const totalCount = rawResults.length;
+    const computedScore = totalCount > 0 ? Math.round((passedCount / totalCount) * 100) : 0;
+
+    const mapped: TestCaseResult[] = rawResults.map((r) => ({
+      passed: r.passed,
+      actualOutput: r.passed ? "Element / Style matched in DOM" : null,
+      error: r.error,
+    }));
+
+    setTestResults(mapped);
+    setHiddenResults([]);
+    setScore(computedScore);
+
+    const cpm = elapsedSeconds > 0 ? Math.round((typedCharCount / elapsedSeconds) * 60) : 0;
+    updateStateCheck("language", fixedLanguage);
+    updateStateCheck("level", level);
+    updateStateCheck("testPassCount", passedCount);
+    updateStateCheck("totalTestCases", totalCount);
+    updateStateCheck("typingVelocityCharsPerMin", cpm);
+    updateStateCheck("pasteCount", pasteCount);
+
+    if (computedScore >= 60) {
+      markComplete(true);
+      if (computedScore === 100) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 2500);
+      }
+    } else {
+      // Auto-reveal hint after first wrong attempt
+      setShowHint(true);
+    }
+
+    setExecuting(false);
+  }, [
+    isExecuting,
+    fixedLanguage,
+    codeByLanguage,
+    executionMethod,
+    htmlTemplate,
+    publicTestCases,
+    level,
+    elapsedSeconds,
+    typedCharCount,
+    pasteCount,
+    setExecuting,
+    setActiveTab,
+    incrementSubmission,
+    setTestResults,
+    setScore,
+    updateStateCheck,
+    markComplete,
+  ]);
+
+  /** Run single test (Freeform execution with stdout/stderr via Judge0) */
   const handleRun = useCallback(async () => {
     if (isExecuting) return;
+
+    if (executionMethod === "html-preview" || executionMethod === "css-preview") {
+      await handleHTMLCSSEvaluation();
+      return;
+    }
 
     setExecuting(true);
     setActiveTab("console");
     setConsoleOutput(null);
 
-    const code = codeByLanguage[language];
-    const langId = JUDGE0_LANGUAGE_IDS[language];
+    const code = codeByLanguage[fixedLanguage as CodeLabLanguage];
+    const langId = fixedLanguageId || JUDGE0_LANGUAGE_IDS[fixedLanguage as CodeLabLanguage];
 
     try {
       const res = await fetch("/api/judge0/submit", {
@@ -202,9 +311,7 @@ export default function CodeLabScene({
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          (errData as Record<string, string>).error || `HTTP ${res.status}`
-        );
+        throw new Error((errData as Record<string, string>).error || `HTTP ${res.status}`);
       }
 
       const result = await res.json();
@@ -222,18 +329,34 @@ export default function CodeLabScene({
     } finally {
       setExecuting(false);
     }
-  }, [isExecuting, codeByLanguage, language, publicTestCases, setExecuting, setActiveTab, setConsoleOutput]);
+  }, [
+    isExecuting,
+    executionMethod,
+    handleHTMLCSSEvaluation,
+    codeByLanguage,
+    fixedLanguage,
+    fixedLanguageId,
+    publicTestCases,
+    setExecuting,
+    setActiveTab,
+    setConsoleOutput,
+  ]);
 
   /** Full Evaluation (Runs against public + hidden test cases via /api/codelab/evaluate) */
   const handleSubmitAndEvaluate = useCallback(async () => {
     if (isExecuting) return;
 
+    if (executionMethod === "html-preview" || executionMethod === "css-preview") {
+      await handleHTMLCSSEvaluation();
+      return;
+    }
+
     setExecuting(true);
     setActiveTab("tests");
     incrementSubmission();
 
-    const code = codeByLanguage[language];
-    const langId = JUDGE0_LANGUAGE_IDS[language];
+    const code = codeByLanguage[fixedLanguage as CodeLabLanguage];
+    const langId = fixedLanguageId || JUDGE0_LANGUAGE_IDS[fixedLanguage as CodeLabLanguage];
 
     try {
       const res = await fetch("/api/codelab/evaluate", {
@@ -249,9 +372,7 @@ export default function CodeLabScene({
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          (errData as Record<string, string>).error || `HTTP ${res.status}`
-        );
+        throw new Error((errData as Record<string, string>).error || `HTTP ${res.status}`);
       }
 
       const data = (await res.json()) as {
@@ -269,7 +390,6 @@ export default function CodeLabScene({
         score: number;
       };
 
-      // Map public results to store format
       const mapped: TestCaseResult[] = data.publicResults.map((r) => ({
         passed: r.passed,
         actualOutput: r.actualOutput,
@@ -280,21 +400,37 @@ export default function CodeLabScene({
       setTestResults(mapped);
       setHiddenResults(data.hiddenResults);
 
-      // Telemetry & anti-cheat records
       const cpm = elapsedSeconds > 0 ? Math.round((typedCharCount / elapsedSeconds) * 60) : 0;
+      const firstRunDelta = firstRunTimestampMs ? firstRunTimestampMs - sessionStartMs : elapsedSeconds * 1000;
+
       setScore(data.score);
-      updateStateCheck("language", language);
+      updateStateCheck("language", fixedLanguage);
+      updateStateCheck("level", level);
       updateStateCheck("pasteCount", pasteCount);
       updateStateCheck("typingVelocityCharsPerMin", cpm);
-      updateStateCheck("totalPassed", data.totalPassed);
-      updateStateCheck("totalCases", data.totalCases);
+      updateStateCheck("testPassCount", data.totalPassed);
+      updateStateCheck("totalTestCases", data.totalCases);
+      updateStateCheck("hintUsed", hintWasShown || showHint);
+      updateStateCheck("errorTypes", collectedErrorTypes.join(","));
+      updateStateCheck("attemptChurnCount", failedRunCount);
+      updateStateCheck("firstRunMs", Math.max(firstRunDelta, 0));
+      updateStateCheck("totalEditingMs", elapsedSeconds * 1000);
 
-      if (data.score === 100) {
+      if (data.score >= 60) {
         markComplete(true);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 2500);
+        if (data.score === 100) {
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 2500);
+        }
+      } else {
+        incrementFailedRun();
+        addErrorType("assertion");
+        setHintShown();
+        setShowHint(true);
       }
     } catch (err: unknown) {
+      incrementFailedRun();
+      addErrorType("runtime");
       const message = err instanceof Error ? err.message : "Evaluation failed";
       setTestResults([
         {
@@ -308,13 +444,27 @@ export default function CodeLabScene({
     }
   }, [
     isExecuting,
+    executionMethod,
+    handleHTMLCSSEvaluation,
     codeByLanguage,
-    language,
+    fixedLanguage,
+    fixedLanguageId,
     assignmentId,
     variantSeed,
+    level,
     pasteCount,
     typedCharCount,
     elapsedSeconds,
+    hintWasShown,
+    showHint,
+    collectedErrorTypes,
+    failedRunCount,
+    firstRunTimestampMs,
+    sessionStartMs,
+    setHintShown,
+    addErrorType,
+    incrementFailedRun,
+    recordFirstRun,
     setExecuting,
     setActiveTab,
     incrementSubmission,
@@ -329,66 +479,9 @@ export default function CodeLabScene({
   const totalPassedCount = publicPassedCount + hiddenPassedCount;
   const totalTestsCount = testResults.length + hiddenResults.length;
 
-  // Share Milestone Modal State
-  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
-  const [courses, setCourses] = useState<Array<{ id: string; title: string; code: string }>>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
-  const [shareCustomNote, setShareCustomNote] = useState<string>("");
-  const [isSharing, setIsSharing] = useState<boolean>(false);
-  const [shareSuccessMessage, setShareSuccessMessage] = useState<string | null>(null);
-
-  const openShareModal = async () => {
-    setIsShareModalOpen(true);
-    setShareSuccessMessage(null);
-    try {
-      const res = await fetch("/api/codelab/courses");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.courses && data.courses.length > 0) {
-          setCourses(data.courses);
-          setSelectedCourseId(data.courses[0].id);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load courses for sharing", err);
-    }
-  };
-
-  const handleBroadcastMilestone = async () => {
-    if (!selectedCourseId) return;
-    setIsSharing(true);
-    try {
-      const res = await fetch("/api/codelab/share", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId: selectedCourseId,
-          problemId: assignmentId,
-          problemTitle: templateTitle,
-          level,
-          tier: tierKey,
-          language,
-          score: currentScore,
-          customMessage: shareCustomNote,
-          instituteCode: institute,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setShareSuccessMessage(data.message || "Achievement broadcasted to class!");
-        setTimeout(() => {
-          setIsShareModalOpen(false);
-          setShareSuccessMessage(null);
-          setShareCustomNote("");
-        }, 1800);
-      }
-    } catch (err) {
-      console.error("Broadcast failed", err);
-    } finally {
-      setIsSharing(false);
-    }
-  };
+  const isPassed = currentScore >= 60 && testResults.length > 0;
+  const nextLevel = level < 30 ? level + 1 : null;
+  const langLabel = LANGUAGE_LABELS[fixedLanguage] || fixedLanguage;
 
   return (
     <div className="flex h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
@@ -396,164 +489,22 @@ export default function CodeLabScene({
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-rose-500/30 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl text-slate-800 dark:text-[#F0F2F8] animate-in zoom-in-95 duration-150">
-            {/* Header */}
             <div className="flex items-start gap-3.5 border-b border-slate-100 dark:border-white/10 pb-4">
-              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-500/15 border border-rose-100 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 shrink-0">
+              <div className="p-3 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 rounded-2xl">
                 <AlertOctagon className="w-6 h-6" />
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/40">
-                    Attempt Invalidated
-                  </span>
-                  {rejectionWarning.rejectedAt && (
-                    <span className="text-xs text-slate-400 font-mono">
-                      {new Date(rejectionWarning.rejectedAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-[#F0F2F8]">
-                  Submission Invalidated by Instructor
-                </h2>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  Submission Invalidated
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
+                  An instructor has requested a resubmission.
+                </p>
               </div>
             </div>
-
-            {/* Warning Message Box */}
-            <div className="p-4 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-500/30 rounded-2xl space-y-2 text-xs">
-              <div className="font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5 text-xs">
-                <AlertTriangle className="w-4 h-4 text-rose-500" />
-                Instructor Feedback & Reason:
-              </div>
-              <p className="text-slate-800 dark:text-[#F0F2F8] bg-white dark:bg-[#181B26] p-3 rounded-xl border border-rose-100 dark:border-white/10 font-medium leading-relaxed">
-                "{rejectionWarning.rejectionReason || "Attempt invalidated due to integrity anomaly or rule non-compliance."}"
-              </p>
-            </div>
-
-            {/* Code of Conduct & Guidelines */}
-            <div className="space-y-2 text-xs text-slate-600 dark:text-[#8B92A5] bg-slate-50 dark:bg-[#181B26] p-4 rounded-2xl border border-slate-200/80 dark:border-white/5">
-              <div className="font-bold text-slate-800 dark:text-[#F0F2F8] uppercase tracking-wider text-[11px]">
-                Integrity & Re-Attempt Guidelines:
-              </div>
-              <ul className="space-y-1.5 text-slate-600 dark:text-[#8B92A5] list-disc list-inside">
-                <li>Formulate and type your solution directly in the CodeLab editor.</li>
-                <li>Avoid copying and pasting full code solutions from external tools.</li>
-                <li>Ensure all algorithmic constraints and test requirements are satisfied.</li>
-              </ul>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-white/10">
-              <Link
-                href={`/${institute}/activities/codelab`}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-              >
-                Back to Problem Bank
-              </Link>
-              <button
-                onClick={() => setShowRejectionWarning(false)}
-                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>I Understand — Start Re-Attempt</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* ──── Share to Course Modal ──── */}
-      {mounted && isShareModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/10 rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl text-slate-800 dark:text-[#F0F2F8] animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-orange-50 dark:bg-orange-500/20 text-orange-600">
-                  <Sparkles className="w-5 h-5 text-orange-500" />
-                </div>
-                <h3 className="font-bold text-base text-slate-900 dark:text-[#F0F2F8]">Broadcast Milestone</h3>
-              </div>
-              <button
-                onClick={() => setIsShareModalOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Achievement Preview Badge Card */}
-            <div className="p-4 rounded-2xl bg-orange-50/50 dark:bg-[#181B26] border border-orange-200/80 dark:border-white/5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/20 px-2 py-0.5 rounded-md border border-orange-200 dark:border-orange-500/30">
-                  Level {level} · {tierMeta.label}
-                </span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                  {currentScore}% Score
-                </span>
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-[#F0F2F8] text-sm">{templateTitle}</h4>
-              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-                Programming Language: <span className="text-orange-600 dark:text-orange-400 font-bold uppercase">{language}</span>
-              </p>
-            </div>
-
-            {/* Target Course Selector */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-[#8B92A5]">Select Class Stream</label>
-              {courses.length === 0 ? (
-                <div className="text-xs text-slate-500 p-3 bg-slate-50 dark:bg-[#181B26] rounded-xl border border-slate-200 dark:border-white/5">
-                  Loading courses or not currently enrolled in active courses.
-                </div>
-              ) : (
-                <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl p-2.5 text-xs text-slate-800 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer"
-                >
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.code} — {c.title}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* Custom note */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-[#8B92A5]">Add a note (optional)</label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Just solved this algorithmic challenge! Anyone want to compare solutions?"
-                value={shareCustomNote}
-                onChange={(e) => setShareCustomNote(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-[#1E2132] border border-slate-200 dark:border-[#3D4460] rounded-xl p-2.5 text-xs text-slate-800 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-              />
-            </div>
-
-            {shareSuccessMessage && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300 text-xs rounded-xl flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>{shareSuccessMessage}</span>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setIsShareModalOpen(false)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleBroadcastMilestone}
-                disabled={isSharing || courses.length === 0}
-                className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-40 shadow-xs cursor-pointer"
-              >
-                {isSharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                <span>Post to Course Stream</span>
-              </button>
+            <div className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+              <strong>Reason: </strong>
+              {rejectionWarning.rejectionReason || "Please solve and resubmit."}
             </div>
           </div>
         </div>,
@@ -571,11 +522,10 @@ export default function CodeLabScene({
             <div className="text-5xl mb-2">🎉</div>
             <h2 className="text-2xl font-black text-white">Perfect Score!</h2>
             <p className="text-sm text-emerald-400 font-semibold mt-1">
-              All public and hidden test cases passed.
+              All test cases passed with 100%!
             </p>
           </div>
 
-          {/* 50 Confetti div particles */}
           {Array.from({ length: 50 }).map((_, i) => {
             const left = `${Math.random() * 100}%`;
             const animDuration = `${1.2 + Math.random() * 1.5}s`;
@@ -602,29 +552,27 @@ export default function CodeLabScene({
       )}
 
       {/* ──── Topbar Navigation ──── */}
-      <header className="flex-none flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#18181b] border-b border-slate-200 dark:border-slate-800 transition-colors">
+      <header className="flex-none flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/10 transition-colors">
         <div className="flex items-center gap-3">
-          {/* Back button */}
+          {/* Breadcrumb Navigation */}
           <Link
-            href={`/${institute}/activities/codelab`}
-            className="group flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer active:scale-95"
+            href={`/${institute}/activities/codelab/${fixedLanguage}`}
+            className="group flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer active:scale-95"
           >
             <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Problem Bank</span>
+            <span>{langLabel} Track</span>
           </Link>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-px bg-slate-200 dark:border-white/10" />
 
           {/* Problem title + level */}
           <div className="flex items-center gap-2">
-            <Code2 className="w-4 h-4 text-orange-500" />
-            <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate max-w-[280px] sm:max-w-md">
-              {templateTitle}
+            <Code2 className="w-4 h-4 text-[#F97316]" />
+            <h1 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate max-w-[280px] sm:max-w-md">
+              Level {level}: {templateTitle}
             </h1>
-            <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${tierMeta.bg} ${tierMeta.border} ${tierMeta.color}`}
-            >
-              Level {level} · {tierMeta.label}
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400">
+              {stageName}
             </span>
           </div>
         </div>
@@ -635,31 +583,22 @@ export default function CodeLabScene({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold ${
               isTimeLong
                 ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/20"
-                : "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                : "bg-slate-100 text-slate-700 border border-slate-200/80 dark:bg-[#1E2132] dark:text-[#F0F2F8] dark:border-white/10"
             }`}
           >
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span>{formatTime(elapsedSeconds)}</span>
           </div>
 
-          {/* Share Milestone Button */}
-          <button
-            onClick={openShareModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-300 text-xs font-bold rounded-xl border border-orange-200 dark:border-orange-500/30 transition-all cursor-pointer shadow-2xs active:scale-95"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-            <span>Share Result</span>
-          </button>
-
           {/* Run button */}
           <button
             onClick={handleRun}
             disabled={isExecuting}
             aria-busy={isExecuting}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs"
           >
-            {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-orange-500" />}
-            <span>Run</span>
+            {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-[#F97316]" />}
+            <span>Run Tests</span>
           </button>
 
           {/* Submit button */}
@@ -667,7 +606,7 @@ export default function CodeLabScene({
             onClick={handleSubmitAndEvaluate}
             disabled={isExecuting}
             aria-busy={isExecuting}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-40 active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#F97316] hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-40 active:scale-95 cursor-pointer"
           >
             {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             <span>Submit Solution</span>
@@ -675,18 +614,44 @@ export default function CodeLabScene({
         </div>
       </header>
 
-      {/* ──── 3-Panel Main Layout ──── */}
+      {/* ──── Celebratory Level Pass Banner ──── */}
+      {isPassed && (
+        <div className="flex-none bg-emerald-600 text-white px-4 py-2.5 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+            <Trophy className="w-4 h-4 text-yellow-300 animate-bounce" />
+            <span>
+              🎉 Level {level} Passed! Score: {currentScore}% (≥ 60% Passing Threshold)
+            </span>
+          </div>
+
+          {nextLevel ? (
+            <Link
+              href={`/${institute}/activities/codelab/${fixedLanguage}/${nextLevel}`}
+              className="flex items-center gap-1.5 bg-white text-emerald-800 hover:bg-emerald-50 px-3.5 py-1 rounded-xl text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <span>Go to Level {nextLevel}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <span className="text-xs font-bold bg-emerald-700/80 px-3 py-1 rounded-xl">
+              Track Completed! 🏆
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ──── Main Layout ──── */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
-        {/* ──── Left Panel: Problem Statement ──── */}
+        {/* Left Panel: W3Schools Educational Problem Statement */}
         <aside
-          className="w-full md:w-[32%] min-w-[280px] bg-white dark:bg-[#18181b] border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden text-slate-800 dark:text-slate-200"
+          className="w-full md:w-[32%] min-w-[280px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 flex flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]"
           style={{ resize: "horizontal" }}
         >
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-[#161b22]/80">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
             <div className="flex items-center gap-2">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                Problem Statement
+              <span className="text-[11px] font-bold text-slate-600 dark:text-[#8B92A5] uppercase tracking-wider">
+                Tutorial & Challenge
               </span>
             </div>
             {tags.length > 0 && (
@@ -694,84 +659,155 @@ export default function CodeLabScene({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
-            {/* Rejection Alert Notice Card */}
-            {rejectionWarning?.isRejected && (
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-500/40 text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                    <AlertOctagon className="w-4 h-4 text-rose-500 shrink-0" />
-                    Previous Attempt Invalidated
-                  </span>
-                  <span className="text-[10px] uppercase font-bold text-rose-700 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-500/30">
-                    Action Required
-                  </span>
-                </div>
-                <div className="text-slate-700 dark:text-slate-200 text-xs leading-relaxed bg-white dark:bg-slate-950/70 p-3 rounded-xl border border-rose-100 dark:border-slate-800">
-                  <strong className="text-slate-900 dark:text-slate-300">Instructor Note: </strong>
-                  {rejectionWarning.rejectionReason || "Attempt invalidated by instructor."}
-                </div>
-              </div>
-            )}
-
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-6 min-w-0 max-w-full">
             {/* Parsed description markdown */}
             <div
-              className="codelab-prose text-sm leading-relaxed text-slate-800 dark:text-slate-200"
+              className="codelab-prose w-full max-w-full min-w-0 text-sm leading-relaxed text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:[overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_code]:whitespace-pre-wrap [&_code]:break-words [&_code]:[overflow-wrap:anywhere]"
               dangerouslySetInnerHTML={{ __html: parsedDescription }}
             />
 
-            {/* Hint Box */}
-            {hintTemplate && (
-              <div className="rounded-2xl border border-orange-200/80 dark:border-orange-500/20 bg-orange-50/50 dark:bg-orange-950/20 p-4 space-y-2">
-                <button
-                  onClick={() => setShowHint((p) => !p)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-orange-700 dark:text-orange-300 hover:text-orange-800 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
+            {/* ──── Adaptive 3-Tier Progressive Hint System ──── */}
+            {progressiveHints.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-[#F0F2F8] uppercase tracking-wider">
                     <Lightbulb className="w-4 h-4 text-amber-500" />
-                    <span>Algorithmic Hint {submissionCount >= 3 && "(Unlocked)"}</span>
+                    <span>Adaptive Hints</span>
                   </div>
-                  {showHint ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
+                  <span className="text-[10px] font-mono text-slate-500 dark:text-[#8B92A5] font-bold">
+                    {failedRunCount} failed attempt{failedRunCount === 1 ? "" : "s"}
+                  </span>
+                </div>
 
-                {showHint && (
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-2 border-t border-orange-200/60 dark:border-orange-500/20 animate-in fade-in duration-200">
-                    {hintTemplate}
-                  </p>
+                {/* Exploration State (0-2 failures) */}
+                {failedRunCount < 3 && (
+                  <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] p-4 text-xs text-slate-600 dark:text-[#8B92A5] space-y-2">
+                    <p className="leading-relaxed font-medium">
+                      💡 <strong>Try exploring first!</strong> If you run into errors or get stuck, progressive hints will automatically unlock to guide you:
+                    </p>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
+                      <span>Hint 1 (Concept Direction):</span>
+                      <span className="font-mono text-[#F97316] font-bold">{failedRunCount} / 3 attempts</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-[#F97316] h-full rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min((failedRunCount / 3) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
+
+                {/* Progressive Unlocked Tiers (Tier 1: >=3, Tier 2: >=5, Tier 3: >=7) */}
+                {progressiveHints.map((hintText, tierIdx) => {
+                  const requiredFails = tierIdx === 0 ? 3 : tierIdx === 1 ? 5 : 7;
+                  const isUnlocked = failedRunCount >= requiredFails;
+                  const isOpen = openHintIndex === tierIdx;
+
+                  const tierNames = [
+                    "Tier 1: Key Direction & Logic",
+                    "Tier 2: Code Scaffold & Structure",
+                    "Tier 3: Step-by-Step Breakdown",
+                  ];
+
+                  const tierBorder =
+                    tierIdx === 0
+                      ? "border-blue-300 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20"
+                      : tierIdx === 1
+                      ? "border-amber-300 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20"
+                      : "border-purple-300 dark:border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20";
+
+                  if (!isUnlocked) {
+                    return (
+                      <div
+                        key={tierIdx}
+                        className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#555C72] flex items-center justify-between text-xs"
+                      >
+                        <span className="flex items-center gap-1.5 font-semibold">
+                          <span>🔒</span>
+                          <span>{tierNames[tierIdx] || `Tier ${tierIdx + 1} Hint`}</span>
+                        </span>
+                        <span className="font-mono text-[10px]">Unlocks at {requiredFails} attempts</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={tierIdx}
+                      className={`rounded-2xl border ${tierBorder} p-3.5 space-y-2 transition-all`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenHintIndex(isOpen ? null : tierIdx);
+                          setHintShown();
+                          updateStateCheck("hintUsed", true);
+                        }}
+                        className="w-full flex items-center justify-between text-xs font-bold text-slate-800 dark:text-[#F0F2F8] hover:text-[#F97316] transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{tierIdx === 0 ? "💡" : tierIdx === 1 ? "🧱" : "🛠️"}</span>
+                          <span>{tierNames[tierIdx] || `Tier ${tierIdx + 1} Hint`}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                            Unlocked
+                          </span>
+                        </div>
+                        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
+
+                      {isOpen && (
+                        <div className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed pt-2.5 border-t border-slate-200/60 dark:border-white/10 animate-in fade-in duration-200">
+                          <p className="font-medium whitespace-pre-wrap">{hintText}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         </aside>
 
-        {/* ──── Center Panel: Monaco Editor ──── */}
-        <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1e1e1e]">
-          <CodeEditor />
-        </main>
+        {/* Center / Preview Panel */}
+        {executionMethod === "html-preview" || executionMethod === "css-preview" ? (
+          <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141721]">
+            <HTMLPreviewEditor
+              initialCode={codeByLanguage[fixedLanguage as CodeLabLanguage] || ""}
+              language={fixedLanguage as "html" | "css"}
+              htmlTemplate={htmlTemplate}
+              onChange={(newCode) => updateCode(newCode)}
+            />
+          </main>
+        ) : (
+          <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141721]">
+            <CodeEditor />
+          </main>
+        )}
 
-        {/* ──── Right Panel: Results & Telemetry ──── */}
+        {/* Right Panel: Test Suite & Results */}
         <aside
-          className="w-full md:w-[32%] min-w-[280px] flex flex-col bg-white dark:bg-[#18181b] border-l border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200"
+          className="w-full md:w-[30%] min-w-[260px] flex flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]"
           style={{ resize: "horizontal" }}
         >
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60">
+          <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] flex-none">
             <button
               onClick={() => setActiveTab("console")}
               className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "console"
-                  ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 bg-white dark:bg-[#18181b]"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                  ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#141721]"
+                  : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
-              <Terminal className="w-3.5 h-3.5" /> Console
+              <Terminal className="w-3.5 h-3.5" /> Output
             </button>
             <button
               onClick={() => setActiveTab("tests")}
               className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === "tests"
-                  ? "text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 bg-white dark:bg-[#18181b]"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                  ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#141721]"
+                  : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5" /> Test Suite
@@ -789,196 +825,103 @@ export default function CodeLabScene({
             </button>
           </div>
 
-          {/* Results Tab Content */}
+          {/* Results Content */}
           <div className="flex-1 overflow-y-auto p-4 text-xs">
             {activeTab === "console" ? (
               <div className="space-y-4 font-mono">
                 {!consoleOutput && !isExecuting && (
                   <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2 font-sans">
                     <Terminal className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-                    <p className="text-xs">Click &quot;Run&quot; to execute standard I/O against test input.</p>
+                    <p className="text-xs">Click &quot;Run Tests&quot; to execute your code.</p>
                   </div>
                 )}
-
                 {isExecuting && (
-                  <div className="flex flex-col items-center justify-center h-48 gap-3 font-sans">
-                    <Loader2 className="w-7 h-7 text-orange-500 animate-spin" />
-                    <span className="text-xs text-orange-600 font-medium">Executing inside Judge0 sandbox...</span>
+                  <div className="flex items-center justify-center h-48 gap-2 text-slate-500">
+                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
+                    <span>Executing in sandbox...</span>
                   </div>
                 )}
-
                 {consoleOutput && (
-                  <div className="space-y-3 font-sans">
-                    {/* Status line */}
-                    <div
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold border ${
-                        consoleOutput.status.id === 3
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-                          : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        {consoleOutput.status.id === 3 ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <AlertTriangle className="w-4 h-4 text-rose-600" />
-                        )}
-                        <span>{consoleOutput.status.description}</span>
-                      </div>
-                      {consoleOutput.time && (
-                        <span className="font-mono text-slate-400 text-[11px]">{consoleOutput.time}s</span>
-                      )}
-                    </div>
-
-                    {/* Standard output */}
+                  <div className="space-y-3">
                     {consoleOutput.stdout && (
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase">Standard Output</div>
-                        <pre className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl text-slate-800 dark:text-slate-200 font-mono text-xs border border-slate-200 dark:border-slate-800 whitespace-pre-wrap">
-                          {consoleOutput.stdout}
-                        </pre>
+                      <div className="p-4 bg-slate-900 dark:bg-[#10131C] border border-slate-800 dark:border-white/10 text-emerald-400 dark:text-emerald-300 rounded-2xl shadow-xs">
+                        <div className="text-[11px] text-slate-400 dark:text-slate-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                          <span>Standard Output</span>
+                        </div>
+                        <pre className="whitespace-pre-wrap font-mono text-xs text-emerald-300 dark:text-emerald-300 leading-relaxed">{consoleOutput.stdout}</pre>
                       </div>
                     )}
-
-                    {/* Standard error */}
                     {consoleOutput.stderr && (
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-rose-600 uppercase">Standard Error</div>
-                        <pre className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-xl text-rose-700 dark:text-rose-300 font-mono text-xs border border-rose-200 dark:border-rose-900/30 whitespace-pre-wrap">
-                          {consoleOutput.stderr}
-                        </pre>
+                      <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-100 rounded-2xl shadow-xs">
+                        <div className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+                          <span>Standard Error</span>
+                        </div>
+                        <pre className="whitespace-pre-wrap font-mono text-xs text-rose-800 dark:text-rose-200 leading-relaxed font-semibold">{consoleOutput.stderr}</pre>
                       </div>
                     )}
                   </div>
                 )}
               </div>
             ) : (
-              /* Test Cases Tab */
-              <div className="space-y-4 font-sans">
+              <div className="space-y-3">
                 {testResults.length === 0 && !isExecuting && (
                   <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
-                    <Sparkles className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-                    <p className="text-xs">Click &quot;Submit Solution&quot; to evaluate against all test cases.</p>
+                    <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-700" />
+                    <p className="text-xs">No test results yet. Click &quot;Submit Solution&quot; to evaluate.</p>
                   </div>
                 )}
-
-                {isExecuting && (
-                  <div className="flex flex-col items-center justify-center h-48 gap-3">
-                    <Loader2 className="w-7 h-7 text-orange-500 animate-spin" />
-                    <span className="text-xs text-orange-600 font-medium">Evaluating batch test suite...</span>
-                  </div>
-                )}
-
-                {testResults.length > 0 && (
-                  <div className="space-y-4">
-                    {/* Score Bar */}
-                    <div className="space-y-1.5 bg-slate-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-slate-700 dark:text-slate-300">Test Suite Score</span>
-                        <span className={currentScore === 100 ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-amber-600 dark:text-amber-400 font-black"}>
-                          {currentScore}%
+                {testResults.map((result, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-xl border transition-all ${
+                      result.passed
+                        ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-500/30"
+                        : "bg-rose-50/50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-500/30"
+                    }`}
+                  >
+                    <div
+                      onClick={() => toggleTest(idx)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        {result.passed ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                        )}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          Test Case #{idx + 1}
                         </span>
                       </div>
-                      <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-orange-500 transition-all duration-700 ease-out rounded-full"
-                          style={{ width: `${currentScore}%` }}
-                        />
-                      </div>
+                      <span className="text-[10px] font-bold uppercase">
+                        {result.passed ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">Passed</span>
+                        ) : (
+                          <span className="text-rose-600 dark:text-rose-400">Failed</span>
+                        )}
+                      </span>
                     </div>
 
-                    {/* Public test cases */}
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Public Test Cases
-                      </div>
-                      {testResults.map((res, i) => {
-                        const tc = publicTestCases[i];
-                        const isExpanded = expandedTests.has(i);
-
-                        return (
-                          <div
-                            key={i}
-                            className={`rounded-xl border transition-all ${
-                              res.passed
-                                ? "bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-500/20"
-                                : "bg-rose-50/40 border-rose-200 dark:bg-rose-950/20 dark:border-rose-500/20"
-                            }`}
-                          >
-                            <button
-                              onClick={() => toggleTest(i)}
-                              className="w-full flex items-center justify-between p-3 text-left cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 rounded-xl"
-                            >
-                              <div className="flex items-center gap-2">
-                                {res.passed ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                                )}
-                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                                  Case {i + 1}: {res.passed ? "Passed" : "Failed"}
-                                </span>
-                              </div>
-                              {isExpanded ? (
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                              ) : (
-                                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                              )}
-                            </button>
-
-                            {isExpanded && tc && (
-                              <div className="px-3 pb-3 space-y-2 border-t border-slate-200/60 dark:border-slate-800/60 pt-2 font-mono text-xs">
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-sans font-bold text-slate-400 uppercase">Input:</span>
-                                  <div className="bg-slate-100 dark:bg-slate-950 p-2 rounded-lg text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-800">{tc.input}</div>
-                                </div>
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-sans font-bold text-slate-400 uppercase">Expected:</span>
-                                  <div className="bg-slate-100 dark:bg-slate-950 p-2 rounded-lg text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-800">{tc.expectedOutput}</div>
-                                </div>
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-sans font-bold text-slate-400 uppercase">Actual Output:</span>
-                                  <div className={`p-2 rounded-lg border ${res.passed ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-500/20" : "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-500/20"}`}>
-                                    {res.actualOutput || "—"}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                    {expandedTests.has(idx) && (
+                      <div className="mt-2.5 pt-2.5 border-t border-slate-200 dark:border-slate-800 text-[11px] space-y-1.5 font-mono">
+                        {result.actualOutput && (
+                          <div>
+                            <span className="text-slate-400">Output: </span>
+                            <span className="text-slate-800 dark:text-slate-200">{result.actualOutput}</span>
                           </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Hidden test cases */}
-                    {hiddenResults.length > 0 && (
-                      <div className="space-y-2 pt-2">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-slate-400" /> Hidden Test Cases ({hiddenResults.length})
-                        </div>
-                        {hiddenResults.map((res, i) => (
-                          <div
-                            key={i}
-                            className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold ${
-                              res.passed
-                                ? "bg-emerald-50/40 border-emerald-200 text-emerald-800 dark:bg-emerald-950/20 dark:border-emerald-500/20 dark:text-emerald-300"
-                                : "bg-rose-50/40 border-rose-200 text-rose-800 dark:bg-rose-950/20 dark:border-rose-500/20 dark:text-rose-300"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              {res.passed ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                              )}
-                              <span>Hidden Test Case {i + 1}</span>
-                            </div>
-                            <span className="text-[11px] font-bold opacity-80">{res.passed ? "Pass" : "Fail"}</span>
+                        )}
+                        {result.error && (
+                          <div className="text-rose-500">
+                            <span className="font-bold">Error: </span>
+                            {result.error}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -999,4 +942,3 @@ export default function CodeLabScene({
     </div>
   );
 }
-

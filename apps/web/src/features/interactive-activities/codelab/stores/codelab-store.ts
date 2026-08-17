@@ -3,8 +3,8 @@ import { CodeLabLanguage, generateStarterCode, FuncSignature } from "../utils/st
 import { CodeSubmissionResponse } from "../utils/judge0-client";
 
 export interface TestCase {
-  input: string; // e.g. "5, 10" or "hello"
-  expectedOutput: string; // e.g. "15"
+  input: string;
+  expectedOutput: string;
   isHidden: boolean;
 }
 
@@ -43,14 +43,20 @@ interface CodeLabState {
   typedCharCount: number;
   sessionStartMs: number;
 
-  // Submission tracking (client-side awareness of rate limit)
+  // Forensic Analytics Telemetry
+  hintWasShown: boolean;
+  collectedErrorTypes: string[];
+  failedRunCount: number;
+  firstRunTimestampMs: number | null;
+
+  // Submission tracking
   submissionCount: number;
 
   // Timer reference
   startedAt: string;
 
   // Actions
-  initialize: (lang: CodeLabLanguage, sig: FuncSignature, tests: TestCase[]) => void;
+  initialize: (lang: CodeLabLanguage, sig: FuncSignature | null, tests: TestCase[]) => void;
   setLanguage: (lang: CodeLabLanguage) => void;
   updateCode: (code: string) => void;
   setExecuting: (exec: boolean) => void;
@@ -62,9 +68,23 @@ interface CodeLabState {
   incrementTypedChars: (count: number) => void;
   incrementSubmission: () => void;
   setStartedAt: (iso: string) => void;
+  setHintShown: () => void;
+  addErrorType: (type: string) => void;
+  incrementFailedRun: () => void;
+  recordFirstRun: () => void;
 }
 
-const ALL_LANGUAGES: CodeLabLanguage[] = ["python", "java", "c", "cpp", "javascript", "csharp", "sql"];
+const ALL_LANGUAGES: CodeLabLanguage[] = [
+  "python",
+  "java",
+  "c",
+  "cpp",
+  "javascript",
+  "csharp",
+  "sql",
+  "html",
+  "css",
+];
 
 function buildEmptyCodeMap(): Record<CodeLabLanguage, string> {
   return {
@@ -75,6 +95,8 @@ function buildEmptyCodeMap(): Record<CodeLabLanguage, string> {
     javascript: "",
     csharp: "",
     sql: "",
+    html: "",
+    css: "",
   };
 }
 
@@ -91,14 +113,17 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
   pasteEvents: [],
   typedCharCount: 0,
   sessionStartMs: Date.now(),
+  hintWasShown: false,
+  collectedErrorTypes: [],
+  failedRunCount: 0,
+  firstRunTimestampMs: null,
   submissionCount: 0,
   startedAt: "",
 
   initialize: (lang, sig, tests) => {
-    // Generate starter code for all supported languages if not already present
     const codes = { ...get().codeByLanguage };
     
-    ALL_LANGUAGES.forEach(l => {
+    ALL_LANGUAGES.forEach((l) => {
       if (!codes[l]) {
         codes[l] = generateStarterCode(l, sig);
       }
@@ -116,6 +141,10 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
       pasteEvents: [],
       typedCharCount: 0,
       sessionStartMs: Date.now(),
+      hintWasShown: false,
+      collectedErrorTypes: [],
+      failedRunCount: 0,
+      firstRunTimestampMs: null,
       submissionCount: 0,
       startedAt: new Date().toISOString(),
     });
@@ -123,34 +152,55 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
 
   setLanguage: (lang) => set({ language: lang }),
   
-  updateCode: (code) => set((state) => ({
-    codeByLanguage: {
-      ...state.codeByLanguage,
-      [state.language]: code,
-    },
-  })),
+  updateCode: (code) =>
+    set((state) => ({
+      codeByLanguage: {
+        ...state.codeByLanguage,
+        [state.language]: code,
+      },
+    })),
 
   setExecuting: (exec) => set({ isExecuting: exec }),
   setConsoleOutput: (out) => set({ consoleOutput: out }),
   setTestResults: (results) => set({ testResults: results }),
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  addPasteEvent: (event) => set((state) => ({
-    pasteEvents: [...state.pasteEvents, event],
-    pasteCount: state.pasteCount + 1,
-  })),
+  addPasteEvent: (event) =>
+    set((state) => ({
+      pasteEvents: [...state.pasteEvents, event],
+      pasteCount: state.pasteCount + 1,
+    })),
 
-  incrementPasteCount: () => set((state) => ({
-    pasteCount: state.pasteCount + 1,
-  })),
+  incrementPasteCount: () =>
+    set((state) => ({
+      pasteCount: state.pasteCount + 1,
+    })),
 
-  incrementTypedChars: (count: number) => set((state) => ({
-    typedCharCount: state.typedCharCount + count,
-  })),
+  incrementTypedChars: (count: number) =>
+    set((state) => ({
+      typedCharCount: state.typedCharCount + count,
+    })),
 
-  incrementSubmission: () => set((state) => ({
-    submissionCount: state.submissionCount + 1,
-  })),
+  incrementSubmission: () =>
+    set((state) => ({
+      submissionCount: state.submissionCount + 1,
+    })),
 
   setStartedAt: (iso) => set({ startedAt: iso }),
+
+  setHintShown: () => set({ hintWasShown: true }),
+  addErrorType: (type: string) =>
+    set((state) => ({
+      collectedErrorTypes: state.collectedErrorTypes.includes(type)
+        ? state.collectedErrorTypes
+        : [...state.collectedErrorTypes, type],
+    })),
+  incrementFailedRun: () =>
+    set((state) => ({
+      failedRunCount: state.failedRunCount + 1,
+    })),
+  recordFirstRun: () =>
+    set((state) => ({
+      firstRunTimestampMs: state.firstRunTimestampMs ?? Date.now(),
+    })),
 }));

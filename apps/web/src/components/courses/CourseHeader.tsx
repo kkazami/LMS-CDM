@@ -23,29 +23,21 @@ export default function CourseHeader({ course, theme }: CourseHeaderProps) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl px-6 py-8 md:px-10 md:py-10 bg-cover bg-center"
+      className="relative overflow-hidden rounded-2xl px-6 py-8 md:px-10 md:py-10 bg-cover bg-center shadow-lg"
       style={
         hasCover
           ? { backgroundImage: `url("${course.coverImage}")` }
-          : { background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})` }
+          : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
       }
     >
       {/* Dark overlay for text readability when there's an image */}
-      {hasCover && (
+      {hasCover ? (
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20 z-0" />
-      )}
-
-      {/* Decorative circles (only show if no cover) */}
-      {!hasCover && (
+      ) : (
         <>
-          <div
-            className="absolute -right-8 -top-8 h-40 w-40 rounded-full opacity-10"
-            style={{ backgroundColor: "#fff" }}
-          />
-          <div
-            className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full opacity-10"
-            style={{ backgroundColor: "#fff" }}
-          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
         </>
       )}
 

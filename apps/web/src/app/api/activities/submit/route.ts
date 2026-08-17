@@ -104,7 +104,7 @@ export async function POST(request: Request) {
             activityType: "codelab",
             courseId: courseId,
             createdBy: eligibility.session.user.id,
-            difficulty: problem?.tier === "easy" ? 1 : problem?.tier === "intermediate" ? 2 : 3,
+            difficulty: problem?.stage === "basics" ? 1 : problem?.stage === "building-up" ? 2 : 3,
             variables: JSON.stringify(problem?.variables || []),
             hiddenTestCases: JSON.stringify(problem?.testCases.filter((tc) => tc.isHidden) || []),
           },

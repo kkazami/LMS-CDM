@@ -69,7 +69,7 @@ export default async function CourseMaterialsPage({ params }: Props) {
         }
       >
         {/* Subtle Premium Background */}
-        <div className={`pointer-events-none absolute inset-0 ${course.coverImage ? 'bg-linear-to-r from-black/80 via-black/50 to-black/20' : 'bg-linear-to-r from-black/20 via-transparent to-black/10'}`} />
+        <div className={`pointer-events-none absolute inset-0 ${course.coverImage ? 'bg-gradient-to-r from-black/80 via-black/50 to-black/20' : 'bg-gradient-to-r from-black/20 via-transparent to-black/10'}`} />
         {!course.coverImage && (
           <>
             <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
