@@ -63,6 +63,10 @@ export default function FlashcardDashboard({
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // Delete confirmation state
+  const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Filtered decks
   const filteredDecks = useMemo(() => {
     let result = decks;
@@ -136,19 +140,27 @@ export default function FlashcardDashboard({
     setCreateError(null);
   };
 
-  const handleDeleteDeck = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this flashcard? This action cannot be undone.")) return;
+  const confirmDeleteDeck = async () => {
+    if (!deckToDelete) return;
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(`/api/flashcards/decks?id=${id}`, {
+      const res = await fetch(`/api/flashcards/decks?id=${deckToDelete}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete deck");
-      setDecks((prev) => prev.filter((d) => d.id !== id));
-      if (activeDeck?.id === id) setActiveDeck(null);
+      setDecks((prev) => prev.filter((d) => d.id !== deckToDelete));
+      if (activeDeck?.id === deckToDelete) setActiveDeck(null);
+      setDeckToDelete(null);
     } catch {
       // Handle error
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteDeck = (id: string) => {
+    setDeckToDelete(id);
   };
 
   const handleDeckUpdated = (updated: FlashcardDeck) => {
@@ -192,7 +204,7 @@ export default function FlashcardDashboard({
       {/* Premium Dashboard Hero */}
       <div className="relative mb-10 overflow-hidden rounded-[2.5rem] p-8 sm:p-12 text-white shadow-xl" style={{ background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }}>
         {/* Subtle Premium Background */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/10" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
         <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
         
@@ -451,6 +463,39 @@ export default function FlashcardDashboard({
               className="rounded-xl bg-[#F97316] px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             >
               {creating ? "Creating..." : "Create Flashcard"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={!!deckToDelete}
+        title="Delete Flashcard Deck"
+        onClose={() => {
+          if (!isDeleting) setDeckToDelete(null);
+        }}
+      >
+        <div className="space-y-6">
+          <p className="text-sm text-slate-600 dark:text-[#8B92A5]">
+            Are you sure you want to delete this entire flashcard deck? All cards inside it will be permanently removed. This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setDeckToDelete(null)}
+              disabled={isDeleting}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteDeck}
+              disabled={isDeleting}
+              className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+            >
+              {isDeleting ? "Deleting..." : "Delete Deck"}
             </button>
           </div>
         </div>

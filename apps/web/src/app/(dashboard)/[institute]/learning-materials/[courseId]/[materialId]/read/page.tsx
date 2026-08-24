@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import DocumentViewerDynamic from "@/components/learning-materials/DocumentViewerDynamic";
 import PomodoroTimer from "@/components/learning-materials/PomodoroTimer";
 import FocusSidebar from "@/components/learning-materials/FocusSidebar";
+import ConvertFlashcardsButton from "@/components/courses/ConvertFlashcardsButton";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,14 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
             </p>
           </div>
         </div>
+
+        {/* Convert to Flashcards button */}
+        <ConvertFlashcardsButton
+          attachmentId={activeAttachment.id}
+          attachmentName={activeAttachment.fileName || "Document"}
+          courseId={courseId}
+          instituteCode={institute}
+        />
       </div>
 
       <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0">
