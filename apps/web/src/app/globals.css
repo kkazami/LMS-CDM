@@ -463,6 +463,61 @@ html {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ── Gamification Animations ──────────────────────────────────── */
+
+@keyframes flameBounce {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50%       { transform: scale(1.12) rotate(3deg); }
+}
+
+@keyframes expBarFill {
+  from { width: 0; }
+}
+
+@keyframes levelUpFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+  50%  { box-shadow: 0 0 0 16px rgba(249,115,22,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+
+@keyframes badgeReveal {
+  0%   { transform: scale(0.7) rotate(-10deg); opacity: 0; }
+  70%  { transform: scale(1.05) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes streakDotPop {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tierPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(249,115,22,0); }
+}
+
+.animate-flame-bounce {
+  animation: flameBounce 2s ease-in-out infinite;
+}
+
+.animate-badge-reveal {
+  animation: badgeReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-tier-pulse {
+  animation: tierPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* ─── Micro-Interactions & Transitions ─── */
 button,
 a {
@@ -472,6 +527,7 @@ a {
 button:active {
   transform: scale(0.98);
 }
+
 /* ─── Reduce Motion for Accessibility ─── */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -481,4 +537,53 @@ button:active {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .animate-flame-bounce,
+  .animate-badge-reveal,
+  .animate-streak-dot,
+  .animate-tier-pulse,
+  .animate-slide-in-right {
+    animation: none !important;
+    transition: none !important;
+  }
 }
+
+/* ─── Mobile-First Responsive Spacing Tokens ─── */
+:root {
+  --space-page-x: 1rem;
+  --space-page-y: 1rem;
+  --radius-card: 0.75rem;
+  --touch-target-min: 44px;
+  --bottom-nav-height: 64px;
+}
+@media (min-width: 640px) {
+  :root {
+    --space-page-x: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --space-page-x: 2rem;
+    --space-page-y: 2rem;
+    --bottom-nav-height: 0px;
+  }
+}
+
+/* ─── Touch Target Enhancement for Coarse Pointers ─── */
+@media (pointer: coarse) {
+  button:not([data-compact]),
+  a:not([data-compact]),
+  [role="button"]:not([data-compact]) {
+    min-height: var(--touch-target-min);
+  }
+}
+
+/* ─── Safe Area Utilities ─── */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-bottom-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem);
+}

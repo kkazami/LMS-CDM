@@ -68,6 +68,8 @@ model User {
   materialAnnotations MaterialAnnotation[]
   notifications       Notification[]
   sentBroadcasts      NotificationBroadcast[] @relation("BroadcastSender")
+  expTransactions     ExpTransaction[]
+  createdGradeIncentives GradeIncentiveRule[] @relation("GradeIncentiveCreator")
 }
 
 model Session {
@@ -110,6 +112,7 @@ model Course {
   taskItems         TaskItem[]
   weeklyChallenges  WeeklyChallenge[]
   broadcasts        NotificationBroadcast[]
+  gradeIncentiveRules GradeIncentiveRule[]
 
   @@index([instituteId])
   @@index([instructorId])
@@ -507,6 +510,22 @@ model GamificationProfile {
   lastActivityDate        DateTime?
   totalPoints             Int            @default(0)
   isLeaderboardAnonymized Boolean        @default(true)
+
+  // ── EXP & Level ──
+  exp                     Int            @default(0)      // Current total EXP
+  level                   Int            @default(1)      // Current level (1–60+)
+  levelTier               String         @default("newcomer") // newcomer | bronze | silver | gold | platinum | diamond | master | legend
+
+  // ── Login Streak Rewards ──
+  lastLoginDate           DateTime?      // Date of last login (date only, compare by day)
+  loginStreakCurrent      Int            @default(0)      // Consecutive daily logins
+  loginStreakLongest      Int            @default(0)      // All-time longest login streak
+  totalLoginDays          Int            @default(0)      // Total unique days logged in
+  lastDailyRewardAt       DateTime?      // When the daily reward was last claimed
+
+  // ── Grade Incentive ──
+  gradeIncentiveBonusExp  Int            @default(0)      // Accumulated EXP from instructor grade incentives
+
   student                 User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   badges                  StudentBadge[]
 }
@@ -516,9 +535,41 @@ model StudentBadge {
   profileId   String
   badgeRuleId String
   earnedAt    DateTime            @default(now())
+  isNew       Boolean             @default(true)   // True until student views the badge notification
+  notifiedAt  DateTime?                            // When the badge-earned toast was shown
   profile     GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, badgeRuleId])
+}
+
+model ExpTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int                       // Positive = gain, Negative = deduction
+  reason      String                    // Human-readable: "Completed CodeLab Level 5", "Daily Login Streak (Day 7)"
+  source      String                    // "codelab" | "assignment" | "attendance" | "login" | "grade_incentive" | "badge" | "study_timer"
+  courseId    String?                   // If tied to a course
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([source])
+}
+
+model GradeIncentiveRule {
+  id           String   @id @default(cuid())
+  courseId     String
+  createdBy    String                  // Instructor userId
+  label        String                  // e.g. "Perfect Score Bonus", "Passing Grade Reward"
+  gradeMin     Float                   // Minimum grade to qualify (0–100)
+  bonusExp     Int                     // EXP awarded when threshold is met
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  creator      User     @relation("GradeIncentiveCreator", fields: [createdBy], references: [id])
+
+  @@index([courseId])
 }
 
 model ActivityLeaderboardCache {
@@ -601,12 +652,12 @@ model FlashcardProgress {
 model StudySessionLog {
   id              String        @id @default(cuid())
   userId          String
-  courseId        String
+  courseId        String?
   syllabusItemId  String?
   durationSeconds Int
   startedAt       DateTime
   completedAt     DateTime
-  course          Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course          Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   syllabusItem    SyllabusItem? @relation(fields: [syllabusItemId], references: [id])
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 

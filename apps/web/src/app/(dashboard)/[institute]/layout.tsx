@@ -85,6 +85,12 @@ export default async function InstituteLayout({
     }
   }
 
+  // Fetch gamification profile for user (level badge in topbar & streak modal)
+  let gamification = await db.gamificationProfile.findUnique({
+    where: { studentId: session.user.id },
+    select: { exp: true, loginStreakCurrent: true },
+  });
+
   return (
     <DashboardLayout
       instituteCode={theme.code}
@@ -96,6 +102,9 @@ export default async function InstituteLayout({
       theme={theme}
       isEligibleForActivities={activityEligible}
       enrolledCourses={enrolledCourses}
+      exp={gamification?.exp || 0}
+      streakCurrent={gamification?.loginStreakCurrent || 1}
+      userId={session.user.id}
     >
       {children}
     </DashboardLayout>

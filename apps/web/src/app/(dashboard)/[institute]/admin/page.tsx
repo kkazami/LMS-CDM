@@ -14,7 +14,6 @@ import {
   ArrowRight,
   UserCheck,
   Layers,
-  Settings,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -137,7 +136,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
           background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
         }}
       >
-        {/* Subtle Premium Background */}
+        {/* Subtle Depth Background Overlays */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
         <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
@@ -158,7 +157,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
               className="mt-1 text-sm sm:text-base text-white/90 font-medium"
               style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.15)" }}
             >
-              Centralized oversight and management hub for all academic entities.
+              Centralized oversight and management hub for all academic entities, courses, and security controls.
             </p>
           </div>
         </div>
@@ -167,12 +166,12 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       {/* ─── 2. KPI Metrics Grid ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Students */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs flex items-center justify-between transition-all hover:shadow-md">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Active Students
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F0F2F8] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
               {totalStudents}
             </p>
           </div>
@@ -182,12 +181,12 @@ export default async function AdminDashboardPage({ params }: PageProps) {
         </div>
 
         {/* Total Instructors */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs flex items-center justify-between transition-all hover:shadow-md">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Instructors
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F0F2F8] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
               {totalInstructors}
             </p>
           </div>
@@ -197,12 +196,12 @@ export default async function AdminDashboardPage({ params }: PageProps) {
         </div>
 
         {/* Active Courses */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs flex items-center justify-between transition-all hover:shadow-md">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Active Courses
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F0F2F8] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
               {totalCourses}
             </p>
           </div>
@@ -212,9 +211,9 @@ export default async function AdminDashboardPage({ params }: PageProps) {
         </div>
 
         {/* Pending Requests */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-5 shadow-xs flex items-center justify-between">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs flex items-center justify-between transition-all hover:shadow-md">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Pending Requests
             </p>
             <p className="text-2xl font-black text-amber-500 mt-1">
@@ -230,14 +229,20 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       {/* ─── 3. Quick Administrative Actions Grid ─── */}
       <div className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-orange-500/10 text-[#F97316]">
+          <div
+            className="p-2 rounded-xl"
+            style={{
+              backgroundColor: `${theme.colors.primary}1A`,
+              color: theme.colors.primary,
+            }}
+          >
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8]">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
               Administrative Modules
             </h2>
-            <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
               Manage courses, user credentials, security controls, and infrastructure
             </p>
           </div>
@@ -250,7 +255,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
               <Link
                 key={action.href}
                 href={action.href}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/20"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 active:scale-[0.98]"
                 style={{
                   animation: `staggerFadeIn 0.2s ease-out both`,
                   animationDelay: `${idx * 40}ms`,
@@ -267,22 +272,25 @@ export default async function AdminDashboardPage({ params }: PageProps) {
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#8B92A5]">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#94A3B8]">
                       {action.count}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] group-hover:text-[#F97316] transition-colors">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9] transition-colors">
                       {action.title}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1 line-clamp-2">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1 line-clamp-2">
                       {action.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between text-xs font-semibold text-[#F97316]">
+                <div
+                  className="mt-5 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-semibold"
+                  style={{ color: theme.colors.primary }}
+                >
                   <span>Access Module</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </div>

@@ -7,6 +7,8 @@ import { Bell, Menu, Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Mo
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
+import LevelBadge from "@/components/common/LevelBadge";
+import SearchModal from "@/components/layout/SearchModal";
 import { useTheme } from "@/lib/theme-context";
 
 type TopbarProps = {
@@ -17,6 +19,7 @@ type TopbarProps = {
   instituteCode: string;
   studentNumber?: string | null;
   avatarUrl?: string | null;
+  exp?: number;
   onOpenMobileMenu?: () => void;
 };
 
@@ -28,13 +31,26 @@ export default function Topbar({
   instituteCode,
   studentNumber,
   avatarUrl,
+  exp = 0,
   onOpenMobileMenu,
 }: TopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { themeMode, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchModalOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -99,18 +115,32 @@ export default function Topbar({
     dynamicTitle = titleMap[segment];
   }
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white/95 dark:bg-[#1A1D27]/95 backdrop-blur-md transition-colors duration-200">
-      <div className="flex items-center justify-between gap-4 px-4 py-3 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white/95 dark:bg-[#1A1D27]/95 backdrop-blur-md transition-colors duration-200 min-h-[56px] flex flex-col justify-center">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onOpenMobileMenu}
-            className="rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
 
+          {/* Mobile Institute Badge & Title */}
+          <div className="md:hidden flex items-center gap-2 min-w-0">
+            <span
+              className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              {instituteCode.toUpperCase()}
+            </span>
+            <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate">
+              {dynamicTitle}
+            </h1>
+          </div>
+
+          {/* Desktop Title & Subtitle */}
           <div className="hidden md:block">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
               {instituteName}
@@ -121,15 +151,33 @@ export default function Topbar({
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-2.5 sm:gap-3">
-          {/* Search bar */}
-          <div className="hidden w-full max-w-md items-center gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 md:flex focus-within:ring-2 focus-within:ring-[#F97316]/20 focus-within:border-[#F97316] transition-all">
-            <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5]" />
-            <input
-              className="w-full bg-transparent text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 dark:placeholder:text-[#555C72]"
-              placeholder="Search courses, notes, or peers..."
-            />
-          </div>
+        <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+          {/* Search bar Desktop */}
+          <button
+            type="button"
+            onClick={() => setSearchModalOpen(true)}
+            className="hidden w-full max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 md:flex hover:ring-2 hover:ring-[#F97316]/20 hover:border-[#F97316] transition-all text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5] shrink-0" />
+              <span className="text-sm text-slate-400 dark:text-[#555C72] truncate">
+                Search courses, notes, or peers...
+              </span>
+            </div>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
+              ⌘K
+            </kbd>
+          </button>
+          
+          {/* Mobile Search Button */}
+          <button
+            type="button"
+            onClick={() => setSearchModalOpen(true)}
+            className="md:hidden relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </button>
 
           {/* Light / Dark Mode Toggle Button */}
           <button
@@ -137,7 +185,7 @@ export default function Topbar({
             onClick={toggleTheme}
             aria-label="Toggle theme"
             aria-pressed={themeMode === "dark"}
-            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95"
+            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
             title={`Switch to ${themeMode === "light" ? "Dark" : "Light"} mode`}
           >
             {themeMode === "dark" ? (
@@ -149,7 +197,7 @@ export default function Topbar({
 
           <Link
             href={`/${instituteCode}/settings`}
-            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95"
+            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Settings"
           >
             <Settings className="h-5 w-5" />
@@ -166,7 +214,10 @@ export default function Topbar({
               aria-haspopup="true"
             >
               <div className="text-right">
-                <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">{userName}</p>
+                <div className="flex items-center justify-end gap-1.5">
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">{userName}</p>
+                  {userRole === "STUDENT" && <LevelBadge exp={exp} size="sm" />}
+                </div>
                 <div className="flex items-center gap-1.5 justify-end">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5]">
                     {userRole}
@@ -230,6 +281,14 @@ export default function Topbar({
           </div>
         </div>
       </div>
+
+      {/* Global Command / Search Palette Modal */}
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        instituteCode={instituteCode}
+        theme={theme}
+      />
     </header>
   );
 }

@@ -10,6 +10,10 @@ import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ChatbotProvider } from "@/lib/chatbot-context";
 import ChatbotWidget from "@/components/common/ChatbotWidget";
+import BadgeToastProvider from "@/components/common/BadgeToast";
+import LoginRewardModal from "@/components/common/LoginRewardModal";
+import FloatingStudyTimer from "@/components/common/FloatingStudyTimer";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface DashboardLayoutProps {
@@ -24,6 +28,11 @@ interface DashboardLayoutProps {
   isEligibleForActivities?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
+  /** Gamification total EXP for LevelBadge */
+  exp?: number;
+  /** Current login streak */
+  streakCurrent?: number;
+  userId?: string;
   children: React.ReactNode;
 }
 
@@ -37,6 +46,9 @@ export default function DashboardLayout({
   theme,
   isEligibleForActivities,
   enrolledCourses,
+  exp = 0,
+  streakCurrent = 0,
+  userId,
   children,
 }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -92,9 +104,10 @@ export default function DashboardLayout({
             studentNumber={studentNumber}
             avatarUrl={avatarUrl ?? null}
             instituteCode={instituteCode}
+            exp={exp}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
-          <main className="p-4 lg:p-8">
+          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {children}
             </AvatarProvider>
@@ -105,8 +118,31 @@ export default function DashboardLayout({
       {/* Toast Notifications */}
       <Toaster />
 
-      {/* Chatbot Widget — STUDENT role only */}
-      {isStudent && <ChatbotWidget theme={theme} />}
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        instituteCode={instituteCode}
+        primaryColor={theme.colors.primary}
+        userRole={userRole}
+      />
+
+      {/* Gamification Badge Toasts */}
+      <BadgeToastProvider />
+
+      {/* Student Gamification Widgets */}
+      {isStudent && (
+        <>
+          <LoginRewardModal
+            userId={userId}
+            streakCurrent={streakCurrent}
+            expEarned={10}
+            totalExp={exp}
+          />
+          <div className="fixed right-4 z-50 flex flex-col gap-4 bottom-[calc(72px+env(safe-area-inset-bottom,0px))] lg:bottom-4 pointer-events-none *:pointer-events-auto items-end">
+            <FloatingStudyTimer />
+            <ChatbotWidget theme={theme} />
+          </div>
+        </>
+      )}
     </div>
   );
 

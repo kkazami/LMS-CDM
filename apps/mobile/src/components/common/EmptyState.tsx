@@ -5,7 +5,7 @@ import { LucideIcon } from 'lucide-react-native';
 import { Button } from './Button';
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   message: string;
   actionLabel?: string;
@@ -17,9 +17,11 @@ export function EmptyState({ icon: Icon, title, message, actionLabel, onAction }
 
   return (
     <View style={styles.container}>
-      <View style={[styles.iconContainer, { backgroundColor: theme.colors.background }]}>
-        <Icon size={48} color={theme.colors.primary} />
-      </View>
+      {Icon && (
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.background }]}>
+          <Icon size={48} color={theme.colors.primary} />
+        </View>
+      )}
       <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
       <Text style={[styles.message, { color: theme.colors.sidebarMuted }]}>{message}</Text>
       {actionLabel && onAction && (

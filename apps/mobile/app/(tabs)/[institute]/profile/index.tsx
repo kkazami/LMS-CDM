@@ -1,80 +1,141 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { ScreenHeader } from '../../../../src/components/common/ScreenHeader';
-import { Card } from '../../../../src/components/common/Card';
-import { Badge } from '../../../../src/components/common/Badge';
-import { Button } from '../../../../src/components/common/Button';
-import { User, Mail, GraduationCap, Building2 } from 'lucide-react-native';
+import { typography } from '../../../../src/lib/typography';
+import { Flame, Zap, Award } from 'lucide-react-native';
 
 export default function ProfileScreen() {
-  const router = useRouter();
+  const api = useAuthStore((state) => state.api);
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const theme = useTheme();
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login');
-  };
+  const { data } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => api.profile.get(),
+  });
+
+  const profile = data?.profile;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <ScreenHeader title="Profile" subtitle="Account details" showBack />
+      <ScreenHeader title="My Profile" subtitle="Academic Identity & Statistics" />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.avatarSection}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
           <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primary }]}>
-            <Text style={styles.avatarLetter}>{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
+            <Text style={styles.avatarLetter}>{(user?.name || 'S').charAt(0).toUpperCase()}</Text>
           </View>
-          <Text style={styles.userName}>{user?.name}</Text>
-          <Badge label={user?.role || 'STUDENT'} variant="info" />
+          <Text style={[styles.nameText, typography.headingLg, { color: theme.colors.text }]}>
+            {user?.name || 'Scholar'}
+          </Text>
+          <Text style={[styles.emailText, { color: theme.colors.textSecondary }]}>{user?.email}</Text>
+          <View style={[styles.roleBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+            <Text style={[styles.roleText, { color: theme.colors.primary }]}>{user?.role || 'STUDENT'}</Text>
+          </View>
         </View>
 
-        <Card style={styles.detailsCard}>
-          <View style={styles.infoRow}>
-            <Mail size={18} color="#6B7280" />
-            <Text style={styles.infoLabel}>Email:</Text>
-            <Text style={styles.infoValue}>{user?.email}</Text>
+        <Text style={[styles.sectionHeading, { color: theme.colors.textSecondary }]}>ACADEMIC STATS</Text>
+        <View style={styles.statsGrid}>
+          <View style={[styles.statBox, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <Flame size={20} color="#F59E0B" />
+            <Text style={[styles.statValue, typography.tabularLg, { color: theme.colors.text }]}>
+              {profile?.currentStreak || 0}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Day Streak</Text>
           </View>
 
-          {user?.studentNumber ? (
-            <View style={styles.infoRow}>
-              <GraduationCap size={18} color="#6B7280" />
-              <Text style={styles.infoLabel}>Student ID:</Text>
-              <Text style={styles.infoValue}>{user.studentNumber}</Text>
-            </View>
-          ) : null}
-
-          <View style={styles.infoRow}>
-            <Building2 size={18} color="#6B7280" />
-            <Text style={styles.infoLabel}>Institute:</Text>
-            <Text style={styles.infoValue}>{user?.institute?.name || 'Lumina Institute'}</Text>
+          <View style={[styles.statBox, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <Zap size={20} color="#EAB308" />
+            <Text style={[styles.statValue, typography.tabularLg, { color: theme.colors.text }]}>
+              {profile?.exp || 0}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Total EXP</Text>
           </View>
-        </Card>
 
-        <Button
-          title="Sign Out"
-          onPress={handleLogout}
-          variant="danger"
-          style={{ marginTop: 24 }}
-        />
+          <View style={[styles.statBox, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <Award size={20} color="#10B981" />
+            <Text style={[styles.statValue, typography.tabularLg, { color: theme.colors.text }]}>
+              {'Lvl ' + (profile?.level || 1)}
+            </Text>
+            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Tier</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20 },
-  avatarSection: { alignItems: 'center', marginBottom: 24 },
-  avatarCircle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  avatarLetter: { fontSize: 36, fontWeight: '800', color: '#FFFFFF' },
-  userName: { fontSize: 22, fontWeight: '800', color: '#2C2727', marginBottom: 6 },
-  detailsCard: { padding: 16 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  infoLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: '#2C2727', flex: 1, textAlign: 'right' },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 14,
+  },
+  card: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  avatarCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  avatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  nameText: {
+    fontWeight: '700',
+  },
+  emailText: {
+    fontSize: 13,
+  },
+  roleBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    marginTop: 4,
+  },
+  roleText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginTop: 6,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 4,
+  },
+  statValue: {
+    fontWeight: '800',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
 });

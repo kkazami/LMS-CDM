@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Link from "next/link";
@@ -14,10 +14,19 @@ import {
   GraduationCap,
   Sparkles,
   Plus,
+  KeyRound,
+  Compass,
+  Flame,
+  Zap,
+  Award,
+  CheckSquare,
+  Code2,
+  Trophy,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
+import Button from "@/components/common/Button";
 import { unenrollFromCourse, reorderCourseCards } from "../courses/actions";
 
 interface EnrolledCourse {
@@ -50,23 +59,9 @@ interface StudentDashboardClientProps {
   initialCourses: EnrolledCourse[];
   dueSoonItems: DueSoonItem[];
   serverNow: string;
-}
-
-function getCourseCategoryColor(code: string): { border: string; badgeBg: string; badgeText: string } {
-  const upper = code.toUpperCase();
-  if (upper.includes("CS") || upper.includes("ELECT") || upper.includes("PROG")) {
-    return { border: "#3B82F6", badgeBg: "rgba(59, 130, 246, 0.15)", badgeText: "#60A5FA" };
-  }
-  if (upper.includes("SYS") || upper.includes("ADMIN") || upper.includes("NET")) {
-    return { border: "#10B981", badgeBg: "rgba(16, 185, 129, 0.15)", badgeText: "#34D399" };
-  }
-  if (upper.includes("IAA") || upper.includes("IS") || upper.includes("DATA") || upper.includes("SEC")) {
-    return { border: "#8B5CF6", badgeBg: "rgba(139, 92, 246, 0.15)", badgeText: "#A78BFA" };
-  }
-  if (upper.includes("MATH") || upper.includes("STAT") || upper.includes("CALC")) {
-    return { border: "#F59E0B", badgeBg: "rgba(245, 158, 11, 0.15)", badgeText: "#FCD34D" };
-  }
-  return { border: "#F97316", badgeBg: "rgba(249, 115, 22, 0.15)", badgeText: "#FB923C" };
+  exp?: number;
+  streakCurrent?: number;
+  level?: number;
 }
 
 function formatRelativeDueDate(
@@ -124,6 +119,9 @@ export default function StudentDashboardClient({
   initialCourses,
   dueSoonItems,
   serverNow,
+  exp = 0,
+  streakCurrent = 1,
+  level = 1,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -179,103 +177,275 @@ export default function StudentDashboardClient({
     });
   };
 
+  // Quick action items for mobile and desktop quick navigation bar
+  const quickActions = [
+    {
+      label: "Join Class",
+      icon: Plus,
+      onClick: () => setJoinModalOpen(true),
+      highlight: true,
+    },
+    {
+      label: "To-do",
+      icon: ClipboardList,
+      href: `/${instituteCode}/assignments`,
+      badge: dueSoonItems.length > 0 ? `${dueSoonItems.length}` : undefined,
+    },
+    {
+      label: "Flashcards",
+      icon: Flame,
+      href: `/${instituteCode}/flashcards`,
+    },
+    {
+      label: "Tasks",
+      icon: CheckSquare,
+      href: `/${instituteCode}/tasks`,
+    },
+    {
+      label: "CodeLab",
+      icon: Code2,
+      href: `/${instituteCode}/activities/codelab`,
+    },
+    {
+      label: "Leaderboard",
+      icon: Trophy,
+      href: `/${instituteCode}/leaderboards`,
+    },
+  ];
+
   return (
     <>
-      <div className="space-y-8 max-w-7xl mx-auto page-enter">
-        {/* ─── 1. Welcome Banner ─── */}
+      <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto page-enter">
+        {/* ─── 1. Compact Gradient Hero Banner with Full Mobile Depth ─── */}
         <div
-          className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+          className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-white shadow-xl"
           style={{
             background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
           }}
         >
-          {/* Subtle Premium Background */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+          {/* Subtle Depth Background Overlays */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/15" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 sm:h-96 w-72 sm:w-96 rounded-full bg-black/15 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -left-24 h-72 sm:h-96 w-72 sm:w-96 rounded-full bg-white/15 blur-3xl" />
 
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md mb-3 text-white border border-white/20">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md text-white border border-white/20 shadow-xs">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>{instituteName}</span>
+                <span>{instituteName} • Student Portal</span>
               </div>
               <h1
-                className="text-2xl sm:text-3xl font-black tracking-tight"
-                style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)" }}
+                className="text-xl sm:text-3xl font-black tracking-tight"
+                style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.25)" }}
               >
                 Welcome back, {userName}! 👋
               </h1>
               <p
-                className="mt-1 text-sm sm:text-base text-white/90 font-medium"
-                style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.15)" }}
+                className="text-xs sm:text-base text-white/90 font-medium max-w-xl"
+                style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)" }}
               >
-                Here is your academic overview for this week.
+                Here is your academic overview, coursework, and upcoming deadlines.
               </p>
+            </div>
+
+            {/* Gamification Pills (Streak & EXP & Level) */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1 sm:pt-0">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/30 backdrop-blur-md border border-white/20 text-white shadow-xs">
+                <Flame className="h-4 w-4 text-amber-300 animate-pulse" />
+                <span className="text-xs font-bold whitespace-nowrap">
+                  {streakCurrent} Day{streakCurrent === 1 ? "" : "s"} Streak
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 backdrop-blur-md border border-white/25 text-white shadow-xs">
+                <Zap className="h-4 w-4 text-yellow-300" />
+                <span className="text-xs font-bold whitespace-nowrap">
+                  {exp} EXP
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xs">
+                <Award className="h-4 w-4 text-emerald-300" />
+                <span className="text-xs font-bold whitespace-nowrap">
+                  Lvl {level}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ─── 2. Main Grid: Enrolled Courses & Due Soon ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ─── 2. Quick Action Bar (Horizontal Scroll on Mobile) ─── */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            if (action.onClick) {
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs shrink-0 cursor-pointer min-h-[44px] active:scale-95 group font-medium text-xs sm:text-sm text-slate-800 dark:text-[#F0F2F8]"
+                  style={
+                    action.highlight
+                      ? {
+                          borderColor: `${theme.colors.primary}60`,
+                          backgroundColor: `${theme.colors.primary}0D`,
+                        }
+                      : {}
+                  }
+                >
+                  <div
+                    className="p-1 rounded-lg shrink-0"
+                    style={{
+                      backgroundColor: `${theme.colors.primary}1A`,
+                      color: theme.colors.primary,
+                    }}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span>{action.label}</span>
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={action.label}
+                href={action.href!}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs shrink-0 cursor-pointer min-h-[44px] active:scale-95 group font-medium text-xs sm:text-sm text-slate-800 dark:text-[#F0F2F8]"
+              >
+                <div
+                  className="p-1 rounded-lg shrink-0"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}1A`,
+                    color: theme.colors.primary,
+                  }}
+                >
+                  <Icon className="h-4 w-4" />
+                </div>
+                <span>{action.label}</span>
+                {action.badge && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                    {action.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ─── 3. Main Grid: Enrolled Courses & Due Soon ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left 2 Columns: Enrolled Classes */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-orange-500/10 text-[#F97316]">
+                <div
+                  className="p-2 rounded-xl"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}1A`,
+                    color: theme.colors.primary,
+                  }}
+                >
                   <GraduationCap className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8]">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
                     My Enrolled Classes
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                     Courses you are currently participating in
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-500/10 text-[#F97316]">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <span
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}1A`,
+                    color: theme.colors.primary,
+                  }}
+                >
                   {courses.length} {courses.length === 1 ? "Class" : "Classes"}
                 </span>
 
-                {/* Add Class Button */}
-                <button
-                  type="button"
-                  onClick={() => setJoinModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white bg-[#F97316] hover:bg-[#EA580C] transition-all shadow-xs cursor-pointer active:scale-95"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add Class</span>
-                </button>
+                {/* Add Class Button with dynamic theme */}
+                <Button theme={theme} onClick={() => setJoinModalOpen(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  <span>Join Class</span>
+                </Button>
               </div>
             </div>
 
             {/* Drag and drop hint */}
             {courses.length > 1 && (
-              <p className="text-xs text-slate-400 dark:text-[#555C72]">
+              <p className="text-xs text-slate-400 dark:text-[#64748B]">
                 Drag cards to reorder • changes are saved automatically
               </p>
             )}
 
             {courses.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-8 text-center shadow-xs">
-                <BookOpen className="mx-auto h-12 w-12 text-slate-300 dark:text-[#555C72] mb-3" />
-                <h3 className="text-base font-semibold text-slate-900 dark:text-[#F0F2F8]">
-                  No Enrolled Classes Yet
-                </h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-[#8B92A5] mb-4">
-                  You are not currently enrolled in any approved courses for this institute.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setJoinModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#F97316] hover:bg-[#EA580C] shadow-xs transition-all cursor-pointer"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Join a Class Now</span>
-                </button>
+              /* Enhanced 2-Step Onboarding Empty State */
+              <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs">
+                <div className="text-center max-w-md mx-auto mb-6">
+                  <div
+                    className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center mb-3"
+                    style={{
+                      backgroundColor: `${theme.colors.primary}18`,
+                      color: theme.colors.primary,
+                    }}
+                  >
+                    <Compass className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
+                    Get Started with Your Courses
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+                    You are not enrolled in any classes yet. Follow these simple steps to begin:
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                    <div
+                      className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
+                      style={{ backgroundColor: theme.colors.primary }}
+                    >
+                      1
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9]">
+                        Get Course Code
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                        Ask your professor for the 6-character class invite code.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                    <div
+                      className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
+                      style={{ backgroundColor: theme.colors.primary }}
+                    >
+                      2
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9]">
+                        Join Class
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                        Click Join Class, enter the code, and await approval.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <Button theme={theme} onClick={() => setJoinModalOpen(true)}>
+                    <KeyRound className="mr-1.5 h-4 w-4" />
+                    <span>Enter Course Code</span>
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -288,7 +458,7 @@ export default function StudentDashboardClient({
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={handleDrop}
-                      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] shadow-xs overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/20 cursor-grab active:cursor-grabbing select-none"
+                      className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/15 cursor-grab active:cursor-grabbing select-none"
                       style={{
                         animation: `staggerFadeIn 0.2s ease-out both`,
                         animationDelay: `${Math.min(index, 10) * 40}ms`,
@@ -343,33 +513,34 @@ export default function StudentDashboardClient({
 
                       {/* Card Body & Footer */}
                       <div className="p-4 flex flex-col justify-between flex-1">
-                        <div className="space-y-1.5 text-xs text-slate-500 dark:text-[#8B92A5]">
+                        <div className="space-y-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
                           {course.instructorName && (
                             <div className="flex items-center gap-1.5">
-                              <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72] shrink-0" />
+                              <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
                               <span className="truncate">{course.instructorName}</span>
                             </div>
                           )}
                           {course.room && (
                             <div className="flex items-center gap-1.5">
-                              <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72] shrink-0" />
+                              <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
                               <span className="truncate">{course.room}</span>
                             </div>
                           )}
                         </div>
 
                         {/* Actions Footer */}
-                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between">
+                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                           <Link
                             href={`/${instituteCode}/courses/${course.id}/classwork`}
-                            className="text-xs font-medium text-slate-600 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
+                            className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
                             draggable={false}
                           >
                             Classwork
                           </Link>
                           <Link
                             href={`/${instituteCode}/courses/${course.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#F97316] hover:underline transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
+                            style={{ color: theme.colors.primary }}
                             draggable={false}
                           >
                             <span>Go to Course</span>
@@ -384,37 +555,43 @@ export default function StudentDashboardClient({
             )}
           </div>
 
-          {/* ─── 3. Right 1 Column: Due Soon / Pending Tasks ─── */}
+          {/* ─── 4. Right 1 Column: Due Soon / Pending Tasks (Urgent Deadlines Feed) ─── */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-orange-500/10 text-[#F97316]">
+                <div
+                  className="p-2 rounded-xl"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}1A`,
+                    color: theme.colors.primary,
+                  }}
+                >
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8]">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
                     Due Soon
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                     Next 7 days deadline
                   </p>
                 </div>
               </div>
               {dueSoonItems.length > 0 && (
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   {dueSoonItems.length} Pending
                 </span>
               )}
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-4 shadow-xs space-y-3">
+            <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-4 shadow-xs space-y-3">
               {dueSoonItems.length === 0 ? (
                 <div className="py-8 text-center">
                   <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 mb-2" />
-                  <p className="text-sm font-semibold text-slate-800 dark:text-[#F0F2F8]">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">
                     All caught up!
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-[#555C72] mt-0.5">
+                  <p className="text-xs text-slate-400 dark:text-[#64748B] mt-0.5">
                     No classwork due in the next 7 days.
                   </p>
                 </div>
@@ -425,32 +602,38 @@ export default function StudentDashboardClient({
                     const Icon = isAssignment ? ClipboardList : BookOpenCheck;
                     const relative = formatRelativeDueDate(item.dueDate, serverNow);
 
-                    let badgeClass = "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#8B92A5]";
+                    let badgeClass = "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#94A3B8]";
                     if (relative.status === "overdue") {
-                      badgeClass = "bg-[#EF4444] text-white font-bold";
+                      badgeClass = "bg-[#EF4444] text-white font-bold animate-pulse";
                     } else if (relative.status === "today") {
-                      badgeClass = "bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30";
+                      badgeClass = "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30";
                     } else if (relative.status === "soon") {
-                      badgeClass = "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20";
+                      badgeClass = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20";
                     }
 
                     return (
                       <Link
                         key={item.id}
                         href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-[rgba(255,255,255,0.07)] transition-all"
+                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-[48px]"
                         style={{
                           animation: `staggerFadeIn 0.2s ease-out both`,
                           animationDelay: `${Math.min(idx, 10) * 40}ms`,
                         }}
                       >
-                        <div className="p-2 rounded-lg shrink-0 mt-0.5 bg-orange-500/10 text-[#F97316]">
+                        <div
+                          className="p-2 rounded-lg shrink-0 mt-0.5"
+                          style={{
+                            backgroundColor: `${theme.colors.primary}1A`,
+                            color: theme.colors.primary,
+                          }}
+                        >
                           <Icon className="h-4 w-4" />
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider truncate">
+                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate">
                               {item.courseCode} {item.courseSection ? `• ${item.courseSection}` : ""}
                             </span>
                             <span
@@ -459,7 +642,7 @@ export default function StudentDashboardClient({
                               {relative.label}
                             </span>
                           </div>
-                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F0F2F8] group-hover:text-[#F97316] transition-colors line-clamp-1">
+                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] group-hover:text-[#F97316] transition-colors line-clamp-1">
                             {item.title}
                           </h4>
                         </div>
@@ -469,10 +652,11 @@ export default function StudentDashboardClient({
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-100 dark:border-[rgba(255,255,255,0.06)] text-right">
+              <div className="pt-3 border-t border-slate-100 dark:border-white/5 text-right">
                 <Link
                   href={`/${instituteCode}/assignments`}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#F97316] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline"
+                  style={{ color: theme.colors.primary }}
                 >
                   <span>Go to full To-do page</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -498,16 +682,16 @@ export default function StudentDashboardClient({
             className="absolute inset-0 bg-black/60 backdrop-blur-xs"
             onClick={() => setConfirmUnenroll(null)}
           />
-          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#22263A] rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-[rgba(255,255,255,0.1)] text-slate-900 dark:text-[#F0F2F8]">
+          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1C2030] rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-[#F1F5F9]">
             <h3 className="text-lg font-bold mb-2">Unenroll from course?</h3>
-            <p className="text-xs text-slate-500 dark:text-[#8B92A5] mb-6">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mb-6">
               You will lose access to all course materials and your submission history. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmUnenroll(null)}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.1)] py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px]"
               >
                 Cancel
               </button>
@@ -515,7 +699,7 @@ export default function StudentDashboardClient({
                 type="button"
                 onClick={() => handleUnenroll(confirmUnenroll)}
                 disabled={isPending}
-                className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer"
+                className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-[44px]"
               >
                 {isPending ? "Unenrolling..." : "Unenroll"}
               </button>

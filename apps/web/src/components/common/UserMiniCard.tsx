@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { X, Mail, Phone, BookOpen, Loader2 } from "lucide-react";
+import { X, Mail, Phone, BookOpen, Loader2, Flame, Trophy } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
+import LevelBadge from "@/components/common/LevelBadge";
+import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 
 interface PublicUserProfile {
   id: string;
@@ -24,6 +26,15 @@ interface PublicUserProfile {
   institute: { code: string; name: string };
   taughtCourses: { id: string; title: string; code: string }[];
   enrollments: { course: { id: string; title: string; code: string } }[];
+  gamificationProfile?: {
+    exp: number;
+    level: number;
+    levelTier: string;
+    currentStreak: number;
+    longestStreak: number;
+    totalLoginDays: number;
+    badges: { badgeRuleId: string; earnedAt: string }[];
+  } | null;
 }
 
 interface UserMiniCardProps {
@@ -74,13 +85,15 @@ export default function UserMiniCard({
       }
     }
     fetchProfile();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Calculate position after mount/load
   useEffect(() => {
     const cardWidth = 320;
-    const cardHeight = 360;
+    const cardHeight = 420;
     const gap = 8;
 
     let top = window.scrollY + anchorRect.bottom + gap;
@@ -109,44 +122,45 @@ export default function UserMiniCard({
     });
   }, [anchorRect]);
 
-  // Click outside to close
-  const handleClickOutside = useCallback(
-    (e: MouseEvent) => {
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
       if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        // Only close if we didn't click on the anchor itself (which would toggle it back open)
-        // We assume the anchor might have its own click handler, but just in case:
         onClose();
       }
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [handleClickOutside]);
-
-  // Escape key to close
-  useEffect(() => {
-    function handleEscape(e: KeyboardEvent) {
+    }
+    function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [onClose]);
 
-  const roleLabel = user?.role === "PROFESSOR" || user?.role === "TEACHER"
-    ? "Instructor"
-    : user?.role === "ADMIN"
-    ? "Admin"
-    : "Student";
-
   if (!mounted) return null;
+
+  const roleLabel =
+    user?.role === "PROFESSOR" || user?.role === "TEACHER"
+      ? "Instructor"
+      : user?.role === "ADMIN"
+      ? "Admin"
+      : "Student";
+
+  const exp = user?.gamificationProfile?.exp || 0;
+  const levelInfo = computeLevelInfo(exp);
+  const streak = user?.gamificationProfile?.currentStreak || 0;
+  const badgeCount = user?.gamificationProfile?.badges?.length || 0;
 
   return createPortal(
     <div
       ref={cardRef}
-      className={`absolute z-[9999] w-80 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-2xl transition-all duration-150 ease-out ${
+      role="dialog"
+      aria-label={`${user?.name || "User"} mini profile`}
+      className={`fixed z-[9999] w-[320px] rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
         visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
       }`}
       style={{
@@ -163,99 +177,130 @@ export default function UserMiniCard({
           <p className="text-sm text-slate-500 dark:text-[#8B92A5]">Could not load profile.</p>
           <button
             onClick={onClose}
-            className="mt-3 text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="mt-3 text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
           >
             Close
           </button>
         </div>
       ) : (
-        <div className="p-5">
-          {/* Header row */}
-          <div className="flex items-start justify-between mb-3">
-            <UserAvatar
-              name={user.name}
-              avatarUrl={user.avatarUrl}
-              size="xl"
-              color={theme.colors.primary}
-            />
-            <button
-              onClick={onClose}
-              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
-              aria-label="Close profile card"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+        <div>
+          {/* Top Banner Accent */}
+          <div
+            className="h-12 w-full"
+            style={{ backgroundColor: user.coverColor || theme.colors.primary }}
+          />
 
-          {/* Name + role */}
-          <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">{user.name}</h3>
-          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-[#8B92A5]">
-            <span
-              className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-              style={{
-                backgroundColor: `${theme.colors.primary}1A`,
-                color: theme.colors.primary,
-              }}
-            >
-              {roleLabel}
-            </span>
-            {user.studentNumber && (
-              <>
-                <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
-                <span className="font-mono">{user.studentNumber}</span>
-              </>
-            )}
-            {user.uniqueId && user.role !== "STUDENT" && (
-              <>
-                <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
-                <span className="font-mono">{user.uniqueId}</span>
-              </>
-            )}
-          </div>
-
-          {user.department && (
-            <p className="mt-1.5 text-xs text-slate-500 dark:text-[#8B92A5]">{user.department}</p>
-          )}
-          {user.yearLevel && user.role === "STUDENT" && (
-            <p className="mt-0.5 text-xs text-slate-400 dark:text-[#8B92A5]">{user.yearLevel}</p>
-          )}
-
-          {/* Divider */}
-          <hr className="my-3 border-slate-100 dark:border-white/5" />
-
-          {/* Contact info */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
-              <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
-              <span className="truncate">{user.email}</span>
+          <div className="px-5 pb-5 pt-0">
+            {/* Header row with Avatar offset */}
+            <div className="flex items-end justify-between -mt-6 mb-2.5">
+              <div className="relative p-1 rounded-full bg-white dark:bg-[#141721] ring-2 ring-[#F97316]/30">
+                <UserAvatar
+                  name={user.name}
+                  avatarUrl={user.avatarUrl}
+                  size="xl"
+                  color={theme.colors.primary}
+                />
+              </div>
+              <button
+                onClick={onClose}
+                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                aria-label="Close profile card"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            {user.phone && (
-              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
-                <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
-                <span>{user.phone}</span>
+
+            {/* Name + Level Badge */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] truncate max-w-[200px]">
+                {user.name}
+              </h3>
+              {user.role === "STUDENT" && <LevelBadge exp={exp} size="sm" />}
+            </div>
+
+            {/* Role & Student Number */}
+            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-[#8B92A5]">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                style={{
+                  backgroundColor: `${theme.colors.primary}1A`,
+                  color: theme.colors.primary,
+                }}
+              >
+                {roleLabel}
+              </span>
+              {user.studentNumber && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
+                  <span className="font-mono">{user.studentNumber}</span>
+                </>
+              )}
+              {user.department && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
+                  <span>{user.department}</span>
+                </>
+              )}
+            </div>
+
+            {/* Student Gamification Stats */}
+            {user.role === "STUDENT" && (
+              <div className="mt-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-bold text-slate-700 dark:text-[#F0F2F8]">
+                    Level {levelInfo.level} · {levelInfo.tier.toUpperCase()}
+                  </span>
+                  <span className="font-mono text-slate-400 dark:text-[#8B92A5]">
+                    {levelInfo.currentLevelProgress} / {levelInfo.expToNextLevel} EXP ({levelInfo.progressPercent}%)
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#F97316] transition-all duration-500"
+                    style={{ width: `${levelInfo.progressPercent}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-1 text-[11px] font-semibold text-slate-600 dark:text-[#8B92A5]">
+                  <span className="flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                    {streak} Day Streak
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                    {badgeCount} Badges
+                  </span>
+                </div>
               </div>
             )}
-            {user.bio && (
-              <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-[#8B92A5]">
-                <BookOpen className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
-                <span className="line-clamp-2">{user.bio}</span>
+
+            {/* Contact info */}
+            <div className="mt-3 space-y-1 text-xs text-slate-600 dark:text-[#8B92A5]">
+              <div className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                <span className="truncate">{user.email}</span>
               </div>
-            )}
+              {user.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <hr className="my-3 border-slate-100 dark:border-white/5" />
+
+            {/* View Full Profile */}
+            <Link
+              href={`/${instituteCode}/users/${user.id}`}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
+              style={{ color: theme.colors.primary }}
+              onClick={onClose}
+            >
+              View Full Profile
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
-
-          {/* Divider */}
-          <hr className="my-3 border-slate-100 dark:border-white/5" />
-
-          {/* View Full Profile */}
-          <Link
-            href={`/${instituteCode}/users/${user.id}`}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
-            style={{ color: theme.colors.primary }}
-            onClick={onClose}
-          >
-            View Full Profile
-            <span aria-hidden="true">→</span>
-          </Link>
         </div>
       )}
     </div>,

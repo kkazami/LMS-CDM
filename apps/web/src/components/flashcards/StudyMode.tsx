@@ -43,8 +43,10 @@ export default function StudyMode({
   const [submitting, setSubmitting] = useState(false);
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
   const [finished, setFinished] = useState(false);
+  const [expEarned, setExpEarned] = useState<number | null>(null);
   const [stats, setStats] = useState<FlashcardStudyStats | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sessionStartTimeRef = useRef<number>(Date.now());
 
   // Fetch study cards
   useEffect(() => {
@@ -175,6 +177,31 @@ export default function StudyMode({
     );
   }
 
+  // Trigger session completion EXP grant when study finishes
+  useEffect(() => {
+    if (finished && sessionResults.length >= 3) {
+      const elapsedSeconds = Math.max(5, Math.round((Date.now() - sessionStartTimeRef.current) / 1000));
+      fetch("/api/flashcards/complete-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          deckId,
+          cardsReviewed: sessionResults.length,
+          durationSeconds: elapsedSeconds,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.grantedExp > 0) {
+            setExpEarned(data.grantedExp);
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+    }
+  }, [finished, deckId, sessionResults.length]);
+
   // Session summary
   if (finished) {
     const totalCards = sessionResults.length;
@@ -200,6 +227,13 @@ export default function StudyMode({
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Session Complete!</h2>
             <p className="mt-2 text-slate-500 dark:text-[#8B92A5]">{deckTitle}</p>
+
+            {expEarned !== null && expEarned > 0 && (
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-xs font-black animate-in zoom-in-95">
+                <span>✨</span>
+                <span>+{expEarned} EXP Earned!</span>
+              </div>
+            )}
           </div>
 
           {/* Stats */}

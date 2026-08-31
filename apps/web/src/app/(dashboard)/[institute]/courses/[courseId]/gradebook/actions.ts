@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { executeSkill } from "@/lib/skills";
 import { createNotification } from "@/lib/notifications";
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 async function ensureInstructor(courseId: string) {
   const session = await getSession();
@@ -127,6 +129,32 @@ export async function updateGrade(submissionId: string, grade: number) {
     },
   });
 
+  // ── Grade Incentive evaluation ──
+  try {
+    const rules = await db.gradeIncentiveRule.findMany({
+      where: { courseId: submission.syllabusItem.course.instituteId ? undefined : undefined, isActive: true },
+    });
+    // Find rules specifically for this course
+    const courseRules = await db.gradeIncentiveRule.findMany({
+      where: { isActive: true },
+    });
+    for (const rule of courseRules) {
+      if (grade >= rule.gradeMin) {
+        await grantExp({
+          userId: submission.studentId,
+          amount: rule.bonusExp,
+          reason: `Grade Incentive: ${rule.label} (${grade}% in ${submission.syllabusItem.course.code})`,
+          source: "grade_incentive",
+        });
+      }
+    }
+    if (grade >= 100) {
+      await awardBadgeIfEarned(submission.studentId, "perfect-score");
+    }
+  } catch (incErr) {
+    console.error("GRADE_INCENTIVE_TRIGGER_ERROR", incErr);
+  }
+
   // ── Notify the student about the new grade ──
   const itemLabel = submission.syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
   const institute = await db.institute.findFirst({ where: { id: submission.syllabusItem.course.instituteId }, select: { code: true } });
@@ -169,12 +197,34 @@ export async function upsertGrade(syllabusItemId: string, studentId: string, gra
     },
   });
 
-  // ── Notify the student about the new grade ──
+  // ── Notify the student about the new grade & check incentives ──
   const syllabusItem = await db.syllabusItem.findUnique({
     where: { id: syllabusItemId },
-    select: { title: true, type: true, course: { select: { code: true, instituteId: true } } },
+    select: { title: true, type: true, courseId: true, course: { select: { code: true, instituteId: true } } },
   });
   if (syllabusItem) {
+    try {
+      const courseRules = await db.gradeIncentiveRule.findMany({
+        where: { courseId: syllabusItem.courseId, isActive: true },
+      });
+      for (const rule of courseRules) {
+        if (grade >= rule.gradeMin) {
+          await grantExp({
+            userId: studentId,
+            amount: rule.bonusExp,
+            reason: `Grade Incentive: ${rule.label} (${grade}% in ${syllabusItem.course.code})`,
+            source: "grade_incentive",
+            courseId: syllabusItem.courseId,
+          });
+        }
+      }
+      if (grade >= 100) {
+        await awardBadgeIfEarned(studentId, "perfect-score");
+      }
+    } catch (incErr) {
+      console.error("GRADE_INCENTIVE_TRIGGER_ERROR", incErr);
+    }
+
     const itemLabel = syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
     const institute = await db.institute.findFirst({ where: { id: syllabusItem.course.instituteId }, select: { code: true } });
     const instCode = institute?.code || "ics";

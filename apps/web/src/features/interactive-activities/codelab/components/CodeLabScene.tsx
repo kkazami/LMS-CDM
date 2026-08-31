@@ -25,6 +25,7 @@ import {
 import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
+import { toast } from "@/components/common/Toast";
 import {
   Terminal,
   Play,
@@ -252,6 +253,36 @@ export default function CodeLabScene({
 
     if (computedScore >= 60) {
       markComplete(true);
+
+      const earned = computedScore === 100 ? 80 : 30;
+      toast.success(`Level Passed! +${earned} EXP Earned! ✨`);
+
+      // Auto-sync submission to activity records
+      fetch("/api/activities/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId,
+          assignmentId,
+          activityType: "codelab",
+          variantSeed,
+          startedAt,
+          completionTimeSeconds: elapsedSeconds,
+          attempts: 1,
+          stateCheck: {
+            level,
+            language: fixedLanguage,
+            testPassCount: passedCount,
+            totalTestCases: totalCount,
+          },
+          score: computedScore,
+          maxScore: 100,
+          passed: true,
+        }),
+      }).catch(() => {
+        // silent background sync
+      });
+
       if (computedScore === 100) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 2500);
@@ -388,6 +419,9 @@ export default function CodeLabScene({
         totalPassed: number;
         totalCases: number;
         score: number;
+        grantedExp?: number;
+        leveledUp?: boolean;
+        newLevel?: number;
       };
 
       const mapped: TestCaseResult[] = data.publicResults.map((r) => ({
@@ -418,6 +452,41 @@ export default function CodeLabScene({
 
       if (data.score >= 60) {
         markComplete(true);
+
+        const earned = data.grantedExp || (data.score === 100 ? 80 : 30);
+        if (earned > 0) {
+          toast.success(
+            `Level Passed! +${earned} EXP Earned! ✨`,
+            data.leveledUp ? `🎉 Level Up! You reached Level ${data.newLevel}!` : undefined
+          );
+        }
+
+        // Auto-sync submission to activity records
+        fetch("/api/activities/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId,
+            assignmentId,
+            activityType: "codelab",
+            variantSeed,
+            startedAt,
+            completionTimeSeconds: elapsedSeconds,
+            attempts: 1,
+            stateCheck: {
+              level,
+              language: fixedLanguage,
+              testPassCount: data.totalPassed,
+              totalTestCases: data.totalCases,
+            },
+            score: data.score,
+            maxScore: 100,
+            passed: true,
+          }),
+        }).catch(() => {
+          // silent background sync
+        });
+
         if (data.score === 100) {
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 2500);

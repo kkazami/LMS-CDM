@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-18T17:50:45.000Z",
+  "title": "Design System: Lumina LMS",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "ICS Computing Flame",
+        "canonical": "#FF7517",
+        "tonalRamp": ["#4a1e00", "#7c3300", "#b34b00", "#e05e00", "#FF7517", "#ff9b52", "#ffbf8d", "#ffe4cc"]
+      },
+      "accent-ibe": {
+        "role": "secondary",
+        "displayName": "IBE Executive Gold",
+        "canonical": "#D4A017",
+        "tonalRamp": ["#3d2d00", "#6b4f00", "#9e7500", "#c29107", "#D4A017", "#e4bd50", "#eed38b", "#f9efcf"]
+      },
+      "accent-ite": {
+        "role": "secondary",
+        "displayName": "ITE Academic Cobalt",
+        "canonical": "#2563EB",
+        "tonalRamp": ["#0d2259", "#153a99", "#1e52d6", "#2563EB", "#5488f2", "#84a9f6", "#b5cbf9", "#e5edfd"]
+      },
+      "neutral-canvas": {
+        "role": "neutral",
+        "displayName": "Canvas Slate",
+        "canonical": "#F8FAFC",
+        "tonalRamp": ["#0B0D13", "#141721", "#1E2230", "#334155", "#64748B", "#94A3B8", "#E2E8F0", "#F8FAFC"]
+      },
+      "neutral-surface": {
+        "role": "neutral",
+        "displayName": "Card Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#141721", "#1A1D27", "#222634", "#475569", "#94A3B8", "#CBD5E1", "#F1F5F9", "#FFFFFF"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Top-level page titles, hero headers, and course banner titles."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers, module titles, and modal headers."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headers, syllabus item titles, and drawer titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, discussion streams, assignment prompts, and general UI copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, table column headers, form labels, and status tags."
+      }
+    },
+    "shadows": [
+      {
+        "name": "subtle-surface",
+        "value": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "purpose": "Default at-rest card elevation against the background canvas."
+      },
+      {
+        "name": "interactive-lift",
+        "value": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "purpose": "Hover state on clickable cards, flashcards, and course tiles."
+      },
+      {
+        "name": "elevated-overlay",
+        "value": "0 20px 25px -5px rgba(0, 0, 0, 0.15)",
+        "purpose": "Modals, dropdown popovers, and floating toolbars."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for micro-interactions and transitions."
+      },
+      {
+        "name": "flip-3d",
+        "value": "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Spaced-repetition flashcard flip transition."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button with dynamic institute theme coloring and micro-scale depression.",
+      "html": "<button class=\"ds-btn-primary\">Create Course</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background-color: #FF7517; border: 1px solid #FF7517; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background-color: #EA580C; border-color: #EA580C; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #FF7517; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral bordered button for secondary actions.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; background-color: #FFFFFF; border: 1px solid #D1D5DB; color: #2C2727; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background-color: #F8FAFC; border-color: #94A3B8; } .ds-btn-secondary:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Form Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Standard form input with institute focus glow and subtle border.",
+      "html": "<div class=\"ds-input-group\"><label class=\"ds-input-label\">Course Code</label><input type=\"text\" class=\"ds-input-field\" placeholder=\"e.g. CS-101\" value=\"CS-101\" /></div>",
+      "css": ".ds-input-group { display: flex; flex-direction: column; gap: 6px; } .ds-input-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 600; color: #475569; } .ds-input-field { width: 100%; border-radius: 12px; border: 1px solid #E2E8F0; background-color: #FFFFFF; padding: 10px 14px; font-size: 0.875rem; color: #0F172A; outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input-field:focus { border-color: #FF7517; box-shadow: 0 0 0 2px rgba(255, 117, 23, 0.2); }"
+    },
+    {
+      "name": "Badge / Status Pill",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Status badge utilizing a 10% institute primary tint.",
+      "html": "<span class=\"ds-badge\">Enrolled</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 4px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 600; background-color: rgba(255, 117, 23, 0.1); color: #FF7517; }"
+    },
+    {
+      "name": "Card Container",
+      "kind": "card",
+      "refersTo": "card-container",
+      "description": "Standard dashboard content container with clean border and header layout.",
+      "html": "<section class=\"ds-card\"><h3 class=\"ds-card-title\">Upcoming Deadlines</h3><p class=\"ds-card-desc\">Assignments due in the next 7 days.</p></section>",
+      "css": ".ds-card { border-radius: 16px; border: 1px solid #E2E8F0; background-color: #FFFFFF; padding: 24px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); } .ds-card-title { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 1.125rem; font-weight: 700; color: #0F172A; } .ds-card-desc { margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; color: #475569; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Polymath Campus",
+    "overview": "Lumina LMS creates an immersive, high-utility academic environment tailored for multi-tenant higher education institutes. The interface balances high-density information architecture with clean editorial breathing room.",
+    "keyCharacteristics": [
+      "Dynamic Institute Accentuation",
+      "Dual-Mode Precision",
+      "Tactile Micro-Interactions",
+      "Atomic Uniformity"
+    ],
+    "rules": [
+      {
+        "name": "The Institute Accent Rule",
+        "body": "Primary accent colors must only be resolved dynamically via the active institute context (getInstituteTheme). Hardcoded single-color overrides across institute boundaries are prohibited.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dual-Surface Contrast Rule",
+        "body": "Surfaces in dark mode must always use tonal depth (#0B0D13 canvas → #141721 card → #1C2030 elevated/menu) paired with rgba(255,255,255,0.08) hairline borders instead of harsh drop shadows.",
+        "section": "colors"
+      },
+      {
+        "name": "The Strict Scannability Rule",
+        "body": "Data labels and metadata tags must use distinct text-xs font-semibold with uppercase or subtle tracking to distinguish them instantly from narrative paragraph text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-Resting Rule",
+        "body": "Cards and containers rest flat with a 1px border. Shadows are applied only to convey elevation in response to interaction (hover, active dragging, modal opening).",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do always pass the dynamic theme prop to atomic components to preserve multi-institute color identity.",
+      "Do provide both light and dark mode styles for all newly authored components using dark: variants.",
+      "Do use rounded-xl for interactive fields and rounded-2xl for structural cards.",
+      "Do implement active:scale-[0.97] on custom clickable interactive elements for tactile feel.",
+      "Do use strict TypeScript interfaces matching Prisma models without using any."
+    ],
+    "donts": [
+      "Don't hardcode static hex colors like #FF7517 or #2563EB directly inside shared dashboard components; resolve them through theme.colors.",
+      "Don't use heavy drop shadows on resting cards; rely on border hairlines and tonal surface shifts.",
+      "Don't create separate duplicated components for different institutes; keep components in packages/ui or src/components and inject institute parameters.",
+      "Don't disable or break keyboard focus rings; always maintain :focus-visible with var(--focus-ring)."
+    ]
+  }
+}

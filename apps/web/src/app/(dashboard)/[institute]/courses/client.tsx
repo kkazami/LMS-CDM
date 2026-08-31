@@ -14,6 +14,7 @@ import {
   User,
   Users,
   Clock,
+  ChevronRight,
 } from "lucide-react";
 import {
   unenrollFromCourse,
@@ -250,7 +251,7 @@ export default function CoursesClient({
                     </div>
                   </div>
 
-                  {/* Card Body */}
+                  {/* Card Body & Footer */}
                   <div className="px-5 py-4 space-y-2">
                     {course.instructorName && (
                       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-[#8B92A5]">
@@ -278,6 +279,25 @@ export default function CoursesClient({
                           {course.enrolledCount}
                         </span>
                       )}
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                      <Link
+                        href={`/${instituteCode}/courses/${course.id}/classwork`}
+                        className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
+                        draggable={false}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Classwork
+                      </Link>
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
+                        style={{ color: theme.colors.primary }}
+                      >
+                        <span>View</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </span>
                     </div>
                   </div>
                 </Link>

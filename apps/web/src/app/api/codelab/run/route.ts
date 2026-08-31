@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Forward to resilient Judge0 execution engine
-    const result = await executeJudge0Submission(sourceCode, languageId, stdin || "");
+    // 4. Wrap student function with standard I/O harness if needed
+    const wrapperLang = getWrapperLanguageFromId(languageId);
+    const executableCode = wrapStudentCode(wrapperLang, sourceCode, null, stdin || "");
+
+    // 5. Forward to resilient Judge0 execution engine
+    const result = await executeJudge0Submission(executableCode, languageId, stdin || "");
     return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("CODELAB_RUN_ERROR", error);

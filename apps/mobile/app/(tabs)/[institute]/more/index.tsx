@@ -1,20 +1,24 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { ScreenHeader } from '../../../../src/components/common/ScreenHeader';
+import { typography, TOUCH_TARGET } from '../../../../src/lib/typography';
 import {
   ClipboardList,
+  Flame,
+  CheckSquare,
+  Layers,
   Trophy,
-  FlaskConical,
+  Award,
   User,
   Settings,
   HelpCircle,
   Shield,
   LogOut,
   ChevronRight,
-  ListTodo,
 } from 'lucide-react-native';
 
 export default function MoreMenuScreen() {
@@ -25,55 +29,80 @@ export default function MoreMenuScreen() {
 
   const instituteCode = user?.institute?.code || 'ics';
 
-  const menuGroups = [
+  const menuSections = [
     {
-      title: 'LMS Features',
+      title: 'ACADEMIC TOOLS',
       items: [
-        { label: 'Assignments', icon: ClipboardList, route: `/(tabs)/${instituteCode}/assignments` },
-        { label: 'Leaderboard', icon: Trophy, route: `/(tabs)/${instituteCode}/leaderboards` },
-        { label: 'Tasks', icon: ListTodo, route: `/(tabs)/${instituteCode}/tasks` },
-        { label: 'Interactive Labs', icon: FlaskConical, route: `/(tabs)/${instituteCode}/activities` },
+        { label: 'To-do & Assignments', icon: ClipboardList, route: '/(tabs)/' + instituteCode + '/assignments' },
+        { label: 'Flashcards Study', icon: Flame, route: '/(tabs)/' + instituteCode + '/flashcards' },
+        { label: 'Learning Materials', icon: Layers, route: '/(tabs)/' + instituteCode + '/materials' },
+        { label: 'Leaderboard & Rankings', icon: Trophy, route: '/(tabs)/' + instituteCode + '/leaderboards' },
+        { label: 'Achievements & Badges', icon: Award, route: '/(tabs)/' + instituteCode + '/achievements' },
       ],
     },
     {
-      title: 'Account & Settings',
+      title: 'PERSONAL WORKSPACE',
       items: [
-        { label: 'Profile', icon: User, route: `/(tabs)/${instituteCode}/profile` },
-        { label: 'Settings', icon: Settings, route: `/(tabs)/${instituteCode}/more/settings` },
-        { label: 'Help & Support', icon: HelpCircle, route: `/(tabs)/${instituteCode}/more/help` },
-        { label: 'Privacy Policy', icon: Shield, route: `/(tabs)/${instituteCode}/more/privacy` },
+        { label: 'Notes, Tasks & Calendar', icon: CheckSquare, route: '/(tabs)/' + instituteCode + '/tasks' },
+      ],
+    },
+    {
+      title: 'ACCOUNT & SUPPORT',
+      items: [
+        { label: 'My Profile', icon: User, route: '/(tabs)/' + instituteCode + '/profile' },
+        { label: 'Help & Support', icon: HelpCircle, route: '/(tabs)/' + instituteCode + '/more/help' },
+        { label: 'Privacy Policy', icon: Shield, route: '/(tabs)/' + instituteCode + '/more/privacy' },
+        { label: 'Settings & Appearance', icon: Settings, route: '/(tabs)/' + instituteCode + '/more/settings' },
       ],
     },
   ];
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login');
+  const handleLogout = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <ScreenHeader title="More Menu" subtitle="All features and settings" />
+      <ScreenHeader title="More Features" subtitle="Directory & Account Settings" />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {menuGroups.map((group, groupIdx) => (
-          <View key={groupIdx} style={styles.group}>
-            <Text style={styles.groupTitle}>{group.title}</Text>
-            <View style={styles.card}>
-              {group.items.map((item, idx) => {
-                const Icon = item.icon;
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {menuSections.map((section, sIdx) => (
+          <View key={sIdx} style={styles.sectionBox}>
+            <Text style={[styles.sectionHeading, { color: theme.colors.textSecondary }]}>
+              {section.title}
+            </Text>
+            <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+              {section.items.map((item, iIdx) => {
+                const IconComp = item.icon;
                 return (
                   <TouchableOpacity
-                    key={idx}
-                    style={[styles.menuItem, idx > 0 && styles.itemBorder]}
+                    key={iIdx}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.label}
+                    style={[
+                      styles.menuItem,
+                      iIdx > 0 && { borderTopWidth: 1, borderTopColor: theme.colors.border },
+                    ]}
                     onPress={() => router.push(item.route as any)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.iconBox, { backgroundColor: `${theme.colors.primary}12` }]}>
-                      <Icon size={18} color={theme.colors.primary} />
+                    <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '15' }]}>
+                      <IconComp size={18} color={theme.colors.primary} />
                     </View>
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                    <ChevronRight size={18} color="#9CA3AF" />
+                    <Text style={[styles.itemLabel, typography.bodyMd, { color: theme.colors.text }]}>
+                      {item.label}
+                    </Text>
+                    <ChevronRight size={16} color={theme.colors.textSecondary} />
                   </TouchableOpacity>
                 );
               })}
@@ -81,8 +110,14 @@ export default function MoreMenuScreen() {
           </View>
         ))}
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <LogOut size={18} color="#DC2626" />
+        <TouchableOpacity
+          style={[
+            styles.logoutBtn,
+            { backgroundColor: theme.colors.card, borderColor: '#FEE2E2', minHeight: TOUCH_TARGET },
+          ]}
+          onPress={handleLogout}
+        >
+          <LogOut size={18} color="#EF4444" />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -91,15 +126,59 @@ export default function MoreMenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20 },
-  group: { marginBottom: 20 },
-  groupTitle: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', marginBottom: 8 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden' },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  itemBorder: { borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-  iconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  itemLabel: { fontSize: 15, fontWeight: '600', color: '#2C2727', flex: 1 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FEE2E2', padding: 16, borderRadius: 14, marginTop: 8 },
-  logoutText: { fontSize: 15, fontWeight: '700', color: '#DC2626' },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+    gap: 16,
+  },
+  sectionBox: {
+    gap: 6,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    paddingLeft: 4,
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+    minHeight: TOUCH_TARGET,
+  },
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemLabel: {
+    flex: 1,
+    fontWeight: '600',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8,
+    marginTop: 8,
+  },
+  logoutText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

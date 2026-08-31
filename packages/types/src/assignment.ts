@@ -7,5 +7,8 @@ export interface Assignment {
   dueDate: string | null;
   courseId: string;
   courseName?: string;
+  courseCode?: string;
+  courseTitle?: string;
   createdAt: string;
 }
+

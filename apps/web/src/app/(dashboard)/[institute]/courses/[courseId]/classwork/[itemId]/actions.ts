@@ -42,6 +42,10 @@ export async function getOrCreateSubmission(syllabusItemId: string) {
   return submission;
 }
 
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+
 export async function submitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
   const user = await getStudentSession();
 
@@ -60,6 +64,21 @@ export async function submitWork(submissionId: string, instituteCode: string, co
     where: { id: submissionId },
     data: { status: "SUBMITTED", submittedAt: new Date() },
   });
+
+  // Grant EXP for assignment submission (idempotent per syllabusItemId)
+  try {
+    await grantExp({
+      userId: user.id,
+      amount: EXP_VALUES.assignment_submitted,
+      reason: `Submitted Assignment: ${itemId}`,
+      source: "assignment",
+      courseId,
+      idempotencyKey: `assignment_sub_${submission.syllabusItemId}`,
+    });
+    await awardBadgeIfEarned(user.id, "assignment-first");
+  } catch (gamiErr) {
+    console.error("GAMIFICATION_ASSIGNMENT_SUBMIT_ERROR", gamiErr);
+  }
 
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
   return { success: true };
@@ -205,10 +224,28 @@ export async function returnGrade(
     return { success: false, error: "Only instructors can grade submissions." };
   }
 
-  await db.studentSubmission.update({
+  const updatedSub = await db.studentSubmission.update({
     where: { id: submissionId },
     data: { grade, status: "RETURNED", isReturned: true },
+    select: { studentId: true },
   });
+
+  // Grant EXP for 100% perfect score on assignment (idempotent)
+  if (grade === 100 && updatedSub.studentId) {
+    try {
+      await grantExp({
+        userId: updatedSub.studentId,
+        amount: EXP_VALUES.assignment_perfect,
+        reason: `100% Perfect Score on Assignment: ${itemId}`,
+        source: "assignment_grade",
+        courseId,
+        idempotencyKey: `assignment_perfect_${submissionId}`,
+      });
+      await awardBadgeIfEarned(updatedSub.studentId, "perfect-score");
+    } catch (gamiErr) {
+      console.error("GAMIFICATION_PERFECT_GRADE_ERROR", gamiErr);
+    }
+  }
 
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}/submissions`);
   revalidatePath(`/${instituteCode}/courses/${courseId}/gradebook`);

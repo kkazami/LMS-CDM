@@ -33,7 +33,7 @@ export default function Input({
         <input
           id={id}
           className={cn(
-            "w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition",
+            "w-full min-h-[44px] rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition",
             "placeholder:text-slate-400 dark:placeholder:text-[#555C72]",
             isPassword && "pr-10",
             className

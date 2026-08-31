@@ -18,6 +18,10 @@ import { db } from "@/lib/db";
 import { substituteTemplate, evaluateVariables, CodeLabVariable } from "@/features/interactive-activities/codelab/utils/problem-engine";
 
 import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +96,7 @@ export async function POST(request: Request) {
     // 4. Fetch template
     const template = await db.activityTemplate.findUnique({
       where: { id: templateId },
-      select: { variables: true, hiddenTestCases: true, activityType: true },
+      select: { title: true, variables: true, hiddenTestCases: true, activityType: true },
     });
 
     if (!template || template.activityType !== "codelab") {
@@ -119,6 +123,8 @@ export async function POST(request: Request) {
     // 7. Execute all test cases
     const results: TestRunResult[] = [];
     let passCount = 0;
+    const wrapperLang = getWrapperLanguageFromId(languageId);
+    const funcSig = variablesObj.functionSignature || null;
 
     for (let i = 0; i < allTestCases.length; i++) {
       const { tc, isHidden } = allTestCases[i];
@@ -126,7 +132,8 @@ export async function POST(request: Request) {
       const substitutedExpected = substituteTemplate(tc.expectedOutput, evaluatedVars);
 
       try {
-        const judgeResult = await executeOnJudge0(sourceCode, languageId, substitutedInput);
+        const executableCode = wrapStudentCode(wrapperLang, sourceCode, funcSig, substitutedInput);
+        const judgeResult = await executeOnJudge0(executableCode, languageId, substitutedInput);
         const actualOut = (judgeResult.stdout || "").trim();
         const expectedOut = substitutedExpected.trim();
         const passed = judgeResult.status.id === 3 && actualOut === expectedOut;
@@ -173,12 +180,56 @@ export async function POST(request: Request) {
     const totalCount = allTestCases.length;
     const score = totalCount > 0 ? Math.round((passCount / totalCount) * 100) : 0;
 
+    let grantedExp = 0;
+    let leveledUp = false;
+    let newLevel = 1;
+
+    if (score >= 60) {
+      try {
+        const studentId = eligibility.session.user.id;
+        if (score === 100) {
+          const expRes = await grantExp({
+            userId: studentId,
+            amount: EXP_VALUES.codelab_level_perfect,
+            reason: `CodeLab: ${template.title || templateId} — Perfect Score (100%)`,
+            source: "codelab",
+            idempotencyKey: `codelab_perfect_${templateId}`,
+          });
+          grantedExp = expRes.grantedAmount;
+          leveledUp = expRes.leveledUp;
+          newLevel = expRes.newLevel;
+
+          await awardBadgeIfEarned(studentId, "codelab-first");
+          await awardBadgeIfEarned(studentId, "codelab-perfect-level");
+          await awardBadgeIfEarned(studentId, "perfect-score");
+        } else {
+          const expRes = await grantExp({
+            userId: studentId,
+            amount: EXP_VALUES.codelab_level_complete,
+            reason: `CodeLab: ${template.title || templateId} — Passed`,
+            source: "codelab",
+            idempotencyKey: `codelab_pass_${templateId}`,
+          });
+          grantedExp = expRes.grantedAmount;
+          leveledUp = expRes.leveledUp;
+          newLevel = expRes.newLevel;
+
+          await awardBadgeIfEarned(studentId, "codelab-first");
+        }
+      } catch (gamiErr) {
+        console.error("GAMIFICATION_RUN_TESTS_ERROR", gamiErr);
+      }
+    }
+
     return NextResponse.json({
       results,
       passCount,
       totalCount,
       score,
       allPassed: passCount === totalCount,
+      grantedExp,
+      leveledUp,
+      newLevel,
     });
   } catch (error: unknown) {
     console.error("CODELAB_RUN_TESTS_ERROR", error);

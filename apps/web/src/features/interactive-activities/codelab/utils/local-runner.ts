@@ -494,8 +494,6 @@ export async function executeLocally(
         source_code: sourceCode,
         language_id: languageId,
         stdin: stdin || "",
-        cpu_time_limit: 5.0,
-        memory_limit: 128000,
       }),
     });
 

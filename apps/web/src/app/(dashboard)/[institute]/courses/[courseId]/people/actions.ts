@@ -82,6 +82,10 @@ export async function approveAllPending(
   return result;
 }
 
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES, DAILY_EXP_CAPS } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+
 // ─── Private Comment Actions ───
 
 export async function sendPrivateComment(
@@ -107,6 +111,23 @@ export async function sendPrivateComment(
       sentiment: sentimentResult.data?.flagged ? sentiment : null,
     },
   });
+
+  // Grant EXP for constructive participation (≥15 characters, max 25 EXP/day)
+  if (content.trim().length >= 15 && user.role.toUpperCase() === "STUDENT") {
+    try {
+      await grantExp({
+        userId: user.id,
+        amount: EXP_VALUES.discussion_post,
+        reason: "Course communication & discussion",
+        source: "discussion",
+        courseId,
+        dailyCap: DAILY_EXP_CAPS.discussion,
+      });
+      await awardBadgeIfEarned(user.id, "discussion-first");
+    } catch (gamiErr) {
+      console.error("GAMIFICATION_DISCUSSION_ERROR", gamiErr);
+    }
+  }
 
   revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/people`);
   return { success: true };
