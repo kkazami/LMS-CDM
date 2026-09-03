@@ -115,48 +115,53 @@ export default function Topbar({
     dynamicTitle = titleMap[segment];
   }
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white/95 dark:bg-[#1A1D27]/95 backdrop-blur-md transition-colors duration-200 min-h-[56px] flex flex-col justify-center">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white/95 dark:bg-[#1A1D27]/95 backdrop-blur-md transition-colors duration-200 min-h-[52px] sm:min-h-[56px] flex flex-col justify-center">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 lg:px-8 py-2 sm:py-3">
+        {/* Left Side: Menu + Institute Badge + Dynamic Title */}
+        <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
           <button
             type="button"
             onClick={onOpenMobileMenu}
-            className="rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+            className="rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1.5 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
           </button>
 
           {/* Mobile Institute Badge & Title */}
-          <div className="md:hidden flex items-center gap-2 min-w-0">
+          <div className="md:hidden flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <span
-              className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
+              className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
               style={{ backgroundColor: theme.colors.primary }}
             >
               {instituteCode.toUpperCase()}
             </span>
-            <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate">
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate">
               {dynamicTitle}
             </h1>
           </div>
 
-          {/* Desktop Title & Subtitle */}
-          <div className="hidden md:block">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+          {/* Desktop & Tablet Title & Subtitle */}
+          <div className="hidden md:flex flex-col min-w-0">
+            <p className="text-[10px] lg:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] truncate max-w-[160px] lg:max-w-[240px] xl:max-w-none">
               {instituteName}
             </p>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+            <h1 className="text-sm lg:text-base xl:text-lg font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate max-w-[160px] lg:max-w-[240px] xl:max-w-none">
               {dynamicTitle}
             </h1>
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
-          {/* Search bar Desktop */}
+        {/* Right Side Controls */}
+        <div className="flex flex-none items-center justify-end gap-1.5 sm:gap-2 lg:gap-2.5 shrink-0">
+          {/* Search bar Desktop (Wide only on xl+) */}
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
-            className="hidden w-full max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 md:flex hover:ring-2 hover:ring-[#F97316]/20 hover:border-[#F97316] transition-all text-left cursor-pointer"
+            className="hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer"
+            style={{
+              borderColor: undefined,
+            }}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5] shrink-0" />
@@ -169,14 +174,14 @@ export default function Topbar({
             </kbd>
           </button>
           
-          {/* Mobile Search Button */}
+          {/* Mobile & Tablet Compact Search Button */}
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
-            className="md:hidden relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="xl:hidden relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1.5 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
             aria-label="Search"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
 
           {/* Light / Dark Mode Toggle Button */}
@@ -185,19 +190,20 @@ export default function Topbar({
             onClick={toggleTheme}
             aria-label="Toggle theme"
             aria-pressed={themeMode === "dark"}
-            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1.5 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
             title={`Switch to ${themeMode === "light" ? "Dark" : "Light"} mode`}
           >
             {themeMode === "dark" ? (
-              <Sun className="h-5 w-5 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
+              <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
             ) : (
-              <Moon className="h-5 w-5 text-slate-600 transition-transform duration-300 -rotate-12 hover:rotate-0" />
+              <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 transition-transform duration-300 -rotate-12 hover:rotate-0" />
             )}
           </button>
 
+          {/* Settings link - visible on 2xl+ screens (always available in user menu) */}
           <Link
             href={`/${instituteCode}/settings`}
-            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="hidden 2xl:flex relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-10 w-10 items-center justify-center shrink-0"
             aria-label="Settings"
           >
             <Settings className="h-5 w-5" />
@@ -206,26 +212,33 @@ export default function Topbar({
           <NotificationBell theme={theme} />
 
           {/* User Profile Avatar with Left Separator */}
-          <div className="relative pl-2 sm:pl-3 border-l border-slate-200 dark:border-white/10" ref={dropdownRef}>
+          <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-white/10" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 sm:gap-2.5 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-9 sm:h-10 shrink-0"
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
             >
-              <div className="text-right">
-                <div className="flex items-center justify-end gap-1.5">
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">{userName}</p>
+              {/* Tablet Compact User Info (1024px - 1279px) */}
+              <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-[100px]">
+                <p className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] truncate">{userRole}</p>
+              </div>
+
+              {/* Desktop Full User Info (1280px+) */}
+              <div className="text-right hidden xl:block min-w-0 max-w-[150px] 2xl:max-w-[200px]">
+                <div className="flex items-center justify-end gap-1.5 min-w-0">
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
                   {userRole === "STUDENT" && <LevelBadge exp={exp} size="sm" />}
                 </div>
                 <div className="flex items-center gap-1.5 justify-end">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] shrink-0">
                     {userRole}
                   </p>
                   {userRole === "STUDENT" && studentNumber && (
                     <>
-                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                      <p className="text-[11px] font-mono text-slate-500 dark:text-[#8B92A5]">{studentNumber}</p>
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0" />
+                      <p className="text-[11px] font-mono text-slate-500 dark:text-[#8B92A5] truncate">{studentNumber}</p>
                     </>
                   )}
                 </div>
@@ -233,8 +246,9 @@ export default function Topbar({
               <UserAvatar
                 name={userName}
                 avatarUrl={avatarUrl}
-                size="md"
-                color="#F97316"
+                size="sm"
+                color={theme.colors.primary}
+                className="h-7 w-7 sm:h-8 sm:w-8 text-xs"
               />
             </button>
 
@@ -253,6 +267,14 @@ export default function Topbar({
               >
                 <User className="mr-3 h-4 w-4 text-slate-400 dark:text-[#8B92A5]" aria-hidden="true" />
                 Profile
+              </Link>
+              <Link
+                href={`/${instituteCode}/settings`}
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium"
+              >
+                <Settings className="mr-3 h-4 w-4 text-slate-400 dark:text-[#8B92A5]" aria-hidden="true" />
+                Settings
               </Link>
               <Link
                 href={`/${instituteCode}/privacy`}

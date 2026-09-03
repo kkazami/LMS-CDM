@@ -18,6 +18,7 @@ import {
   Plus,
   Compass,
   Share2,
+  BarChart3,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
@@ -27,6 +28,10 @@ import InstructorEditCourseModal from "@/components/courses/InstructorEditCourse
 import Button from "@/components/common/Button";
 import { archiveCourse, reorderCourseCards } from "../courses/actions";
 import { approveEnrollment, declineEnrollment, approveAllPending } from "../courses/[courseId]/people/actions";
+import { TypingBanner } from "@/components/motion/TypingBanner";
+import { StatPill } from "@/components/dashboard/StatPill";
+import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 
 interface TaughtCourse {
   id: string;
@@ -59,6 +64,7 @@ interface TeacherDashboardClientProps {
   theme: InstituteTheme;
   initialCourses: TaughtCourse[];
   initialPendingRequests: PendingRequest[];
+  typingSessionKey?: string;
 }
 
 export default function TeacherDashboardClient({
@@ -68,6 +74,7 @@ export default function TeacherDashboardClient({
   theme,
   initialCourses,
   initialPendingRequests,
+  typingSessionKey,
 }: TeacherDashboardClientProps) {
   const [courses, setCourses] = useState<TaughtCourse[]>(initialCourses);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -197,41 +204,128 @@ export default function TeacherDashboardClient({
     }
   };
 
+  const totalStudentsEnrolled = courses.reduce((acc, c) => acc + c.enrolledCount, 0);
+
   return (
     <>
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
-        {/* ─── 1. Welcome Banner ─── */}
+        {/* ─── 1. Anti-Slop Faculty Hero Banner ─── */}
         <div
-          className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+          className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs transition-colors"
           style={{
-            background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
+            borderLeft: `4px solid ${theme.colors.primary}`,
+            background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
           }}
         >
-          {/* Subtle Depth Background Overlays */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md mb-3 text-white border border-white/20">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: `${theme.colors.primary}1A`,
+                  color: theme.colors.primary,
+                }}
+              >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{instituteName} • Faculty Portal</span>
               </div>
-              <h1
-                className="text-2xl sm:text-3xl font-black tracking-tight"
-                style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)" }}
-              >
-                Welcome back, Professor {userName}! 👨‍🏫
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+                <TypingBanner
+                  text={`Welcome back, Professor ${userName}!`}
+                  sessionKey={typingSessionKey ?? "lumina_faculty_typed_greeting"}
+                />
               </h1>
-              <p
-                className="mt-1 text-sm sm:text-base text-white/90 font-medium"
-                style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.15)" }}
-              >
-                Manage your assigned classes, syllabus, gradebook, and student enrollment requests.
+              <p className="text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
+                Manage your assigned classes, syllabus, gradebook ledgers, and student enrollment requests.
               </p>
             </div>
+
+            {/* Faculty StatPills row (no ExpRing) */}
+            <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+              <StatPill
+                icon={BookOpen}
+                label={`${courses.length} Classes`}
+                color={theme.colors.primary}
+              />
+              <StatPill
+                icon={Users}
+                label={`${totalStudentsEnrolled} Students`}
+                color="#10B981"
+              />
+              <StatPill
+                icon={UserCheck}
+                label={`${pendingRequests.length} Pending`}
+                color={pendingRequests.length > 0 ? "#F59E0B" : "#64748B"}
+              />
+            </div>
           </div>
+        </div>
+
+        {/* ─── 1b. Faculty Quick Action Cards Grid ─── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+              Instruction Controls
+            </h2>
+          </div>
+          <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <StaggerItem>
+              <QuickActionCard
+                icon={Plus}
+                label="Add Class"
+                sublabel="Provision course"
+                onClick={() => setCreateModalOpen(true)}
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <QuickActionCard
+                icon={GraduationCap}
+                label="Gradebook"
+                sublabel="Grading matrix"
+                href={`/${instituteCode}/courses`}
+                color="#3B82F6"
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <QuickActionCard
+                icon={UserCheck}
+                label="Requests"
+                sublabel="Enrollment queue"
+                href="#pending-requests"
+                badge={pendingRequests.length > 0 ? `${pendingRequests.length} New` : null}
+                badgeVariant={pendingRequests.length > 0 ? "warning" : "muted"}
+                color="#F59E0B"
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <QuickActionCard
+                icon={BarChart3}
+                label="Analytics"
+                sublabel="At-risk telemetry"
+                href={`/${instituteCode}/analytics`}
+                color="#8B5CF6"
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <QuickActionCard
+                icon={Share2}
+                label="Broadcast"
+                sublabel="Send notice"
+                href={`/${instituteCode}/announcements`}
+                color="#EC4899"
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <QuickActionCard
+                icon={Compass}
+                label="CodeLab Hub"
+                sublabel="Lab workspace"
+                href={`/${instituteCode}/activities/codelab`}
+                color="#06B6D4"
+              />
+            </StaggerItem>
+          </StaggerGroup>
         </div>
 
         {/* ─── 2. Main Grid: Taught Courses & Pending Requests ─── */}
@@ -264,10 +358,6 @@ export default function TeacherDashboardClient({
                 >
                   {courses.length} {courses.length === 1 ? "Class" : "Classes"}
                 </span>
-                <Button theme={theme} onClick={() => setCreateModalOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  <span>Add Class</span>
-                </Button>
               </div>
             </div>
 
@@ -365,7 +455,10 @@ export default function TeacherDashboardClient({
                         style={
                           hasCover
                             ? { backgroundImage: `url("${course.coverImage}")` }
-                            : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
+                            : {
+                                backgroundColor: "var(--bg-surface, #1A1D27)",
+                                borderLeft: `4px solid ${theme.colors.primary}`,
+                              }
                         }
                       >
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
@@ -373,7 +466,7 @@ export default function TeacherDashboardClient({
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold font-mono tabular-nums tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
                               {course.code}
                             </span>
                             {course.section && (
@@ -382,7 +475,7 @@ export default function TeacherDashboardClient({
                               </span>
                             )}
                             {course.pendingCount > 0 && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs shrink-0">
+                              <span className="text-[10px] font-bold font-mono tabular-nums px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs shrink-0">
                                 {course.pendingCount} pending
                               </span>
                             )}

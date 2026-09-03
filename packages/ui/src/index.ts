@@ -5,3 +5,4 @@ export { default as Modal } from "./components/Modal";
 export { default as Table } from "./components/Table";
 export { default as Badge } from "./components/Badge";
 export { default as MobileBottomNav } from "./components/MobileBottomNav";
+export * from "./lib/motion";

@@ -138,7 +138,7 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
     return (
       <div
         className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-        style={{ height: "calc(100vh - 73px)" }}
+        style={{ height: "calc(100dvh - 73px)" }}
       >
         <CodeLabScene
           key={`codelab-${problem.id}-${levelNumber}`}

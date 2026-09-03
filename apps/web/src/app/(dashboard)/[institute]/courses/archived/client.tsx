@@ -15,6 +15,7 @@ interface ArchivedCourse {
   room: string;
   instructorName: string | null;
   enrolledCount: number;
+  coverImage?: string | null;
 }
 
 const CARD_COLORS = [
@@ -77,15 +78,27 @@ export default function ArchivedCoursesClient({
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-4">
           {courses.map((course, index) => {
             const bg = CARD_COLORS[index % CARD_COLORS.length];
+            const hasCover = Boolean(course.coverImage);
             return (
               <div
                 key={course.id}
                 className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs opacity-85 hover:opacity-100 transition-opacity"
               >
                 {/* Card Header */}
-                <div className="relative px-5 py-6" style={{ background: bg }}>
-                  <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10" />
-                  <div className="absolute top-3 right-3">
+                <div
+                  className="relative px-5 py-6 bg-cover bg-center transition-all"
+                  style={
+                    hasCover
+                      ? { backgroundImage: `url("${course.coverImage}")` }
+                      : { background: bg }
+                  }
+                >
+                  {hasCover ? (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/25 pointer-events-none" />
+                  ) : (
+                    <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10 pointer-events-none" />
+                  )}
+                  <div className="absolute top-3 right-3 z-10">
                     <button
                       onClick={() => handleUnarchive(course.id)}
                       disabled={isPending}
@@ -96,8 +109,16 @@ export default function ArchivedCoursesClient({
                     </button>
                   </div>
                   <div className="relative z-10 pr-8">
-                    <h3 className="text-base font-bold text-white truncate">{course.title}</h3>
-                    <p className="mt-0.5 text-xs text-white/70">
+                    <h3
+                      className="text-base font-bold text-white truncate"
+                      style={hasCover ? { textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)" } : undefined}
+                    >
+                      {course.title}
+                    </h3>
+                    <p
+                      className="mt-0.5 text-xs text-white/80 font-medium"
+                      style={hasCover ? { textShadow: "0 1px 2px rgba(0, 0, 0, 0.5)" } : undefined}
+                    >
                       {course.code}
                       {course.section ? ` • ${course.section}` : ""}
                     </p>

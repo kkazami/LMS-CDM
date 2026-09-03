@@ -15,10 +15,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main
-      className="grid min-h-screen place-items-center p-4"
+      className="flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto"
       style={{ backgroundColor: theme.colors.background }}
     >
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md my-auto">
         <Card
           title="Sign in to Lumina LMS"
           description={`Access your ${theme.name} learning dashboard.`}

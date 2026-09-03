@@ -137,6 +137,8 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     select: { exp: true, loginStreakCurrent: true, level: true },
   });
 
+  const typingSessionKey = `lumina_typed_${studentId.slice(0, 8)}`;
+
   return (
     <StudentDashboardClient
       userName={session.user.name as string}
@@ -149,6 +151,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 1}
       level={gamification?.level ?? 1}
+      typingSessionKey={typingSessionKey}
     />
   );
 }

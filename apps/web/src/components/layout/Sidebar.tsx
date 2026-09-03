@@ -28,6 +28,7 @@ import {
   ChevronRight,
   PenTool,
   Settings,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -53,6 +54,8 @@ interface SidebarProps {
   userRole: string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isMobileDrawer?: boolean;
+  onCloseMobileDrawer?: () => void;
   /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
   isEligibleForActivities?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
@@ -105,6 +108,8 @@ export default function Sidebar({
   userRole,
   isCollapsed,
   onToggleCollapse,
+  isMobileDrawer = false,
+  onCloseMobileDrawer,
   isEligibleForActivities,
   enrolledCourses,
 }: SidebarProps) {
@@ -151,31 +156,58 @@ export default function Sidebar({
     }
   };
 
+  const handleLinkClick = () => {
+    if (isMobileDrawer && onCloseMobileDrawer) {
+      onCloseMobileDrawer();
+    }
+  };
+
   return (
     <aside
-      className={`hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
-        isCollapsed ? "w-[72px]" : "w-72"
+      className={`${
+        isMobileDrawer
+          ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
+          : `hidden h-screen shrink-0 border-r flex-col lg:sticky lg:top-0 lg:self-start lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
+              isCollapsed ? "w-[72px]" : "w-72"
+            }`
       }`}
     >
       {/* Header with logo + collapse toggle */}
       <div className="flex items-center h-16 shrink-0 border-b border-slate-200/80 dark:border-white/5 bg-transparent px-4 gap-2">
         <div
           className={`flex items-center gap-2 overflow-hidden transition-all duration-300 flex-1 min-w-0 ${
-            isCollapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
+            !isMobileDrawer && isCollapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          <Link href={`/${instituteCode}`} className="flex items-center gap-2 group">
-            <span className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap group-hover:text-[#F97316] transition-colors">
+          <Link
+            href={`/${instituteCode}`}
+            onClick={handleLinkClick}
+            className="flex items-center gap-2 group"
+          >
+            <span
+              className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap transition-colors"
+            >
               Lumina LMS
             </span>
             <span
-              className="h-2 w-2 rounded-full shrink-0 animate-pulse bg-[#F97316]"
+              className="h-2 w-2 rounded-full shrink-0 animate-pulse"
+              style={{ backgroundColor: theme.colors.primary }}
             />
           </Link>
         </div>
 
-        {onToggleCollapse && (
+        {isMobileDrawer ? (
           <button
+            type="button"
+            onClick={onCloseMobileDrawer}
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            aria-label="Close sidebar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : onToggleCollapse ? (
+          <button
+            type="button"
             onClick={onToggleCollapse}
             className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -186,7 +218,7 @@ export default function Sidebar({
               <PanelLeftClose className="h-5 w-5" />
             )}
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* Scrollable Nav */}
@@ -215,9 +247,18 @@ export default function Sidebar({
                   onKeyDown={handleMyCoursesKeyDown}
                   className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
                     isSubActive && !isMyCoursesOpen
-                      ? "border-l-[3px] border-[#F97316] bg-orange-500/10 text-[#F97316] font-semibold rounded-r-xl rounded-l-none"
+                      ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
                       : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
                   }`}
+                  style={
+                    isSubActive && !isMyCoursesOpen
+                      ? {
+                          borderColor: theme.colors.primary,
+                          backgroundColor: `${theme.colors.primary}1A`,
+                          color: theme.colors.primary,
+                        }
+                      : undefined
+                  }
                 >
                   <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
                   <span
@@ -253,12 +294,22 @@ export default function Sidebar({
                         <Link
                           id="sidebar-my-courses-todo"
                           href={`/${instituteCode}/assignments`}
+                          onClick={handleLinkClick}
                           className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
                             pathname === `/${instituteCode}/assignments` ||
                             pathname.startsWith(`/${instituteCode}/assignments/`)
-                              ? "bg-orange-500/10 text-[#F97316] font-semibold"
+                              ? "font-semibold"
                               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
                           }`}
+                          style={
+                            pathname === `/${instituteCode}/assignments` ||
+                            pathname.startsWith(`/${instituteCode}/assignments/`)
+                              ? {
+                                  backgroundColor: `${theme.colors.primary}1A`,
+                                  color: theme.colors.primary,
+                                }
+                              : undefined
+                          }
                         >
                           <ClipboardCheck className="h-4 w-4 shrink-0" />
                           <span className="truncate">To-do</span>
@@ -276,11 +327,20 @@ export default function Sidebar({
                             key={course.id}
                             id={`sidebar-course-${course.id}`}
                             href={courseHref}
+                            onClick={handleLinkClick}
                             className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
                               isCourseActive
-                                ? "bg-orange-500/10 text-[#F97316] font-semibold"
+                                ? "font-semibold"
                                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
                             }`}
+                            style={
+                              isCourseActive
+                                ? {
+                                    backgroundColor: `${theme.colors.primary}1A`,
+                                    color: theme.colors.primary,
+                                  }
+                                : undefined
+                            }
                           >
                             <BookOpen className="h-4 w-4 shrink-0" />
                             <span className="truncate">{course.code}</span>
@@ -299,12 +359,22 @@ export default function Sidebar({
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleLinkClick}
               title={isCollapsed ? item.label : undefined}
               className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                 active
-                  ? "border-l-[3px] border-[#F97316] bg-orange-500/10 text-[#F97316] font-semibold rounded-r-xl rounded-l-none"
+                  ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
                   : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
               }`}
+              style={
+                active
+                  ? {
+                      borderColor: theme.colors.primary,
+                      backgroundColor: `${theme.colors.primary}1A`,
+                      color: theme.colors.primary,
+                    }
+                  : undefined
+              }
             >
               <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
               <span

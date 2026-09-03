@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Trophy,
   Flame,
@@ -42,6 +43,7 @@ export default function LeaderboardsClient({
   theme,
   initialSelfAnonymized,
 }: LeaderboardsClientProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("global");
   const [selectedCourseId, setSelectedCourseId] = useState<string>(
     enrolledCourses[0]?.id || ""
@@ -61,10 +63,11 @@ export default function LeaderboardsClient({
       });
       if (res.ok) {
         setIsAnonymized(nextVal);
+        router.refresh();
         toast.success(
-          nextVal ? "Anonymity Enabled" : "Public Profile Enabled",
+          nextVal ? "Private Mode Enabled" : "Public Profile Enabled",
           nextVal
-            ? "Your name is now shown as Scholar #ID to peers."
+            ? "Your name is now hidden and shown as Student #ID to peers."
             : "Your name and avatar are now visible on the leaderboard."
         );
       }
@@ -109,11 +112,11 @@ export default function LeaderboardsClient({
             <span>Hall of Fame & Leaderboards</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1">
-            Celebrate top scholars, track EXP progression, and climb the ranks.
+            Celebrate top students, track EXP progression, and climb the ranks.
           </p>
         </div>
 
-        {/* Anonymity Toggle Button */}
+        {/* Anonymity / Privacy Toggle Button */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -129,7 +132,7 @@ export default function LeaderboardsClient({
             {isAnonymized ? (
               <>
                 <EyeOff className="w-3.5 h-3.5 text-slate-400" />
-                <span>Leaderboard: Anonymous</span>
+                <span>Leaderboard: Private</span>
               </>
             ) : (
               <>
@@ -212,7 +215,7 @@ export default function LeaderboardsClient({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search scholars..."
+            placeholder="Search students..."
             className="w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 outline-none focus:border-[#F97316] transition-colors"
           />
         </div>
@@ -259,7 +262,7 @@ export default function LeaderboardsClient({
             Rankings (Top 50)
           </h2>
           <span className="text-xs text-slate-400 dark:text-[#555C72] font-mono">
-            {displayedRankings.length} Scholars Listed
+            {displayedRankings.length} Students Listed
           </span>
         </div>
 
@@ -267,7 +270,7 @@ export default function LeaderboardsClient({
           <div className="p-12 text-center">
             <Trophy className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
             <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-              No scholars found matching your search.
+              No students found matching your search.
             </p>
           </div>
         ) : (

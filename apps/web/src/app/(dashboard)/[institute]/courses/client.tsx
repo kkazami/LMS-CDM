@@ -6,6 +6,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
 import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import InstructorCreateCourseModal from "@/components/courses/InstructorCreateCourseModal";
+import CustomizeCourseModal from "@/components/courses/CustomizeCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
 import {
   Plus,
@@ -33,6 +34,7 @@ interface CourseCard {
   instructorName: string | null;
   enrolledCount?: number;
   displayOrderIndex?: number;
+  coverImage?: string | null;
 }
 
 // Color palette for course cards (Google Classroom-inspired)
@@ -74,7 +76,21 @@ export default function CoursesClient({
     )
   );
   const [confirmUnenroll, setConfirmUnenroll] = useState<string | null>(null);
+  const [customizingCourse, setCustomizingCourse] = useState<{
+    id: string;
+    title: string;
+    coverImage?: string;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleCoverSuccess = (newCoverImage: string) => {
+    if (!customizingCourse) return;
+    setCourses((prev) =>
+      prev.map((c) =>
+        c.id === customizingCourse.id ? { ...c, coverImage: newCoverImage } : c
+      )
+    );
+  };
 
   const isStudent = userRole === "STUDENT";
   const isInstructor = userRole === "PROFESSOR" || userRole === "ADMIN";
@@ -202,6 +218,7 @@ export default function CoursesClient({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
           {courses.map((course, index) => {
             const color = getCardColor(index);
+            const hasCover = Boolean(course.coverImage);
             return (
               <div
                 key={course.id}
@@ -215,44 +232,76 @@ export default function CoursesClient({
                   animationDelay: `${Math.min(index, 10) * 40}ms`,
                 }}
               >
-                <Link
-                  href={`/${instituteCode}/courses/${course.id}`}
-                  className="block"
-                  draggable={false}
+                {/* Card Header */}
+                <div
+                  className="relative px-5 py-6 bg-cover bg-center transition-all"
+                  style={
+                    hasCover
+                      ? { backgroundImage: `url("${course.coverImage}")` }
+                      : { background: color.bg }
+                  }
                 >
-                  {/* Card Header */}
-                  <div
-                    className="relative px-5 py-6"
-                    style={{ background: color.bg }}
-                  >
-                    {/* Decorative circles */}
-                    <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10" />
-                    <div className="absolute -bottom-2 -left-2 h-12 w-12 rounded-full bg-white/10" />
+                  {hasCover ? (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/25 pointer-events-none" />
+                  ) : (
+                    <>
+                      {/* Decorative circles */}
+                      <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10 pointer-events-none" />
+                      <div className="absolute -bottom-2 -left-2 h-12 w-12 rounded-full bg-white/10 pointer-events-none" />
+                    </>
+                  )}
 
-                    {/* Triple-dot menu */}
-                    <div className="absolute top-3 right-3 z-10">
-                      <CourseCardMenu
-                        courseId={course.id}
-                        isStudent={isStudent}
-                        isArchived={false}
-                        onUnenroll={() => setConfirmUnenroll(course.id)}
-                        onArchive={() => handleArchive(course.id)}
-                      />
-                    </div>
+                  {/* Triple-dot menu */}
+                  <div className="absolute top-3 right-3 z-20">
+                    <CourseCardMenu
+                      courseId={course.id}
+                      isStudent={isStudent}
+                      isArchived={false}
+                      onUnenroll={() => setConfirmUnenroll(course.id)}
+                      onArchive={() => handleArchive(course.id)}
+                      onCustomizeCard={
+                        userRole === "PROFESSOR"
+                          ? () =>
+                              setCustomizingCourse({
+                                id: course.id,
+                                title: course.title,
+                                coverImage: course.coverImage ?? undefined,
+                              })
+                          : undefined
+                      }
+                    />
+                  </div>
 
-                    <div className="relative z-10 pr-8">
-                      <h3 className="text-lg font-bold text-white truncate">
+                  <div className="relative z-10 pr-10">
+                    <Link
+                      href={`/${instituteCode}/courses/${course.id}`}
+                      className="block hover:underline"
+                      draggable={false}
+                    >
+                      <h3
+                        className="text-lg font-bold text-white truncate"
+                        style={hasCover ? { textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)" } : undefined}
+                      >
                         {course.title}
                       </h3>
-                      <p className="mt-0.5 text-sm text-white/80">
+                      <p
+                        className="mt-0.5 text-sm text-white/90 font-medium"
+                        style={hasCover ? { textShadow: "0 1px 2px rgba(0, 0, 0, 0.5)" } : undefined}
+                      >
                         {course.code}
                         {course.section ? ` • ${course.section}` : ""}
                       </p>
-                    </div>
+                    </Link>
                   </div>
+                </div>
 
-                  {/* Card Body & Footer */}
-                  <div className="px-5 py-4 space-y-2">
+                {/* Card Body & Footer */}
+                <div className="px-5 py-4 space-y-2">
+                  <Link
+                    href={`/${instituteCode}/courses/${course.id}`}
+                    className="block space-y-2 group/body"
+                    draggable={false}
+                  >
                     {course.instructorName && (
                       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-[#8B92A5]">
                         <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72]" />
@@ -280,27 +329,28 @@ export default function CoursesClient({
                         </span>
                       )}
                     </div>
+                  </Link>
 
-                    {/* Actions Footer */}
-                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                      <Link
-                        href={`/${instituteCode}/courses/${course.id}/classwork`}
-                        className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
-                        draggable={false}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Classwork
-                      </Link>
-                      <span
-                        className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
-                        style={{ color: theme.colors.primary }}
-                      >
-                        <span>View</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
+                  {/* Actions Footer */}
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                    <Link
+                      href={`/${instituteCode}/courses/${course.id}/classwork`}
+                      className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
+                      draggable={false}
+                    >
+                      Classwork
+                    </Link>
+                    <Link
+                      href={`/${instituteCode}/courses/${course.id}`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
+                      style={{ color: theme.colors.primary }}
+                      draggable={false}
+                    >
+                      <span>View</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
-                </Link>
+                </div>
               </div>
             );
           })}
@@ -358,6 +408,20 @@ export default function CoursesClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Instructor Customize Course Modal */}
+      {customizingCourse && (
+        <CustomizeCourseModal
+          open={Boolean(customizingCourse)}
+          onClose={() => setCustomizingCourse(null)}
+          courseId={customizingCourse.id}
+          courseTitle={customizingCourse.title}
+          currentCoverImage={customizingCourse.coverImage}
+          theme={theme}
+          instituteCode={instituteCode}
+          onSuccess={handleCoverSuccess}
+        />
       )}
     </>
   );

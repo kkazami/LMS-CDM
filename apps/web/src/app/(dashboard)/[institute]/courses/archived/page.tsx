@@ -46,6 +46,7 @@ export default async function ArchivedCoursesPage({
     room: c.room,
     instructorName: c.instructor?.name ?? null,
     enrolledCount: c._count.enrollments,
+    coverImage: c.coverImage || null,
   }));
 
   return (

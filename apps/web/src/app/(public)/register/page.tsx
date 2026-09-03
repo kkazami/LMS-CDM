@@ -17,10 +17,10 @@ export default async function RegisterPage({
 
   return (
     <main
-      className="grid min-h-screen place-items-center p-4"
+      className="flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto"
       style={{ backgroundColor: theme.colors.background }}
     >
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md my-auto">
         <Card
           title="Create your account"
           description={`Register for ${theme.name} and continue your learning journey.`}

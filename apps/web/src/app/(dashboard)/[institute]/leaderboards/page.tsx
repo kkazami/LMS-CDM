@@ -70,7 +70,7 @@ export default async function LeaderboardsPage({
     const isSelf = p.studentId === session.user.id;
     const isAnon = p.isLeaderboardAnonymized && !isSelf;
     const displayName = isAnon
-      ? `Scholar #${p.student.id.slice(-4).toUpperCase()}`
+      ? `Student #${p.student.id.slice(-4).toUpperCase()}`
       : p.student.name;
 
     return {
@@ -89,9 +89,9 @@ export default async function LeaderboardsPage({
     };
   });
 
-  // Check self anonymity status
+  // Check self anonymity status (default to false: real names shown by default)
   const selfProfile = globalProfiles.find((p) => p.studentId === session.user.id);
-  const selfAnonymized = selfProfile?.isLeaderboardAnonymized ?? true;
+  const selfAnonymized = selfProfile?.isLeaderboardAnonymized ?? false;
 
   return (
     <LeaderboardsClient

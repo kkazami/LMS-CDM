@@ -33,7 +33,7 @@ export default function Input({
         <input
           id={id}
           className={cn(
-            "w-full min-h-[44px] rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition",
+            "w-full min-h-[44px] rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition scroll-my-20",
             "placeholder:text-slate-400 dark:placeholder:text-[#555C72]",
             isPassword && "pr-10",
             className
@@ -44,10 +44,18 @@ export default function Input({
           onFocus={(e) => {
             e.currentTarget.style.borderColor = theme.colors.primary;
             e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.primary}33`;
+            props.onFocus?.(e);
+
+            // On mobile devices & WebViews, ensure focused input is smoothly centered above virtual keyboard
+            const target = e.currentTarget;
+            setTimeout(() => {
+              target.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 300);
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = "";
             e.currentTarget.style.boxShadow = "none";
+            props.onBlur?.(e);
           }}
           {...props}
           type={inputType}

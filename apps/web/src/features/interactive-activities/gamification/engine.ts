@@ -48,7 +48,7 @@ export async function processGamificationEvent(
     profile = await db.gamificationProfile.create({
       data: {
         studentId: submission.studentId,
-        isLeaderboardAnonymized: true // default opt-in to privacy
+        isLeaderboardAnonymized: false // default: real names shown on leaderboard
       }
     });
   }

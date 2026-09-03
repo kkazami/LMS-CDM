@@ -93,12 +93,12 @@ function AttachmentChip({
   const Icon = isLink ? Link2 : getFileIcon(attachment.fileName);
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-3 py-2.5 transition-all hover:border-orange-500/30 hover:shadow-xs">
+    <div className="group flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-3 py-2.5 transition-all hover:border-slate-300 dark:hover:border-white/20 hover:shadow-xs">
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
           isLink
             ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20"
-            : "bg-orange-500/10 text-[#F97316] group-hover:bg-orange-500/20"
+            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20"
         }`}
       >
         <Icon className="h-4 w-4" />
@@ -288,20 +288,44 @@ export default function AttachmentModal({
         {/* ─── Upload File Tab ─── */}
         {activeTab === "file" && (
           <div className="space-y-3">
-            {/* Drag-and-drop zone */}
+            {/* Mobile-optimized Direct Picker Button (sm:hidden) */}
+            <div className="sm:hidden space-y-2">
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl text-white font-bold text-sm shadow-md transition-all active:scale-[0.98] cursor-pointer min-h-[52px]"
+                style={{ backgroundColor: theme.colors.primary }}
+              >
+                {uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-white" />
+                ) : (
+                  <Upload className="h-5 w-5 text-white" />
+                )}
+                <span>{uploading ? "Uploading File..." : "Choose File or Photo"}</span>
+              </button>
+              <p className="text-center text-[11px] text-slate-500 dark:text-[#8B92A5]">
+                Select from Photos, Files, or Documents (Max 25 MB)
+              </p>
+            </div>
+
+            {/* Desktop Drag-and-drop & Tap Zone (hidden sm:flex) */}
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => !uploading && fileInputRef.current?.click()}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 transition-all duration-200 ${
+              className={`hidden sm:flex group relative cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 transition-all duration-200 ${
                 isDragging
-                  ? "border-orange-400 bg-orange-500/10"
-                  : "border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:border-orange-500/50 hover:bg-orange-500/5"
+                  ? "border-slate-400 bg-slate-100/50 dark:bg-white/5"
+                  : "border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-slate-100/50 dark:hover:bg-white/5"
               } ${uploading ? "pointer-events-none opacity-60" : ""}`}
+              style={{
+                borderColor: isDragging ? theme.colors.primary : undefined,
+              }}
             >
               {uploading ? (
-                <Loader2 className="mb-2 h-8 w-8 animate-spin text-[#F97316]" />
+                <Loader2 className="mb-2 h-8 w-8 animate-spin" style={{ color: theme.colors.primary }} />
               ) : (
                 <div
                   className="mb-2 flex h-12 w-12 items-center justify-center rounded-full transition-colors"
@@ -322,8 +346,8 @@ export default function AttachmentModal({
             </div>
 
             {/* Accepted formats info */}
-            <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-3 py-2.5">
-              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-0.5">Accepted file types:</p>
+            <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 px-3.5 py-2.5">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-0.5">Accepted formats:</p>
               <p className="text-[11px] text-blue-600/90 dark:text-blue-300/80 leading-relaxed">
                 PDF, DOCX, PPTX, XLSX, JPG, PNG, GIF, WEBP, ZIP, TXT, CSV
               </p>
@@ -359,7 +383,7 @@ export default function AttachmentModal({
                 value={linkUrl}
                 onChange={(e) => { setLinkUrl(e.target.value); setLinkError(""); }}
                 placeholder="https://docs.google.com/document/d/..."
-                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:border-orange-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 style={{ borderColor: linkError ? "#ef4444" : undefined }}
               />
             </div>
@@ -373,7 +397,7 @@ export default function AttachmentModal({
                 value={linkName}
                 onChange={(e) => setLinkName(e.target.value)}
                 placeholder="e.g. Lecture Notes - Chapter 3"
-                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:border-orange-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 transition-colors focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
               />
             </div>
 

@@ -323,14 +323,13 @@ export default function StudyMode({
       </div>
 
       {/* Flashcard */}
-      <div className="flashcard-scene mb-10 flex-1 flex flex-col justify-center">
+      <div className="flashcard-scene mb-6 sm:mb-10 flex-1 flex flex-col justify-center">
         <div
-          className={`flashcard-inner relative w-full grid ${studyState === "incorrect" ? "flipped" : ""}`}
-          style={{ minHeight: "560px" }}
+          className={`flashcard-inner relative w-full grid min-h-[360px] sm:min-h-[480px] lg:min-h-[560px] ${studyState === "incorrect" ? "flipped" : ""}`}
         >
           {/* Front face */}
           <div
-            className={`flashcard-face [grid-area:1/1] rounded-3xl border-2 bg-slate-900 dark:bg-[#141721] shadow-2xl p-10 flex flex-col items-center justify-center transition-colors ${
+            className={`flashcard-face [grid-area:1/1] rounded-3xl border-2 bg-slate-900 dark:bg-[#141721] shadow-2xl p-6 sm:p-10 flex flex-col items-center justify-center transition-colors ${
               studyState === "correct"
                 ? "border-emerald-500 bg-emerald-950/60"
                 : studyState === "incorrect"
@@ -346,9 +345,9 @@ export default function StudyMode({
             }
           >
             {/* Question */}
-            <div className="text-center mb-6 w-full px-4">
+            <div className="text-center mb-4 sm:mb-6 w-full px-2 sm:px-4">
               <span
-                className="inline-block rounded-full px-5 py-2 text-sm font-bold mb-8 uppercase tracking-widest"
+                className="inline-block rounded-full px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold mb-4 sm:mb-8 uppercase tracking-widest"
                 style={{
                   backgroundColor: `${deckColor}25`,
                   color: deckColor,
@@ -356,7 +355,7 @@ export default function StudyMode({
               >
                 Question
               </span>
-              <p className="text-4xl sm:text-5xl font-semibold text-white leading-tight max-w-3xl mx-auto wrap-break-word">
+              <p className="text-xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight max-w-3xl mx-auto wrap-break-word">
                 {currentCard?.front}
               </p>
             </div>
@@ -392,17 +391,17 @@ export default function StudyMode({
 
           {/* Back face (shown on incorrect flip) */}
           <div
-            className="flashcard-face flashcard-back [grid-area:1/1] rounded-3xl border-2 border-rose-500/40 bg-slate-900 dark:bg-[#141721] shadow-2xl p-10 flex flex-col items-center justify-center w-full"
+            className="flashcard-face flashcard-back [grid-area:1/1] rounded-3xl border-2 border-rose-500/40 bg-slate-900 dark:bg-[#141721] shadow-2xl p-6 sm:p-10 flex flex-col items-center justify-center w-full"
           >
-            <div className="text-center max-w-2xl mx-auto w-full px-4">
-              <XCircle className="h-16 w-16 text-rose-400 mx-auto mb-6" />
-              <span className="inline-block rounded-full bg-rose-500/20 px-4 py-1.5 text-xs font-bold text-rose-400 mb-6 uppercase tracking-widest">
+            <div className="text-center max-w-2xl mx-auto w-full px-2 sm:px-4">
+              <XCircle className="h-10 w-10 sm:h-16 sm:w-16 text-rose-400 mx-auto mb-3 sm:mb-6" />
+              <span className="inline-block rounded-full bg-rose-500/20 px-3 sm:px-4 py-1 sm:py-1.5 text-xs font-bold text-rose-400 mb-3 sm:mb-6 uppercase tracking-widest">
                 Correct Answer
               </span>
-              <p className="text-3xl font-semibold text-white leading-relaxed wrap-break-word">
+              <p className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white leading-relaxed wrap-break-word">
                 {correctAnswer}
               </p>
-              <p className="mt-8 text-base text-slate-400 wrap-break-word">
+              <p className="mt-4 sm:mt-8 text-sm sm:text-base text-slate-400 wrap-break-word">
                 Your answer: <span className="font-semibold text-rose-400 line-through decoration-rose-400/50 wrap-break-word">{answer}</span>
               </p>
             </div>

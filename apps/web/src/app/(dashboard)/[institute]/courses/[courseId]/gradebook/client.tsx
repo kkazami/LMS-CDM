@@ -31,12 +31,12 @@ interface GradebookClientProps {
 }
 
 function gradeColor(grade: number | null, maxPoints: number | null): string {
-  if (grade === null) return "text-gray-400 bg-transparent";
-  if (!maxPoints) return "text-gray-700";
+  if (grade === null) return "text-gray-400 dark:text-[#64748B] bg-transparent";
+  if (!maxPoints) return "text-gray-700 dark:text-[#F0F2F8] font-mono tabular-nums";
   const pct = (grade / maxPoints) * 100;
-  if (pct >= 80) return "text-emerald-700 bg-emerald-50 font-semibold";
-  if (pct >= 50) return "text-amber-700 bg-amber-50 font-semibold";
-  return "text-red-700 bg-red-50 font-semibold";
+  if (pct >= 80) return "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 font-semibold font-mono tabular-nums";
+  if (pct >= 50) return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 font-semibold font-mono tabular-nums";
+  return "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 font-semibold font-mono tabular-nums";
 }
 
 export default function GradebookClient({ data, courseId, courseTitle, instituteCode, theme }: GradebookClientProps) {
@@ -199,7 +199,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
             </button>
             <a
               href={`/api/courses/${courseId}/gradebook/export`}
-              className="flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition-all shadow-xs"
+              className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all shadow-xs hover:brightness-110 min-h-[44px]"
+              style={{ backgroundColor: theme?.colors.primary ?? "#EA580C" }}
             >
               <Download className="h-4 w-4" />
               Export CSV
@@ -259,9 +260,10 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                       key={assignment.id}
                       className={`px-4 py-3 border-r border-slate-200/80 dark:border-white/5 cursor-pointer transition-colors ${
                         isSelected 
-                          ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/40 outline outline-2 outline-[#F97316] -outline-offset-2 relative z-10" 
+                          ? "bg-slate-500/10 dark:bg-white/10 outline outline-2 -outline-offset-2 relative z-10" 
                           : "hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
                       }`}
+                      style={isSelected ? { outlineColor: theme?.colors.primary ?? "#3B82F6" } : undefined}
                       onClick={() => {
                         setSelectedCell({ studentId: student.id, assignmentId: assignment.id });
                         setEditingCell({ studentId: student.id, assignmentId: assignment.id });
@@ -305,7 +307,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                               }
                             }
                           }}
-                          className="w-16 rounded-lg border border-orange-400 bg-white dark:bg-[#1E2132] px-1.5 py-0.5 text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          className="w-16 rounded-lg border border-slate-300 dark:border-white/20 bg-white dark:bg-[#1E2132] px-1.5 py-0.5 text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 font-mono tabular-nums"
+                          style={{ borderColor: theme?.colors.primary }}
                         />
                       ) : (
                         <span
@@ -335,10 +338,10 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                       const eq = getGradingScaleEquivalent(final);
                       return (
                         <div className="flex flex-col items-end">
-                          <span className={`font-bold text-lg ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          <span className={`font-bold text-lg font-mono tabular-nums ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {eq}
                           </span>
-                          <span className="text-xs text-slate-500 dark:text-[#8B92A5]">{final.toFixed(1)}%</span>
+                          <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono tabular-nums">{final.toFixed(1)}%</span>
                         </div>
                       );
                     })()}

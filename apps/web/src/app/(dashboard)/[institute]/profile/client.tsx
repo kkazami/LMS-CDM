@@ -161,10 +161,10 @@ export default function ProfileEditClient({
             <button
               type="button"
               onClick={() => setAvatarModalOpen(true)}
-              className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700"
+              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
               aria-label="Change profile photo"
             >
-              <Camera className="h-3.5 w-3.5" />
+              <Camera className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -296,7 +296,7 @@ export default function ProfileEditClient({
                   key={color}
                   type="button"
                   onClick={() => setCoverColor(color)}
-                  className="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
                   style={{
                     backgroundColor: color,
                     borderColor: coverColor === color ? (theme.colors.primary || "#F97316") : "transparent",

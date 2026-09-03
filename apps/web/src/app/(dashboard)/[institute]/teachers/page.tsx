@@ -146,6 +146,8 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     requestedAt: p.createdAt.toISOString(),
   }));
 
+  const typingSessionKey = `lumina_typed_${teacherId.slice(0, 8)}`;
+
   return (
     <TeacherDashboardClient
       userName={session.user.name as string}
@@ -154,6 +156,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       theme={theme}
       initialCourses={courses}
       initialPendingRequests={pendingRequests}
+      typingSessionKey={typingSessionKey}
     />
   );
 }

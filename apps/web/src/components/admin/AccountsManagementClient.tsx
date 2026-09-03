@@ -214,7 +214,7 @@ export default function AccountsManagementClient({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by name, email, or ID..."
-            className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] py-2.5 pl-10 pr-4 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 dark:placeholder:text-[#555C72] focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
+            className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] py-2.5 pl-10 pr-4 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 dark:placeholder:text-[#555C72] focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 focus:border-slate-300 dark:focus:border-white/20 min-h-[44px]"
           />
         </div>
 
@@ -235,7 +235,7 @@ export default function AccountsManagementClient({
 
       {/* Data Table */}
       <div className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02]">
@@ -288,7 +288,7 @@ export default function AccountsManagementClient({
 
                     {/* Unique ID / Student Number */}
                     <td className="px-4 py-3.5">
-                      <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-2.5 py-1 font-mono text-xs text-slate-700 dark:text-[#8B92A5] border border-slate-200/60 dark:border-white/5">
+                      <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-2.5 py-1 font-mono text-xs text-slate-700 dark:text-[#8B92A5] border border-slate-200/60 dark:border-white/5 tabular-nums">
                         {activeTab === "students" 
                           ? (user.studentNumber || "—") 
                           : (user.uniqueId || "—")}
@@ -314,7 +314,7 @@ export default function AccountsManagementClient({
                     </td>
 
                     {/* Created */}
-                    <td className="px-4 py-3.5 text-slate-500 dark:text-[#8B92A5] text-xs">
+                    <td className="px-4 py-3.5 text-slate-500 dark:text-[#8B92A5] text-xs font-mono tabular-nums">
                       {new Date(user.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
@@ -330,7 +330,7 @@ export default function AccountsManagementClient({
                             e.stopPropagation();
                             setActionMenuUser(actionMenuUser === user.id ? null : user.id);
                           }}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-[#F0F2F8] cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-[#F0F2F8] cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
@@ -345,14 +345,14 @@ export default function AccountsManagementClient({
                                 setEditingUser(user);
                                 setActionMenuUser(null);
                               }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                               Edit Profile
                             </button>
                             <button
                               onClick={() => handleToggleStatus(user)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
                             >
                               {user.isActive ? (
                                 <>
@@ -371,7 +371,7 @@ export default function AccountsManagementClient({
                                 setResetPasswordUser(user);
                                 setActionMenuUser(null);
                               }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
                             >
                               <KeyRound className="h-3.5 w-3.5" />
                               Reset Password
@@ -382,7 +382,7 @@ export default function AccountsManagementClient({
                                 setRoleChangeUser(user);
                                 setActionMenuUser(null);
                               }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium"
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
                             >
                               <ShieldAlert className="h-3.5 w-3.5" />
                               Change Role
@@ -396,6 +396,149 @@ export default function AccountsManagementClient({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View (all columns represented) */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-3 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-white/10" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 w-32 rounded bg-slate-200 dark:bg-white/10" />
+                    <div className="h-3 w-44 rounded bg-slate-200 dark:bg-white/10" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : users.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 dark:text-[#555C72]">
+              No {activeTab === "students" ? "students" : "instructors"} found.
+            </div>
+          ) : (
+            users.map((user) => (
+              <div key={user.id} className="p-4 space-y-3 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-semibold text-white shadow-xs"
+                      style={{ backgroundColor: user.isActive ? theme.colors.primary : "#9CA3AF" }}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 dark:text-[#F0F2F8] text-sm leading-tight">
+                        {user.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative inline-block">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActionMenuUser(actionMenuUser === user.id ? null : user.id);
+                      }}
+                      className="rounded-lg p-2 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      aria-label="Account actions"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
+
+                    {actionMenuUser === user.id && (
+                      <div
+                        className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#22263A] py-1 shadow-xl text-slate-700 dark:text-[#F0F2F8]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => {
+                            setEditingUser(user);
+                            setActionMenuUser(null);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit Profile
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(user)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
+                        >
+                          {user.isActive ? (
+                            <>
+                              <UserX className="h-3.5 w-3.5 text-rose-500" />
+                              <span className="text-rose-600 dark:text-rose-400 font-semibold">Suspend Account</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Reactivate Account</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setResetPasswordUser(user);
+                            setActionMenuUser(null);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                          Reset Password
+                        </button>
+                        <div className="my-1 border-t border-slate-100 dark:border-white/10" />
+                        <button
+                          onClick={() => {
+                            setRoleChangeUser(user);
+                            setActionMenuUser(null);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
+                        >
+                          <ShieldAlert className="h-3.5 w-3.5" />
+                          Change Role
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                  <div className="rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-[#181B26] p-2.5">
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">
+                      {activeTab === "students" ? "Student No." : "Employee ID"}
+                    </span>
+                    <span className="font-mono tabular-nums font-semibold text-slate-700 dark:text-[#F0F2F8] mt-0.5 block truncate">
+                      {activeTab === "students" ? (user.studentNumber || "—") : (user.uniqueId || "—")}
+                    </span>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-[#181B26] p-2.5">
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">
+                      Status
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold mt-0.5 ${
+                        user.isActive
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-rose-500"}`} />
+                      {user.isActive ? "Active" : "Suspended"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 dark:text-[#8B92A5] pt-1">
+                  <span>Created: <span className="font-mono tabular-nums">{new Date(user.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span></span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination */}

@@ -43,7 +43,7 @@ export async function refreshLeaderboardCache(courseId: string) {
     const sampleSub = submissions.find(s => s.studentId === studentId);
     if (sampleSub) {
       const profile = sampleSub.student.gamificationProfile;
-      const isAnonymized = profile ? profile.isLeaderboardAnonymized : true;
+      const isAnonymized = profile ? profile.isLeaderboardAnonymized : false;
       const displayName = isAnonymized ? "Anonymous Student" : sampleSub.student.name;
 
       rankings.push({
@@ -125,7 +125,7 @@ export async function refreshCodeLabLeaderboardCache(courseId?: string | null) {
     const sampleSub = submissions.find((s) => s.studentId === studentId);
     if (sampleSub) {
       const profile = sampleSub.student.gamificationProfile;
-      const isAnonymized = profile ? profile.isLeaderboardAnonymized : true;
+      const isAnonymized = profile ? profile.isLeaderboardAnonymized : false;
       const displayName = isAnonymized ? "Anonymous Student" : sampleSub.student.name;
 
       rankings.push({

@@ -17,6 +17,24 @@
   --accent-orange-hover: #EA580C;
   --accent-orange-subtle: rgba(249, 115, 22, 0.10);
   --focus-ring: #F97316;
+
+  /* Motion & Easing Tokens */
+  --motion-micro:    80ms;
+  --motion-fast:     150ms;
+  --motion-normal:   200ms;
+  --motion-moderate: 300ms;
+  --motion-slow:     400ms;
+  --motion-xslow:    600ms;
+
+  --ease-enter:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit:   cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-micro:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-data:   cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  --skeleton-base:    #F1F5F9;
+  --skeleton-shine:   #E2E8F0;
+  --rank1-glow: rgba(212, 160, 23, 0.14);
 }
 
 [data-theme="dark"],
@@ -34,6 +52,10 @@
   --accent-orange-hover: #FB923C;
   --accent-orange-subtle: rgba(249, 115, 22, 0.12);
   --focus-ring: #F97316;
+
+  --skeleton-base:    #1E2132;
+  --skeleton-shine:   #252A40;
+  --rank1-glow: rgba(212, 160, 23, 0.10);
 }
 
 /* ─── Scrollbar Theming (Adaptive Light & Dark) ─── */
@@ -463,7 +485,7 @@ html {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Gamification Animations ──────────────────────────────────── */
+/* ── Gamification Animations (Deduplicated) ───────────────────────── */
 
 @keyframes flameBounce {
   0%, 100% { transform: scale(1) rotate(-3deg); }
@@ -518,33 +540,126 @@ html {
   animation: tierPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ─── Micro-Interactions & Transitions ─── */
-button,
-a {
+/* ─── Shimmer Keyframes ─── */
+@keyframes skeleton-sweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-shine) 40%,
+    var(--skeleton-base) 80%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.5s var(--ease-smooth) infinite;
+}
+
+/* ─── Cursor Blink ─── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 0.75s var(--ease-smooth) infinite;
+}
+
+/* ─── Announcement Ticker ─── */
+@keyframes ticker-scroll {
+  from { transform: translateX(0%); }
+  to   { transform: translateX(-50%); }
+}
+.animate-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker-scroll 32s linear infinite;
+  will-change: transform;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* ─── Rank 1 Glow ─── */
+@keyframes rank-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--rank1-glow); }
+  50%       { box-shadow: 0 0 24px 6px var(--rank1-glow); }
+}
+.animate-rank-glow {
+  animation: rank-glow 3.5s var(--ease-smooth) infinite;
+}
+
+/* ─── Tabular Numbers ─── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ─── Button Touch Response (Sub-16ms) ─── */
+button, [role="button"], a[href] {
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: transform var(--motion-micro) var(--ease-micro),
+              filter var(--motion-micro) var(--ease-smooth);
 }
 
-button:active {
-  transform: scale(0.98);
+button:active:not(:disabled),
+[role="button"]:active {
+  transform: scale(0.97);
+  filter: brightness(0.93);
 }
 
-/* ─── Reduce Motion for Accessibility ─── */
+/* ─── Card Hover Lift ─── */
+.card-hover {
+  transition: transform var(--motion-normal) var(--ease-enter),
+              box-shadow var(--motion-normal) var(--ease-smooth);
+  will-change: transform;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Progress Fill (scaleX GPU-safe) ─── */
+.progress-fill {
+  transform-origin: left center;
+  transition: transform var(--motion-slow) var(--ease-data);
+  will-change: transform;
+}
+
+/* ─── Reduced Motion Override (Safe & Accessible) ─── */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  .animate-blink,
+  .animate-ticker,
+  .animate-rank-glow,
   .animate-flame-bounce,
   .animate-badge-reveal,
   .animate-streak-dot,
   .animate-tier-pulse,
-  .animate-slide-in-right {
+  .animate-slide-in-right,
+  .skeleton-shimmer {
     animation: none !important;
-    transition: none !important;
   }
+  .reduce-motion-transition {
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ─── Tactile Noise Texture Overlay ─── */
+.hero-noise {
+  position: relative;
+}
+.hero-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ─── Mobile-First Responsive Spacing Tokens ─── */

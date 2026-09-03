@@ -29,14 +29,14 @@ export default function Button({
       color: "#FFFFFF",
     },
     secondary: {
-      backgroundColor: "#FFFFFF",
-      borderColor: theme.colors.border,
-      color: theme.colors.text,
+      backgroundColor: "var(--bg-surface, #FFFFFF)",
+      borderColor: "var(--border-color, #E2E8F0)",
+      color: "var(--text-primary, #0F172A)",
     },
     ghost: {
       backgroundColor: "transparent",
       borderColor: "transparent",
-      color: theme.colors.text,
+      color: "var(--text-primary, #0F172A)",
     },
   }[variant];
 
