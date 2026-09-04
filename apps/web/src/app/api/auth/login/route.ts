@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, instituteCode: requestedInstituteCode } = parsed.data;
 
     const user = await db.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -61,6 +61,22 @@ export async function POST(request: Request) {
         { message: "Your account has been deactivated. Please contact administration." },
         { status: 403 }
       );
+    }
+
+    // Enforce institute scoping: accounts can only sign in through their own institute's portal
+    if (requestedInstituteCode && user.institute?.code) {
+      const userInstituteCode = user.institute.code.toLowerCase();
+      const targetInstituteCode = requestedInstituteCode.toLowerCase();
+
+      if (userInstituteCode !== targetInstituteCode) {
+        const userInstituteName = user.institute.name || userInstituteCode.toUpperCase();
+        return NextResponse.json(
+          {
+            message: `Access denied. Your account is registered under ${userInstituteName} (${userInstituteCode.toUpperCase()}). You cannot log in through the ${targetInstituteCode.toUpperCase()} portal.`,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const session = await createSession(user.id);

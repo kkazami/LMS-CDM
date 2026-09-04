@@ -15,7 +15,7 @@ interface AuthState {
   api: ApiClient;
 
   initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, instituteCode?: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -61,8 +61,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    login: async (email: string, password: string) => {
-      const response = await api.auth.login({ email, password });
+    login: async (email: string, password: string, instituteCode?: string) => {
+      const response = await api.auth.login({ email, password, instituteCode });
 
       await SecureStore.setItemAsync(TOKEN_KEY, response.token);
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));

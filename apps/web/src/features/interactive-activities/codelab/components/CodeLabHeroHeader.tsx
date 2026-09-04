@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Sparkles } from "lucide-react";
+import { TypingBanner } from "@/components/motion/TypingBanner";
 import {
   PythonLogo,
   CppLogo,
@@ -79,7 +80,12 @@ export default function CodeLabHeroHeader({ institute: _institute }: CodeLabHero
           <span>ICS Interactive CodeLab Tracks</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-          Choose Your Learning Track
+          <TypingBanner
+            text="Choose Your Learning Track"
+            speed={35}
+            cursorColor="#FF7517"
+            className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]"
+          />
         </h1>
         <p className="text-slate-600 dark:text-[#8B92A5] text-xs sm:text-sm max-w-2xl leading-relaxed font-normal">
           Step-by-step programming mastery inspired by W3Schools. 30 guided levels per track — from

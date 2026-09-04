@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
-import { INSTITUTES } from "@/components/common/InstituteSelector";
 
 
 import type { ComponentType } from "react";
@@ -225,38 +224,6 @@ export default function Sidebar({
           </button>
         ) : null}
       </div>
-
-      {/* Mobile Drawer Campus Switcher */}
-      {isMobileDrawer && (
-        <div className="p-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 block px-1">
-            Select Campus
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            {INSTITUTES.map((inst) => {
-              const isCurrent = instituteCode.toLowerCase() === inst.code;
-              const targetUrl = pathname.startsWith(`/${instituteCode}`)
-                ? pathname.replace(`/${instituteCode}`, `/${inst.code}`)
-                : `/${inst.code}`;
-              return (
-                <Link
-                  key={inst.code}
-                  href={targetUrl}
-                  onClick={handleLinkClick}
-                  className={`py-1.5 px-2 rounded-xl text-center font-bold text-xs transition-all border ${
-                    isCurrent
-                      ? "shadow-xs text-white"
-                      : "border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5"
-                  }`}
-                  style={isCurrent ? { backgroundColor: inst.color, borderColor: inst.color } : undefined}
-                >
-                  {inst.short}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Scrollable Nav */}
       <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">

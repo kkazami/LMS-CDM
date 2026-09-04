@@ -397,6 +397,8 @@ export default function SearchModal({
     router.push(href);
   }
 
+  if (!mounted || !isOpen) return null;
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}

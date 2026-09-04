@@ -21,6 +21,22 @@ export default async function InstituteLayout({
     redirect(`/login?institute=${institute}`);
   }
 
+  // Enforce institute scoping: users are strictly locked to their registered institute
+  let userInstituteCode = "ics";
+  if (session.user.instituteId) {
+    const userInstitute = await db.institute.findUnique({
+      where: { id: session.user.instituteId },
+      select: { code: true },
+    });
+    if (userInstitute?.code) {
+      userInstituteCode = userInstitute.code.toLowerCase();
+    }
+  }
+
+  if (userInstituteCode !== institute.toLowerCase()) {
+    redirect(`/${userInstituteCode}`);
+  }
+
   const theme = getInstituteTheme(institute);
 
   // Compute activity eligibility for the sidebar

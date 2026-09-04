@@ -34,7 +34,7 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, selectedInstitute);
       // Auth listener in _layout.tsx handles redirection upon success
     } catch (err: any) {
       setError(err?.message || 'Invalid email or password. Please try again.');

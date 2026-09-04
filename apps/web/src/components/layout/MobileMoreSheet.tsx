@@ -19,7 +19,6 @@ import {
   Flame,
   type LucideIcon,
 } from "lucide-react";
-import { INSTITUTES } from "@/components/common/InstituteSelector";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -137,49 +136,6 @@ export default function MobileMoreSheet({
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Switch Campus Section */}
-        <div className="px-4 pt-3 pb-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 block px-1">
-            Switch Campus
-          </span>
-          <div className="grid grid-cols-3 gap-2">
-            {INSTITUTES.map((inst) => {
-              const isCurrent = instituteCode.toLowerCase() === inst.code;
-              const targetUrl = pathname.startsWith(`/${instituteCode}`)
-                ? pathname.replace(`/${instituteCode}`, `/${inst.code}`)
-                : `/${inst.code}`;
-              return (
-                <Link
-                  key={inst.code}
-                  href={targetUrl}
-                  onClick={onClose}
-                  className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer ${
-                    isCurrent
-                      ? "shadow-xs font-bold"
-                      : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#1A1D27] hover:bg-slate-100 text-slate-700 dark:text-slate-200"
-                  }`}
-                  style={
-                    isCurrent
-                      ? {
-                          borderColor: inst.color,
-                          backgroundColor: `${inst.color}15`,
-                          color: inst.color,
-                        }
-                      : undefined
-                  }
-                >
-                  <span className="text-xs font-black" style={{ color: isCurrent ? inst.color : undefined }}>
-                    {inst.short}
-                  </span>
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-full">
-                    {inst.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
         </div>
 
         {/* Scrollable Navigation Grid */}

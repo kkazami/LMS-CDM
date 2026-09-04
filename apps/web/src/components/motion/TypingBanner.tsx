@@ -7,9 +7,14 @@ interface TypingBannerProps {
   speed?: number;
   sessionKey?: string;
   className?: string;
+  cursorColor?: string;
+  cursorClassName?: string;
+  cursorHeight?: string;
+  cursorWidth?: string;
+  keepCursor?: boolean;
 }
 
-function useShouldSkipAnimation(sessionKey: string): boolean {
+function useShouldSkipAnimation(): boolean {
   return useSyncExternalStore(
     (onStoreChange) => {
       if (typeof window === "undefined" || !window.matchMedia) {
@@ -21,15 +26,10 @@ function useShouldSkipAnimation(sessionKey: string): boolean {
     },
     () => {
       if (typeof window === "undefined") return false;
-      try {
-        const alreadyTyped = sessionStorage.getItem(sessionKey) === "true";
-        const prefersReduced =
-          window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
-          false;
-        return Boolean(alreadyTyped || prefersReduced);
-      } catch {
-        return false;
-      }
+      return (
+        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ??
+        false
+      );
     },
     () => false
   );
@@ -38,20 +38,43 @@ function useShouldSkipAnimation(sessionKey: string): boolean {
 export function TypingBanner({
   text,
   speed = 38,
-  sessionKey = "lumina_typed_greeting",
+  sessionKey,
   className,
+  cursorColor = "#FF7517",
+  cursorClassName,
+  cursorHeight = "1em",
+  cursorWidth = "0.085em",
+  keepCursor = true,
 }: TypingBannerProps) {
-  const shouldSkipAnimation = useShouldSkipAnimation(sessionKey);
+  const shouldSkipAnimation = useShouldSkipAnimation();
 
   const [displayed, setDisplayed] = useState("");
   const [showCursor, setShowCursor] = useState(true);
 
+  // Clear any legacy sessionStorage flags so they never persist or suppress animation
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (sessionKey) {
+          sessionStorage.removeItem(sessionKey);
+        }
+        sessionStorage.removeItem("lumina_typed_greeting");
+        sessionStorage.removeItem("lumina_faculty_typed_greeting");
+      } catch {
+        // ignore sessionStorage unavailable in restricted environments
+      }
+    }
+  }, [sessionKey]);
+
   useEffect(() => {
     if (shouldSkipAnimation) {
       setDisplayed(text);
-      setShowCursor(false);
+      setShowCursor(keepCursor);
       return;
     }
+
+    setDisplayed("");
+    setShowCursor(true);
 
     let i = 0;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -61,12 +84,9 @@ export function TypingBanner({
       setDisplayed(text.slice(0, i));
       if (i >= text.length) {
         clearInterval(interval);
-        try {
-          sessionStorage.setItem(sessionKey, "true");
-        } catch {
-          // ignore sessionStorage unavailable in restricted environments
+        if (!keepCursor) {
+          timeoutId = setTimeout(() => setShowCursor(false), 1200);
         }
-        timeoutId = setTimeout(() => setShowCursor(false), 900);
       }
     }, speed);
 
@@ -74,10 +94,10 @@ export function TypingBanner({
       clearInterval(interval);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [text, speed, shouldSkipAnimation, sessionKey]);
+  }, [text, speed, shouldSkipAnimation, keepCursor]);
 
   const currentText = shouldSkipAnimation ? text : displayed;
-  const currentCursor = shouldSkipAnimation ? false : showCursor;
+  const currentCursor = shouldSkipAnimation ? false : (keepCursor || showCursor);
 
   return (
     <span className={className} aria-label={text}>
@@ -86,8 +106,15 @@ export function TypingBanner({
       </span>
       {currentCursor && (
         <span
-          className="inline-block w-[2px] ml-[2px] align-middle animate-blink"
-          style={{ height: "0.9em", backgroundColor: "currentColor" }}
+          className={`inline-block ml-1 sm:ml-1.5 rounded-[1px] animate-blink ${cursorClassName ?? ""}`}
+          style={{
+            height: cursorHeight,
+            width: cursorWidth,
+            minWidth: "3.5px",
+            backgroundColor: cursorColor,
+            boxShadow: `0 0 10px ${cursorColor}99`,
+            verticalAlign: "-0.1em",
+          }}
           aria-hidden="true"
         />
       )}

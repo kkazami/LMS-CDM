@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { Tabs, useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useAuthStore } from '../../../src/stores/auth-store';
 import {
@@ -10,9 +11,20 @@ import {
 } from 'lucide-react-native';
 
 export default function InstituteTabsLayout() {
+  const router = useRouter();
+  const { institute } = useLocalSearchParams<{ institute: string }>();
   const theme = useTheme();
   const user = useAuthStore((state) => state.user);
   const role = (user?.role || 'STUDENT').toUpperCase();
+
+  useEffect(() => {
+    if (user?.institute?.code && institute) {
+      const userInst = user.institute.code.toLowerCase();
+      if (userInst !== institute.toLowerCase()) {
+        router.replace(`/(tabs)/${userInst}`);
+      }
+    }
+  }, [user, institute, router]);
 
   const isProfessor = role === 'PROFESSOR' || role === 'TEACHER';
 
@@ -35,7 +47,7 @@ export default function InstituteTabsLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
 
@@ -43,7 +55,7 @@ export default function InstituteTabsLayout() {
         name="courses/index"
         options={{
           title: isProfessor ? 'My Classes' : 'Courses',
-          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <BookOpen size={size} color={color} />,
         }}
       />
 
@@ -51,7 +63,7 @@ export default function InstituteTabsLayout() {
         name="grades/index"
         options={{
           title: isProfessor ? 'Analytics' : 'Grades',
-          tabBarIcon: ({ color, size }) => <Trophy size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Trophy size={size} color={color} />,
         }}
       />
 
@@ -59,7 +71,7 @@ export default function InstituteTabsLayout() {
         name="announcements/index"
         options={{
           title: 'Announcements',
-          tabBarIcon: ({ color, size }) => <Megaphone size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Megaphone size={size} color={color} />,
         }}
       />
 
@@ -67,7 +79,7 @@ export default function InstituteTabsLayout() {
         name="more/index"
         options={{
           title: 'More',
-          tabBarIcon: ({ color, size }) => <MenuIcon size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <MenuIcon size={size} color={color} />,
         }}
       />
 

@@ -68,7 +68,10 @@ export default function LoginForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          instituteCode,
+        }),
       });
 
       const data = await response.json();

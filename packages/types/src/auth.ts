@@ -3,6 +3,7 @@ export type Role = 'ADMIN' | 'PROFESSOR' | 'TEACHER' | 'STUDENT' | 'PARENT';
 export interface LoginRequest {
   email: string;
   password: string;
+  instituteCode?: string;
 }
 
 export interface LoginResponse {
