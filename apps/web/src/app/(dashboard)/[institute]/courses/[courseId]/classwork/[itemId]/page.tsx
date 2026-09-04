@@ -13,7 +13,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const { institute, courseId, itemId } = await params;
 
   const session = await getSession();
-  if (!session) redirect(`/${institute}/login`);
+  if (!session) redirect(`/login?institute=${institute}`);
 
   const theme = getInstituteTheme(institute);
 

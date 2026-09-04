@@ -1,7 +1,6 @@
-"use client";
-
+import Link from "next/link";
 import type { InstituteTheme } from "@/lib/theme";
-import { BookOpen, MapPin, User } from "lucide-react";
+import { BookOpen, MapPin, User, ClipboardCheck, CheckCircle2 } from "lucide-react";
 
 interface CourseHeaderProps {
   course: {
@@ -15,9 +14,20 @@ interface CourseHeaderProps {
     instructor: { name: string } | null;
   };
   theme: InstituteTheme;
+  pendingWorkCount?: number;
+  isInstructor?: boolean;
+  instituteCode?: string;
+  courseId?: string;
 }
 
-export default function CourseHeader({ course, theme }: CourseHeaderProps) {
+export default function CourseHeader({
+  course,
+  theme,
+  pendingWorkCount,
+  isInstructor = false,
+  instituteCode,
+  courseId,
+}: CourseHeaderProps) {
   const hasCover = Boolean(course.coverImage);
 
   if (hasCover) {
@@ -44,7 +54,7 @@ export default function CourseHeader({ course, theme }: CourseHeaderProps) {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-white/90">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/90">
             {course.section && (
               <span className="flex items-center gap-1.5">
                 <BookOpen className="h-3.5 w-3.5" />
@@ -62,6 +72,22 @@ export default function CourseHeader({ course, theme }: CourseHeaderProps) {
                 <User className="h-3.5 w-3.5" />
                 {course.instructor.name}
               </span>
+            )}
+            {isInstructor && (
+              (pendingWorkCount ?? 0) > 0 ? (
+                <Link
+                  href={instituteCode && courseId ? `/${instituteCode}/courses/${courseId}/gradebook` : "#"}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/90 hover:bg-amber-500 text-white backdrop-blur-md shadow-xs border border-white/25 transition-all hover:scale-105 active:scale-95"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span>{pendingWorkCount} Pending Work</span>
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/15 text-white/90 backdrop-blur-md border border-white/20">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>No Pending Work</span>
+                </span>
+              )
             )}
           </div>
         </div>
@@ -110,24 +136,45 @@ export default function CourseHeader({ course, theme }: CourseHeaderProps) {
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-[#94A3B8]">
-        {course.section && (
-          <span className="flex items-center gap-1.5">
-            <BookOpen className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
-            <span>Section {course.section}</span>
-          </span>
-        )}
-        {course.room && (
-          <span className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
-            <span>{course.room}</span>
-          </span>
-        )}
-        {course.instructor && (
-          <span className="flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
-            <span>{course.instructor.name}</span>
-          </span>
+      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-[#94A3B8]">
+        <div className="flex flex-wrap items-center gap-4">
+          {course.section && (
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
+              <span>Section {course.section}</span>
+            </span>
+          )}
+          {course.room && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
+              <span>{course.room}</span>
+            </span>
+          )}
+          {course.instructor && (
+            <span className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B]" />
+              <span>{course.instructor.name}</span>
+            </span>
+          )}
+        </div>
+
+        {isInstructor && (
+          <div>
+            {(pendingWorkCount ?? 0) > 0 ? (
+              <Link
+                href={instituteCode && courseId ? `/${instituteCode}/courses/${courseId}/gradebook` : "#"}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 border border-amber-500/30 transition-all hover:scale-105 active:scale-95"
+              >
+                <ClipboardCheck className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                <span>{pendingWorkCount} Pending Work</span>
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#94A3B8] border border-slate-200/60 dark:border-white/5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <span>No Pending Work</span>
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>

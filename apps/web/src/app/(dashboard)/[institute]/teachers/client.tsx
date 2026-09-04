@@ -19,6 +19,7 @@ import {
   Compass,
   Share2,
   BarChart3,
+  ClipboardCheck,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
@@ -44,6 +45,15 @@ interface TaughtCourse {
   coverImage?: string;
   enrolledCount: number;
   pendingCount: number;
+  pendingWorkCount?: number;
+}
+
+export interface PendingClassWork {
+  courseId: string;
+  courseTitle: string;
+  courseCode: string;
+  section: string;
+  pendingCount: number;
 }
 
 interface PendingRequest {
@@ -64,6 +74,8 @@ interface TeacherDashboardClientProps {
   theme: InstituteTheme;
   initialCourses: TaughtCourse[];
   initialPendingRequests: PendingRequest[];
+  initialPendingWorkClasses?: PendingClassWork[];
+  totalPendingWorkCount?: number;
   typingSessionKey?: string;
 }
 
@@ -74,12 +86,15 @@ export default function TeacherDashboardClient({
   theme,
   initialCourses,
   initialPendingRequests,
+  initialPendingWorkClasses = [],
+  totalPendingWorkCount,
   typingSessionKey,
 }: TeacherDashboardClientProps) {
   const [courses, setCourses] = useState<TaughtCourse[]>(initialCourses);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<TaughtCourse | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
+  const [pendingWorkClasses, setPendingWorkClasses] = useState<PendingClassWork[]>(initialPendingWorkClasses);
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
   const [customizingCourse, setCustomizingCourse] = useState<{ id: string; title: string; coverImage?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -91,6 +106,10 @@ export default function TeacherDashboardClient({
   useEffect(() => {
     setPendingRequests(initialPendingRequests);
   }, [initialPendingRequests]);
+
+  useEffect(() => {
+    setPendingWorkClasses(initialPendingWorkClasses);
+  }, [initialPendingWorkClasses]);
 
   // ─── Drag and Drop Reordering ───
   const dragItemRef = useRef<number | null>(null);
@@ -205,6 +224,9 @@ export default function TeacherDashboardClient({
   };
 
   const totalStudentsEnrolled = courses.reduce((acc, c) => acc + c.enrolledCount, 0);
+  const totalPendingWork =
+    totalPendingWorkCount ??
+    pendingWorkClasses.reduce((acc, c) => acc + c.pendingCount, 0);
 
   return (
     <>
@@ -254,8 +276,13 @@ export default function TeacherDashboardClient({
               />
               <StatPill
                 icon={UserCheck}
-                label={`${pendingRequests.length} Pending`}
+                label={`${pendingRequests.length} Requests`}
                 color={pendingRequests.length > 0 ? "#F59E0B" : "#64748B"}
+              />
+              <StatPill
+                icon={ClipboardCheck}
+                label={`${totalPendingWork} to Grade`}
+                color={totalPendingWork > 0 ? "#F43F5E" : "#64748B"}
               />
             </div>
           </div>
@@ -283,7 +310,9 @@ export default function TeacherDashboardClient({
                 icon={GraduationCap}
                 label="Gradebook"
                 sublabel="Grading matrix"
-                href={`/${instituteCode}/courses`}
+                href="#pending-work"
+                badge={totalPendingWork > 0 ? `${totalPendingWork} to Grade` : null}
+                badgeVariant={totalPendingWork > 0 ? "warning" : "muted"}
                 color="#3B82F6"
               />
             </StaggerItem>
@@ -465,8 +494,8 @@ export default function TeacherDashboardClient({
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold font-mono tabular-nums tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold font-mono tabular-nums tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
                               {course.code}
                             </span>
                             {course.section && (
@@ -476,7 +505,13 @@ export default function TeacherDashboardClient({
                             )}
                             {course.pendingCount > 0 && (
                               <span className="text-[10px] font-bold font-mono tabular-nums px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs shrink-0">
-                                {course.pendingCount} pending
+                                {course.pendingCount} req
+                              </span>
+                            )}
+                            {(course.pendingWorkCount ?? 0) > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono tabular-nums px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-xs shrink-0 border border-white/20">
+                                <ClipboardCheck className="h-2.5 w-2.5" />
+                                {course.pendingWorkCount} to grade
                               </span>
                             )}
                           </div>
@@ -539,10 +574,15 @@ export default function TeacherDashboardClient({
                             </Link>
                             <Link
                               href={`/${instituteCode}/courses/${course.id}/gradebook`}
-                              className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
+                              className="relative text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors inline-flex items-center gap-1.5"
                               draggable={false}
                             >
-                              Gradebook
+                              <span>Gradebook</span>
+                              {(course.pendingWorkCount ?? 0) > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                  {course.pendingWorkCount}
+                                </span>
+                              )}
                             </Link>
                           </div>
                           <Link
@@ -563,8 +603,92 @@ export default function TeacherDashboardClient({
             )}
           </div>
 
-          {/* ─── 3. Right 1 Column: Pending Enrollment Requests Widget ─── */}
-          <div className="space-y-4">
+          {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests ─── */}
+          <div className="space-y-6">
+            {/* ─── 3a. Pending Work by Class Widget ─── */}
+            <div className="space-y-4" id="pending-work">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="p-2 rounded-xl"
+                    style={{
+                      backgroundColor: `${theme.colors.primary}1A`,
+                      color: theme.colors.primary,
+                    }}
+                  >
+                    <ClipboardCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">Pending Work</h2>
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8]">Submissions awaiting grading</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {totalPendingWork > 0 ? (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      {totalPendingWork} to grade
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      All graded
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-4 shadow-xs space-y-3">
+                {pendingWorkClasses.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 mb-2" />
+                    <p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">All caught up!</p>
+                    <p className="text-xs text-slate-400 dark:text-[#64748B] mt-0.5">
+                      No student submissions currently pending grading.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {pendingWorkClasses.map((item) => (
+                      <div
+                        key={item.courseId}
+                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all gap-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-200/70 dark:bg-white/10 text-slate-800 dark:text-[#F1F5F9]">
+                              {item.courseCode}
+                            </span>
+                            {item.section && (
+                              <span className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                                • Sec {item.section}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-medium text-slate-700 dark:text-[#CBD5E1] truncate mt-1">
+                            {item.courseTitle}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-bold font-mono tabular-nums px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                            {item.pendingCount} to grade
+                          </span>
+                          <Link
+                            href={`/${instituteCode}/courses/${item.courseId}/gradebook`}
+                            className="p-1.5 rounded-lg bg-slate-200/60 dark:bg-white/5 text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                            title="Open Gradebook"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ─── 3b. Pending Enrollment Requests Widget ─── */}
+            <div className="space-y-4" id="pending-requests">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div
@@ -657,6 +781,7 @@ export default function TeacherDashboardClient({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Instructor Create Course Modal */}
       <InstructorCreateCourseModal

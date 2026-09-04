@@ -16,7 +16,7 @@ export function StatPill({ icon: Icon, label, color }: StatPillProps) {
       }}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" style={{ color }} aria-hidden="true" />
-      <span className="text-xs font-semibold font-mono tabular-nums" style={{ color }}>
+      <span className="text-xs font-semibold font-mono tabular-nums" style={{ color }} suppressHydrationWarning>
         {label}
       </span>
     </div>

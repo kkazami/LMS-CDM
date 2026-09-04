@@ -48,8 +48,13 @@ export function TypingBanner({
 }: TypingBannerProps) {
   const shouldSkipAnimation = useShouldSkipAnimation();
 
+  const [mounted, setMounted] = useState(false);
   const [displayed, setDisplayed] = useState("");
   const [showCursor, setShowCursor] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Clear any legacy sessionStorage flags so they never persist or suppress animation
   useEffect(() => {
@@ -67,6 +72,8 @@ export function TypingBanner({
   }, [sessionKey]);
 
   useEffect(() => {
+    if (!mounted) return;
+
     if (shouldSkipAnimation) {
       setDisplayed(text);
       setShowCursor(keepCursor);
@@ -94,13 +101,13 @@ export function TypingBanner({
       clearInterval(interval);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [text, speed, shouldSkipAnimation, keepCursor]);
+  }, [mounted, text, speed, shouldSkipAnimation, keepCursor]);
 
-  const currentText = shouldSkipAnimation ? text : displayed;
-  const currentCursor = shouldSkipAnimation ? false : (keepCursor || showCursor);
+  const currentText = !mounted ? "" : shouldSkipAnimation ? text : displayed;
+  const currentCursor = !mounted ? keepCursor : shouldSkipAnimation ? false : (keepCursor || showCursor);
 
   return (
-    <span className={className} aria-label={text}>
+    <span className={className} aria-label={text} suppressHydrationWarning>
       <span aria-hidden="true" suppressHydrationWarning>
         {currentText}
       </span>
