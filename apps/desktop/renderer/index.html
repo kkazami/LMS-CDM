@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lumina LMS — Connection Error</title>
+  <title>Lumina LMS — Cannot Connect</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,90 +14,152 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #F6F4F4;
+      background: #0d0f17;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #2C2727;
+      color: #F0F2F8;
+      padding: 24px;
     }
 
-    .icon {
-      width: 80px;
-      height: 80px;
-      background: #FEE2E2;
+    .card {
+      background: #141824;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 20px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .icon-badge {
+      width: 68px;
+      height: 68px;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
-      margin-bottom: 24px;
+      font-size: 30px;
+      margin-bottom: 20px;
+      color: #F87171;
     }
 
     h1 {
-      font-size: 22px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       margin-bottom: 8px;
+      color: #FFFFFF;
     }
 
-    p {
-      font-size: 14px;
-      color: #6B7280;
-      max-width: 360px;
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 32px;
+    p.desc {
+      font-size: 13.5px;
+      color: #8B92A5;
+      line-height: 1.5;
+      margin-bottom: 24px;
     }
 
-    button {
-      padding: 10px 24px;
+    .action-btn {
+      padding: 12px 28px;
       background: #FF7517;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.15s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    button:hover {
+    .action-btn:hover {
       background: #FC8236;
+      transform: translateY(-1px);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
     }
 
     .hint {
       margin-top: 24px;
       padding: 16px;
-      background: #FFF;
-      border: 1px solid #E5E7EB;
-      border-radius: 8px;
-      max-width: 400px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      width: 100%;
+      text-align: left;
     }
 
-    .hint p {
-      margin-bottom: 8px;
-      text-align: left;
-      font-size: 13px;
+    .hint-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #A0AEC0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .hint-step {
+      font-size: 12.5px;
+      color: #8B92A5;
+      margin-bottom: 4px;
     }
 
     .hint code {
-      background: #F3F4F6;
-      padding: 2px 6px;
-      border-radius: 4px;
+      display: block;
+      background: #0d0f17;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 12px;
+      border-radius: 6px;
       font-size: 12px;
+      color: #FF9B4E;
       font-family: 'Consolas', 'Monaco', monospace;
+      margin-top: 4px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="icon">⚡</div>
-  <h1>Cannot Connect to Lumina LMS</h1>
-  <p>The application server is not reachable. Make sure the web server is running and try again.</p>
-  <button onclick="window.location.reload()">Retry Connection</button>
+  <div class="card">
+    <div class="icon-badge">⚡</div>
+    <h1>Cannot Connect to Lumina LMS Server</h1>
+    <p class="desc">The Administrator Console requires the Lumina LMS web server to be running on <code>http://localhost:3000</code>.</p>
+    
+    <button class="action-btn" id="retry-btn" onclick="checkAndReload()">
+      Check Server Status
+    </button>
 
-  <div class="hint">
-    <p><strong>For developers:</strong></p>
-    <p>Start the web server first:</p>
-    <p><code>pnpm dev:web</code></p>
-    <p>Then restart the desktop app:</p>
-    <p><code>pnpm dev:desktop</code></p>
+    <div class="hint">
+      <div class="hint-title">Developer Instructions</div>
+      <div class="hint-step">Step 1: Start the web server</div>
+      <code>pnpm dev:web</code>
+      <div class="hint-step">Step 2: Restart the desktop app</div>
+      <code>pnpm dev:desktop</code>
+    </div>
   </div>
+
+  <script>
+    function checkAndReload() {
+      const btn = document.getElementById('retry-btn');
+      btn.innerText = 'Connecting...';
+      btn.disabled = true;
+
+      fetch('http://localhost:3000/api/auth/me')
+        .then(() => {
+          window.location.href = 'http://localhost:3000/login?institute=ics&desktop=admin';
+        })
+        .catch(() => {
+          btn.innerText = 'Check Server Status';
+          btn.disabled = false;
+          alert('Server still not reachable. Please start the Next.js server with: pnpm dev:web');
+        });
+    }
+  </script>
 </body>
 </html>

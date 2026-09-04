@@ -58,7 +58,7 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-screen bg-canvas text-primary-theme transition-colors duration-200 overflow-x-hidden max-w-full"
+      className="min-h-screen bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--focus-ring": theme.colors.primary,
       } as React.CSSProperties}
@@ -68,7 +68,7 @@ export default function DashboardLayout({
         <NavigationProgress color={theme.colors.primary} />
       </Suspense>
 
-      <div className="flex items-start">
+      <div className="flex">
         <Sidebar
           instituteCode={instituteCode}
           theme={theme}
@@ -110,7 +110,9 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-x-hidden max-w-full">
+        <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+          isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
+        }`}>
           <Topbar
             theme={theme}
             instituteName={instituteName}

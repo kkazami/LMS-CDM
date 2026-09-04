@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
+import { isDesktopAdmin as isDesktopAdminCheck } from "@/lib/electron-detect";
 import type { InstituteTheme } from "@/lib/theme";
 
 type LoginFormValues = {
@@ -15,13 +16,29 @@ type LoginFormValues = {
 type LoginFormProps = {
   theme: InstituteTheme;
   instituteCode: string;
+  isDesktopAdmin?: boolean;
 };
 
 export default function LoginForm({
   theme,
   instituteCode,
+  isDesktopAdmin = false,
 }: LoginFormProps) {
   const router = useRouter();
+
+  const [isDesktopMode, setIsDesktopMode] = useState<boolean>(isDesktopAdmin);
+
+  useEffect(() => {
+    if (
+      !isDesktopMode &&
+      (isDesktopAdmin ||
+        isDesktopAdminCheck() ||
+        new URLSearchParams(window.location.search).get("desktop") === "admin" ||
+        (typeof navigator !== "undefined" && navigator.userAgent.includes("Electron")))
+    ) {
+      setIsDesktopMode(true);
+    }
+  }, [isDesktopAdmin, isDesktopMode]);
 
   const [values, setValues] = useState<LoginFormValues>({
     email: "",
@@ -61,14 +78,23 @@ export default function LoginForm({
       }
 
       const role = data.user.role.toUpperCase();
+
+      if (isDesktopMode && role !== "ADMIN") {
+        setErrorMessage(
+          "This application is restricted to administrators only. Students and instructors should use the web portal or mobile app."
+        );
+        await fetch("/api/auth/logout", { method: "POST" });
+        return;
+      }
+
       let targetPath = `/${data.user.institute.code}`;
 
-      if (role === "STUDENT") {
+      if (isDesktopMode || role === "ADMIN") {
+        targetPath += "/admin";
+      } else if (role === "STUDENT") {
         targetPath += "/students";
       } else if (role === "PROFESSOR" || role === "TEACHER") {
         targetPath += "/teachers";
-      } else if (role === "ADMIN") {
-        targetPath += "/admin";
       }
 
       window.location.href = targetPath;
@@ -81,6 +107,10 @@ export default function LoginForm({
     }
   }
 
+  const registerLink = isDesktopMode
+    ? `/register?institute=${instituteCode}&desktop=admin`
+    : `/register?institute=${instituteCode}`;
+
   return (
     <form onSubmit={handleSubmit} className="grid gap-4">
       <Input
@@ -88,7 +118,7 @@ export default function LoginForm({
         name="email"
         label="Email"
         type="email"
-        placeholder="student@school.edu"
+        placeholder={isDesktopMode ? "admin@school.edu" : "student@school.edu"}
         value={values.email}
         onChange={(event) => updateField("email", event.target.value)}
         theme={theme}
@@ -110,7 +140,7 @@ export default function LoginForm({
         <div className="flex justify-end mt-1">
           <Link
             href={`/forgot-password?institute=${instituteCode}`}
-            className="text-xs font-medium text-gray-600 hover:underline"
+            className="text-xs font-medium hover:underline"
             style={{ color: theme.colors.primary }}
           >
             Forgot Password?
@@ -127,13 +157,13 @@ export default function LoginForm({
       </Button>
 
       <div className="flex items-center justify-between gap-3 text-sm text-gray-600">
-        <span>New to Lumina LMS?</span>
+        <span>{isDesktopMode ? "New Administrator?" : "New to Lumina LMS?"}</span>
         <Link
-          href={`/register?institute=${instituteCode}`}
-          className="font-medium"
+          href={registerLink}
+          className="font-medium hover:underline"
           style={{ color: theme.colors.primary }}
         >
-          Create an account
+          {isDesktopMode ? "Register Administrator" : "Create an account"}
         </Link>
       </div>
     </form>

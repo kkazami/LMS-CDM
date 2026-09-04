@@ -1,10 +1,10 @@
-import Card from "@/components/common/Card";
-import RegisterForm from "@/components/forms/RegisterForm";
-import { getInstituteTheme } from "@/lib/get-institute-theme";
+import RegisterClient from "@/components/forms/RegisterClient";
+import { headers } from "next/headers";
 
 type RegisterPageProps = {
   searchParams?: Promise<{
     institute?: string;
+    desktop?: string;
   }>;
 };
 
@@ -13,21 +13,18 @@ export default async function RegisterPage({
 }: RegisterPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const instituteCode = resolvedSearchParams?.institute ?? "ics";
-  const theme = getInstituteTheme(instituteCode);
+
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent") || "";
+  const isDesktopAdmin =
+    resolvedSearchParams?.desktop === "admin" ||
+    userAgent.includes("Electron") ||
+    userAgent.includes("LuminaDesktopAdmin");
 
   return (
-    <main
-      className="flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto"
-      style={{ backgroundColor: theme.colors.background }}
-    >
-      <div className="w-full max-w-md my-auto">
-        <Card
-          title="Create your account"
-          description={`Register for ${theme.name} and continue your learning journey.`}
-        >
-          <RegisterForm theme={theme} instituteCode={theme.code} />
-        </Card>
-      </div>
-    </main>
+    <RegisterClient
+      initialInstituteCode={instituteCode}
+      initialIsDesktopAdmin={isDesktopAdmin}
+    />
   );
 }

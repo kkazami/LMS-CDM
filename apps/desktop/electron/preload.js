@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
@@ -7,11 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isDesktopAdmin: true,
 
   // ── Admin Desktop IPC Bridges ──
-  exportFile: (args: { fileName: string; content: string; fileType: string }) =>
+  exportFile: (args) =>
     ipcRenderer.invoke('admin:export-file', args),
   printPdf: () =>
     ipcRenderer.invoke('admin:print-pdf'),
-  notify: (args: { title: string; body: string }) =>
+  notify: (args) =>
     ipcRenderer.send('admin:notify', args),
   getAppInfo: () =>
     ipcRenderer.invoke('admin:get-app-info'),

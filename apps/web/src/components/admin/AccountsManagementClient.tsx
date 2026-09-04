@@ -13,10 +13,14 @@ import {
   Pencil,
   KeyRound,
   ShieldAlert,
+  ShieldCheck,
   Users,
   GraduationCap,
+  Download,
+  Laptop,
   type LucideIcon,
 } from "lucide-react";
+import { isDesktopAdmin } from "@/lib/electron-detect";
 import type { InstituteTheme } from "@/lib/theme";
 import type { LMSUser, PaginatedResponse } from "@/lib/admin-types";
 import UserProfileModal from "./UserProfileModal";
@@ -24,7 +28,7 @@ import BulkImportModal from "./BulkImportModal";
 import ResetPasswordModal from "./ResetPasswordModal";
 import RoleChangeModal from "./RoleChangeModal";
 
-type Tab = "students" | "instructors";
+type Tab = "students" | "instructors" | "admins";
 
 interface AccountsManagementClientProps {
   theme: InstituteTheme;
@@ -51,7 +55,11 @@ export default function AccountsManagementClient({
   const [editingUser, setEditingUser] = useState<LMSUser | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<LMSUser | null>(null);
   const [roleChangeUser, setRoleChangeUser] = useState<LMSUser | null>(null);
-  const [actionMenuUser, setActionMenuUser] = useState<string | null>(null);
+  const [actionMenu, setActionMenu] = useState<{
+    user: LMSUser;
+    top: number;
+    right: number;
+  } | null>(null);
 
   // Toast
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -64,7 +72,12 @@ export default function AccountsManagementClient({
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const roleParam = activeTab === "students" ? "STUDENT" : "INSTRUCTOR";
+      const roleParam =
+        activeTab === "students"
+          ? "STUDENT"
+          : activeTab === "instructors"
+          ? "INSTRUCTOR"
+          : "ADMIN";
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: pageSize.toString(),
@@ -122,23 +135,97 @@ export default function AccountsManagementClient({
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to update status.", "error");
     }
-    setActionMenuUser(null);
   }
 
-  // Close action menu on outside click
+  // ─── Floating Action Menu Anchor ───
+  const handleOpenActionMenu = (e: React.MouseEvent<HTMLButtonElement>, user: LMSUser) => {
+    e.stopPropagation();
+    if (actionMenu?.user.id === user.id) {
+      setActionMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const menuHeight = 185;
+    const fitsBelow = rect.bottom + menuHeight < window.innerHeight;
+    const top = fitsBelow ? rect.bottom + 4 : Math.max(10, rect.top - menuHeight - 4);
+    const right = Math.max(12, window.innerWidth - rect.right);
+    setActionMenu({ user, top, right });
+  };
+
+  // Close floating action menu on outside click, scroll, resize, or Escape
   useEffect(() => {
-    function handleClick() {
-      setActionMenuUser(null);
+    if (!actionMenu) return;
+    const handleDismiss = () => setActionMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActionMenu(null);
+    };
+    window.addEventListener("scroll", handleDismiss, true);
+    window.addEventListener("resize", handleDismiss);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleDismiss, true);
+      window.removeEventListener("resize", handleDismiss);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [actionMenu]);
+
+  const handleExportCSV = () => {
+    if (users.length === 0) {
+      showToast("No data to export.", "error");
+      return;
     }
-    if (actionMenuUser) {
-      document.addEventListener("click", handleClick);
-      return () => document.removeEventListener("click", handleClick);
+
+    const headers = ["ID", "Name", "Email", "Role", "Identifier", "Status", "Created At"];
+    const rows = users.map((u) => [
+      u.id,
+      `"${u.name.replace(/"/g, '""')}"`,
+      `"${u.email}"`,
+      u.role,
+      `"${(activeTab === "students" ? u.studentNumber : u.uniqueId) || ""}"`,
+      u.isActive ? "Active" : "Suspended",
+      new Date(u.createdAt).toISOString(),
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const fileName = `${instituteCode}-${activeTab}-accounts-${new Date().toISOString().split("T")[0]}.csv`;
+
+    if (typeof window !== "undefined" && window.electronAPI?.exportFile) {
+      window.electronAPI
+        .exportFile({
+          fileName,
+          content: csvContent,
+          fileType: "csv",
+        })
+        .then((res) => {
+          if (res.success) {
+            showToast(`Exported to ${res.path || fileName}`);
+          }
+        })
+        .catch(() => {
+          downloadBlobFallback(csvContent, fileName);
+        });
+    } else {
+      downloadBlobFallback(csvContent, fileName);
     }
-  }, [actionMenuUser]);
+  };
+
+  const downloadBlobFallback = (content: string, fileName: string) => {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded ${fileName}`);
+  };
 
   const tabs: { key: Tab; label: string; icon: LucideIcon }[] = [
     { key: "students", label: "Student Directory", icon: GraduationCap },
     { key: "instructors", label: "Instructor Directory", icon: Users },
+    { key: "admins", label: "Administrator Directory", icon: ShieldCheck },
   ];
 
   return (
@@ -157,14 +244,30 @@ export default function AccountsManagementClient({
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Account Management</h2>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Account Management</h2>
+            {isDesktopAdmin() && (
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <Laptop className="h-3.5 w-3.5" />
+                Desktop Console
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">
-            Create, manage, and administer user accounts across the institute.
+            Create, manage, and administer student, instructor, and administrator accounts across the institute.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer shadow-xs"
+            title="Export current directory as CSV"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </button>
           <button
             onClick={() => setShowBulkModal(true)}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer shadow-xs"
@@ -242,7 +345,7 @@ export default function AccountsManagementClient({
                 <th className="px-4 py-3 font-semibold text-slate-500 dark:text-[#8B92A5] uppercase text-xs tracking-wider">Name</th>
                 <th className="px-4 py-3 font-semibold text-slate-500 dark:text-[#8B92A5] uppercase text-xs tracking-wider">Email</th>
                 <th className="px-4 py-3 font-semibold text-slate-500 dark:text-[#8B92A5] uppercase text-xs tracking-wider">
-                  {activeTab === "students" ? "Student No." : "Employee ID"}
+                  {activeTab === "students" ? "Student No." : activeTab === "instructors" ? "Employee ID" : "Admin ID"}
                 </th>
                 <th className="px-4 py-3 font-semibold text-slate-500 dark:text-[#8B92A5] uppercase text-xs tracking-wider">Status</th>
                 <th className="px-4 py-3 font-semibold text-slate-500 dark:text-[#8B92A5] uppercase text-xs tracking-wider">Created</th>
@@ -264,7 +367,7 @@ export default function AccountsManagementClient({
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-slate-400 dark:text-[#555C72]">
-                    No {activeTab === "students" ? "students" : "instructors"} found.
+                    No {activeTab === "students" ? "students" : activeTab === "instructors" ? "instructors" : "administrators"} found.
                   </td>
                 </tr>
               ) : (
@@ -324,72 +427,14 @@ export default function AccountsManagementClient({
 
                     {/* Actions */}
                     <td className="px-4 py-3.5 text-right">
-                      <div className="relative inline-block">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActionMenuUser(actionMenuUser === user.id ? null : user.id);
-                          }}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-[#F0F2F8] cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-
-                        {actionMenuUser === user.id && (
-                          <div
-                            className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#22263A] py-1 shadow-xl text-slate-700 dark:text-[#F0F2F8]"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              onClick={() => {
-                                setEditingUser(user);
-                                setActionMenuUser(null);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                              Edit Profile
-                            </button>
-                            <button
-                              onClick={() => handleToggleStatus(user)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                            >
-                              {user.isActive ? (
-                                <>
-                                  <UserX className="h-3.5 w-3.5 text-rose-500" />
-                                  <span className="text-rose-600 dark:text-rose-400 font-semibold">Suspend Account</span>
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Reactivate Account</span>
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setResetPasswordUser(user);
-                                setActionMenuUser(null);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                            >
-                              <KeyRound className="h-3.5 w-3.5" />
-                              Reset Password
-                            </button>
-                            <div className="my-1 border-t border-slate-100 dark:border-white/10" />
-                            <button
-                              onClick={() => {
-                                setRoleChangeUser(user);
-                                setActionMenuUser(null);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                            >
-                              <ShieldAlert className="h-3.5 w-3.5" />
-                              Change Role
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleOpenActionMenu(e, user)}
+                        aria-label={`Open account actions for ${user.name}`}
+                        className="rounded-lg p-1.5 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-[#F0F2F8] cursor-pointer min-h-[40px] min-w-[40px] inline-flex items-center justify-center"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -414,7 +459,7 @@ export default function AccountsManagementClient({
             ))
           ) : users.length === 0 ? (
             <div className="p-8 text-center text-slate-400 dark:text-[#555C72]">
-              No {activeTab === "students" ? "students" : "instructors"} found.
+              No {activeTab === "students" ? "students" : activeTab === "instructors" ? "instructors" : "administrators"} found.
             </div>
           ) : (
             users.map((user) => (
@@ -437,79 +482,20 @@ export default function AccountsManagementClient({
                     </div>
                   </div>
 
-                  <div className="relative inline-block">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActionMenuUser(actionMenuUser === user.id ? null : user.id);
-                      }}
-                      className="rounded-lg p-2 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                      aria-label="Account actions"
-                    >
-                      <MoreHorizontal className="h-5 w-5" />
-                    </button>
-
-                    {actionMenuUser === user.id && (
-                      <div
-                        className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#22263A] py-1 shadow-xl text-slate-700 dark:text-[#F0F2F8]"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() => {
-                            setEditingUser(user);
-                            setActionMenuUser(null);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit Profile
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                        >
-                          {user.isActive ? (
-                            <>
-                              <UserX className="h-3.5 w-3.5 text-rose-500" />
-                              <span className="text-rose-600 dark:text-rose-400 font-semibold">Suspend Account</span>
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Reactivate Account</span>
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setResetPasswordUser(user);
-                            setActionMenuUser(null);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                        >
-                          <KeyRound className="h-3.5 w-3.5" />
-                          Reset Password
-                        </button>
-                        <div className="my-1 border-t border-slate-100 dark:border-white/10" />
-                        <button
-                          onClick={() => {
-                            setRoleChangeUser(user);
-                            setActionMenuUser(null);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[44px]"
-                        >
-                          <ShieldAlert className="h-3.5 w-3.5" />
-                          Change Role
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenActionMenu(e, user)}
+                    className="rounded-lg p-2 text-slate-400 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                    aria-label={`Account actions for ${user.name}`}
+                  >
+                    <MoreHorizontal className="h-5 w-5" />
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
                   <div className="rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-[#181B26] p-2.5">
                     <span className="text-slate-400 dark:text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">
-                      {activeTab === "students" ? "Student No." : "Employee ID"}
+                      {activeTab === "students" ? "Student No." : activeTab === "instructors" ? "Employee ID" : "Admin ID"}
                     </span>
                     <span className="font-mono tabular-nums font-semibold text-slate-700 dark:text-[#F0F2F8] mt-0.5 block truncate">
                       {activeTab === "students" ? (user.studentNumber || "—") : (user.uniqueId || "—")}
@@ -662,6 +648,76 @@ export default function AccountsManagementClient({
           setRoleChangeUser(null);
         }}
       />
+
+      {/* Floating Action Menu (Rendered OUTSIDE the table to prevent clipping) */}
+      {actionMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-transparent"
+            onClick={() => setActionMenu(null)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: `${actionMenu.top}px`,
+              right: `${actionMenu.right}px`,
+            }}
+            className="z-50 w-48 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#22263A] py-1 shadow-xl text-slate-700 dark:text-[#F0F2F8] animate-in fade-in zoom-in-95 duration-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setEditingUser(actionMenu.user);
+                setActionMenu(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[38px]"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit Profile
+            </button>
+            <button
+              onClick={() => {
+                handleToggleStatus(actionMenu.user);
+                setActionMenu(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[38px]"
+            >
+              {actionMenu.user.isActive ? (
+                <>
+                  <UserX className="h-3.5 w-3.5 text-rose-500" />
+                  <span className="text-rose-600 dark:text-rose-400 font-semibold">Suspend Account</span>
+                </>
+              ) : (
+                <>
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Reactivate Account</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setResetPasswordUser(actionMenu.user);
+                setActionMenu(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[38px]"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Reset Password
+            </button>
+            <div className="my-1 border-t border-slate-100 dark:border-white/10" />
+            <button
+              onClick={() => {
+                setRoleChangeUser(actionMenu.user);
+                setActionMenu(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer font-medium min-h-[38px]"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Change Role
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

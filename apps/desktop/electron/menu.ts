@@ -1,48 +1,65 @@
-import { Menu, BrowserWindow, app, shell } from 'electron';
+import { Menu, BrowserWindow, app, shell, dialog } from 'electron';
+import * as fs from 'fs';
+
+const WEB_URL = process.env.NODE_ENV !== 'production'
+  ? 'http://localhost:3000'
+  : (process.env.LMS_WEB_URL || 'http://localhost:3000');
 
 export function setupMenu(mainWindow: BrowserWindow) {
   const isMac = process.platform === 'darwin';
 
-  const template: (Electron.MenuItemConstructorOptions | Electron.MenuItem)[] = [
-    // App menu (macOS only)
-    ...(isMac
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              { role: 'about' as const },
-              { type: 'separator' as const },
-              { role: 'services' as const },
-              { type: 'separator' as const },
-              { role: 'hide' as const },
-              { role: 'hideOthers' as const },
-              { role: 'unhide' as const },
-              { type: 'separator' as const },
-              { role: 'quit' as const },
-            ],
-          },
-        ]
-      : []),
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' as const },
+        { type: 'separator' as const },
+        { role: 'quit' as const },
+      ],
+    }] : []),
 
-    // File menu
     {
-      label: 'File',
+      label: 'Navigate',
       submenu: [
         {
-          label: 'Dashboard',
-          accelerator: 'CmdOrCtrl+D',
-          click: () => {
-            mainWindow.webContents.executeJavaScript(
-              'window.location.href = window.location.origin'
-            );
-          },
+          label: 'Admin Dashboard',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/admin'),
+        },
+        {
+          label: 'Course Management',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/admin/courses'),
+        },
+        {
+          label: 'Account Management',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/accounts'),
+        },
+        {
+          label: 'Permission Matrix',
+          accelerator: 'CmdOrCtrl+4',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/accounts/permissions'),
         },
         { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' },
+        {
+          label: 'Audit Logs',
+          accelerator: 'CmdOrCtrl+5',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/logs'),
+        },
+        {
+          label: 'Backup & Recovery',
+          accelerator: 'CmdOrCtrl+6',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/backup'),
+        },
+        {
+          label: 'Security Tools',
+          accelerator: 'CmdOrCtrl+7',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/security'),
+        },
       ],
     },
 
-    // Edit menu
     {
       label: 'Edit',
       submenu: [
@@ -56,7 +73,6 @@ export function setupMenu(mainWindow: BrowserWindow) {
       ],
     },
 
-    // View menu
     {
       label: 'View',
       submenu: [
@@ -72,28 +88,59 @@ export function setupMenu(mainWindow: BrowserWindow) {
       ],
     },
 
-    // Help menu
+    {
+      label: 'Tools',
+      submenu: [
+        {
+          label: 'Export Audit Log (PDF)',
+          accelerator: 'CmdOrCtrl+P',
+          click: () => {
+            mainWindow.webContents.printToPDF({}).then((data) => {
+              dialog.showSaveDialog(mainWindow, {
+                title: 'Export Audit Log',
+                defaultPath: 'audit-log-' + new Date().toISOString().slice(0, 10) + '.pdf',
+                filters: [{ name: 'PDF', extensions: ['pdf'] }],
+              }).then(({ filePath }) => {
+                if (filePath) {
+                  fs.writeFileSync(filePath, data);
+                }
+              });
+            }).catch((err) => {
+              console.error('Failed to print PDF:', err);
+            });
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Sign Out',
+          accelerator: 'CmdOrCtrl+Shift+Q',
+          click: () => {
+            mainWindow.webContents.session.clearStorageData({ storages: ['cookies'] }).then(() => {
+              mainWindow.loadURL(WEB_URL + '/login?institute=ics&desktop=admin');
+            });
+          },
+        },
+      ],
+    },
+
     {
       label: 'Help',
       submenu: [
         {
-          label: 'About Lumina LMS',
+          label: 'About Lumina LMS Admin Console',
           click: () => {
-            const { dialog } = require('electron');
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'Lumina LMS',
-              message: 'Lumina LMS Desktop',
-              detail: `Version ${app.getVersion()}\n\nA multi-institute Learning Management System.`,
+              title: 'Lumina LMS — Administrator Console',
+              message: 'Lumina LMS Desktop Admin',
+              detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing the Lumina Learning Management System.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
             });
           },
         },
         { type: 'separator' },
         {
           label: 'Report Issue',
-          click: () => {
-            shell.openExternal('https://github.com/your-org/lumina-lms/issues');
-          },
+          click: () => shell.openExternal('https://github.com/your-org/lumina-lms/issues'),
         },
       ],
     },

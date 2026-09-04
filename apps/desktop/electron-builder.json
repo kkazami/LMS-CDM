@@ -1,0 +1,27 @@
+{
+  "appId": "com.lumina.lms.admin",
+  "productName": "Lumina LMS Admin",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "electron/**/*",
+    "renderer/**/*",
+    "assets/**/*",
+    "!node_modules"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icon.png"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icon.png",
+    "category": "public.app-category.education"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "assets/icon.png",
+    "category": "Education"
+  }
+}
