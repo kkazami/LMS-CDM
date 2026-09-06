@@ -42,6 +42,21 @@ export async function GET(_req: Request, { params }: RouteParams) {
         select: { course: { select: { id: true, title: true, code: true } } },
         take: 5,
       },
+      gamificationProfile: {
+        select: {
+          exp: true,
+          level: true,
+          levelTier: true,
+          currentStreak: true,
+          longestStreak: true,
+          totalLoginDays: true,
+          badges: {
+            select: { badgeRuleId: true, earnedAt: true },
+            orderBy: { earnedAt: "desc" },
+            take: 6,
+          },
+        },
+      },
     },
   });
 

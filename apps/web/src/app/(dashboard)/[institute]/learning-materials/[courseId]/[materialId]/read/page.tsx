@@ -115,6 +115,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
             userId={userId}
             type={activeAttachment.type}
             fileName={activeAttachment.fileName}
+            materialId={materialId}
           />
         </div>
 

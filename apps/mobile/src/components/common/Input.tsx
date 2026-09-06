@@ -5,11 +5,14 @@ import { useTheme } from '../../hooks/useTheme';
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
+  ringColor?: string;
 }
 
-export function Input({ label, error, ...props }: InputProps) {
+export function Input({ label, error, ringColor, ...props }: InputProps) {
   const theme = useTheme();
   const [isFocused, setIsFocused] = useState(false);
+
+  const activeBorder = ringColor || theme.colors.ring;
 
   return (
     <View style={styles.container}>
@@ -18,7 +21,7 @@ export function Input({ label, error, ...props }: InputProps) {
         style={[
           styles.input,
           {
-            borderColor: error ? '#EF4444' : isFocused ? theme.colors.ring : theme.colors.border,
+            borderColor: error ? '#EF4444' : isFocused ? activeBorder : theme.colors.border,
             color: theme.colors.text,
             backgroundColor: theme.colors.card,
           },

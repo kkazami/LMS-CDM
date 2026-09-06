@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
 import { createSession } from "@/lib/auth-session";
 
+import { processLoginReward } from "@/lib/gamification/login-rewards";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, instituteCode: requestedInstituteCode } = parsed.data;
 
     const user = await db.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -61,7 +63,32 @@ export async function POST(request: Request) {
       );
     }
 
+    // Enforce institute scoping: accounts can only sign in through their own institute's portal
+    if (requestedInstituteCode && user.institute?.code) {
+      const userInstituteCode = user.institute.code.toLowerCase();
+      const targetInstituteCode = requestedInstituteCode.toLowerCase();
+
+      if (userInstituteCode !== targetInstituteCode) {
+        const userInstituteName = user.institute.name || userInstituteCode.toUpperCase();
+        return NextResponse.json(
+          {
+            message: `Access denied. Your account is registered under ${userInstituteName} (${userInstituteCode.toUpperCase()}). You cannot log in through the ${targetInstituteCode.toUpperCase()} portal.`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const session = await createSession(user.id);
+
+    // Process Daily Login Rewards asynchronously / before responding
+    try {
+      if (user.role === "STUDENT") {
+        await processLoginReward(user.id);
+      }
+    } catch (rewardErr) {
+      console.error("LOGIN_REWARD_ERROR", rewardErr);
+    }
 
     const instituteCode = user.institute?.code || "ics";
     const instituteName = user.institute?.name || "Institute of Computer Studies";
@@ -84,13 +111,14 @@ export async function POST(request: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error("LOGIN_ERROR:", error?.message || error, error?.stack);
+  } catch (error: unknown) {
+    const err = error as { message?: string; stack?: string };
+    console.error("LOGIN_ERROR:", err?.message || error, err?.stack);
 
     return NextResponse.json(
       {
         message: "Something went wrong during login.",
-        detail: process.env.NODE_ENV !== "production" ? error?.message : undefined,
+        detail: process.env.NODE_ENV !== "production" ? err?.message : undefined,
       },
       { status: 500 }
     );

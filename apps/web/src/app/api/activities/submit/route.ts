@@ -19,6 +19,9 @@ import { activitySubmissionSchema } from "@/features/interactive-activities/shar
 import { db } from "@/lib/db";
 import { processGamificationEvent } from "@/features/interactive-activities/gamification/engine";
 import { getProblemById } from "@/features/interactive-activities/codelab/problems";
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
     // 4. Verify the template exists (the assignmentId maps to a templateId)
     let template = await db.activityTemplate.findUnique({
       where: { id: payload.assignmentId },
-      select: { id: true, activityType: true, courseId: true, syllabusItemId: true },
+      select: { id: true, title: true, activityType: true, courseId: true, syllabusItemId: true },
     });
 
     if (!template && payload.activityType === "codelab") {
@@ -108,7 +111,7 @@ export async function POST(request: Request) {
             variables: JSON.stringify(problem?.variables || []),
             hiddenTestCases: JSON.stringify(problem?.testCases.filter((tc) => tc.isHidden) || []),
           },
-          select: { id: true, activityType: true, courseId: true, syllabusItemId: true },
+          select: { id: true, title: true, activityType: true, courseId: true, syllabusItemId: true },
         });
       }
     }
@@ -157,9 +160,40 @@ export async function POST(request: Request) {
       },
     });
 
-    // 7. Fire Gamification Hook (Sprint 7)
+    // 7. Fire Gamification Hook
     try {
       await processGamificationEvent(payload, template.courseId);
+
+      // Dedicated EXP and Badge grants with anti-abuse idempotency
+      if (payload.activityType === "codelab" && payload.score >= 60) {
+        if (payload.score === 100) {
+          // Grant with perfect idempotency key
+          await grantExp({
+            userId: payload.studentId,
+            amount: EXP_VALUES.codelab_level_perfect,
+            reason: `CodeLab: ${template.title} — Perfect Score (100%)`,
+            source: "codelab",
+            courseId: template.courseId,
+            idempotencyKey: `codelab_perfect_${payload.assignmentId}`,
+          });
+
+          await awardBadgeIfEarned(payload.studentId, "codelab-first");
+          await awardBadgeIfEarned(payload.studentId, "codelab-perfect-level");
+          await awardBadgeIfEarned(payload.studentId, "perfect-score");
+        } else {
+          // Regular pass (≥60%)
+          await grantExp({
+            userId: payload.studentId,
+            amount: EXP_VALUES.codelab_level_complete,
+            reason: `CodeLab: ${template.title} — Passed`,
+            source: "codelab",
+            courseId: template.courseId,
+            idempotencyKey: `codelab_pass_${payload.assignmentId}`,
+          });
+
+          await awardBadgeIfEarned(payload.studentId, "codelab-first");
+        }
+      }
     } catch (gamiErr) {
       console.error("GAMIFICATION_ERROR", gamiErr);
     }

@@ -14,3 +14,5 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 }
+
+export type TaskItem = Task;

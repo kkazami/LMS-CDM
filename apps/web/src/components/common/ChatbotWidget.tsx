@@ -61,7 +61,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
         <button
           id="chatbot-bubble"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-40 flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
           style={{ backgroundColor: theme.colors.primary }}
           aria-label="Open Lumina Assistant"
         >
@@ -78,7 +78,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
       {isOpen && (
         <div
           id="chatbot-panel"
-          className="fixed bottom-6 right-6 z-50 flex flex-col w-90 h-125 rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden"
+          className="fixed inset-x-2 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] sm:inset-auto sm:bottom-6 sm:right-6 z-50 flex flex-col sm:w-90 h-[70vh] sm:h-125 rounded-2xl bg-white dark:bg-[#1A1D27] border border-slate-200 dark:border-white/10 shadow-2xl ring-1 ring-black/5 overflow-hidden"
           style={{
             animation: "chatbot-slide-up 0.3s ease-out",
           }}
@@ -100,7 +100,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
             <button
               id="chatbot-close"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center h-8 w-8 rounded-full text-white/80 hover:bg-white/20 transition-colors"
+              className="flex items-center justify-center h-8 w-8 rounded-full text-white/80 hover:bg-white/20 transition-colors cursor-pointer"
               aria-label="Close chat"
             >
               <X className="h-4 w-4" />
@@ -108,7 +108,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
           </div>
 
           {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-[#141721]">
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -142,7 +142,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
                   className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === "user"
                       ? "text-white rounded-br-sm"
-                      : "bg-white text-gray-700 rounded-bl-sm shadow-sm border border-gray-100"
+                      : "bg-white dark:bg-[#22263A] text-gray-700 dark:text-[#F0F2F8] rounded-bl-sm shadow-sm border border-gray-100 dark:border-white/5"
                   }`}
                   style={
                     msg.role === "user"
@@ -167,11 +167,11 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
                     style={{ color: theme.colors.primary }}
                   />
                 </div>
-                <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-100">
+                <div className="bg-white dark:bg-[#22263A] rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-gray-100 dark:border-white/5">
                   <div className="flex gap-1">
-                    <span className="h-2 w-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-600 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-600 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-600 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
               </div>
@@ -181,7 +181,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
           </div>
 
           {/* Input area */}
-          <div className="shrink-0 border-t border-gray-200 bg-white px-3 py-3">
+          <div className="shrink-0 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] px-3 py-3">
             <div className="flex items-center gap-2">
               <input
                 ref={inputRef}
@@ -191,7 +191,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything..."
-                className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition-shadow placeholder:text-gray-400 focus:border-transparent focus:ring-2"
+                className="flex-1 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#141721] text-gray-900 dark:text-[#F0F2F8] px-4 py-2.5 text-sm outline-none transition-shadow placeholder:text-gray-400 dark:placeholder:text-[#8B92A5] focus:border-transparent focus:ring-2"
                 style={{
                   // @ts-expect-error CSS variable for focus ring
                   "--tw-ring-color": `${theme.colors.primary}40`,

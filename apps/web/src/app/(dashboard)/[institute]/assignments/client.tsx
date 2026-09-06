@@ -143,7 +143,7 @@ function TodoSection({
         aria-expanded={isOpen}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="flex items-center justify-between cursor-pointer select-none group"
+        className="flex items-center justify-between min-h-[48px] cursor-pointer select-none group"
       >
         <div className="flex items-center gap-2.5">
           <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">{label}</h2>
@@ -200,7 +200,7 @@ function TodoSection({
                   key={item.id}
                   id={`todo-item-${item.id}`}
                   href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-                  className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group/item border border-transparent hover:border-slate-200 dark:hover:border-white/5"
+                  className="flex items-center gap-3.5 min-h-[52px] p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group/item border border-transparent hover:border-slate-200 dark:hover:border-white/5"
                 >
                   {/* Icon avatar */}
                   <div
@@ -292,7 +292,7 @@ export default function TodoClient({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto page-enter space-y-6">
+    <div className="w-full max-w-4xl mx-auto page-enter space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">To-do</h1>
@@ -301,28 +301,73 @@ export default function TodoClient({
         </p>
       </div>
 
-      {/* Filter Bar */}
-      <div>
-        <select
-          id="todo-course-filter"
-          value={selectedCourseId}
-          onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="w-full sm:w-auto min-w-[220px] px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-slate-800 dark:text-[#F0F2F8] cursor-pointer shadow-xs outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
-        >
-          <option value="all">All classes</option>
-          {enrolledCourses.map((course) => (
-            <option key={course.id} value={course.id}>
-              {course.title}
-            </option>
-          ))}
-        </select>
+      {/* Filter Bar with Horizontal Scroll Chips for 1-tap filtering */}
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedCourseId("all")}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[40px] shadow-xs active:scale-95 shrink-0 border"
+            style={
+              selectedCourseId === "all"
+                ? {
+                    backgroundColor: theme.colors.primary,
+                    borderColor: theme.colors.primary,
+                    color: "#ffffff",
+                  }
+                : {}
+            }
+          >
+            <span>All classes</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCourseId === "all"
+                  ? "bg-white/25 text-white"
+                  : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              {items.noDueDate.length +
+                items.thisWeek.length +
+                items.nextWeek.length +
+                items.later.length +
+                items.done.length}
+            </span>
+          </button>
+
+          {enrolledCourses.map((course) => {
+            const isSelected = selectedCourseId === course.id;
+            return (
+              <button
+                key={course.id}
+                type="button"
+                onClick={() => setSelectedCourseId(course.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[40px] shadow-xs active:scale-95 shrink-0 border ${
+                  isSelected
+                    ? "text-white"
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-slate-700 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-white/5"
+                }`}
+                style={
+                  isSelected
+                    ? {
+                        backgroundColor: theme.colors.primary,
+                        borderColor: theme.colors.primary,
+                        color: "#ffffff",
+                      }
+                    : {}
+                }
+              >
+                <span>{course.code || course.title}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Empty State */}
       {totalFiltered === 0 ? (
         <div
           id="todo-empty-state"
-          className="flex flex-col items-center justify-center py-20 rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-8 shadow-xs text-center"
+          className="flex flex-col items-center justify-center min-h-[50vh] py-20 rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-8 shadow-xs text-center"
         >
           <ClipboardCheck className="h-16 w-16 text-emerald-500 mb-4" />
           <h2 className="text-xl font-bold text-slate-800 dark:text-[#F0F2F8] mb-1">

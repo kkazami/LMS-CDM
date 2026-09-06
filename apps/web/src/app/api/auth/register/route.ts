@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, studentNumber, password, instituteCode } = parsed.data;
+    const { name, email, studentNumber, uniqueId, role, password, instituteCode } = parsed.data;
 
     const existingUser = await db.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -47,14 +47,16 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hash(password, 10);
+    const userRole = role === "ADMIN" ? "ADMIN" : "STUDENT";
 
     const user = await db.user.create({
       data: {
         name,
         email: email.toLowerCase(),
-        studentNumber,
+        studentNumber: userRole === "ADMIN" ? null : (studentNumber || null),
+        uniqueId: uniqueId || "",
         password: hashedPassword,
-        role: "STUDENT", // using uppercase "STUDENT" to match schema
+        role: userRole,
         instituteId: institute.id,
       },
       select: {

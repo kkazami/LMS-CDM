@@ -15,7 +15,7 @@ export default async function LeaderboardPage({
   const session = await getSession();
 
   if (!session) {
-    redirect(`/${institute}/login`);
+    redirect(`/login?institute=${institute}`);
   }
 
   // Fetch gamification profile

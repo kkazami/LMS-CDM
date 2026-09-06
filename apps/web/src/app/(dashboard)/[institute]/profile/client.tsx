@@ -12,13 +12,22 @@ import {
   GraduationCap,
   Briefcase,
   Palette,
+  Flame,
+  Trophy,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 import type { InstituteTheme } from "@/lib/theme";
 import { useAvatar } from "@/lib/avatar-context";
 import { toast } from "@/components/common/Toast";
 import UserAvatar from "@/components/common/UserAvatar";
 import AvatarUploadModal from "@/components/common/AvatarUploadModal";
 import Button from "@/components/common/Button";
+import ExpProgressRing from "@/components/common/ExpProgressRing";
+import BadgeIcon from "@/components/common/BadgeIcon";
+import { computeLevelInfo, TIER_CONFIG } from "@/lib/gamification/exp-engine";
+import { getBadgeById, formatBadgeName } from "@/lib/gamification/badge-catalog";
 
 interface ProfileUser {
   id: string;
@@ -37,6 +46,15 @@ interface ProfileUser {
   institute: { code: string; name: string };
   taughtCourses: { id: string; title: string; code: string }[];
   enrollments: { course: { id: string; title: string; code: string } }[];
+  gamificationProfile?: {
+    exp: number;
+    level: number;
+    levelTier: string;
+    loginStreakCurrent: number;
+    loginStreakLongest: number;
+    totalLoginDays: number;
+    badges: { badgeRuleId: string; earnedAt: string }[];
+  } | null;
 }
 
 interface ProfileEditClientProps {
@@ -143,10 +161,10 @@ export default function ProfileEditClient({
             <button
               type="button"
               onClick={() => setAvatarModalOpen(true)}
-              className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700"
+              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
               aria-label="Change profile photo"
             >
-              <Camera className="h-3.5 w-3.5" />
+              <Camera className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -278,7 +296,7 @@ export default function ProfileEditClient({
                   key={color}
                   type="button"
                   onClick={() => setCoverColor(color)}
-                  className="h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
                   style={{
                     backgroundColor: color,
                     borderColor: coverColor === color ? (theme.colors.primary || "#F97316") : "transparent",
@@ -317,6 +335,142 @@ export default function ProfileEditClient({
             </Button>
           </div>
         </div>
+
+        {/* ── Progress & Achievements Section (Student Gamification) ── */}
+        {isStudent && (
+          <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+                <Sparkles className="h-4 w-4 text-[#F97316]" />
+                Progress & Achievements
+              </h2>
+              <Link
+                href={`/${instituteCode}/achievements`}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#F97316] hover:text-[#EA580C] transition-colors"
+              >
+                <span>View All Achievements</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* EXP Arc & Level Progress Overview */}
+            {(() => {
+              const exp = user.gamificationProfile?.exp || 0;
+              const levelInfo = computeLevelInfo(exp);
+              const tierConfig = TIER_CONFIG[levelInfo.tier] || TIER_CONFIG.newcomer;
+              const streak = user.gamificationProfile?.loginStreakCurrent || 0;
+              const totalDays = user.gamificationProfile?.totalLoginDays || 0;
+              const badges = user.gamificationProfile?.badges || [];
+
+              return (
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                    <ExpProgressRing
+                      percent={levelInfo.progressPercent}
+                      level={levelInfo.level}
+                      tierIcon={tierConfig.icon}
+                      size={110}
+                    />
+
+                    <div className="flex-1 w-full space-y-2 text-center sm:text-left">
+                      <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                        <span className={`text-base font-black ${tierConfig.color} ${tierConfig.darkColor}`}>
+                          Level {levelInfo.level} · {tierConfig.label} Tier
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono font-bold">
+                          {exp} Total EXP
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-slate-500 dark:text-[#8B92A5] font-mono">
+                          <span>Progress to Level {levelInfo.level + 1}</span>
+                          <span>
+                            {levelInfo.currentLevelProgress} / {levelInfo.expToNextLevel} EXP ({levelInfo.progressPercent}%)
+                          </span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#F97316] transition-all duration-700 ease-out"
+                            style={{ width: `${levelInfo.progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Streak & Total Days */}
+                      <div className="flex items-center justify-center sm:justify-start gap-4 pt-1 text-xs text-slate-600 dark:text-[#8B92A5]">
+                        <span className="inline-flex items-center gap-1.5 font-bold text-orange-600 dark:text-orange-400">
+                          <Flame className="w-4 h-4 fill-orange-500 text-orange-500" />
+                          {streak}-Day Login Streak
+                        </span>
+                        <span className="text-slate-300 dark:text-white/10">•</span>
+                        <span>{totalDays} Total Login Days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Badges */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
+                        Recent Badges ({badges.length})
+                      </h3>
+                      <Link
+                        href={`/${instituteCode}/achievements`}
+                        className="text-xs text-slate-500 hover:text-slate-700 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8] transition-colors"
+                      >
+                        Browse all 60 badges →
+                      </Link>
+                    </div>
+
+                    {badges.length === 0 ? (
+                      <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
+                        <Trophy className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                        <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+                          No badges earned yet. Complete activities and daily logins to earn badges!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                        {badges.map((b) => {
+                          const def = getBadgeById(b.badgeRuleId);
+                          const name = def?.name || formatBadgeName(b.badgeRuleId);
+                          const earnDate = new Date(b.earnedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+
+                          return (
+                            <Link
+                              key={b.badgeRuleId}
+                              href={`/${instituteCode}/achievements?badge=${b.badgeRuleId}`}
+                              title={`View ${name} in Achievements`}
+                              className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-200/80 dark:border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 dark:hover:bg-orange-500/10 transition-all duration-150 text-center cursor-pointer active:scale-95 shadow-xs"
+                            >
+                              <div className={`p-2 rounded-xl transition-transform group-hover:scale-110 ${def?.bgColor || "bg-orange-500/10"}`}>
+                                <BadgeIcon
+                                  name={def?.iconName || "Trophy"}
+                                  className={`w-5 h-5 ${def?.color || "text-orange-500"} ${def?.darkColor || "dark:text-orange-400"}`}
+                                />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-[#F0F2F8] group-hover:text-orange-600 dark:group-hover:text-orange-400 leading-tight line-clamp-1 transition-colors">
+                                {name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-[#555C72] font-mono">
+                                {earnDate}
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Read-only info section */}
         <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 space-y-3 shadow-xs">

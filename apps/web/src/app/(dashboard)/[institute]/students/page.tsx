@@ -131,6 +131,14 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     courseSection: item.course.section,
   }));
 
+  // 4. Fetch gamification profile
+  const gamification = await db.gamificationProfile.findUnique({
+    where: { studentId },
+    select: { exp: true, loginStreakCurrent: true, level: true },
+  });
+
+  const typingSessionKey = `lumina_typed_${studentId.slice(0, 8)}`;
+
   return (
     <StudentDashboardClient
       userName={session.user.name as string}
@@ -140,6 +148,10 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       initialCourses={enrolledCourses}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
+      exp={gamification?.exp ?? 0}
+      streakCurrent={gamification?.loginStreakCurrent ?? 1}
+      level={gamification?.level ?? 1}
+      typingSessionKey={typingSessionKey}
     />
   );
 }

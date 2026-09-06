@@ -1,3 +1,16 @@
 {
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "paths": {
+      "react": ["../../apps/web/node_modules/@types/react"],
+      "react/jsx-runtime": ["../../apps/web/node_modules/@types/react/jsx-runtime"],
+      "react-dom": ["../../apps/web/node_modules/@types/react-dom"],
+      "lucide-react": ["../../apps/web/node_modules/lucide-react"],
+      "next/*": ["../../apps/web/node_modules/next/*"]
+    }
+  },
+  "include": ["src/**/*"]
 }

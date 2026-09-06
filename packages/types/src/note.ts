@@ -12,3 +12,5 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
 }
+
+export type NoteItem = Note;

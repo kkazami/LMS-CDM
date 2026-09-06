@@ -17,19 +17,18 @@ export const DEFAULT_PUBLIC_JUDGE0_URL = "https://ce.judge0.com";
 
 /**
  * Resolves the primary Judge0 endpoint URL.
- * Automatically avoids defaulting to http://localhost:2358 in production / Vercel.
  */
 export function getJudge0BaseUrl(): string {
   const envUrl = process.env.JUDGE0_URL?.trim();
-  if (envUrl) {
+  if (envUrl && !envUrl.includes("localhost")) {
     return envUrl.replace(/\/+$/, "");
   }
-  // In production (Vercel) or when no custom URL is specified, default to public CE cloud
-  return DEFAULT_PUBLIC_JUDGE0_URL;
+  // In production / Vercel or when localhost docker is not guaranteed, use public CE cloud
+  return envUrl ? envUrl.replace(/\/+$/, "") : DEFAULT_PUBLIC_JUDGE0_URL;
 }
 
 /**
- * Builds HTTP headers for Judge0 requests (supporting custom tokens, RapidAPI keys, etc.).
+ * Builds HTTP headers for Judge0 requests.
  */
 export function getJudge0Headers(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -68,64 +67,70 @@ export async function executeJudge0Submission(
   languageId: number,
   stdin: string = ""
 ): Promise<Judge0ExecutionResponse> {
+  // Fast in-process execution for JavaScript
+  if (languageId === 93) {
+    try {
+      const localJs = await executeLocally(sourceCode, languageId, stdin);
+      if (localJs.status.id === 3 || localJs.status.id === 11) {
+        return {
+          stdout: localJs.stdout,
+          stderr: localJs.stderr,
+          compile_output: localJs.compile_output,
+          time: localJs.time,
+          memory: localJs.memory,
+          status: localJs.status,
+        };
+      }
+    } catch {
+      // Fall through to cloud
+    }
+  }
+
   const primaryUrl = getJudge0BaseUrl();
   const headers = getJudge0Headers();
 
-  // Try Primary Judge0 URL
-  try {
-    const res = await fetch(`${primaryUrl}/submissions?base64_encoded=false&wait=true`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        source_code: sourceCode,
-        language_id: languageId,
-        stdin: stdin || "",
-        cpu_time_limit: 5.0,
-        memory_limit: 128000,
-      }),
-    });
+  // Helper fetch with timeout
+  const postToJudge0 = async (url: string, hdrs: Record<string, string>, timeoutMs: number): Promise<Judge0ExecutionResponse | null> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (res.ok) {
-      const data = (await res.json()) as Judge0ExecutionResponse;
-      // Status 13 is internal error in Judge0; if not 13, return result
-      if (data.status?.id !== 13) {
-        return data;
-      }
-      console.warn("Primary Judge0 returned internal error:", data.message);
-    } else {
-      console.warn(`Primary Judge0 returned HTTP ${res.status}: ${await res.text().catch(() => "")}`);
-    }
-  } catch (err: unknown) {
-    console.warn(`Primary Judge0 request failed (${primaryUrl}):`, err);
-  }
-
-  // If primary was a custom URL and failed, attempt public CE endpoint as secondary cloud fallback
-  if (primaryUrl !== DEFAULT_PUBLIC_JUDGE0_URL) {
     try {
-      const fallbackRes = await fetch(`${DEFAULT_PUBLIC_JUDGE0_URL}/submissions?base64_encoded=false&wait=true`, {
+      const res = await fetch(`${url}/submissions?base64_encoded=false&wait=true`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: hdrs,
+        signal: controller.signal,
         body: JSON.stringify({
           source_code: sourceCode,
           language_id: languageId,
           stdin: stdin || "",
-          cpu_time_limit: 5.0,
-          memory_limit: 128000,
         }),
       });
 
-      if (fallbackRes.ok) {
-        const data = (await fallbackRes.json()) as Judge0ExecutionResponse;
+      clearTimeout(timeout);
+      if (res.ok) {
+        const data = (await res.json()) as Judge0ExecutionResponse;
         if (data.status?.id !== 13) {
           return data;
         }
       }
-    } catch (fallbackErr: unknown) {
-      console.warn("Secondary public Judge0 request failed:", fallbackErr);
+      return null;
+    } catch {
+      clearTimeout(timeout);
+      return null;
     }
+  };
+
+  // 1. Try Primary URL (timeout 4s)
+  const primaryResult = await postToJudge0(primaryUrl, headers, 4000);
+  if (primaryResult) return primaryResult;
+
+  // 2. If Primary failed or was localhost, try public Judge0 CE cloud (timeout 6s)
+  if (primaryUrl !== DEFAULT_PUBLIC_JUDGE0_URL) {
+    const publicResult = await postToJudge0(DEFAULT_PUBLIC_JUDGE0_URL, { "Content-Type": "application/json" }, 6000);
+    if (publicResult) return publicResult;
   }
 
-  // Fallback to local / in-process runner (e.g. Node.js VM for JavaScript)
+  // 3. Fallback to local execution runner (handles Python/JS/SQL/diagnostics)
   const localRes: LocalExecutionResult = await executeLocally(sourceCode, languageId, stdin);
   return {
     stdout: localRes.stdout,

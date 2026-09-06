@@ -1,0 +1,45 @@
+{
+  "name": "Lumina LMS",
+  "short_name": "Lumina",
+  "description": "Next-Generation Higher Education Learning Management System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1A1D27",
+  "theme_color": "#FF7517",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logos/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logos/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Courses",
+      "short_name": "Courses",
+      "description": "View active enrolled courses",
+      "url": "/ics/courses"
+    },
+    {
+      "name": "Announcements",
+      "short_name": "Alerts",
+      "description": "Latest announcements and campus notices",
+      "url": "/ics/announcements"
+    },
+    {
+      "name": "Assignments",
+      "short_name": "To-do",
+      "description": "Pending coursework and assignments",
+      "url": "/ics/assignments"
+    }
+  ]
+}

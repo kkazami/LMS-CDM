@@ -34,10 +34,11 @@ interface SortHeaderProps {
   sortKey: SortKey;
   currentKey: SortKey;
   currentDir: SortDir;
+  activeColor: string;
   onSort: (key: SortKey) => void;
 }
 
-function SortHeader({ label, sortKey, currentKey, currentDir, onSort }: SortHeaderProps) {
+function SortHeader({ label, sortKey, currentKey, currentDir, activeColor, onSort }: SortHeaderProps) {
   const isActive = currentKey === sortKey;
   return (
     <th
@@ -45,12 +46,12 @@ function SortHeader({ label, sortKey, currentKey, currentDir, onSort }: SortHead
       onClick={() => onSort(sortKey)}
     >
       <div className="flex items-center gap-1.5">
-        <span className={isActive ? "text-[#F97316]" : ""}>{label}</span>
+        <span style={isActive ? { color: activeColor } : undefined}>{label}</span>
         {isActive ? (
           currentDir === "asc" ? (
-            <ArrowUp className="h-3.5 w-3.5 text-[#F97316]" />
+            <ArrowUp className="h-3.5 w-3.5" style={{ color: activeColor }} />
           ) : (
-            <ArrowDown className="h-3.5 w-3.5 text-[#F97316]" />
+            <ArrowDown className="h-3.5 w-3.5" style={{ color: activeColor }} />
           )
         ) : (
           <ArrowUpDown className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72] group-hover:text-slate-600 dark:group-hover:text-[#8B92A5] transition-colors" />
@@ -63,7 +64,7 @@ function SortHeader({ label, sortKey, currentKey, currentDir, onSort }: SortHead
 export default function GradesDashboard({
   allRows,
   enrolledCourses,
-  theme: _theme,
+  theme,
   selectedCourseId,
   onCourseChange,
 }: GradesDashboardProps) {
@@ -184,7 +185,54 @@ export default function GradesDashboard({
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] shadow-sm">
-          <div className="overflow-x-auto">
+          {/* Mobile Responsive Card List View (< md) */}
+          <div className="md:hidden divide-y divide-[#E4E6EF]/60 dark:divide-[rgba(255,255,255,0.04)]">
+            {sortedRows.map((row) => {
+              const pct = getPercent(row);
+              const Icon = row.itemType === "ASSIGNMENT" ? ClipboardList : BookOpenCheck;
+              return (
+                <div key={row.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="flex items-center justify-center h-9 w-9 rounded-xl shrink-0"
+                        style={{ backgroundColor: `${theme.colors.primary}1A`, color: theme.colors.primary }}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
+                          {row.itemTitle}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono">
+                          {row.courseCode} · {row.itemType === "ASSIGNMENT" ? "Assignment" : "Quiz"}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold font-mono tabular-nums shrink-0"
+                      style={{ backgroundColor: `${theme.colors.primary}1A`, color: theme.colors.primary }}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-white/5">
+                    <span className="text-slate-500 dark:text-[#8B92A5]">Score</span>
+                    <span className="font-bold font-mono tabular-nums text-slate-900 dark:text-[#F0F2F8]">
+                      {row.grade} / {row.maxPoints} pts
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-[#8B92A5]">
+                    <span>Graded on</span>
+                    <span className="font-mono">{formatDate(row.gradedAt)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (>= md) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-slate-50 dark:bg-[#22263A] border-b border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)]">
                 <tr>
@@ -193,6 +241,7 @@ export default function GradesDashboard({
                     sortKey="itemTitle"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <SortHeader
@@ -200,6 +249,7 @@ export default function GradesDashboard({
                     sortKey="itemType"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <SortHeader
@@ -207,6 +257,7 @@ export default function GradesDashboard({
                     sortKey="courseCode"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <SortHeader
@@ -214,6 +265,7 @@ export default function GradesDashboard({
                     sortKey="grade"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <SortHeader
@@ -221,6 +273,7 @@ export default function GradesDashboard({
                     sortKey="maxPoints"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <SortHeader
@@ -228,6 +281,7 @@ export default function GradesDashboard({
                     sortKey="percent"
                     currentKey={sortKey}
                     currentDir={sortDir}
+                    activeColor={theme.colors.primary}
                     onSort={handleSort}
                   />
                   <th className="px-5 py-3.5 text-right text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">
@@ -247,7 +301,10 @@ export default function GradesDashboard({
                       {/* Title */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center h-8 w-8 rounded-xl bg-orange-500/10 text-[#F97316] shrink-0">
+                          <div
+                            className="flex items-center justify-center h-8 w-8 rounded-xl shrink-0"
+                            style={{ backgroundColor: `${theme.colors.primary}1A`, color: theme.colors.primary }}
+                          >
                             <Icon className="h-4 w-4" />
                           </div>
                           <span className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate max-w-[220px]">
@@ -274,18 +331,21 @@ export default function GradesDashboard({
                       </td>
 
                       {/* Score */}
-                      <td className="px-5 py-4 text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
+                      <td className="px-5 py-4 text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-[#F0F2F8]">
                         {row.grade}
                       </td>
 
                       {/* Max Points */}
-                      <td className="px-5 py-4 text-sm text-slate-500 dark:text-[#8B92A5]">
+                      <td className="px-5 py-4 text-sm font-mono tabular-nums text-slate-500 dark:text-[#8B92A5]">
                         {row.maxPoints}
                       </td>
 
                       {/* Percentage */}
                       <td className="px-5 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-[#F97316]">
+                        <span
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold font-mono tabular-nums"
+                          style={{ backgroundColor: `${theme.colors.primary}1A`, color: theme.colors.primary }}
+                        >
                           {pct}%
                         </span>
                       </td>

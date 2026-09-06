@@ -2,7 +2,7 @@ import Skeleton from "@/components/common/Skeleton";
 
 export default function TodoLoadingSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div>
         <Skeleton className="h-8 w-28" shimmer />
@@ -18,7 +18,7 @@ export default function TodoLoadingSkeleton() {
       <div className="space-y-4">
         {["This week", "Next week", "Later", "No due date"].map(
           (label, sectionIdx) => (
-            <div key={label} className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
+            <div key={label} className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 sm:p-5 shadow-xs">
               {/* Section Header */}
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3 mb-3">
                 <Skeleton className="h-5 w-28" shimmer />

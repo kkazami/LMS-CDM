@@ -29,21 +29,21 @@ export default function Button({
       color: "#FFFFFF",
     },
     secondary: {
-      backgroundColor: "#FFFFFF",
-      borderColor: theme.colors.border,
-      color: theme.colors.text,
+      backgroundColor: "var(--bg-surface, #FFFFFF)",
+      borderColor: "var(--border-color, #E2E8F0)",
+      color: "var(--text-primary, #0F172A)",
     },
     ghost: {
       backgroundColor: "transparent",
       borderColor: "transparent",
-      color: theme.colors.text,
+      color: "var(--text-primary, #0F172A)",
     },
   }[variant];
 
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex min-h-[44px] items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer",
         loading && "cursor-wait opacity-80",
         className
       )}

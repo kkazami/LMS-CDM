@@ -19,6 +19,9 @@ import { evaluateVariables, substituteTemplate } from "@/features/interactive-ac
 import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { db } from "@/lib/db";
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +54,9 @@ interface EvaluateResponse {
   totalPassed: number;
   totalCases: number;
   score: number;
+  grantedExp?: number;
+  leveledUp?: boolean;
+  newLevel?: number;
 }
 
 async function executeTestCaseOnJudge0(
@@ -243,12 +249,57 @@ export async function POST(request: Request) {
     const totalCases = testCasesToRun.length;
     const score = totalCases > 0 ? Math.round((totalPassed / totalCases) * 100) : 0;
 
+    // Grant EXP and award badges if student passed this level (≥60%)
+    let grantedExp = 0;
+    let leveledUp = false;
+    let newLevel = 1;
+
+    if (score >= 60) {
+      try {
+        const studentId = eligibility.session.user.id;
+        if (score === 100) {
+          const expRes = await grantExp({
+            userId: studentId,
+            amount: EXP_VALUES.codelab_level_perfect,
+            reason: `CodeLab: ${problem?.title || templateId} — Perfect Score (100%)`,
+            source: "codelab",
+            idempotencyKey: `codelab_perfect_${templateId}`,
+          });
+          grantedExp = expRes.grantedAmount;
+          leveledUp = expRes.leveledUp;
+          newLevel = expRes.newLevel;
+
+          await awardBadgeIfEarned(studentId, "codelab-first");
+          await awardBadgeIfEarned(studentId, "codelab-perfect-level");
+          await awardBadgeIfEarned(studentId, "perfect-score");
+        } else {
+          const expRes = await grantExp({
+            userId: studentId,
+            amount: EXP_VALUES.codelab_level_complete,
+            reason: `CodeLab: ${problem?.title || templateId} — Passed`,
+            source: "codelab",
+            idempotencyKey: `codelab_pass_${templateId}`,
+          });
+          grantedExp = expRes.grantedAmount;
+          leveledUp = expRes.leveledUp;
+          newLevel = expRes.newLevel;
+
+          await awardBadgeIfEarned(studentId, "codelab-first");
+        }
+      } catch (gamiErr) {
+        console.error("GAMIFICATION_EVALUATE_ERROR", gamiErr);
+      }
+    }
+
     const responsePayload: EvaluateResponse = {
       publicResults,
       hiddenResults,
       totalPassed,
       totalCases,
       score,
+      grantedExp,
+      leveledUp,
+      newLevel,
     };
 
     return NextResponse.json(responsePayload);

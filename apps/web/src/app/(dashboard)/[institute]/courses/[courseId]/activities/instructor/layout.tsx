@@ -15,7 +15,7 @@ export default async function InstructorActivitiesLayout({
   // 1. Validate session & Role
   const session = await getSession();
   if (!session) {
-    redirect(`/${institute}/login`);
+    redirect(`/login?institute=${institute}`);
   }
 
   const role = session.user.role.toUpperCase();

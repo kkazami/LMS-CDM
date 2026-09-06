@@ -7,7 +7,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -35,7 +34,7 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, selectedInstitute);
       // Auth listener in _layout.tsx handles redirection upon success
     } catch (err: any) {
       setError(err?.message || 'Invalid email or password. Please try again.');
@@ -46,17 +45,28 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
+      >
         {/* Brand Header */}
         <View style={styles.header}>
           <View style={[styles.logoBadge, { backgroundColor: theme.colors.primary }]}>
             <GraduationCap size={32} color="#FFFFFF" />
           </View>
           <Text style={styles.appName}>Lumina LMS</Text>
-          <Text style={styles.tagline}>Select your institute to continue</Text>
+          <View style={[styles.activeInstituteBadge, { backgroundColor: `${theme.colors.primary}18`, borderColor: `${theme.colors.primary}40` }]}>
+            <Text style={[styles.activeInstituteBadgeText, { color: theme.colors.primary }]}>
+              {theme.name}
+            </Text>
+          </View>
         </View>
 
         {/* Institute Selector */}
@@ -72,6 +82,7 @@ export default function LoginScreen() {
                   isSelected && {
                     borderColor: instTheme.colors.primary,
                     backgroundColor: `${instTheme.colors.primary}15`,
+                    borderWidth: 2,
                   },
                 ]}
                 onPress={() => setSelectedInstitute(inst.code)}
@@ -80,7 +91,7 @@ export default function LoginScreen() {
                 <Text
                   style={[
                     styles.instituteChipText,
-                    isSelected && { color: instTheme.colors.primary, fontWeight: '700' },
+                    isSelected && { color: instTheme.colors.primary, fontWeight: '800' },
                   ]}
                 >
                   {inst.short}
@@ -91,7 +102,7 @@ export default function LoginScreen() {
         </View>
 
         {/* Form */}
-        <View style={styles.form}>
+        <View style={[styles.form, { borderColor: `${theme.colors.primary}25` }]}>
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <Input
@@ -101,6 +112,7 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            ringColor={theme.colors.primary}
           />
 
           <Input
@@ -109,6 +121,7 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            ringColor={theme.colors.primary}
           />
 
           <TouchableOpacity
@@ -124,7 +137,11 @@ export default function LoginScreen() {
             title="Sign In"
             onPress={handleLogin}
             loading={loading}
-            style={{ marginTop: 8 }}
+            style={{
+              marginTop: 8,
+              backgroundColor: theme.colors.primary,
+              borderColor: theme.colors.primary,
+            }}
           />
 
           <View style={styles.footerRow}>
@@ -142,7 +159,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F4F4',
   },
   scrollContent: {
     flexGrow: 1,
@@ -151,7 +167,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   logoBadge: {
     width: 64,
@@ -160,22 +176,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   appName: {
     fontSize: 28,
     fontWeight: '800',
     color: '#2C2727',
   },
-  tagline: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+  activeInstituteBadge: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  activeInstituteBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   instituteContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   instituteChip: {
     paddingHorizontal: 20,
@@ -194,8 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 24,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 1.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,

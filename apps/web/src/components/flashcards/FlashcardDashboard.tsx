@@ -201,36 +201,43 @@ export default function FlashcardDashboard({
   // Main deck grid
   return (
     <div className="page-enter pb-12">
-      {/* Premium Dashboard Hero */}
-      <div className="relative mb-10 overflow-hidden rounded-[2.5rem] p-8 sm:p-12 text-white shadow-xl" style={{ background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }}>
-        {/* Subtle Premium Background */}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/10" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+      {/* Anti-Slop Study Center Hero */}
+      <div
+        className="hero-noise relative mb-8 overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs transition-colors"
+        style={{
+          borderLeft: `4px solid ${theme.colors.primary}`,
+          background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
+        }}
+      >
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs font-bold tracking-widest text-white backdrop-blur-md uppercase shadow-sm border border-white/10">
-              <FlashcardIcon className="h-4 w-4" />
+            <div
+              className="mb-3 inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-bold tracking-wide uppercase"
+              style={{
+                backgroundColor: `${theme.colors.primary}1A`,
+                color: theme.colors.primary,
+              }}
+            >
+              <FlashcardIcon className="h-3.5 w-3.5" />
               <span>Study Center</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight drop-shadow-sm mb-4 leading-tight">
-               Flashcards
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] mb-2">
+              Flashcards
             </h1>
-            <p className="max-w-2xl text-lg font-medium text-white/90 leading-relaxed">
+            <p className="max-w-2xl text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
               Master your subjects faster. Create custom decks, practice with spaced repetition, and track your progress in real-time.
             </p>
           </div>
-          
-          <div className="shrink-0 md:self-end">
-             <button
-               onClick={() => setCreateOpen(true)}
-               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl bg-white px-7 py-4 text-sm font-bold shadow-xl transition-all hover:scale-105 hover:bg-gray-50 active:scale-95"
-               style={{ color: theme.colors.primary }}
-             >
-                <Plus className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
-                <span>Create New Flashcard</span>
-             </button>
+
+          <div className="shrink-0 flex items-center gap-3">
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]"
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+              <span>Create New Flashcard</span>
+            </button>
           </div>
         </div>
       </div>
@@ -244,7 +251,7 @@ export default function FlashcardDashboard({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your flashcards by title, topic, or tags..."
-            className="w-full rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-4 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+            className="w-full min-h-[48px] rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-3.5 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
           />
           {searchQuery && (
             <button
@@ -258,16 +265,28 @@ export default function FlashcardDashboard({
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex h-13.5 shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
+          className={`inline-flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
             showFilters || filterCourse
-              ? "border-orange-500/20 bg-orange-500/10 text-[#F97316]"
+              ? ""
               : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-[#181B26] hover:border-slate-300 dark:hover:border-white/10"
           }`}
+          style={
+            showFilters || filterCourse
+              ? {
+                  borderColor: `${theme.colors.primary}40`,
+                  backgroundColor: `${theme.colors.primary}1A`,
+                  color: theme.colors.primary,
+                }
+              : undefined
+          }
         >
           <SlidersHorizontal className="h-5 w-5" />
           Filters
           {filterCourse && (
-            <span className="ml-1.5 flex h-2 w-2 rounded-full bg-[#F97316] shadow-xs shadow-orange-500/50" />
+            <span
+              className="ml-1.5 flex h-2 w-2 rounded-full shadow-xs"
+              style={{ backgroundColor: theme.colors.primary }}
+            />
           )}
         </button>
       </div>
@@ -283,7 +302,7 @@ export default function FlashcardDashboard({
               <select
                 value={filterCourse}
                 onChange={(e) => setFilterCourse(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:border-[#F97316] focus:bg-white dark:focus:bg-[#1E2132] focus:outline-none focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:bg-white dark:focus:bg-[#1E2132] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20 cursor-pointer"
               >
                 <option value="">All Courses</option>
                 {courseOptions.map((c) => (
@@ -296,7 +315,8 @@ export default function FlashcardDashboard({
             {filterCourse && (
               <button
                 onClick={() => setFilterCourse("")}
-                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold text-[#F97316] transition-colors hover:bg-orange-500/10 cursor-pointer"
+                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors cursor-pointer min-h-[44px]"
+                style={{ color: theme.colors.primary }}
               >
                 Clear filter
               </button>
@@ -308,7 +328,13 @@ export default function FlashcardDashboard({
       {/* Deck grid */}
       {filteredDecks.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center mt-4 shadow-xs">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] shadow-inner">
+          <div
+            className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl shadow-inner"
+            style={{
+              backgroundColor: `${theme.colors.primary}1A`,
+              color: theme.colors.primary,
+            }}
+          >
             <FlashcardIcon className="h-10 w-10" />
           </div>
           <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
@@ -322,7 +348,8 @@ export default function FlashcardDashboard({
           {!searchQuery && !filterCourse && (
             <button
               onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#F97316] px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer min-h-[44px]"
+              style={{ backgroundColor: theme.colors.primary }}
             >
               <Plus className="h-5 w-5" />
               Create Your First Flashcard
@@ -374,7 +401,7 @@ export default function FlashcardDashboard({
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g., Midterms Prep, Vocabulary..."
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
               />
             </div>
 
@@ -387,7 +414,7 @@ export default function FlashcardDashboard({
                 onChange={(e) => setNewDescription(e.target.value)}
                 placeholder="Brief description of this flashcard..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+                className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
               />
             </div>
             
@@ -400,7 +427,7 @@ export default function FlashcardDashboard({
                 value={newTags}
                 onChange={(e) => setNewTags(e.target.value)}
                 placeholder="e.g., Midterms, Chapter 5, Vocabulary"
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
               />
             </div>
             
@@ -411,7 +438,7 @@ export default function FlashcardDashboard({
               <select
                 value={newCourseId}
                 onChange={(e) => setNewCourseId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20 cursor-pointer"
               >
                 <option value="">No course linked</option>
                 {courseOptions.map((c) => (
@@ -452,7 +479,7 @@ export default function FlashcardDashboard({
                 setCreateOpen(false);
                 resetCreateForm();
               }}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-[44px]"
             >
               Cancel
             </button>
@@ -460,7 +487,8 @@ export default function FlashcardDashboard({
               type="button"
               onClick={handleCreateDeck}
               disabled={creating}
-              className="rounded-xl bg-[#F97316] px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+              className="rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer min-h-[44px]"
+              style={{ backgroundColor: theme.colors.primary }}
             >
               {creating ? "Creating..." : "Create Flashcard"}
             </button>

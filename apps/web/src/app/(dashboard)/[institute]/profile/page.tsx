@@ -45,6 +45,21 @@ export default async function ProfilePage({ params }: PageProps) {
         select: { course: { select: { id: true, title: true, code: true } } },
         take: 5,
       },
+      gamificationProfile: {
+        select: {
+          exp: true,
+          level: true,
+          levelTier: true,
+          loginStreakCurrent: true,
+          loginStreakLongest: true,
+          totalLoginDays: true,
+          badges: {
+            select: { badgeRuleId: true, earnedAt: true },
+            orderBy: { earnedAt: "desc" },
+            take: 6,
+          },
+        },
+      },
     },
   });
 
@@ -53,6 +68,15 @@ export default async function ProfilePage({ params }: PageProps) {
   const serializedUser = {
     ...user,
     createdAt: user.createdAt.toISOString(),
+    gamificationProfile: user.gamificationProfile
+      ? {
+          ...user.gamificationProfile,
+          badges: user.gamificationProfile.badges.map((b) => ({
+            badgeRuleId: b.badgeRuleId,
+            earnedAt: b.earnedAt.toISOString(),
+          })),
+        }
+      : null,
   };
 
   return (

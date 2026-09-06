@@ -63,10 +63,28 @@ export default async function CourseInteriorLayout({
   const showPendingCount =
     isInstructor || isAdmin ? course._count.enrollments : 0;
 
+  const pendingWorkCount =
+    isInstructor || isAdmin
+      ? await db.studentSubmission.count({
+          where: {
+            syllabusItem: { courseId: course.id },
+            status: "SUBMITTED",
+            OR: [{ grade: null }, { isReturned: false }],
+          },
+        })
+      : 0;
+
   return (
     <div className="-m-4 lg:-m-8">
       <div className="px-4 pt-4 md:px-8 md:pt-6">
-        <CourseHeader course={course} theme={theme} />
+        <CourseHeader
+          course={course}
+          theme={theme}
+          pendingWorkCount={pendingWorkCount}
+          isInstructor={isInstructor || isAdmin}
+          instituteCode={institute}
+          courseId={courseId}
+        />
       </div>
       <div className="mt-4">
         <CourseTabs
@@ -74,6 +92,7 @@ export default async function CourseInteriorLayout({
           instituteCode={institute}
           theme={theme}
           pendingCount={showPendingCount}
+          pendingWorkCount={pendingWorkCount}
           isInstructor={isInstructor || isAdmin}
         />
       </div>

@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true",
+        "DEFAULT_VIEWPORT": "1440x900"
+      }
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {
+        "HEADLESS": "true"
+      }
+    }
+  }
+}

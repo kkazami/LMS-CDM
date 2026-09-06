@@ -2,14 +2,17 @@
   "name": "desktop",
   "private": true,
   "version": "1.0.0",
+  "productName": "Lumina LMS Admin Console",
+  "description": "Administrator desktop console for the Lumina Learning Management System.",
   "main": "electron/main.ts",
   "scripts": {
-    "dev": "npx tsx electron/main.ts",
-    "build": "echo 'Build desktop app'",
-    "pack": "echo 'Package desktop app'"
+    "dev": "electron -r tsx electron/main.ts",
+    "build": "electron-builder --config electron-builder.json",
+    "pack": "electron-builder --dir --config electron-builder.json"
   },
   "devDependencies": {
     "electron": "^41.0.3",
+    "electron-builder": "^25.1.8",
     "tsx": "^4.19.0"
   }
 }

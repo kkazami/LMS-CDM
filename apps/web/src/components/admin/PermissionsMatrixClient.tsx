@@ -155,7 +155,7 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
         {hasChanges && (
           <button
             onClick={() => setShowReAuth(true)}
-            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 shadow-xs cursor-pointer min-h-[44px]"
             style={{ backgroundColor: theme.colors.primary }}
           >
             <Save className="h-4 w-4" />
@@ -206,28 +206,31 @@ export default function PermissionsMatrixClient({ theme }: PermissionsMatrixClie
 
                     return (
                       <td key={role} className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => togglePermission(role, perm)}
-                          disabled={isAdmin}
-                          className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                            isAdmin
-                              ? "cursor-not-allowed opacity-70"
-                              : "cursor-pointer"
-                          } ${isEnabled ? "" : "bg-slate-200 dark:bg-white/10"}`}
-                          style={{
-                            backgroundColor: isEnabled ? theme.colors.primary : undefined,
-                          }}
-                          title={isAdmin ? "Admin permissions cannot be reduced" : `Toggle ${perm} for ${role}`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
-                              isEnabled ? "translate-x-5" : "translate-x-0"
-                            }`}
-                          />
-                        </button>
-                        {isAdmin && (
-                          <Lock className="mx-auto mt-1 h-3 w-3 text-slate-400 dark:text-slate-500" />
-                        )}
+                        <div className="inline-flex flex-col items-center justify-center">
+                          <button
+                            onClick={() => togglePermission(role, perm)}
+                            disabled={isAdmin}
+                            className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-400/30 ${
+                              isAdmin
+                                ? "cursor-not-allowed opacity-70"
+                                : "cursor-pointer"
+                            } ${isEnabled ? "" : "bg-slate-200 dark:bg-white/10"}`}
+                            style={{
+                              backgroundColor: isEnabled ? theme.colors.primary : undefined,
+                            }}
+                            title={isAdmin ? "Admin permissions cannot be reduced" : `Toggle ${perm} for ${role}`}
+                            aria-label={`Toggle ${perm} for ${role}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
+                                isEnabled ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                          {isAdmin && (
+                            <Lock className="mx-auto mt-1 h-3 w-3 text-slate-400 dark:text-slate-500" />
+                          )}
+                        </div>
                       </td>
                     );
                   })}

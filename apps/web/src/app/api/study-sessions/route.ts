@@ -4,6 +4,10 @@ import { requireWorkspaceSession } from "../workspace/_shared";
 
 export const dynamic = "force-dynamic";
 
+import { grantExp } from "@/lib/gamification/grant-exp";
+import { EXP_VALUES, DAILY_EXP_CAPS } from "@/lib/gamification/exp-engine";
+import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+
 // POST: Log a new study session (Pomodoro focus time)
 export async function POST(request: Request) {
   try {
@@ -30,6 +34,23 @@ export async function POST(request: Request) {
         completedAt: new Date(completedAt),
       },
     });
+
+    // Grant EXP for verified study sessions (≥15 mins / 900s, max 50 EXP/day)
+    if (durationSeconds >= 900) {
+      try {
+        await grantExp({
+          userId: session.user.id,
+          amount: EXP_VALUES.study_focus_15m,
+          reason: "Completed 15 min Focus Study Session",
+          source: "study_session",
+          courseId,
+          dailyCap: DAILY_EXP_CAPS.study_session,
+        });
+        await awardBadgeIfEarned(session.user.id, "study-session-first");
+      } catch (gamiErr) {
+        console.error("GAMIFICATION_STUDY_SESSION_ERROR", gamiErr);
+      }
+    }
 
     return NextResponse.json(log);
   } catch (error) {

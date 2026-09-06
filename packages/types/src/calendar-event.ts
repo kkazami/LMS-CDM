@@ -14,3 +14,5 @@ export interface CalendarEvent {
   createdAt: string;
   updatedAt: string;
 }
+
+export type LmsCalendarEvent = CalendarEvent;

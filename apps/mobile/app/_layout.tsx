@@ -3,6 +3,8 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../src/lib/query-client';
 import { useAuthStore } from '../src/stores/auth-store';
 
 export default function RootLayout() {
@@ -35,12 +37,15 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <StatusBar style="auto" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
+
 
 const styles = StyleSheet.create({
   loadingContainer: {

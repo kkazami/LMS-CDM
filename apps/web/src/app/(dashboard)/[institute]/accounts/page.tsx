@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import AccountsManagementClient from "@/components/admin/AccountsManagementClient";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ institute: string }>;
 };

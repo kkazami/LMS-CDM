@@ -23,9 +23,10 @@ interface DocumentViewerProps {
   userId: string;
   type?: string;
   fileName?: string;
+  materialId?: string;
 }
 
-export default function DocumentViewer({ url, attachmentId, userId, type, fileName }: DocumentViewerProps) {
+export default function DocumentViewer({ url, attachmentId, userId, type, fileName, materialId }: DocumentViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -42,6 +43,23 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Active reading timer (grants EXP after 15 seconds of reading)
+  useEffect(() => {
+    if (!materialId) return;
+
+    const timer = setTimeout(() => {
+      fetch("/api/materials/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId, durationSeconds: 15 }),
+      }).catch(() => {
+        // silent catch
+      });
+    }, 15000);
+
+    return () => clearTimeout(timer);
+  }, [materialId]);
 
   useEffect(() => {
     fetchAnnotations();
