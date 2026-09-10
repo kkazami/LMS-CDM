@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { InstituteTheme } from "@/lib/theme";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
@@ -29,14 +30,14 @@ export default function Button({
       color: "#FFFFFF",
     },
     secondary: {
-      backgroundColor: "#FFFFFF",
-      borderColor: theme.colors.border,
-      color: theme.colors.text,
+      backgroundColor: "var(--bg-surface, #FFFFFF)",
+      borderColor: "var(--border-color, #E2E8F0)",
+      color: "var(--text-primary, #0F172A)",
     },
     ghost: {
       backgroundColor: "transparent",
       borderColor: "transparent",
-      color: theme.colors.text,
+      color: "var(--text-primary, #0F172A)",
     },
   }[variant];
 
@@ -62,6 +63,14 @@ export default function Button({
         }
       }}
       {...props}
+      onClick={(e) => {
+        try {
+          triggerNativeHaptic("light");
+        } catch {
+          // ignore
+        }
+        props.onClick?.(e);
+      }}
     >
       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />}
       {children}

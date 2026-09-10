@@ -283,7 +283,8 @@ export default function YourWorkPanel({
                   <button
                     onClick={() => handleRemove(att.id)}
                     disabled={isPending}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 shrink-0 cursor-pointer"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 shrink-0 cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center p-1 rounded-md active:scale-95"
+                    aria-label={`Remove attachment ${att.fileName || "file"}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -304,18 +305,18 @@ export default function YourWorkPanel({
               <button
                 onClick={handleUnsubmit}
                 disabled={isPending || isPastDeadline}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-all cursor-pointer min-h-[44px] active:scale-[0.98]"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <RotateCcw className="h-4 w-4" />
                 Unsubmit
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F97316] hover:bg-[#EA580C] py-2.5 text-xs font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F97316] hover:bg-[#EA580C] py-3 text-sm font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer min-h-[44px] active:scale-[0.98]"
               >
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-4 w-4" />
                 {isPending ? "Submitting..." : "Turn in"}
               </button>
             )

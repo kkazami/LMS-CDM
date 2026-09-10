@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
+import { getInstituteTheme } from "@/lib/get-institute-theme";
 import WorkspaceDashboard from "@/components/workspace/WorkspaceDashboard";
 import { serializeCalendarEvent, serializeNote, serializeTask } from "@/lib/workspace";
 
@@ -40,6 +41,8 @@ export default async function TasksPage({ params }: PageProps) {
     }),
   ]);
 
+  const theme = getInstituteTheme(institute);
+
   return (
     <WorkspaceDashboard
       instituteCode={institute}
@@ -47,6 +50,7 @@ export default async function TasksPage({ params }: PageProps) {
       tasks={tasks.map(serializeTask)}
       events={events.map(serializeCalendarEvent)}
       courseOptions={courses}
+      theme={theme}
     />
   );
 }

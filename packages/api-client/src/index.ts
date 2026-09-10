@@ -135,18 +135,28 @@ export function createApiClient(config: ApiClientConfig) {
       getGrades: (courseId: string) =>
         request<CourseGradesResponse>(`/api/courses/${courseId}/grades`),
 
+      getGradebook: (courseId: string) =>
+        request<{
+          course: { id: string; title: string; code: string };
+          students: Array<{ id: string; name: string; email: string; studentNumber?: string | null; avatarUrl?: string | null }>;
+          assignments: Array<{ id: string; title: string; maxPoints: number | null; type: string; dueDate?: string | null }>;
+          grades: Record<string, Record<string, { submissionId: string | null; grade: number | null; status: string | null; isReturned: boolean; submittedAt: string | null; attachments: any[] }>>;
+          gradingPolicy: any;
+        }>(`/api/courses/${courseId}/gradebook`),
+
       submitAssignment: (
         courseId: string,
         syllabusItemId: string,
         status = 'SUBMITTED',
         attachmentUrl?: string,
         fileName?: string,
-        idempotencyKey?: string
+        idempotencyKey?: string,
+        attachments?: Array<{ url: string; fileName?: string; type?: string }>
       ) =>
         request<CourseSubmissionResponse>(`/api/courses/${courseId}/submissions`, {
           method: 'POST',
           headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
-          body: JSON.stringify({ syllabusItemId, status, attachmentUrl, fileName }),
+          body: JSON.stringify({ syllabusItemId, status, attachmentUrl, fileName, attachments }),
         }),
 
       gradeSubmission: (courseId: string, data: GradeSubmissionInput) =>
@@ -157,6 +167,23 @@ export function createApiClient(config: ApiClientConfig) {
             body: JSON.stringify(data),
           }
         ),
+
+      getEnrollments: (courseId: string, status?: string) =>
+        request<{ enrollments: any[]; totalCount: number }>(
+          `/api/courses/${courseId}/enrollments${status ? `?status=${status}` : ''}`
+        ),
+
+      updateEnrollment: (courseId: string, enrollmentId: string, action: 'APPROVE' | 'REJECT') =>
+        request<{ success: boolean; enrollment: any }>(`/api/courses/${courseId}/enrollments`, {
+          method: 'PATCH',
+          body: JSON.stringify({ enrollmentId, action }),
+        }),
+
+      broadcast: (courseId: string, message: string, category = 'GENERAL') =>
+        request<{ success: boolean; broadcast: any }>(`/api/courses/${courseId}/broadcast`, {
+          method: 'POST',
+          body: JSON.stringify({ message, category }),
+        }),
     },
 
     announcements: {
@@ -269,7 +296,7 @@ export function createApiClient(config: ApiClientConfig) {
         }),
 
       getBadges: () =>
-        request<{ badges: StudentBadge[] }>('/api/gamification/new-badges'),
+        request<{ badges: StudentBadge[] }>('/api/gamification/badges'),
 
       updatePrivacy: (isLeaderboardAnonymized: boolean) =>
         request<{ success: boolean }>('/api/gamification/privacy', {
@@ -285,12 +312,18 @@ export function createApiClient(config: ApiClientConfig) {
 
     notifications: {
       list: () =>
-        request<{ notifications: AppNotification[] }>('/api/notifications'),
+        request<{ notifications: AppNotification[]; unreadCount?: number }>('/api/notifications'),
 
       markRead: (notificationId: string) =>
         request<{ success: boolean }>('/api/notifications', {
           method: 'PATCH',
           body: JSON.stringify({ id: notificationId }),
+        }),
+
+      markAllRead: () =>
+        request<{ success: boolean }>('/api/notifications', {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'markAllRead' }),
         }),
 
       registerPushToken: (data: RegisterPushTokenInput) =>

@@ -28,10 +28,20 @@ export interface GradebookAssignment {
   type: string;
 }
 
+export interface GradebookCellAttachment {
+  id: string;
+  type: string;
+  url: string;
+  fileName: string;
+}
+
 export interface GradebookCell {
   submissionId: string | null;
   grade: number | null;
   status: string | null;
+  isReturned?: boolean;
+  submittedAt?: string | null;
+  attachments?: GradebookCellAttachment[];
 }
 
 export interface GradebookData {
@@ -69,6 +79,17 @@ export async function getGradebookData(courseId: string): Promise<GradebookData>
         studentId: true,
         grade: true,
         status: true,
+        isReturned: true,
+        submittedAt: true,
+        attachments: {
+          select: {
+            id: true,
+            type: true,
+            url: true,
+            fileName: true,
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
     }),
     db.gradingPolicy.findUnique({
@@ -85,7 +106,7 @@ export async function getGradebookData(courseId: string): Promise<GradebookData>
   for (const student of students) {
     grades[student.id] = {};
     for (const assignment of assignments) {
-      grades[student.id][assignment.id] = { submissionId: null, grade: null, status: null };
+      grades[student.id][assignment.id] = { submissionId: null, grade: null, status: null, attachments: [] };
     }
   }
 
@@ -95,6 +116,14 @@ export async function getGradebookData(courseId: string): Promise<GradebookData>
         submissionId: sub.id,
         grade: sub.grade,
         status: sub.status,
+        isReturned: sub.isReturned,
+        submittedAt: sub.submittedAt ? sub.submittedAt.toISOString() : null,
+        attachments: sub.attachments.map((a) => ({
+          id: a.id,
+          type: a.type,
+          url: a.url,
+          fileName: a.fileName,
+        })),
       };
     }
   }
@@ -112,11 +141,21 @@ export async function getGradebookData(courseId: string): Promise<GradebookData>
   };
 }
 
-export async function updateGrade(submissionId: string, grade: number) {
+export async function updateGrade(submissionId: string, rawGrade: number) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
+
+  const existing = await db.studentSubmission.findUnique({
+    where: { id: submissionId },
+    select: { syllabusItem: { select: { maxPoints: true } } },
+  });
+
+  let grade = Math.max(0, rawGrade);
+  if (existing?.syllabusItem?.maxPoints !== null && existing?.syllabusItem?.maxPoints !== undefined) {
+    grade = Math.min(existing.syllabusItem.maxPoints, grade);
+  }
 
   const submission = await db.studentSubmission.update({
     where: { id: submissionId },
@@ -170,11 +209,21 @@ export async function updateGrade(submissionId: string, grade: number) {
   return { success: true };
 }
 
-export async function upsertGrade(syllabusItemId: string, studentId: string, grade: number) {
+export async function upsertGrade(syllabusItemId: string, studentId: string, rawGrade: number) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
+
+  const syllabusItem = await db.syllabusItem.findUnique({
+    where: { id: syllabusItemId },
+    select: { title: true, type: true, maxPoints: true, courseId: true, course: { select: { code: true, instituteId: true } } },
+  });
+
+  let grade = Math.max(0, rawGrade);
+  if (syllabusItem?.maxPoints !== null && syllabusItem?.maxPoints !== undefined) {
+    grade = Math.min(syllabusItem.maxPoints, grade);
+  }
 
   await db.studentSubmission.upsert({
     where: {
@@ -198,10 +247,6 @@ export async function upsertGrade(syllabusItemId: string, studentId: string, gra
   });
 
   // ── Notify the student about the new grade & check incentives ──
-  const syllabusItem = await db.syllabusItem.findUnique({
-    where: { id: syllabusItemId },
-    select: { title: true, type: true, courseId: true, course: { select: { code: true, instituteId: true } } },
-  });
   if (syllabusItem) {
     try {
       const courseRules = await db.gradeIncentiveRule.findMany({
@@ -234,6 +279,47 @@ export async function upsertGrade(syllabusItemId: string, studentId: string, gra
       title: "Grade posted",
       message: `New grade for ${itemLabel}: ${syllabusItem.title} in ${syllabusItem.course.code}`,
       link: `/${instCode}/grades`,
+    });
+  }
+
+  return { success: true };
+}
+
+export async function clearGrade(syllabusItemId: string, studentId: string) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+  const role = session.user.role.toUpperCase();
+  if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
+
+  const existing = await db.studentSubmission.findUnique({
+    where: {
+      syllabusItemId_studentId: {
+        syllabusItemId,
+        studentId,
+      },
+    },
+    include: {
+      attachments: true,
+    },
+  });
+
+  if (!existing) return { success: true };
+
+  // If the student never actually submitted anything (no attachments and never submitted):
+  // Delete the placeholder submission created by the accidental grade!
+  if (existing.attachments.length === 0 && !existing.submittedAt) {
+    await db.studentSubmission.delete({
+      where: { id: existing.id },
+    });
+  } else {
+    // The student DID submit work: reset grade to null and status to SUBMITTED
+    await db.studentSubmission.update({
+      where: { id: existing.id },
+      data: {
+        grade: null,
+        status: "SUBMITTED",
+        isReturned: false,
+      },
     });
   }
 

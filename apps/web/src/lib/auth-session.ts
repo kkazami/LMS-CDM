@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 /**
  * Creates a real database-backed session for the user and sets the HTTP-only cookie.
@@ -28,19 +28,45 @@ export async function createSession(userId: string) {
 }
 
 /**
- * Validates the session from the lumina_session cookie.
- * If expired or invalid, clears the cookie and returns null.
+ * Validates the session from the lumina_session cookie or Authorization: Bearer header.
+ * If expired or invalid, clears the cookie (if present) and returns null.
  */
 export async function getSession() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("lumina_session")?.value;
+  let sessionId: string | undefined;
+  let isCookie = false;
+
+  try {
+    const cookieStore = await cookies();
+    sessionId = cookieStore.get("lumina_session")?.value;
+    if (sessionId) {
+      isCookie = true;
+    }
+  } catch {
+    // cookies() might throw in non-request contexts
+  }
+
+  if (!sessionId) {
+    try {
+      const headerStore = await headers();
+      const authHeader = headerStore.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        sessionId = authHeader.slice(7).trim();
+      }
+    } catch {
+      // headers() might throw in non-request contexts
+    }
+  }
 
   if (!sessionId) return null;
 
   try {
     const session = await db.session.findUnique({
       where: { id: sessionId },
-      include: { user: true },
+      include: {
+        user: {
+          include: { institute: true },
+        },
+      },
     });
 
     if (!session) {
@@ -48,9 +74,14 @@ export async function getSession() {
     }
 
     if (session.expiresAt.getTime() < Date.now()) {
-      // Session has expired, clear the cookie
-      await db.session.delete({ where: { id: session.id } });
-      cookieStore.delete("lumina_session");
+      // Session has expired, clear the cookie if applicable
+      await db.session.delete({ where: { id: session.id } }).catch(() => {});
+      if (isCookie) {
+        try {
+          const cookieStore = await cookies();
+          cookieStore.delete("lumina_session");
+        } catch {}
+      }
       return null;
     }
 
@@ -58,8 +89,13 @@ export async function getSession() {
     const user = session.user as Record<string, unknown>;
     if (user.isActive === false) {
       // Purge session for deactivated user
-      await db.session.delete({ where: { id: session.id } });
-      cookieStore.delete("lumina_session");
+      await db.session.delete({ where: { id: session.id } }).catch(() => {});
+      if (isCookie) {
+        try {
+          const cookieStore = await cookies();
+          cookieStore.delete("lumina_session");
+        } catch {}
+      }
       return null;
     }
 

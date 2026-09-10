@@ -61,8 +61,16 @@ export default function UserMiniCard({
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     setMounted(true);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Fetch user profile on mount
@@ -90,37 +98,41 @@ export default function UserMiniCard({
     };
   }, [userId]);
 
-  // Calculate position after mount/load
+  // Calculate position after mount/load for desktop popover
   useEffect(() => {
+    if (isMobile) {
+      setVisible(true);
+      return;
+    }
+
     const cardWidth = 320;
-    const cardHeight = 420;
+    const cardHeight = 440;
     const gap = 8;
 
-    let top = window.scrollY + anchorRect.bottom + gap;
-    let left = window.scrollX + anchorRect.left;
+    let top = anchorRect.bottom + gap;
+    let left = anchorRect.left;
 
     const spaceBelow = window.innerHeight - anchorRect.bottom;
     const spaceAbove = anchorRect.top;
 
     // Flip above if it doesn't fit below AND there is more space above
     if (cardHeight > spaceBelow && spaceAbove > spaceBelow) {
-      top = window.scrollY + anchorRect.top - cardHeight - gap;
+      top = Math.max(16, anchorRect.top - cardHeight - gap);
     }
 
     // Keep within viewport horizontally
-    if (anchorRect.left + cardWidth > window.innerWidth) {
-      left = window.scrollX + window.innerWidth - cardWidth - 16;
+    if (left + cardWidth > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - cardWidth - 16);
     }
-    if (anchorRect.left < 16) {
-      left = window.scrollX + 16;
+    if (left < 16) {
+      left = 16;
     }
 
     setPosition({ top, left });
-    // Trigger entrance animation
     requestAnimationFrame(() => {
       setVisible(true);
     });
-  }, [anchorRect]);
+  }, [anchorRect, isMobile]);
 
   // Close on outside click
   useEffect(() => {
@@ -156,18 +168,41 @@ export default function UserMiniCard({
   const badgeCount = user?.gamificationProfile?.badges?.length || 0;
 
   return createPortal(
-    <div
-      ref={cardRef}
-      role="dialog"
-      aria-label={`${user?.name || "User"} mini profile`}
-      className={`fixed z-[9999] w-[320px] rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
-        visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
-      }`}
-      style={{
-        top: position.top,
-        left: position.left,
-      }}
-    >
+    <>
+      {/* Backdrop scrim on mobile */}
+      {isMobile && (
+        <div
+          className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        ref={cardRef}
+        role="dialog"
+        aria-label={`${user?.name || "User"} mini profile`}
+        className={
+          isMobile
+            ? `fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] w-full max-w-md mx-auto rounded-t-[28px] border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-transform duration-300 ease-out overflow-y-auto pb-[env(safe-area-inset-bottom,16px)] ${
+                visible ? "translate-y-0" : "translate-y-full"
+              }`
+            : `fixed z-[9999] w-[320px] rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
+                visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              }`
+        }
+        style={
+          !isMobile
+            ? {
+                top: position.top,
+                left: position.left,
+              }
+            : undefined
+        }
+      >
+        {isMobile && (
+          <div className="w-10 h-1 bg-slate-300 dark:bg-white/20 rounded-full mx-auto my-2.5" />
+        )}
       {loading ? (
         <div className="flex items-center justify-center p-10">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400 dark:text-slate-500" />
@@ -303,7 +338,8 @@ export default function UserMiniCard({
           </div>
         </div>
       )}
-    </div>,
+    </div>
+    </>,
     document.body
   );
 }

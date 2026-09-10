@@ -9,6 +9,7 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
+    "dev:mobile:tunnel": "pnpm --filter mobile tunnel",
     "dev:desktop": "pnpm --filter desktop dev",
     "dev:all": "turbo dev start --parallel",
     "build:web": "prisma generate && pnpm --filter web build",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@types/pg": "^8.21.0",
     "prisma": "^7.9.1",
+    "puppeteer-core": "^25.10.0",
     "tsx": "^4.19.2",
     "turbo": "^2.4.0"
   },

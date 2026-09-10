@@ -1,8 +1,11 @@
-export default function ClassesPage() {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">My Classes</h2>
-      <p className="mt-4 text-gray-600">View and manage all your classes here.</p>
-    </div>
-  );
+import { redirect } from "next/navigation";
+
+type PageProps = {
+  params: Promise<{ institute: string }>;
+};
+
+export default async function ClassesPage({ params }: PageProps) {
+  const { institute } = await params;
+  redirect(`/${institute}/courses`);
 }
+

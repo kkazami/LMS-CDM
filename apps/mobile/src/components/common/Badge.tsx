@@ -1,16 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
-export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary';
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'muted';
 
 interface BadgeProps {
   label: string;
   variant?: BadgeVariant;
-  style?: ViewStyle;
+  size?: 'sm' | 'md' | 'lg';
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Badge({ label, variant = 'default', style }: BadgeProps) {
+export function Badge({ label, variant = 'default', size = 'md', style }: BadgeProps) {
   const theme = useTheme();
 
   const getStyle = () => {
@@ -49,28 +50,46 @@ export function Badge({ label, variant = 'default', style }: BadgeProps) {
     }
   };
 
+  const getSizeStyle = () => {
+    switch (size) {
+      case 'sm':
+        return { paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 };
+      case 'lg':
+        return { paddingHorizontal: 12, paddingVertical: 6, fontSize: 14 };
+      case 'md':
+      default:
+        return { paddingHorizontal: 8, paddingVertical: 4, fontSize: 12 };
+    }
+  };
+
   const colors = getStyle();
+  const sizeStyle = getSizeStyle();
 
   return (
     <View
       accessibilityRole="text"
       accessibilityLabel={'Badge: ' + label}
-      style={[styles.container, { backgroundColor: colors.bg }, style]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.bg,
+          paddingHorizontal: sizeStyle.paddingHorizontal,
+          paddingVertical: sizeStyle.paddingVertical,
+        },
+        style,
+      ]}
     >
-      <Text style={[styles.text, { color: colors.text }]}>{label}</Text>
+      <Text style={[styles.text, { color: colors.text, fontSize: sizeStyle.fontSize }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 9999,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: 12,
     fontWeight: '600',
   },
 });

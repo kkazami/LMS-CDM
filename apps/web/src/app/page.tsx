@@ -108,7 +108,7 @@ const programs: ProgramData[] = [
       "Capstone Project Development",
       "Software Systems & Database Architecture",
     ],
-    loginUrl: "/login?dept=ics",
+    loginUrl: "/login?institute=ics",
   },
   {
     id: "ite",
@@ -128,7 +128,7 @@ const programs: ProgramData[] = [
       "Demonstration Teaching & Rubrics",
       "Certified Educator Leadership Preparation",
     ],
-    loginUrl: "/login?dept=ite",
+    loginUrl: "/login?institute=ite",
   },
   {
     id: "ibe",
@@ -148,7 +148,7 @@ const programs: ProgramData[] = [
       "Financial Analysis & Feasibility Studies",
       "Venture Incubation & Entrepreneurship",
     ],
-    loginUrl: "/login?dept=ibe",
+    loginUrl: "/login?institute=ibe",
   },
 ];
 

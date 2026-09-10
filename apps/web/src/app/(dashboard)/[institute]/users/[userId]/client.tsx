@@ -82,7 +82,7 @@ export default function PublicProfileClient({
       {/* Avatar overlapping banner bottom */}
       <div className="relative px-6">
         <div className="-mt-12 mb-4">
-          <div className="inline-block rounded-full ring-4 ring-white">
+          <div className="inline-block rounded-full ring-4 ring-white dark:ring-[#141721]">
             <UserAvatar
               name={user.name}
               avatarUrl={user.avatarUrl}
@@ -93,8 +93,8 @@ export default function PublicProfileClient({
         </div>
 
         {/* Name + Role */}
-        <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">{user.name}</h1>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-[#8B92A5]">
           <span
             className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide"
             style={{
@@ -104,30 +104,30 @@ export default function PublicProfileClient({
           >
             {roleLabel}
           </span>
-          <span className="h-1 w-1 rounded-full bg-gray-300" />
+          <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
           <span>{user.institute.name}</span>
           {user.department && (
             <>
-              <span className="h-1 w-1 rounded-full bg-gray-300" />
+              <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
               <span>{user.department}</span>
             </>
           )}
           {isStudent && user.yearLevel && (
             <>
-              <span className="h-1 w-1 rounded-full bg-gray-300" />
+              <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
               <span>{user.yearLevel}</span>
             </>
           )}
           {isStudent && user.studentNumber && (
             <>
-              <span className="h-1 w-1 rounded-full bg-gray-300" />
-              <span className="font-mono text-xs">{user.studentNumber}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+              <span className="font-mono text-xs tabular-nums text-slate-700 dark:text-[#F0F2F8]">{user.studentNumber}</span>
             </>
           )}
           {!isStudent && user.uniqueId && (
             <>
-              <span className="h-1 w-1 rounded-full bg-gray-300" />
-              <span className="font-mono text-xs">{user.uniqueId}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+              <span className="font-mono text-xs tabular-nums text-slate-700 dark:text-[#F0F2F8]">{user.uniqueId}</span>
             </>
           )}
         </div>
@@ -135,30 +135,30 @@ export default function PublicProfileClient({
 
       {/* About Section */}
       <div className="mt-8 px-6">
-        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] mb-3">
           <BookOpen className="h-4 w-4" />
           About
         </h2>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 space-y-3 shadow-xs">
+          <p className="text-sm text-slate-700 dark:text-[#F0F2F8] leading-relaxed whitespace-pre-wrap">
             {user.bio || "No bio added yet."}
           </p>
 
-          <hr className="border-gray-100" />
+          <hr className="border-slate-100 dark:border-white/5" />
 
           <div className="grid gap-2">
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <Mail className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-[#8B92A5]">
+              <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <span>{user.email}</span>
             </div>
             {user.phone && (
-              <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                <Phone className="h-4 w-4 text-gray-400 shrink-0" />
-                <span>{user.phone}</span>
+              <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-[#8B92A5]">
+                <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                <span className="font-mono tabular-nums">{user.phone}</span>
               </div>
             )}
-            <div className="flex items-center gap-2.5 text-sm text-gray-600">
-              <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-[#8B92A5]">
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <span>
                 Member since{" "}
                 {new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -173,7 +173,7 @@ export default function PublicProfileClient({
 
       {/* Courses Section */}
       <div className="mt-6 px-6 pb-8">
-        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] mb-3">
           {isStudent ? (
             <GraduationCap className="h-4 w-4" />
           ) : (
@@ -181,21 +181,21 @@ export default function PublicProfileClient({
           )}
           {courseLabel}
         </h2>
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
           {courses.length === 0 ? (
-            <p className="text-sm text-gray-400">No courses to display.</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">No courses to display.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {courses.map((course) => (
                 <Link
                   key={course.id}
                   href={`/${instituteCode}/courses/${course.id}/stream`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-100 dark:hover:bg-white/5"
                 >
-                  <span className="font-semibold" style={{ color: theme.colors.primary }}>
+                  <span className="font-semibold font-mono tabular-nums" style={{ color: theme.colors.primary }}>
                     {course.code}
                   </span>
-                  <span className="text-gray-400">·</span>
+                  <span className="text-slate-400 dark:text-slate-600">·</span>
                   <span className="max-w-[140px] truncate">{course.title}</span>
                 </Link>
               ))}

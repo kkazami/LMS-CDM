@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Link from "next/link";
@@ -28,6 +28,12 @@ import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
 import Button from "@/components/common/Button";
 import { unenrollFromCourse, reorderCourseCards } from "../courses/actions";
+import { TypingBanner } from "@/components/motion/TypingBanner";
+import { FadeIn } from "@/components/motion/FadeIn";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
+import { ExpRing } from "@/components/dashboard/ExpRing";
+import { StatPill } from "@/components/dashboard/StatPill";
+import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 
 interface EnrolledCourse {
   id: string;
@@ -62,6 +68,7 @@ interface StudentDashboardClientProps {
   exp?: number;
   streakCurrent?: number;
   level?: number;
+  typingSessionKey?: string;
 }
 
 function formatRelativeDueDate(
@@ -122,6 +129,7 @@ export default function StudentDashboardClient({
   exp = 0,
   streakCurrent = 1,
   level = 1,
+  typingSessionKey,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -216,121 +224,138 @@ export default function StudentDashboardClient({
   return (
     <>
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto page-enter">
-        {/* ─── 1. Compact Gradient Hero Banner with Full Mobile Depth ─── */}
-        <div
-          className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-white shadow-xl"
-          style={{
-            background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
-          }}
-        >
-          {/* Subtle Depth Background Overlays */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/15" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 sm:h-96 w-72 sm:w-96 rounded-full bg-black/15 blur-3xl" />
-          <div className="pointer-events-none absolute -top-24 -left-24 h-72 sm:h-96 w-72 sm:w-96 rounded-full bg-white/15 blur-3xl" />
-
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md text-white border border-white/20 shadow-xs">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>{instituteName} • Student Portal</span>
-              </div>
-              <h1
-                className="text-xl sm:text-3xl font-black tracking-tight"
-                style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.25)" }}
-              >
-                Welcome back, {userName}! 👋
-              </h1>
-              <p
-                className="text-xs sm:text-base text-white/90 font-medium max-w-xl"
-                style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)" }}
-              >
-                Here is your academic overview, coursework, and upcoming deadlines.
-              </p>
-            </div>
-
-            {/* Gamification Pills (Streak & EXP & Level) */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1 sm:pt-0">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/30 backdrop-blur-md border border-white/20 text-white shadow-xs">
-                <Flame className="h-4 w-4 text-amber-300 animate-pulse" />
-                <span className="text-xs font-bold whitespace-nowrap">
-                  {streakCurrent} Day{streakCurrent === 1 ? "" : "s"} Streak
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 backdrop-blur-md border border-white/25 text-white shadow-xs">
-                <Zap className="h-4 w-4 text-yellow-300" />
-                <span className="text-xs font-bold whitespace-nowrap">
-                  {exp} EXP
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-xs">
-                <Award className="h-4 w-4 text-emerald-300" />
-                <span className="text-xs font-bold whitespace-nowrap">
-                  Lvl {level}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── 2. Quick Action Bar (Horizontal Scroll on Mobile) ─── */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            if (action.onClick) {
-              return (
-                <button
-                  key={action.label}
-                  type="button"
-                  onClick={action.onClick}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs shrink-0 cursor-pointer min-h-[44px] active:scale-95 group font-medium text-xs sm:text-sm text-slate-800 dark:text-[#F0F2F8]"
-                  style={
-                    action.highlight
-                      ? {
-                          borderColor: `${theme.colors.primary}60`,
-                          backgroundColor: `${theme.colors.primary}0D`,
-                        }
-                      : {}
-                  }
-                >
-                  <div
-                    className="p-1 rounded-lg shrink-0"
+        {/* ─── 1. Premium Anti-Slop Hero Banner ─── */}
+        <FadeIn y={20} duration={0.45}>
+          <div
+            className="hero-noise relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xl transition-colors"
+            style={{
+              background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}1A 0%, transparent 65%), var(--bg-surface, #FFFFFF)`,
+            }}
+          >
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
+              <div className="space-y-2 max-w-xl min-w-0">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider"
                     style={{
                       backgroundColor: `${theme.colors.primary}1A`,
                       color: theme.colors.primary,
                     }}
                   >
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <span>{action.label}</span>
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={action.label}
-                href={action.href!}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs shrink-0 cursor-pointer min-h-[44px] active:scale-95 group font-medium text-xs sm:text-sm text-slate-800 dark:text-[#F0F2F8]"
-              >
-                <div
-                  className="p-1 rounded-lg shrink-0"
-                  style={{
-                    backgroundColor: `${theme.colors.primary}1A`,
-                    color: theme.colors.primary,
-                  }}
-                >
-                  <Icon className="h-4 w-4" />
-                </div>
-                <span>{action.label}</span>
-                {action.badge && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                    {action.badge}
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>{instituteName} · Portal</span>
                   </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+                </div>
+
+                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
+                  <TypingBanner
+                    text={`Welcome back, ${userName}!`}
+                    sessionKey={typingSessionKey ?? "lumina_typed_greeting"}
+                  />
+                </h1>
+
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] font-medium leading-relaxed">
+                  You have <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{courses.length}</span> active courses and{" "}
+                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{dueSoonItems.length}</span> pending academic deadlines.
+                </p>
+              </div>
+
+              {/* EXP Ring */}
+              <div className="self-center md:self-auto shrink-0">
+                <ExpRing
+                  level={level}
+                  currentExp={exp}
+                  nextLevelExp={level * 100}
+                  color={theme.colors.primary}
+                  size={96}
+                />
+              </div>
+            </div>
+
+            {/* Bottom StatPills Row */}
+            <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-3 sm:px-8 pb-3 sm:pb-5 pt-1 border-t border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-none">
+              <StatPill
+                icon={Flame}
+                label={`${streakCurrent} Day${streakCurrent === 1 ? "" : "s"} Streak`}
+                color={theme.colors.primary}
+              />
+              <StatPill
+                icon={Zap}
+                label={`${exp} EXP`}
+                color={theme.colors.primary}
+              />
+              <StatPill
+                icon={Trophy}
+                label={`Rank #${Math.max(1, 10 - level)}`}
+                color={theme.colors.primary}
+              />
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
+        <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StaggerItem>
+            <QuickActionCard
+              icon={Plus}
+              label="Join Class"
+              onClick={() => setJoinModalOpen(true)}
+              sublabel="Enter code"
+              color={theme.colors.primary}
+              badge="New"
+              badgeVariant="info"
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={ClipboardList}
+              label="To-do"
+              href={`/${instituteCode}/assignments`}
+              sublabel={dueSoonItems.length > 0 ? "Due soon" : "All clear"}
+              color={theme.colors.primary}
+              badge={dueSoonItems.length > 0 ? `${dueSoonItems.length}` : null}
+              badgeVariant={dueSoonItems.length > 0 ? "warning" : "muted"}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Flame}
+              label="Flashcards"
+              href={`/${instituteCode}/flashcards`}
+              sublabel="Spaced review"
+              color={theme.colors.primary}
+              badge="Daily"
+              badgeVariant="success"
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={CheckSquare}
+              label="Tasks"
+              href={`/${instituteCode}/tasks`}
+              sublabel="Weekly goals"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Code2}
+              label="CodeLab"
+              href={`/${instituteCode}/activities/codelab`}
+              sublabel="Interactive labs"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Trophy}
+              label="Leaderboard"
+              href={`/${instituteCode}/leaderboards`}
+              sublabel="Top rankings"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+        </StaggerGroup>
 
         {/* ─── 3. Main Grid: Enrolled Courses & Due Soon ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -477,12 +502,12 @@ export default function StudentDashboardClient({
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-[calc(100%-44px)]">
+                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-bold tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
                               {course.code}
                             </span>
                             {course.section && (
-                              <span className="text-xs font-medium text-white/90 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded truncate border border-white/20">
+                              <span className="text-[11px] sm:text-xs font-medium text-white/90 bg-black/30 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded truncate border border-white/20">
                                 {course.section}
                               </span>
                             )}
@@ -632,17 +657,17 @@ export default function StudentDashboardClient({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate">
+                          <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
+                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate min-w-0 flex-1">
                               {item.courseCode} {item.courseSection ? `• ${item.courseSection}` : ""}
                             </span>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeClass}`}
                             >
                               {relative.label}
                             </span>
                           </div>
-                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] group-hover:text-[#F97316] transition-colors line-clamp-1">
+                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] transition-colors line-clamp-1">
                             {item.title}
                           </h4>
                         </div>

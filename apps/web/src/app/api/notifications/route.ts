@@ -61,7 +61,7 @@ export async function PATCH(request: Request) {
     }
 
     const userId = session.user.id;
-    const body = (await request.json()) as { action: string; id?: string };
+    const body = (await request.json()) as { action?: string; id?: string };
 
     if (body.action === "markAllRead") {
       await db.notification.updateMany({
@@ -71,9 +71,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    if (body.action === "markRead" && body.id) {
+    if (body.id || (body.action === "markRead" && body.id)) {
+      const notifId = body.id!;
       await db.notification.updateMany({
-        where: { id: body.id, userId },
+        where: { id: notifId, userId },
         data: { isRead: true },
       });
       return NextResponse.json({ success: true });

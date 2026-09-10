@@ -15,6 +15,8 @@ import {
   UserCheck,
   Layers,
 } from "lucide-react";
+import { TypingBanner } from "@/components/motion/TypingBanner";
+import { StatPill } from "@/components/dashboard/StatPill";
 
 export const dynamic = "force-dynamic";
 
@@ -127,38 +129,63 @@ export default async function AdminDashboardPage({ params }: PageProps) {
     },
   ];
 
+  const typingSessionKey = `lumina_typed_${session.user.id.slice(0, 8)}`;
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto page-enter">
-      {/* ─── 1. Welcome Banner ─── */}
+      {/* ─── 1. Anti-Slop Administrator Hero Banner ─── */}
       <div
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+        className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs transition-colors"
         style={{
-          background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)`,
+          borderLeft: `4px solid ${theme.colors.primary}`,
+          background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
         }}
       >
-        {/* Subtle Depth Background Overlays */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/10" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-md mb-3 text-white border border-white/20">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+              style={{
+                backgroundColor: `${theme.colors.primary}1A`,
+                color: theme.colors.primary,
+              }}
+            >
               <Sparkles className="h-3.5 w-3.5" />
               <span>{instituteRecord.name} • Administrator Console</span>
             </div>
-            <h1
-              className="text-2xl sm:text-3xl font-black tracking-tight"
-              style={{ textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)" }}
-            >
-              Welcome back, Administrator {session.user.name}! 🛡️
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+              <TypingBanner
+                text={`Welcome back, Administrator ${session.user.name}!`}
+                sessionKey={typingSessionKey}
+              />
             </h1>
-            <p
-              className="mt-1 text-sm sm:text-base text-white/90 font-medium"
-              style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.15)" }}
-            >
-              Centralized oversight and management hub for all academic entities, courses, and security controls.
+            <p className="text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
+              Centralized governance and management hub for all academic entities, courses, and security controls.
             </p>
+          </div>
+
+          {/* Admin StatPills row (no ExpRing) */}
+          <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+            <StatPill
+              icon={GraduationCap}
+              label={`${totalStudents} Students`}
+              color={theme.colors.primary}
+            />
+            <StatPill
+              icon={Users}
+              label={`${totalInstructors} Faculty`}
+              color="#10B981"
+            />
+            <StatPill
+              icon={Library}
+              label={`${totalCourses} Courses`}
+              color="#8B5CF6"
+            />
+            <StatPill
+              icon={UserCheck}
+              label={`${pendingEnrollments} Requests`}
+              color={pendingEnrollments > 0 ? "#F59E0B" : "#64748B"}
+            />
           </div>
         </div>
       </div>
@@ -171,7 +198,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Active Students
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1 font-mono tabular-nums">
               {totalStudents}
             </p>
           </div>
@@ -186,7 +213,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Instructors
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1 font-mono tabular-nums">
               {totalInstructors}
             </p>
           </div>
@@ -201,7 +228,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Active Courses
             </p>
-            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1">
+            <p className="text-2xl font-black text-slate-900 dark:text-[#F1F5F9] mt-1 font-mono tabular-nums">
               {totalCourses}
             </p>
           </div>
@@ -216,7 +243,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
               Pending Requests
             </p>
-            <p className="text-2xl font-black text-amber-500 mt-1">
+            <p className="text-2xl font-black text-amber-500 mt-1 font-mono tabular-nums">
               {pendingEnrollments}
             </p>
           </div>

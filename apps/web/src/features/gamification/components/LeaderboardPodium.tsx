@@ -35,7 +35,7 @@ export default function LeaderboardPodium({ top3, theme }: LeaderboardPodiumProp
 
   return (
     <div className="pt-8 pb-4 px-2">
-      <div className="flex items-end justify-center gap-3 sm:gap-6 max-w-2xl mx-auto">
+      <div className="flex items-end justify-center gap-2 sm:gap-6 max-w-2xl mx-auto">
         {/* ── #2 Second Place (Left) ── */}
         {second ? (
           <PodiumCard
@@ -113,17 +113,17 @@ function PodiumCard({
   isWinner?: boolean;
 }) {
   return (
-    <div className={`flex-1 flex flex-col items-center max-w-[190px] ${orderClass}`}>
+    <div className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass}`}>
       {/* Avatar + Rank Badge */}
-      <div className="relative mb-3 flex flex-col items-center">
+      <div className="relative mb-2.5 flex flex-col items-center">
         {isWinner && (
-          <span className="text-2xl -mb-1 animate-bounce select-none">👑</span>
+          <span className="text-xl sm:text-2xl -mb-1 animate-bounce select-none">👑</span>
         )}
 
         <div
-          className={`relative p-1 rounded-full bg-white dark:bg-[#141721] ring-2 shadow-lg transition-transform hover:scale-105 ${
+          className={`relative z-10 p-1 rounded-full bg-white dark:bg-[#141721] ring-2 shadow-lg transition-transform hover:scale-105 ${
             isWinner
-              ? "ring-amber-500 ring-offset-2 ring-offset-amber-500/20"
+              ? "ring-amber-500 ring-offset-2 ring-offset-amber-500/20 animate-rank-glow"
               : student.rank === 2
               ? "ring-slate-400"
               : "ring-amber-700"
@@ -137,9 +137,9 @@ function PodiumCard({
           />
         </div>
 
-        {/* Rank Badge Pill */}
+        {/* Rank Badge Pill: positioned with positive margin & z-index so the avatar never covers #1 #2 #3 */}
         <span
-          className={`-mt-3 px-2 py-0.5 rounded-full text-xs font-black flex items-center gap-0.5 shadow-md ${badgeBg}`}
+          className={`relative z-20 mt-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap ${badgeBg}`}
         >
           <span>{medalEmoji}</span>
           <span>#{student.rank}</span>
@@ -158,10 +158,15 @@ function PodiumCard({
 
       {/* Pedestal Block */}
       <div
-        className={`w-full ${pedestalHeight} rounded-t-3xl border-t border-x ${pedestalBorder} ${pedestalBg} flex flex-col items-center justify-start pt-4 px-2 text-center shadow-lg transition-all`}
+        className={`w-full ${pedestalHeight} rounded-t-3xl border-t border-x ${pedestalBorder} ${pedestalBg} flex flex-col items-center justify-start pt-4 px-2 text-center shadow-lg transition-all ${
+          isWinner ? "animate-rank-glow" : ""
+        }`}
       >
         <div className="space-y-1">
-          <div className="text-xs sm:text-sm font-black font-mono text-[#F97316]">
+          <div
+            className="text-xs sm:text-sm font-black font-mono tabular-nums"
+            style={{ color: theme.colors.primary }}
+          >
             <CountUpNumber value={student.exp} duration={1000} /> EXP
           </div>
 

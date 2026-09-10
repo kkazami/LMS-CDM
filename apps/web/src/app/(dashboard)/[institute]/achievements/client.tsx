@@ -405,7 +405,7 @@ function BadgeCard({
               <CheckCircle2 className="w-3 h-3" /> Earned
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#94A3B8] text-[10px] font-bold uppercase tracking-wider">
               <Lock className="w-3 h-3" /> Not Earned
             </span>
           )}
@@ -430,13 +430,13 @@ function BadgeCard({
       {/* Footer: How to Earn / Earn Date */}
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 text-[11px]">
         {isEarned ? (
-          <div className="flex items-center justify-between text-slate-400 dark:text-[#555C72] font-mono">
+          <div className="flex items-center justify-between text-slate-500 dark:text-[#94A3B8] font-mono">
             <span>Earned on:</span>
-            <span className="font-bold text-slate-600 dark:text-[#8B92A5]">{formattedEarnDate}</span>
+            <span className="font-bold text-slate-700 dark:text-[#F0F2F8]">{formattedEarnDate}</span>
           </div>
         ) : (
           <div className="space-y-0.5">
-            <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 dark:text-[#555C72]">
+            <span className="font-bold uppercase tracking-wider text-[10px] text-slate-500 dark:text-[#94A3B8]">
               How to earn:
             </span>
             <p className="text-slate-600 dark:text-[#8B92A5] font-medium leading-tight">

@@ -1,9 +1,27 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Star, Settings } from "lucide-react";
-import { updateGrade, upsertGrade, saveGradingPolicy, type GradebookData } from "./actions";
+import { ArrowLeft, Download, Star, Settings, Smartphone, Eye, Edit3, FileText, ExternalLink } from "lucide-react";
+import { updateGrade, upsertGrade, clearGrade, saveGradingPolicy, type GradebookData } from "./actions";
+
+function useIsMobileView(): boolean {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined" || !window.matchMedia) {
+        return () => {};
+      }
+      const mq = window.matchMedia("(max-width: 767px)");
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => {
+      if (typeof window === "undefined") return false;
+      return window.innerWidth < 768;
+    },
+    () => false
+  );
+}
 
 export function getGradingScaleEquivalent(pct: number): string {
   const p = Math.round(pct);
@@ -20,6 +38,7 @@ export function getGradingScaleEquivalent(pct: number): string {
   return "F";
 }
 import GradingPolicyModal from "@/components/courses/GradingPolicyModal";
+import GradeEvaluationModal from "@/components/courses/GradeEvaluationModal";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface GradebookClientProps {
@@ -31,23 +50,62 @@ interface GradebookClientProps {
 }
 
 function gradeColor(grade: number | null, maxPoints: number | null): string {
-  if (grade === null) return "text-gray-400 bg-transparent";
-  if (!maxPoints) return "text-gray-700";
+  if (grade === null) return "text-gray-400 dark:text-[#64748B] bg-transparent";
+  if (!maxPoints) return "text-gray-700 dark:text-[#F0F2F8] font-mono tabular-nums";
   const pct = (grade / maxPoints) * 100;
-  if (pct >= 80) return "text-emerald-700 bg-emerald-50 font-semibold";
-  if (pct >= 50) return "text-amber-700 bg-amber-50 font-semibold";
-  return "text-red-700 bg-red-50 font-semibold";
+  if (pct >= 80) return "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 font-semibold font-mono tabular-nums";
+  if (pct >= 50) return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 font-semibold font-mono tabular-nums";
+  return "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 font-semibold font-mono tabular-nums";
 }
 
 export default function GradebookClient({ data, courseId, courseTitle, instituteCode, theme }: GradebookClientProps) {
+  const isMobileView = useIsMobileView();
   const [localGrades, setLocalGrades] = useState<Record<string, Record<string, string>>>({});
   const [editingCell, setEditingCell] = useState<{ studentId: string; assignmentId: string } | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ studentId: string; assignmentId: string } | null>(null);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const [gradingSubmission, setGradingSubmission] = useState<{
+    submission: {
+      id: string;
+      status: string;
+      grade: number | null;
+      isReturned: boolean;
+      submittedAt: Date | null;
+      student: { id: string; name: string; email: string };
+      attachments: Array<{ id: string; type: string; url: string; fileName: string }>;
+    };
+    maxPoints: number | null;
+    itemId: string;
+    studentId: string;
+  } | null>(null);
+
+  function handleModalGraded(submissionId: string, grade: number) {
+    if (gradingSubmission) {
+      const { studentId, itemId } = gradingSubmission;
+      setLocalGrades((prev) => ({
+        ...prev,
+        [studentId]: { ...(prev[studentId] ?? {}), [itemId]: grade.toString() },
+      }));
+      if (data.grades[studentId]?.[itemId]) {
+        data.grades[studentId][itemId].grade = grade;
+        data.grades[studentId][itemId].status = "RETURNED";
+        data.grades[studentId][itemId].isReturned = true;
+      }
+    }
+  }
+
+  // Ensure editing cell is cleared if mobile view is detected
+  useEffect(() => {
+    if (isMobileView && editingCell) {
+      setEditingCell(null);
+    }
+  }, [isMobileView, editingCell]);
+
   useEffect(() => {
     function handleGlobalKeyDown(e: KeyboardEvent) {
+      if (isMobileView) return;
       if (editingCell) return;
       if (!selectedCell) return;
 
@@ -137,21 +195,68 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
     return null;
   }
 
-  function handleCellEdit(studentId: string, assignmentId: string, value: string) {
+  function handleCellEdit(studentId: string, assignmentId: string, value: string, maxPoints: number | null = null) {
+    let val = value;
+    if (maxPoints !== null && value !== "") {
+      const num = parseFloat(value);
+      if (!isNaN(num) && num > maxPoints) {
+        val = maxPoints.toString();
+      }
+    }
     setLocalGrades((prev) => ({
       ...prev,
-      [studentId]: { ...(prev[studentId] ?? {}), [assignmentId]: value },
+      [studentId]: { ...(prev[studentId] ?? {}), [assignmentId]: val },
     }));
   }
 
-  function handleCellBlur(studentId: string, assignmentId: string) {
+  function handleCellBlur(studentId: string, assignmentId: string, maxPoints: number | null = null) {
     const rawValue = localGrades[studentId]?.[assignmentId];
     if (rawValue === undefined) {
       setEditingCell(null);
       return;
     }
-    const gradeNum = parseFloat(rawValue);
-    if (!isNaN(gradeNum) && rawValue !== "") {
+
+    // When cleared, delete/clear the grade from the database
+    if (rawValue.trim() === "") {
+      startTransition(async () => {
+        await clearGrade(assignmentId, studentId);
+      });
+      setLocalGrades((prev) => ({
+        ...prev,
+        [studentId]: { ...(prev[studentId] ?? {}), [assignmentId]: "" },
+      }));
+      if (data.grades[studentId]?.[assignmentId]) {
+        data.grades[studentId][assignmentId].grade = null;
+        if (
+          (!data.grades[studentId][assignmentId].attachments || data.grades[studentId][assignmentId].attachments!.length === 0) &&
+          !data.grades[studentId][assignmentId].submittedAt
+        ) {
+          data.grades[studentId][assignmentId].submissionId = null;
+          data.grades[studentId][assignmentId].status = null;
+          data.grades[studentId][assignmentId].isReturned = false;
+        }
+      }
+      setEditingCell(null);
+      return;
+    }
+
+    let gradeNum = parseFloat(rawValue);
+    if (!isNaN(gradeNum)) {
+      if (maxPoints !== null && gradeNum > maxPoints) {
+        gradeNum = maxPoints;
+      }
+      if (gradeNum < 0) {
+        gradeNum = 0;
+      }
+      setLocalGrades((prev) => ({
+        ...prev,
+        [studentId]: { ...(prev[studentId] ?? {}), [assignmentId]: gradeNum.toString() },
+      }));
+      if (data.grades[studentId]?.[assignmentId]) {
+        data.grades[studentId][assignmentId].grade = gradeNum;
+        data.grades[studentId][assignmentId].status = "RETURNED";
+        data.grades[studentId][assignmentId].isReturned = true;
+      }
       startTransition(async () => {
         await upsertGrade(assignmentId, studentId, gradeNum);
       });
@@ -173,40 +278,68 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
     <>
       <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] overflow-hidden shadow-xs transition-colors">
       {/* Header */}
-      <div className="bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/5 px-6 py-4">
-        <div className="max-w-full mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      <div className="bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/5 px-4 sm:px-6 py-4">
+        <div className="max-w-full mx-auto flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <Link
               href={`/${instituteCode}/courses/${courseId}`}
               className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
-              {courseTitle}
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <span className="truncate max-w-[130px] sm:max-w-[220px]">{courseTitle}</span>
             </Link>
             <span className="text-slate-300 dark:text-white/10">/</span>
             <span className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Gradebook</span>
+            {isMobileView ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+                <Eye className="w-3 h-3" />
+                View Mode
+              </span>
+            ) : (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                <Edit3 className="w-3 h-3" />
+                Edit Mode
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsPolicyModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#1C2030] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#1C2030] px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all shadow-xs cursor-pointer"
             >
-              <Settings className="h-4 w-4" />
-              Grading Policy
+              <Settings className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Grading Policy</span>
+              <span className="sm:hidden">Policy</span>
               {hasValidPolicy && (
                 <span className="flex h-2 w-2 rounded-full bg-emerald-500 ml-1"></span>
               )}
             </button>
             <a
               href={`/api/courses/${courseId}/gradebook/export`}
-              className="flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition-all shadow-xs"
+              className="flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-all shadow-xs hover:brightness-110 min-h-[40px] sm:min-h-[44px]"
+              style={{ backgroundColor: theme?.colors.primary ?? "#EA580C" }}
             >
-              <Download className="h-4 w-4" />
-              Export CSV
+              <Download className="h-4 w-4 shrink-0" />
+              <span>Export CSV</span>
             </a>
           </div>
         </div>
       </div>
+
+      {/* Mobile View-Only Mode Banner Note */}
+      {isMobileView && (
+        <div className="mx-4 sm:mx-6 mt-4 p-3.5 sm:p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-500/25 flex items-start gap-3 text-amber-900 dark:text-amber-200 shadow-xs">
+          <Smartphone className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm leading-relaxed">
+            <p className="font-bold text-amber-800 dark:text-amber-300">
+              It is only in View Mode
+            </p>
+            <p className="text-amber-700 dark:text-amber-300/90 mt-0.5">
+              Gradebook entries are view-only in Mobile Web View. You can only enter Edit Mode in PC and Tablet Web View.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
@@ -254,75 +387,198 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
 
                   const isSelected = selectedCell?.studentId === student.id && selectedCell?.assignmentId === assignment.id;
 
+                  const hasSubmission = Boolean(cell?.submissionId);
+                  const hasWork = Boolean(
+                    hasSubmission && (
+                      (cell?.attachments && cell.attachments.length > 0) ||
+                      (cell?.submittedAt && (cell.status === "SUBMITTED" || cell.status === "RETURNED"))
+                    )
+                  );
+                  const hasGrade = displayGrade !== null && displayGrade !== undefined && displayGrade !== "";
+                  const isNeedsGrading = hasWork && !hasGrade;
+
                   return (
                     <td
                       key={assignment.id}
-                      className={`px-4 py-3 border-r border-slate-200/80 dark:border-white/5 cursor-pointer transition-colors ${
-                        isSelected 
-                          ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/40 outline outline-2 outline-[#F97316] -outline-offset-2 relative z-10" 
+                      className={`px-3 sm:px-4 py-2.5 sm:py-3 border-r border-slate-200/80 dark:border-white/5 cursor-pointer transition-colors ${
+                        isNeedsGrading
+                          ? "bg-amber-500/[0.08] dark:bg-amber-500/[0.14] border-amber-300/80 dark:border-amber-500/30 hover:bg-amber-500/[0.14] dark:hover:bg-amber-500/[0.22] ring-1 ring-inset ring-amber-500/30 dark:ring-amber-500/40"
+                          : isSelected 
+                          ? "bg-slate-500/10 dark:bg-white/10 outline outline-2 -outline-offset-2 relative z-10" 
                           : "hover:bg-slate-100/60 dark:hover:bg-white/[0.04]"
                       }`}
+                      style={isSelected ? { outlineColor: theme?.colors.primary ?? "#3B82F6" } : undefined}
                       onClick={() => {
                         setSelectedCell({ studentId: student.id, assignmentId: assignment.id });
-                        setEditingCell({ studentId: student.id, assignmentId: assignment.id });
+                        if (!isMobileView) {
+                          setEditingCell({ studentId: student.id, assignmentId: assignment.id });
+                        }
                       }}
                     >
-                      {isEditing ? (
-                        <input
-                          autoFocus
-                          type="number"
-                          min={0}
-                          max={assignment.maxPoints ?? undefined}
-                          step={0.5}
-                          defaultValue={displayGrade ?? ""}
-                          onChange={(e) => handleCellEdit(student.id, assignment.id, e.target.value)}
-                          onBlur={() => handleCellBlur(student.id, assignment.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
-                              const sIdx = data.students.findIndex(s => s.id === student.id);
-                              if (sIdx < data.students.length - 1) {
-                                const nextCell = { studentId: data.students[sIdx + 1].id, assignmentId: assignment.id };
-                                setTimeout(() => {
-                                  setSelectedCell(nextCell);
-                                  setEditingCell(nextCell);
-                                }, 50);
+                      {isEditing && !isMobileView ? (
+                        <div className="flex items-center justify-between gap-1.5 min-w-[75px]">
+                          <input
+                            autoFocus
+                            type="number"
+                            min={0}
+                            max={assignment.maxPoints ?? undefined}
+                            step={0.5}
+                            defaultValue={displayGrade ?? ""}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              if (assignment.maxPoints !== null && val !== "") {
+                                const num = parseFloat(val);
+                                if (!isNaN(num) && num > assignment.maxPoints) {
+                                  val = assignment.maxPoints.toString();
+                                  e.target.value = val;
+                                }
                               }
-                            } else if (e.key === "Escape") {
-                              setEditingCell(null);
-                            } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                              e.preventDefault();
-                              e.currentTarget.blur();
-                              const sIdx = data.students.findIndex(s => s.id === student.id);
-                              const nextIdx = e.key === "ArrowUp" ? sIdx - 1 : sIdx + 1;
-                              if (nextIdx >= 0 && nextIdx < data.students.length) {
-                                const nextCell = { studentId: data.students[nextIdx].id, assignmentId: assignment.id };
-                                setTimeout(() => {
-                                  setSelectedCell(nextCell);
-                                  setEditingCell(nextCell);
-                                }, 50);
+                              handleCellEdit(student.id, assignment.id, val, assignment.maxPoints);
+                            }}
+                            onBlur={() => handleCellBlur(student.id, assignment.id, assignment.maxPoints)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                                const sIdx = data.students.findIndex(s => s.id === student.id);
+                                if (sIdx < data.students.length - 1) {
+                                  const nextCell = { studentId: data.students[sIdx + 1].id, assignmentId: assignment.id };
+                                  setTimeout(() => {
+                                    setSelectedCell(nextCell);
+                                    setEditingCell(nextCell);
+                                  }, 50);
+                                }
+                              } else if (e.key === "Escape") {
+                                setEditingCell(null);
+                              } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                                const sIdx = data.students.findIndex(s => s.id === student.id);
+                                const nextIdx = e.key === "ArrowUp" ? sIdx - 1 : sIdx + 1;
+                                if (nextIdx >= 0 && nextIdx < data.students.length) {
+                                  const nextCell = { studentId: data.students[nextIdx].id, assignmentId: assignment.id };
+                                  setTimeout(() => {
+                                    setSelectedCell(nextCell);
+                                    setEditingCell(nextCell);
+                                  }, 50);
+                                }
                               }
-                            }
-                          }}
-                          className="w-16 rounded-lg border border-orange-400 bg-white dark:bg-[#1E2132] px-1.5 py-0.5 text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none focus:ring-1 focus:ring-orange-500"
-                        />
+                            }}
+                            className="w-16 rounded-lg border border-slate-300 dark:border-white/20 bg-white dark:bg-[#1E2132] px-1.5 py-0.5 text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 font-mono tabular-nums"
+                            style={{ borderColor: theme?.colors.primary }}
+                          />
+                          {hasWork && (
+                            <button
+                              type="button"
+                              title={
+                                cell?.attachments && cell.attachments.length > 0
+                                  ? `View submitted work (${cell.attachments.length} attachment${cell.attachments.length > 1 ? "s" : ""})`
+                                  : "View student submission"
+                              }
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setGradingSubmission({
+                                  submission: {
+                                    id: cell.submissionId!,
+                                    status: cell.status || "SUBMITTED",
+                                    grade: typeof displayGrade === "number" ? displayGrade : cell.grade,
+                                    isReturned: Boolean(cell.isReturned),
+                                    submittedAt: cell.submittedAt ? new Date(cell.submittedAt) : null,
+                                    student: {
+                                      id: student.id,
+                                      name: student.name,
+                                      email: student.email,
+                                    },
+                                    attachments: cell.attachments || [],
+                                  },
+                                  maxPoints: assignment.maxPoints,
+                                  itemId: assignment.id,
+                                  studentId: student.id,
+                                });
+                              }}
+                              className="hidden md:inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/10 dark:hover:bg-orange-500/20 border border-slate-200/50 dark:border-white/10 shrink-0 cursor-pointer"
+                            >
+                              {cell?.attachments && cell.attachments.length > 0 ? (
+                                <FileText className="w-3.5 h-3.5" />
+                              ) : (
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          )}
+                        </div>
                       ) : (
-                        <span
-                          className={`inline-block rounded-lg px-2.5 py-1 text-sm transition-colors ${
-                            displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
-                              ? gradeColor(displayGrade as number | null, assignment.maxPoints)
-                              : cell?.submissionId
-                              ? "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5"
-                              : "text-slate-300 dark:text-slate-600"
-                          }`}
-                        >
-                          {displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
-                            ? `${displayGrade}${assignment.maxPoints ? `/${assignment.maxPoints}` : ""}`
-                            : cell?.submissionId
-                            ? "—"
-                            : "·"}
-                        </span>
+                        <div className="flex items-center justify-between gap-1.5 min-w-[75px]">
+                          {isNeedsGrading ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                              </span>
+                              <span>To Grade</span>
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-block rounded-lg px-2.5 py-1 text-sm transition-colors ${
+                                displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
+                                  ? gradeColor(displayGrade as number | null, assignment.maxPoints)
+                                  : cell?.submissionId
+                                  ? "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5"
+                                  : "text-slate-300 dark:text-slate-600"
+                              }`}
+                            >
+                              {displayGrade !== null && displayGrade !== undefined && displayGrade !== ""
+                                ? `${displayGrade}${assignment.maxPoints ? `/${assignment.maxPoints}` : ""}`
+                                : cell?.submissionId
+                                ? "—"
+                                : "·"}
+                            </span>
+                          )}
+
+                          {/* Submission Work Modal Link / Button: Hidden in Mobile Web View, Available in Tablet and Desktop */}
+                          {!isMobileView && hasWork && (
+                            <button
+                              type="button"
+                              title={
+                                cell?.attachments && cell.attachments.length > 0
+                                  ? `View submitted work (${cell.attachments.length} attachment${cell.attachments.length > 1 ? "s" : ""})`
+                                  : "View student submission"
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setGradingSubmission({
+                                  submission: {
+                                    id: cell.submissionId!,
+                                    status: cell.status || "SUBMITTED",
+                                    grade: typeof displayGrade === "number" ? displayGrade : cell.grade,
+                                    isReturned: Boolean(cell.isReturned),
+                                    submittedAt: cell.submittedAt ? new Date(cell.submittedAt) : null,
+                                    student: {
+                                      id: student.id,
+                                      name: student.name,
+                                      email: student.email,
+                                    },
+                                    attachments: cell.attachments || [],
+                                  },
+                                  maxPoints: assignment.maxPoints,
+                                  itemId: assignment.id,
+                                  studentId: student.id,
+                                });
+                              }}
+                              className={`hidden md:inline-flex items-center justify-center p-1 rounded-md transition-all shrink-0 cursor-pointer ${
+                                isNeedsGrading
+                                  ? "text-amber-700 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/30"
+                                  : "text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/10 dark:hover:bg-orange-500/20 border border-slate-200/50 dark:border-white/10"
+                              }`}
+                            >
+                              {cell?.attachments && cell.attachments.length > 0 ? (
+                                <FileText className="w-3.5 h-3.5" />
+                              ) : (
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   );
@@ -335,10 +591,10 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                       const eq = getGradingScaleEquivalent(final);
                       return (
                         <div className="flex flex-col items-end">
-                          <span className={`font-bold text-lg ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          <span className={`font-bold text-lg font-mono tabular-nums ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {eq}
                           </span>
-                          <span className="text-xs text-slate-500 dark:text-[#8B92A5]">{final.toFixed(1)}%</span>
+                          <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono tabular-nums">{final.toFixed(1)}%</span>
                         </div>
                       );
                     })()}
@@ -351,13 +607,28 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       </div>
 
       {/* Color legend */}
-      <div className="sticky bottom-0 bg-white dark:bg-[#141721] border-t border-slate-200/80 dark:border-white/5 px-6 py-3 flex items-center gap-6 text-xs text-slate-500 dark:text-[#8B92A5]">
-        <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">Legend:</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-emerald-500/20 border border-emerald-500/40" /> ≥ 80%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500/20 border border-amber-500/40" /> ≥ 50%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-500/20 border border-red-500/40" /> &lt; 50%</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20" /> Not graded</span>
-        <span className="ml-2 text-slate-400 dark:text-slate-500 italic">Click a cell to edit grade inline</span>
+      <div className="sticky bottom-0 bg-white dark:bg-[#141721] border-t border-slate-200/80 dark:border-white/5 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-[#8B92A5]">
+        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+          <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">Legend:</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-emerald-500/20 border border-emerald-500/40" /> ≥ 80%</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500/20 border border-amber-500/40" /> ≥ 50%</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-500/20 border border-red-500/40" /> &lt; 50%</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-amber-500/30 border border-amber-500/60 ring-1 ring-amber-500/30" /> Needs grade (work submitted)</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20" /> Not graded</span>
+        </div>
+        <div>
+          {isMobileView ? (
+            <span className="text-amber-700 dark:text-amber-400 font-medium flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5 shrink-0" />
+              View Mode Active (Enter Edit Mode in PC & Tablet Web View)
+            </span>
+          ) : (
+            <span className="text-slate-400 dark:text-slate-500 italic flex items-center gap-1.5">
+              <Edit3 className="w-3.5 h-3.5 shrink-0" />
+              Click a cell to edit grade inline
+            </span>
+          )}
+        </div>
       </div>
     </div>
 
@@ -367,6 +638,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
         onSave={handleSavePolicy}
         activeCategories={activeCategories}
         initialWeights={policyWeights}
+        readOnly={isMobileView}
         theme={theme || {
           code: "ics",
           name: "Default",
@@ -383,6 +655,18 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
           }
         }}
       />
+
+      {gradingSubmission && (
+        <GradeEvaluationModal
+          submission={gradingSubmission.submission}
+          maxPoints={gradingSubmission.maxPoints}
+          instituteCode={instituteCode}
+          courseId={courseId}
+          itemId={gradingSubmission.itemId}
+          onClose={() => setGradingSubmission(null)}
+          onGraded={handleModalGraded}
+        />
+      )}
     </>
   );
 }

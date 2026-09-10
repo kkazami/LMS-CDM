@@ -11,6 +11,7 @@ interface GradingPolicyModalProps {
   theme: InstituteTheme;
   activeCategories: string[]; // e.g., ["ASSIGNMENT", "QUIZ", "Laboratory Work"]
   initialWeights?: { category: string; weightPercentage: number }[];
+  readOnly?: boolean;
 }
 
 export default function GradingPolicyModal({
@@ -20,6 +21,7 @@ export default function GradingPolicyModal({
   theme,
   activeCategories,
   initialWeights,
+  readOnly = false,
 }: GradingPolicyModalProps) {
   // Local state for weights, keyed by category
   const [weights, setWeights] = useState<Record<string, string>>({});
@@ -113,6 +115,15 @@ export default function GradingPolicyModal({
 
         {/* Body */}
         <div className="p-6 overflow-y-auto">
+          {readOnly && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                <strong>View-Only Mode:</strong> Policy adjustments can only be edited and saved in PC and Tablet Web View.
+              </span>
+            </div>
+          )}
+
           <p className="text-sm text-slate-500 dark:text-[#8B92A5] mb-6">
             Configure the percentage weight for each classwork category. The total must exactly equal 100%.
           </p>
@@ -134,9 +145,12 @@ export default function GradingPolicyModal({
                       min={0}
                       max={100}
                       step={0.5}
+                      disabled={readOnly}
                       value={weights[category]}
                       onChange={(e) => setWeights({ ...weights, [category]: e.target.value })}
-                      className="w-20 rounded-lg border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-1.5 text-right text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      className={`w-20 rounded-lg border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-1.5 text-right text-sm text-slate-900 dark:text-[#F0F2F8] outline-none ${
+                        readOnly ? "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-[#141721]" : "focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      }`}
                     />
                     <span className="text-slate-400 dark:text-slate-500 text-sm font-medium w-4">%</span>
                   </div>
@@ -171,19 +185,21 @@ export default function GradingPolicyModal({
               onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
-              Cancel
+              {readOnly ? "Close" : "Cancel"}
             </button>
-            <button
-              onClick={handleSave}
-              disabled={!isValidTotal || isSaving}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                backgroundColor: theme.colors.primary,
-              }}
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Apply Policy
-            </button>
+            {!readOnly && (
+              <button
+                onClick={handleSave}
+                disabled={!isValidTotal || isSaving}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{
+                  backgroundColor: theme.colors.primary,
+                }}
+              >
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Apply Policy
+              </button>
+            )}
           </div>
         </div>
 

@@ -43,10 +43,10 @@ export default async function ArduinoActivityPage({
   }
 
   return (
-    <div className="-m-4 lg:-m-8 flex h-full w-full bg-[#1e293b] relative overflow-hidden" style={{ height: "calc(100vh - 73px)" }}>
+    <div className="-m-4 lg:-m-8 flex h-full w-full bg-[#1e293b] relative overflow-hidden" style={{ height: "calc(100dvh - 73px)" }}>
       
       {/* 3D Scene */}
-      <div className="flex-1 h-full relative z-10 mr-[450px]">
+      <div className="flex-1 h-full relative z-10 mr-0 lg:mr-[450px]">
         {/* Standardized Activity Guide */}
         <div className="absolute top-6 left-6 z-20 bg-white/95 backdrop-blur text-slate-800 p-5 rounded-2xl border border-slate-200 shadow-xl max-w-sm pointer-events-auto">
           <div className="flex items-center gap-2 mb-3">

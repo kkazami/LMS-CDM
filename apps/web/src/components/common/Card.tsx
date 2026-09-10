@@ -14,7 +14,7 @@ export default function Card({
   rightSlot,
 }: CardProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-6 shadow-xs transition-colors">
+    <section className="rounded-2xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] p-5 sm:p-6 shadow-xs transition-colors">
       {(title || description || rightSlot) && (
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>

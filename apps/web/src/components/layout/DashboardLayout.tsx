@@ -58,7 +58,7 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-screen bg-canvas text-primary-theme transition-colors duration-200"
+      className="min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--focus-ring": theme.colors.primary,
       } as React.CSSProperties}
@@ -68,7 +68,7 @@ export default function DashboardLayout({
         <NavigationProgress color={theme.colors.primary} />
       </Suspense>
 
-      <div className="flex items-start">
+      <div className="flex">
         <Sidebar
           instituteCode={instituteCode}
           theme={theme}
@@ -79,23 +79,40 @@ export default function DashboardLayout({
           enrolledCourses={enrolledCourses}
         />
 
-        {mobileOpen ? (
-          <div className="fixed inset-0 z-40 lg:hidden">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-            <div className="relative z-50 flex">
-              <Sidebar
-                instituteCode={instituteCode}
-                theme={theme}
-                userRole={userRole}
-                isCollapsed={false}
-                isEligibleForActivities={isEligibleForActivities}
-                enrolledCourses={enrolledCourses}
-              />
-            </div>
+        {/* Mobile Sidebar Drawer (Slides in on burger menu click) */}
+        <div
+          className={`fixed inset-0 z-[60] lg:hidden transition-all duration-300 ${
+            mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+          }`}
+          aria-hidden={!mobileOpen}
+        >
+          {/* Backdrop scrim */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer container */}
+          <div
+            className={`relative z-10 h-full max-w-[280px] w-[80vw] transition-transform duration-300 ease-in-out ${
+              mobileOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <Sidebar
+              instituteCode={instituteCode}
+              theme={theme}
+              userRole={userRole}
+              isCollapsed={false}
+              isMobileDrawer={true}
+              onCloseMobileDrawer={() => setMobileOpen(false)}
+              isEligibleForActivities={isEligibleForActivities}
+              enrolledCourses={enrolledCourses}
+            />
           </div>
-        ) : null}
+        </div>
 
-        <div className="min-w-0 flex-1">
+        <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+          isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
+        }`}>
           <Topbar
             theme={theme}
             instituteName={instituteName}
@@ -107,7 +124,7 @@ export default function DashboardLayout({
             exp={exp}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
-          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-8">
+          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {children}
             </AvatarProvider>
@@ -123,6 +140,8 @@ export default function DashboardLayout({
         instituteCode={instituteCode}
         primaryColor={theme.colors.primary}
         userRole={userRole}
+        userName={userName}
+        avatarUrl={avatarUrl ?? null}
       />
 
       {/* Gamification Badge Toasts */}
@@ -137,10 +156,8 @@ export default function DashboardLayout({
             expEarned={10}
             totalExp={exp}
           />
-          <div className="fixed right-4 z-50 flex flex-col gap-4 bottom-[calc(72px+env(safe-area-inset-bottom,0px))] lg:bottom-4 pointer-events-none *:pointer-events-auto items-end">
-            <FloatingStudyTimer />
-            <ChatbotWidget theme={theme} />
-          </div>
+          <FloatingStudyTimer />
+          <ChatbotWidget theme={theme} />
         </>
       )}
     </div>

@@ -26,6 +26,7 @@ import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
 import { toast } from "@/components/common/Toast";
+import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import {
   Terminal,
   Play,
@@ -141,6 +142,7 @@ export default function CodeLabScene({
   } = useActivityStore();
 
   const [mounted, setMounted] = useState<boolean>(false);
+  const [mobilePanel, setMobilePanel] = useState<"tutorial" | "editor" | "results">("tutorial");
   const [expandedTests, setExpandedTests] = useState<Set<number>>(new Set());
   const [showHint, setShowHint] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
@@ -323,6 +325,7 @@ export default function CodeLabScene({
     }
 
     setExecuting(true);
+    setMobilePanel("results");
     setActiveTab("console");
     setConsoleOutput(null);
 
@@ -383,6 +386,7 @@ export default function CodeLabScene({
     }
 
     setExecuting(true);
+    setMobilePanel("results");
     setActiveTab("tests");
     incrementSubmission();
 
@@ -451,6 +455,7 @@ export default function CodeLabScene({
       updateStateCheck("totalEditingMs", elapsedSeconds * 1000);
 
       if (data.score >= 60) {
+        triggerNativeHaptic("success");
         markComplete(true);
 
         const earned = data.grantedExp || (data.score === 100 ? 80 : 30);
@@ -471,13 +476,20 @@ export default function CodeLabScene({
             activityType: "codelab",
             variantSeed,
             startedAt,
-            completionTimeSeconds: elapsedSeconds,
-            attempts: 1,
-            stateCheck: {
-              level,
+            completedAt: new Date().toISOString(),
+            timeSpentSeconds: elapsedSeconds,
+            stateChecks: {
               language: fixedLanguage,
+              level,
+              pasteCount,
+              typingVelocityCharsPerMin: cpm,
               testPassCount: data.totalPassed,
               totalTestCases: data.totalCases,
+              hintUsed: hintWasShown || showHint,
+              errorTypes: collectedErrorTypes.join(","),
+              attemptChurnCount: failedRunCount,
+              firstRunMs: Math.max(firstRunDelta, 0),
+              totalEditingMs: elapsedSeconds * 1000,
             },
             score: data.score,
             maxScore: 100,
@@ -492,12 +504,14 @@ export default function CodeLabScene({
           setTimeout(() => setShowConfetti(false), 2500);
         }
       } else {
+        triggerNativeHaptic("error");
         incrementFailedRun();
         addErrorType("assertion");
         setHintShown();
         setShowHint(true);
       }
     } catch (err: unknown) {
+      triggerNativeHaptic("error");
       incrementFailedRun();
       addErrorType("runtime");
       const message = err instanceof Error ? err.message : "Evaluation failed";
@@ -709,11 +723,53 @@ export default function CodeLabScene({
         </div>
       )}
 
+      {/* ──── Mobile Viewport Panel Switcher (< md) ──── */}
+      <div className="flex md:hidden border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shrink-0 z-20">
+        <button
+          type="button"
+          onClick={() => setMobilePanel("tutorial")}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+            mobilePanel === "tutorial"
+              ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
+              : "border-transparent text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>Tutorial</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePanel("editor")}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+            mobilePanel === "editor"
+              ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
+              : "border-transparent text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
+          }`}
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>Editor</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePanel("results")}
+          className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+            mobilePanel === "results"
+              ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
+              : "border-transparent text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
+          }`}
+        >
+          <Terminal className="w-3.5 h-3.5" />
+          <span>Results</span>
+        </button>
+      </div>
+
       {/* ──── Main Layout ──── */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Panel: W3Schools Educational Problem Statement */}
         <aside
-          className="w-full md:w-[32%] min-w-[280px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 flex flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]"
+          className={`w-full md:w-[32%] min-w-[280px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 ${
+            mobilePanel === "tutorial" ? "flex" : "hidden md:flex"
+          } flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
           style={{ resize: "horizontal" }}
         >
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
@@ -840,7 +896,7 @@ export default function CodeLabScene({
 
         {/* Center / Preview Panel */}
         {executionMethod === "html-preview" || executionMethod === "css-preview" ? (
-          <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141721]">
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-w-0 bg-white dark:bg-[#141721]`}>
             <HTMLPreviewEditor
               initialCode={codeByLanguage[fixedLanguage as CodeLabLanguage] || ""}
               language={fixedLanguage as "html" | "css"}
@@ -849,14 +905,16 @@ export default function CodeLabScene({
             />
           </main>
         ) : (
-          <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#141721]">
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-w-0 bg-white dark:bg-[#141721]`}>
             <CodeEditor />
           </main>
         )}
 
         {/* Right Panel: Test Suite & Results */}
         <aside
-          className="w-full md:w-[30%] min-w-[260px] flex flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]"
+          className={`w-full md:w-[30%] min-w-[260px] ${
+            mobilePanel === "results" ? "flex" : "hidden md:flex"
+          } flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]`}
           style={{ resize: "horizontal" }}
         >
           {/* Tab Navigation */}

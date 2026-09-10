@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
 import PageTransition from "@/components/common/PageTransition";
+import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,7 +17,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#0F1724",
+  themeColor: "#FF7517",
+  interactiveWidget: "resizes-content",
 };
 
 export const metadata: Metadata = {
@@ -48,6 +50,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="antialiased font-[family-name:var(--font-inter)] selection:bg-orange-500 selection:text-white">
         <OfflineBanner />
+        <InAppBrowserPrompt />
         <ServiceWorkerRegister />
         <PageTransition>{children}</PageTransition>
       </body>

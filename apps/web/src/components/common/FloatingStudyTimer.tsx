@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Timer, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
+import { Timer, Sparkles, ChevronUp, ChevronDown, X } from "lucide-react";
 
 export default function FloatingStudyTimer() {
   const [secondsToday, setSecondsToday] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobileMinimized, setIsMobileMinimized] = useState(true);
   const [lastRewardMsg, setLastRewardMsg] = useState<string | null>(null);
 
   const lastActivityRef = useRef(Date.now());
 
-  // Listen for user activity to reset AFK status
+  // Listen for user activity to reset AFK status (throttled to 5s to eliminate scroll jank)
   const handleActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
+    const now = Date.now();
+    if (now - lastActivityRef.current < 5000) return;
+    lastActivityRef.current = now;
     if (!isActive) setIsActive(true);
   }, [isActive]);
 
@@ -77,7 +80,7 @@ export default function FloatingStudyTimer() {
   const progressPercent = Math.min(Math.round((minutes / nextMilestoneMinutes) * 100), 100);
 
   return (
-    <div className="fixed bottom-5 left-5 z-40">
+    <div className="hidden lg:block fixed bottom-5 left-5 z-40">
       {/* Toast popup when reward unlocked */}
       {lastRewardMsg && (
         <div className="mb-2 p-3 bg-emerald-600 text-white text-xs font-bold rounded-2xl shadow-xl animate-in slide-in-from-bottom-2 duration-200 flex items-center gap-2">
@@ -86,8 +89,31 @@ export default function FloatingStudyTimer() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-2xl shadow-lg p-2.5 transition-all duration-200">
-        <div className="flex items-center gap-2.5">
+      {/* Mobile Minimized Pill Button */}
+      {isMobileMinimized ? (
+        <button
+          type="button"
+          onClick={() => setIsMobileMinimized(false)}
+          className="lg:hidden relative flex h-10 w-10 items-center justify-center rounded-full bg-white/95 dark:bg-[#141721]/95 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-lg cursor-pointer active:scale-95 transition-transform"
+          aria-label="Expand study timer"
+          title={`${minutes}m Active`}
+        >
+          <Timer className="w-5 h-5 text-[#F97316]" />
+          <span
+            className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-[#141721] ${
+              isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-400"
+            }`}
+          />
+        </button>
+      ) : null}
+
+      {/* Full Timer Card (Desktop always, Mobile when expanded) */}
+      <div
+        className={`${
+          isMobileMinimized ? "hidden lg:block" : "block"
+        } bg-white/95 dark:bg-[#141721]/95 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-2.5 transition-all duration-200`}
+      >
+        <div className="flex items-center justify-between gap-2.5">
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
@@ -105,6 +131,17 @@ export default function FloatingStudyTimer() {
             </div>
             <span>{minutes}m Active</span>
             {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
+          </button>
+
+          {/* Minimize button on mobile */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMinimized(true)}
+            className="lg:hidden rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Minimize timer"
+            title="Minimize"
+          >
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 

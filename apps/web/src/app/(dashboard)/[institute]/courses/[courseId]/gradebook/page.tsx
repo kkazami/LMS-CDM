@@ -13,7 +13,7 @@ export default async function GradebookPage({ params }: Props) {
   const { institute, courseId } = await params;
 
   const session = await getSession();
-  if (!session) redirect(`/${institute}/login`);
+  if (!session) redirect(`/login?institute=${institute}`);
 
   const role = session.user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "ADMIN") {

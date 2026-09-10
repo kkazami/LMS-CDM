@@ -19,8 +19,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Institute code is required.' }, { status: 400 });
     }
 
-    const institute = await db.institute.findUnique({
-      where: { code: instituteCode },
+    const institute = await db.institute.findFirst({
+      where: {
+        OR: [
+          { code: instituteCode },
+          { code: instituteCode.toLowerCase() },
+          { code: instituteCode.toUpperCase() },
+        ],
+      },
       select: { id: true },
     });
     if (!institute) {
@@ -29,27 +35,46 @@ export async function GET(request: Request) {
 
     const profiles = await db.gamificationProfile.findMany({
       where: {
-        student: { instituteId: institute.id },
+        student: { instituteId: institute.id, role: 'STUDENT', isActive: true },
       },
       select: {
+        id: true,
+        studentId: true,
         totalPoints: true,
+        exp: true,
+        level: true,
+        levelTier: true,
         loginStreakCurrent: true,
-        student: { select: { id: true, name: true } },
+        currentStreak: true,
+        isLeaderboardAnonymized: true,
+        student: { select: { id: true, name: true, avatarUrl: true } },
       },
-      orderBy: { totalPoints: 'desc' },
+      orderBy: { exp: 'desc' },
       take: limit,
     });
 
+    const entries = profiles.map((p, index) => {
+      const isCurrentUser = session.user.id === p.student.id;
+      const isAnon = p.isLeaderboardAnonymized && !isCurrentUser;
+      const userName = isAnon
+        ? `Student #${p.student.id.slice(-4).toUpperCase()}`
+        : p.student.name;
+
+      return {
+        rank: index + 1,
+        userId: p.student.id,
+        userName,
+        totalPoints: p.exp || p.totalPoints || 0,
+        currentStreak: p.currentStreak || p.loginStreakCurrent || 0,
+        level: p.level,
+        levelTier: p.levelTier,
+        avatarUrl: isAnon ? null : p.student.avatarUrl,
+        isCurrentUser,
+      };
+    });
+
     return NextResponse.json(
-      {
-        entries: profiles.map((p, index) => ({
-          rank: index + 1,
-          userId: p.student.id,
-          userName: p.student.name,
-          totalPoints: p.totalPoints,
-          currentStreak: p.loginStreakCurrent || 0,
-        })),
-      },
+      { entries },
       {
         headers: {
           'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',

@@ -7,6 +7,7 @@ import { arduinoSim } from "../utils/interpreter";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
 import { Play, Square, Terminal } from "lucide-react";
+import MonacoInit from "@/components/common/MonacoInit";
 
 export interface ArduinoUIProps {
   assignmentId: string;
@@ -57,6 +58,7 @@ export default function ArduinoUI({
 
   return (
     <>
+      <MonacoInit />
       {/* Active Wiring Hint overlay */}
       {wiringState.active && (
         <div className="absolute top-6 left-6 z-50 bg-blue-600 text-white px-4 py-2 rounded shadow-lg animate-pulse flex items-center gap-2">
@@ -66,7 +68,7 @@ export default function ArduinoUI({
       )}
 
       {/* Editor & Serial Monitor Panel (Right Side) */}
-      <div className="absolute top-0 right-0 h-full w-[450px] bg-[#1e1e1e] flex flex-col z-40 border-l border-slate-700 shadow-2xl">
+      <div className="absolute top-0 right-0 h-full w-full sm:w-[380px] lg:w-[450px] bg-[#1e1e1e] flex flex-col z-40 border-l border-slate-700 shadow-2xl">
         
         {/* Editor Toolbar */}
         <div className="h-12 border-b border-slate-700 flex items-center justify-between px-4 bg-[#252526]">
@@ -116,7 +118,7 @@ export default function ArduinoUI({
       </div>
 
       {/* Shared Submit Bar - positioned to the left of the editor */}
-      <div className="mr-[450px]">
+      <div className="mr-0 lg:mr-[450px]">
         <SubmitBar 
           activityType="arduino"
           assignmentId={assignmentId}

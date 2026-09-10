@@ -11,7 +11,7 @@ export default async function SubmissionsPage({ params }: Props) {
   const { institute, courseId, itemId } = await params;
 
   const session = await getSession();
-  if (!session) redirect(`/${institute}/login`);
+  if (!session) redirect(`/login?institute=${institute}`);
 
   const role = session.user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "ADMIN") {

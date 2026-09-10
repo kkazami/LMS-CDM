@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,18 @@ import {
   HelpCircle,
   Sparkles,
   ArrowRight,
+  LayoutDashboard,
+  Users,
+  Shield,
+  ShieldCheck,
+  HardDrive,
+  FileText,
+  Library,
+  GraduationCap,
+  Megaphone,
+  BarChart2,
+  Archive,
+  Terminal,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 
@@ -25,6 +37,7 @@ interface SearchModalProps {
   onClose: () => void;
   instituteCode: string;
   theme: InstituteTheme;
+  userRole?: string;
   enrolledCourses?: { id: string; title: string; code: string }[];
 }
 
@@ -32,7 +45,7 @@ interface SearchItem {
   id: string;
   title: string;
   subtitle?: string;
-  category: "Navigation" | "Courses" | "Activities";
+  category: "Administration" | "Navigation" | "Courses" | "Activities" | "Tools";
   href: string;
   icon: React.ComponentType<{ className?: string }>;
 }
@@ -42,6 +55,7 @@ export default function SearchModal({
   onClose,
   instituteCode,
   theme,
+  userRole,
   enrolledCourses = [],
 }: SearchModalProps) {
   const router = useRouter();
@@ -81,98 +95,291 @@ export default function SearchModal({
 
   if (!mounted || !isOpen) return null;
 
-  // Build searchable items list
-  const defaultItems: SearchItem[] = [
-    {
-      id: "nav-dashboard",
-      title: "Student Dashboard",
-      subtitle: "Overview, coursework, and upcoming deadlines",
-      category: "Navigation",
-      href: `/${instituteCode}/students`,
-      icon: Sparkles,
-    },
-    {
-      id: "nav-courses",
-      title: "My Courses",
-      subtitle: "View all enrolled classes and syllabus",
-      category: "Navigation",
-      href: `/${instituteCode}/courses`,
-      icon: BookOpen,
-    },
-    {
-      id: "nav-assignments",
-      title: "To-do & Assignments",
-      subtitle: "Upcoming homework, quizzes, and project deadlines",
-      category: "Navigation",
-      href: `/${instituteCode}/assignments`,
-      icon: ClipboardList,
-    },
-    {
-      id: "nav-flashcards",
-      title: "Study Flashcards",
-      subtitle: "AI-generated flashcards and active recall decks",
-      category: "Activities",
-      href: `/${instituteCode}/flashcards`,
-      icon: Flame,
-    },
-    {
-      id: "nav-tasks",
-      title: "Personal Tasks",
-      subtitle: "Kanban board and task tracker",
-      category: "Navigation",
-      href: `/${instituteCode}/tasks`,
-      icon: CheckSquare,
-    },
-    {
-      id: "nav-codelab",
-      title: "CodeLab Interactive IDE",
-      subtitle: "Multi-language online coding exercises",
-      category: "Activities",
-      href: `/${instituteCode}/activities/codelab`,
-      icon: Code2,
-    },
-    {
-      id: "nav-leaderboard",
-      title: "Leaderboards & EXP",
-      subtitle: "Academic rank and gamification standings",
-      category: "Activities",
-      href: `/${instituteCode}/leaderboards`,
-      icon: Trophy,
-    },
-    {
-      id: "nav-profile",
-      title: "Profile & Badges",
-      subtitle: "View your student avatar and unlocked achievements",
-      category: "Navigation",
-      href: `/${instituteCode}/profile`,
-      icon: User,
-    },
-    {
-      id: "nav-settings",
-      title: "Account Settings",
-      subtitle: "Preferences, appearance, and notifications",
-      category: "Navigation",
-      href: `/${instituteCode}/settings`,
-      icon: Settings,
-    },
-    {
-      id: "nav-help",
-      title: "Help & Support",
-      subtitle: "Guides, FAQs, and contact support",
-      category: "Navigation",
-      href: `/${instituteCode}/help`,
-      icon: HelpCircle,
-    },
-  ];
+  const role = (userRole || "STUDENT").toUpperCase();
+  const isAdmin = role === "ADMIN";
+  const isProfessor = role === "PROFESSOR" || role === "TEACHER" || role === "INSTRUCTOR";
 
-  const courseItems: SearchItem[] = enrolledCourses.map((c) => ({
-    id: `course-${c.id}`,
-    title: c.title,
-    subtitle: `Course Code: ${c.code}`,
-    category: "Courses",
-    href: `/${instituteCode}/courses/${c.id}`,
-    icon: BookOpen,
-  }));
+  // Build searchable items list strictly filtered by the active user role
+  const defaultItems: SearchItem[] = [];
+
+  if (isAdmin) {
+    defaultItems.push(
+      {
+        id: "admin-dashboard",
+        title: "Admin Dashboard",
+        subtitle: "System overview, active sessions, and quick metrics",
+        category: "Administration",
+        href: `/${instituteCode}/admin`,
+        icon: LayoutDashboard,
+      },
+      {
+        id: "admin-courses",
+        title: "Course Management",
+        subtitle: "Create, configure, and oversee institute courses",
+        category: "Administration",
+        href: `/${instituteCode}/admin/courses`,
+        icon: Library,
+      },
+      {
+        id: "admin-accounts",
+        title: "Account Management",
+        subtitle: "Manage students, instructors, and administrator accounts",
+        category: "Administration",
+        href: `/${instituteCode}/accounts`,
+        icon: Users,
+      },
+      {
+        id: "admin-permissions",
+        title: "Permissions Matrix",
+        subtitle: "Role-based access control and privilege assignments",
+        category: "Administration",
+        href: `/${instituteCode}/accounts/permissions`,
+        icon: ShieldCheck,
+      },
+      {
+        id: "admin-logs",
+        title: "Audit Logs",
+        subtitle: "Security events, admin activities, and system audit trail",
+        category: "Administration",
+        href: `/${instituteCode}/logs`,
+        icon: FileText,
+      },
+      {
+        id: "admin-backup",
+        title: "Backup & Recovery",
+        subtitle: "Database snapshots, automated backups, and restoration",
+        category: "Administration",
+        href: `/${instituteCode}/backup`,
+        icon: HardDrive,
+      },
+      {
+        id: "admin-security",
+        title: "Security Controls",
+        subtitle: "Session policies, IP rules, and security enforcement",
+        category: "Administration",
+        href: `/${instituteCode}/security`,
+        icon: Shield,
+      },
+      {
+        id: "admin-settings",
+        title: "System Settings",
+        subtitle: "Institute branding, preferences, and system config",
+        category: "Tools",
+        href: `/${instituteCode}/settings`,
+        icon: Settings,
+      },
+      {
+        id: "admin-help",
+        title: "Help & Documentation",
+        subtitle: "Administrator manuals, guides, and technical support",
+        category: "Tools",
+        href: `/${instituteCode}/help`,
+        icon: HelpCircle,
+      }
+    );
+  } else if (isProfessor) {
+    defaultItems.push(
+      {
+        id: "prof-dashboard",
+        title: "Teacher Dashboard",
+        subtitle: "Class overview, grading queue, and teaching schedule",
+        category: "Navigation",
+        href: `/${instituteCode}/teachers`,
+        icon: LayoutDashboard,
+      },
+      {
+        id: "prof-courses",
+        title: "My Classes",
+        subtitle: "Active classes, syllabus, and course rosters",
+        category: "Courses",
+        href: `/${instituteCode}/courses`,
+        icon: BookOpen,
+      },
+      {
+        id: "prof-archived",
+        title: "Archived Classes",
+        subtitle: "Past semester records and archived courses",
+        category: "Courses",
+        href: `/${instituteCode}/courses/archived`,
+        icon: Archive,
+      },
+      {
+        id: "prof-materials",
+        title: "Learning Materials",
+        subtitle: "Course handouts, reference documents, and notes",
+        category: "Navigation",
+        href: `/${instituteCode}/learning-materials`,
+        icon: BookOpen,
+      },
+      {
+        id: "prof-announcements",
+        title: "Announcements",
+        subtitle: "Broadcast notices and updates to classes",
+        category: "Navigation",
+        href: `/${instituteCode}/announcements`,
+        icon: Megaphone,
+      },
+      {
+        id: "prof-analytics",
+        title: "Student Analytics",
+        subtitle: "Performance metrics, completion rates, and learning insights",
+        category: "Activities",
+        href: `/${instituteCode}/analytics`,
+        icon: BarChart2,
+      },
+      {
+        id: "prof-leaderboard",
+        title: "Manage Leaderboard",
+        subtitle: "Class gamification standings, EXP points, and rewards",
+        category: "Activities",
+        href: `/${instituteCode}/manage-leaderboard`,
+        icon: Trophy,
+      },
+      {
+        id: "prof-codelab",
+        title: "CodeLab Analytics",
+        subtitle: "Student code submission telemetry and execution metrics",
+        category: "Activities",
+        href: `/${instituteCode}/activities/codelab/instructor`,
+        icon: Terminal,
+      },
+      {
+        id: "prof-settings",
+        title: "Account Settings",
+        subtitle: "Instructor profile, preferences, and notifications",
+        category: "Tools",
+        href: `/${instituteCode}/settings`,
+        icon: Settings,
+      },
+      {
+        id: "prof-help",
+        title: "Help & Support",
+        subtitle: "Teaching documentation, FAQs, and contact help",
+        category: "Tools",
+        href: `/${instituteCode}/help`,
+        icon: HelpCircle,
+      }
+    );
+  } else {
+    // Student
+    defaultItems.push(
+      {
+        id: "nav-dashboard",
+        title: "Student Dashboard",
+        subtitle: "Overview, coursework, and upcoming deadlines",
+        category: "Navigation",
+        href: `/${instituteCode}/students`,
+        icon: Sparkles,
+      },
+      {
+        id: "nav-courses",
+        title: "My Courses",
+        subtitle: "View all enrolled classes and syllabus",
+        category: "Courses",
+        href: `/${instituteCode}/courses`,
+        icon: BookOpen,
+      },
+      {
+        id: "nav-materials",
+        title: "Learning Materials",
+        subtitle: "Class handouts, lecture notes, and syllabus PDFs",
+        category: "Courses",
+        href: `/${instituteCode}/learning-materials`,
+        icon: BookOpen,
+      },
+      {
+        id: "nav-announcements",
+        title: "Announcements",
+        subtitle: "Institute notices and course updates",
+        category: "Navigation",
+        href: `/${instituteCode}/announcements`,
+        icon: Megaphone,
+      },
+      {
+        id: "nav-grades",
+        title: "Grades & Performance",
+        subtitle: "GPA tracker, assignment scores, and feedback",
+        category: "Navigation",
+        href: `/${instituteCode}/grades`,
+        icon: GraduationCap,
+      },
+      {
+        id: "nav-assignments",
+        title: "To-do & Assignments",
+        subtitle: "Upcoming homework, quizzes, and project deadlines",
+        category: "Navigation",
+        href: `/${instituteCode}/assignments`,
+        icon: ClipboardList,
+      },
+      {
+        id: "nav-flashcards",
+        title: "Study Flashcards",
+        subtitle: "AI-generated flashcards and active recall decks",
+        category: "Activities",
+        href: `/${instituteCode}/flashcards`,
+        icon: Flame,
+      },
+      {
+        id: "nav-tasks",
+        title: "Personal Tasks",
+        subtitle: "Kanban board and task tracker",
+        category: "Activities",
+        href: `/${instituteCode}/tasks`,
+        icon: CheckSquare,
+      },
+      {
+        id: "nav-codelab",
+        title: "CodeLab Interactive IDE",
+        subtitle: "Multi-language online coding exercises",
+        category: "Activities",
+        href: `/${instituteCode}/activities/codelab`,
+        icon: Code2,
+      },
+      {
+        id: "nav-leaderboard",
+        title: "Leaderboards & EXP",
+        subtitle: "Academic rank and gamification standings",
+        category: "Activities",
+        href: `/${instituteCode}/leaderboards`,
+        icon: Trophy,
+      },
+      {
+        id: "nav-profile",
+        title: "Profile & Badges",
+        subtitle: "View your student avatar and unlocked achievements",
+        category: "Tools",
+        href: `/${instituteCode}/profile`,
+        icon: User,
+      },
+      {
+        id: "nav-settings",
+        title: "Account Settings",
+        subtitle: "Preferences, appearance, and notifications",
+        category: "Tools",
+        href: `/${instituteCode}/settings`,
+        icon: Settings,
+      },
+      {
+        id: "nav-help",
+        title: "Help & Support",
+        subtitle: "Guides, FAQs, and contact support",
+        category: "Tools",
+        href: `/${instituteCode}/help`,
+        icon: HelpCircle,
+      }
+    );
+  }
+
+  const courseItems: SearchItem[] = (!isAdmin && enrolledCourses.length > 0)
+    ? enrolledCourses.map((c) => ({
+        id: `course-${c.id}`,
+        title: c.title,
+        subtitle: `Course Code: ${c.code}`,
+        category: "Courses",
+        href: `/${instituteCode}/courses/${c.id}`,
+        icon: BookOpen,
+      }))
+    : [];
 
   const allItems = [...defaultItems, ...courseItems];
 
@@ -189,6 +396,8 @@ export default function SearchModal({
     onClose();
     router.push(href);
   }
+
+  if (!mounted || !isOpen) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-0 sm:p-4">
@@ -213,7 +422,13 @@ export default function SearchModal({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search courses, assignments, tools..."
+            placeholder={
+              isAdmin
+                ? "Search admin directories, tools, audit..."
+                : isProfessor
+                ? "Search classes, grading, tools..."
+                : "Search courses, assignments, tools..."
+            }
             className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none min-h-[44px]"
           />
           {query && (
@@ -244,7 +459,11 @@ export default function SearchModal({
                 No results found for &ldquo;{query}&rdquo;
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Try searching for courses, assignments, or features.
+                {isAdmin
+                  ? "Try searching for accounts, logs, courses, or settings."
+                  : isProfessor
+                  ? "Try searching for classes, grading, or tools."
+                  : "Try searching for courses, assignments, or features."}
               </p>
             </div>
           ) : (

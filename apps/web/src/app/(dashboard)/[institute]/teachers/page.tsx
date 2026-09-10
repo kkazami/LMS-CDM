@@ -122,6 +122,48 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     pendingCountMap.set(p.courseId, (pendingCountMap.get(p.courseId) ?? 0) + 1);
   }
 
+  // 3. Fetch pending student submissions (Pending Work to Grade) across all taught courses
+  const pendingWorkSubmissions = await db.studentSubmission.findMany({
+    where: {
+      syllabusItem: {
+        courseId: { in: courseIds },
+      },
+      status: "SUBMITTED",
+      OR: [{ grade: null }, { isReturned: false }],
+    },
+    select: {
+      id: true,
+      syllabusItemId: true,
+      submittedAt: true,
+      syllabusItem: {
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          courseId: true,
+        },
+      },
+    },
+  });
+
+  // Count pending work per course
+  const pendingWorkCountMap = new Map<string, number>();
+  for (const s of pendingWorkSubmissions) {
+    const cId = s.syllabusItem.courseId;
+    pendingWorkCountMap.set(cId, (pendingWorkCountMap.get(cId) ?? 0) + 1);
+  }
+
+  // Build list of classes that have pending work
+  const pendingWorkClasses = taughtCourses
+    .filter((c) => (pendingWorkCountMap.get(c.id) ?? 0) > 0)
+    .map((c) => ({
+      courseId: c.id,
+      courseTitle: c.title,
+      courseCode: c.code,
+      section: c.section,
+      pendingCount: pendingWorkCountMap.get(c.id) ?? 0,
+    }));
+
   const courses = taughtCourses.map((c) => ({
     id: c.id,
     title: c.title,
@@ -133,6 +175,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     coverImage: c.coverImage ?? "",
     enrolledCount: c._count.enrollments,
     pendingCount: pendingCountMap.get(c.id) ?? 0,
+    pendingWorkCount: pendingWorkCountMap.get(c.id) ?? 0,
   }));
 
   const pendingRequests = pendingEnrollments.map((p) => ({
@@ -146,6 +189,8 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     requestedAt: p.createdAt.toISOString(),
   }));
 
+  const typingSessionKey = `lumina_typed_${teacherId.slice(0, 8)}`;
+
   return (
     <TeacherDashboardClient
       userName={session.user.name as string}
@@ -154,6 +199,9 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       theme={theme}
       initialCourses={courses}
       initialPendingRequests={pendingRequests}
+      initialPendingWorkClasses={pendingWorkClasses}
+      totalPendingWorkCount={pendingWorkSubmissions.length}
+      typingSessionKey={typingSessionKey}
     />
   );
 }

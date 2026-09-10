@@ -23,6 +23,7 @@ import {
 } from "@/features/interactive-activities/codelab/problems/types";
 import { getTrackLevels } from "@/features/interactive-activities/codelab/problems";
 import { LANGUAGE_LOGO_MAP } from "@/features/interactive-activities/codelab/components/LanguageLogos";
+import { TypingBanner } from "@/components/motion/TypingBanner";
 import CodeLabAlertModal, {
   type CodeLabAlertItem,
 } from "@/features/interactive-activities/codelab/components/CodeLabAlertModal";
@@ -55,54 +56,63 @@ const LANGUAGE_THEMES: Record<ProblemLanguage, {
   badgeClasses: string;
   ambientGlow: string;
   iconColor: string;
+  caretColor: string;
 }> = {
   python: {
     borderColor: "border-l-[#3776AB]",
     badgeClasses: "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/30",
     ambientGlow: "from-blue-500/15 via-yellow-500/10 to-transparent",
     iconColor: "text-[#3776AB] dark:text-[#60A5FA]",
+    caretColor: "#3776AB",
   },
   cpp: {
     borderColor: "border-l-[#00599C]",
     badgeClasses: "bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/30",
     ambientGlow: "from-blue-600/15 via-indigo-500/10 to-transparent",
     iconColor: "text-[#00599C] dark:text-[#60A5FA]",
+    caretColor: "#00599C", // Navy blue
   },
   csharp: {
     borderColor: "border-l-[#9B4F96]",
     badgeClasses: "bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/20 dark:border-purple-500/30",
     ambientGlow: "from-purple-500/15 via-violet-500/10 to-transparent",
     iconColor: "text-[#9B4F96] dark:text-[#C084FC]",
+    caretColor: "#9B4F96", // C# purple
   },
   java: {
     borderColor: "border-l-[#EA580C]",
     badgeClasses: "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 dark:border-orange-500/30",
     ambientGlow: "from-orange-500/15 via-amber-500/10 to-transparent",
     iconColor: "text-[#EA580C] dark:text-[#FB923C]",
+    caretColor: "#EA580C", // Java orange-red
   },
   javascript: {
     borderColor: "border-l-[#EAB308]",
     badgeClasses: "bg-yellow-500/15 dark:bg-yellow-500/20 text-amber-800 dark:text-yellow-300 border-yellow-500/30 dark:border-yellow-500/30",
     ambientGlow: "from-yellow-500/15 via-amber-500/10 to-transparent",
     iconColor: "text-[#D97706] dark:text-[#FCD34D]",
+    caretColor: "#EAB308", // JavaScript gold/amber
   },
   sql: {
     borderColor: "border-l-[#0EA5E9]",
     badgeClasses: "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-500/20 dark:border-sky-500/30",
     ambientGlow: "from-sky-500/15 via-blue-500/10 to-transparent",
     iconColor: "text-[#0284C7] dark:text-[#38BDF8]",
+    caretColor: "#0EA5E9", // SQL sky blue
   },
   html: {
     borderColor: "border-l-[#E44D26]",
     badgeClasses: "bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30",
     ambientGlow: "from-rose-500/15 via-orange-500/10 to-transparent",
     iconColor: "text-[#E11D48] dark:text-[#FB7185]",
+    caretColor: "#E44D26", // HTML5 red-orange
   },
   css: {
     borderColor: "border-l-[#1572B6]",
     badgeClasses: "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border-cyan-500/20 dark:border-cyan-500/30",
     ambientGlow: "from-cyan-500/15 via-blue-500/10 to-transparent",
     iconColor: "text-[#0891B2] dark:text-[#22D3EE]",
+    caretColor: "#1572B6", // CSS3 blue
   },
 };
 
@@ -331,7 +341,12 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
             <span>{langLabel} Track</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-            {langLabel} Curriculum — 30 Levels
+            <TypingBanner
+              text={`${langLabel} Curriculum — 30 Levels`}
+              speed={35}
+              cursorColor={langTheme.caretColor}
+              className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]"
+            />
           </h1>
           <p className="text-slate-600 dark:text-[#8B92A5] text-xs sm:text-sm font-normal leading-relaxed">
             Pass each level with score ≥ 60% to unlock the next level in sequence. Practice real-world programming challenges with automated validation.

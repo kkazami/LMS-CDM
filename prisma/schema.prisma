@@ -514,7 +514,7 @@ model GamificationProfile {
   longestStreak           Int            @default(0)
   lastActivityDate        DateTime?
   totalPoints             Int            @default(0)
-  isLeaderboardAnonymized Boolean        @default(true)
+  isLeaderboardAnonymized Boolean        @default(false)
 
   // ── EXP & Level ──
   exp                     Int            @default(0)      // Current total EXP

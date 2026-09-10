@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, instituteCode: requestedInstituteCode } = parsed.data;
 
     const user = await db.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -63,12 +63,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Enforce institute scoping: accounts can only sign in through their own institute's portal
+    if (requestedInstituteCode && user.institute?.code) {
+      const userInstituteCode = user.institute.code.toLowerCase();
+      const targetInstituteCode = requestedInstituteCode.toLowerCase();
+
+      if (userInstituteCode !== targetInstituteCode) {
+        const userInstituteName = user.institute.name || userInstituteCode.toUpperCase();
+        return NextResponse.json(
+          {
+            message: `Access denied. Your account is registered under ${userInstituteName} (${userInstituteCode.toUpperCase()}). You cannot log in through the ${targetInstituteCode.toUpperCase()} portal.`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const session = await createSession(user.id);
 
     // Process Daily Login Rewards asynchronously / before responding
+    let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
     try {
       if (user.role === "STUDENT") {
-        await processLoginReward(user.id);
+        loginRewardResult = await processLoginReward(user.id);
       }
     } catch (rewardErr) {
       console.error("LOGIN_REWARD_ERROR", rewardErr);
@@ -81,6 +98,7 @@ export async function POST(request: Request) {
       {
         message: "Login successful.",
         token: session.id,
+        expiresAt: session.expiresAt.toISOString(),
         user: {
           id: user.id,
           name: user.name,
@@ -92,6 +110,11 @@ export async function POST(request: Request) {
             name: instituteName,
           },
         },
+        rewardReceipt: loginRewardResult ? {
+          rewarded: loginRewardResult.rewarded,
+          streak: loginRewardResult.streak,
+          expEarned: loginRewardResult.rewarded ? 10 : 0,
+        } : null,
       },
       { status: 200 }
     );

@@ -25,6 +25,7 @@ import {
 import type { CalendarEvent, Note, Task } from "@/lib/lms-types";
 import { buildMonthMatrix, formatDateKey } from "@/lib/calendar";
 import { serializeNote, serializeTask } from "@/lib/workspace";
+import type { InstituteTheme } from "@/lib/theme";
 
 type ViewMode = "grid" | "list";
 type ModuleTab = "notes" | "tasks" | "calendar";
@@ -35,6 +36,7 @@ type WorkspaceDashboardProps = {
   tasks: Task[];
   events: CalendarEvent[];
   courseOptions: Array<{ id: string; title: string; code: string }>;
+  theme?: InstituteTheme;
 };
 
 type NoteDraft = {
@@ -167,7 +169,7 @@ function toIsoDateTime(dateValue: string) {
   return new Date(`${dateValue}T00:00:00.000Z`).toISOString();
 }
 
-export default function WorkspaceDashboard({ instituteCode, notes: initialNotes, tasks: initialTasks, events: initialEvents, courseOptions }: WorkspaceDashboardProps) {
+export default function WorkspaceDashboard({ instituteCode, notes: initialNotes, tasks: initialTasks, events: initialEvents, courseOptions, theme }: WorkspaceDashboardProps) {
   const [moduleTab, setModuleTab] = useState<ModuleTab>("notes");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [notes, setNotes] = useState(initialNotes);
@@ -641,7 +643,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                     if (!noteDraft.content.trim()) return;
                     void createNote();
                   }}
-                  className="rounded-full bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 disabled:opacity-50 cursor-pointer"
+                  className="rounded-full px-5 py-3 text-sm font-medium text-white transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-slate-400/60 disabled:opacity-50 cursor-pointer min-h-[44px]"
+                  style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
                   disabled={isSaving}
                 >
                   Save note
@@ -665,7 +668,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   setNoteDraft((current) => ({ ...current, content: readNoteEditorContent() }));
                   updateEditorFormatState();
                 }}
-                className="min-h-44 max-h-80 overflow-y-auto overflow-x-hidden wrap-break-word whitespace-pre-wrap rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-4 text-sm leading-6 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+                className="min-h-44 max-h-80 overflow-y-auto overflow-x-hidden wrap-break-word whitespace-pre-wrap rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-4 text-sm leading-6 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 style={{ backgroundColor: noteDraft.color === "#ffffff" ? undefined : noteDraft.color, scrollbarGutter: "stable" }}
                 data-placeholder="Write something useful"
               />
@@ -685,25 +688,29 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   value={noteDraft.title}
                   onChange={(event) => setNoteDraft((current) => ({ ...current, title: event.target.value }))}
                   placeholder="Title"
-                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 />
 
                 <div className="flex flex-wrap gap-2">
-                  {NOTE_CATEGORIES.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        const nextCategory = category === "Other" ? customCategoryDraft.trim() || "Other" : category;
-                        setNoteDraft((current) => ({ ...current, category: nextCategory }));
-                      }}
-                      className={[
-                        "rounded-full px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
-                        noteDraft.category === category ? "bg-slate-900 dark:bg-[#F97316] text-white" : "bg-white dark:bg-[#1E2132] border border-slate-200/80 dark:border-white/5 text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5",
-                      ].join(" ")}
-                    >
-                      {category}
-                    </button>
-                  ))}
+                  {NOTE_CATEGORIES.map((category) => {
+                    const isSelected = noteDraft.category === category;
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          const nextCategory = category === "Other" ? customCategoryDraft.trim() || "Other" : category;
+                          setNoteDraft((current) => ({ ...current, category: nextCategory }));
+                        }}
+                        className={[
+                          "rounded-full px-3 py-1.5 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
+                          isSelected ? "text-white shadow-xs" : "bg-white dark:bg-[#1E2132] border border-slate-200/80 dark:border-white/5 text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5",
+                        ].join(" ")}
+                        style={isSelected ? { backgroundColor: theme?.colors.primary ?? "#0F172A" } : undefined}
+                      >
+                        {category}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <input
@@ -718,7 +725,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                     }
                   }}
                   placeholder="Custom category"
-                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 />
 
                 <div className="flex items-center gap-2">
@@ -874,12 +881,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   }
                 }}
                 placeholder="Add a task and press Enter"
-                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
               />
               <select
                 value={taskDraft.priority}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, priority: event.target.value as Task["priority"] }))}
-                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
               >
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -889,12 +896,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 type="date"
                 value={taskDraft.dueDate}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, dueDate: event.target.value }))}
-                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 font-mono tabular-nums"
               />
               <select
                 value={taskDraft.courseId}
                 onChange={(event) => setTaskDraft((current) => ({ ...current, courseId: event.target.value }))}
-                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-orange-500/20"
+                className="rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-slate-50 dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:bg-white dark:focus:bg-[#1E2132] focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
               >
                 <option value="">Associate course</option>
                 {courseOptions.map((course) => (
@@ -905,7 +912,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
               </select>
               <button
                 onClick={() => void createTask()}
-                className="rounded-2xl bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs"
+                className="rounded-2xl px-5 py-3 text-sm font-medium text-white transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs min-h-[44px]"
+                style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
               >
                 Add
               </button>
@@ -997,7 +1005,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 <select
                   value={calendarMonth.getMonth()}
                   onChange={(event) => setCalendarMonth((current) => new Date(current.getFullYear(), Number(event.target.value), 1))}
-                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
+                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 cursor-pointer"
                   aria-label="Select month"
                 >
                   {CALENDAR_MONTHS.map((month, index) => (
@@ -1009,7 +1017,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 <select
                   value={calendarMonth.getFullYear()}
                   onChange={(event) => setCalendarMonth((current) => new Date(Number(event.target.value), current.getMonth(), 1))}
-                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
+                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 cursor-pointer"
                   aria-label="Select year"
                 >
                   {yearOptions.map((year) => (
@@ -1042,15 +1050,23 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                           "min-h-28 rounded-3xl border p-3 text-left transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
                           day.isCurrentMonth ? "border-slate-200/80 dark:border-white/5" : "border-slate-100 dark:border-white/[0.02] bg-slate-100/60 dark:bg-white/[0.01] text-slate-400 dark:text-slate-600",
                           day.isToday ? "bg-amber-50/80 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" : isCurrentWeek ? "bg-slate-50/80 dark:bg-[#181B26]" : "bg-white dark:bg-[#141721]",
-                          isSelected ? "shadow-inner ring-2 ring-orange-500/50" : "",
+                          isSelected ? "shadow-inner" : "",
                         ].join(" ")}
+                        style={isSelected ? { borderColor: theme?.colors.primary ?? "#0F172A", boxShadow: `0 0 0 2px ${theme?.colors.primary ?? "#0F172A"}` } : undefined}
                       >
                         <div className="flex items-center justify-between">
                           <span className={[
-                            "text-sm font-medium",
+                            "text-sm font-medium font-mono tabular-nums",
                             day.isToday ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-900 dark:text-[#F0F2F8]",
                           ].join(" ")}>{day.day}</span>
-                          {dayEvents.length ? <span className="rounded-full bg-slate-900 dark:bg-[#F97316] px-2 py-0.5 text-[10px] font-semibold text-white">{dayEvents.length}</span> : null}
+                          {dayEvents.length ? (
+                            <span
+                              className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white font-mono tabular-nums"
+                              style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
+                            >
+                              {dayEvents.length}
+                            </span>
+                          ) : null}
                         </div>
 
                         <div className="mt-3 space-y-2">
@@ -1092,7 +1108,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   value={calendarDayNotes[selectedCalendarDate] ?? ""}
                   onChange={(event) => setCalendarDayNotes((current) => ({ ...current, [selectedCalendarDate]: event.target.value }))}
                   placeholder="Add a reminder, reflection, or study note for this day..."
-                  className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#141721] px-4 py-3 text-sm leading-6 text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#141721] px-4 py-3 text-sm leading-6 text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 />
               </div>
             ) : null}
@@ -1161,7 +1177,7 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   updateLocalNote(nextNote);
                   void saveNote(nextNote);
                 }}
-                className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="w-full rounded-2xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
               />
 
               <div className="flex flex-wrap gap-2">
@@ -1193,14 +1209,14 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                   updateLocalNote(nextNote);
                   void saveNote(nextNote);
                 }}
-                className="min-h-64 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden whitespace-pre-wrap rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-[#1E2132] p-4 text-sm leading-7 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="min-h-64 max-h-[calc(100vh-16rem)] overflow-y-auto overflow-x-hidden whitespace-pre-wrap rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-[#1E2132] p-4 text-sm leading-7 text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20"
                 style={{ backgroundColor: activeNote.color === "#ffffff" ? undefined : activeNote.color, scrollbarGutter: "stable" }}
                 data-placeholder="Write your note here..."
               />
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => void toggleNotePin(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">{activeNote.pinned ? "Unpin" : "Pin"}</button>
-                <button onClick={() => void archiveNote(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">Archive</button>
-                <button onClick={() => void deleteNote(activeNote)} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/20">Delete</button>
+                <button onClick={() => void toggleNotePin(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 min-h-[44px]">{activeNote.pinned ? "Unpin" : "Pin"}</button>
+                <button onClick={() => void archiveNote(activeNote)} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 min-h-[44px]">Archive</button>
+                <button onClick={() => void deleteNote(activeNote)} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/20 min-h-[44px]">Delete</button>
               </div>
             </div>
           </div>
@@ -1235,14 +1251,18 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Max Points</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.maxPoints ?? "-"}</p>
+                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] font-mono tabular-nums">{activeEvent.maxPoints ?? "-"}</p>
                 </div>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Due</p>
-                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(activeEvent.eventDate))}</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] font-mono tabular-nums">{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(activeEvent.eventDate))}</p>
               </div>
-              <a href={activeEvent.deepLink} className="inline-flex items-center justify-center rounded-2xl bg-slate-900 dark:bg-[#F97316] px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 dark:hover:bg-[#EA580C] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs">
+              <a
+                href={activeEvent.deepLink}
+                className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-medium text-white transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs min-h-[44px]"
+                style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
+              >
                 Go to Assignment Submission
               </a>
             </div>

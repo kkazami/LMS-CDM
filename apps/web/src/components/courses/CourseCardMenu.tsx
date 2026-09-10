@@ -57,10 +57,10 @@ export default function CourseCardMenu({
           setOpen((prev) => !prev);
         }}
         onMouseDown={stopEvent}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors shadow-xs backdrop-blur-xs"
+        className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-white transition-all shadow-xs backdrop-blur-xs cursor-pointer active:scale-95"
         aria-label="Course options"
       >
-        <MoreVertical className="h-4 w-4" />
+        <MoreVertical className="h-5 w-5" />
       </button>
 
       {open && (
@@ -93,7 +93,7 @@ export default function CourseCardMenu({
                 onUnenroll?.();
               }}
               onMouseDown={stopEvent}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               Unenroll
@@ -109,7 +109,7 @@ export default function CourseCardMenu({
                     onEdit();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <Edit2 className="h-4 w-4 text-blue-500" />
                   Edit
@@ -124,7 +124,7 @@ export default function CourseCardMenu({
                     onCustomizeCard();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <ImageIcon className="h-4 w-4 text-blue-500" />
                   Customize Card
@@ -139,7 +139,7 @@ export default function CourseCardMenu({
                     onUnarchive?.();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <ArchiveRestore className="h-4 w-4 text-indigo-500" />
                   Unarchive
@@ -153,7 +153,7 @@ export default function CourseCardMenu({
                     onArchive?.();
                   }}
                   onMouseDown={stopEvent}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <Archive className="h-4 w-4 text-slate-400 dark:text-[#8B92A5]" />
                   Archive
