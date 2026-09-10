@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { InstituteTheme } from "@/lib/theme";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
@@ -62,6 +63,14 @@ export default function Button({
         }
       }}
       {...props}
+      onClick={(e) => {
+        try {
+          triggerNativeHaptic("light");
+        } catch {
+          // ignore
+        }
+        props.onClick?.(e);
+      }}
     >
       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />}
       {children}

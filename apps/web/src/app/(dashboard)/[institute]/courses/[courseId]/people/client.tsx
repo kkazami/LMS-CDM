@@ -310,22 +310,23 @@ export default function PeopleClient({
                 key={student.id}
                 className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <UserAvatar
                     name={student.name}
                     avatarUrl={student.avatarUrl}
                     size="sm"
                     color={theme.colors.primary}
+                    className="shrink-0"
                     onClick={(e: React.MouseEvent) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setMiniCard({ userId: student.id, anchorRect: rect });
                     }}
                   />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
                       {student.name}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-[#8B92A5]">{student.email}</p>
+                    <p className="text-xs text-slate-500 dark:text-[#8B92A5] truncate">{student.email}</p>
                   </div>
                 </div>
 

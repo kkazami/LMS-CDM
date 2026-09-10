@@ -233,16 +233,16 @@ export default function TeacherDashboardClient({
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
         {/* ─── 1. Anti-Slop Faculty Hero Banner ─── */}
         <div
-          className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs transition-colors"
+          className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 sm:p-6 lg:p-8 shadow-xs transition-colors"
           style={{
             borderLeft: `4px solid ${theme.colors.primary}`,
             background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
           }}
         >
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="space-y-2 max-w-2xl min-w-0">
               <div
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider"
                 style={{
                   backgroundColor: `${theme.colors.primary}1A`,
                   color: theme.colors.primary,
@@ -251,19 +251,19 @@ export default function TeacherDashboardClient({
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{instituteName} • Faculty Portal</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                 <TypingBanner
                   text={`Welcome back, Professor ${userName}!`}
                   sessionKey={typingSessionKey ?? "lumina_faculty_typed_greeting"}
                 />
               </h1>
-              <p className="text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
+              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
                 Manage your assigned classes, syllabus, gradebook ledgers, and student enrollment requests.
               </p>
             </div>
 
             {/* Faculty StatPills row (no ExpRing) */}
-            <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 self-start md:self-auto overflow-x-auto scrollbar-none max-w-full">
               <StatPill
                 icon={BookOpen}
                 label={`${courses.length} Classes`}
@@ -311,7 +311,7 @@ export default function TeacherDashboardClient({
                 label="Gradebook"
                 sublabel="Grading matrix"
                 href="#pending-work"
-                badge={totalPendingWork > 0 ? `${totalPendingWork} to Grade` : null}
+                badge={totalPendingWork > 0 ? `${totalPendingWork} Due` : null}
                 badgeVariant={totalPendingWork > 0 ? "warning" : "muted"}
                 color="#3B82F6"
               />

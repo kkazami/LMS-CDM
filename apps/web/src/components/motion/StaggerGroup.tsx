@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
 
 const containerVariants: Variants = {
@@ -26,10 +26,12 @@ export function StaggerGroup({
   children: ReactNode;
   className?: string;
 }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.div
       variants={containerVariants}
-      initial="hidden"
+      initial={shouldReduceMotion ? false : "hidden"}
       animate="show"
       className={className}
     >
@@ -37,6 +39,7 @@ export function StaggerGroup({
     </motion.div>
   );
 }
+
 
 export function StaggerItem({
   children,

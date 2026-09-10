@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { createApiClient, type ApiClient } from '@lms/api-client';
 import { API_BASE_URL } from '../lib/constants';
-import type { AuthUser } from '@lms/types';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
+import type { AuthUser, LoginResponse } from '@lms/types';
 
 const TOKEN_KEY = 'lumina_auth_token';
 const USER_KEY = 'lumina_user';
@@ -12,12 +13,14 @@ interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  rewardReceipt: LoginResponse['rewardReceipt'] | null;
   api: ApiClient;
 
   initialize: () => Promise<void>;
-  login: (email: string, password: string, instituteCode?: string) => Promise<void>;
+  login: (email: string, password: string, instituteCode?: string) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
+  clearRewardReceipt: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => {
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     user: null,
     isLoading: true,
     isAuthenticated: false,
+    rewardReceipt: null,
     api,
 
     initialize: async () => {
@@ -47,6 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
             const response = await api.auth.me();
             set({ user: response.user });
             await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+            registerForPushNotificationsAsync(api).catch(() => {});
           } catch {
             // Token invalid, clear state
             await SecureStore.deleteItemAsync(TOKEN_KEY);
@@ -71,7 +76,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
         token: response.token,
         user: response.user as AuthUser,
         isAuthenticated: true,
+        rewardReceipt: response.rewardReceipt || null,
       });
+
+      registerForPushNotificationsAsync(api).catch(() => {});
+
+      return response;
     },
 
     logout: async () => {
@@ -83,9 +93,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
-      set({ token: null, user: null, isAuthenticated: false });
+      set({ token: null, user: null, isAuthenticated: false, rewardReceipt: null });
     },
 
     setUser: (user: AuthUser) => set({ user }),
+    clearRewardReceipt: () => set({ rewardReceipt: null }),
   };
 });

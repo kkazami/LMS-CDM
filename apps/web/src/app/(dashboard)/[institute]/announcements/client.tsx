@@ -132,8 +132,8 @@ export default function AnnouncementsClient({
       </div>
 
       {/* ── Class Filter ── */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#8B92A5]">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 mb-6">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-[#8B92A5] shrink-0">
           <Filter className="h-4 w-4" />
           <span>Filter by class:</span>
         </div>
@@ -141,7 +141,7 @@ export default function AnnouncementsClient({
           id="announcements-course-filter"
           value={selectedCourseId}
           onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 transition-shadow"
+          className="min-w-0 flex-1 max-w-full sm:max-w-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] px-3 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 transition-shadow"
           style={{ 
             // @ts-expect-error CSS custom property for focus ring
             "--tw-ring-color": `${theme.colors.primary}40`,

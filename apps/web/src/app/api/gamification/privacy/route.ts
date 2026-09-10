@@ -11,22 +11,25 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { isAnonymized } = (await req.json()) as { isAnonymized: boolean };
+    const body = (await req.json()) as { isAnonymized?: boolean; isLeaderboardAnonymized?: boolean };
+    const isAnon = Boolean(body.isLeaderboardAnonymized ?? body.isAnonymized);
 
     await db.gamificationProfile.upsert({
       where: { studentId: session.user.id },
       create: {
         studentId: session.user.id,
-        isLeaderboardAnonymized: Boolean(isAnonymized),
+        isLeaderboardAnonymized: isAnon,
       },
       update: {
-        isLeaderboardAnonymized: Boolean(isAnonymized),
+        isLeaderboardAnonymized: isAnon,
       },
     });
 
-    return NextResponse.json({ ok: true, isAnonymized: Boolean(isAnonymized) });
+    return NextResponse.json({ ok: true, success: true, isAnonymized: isAnon });
   } catch (error) {
     console.error("TOGGLE_ANONYMITY_ERROR", error);
     return NextResponse.json({ error: "Failed to update anonymity" }, { status: 500 });
   }
 }
+
+export const PUT = POST;

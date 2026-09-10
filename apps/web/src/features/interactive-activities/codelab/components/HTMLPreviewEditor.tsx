@@ -5,6 +5,7 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import { useTheme } from "@/lib/theme-context";
 import { useCodeLabStore } from "../stores/codelab-store";
 import { Play, Eye, Code2 } from "lucide-react";
+import MonacoInit from "@/components/common/MonacoInit";
 
 interface HTMLPreviewEditorProps {
   initialCode: string;
@@ -77,6 +78,7 @@ export default function HTMLPreviewEditor({
 
   return (
     <div className="flex h-full w-full flex-col md:flex-row overflow-hidden bg-white dark:bg-[#1e1e1e]">
+      <MonacoInit />
       {/* Editor Panel — Left Half */}
       <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 min-w-0">
         <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-[#161b22] border-b border-slate-200 dark:border-slate-800 flex-none">

@@ -232,11 +232,11 @@ export default function StudentDashboardClient({
               background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}1A 0%, transparent 65%), var(--bg-surface, #FFFFFF)`,
             }}
           >
-            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between p-6 sm:p-8 gap-6">
-              <div className="space-y-2 max-w-xl">
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
+              <div className="space-y-2 max-w-xl min-w-0">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider"
                     style={{
                       backgroundColor: `${theme.colors.primary}1A`,
                       color: theme.colors.primary,
@@ -247,14 +247,14 @@ export default function StudentDashboardClient({
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                   <TypingBanner
                     text={`Welcome back, ${userName}!`}
                     sessionKey={typingSessionKey ?? "lumina_typed_greeting"}
                   />
                 </h1>
 
-                <p className="text-sm text-slate-500 dark:text-[#8B92A5] font-medium leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] font-medium leading-relaxed">
                   You have <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{courses.length}</span> active courses and{" "}
                   <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{dueSoonItems.length}</span> pending academic deadlines.
                 </p>
@@ -273,7 +273,7 @@ export default function StudentDashboardClient({
             </div>
 
             {/* Bottom StatPills Row */}
-            <div className="relative z-10 flex flex-wrap items-center gap-2.5 px-6 sm:px-8 pb-5 pt-1 border-t border-slate-100 dark:border-white/5">
+            <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-3 sm:px-8 pb-3 sm:pb-5 pt-1 border-t border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-none">
               <StatPill
                 icon={Flame}
                 label={`${streakCurrent} Day${streakCurrent === 1 ? "" : "s"} Streak`}
@@ -502,12 +502,12 @@ export default function StudentDashboardClient({
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-[calc(100%-44px)]">
+                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-bold tracking-wide bg-white/20 backdrop-blur-md text-white border border-white/30 shrink-0">
                               {course.code}
                             </span>
                             {course.section && (
-                              <span className="text-xs font-medium text-white/90 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded truncate border border-white/20">
+                              <span className="text-[11px] sm:text-xs font-medium text-white/90 bg-black/30 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded truncate border border-white/20">
                                 {course.section}
                               </span>
                             )}
@@ -657,17 +657,17 @@ export default function StudentDashboardClient({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate">
+                          <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
+                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate min-w-0 flex-1">
                               {item.courseCode} {item.courseSection ? `• ${item.courseSection}` : ""}
                             </span>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeClass}`}
                             >
                               {relative.label}
                             </span>
                           </div>
-                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] group-hover:text-[#F97316] transition-colors line-clamp-1">
+                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] transition-colors line-clamp-1">
                             {item.title}
                           </h4>
                         </div>

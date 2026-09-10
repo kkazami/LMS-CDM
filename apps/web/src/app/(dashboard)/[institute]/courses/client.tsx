@@ -303,29 +303,29 @@ export default function CoursesClient({
                     draggable={false}
                   >
                     {course.instructorName && (
-                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-[#8B92A5]">
-                        <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72]" />
-                        <span>{course.instructorName}</span>
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-[#8B92A5] min-w-0">
+                        <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#555C72] shrink-0" />
+                        <span className="truncate">{course.instructorName}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-[#8B92A5]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500 dark:text-[#8B92A5] min-w-0">
                       {course.subject && (
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="h-3 w-3" />
-                          {course.subject}
+                        <span className="flex items-center gap-1 min-w-0 max-w-[160px] truncate" title={course.subject}>
+                          <BookOpen className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{course.subject}</span>
                         </span>
                       )}
                       {course.room && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {course.room}
+                        <span className="flex items-center gap-1 min-w-0 max-w-[120px] truncate" title={course.room}>
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{course.room}</span>
                         </span>
                       )}
                       {course.enrolledCount !== undefined && (
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {course.enrolledCount}
+                        <span className="flex items-center gap-1 shrink-0">
+                          <Users className="h-3 w-3 shrink-0" />
+                          <span>{course.enrolledCount}</span>
                         </span>
                       )}
                     </div>

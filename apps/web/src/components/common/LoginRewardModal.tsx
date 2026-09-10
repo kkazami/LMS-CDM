@@ -37,6 +37,13 @@ export default function LoginRewardModal({
   const displayStreak = Math.max(1, streakCurrent);
 
   useEffect(() => {
+    // Check if dismissed in this browser session
+    try {
+      if (sessionStorage.getItem(`gamification_daily_reward_dismissed_${userId}`)) {
+        return;
+      }
+    } catch {}
+
     // Check localStorage date in GMT+8 (PST)
     const todayPht = getPHTDateString();
     const storageKey = `gamification_daily_reward_seen_${userId}`;
@@ -72,6 +79,7 @@ export default function LoginRewardModal({
     try {
       const todayPht = getPHTDateString();
       localStorage.setItem(`gamification_daily_reward_seen_${userId}`, todayPht);
+      sessionStorage.setItem(`gamification_daily_reward_dismissed_${userId}`, '1');
     } catch {
       // ignore
     }
@@ -86,8 +94,19 @@ export default function LoginRewardModal({
   const currentDayIndex = (phtNow.getDay() + 6) % 7; // 0 = Mon, 6 = Sun
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200 overflow-hidden">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      onTouchEnd={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          handleClose();
+        }
+      }}
+      className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:pb-4 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+    >
+      <div className="relative w-full max-w-md max-h-[calc(100dvh-100px)] overflow-y-auto bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-8 text-center transition-all duration-200">
         {/* Ambient Top Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-orange-500/20 blur-3xl rounded-full pointer-events-none" />
 
@@ -95,7 +114,7 @@ export default function LoginRewardModal({
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
@@ -191,7 +210,7 @@ export default function LoginRewardModal({
         <button
           type="button"
           onClick={handleClose}
-          className="w-full py-3 px-4 rounded-2xl bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+          className="w-full py-3 px-4 rounded-2xl bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] touch-manipulation min-h-[48px]"
         >
           <span>Claim & Continue</span>
           <ArrowRight className="w-4 h-4" />

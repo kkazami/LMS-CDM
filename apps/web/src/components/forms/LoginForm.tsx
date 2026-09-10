@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { isDesktopAdmin as isDesktopAdminCheck } from "@/lib/electron-detect";
+import { triggerNativeHaptic, syncSessionToNative } from "@/lib/mobile-bridge";
 import type { InstituteTheme } from "@/lib/theme";
 
 type LoginFormValues = {
@@ -80,6 +81,11 @@ export default function LoginForm({
         throw new Error(data.message || "Unable to sign in.");
       }
 
+      triggerNativeHaptic("success");
+      if (data.token) {
+        syncSessionToNative(data.token, data.user);
+      }
+
       const role = data.user.role.toUpperCase();
 
       if (isDesktopMode && role !== "ADMIN") {
@@ -102,6 +108,7 @@ export default function LoginForm({
 
       window.location.href = targetPath;
     } catch (error) {
+      triggerNativeHaptic("error");
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to sign in."
       );

@@ -1,8 +1,7 @@
 "use client";
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   X,
   BookOpen,
@@ -17,8 +16,14 @@ import {
   FileText,
   Library,
   Flame,
+  User,
+  Settings,
+  LogOut,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import UserAvatar from "@/components/common/UserAvatar";
+import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -26,6 +31,8 @@ interface MobileMoreSheetProps {
   instituteCode: string;
   primaryColor: string;
   userRole: string;
+  userName?: string;
+  avatarUrl?: string | null;
 }
 
 interface NavItem {
@@ -41,9 +48,13 @@ export default function MobileMoreSheet({
   instituteCode,
   primaryColor,
   userRole,
+  userName = "User",
+  avatarUrl = null,
 }: MobileMoreSheetProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const role = userRole.toUpperCase();
   const isStudent = role === "STUDENT";
   const isProfessor = role === "PROFESSOR" || role === "TEACHER";
@@ -93,16 +104,35 @@ export default function MobileMoreSheet({
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
   ];
 
+  const handleLogout = async () => {
+    triggerNativeHaptic("medium");
+    setLoggingOut(true);
+    try {
+      logoutFromNative();
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    onClose();
+    router.push(`/login?institute=${instituteCode}&force=true`);
+  };
+
   const items = isStudent ? studentItems : isProfessor ? teacherItems : adminItems;
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] lg:hidden">
+    <div className="fixed inset-0 z-[100] lg:hidden">
       {/* Backdrop scrim */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 touch-manipulation"
         onClick={onClose}
+        onTouchEnd={(e) => {
+          if (e.target === e.currentTarget) {
+            e.preventDefault();
+            onClose();
+          }
+        }}
         aria-hidden="true"
       />
 
@@ -112,7 +142,7 @@ export default function MobileMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-label="More navigation options"
-        className="fixed inset-x-0 bottom-0 z-10 max-h-[85vh] flex flex-col rounded-t-[28px] border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300"
+        className="fixed inset-x-0 bottom-0 z-10 max-h-[85vh] flex flex-col rounded-t-[28px] border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl overflow-hidden transition-transform duration-300 ease-out"
       >
         {/* Handle bar + Header */}
         <div className="px-5 pt-3 pb-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0">
@@ -131,15 +161,65 @@ export default function MobileMoreSheet({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* User Card */}
+        <div className="px-4 pt-3 pb-2 shrink-0">
+          <div className="p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <UserAvatar
+                name={userName}
+                avatarUrl={avatarUrl}
+                size="sm"
+                color={primaryColor}
+                className="h-10 w-10 shrink-0 text-xs"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">
+                  {userName}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#8B92A5] truncate">
+                  {userRole}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link
+                href={`/${instituteCode}/profile`}
+                onClick={() => {
+                  triggerNativeHaptic("light");
+                  onClose();
+                }}
+                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
+                title="Profile"
+                aria-label="Profile"
+              >
+                <User className="w-4 h-4" />
+              </Link>
+              <Link
+                href={`/${instituteCode}/settings`}
+                onClick={() => {
+                  triggerNativeHaptic("light");
+                  onClose();
+                }}
+                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
+                title="Settings"
+                aria-label="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Scrollable Navigation Grid */}
-        <div className="flex-1 overflow-y-auto p-4 pb-[calc(24px+env(safe-area-inset-bottom,0px))]">
+        <div className="flex-1 overflow-y-auto px-4 py-2">
           <div className="grid grid-cols-2 gap-2.5">
             {items.map((item) => {
               const Icon = item.icon;
@@ -149,8 +229,11 @@ export default function MobileMoreSheet({
                 <Link
                   key={item.label}
                   href={item.href}
-                  onClick={onClose}
-                  className={`flex flex-col p-3 rounded-2xl border transition-all cursor-pointer min-h-[72px] active:scale-[0.98] ${
+                  onClick={() => {
+                    triggerNativeHaptic("light");
+                    onClose();
+                  }}
+                  className={`flex flex-col p-3 rounded-2xl border transition-all cursor-pointer min-h-[72px] active:scale-[0.98] touch-manipulation ${
                     isActive
                       ? "border-transparent bg-slate-100/90 dark:bg-white/10"
                       : "border-slate-200/70 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27] hover:bg-slate-100/70 dark:hover:bg-white/[0.07]"
@@ -164,7 +247,7 @@ export default function MobileMoreSheet({
                       : undefined
                   }
                 >
-                  <div className="flex items-center gap-2.5 mb-1">
+                  <div className="flex items-center gap-2.5 mb-1 min-w-0">
                     <div
                       className="p-1.5 rounded-xl shrink-0"
                       style={{
@@ -176,12 +259,12 @@ export default function MobileMoreSheet({
                         style={{ color: isActive ? primaryColor : undefined }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">
                       {item.label}
                     </span>
                   </div>
                   {item.description && (
-                    <span className="text-[10px] text-slate-500 dark:text-[#8B92A5] line-clamp-1">
+                    <span className="text-[10px] text-slate-500 dark:text-[#8B92A5] truncate">
                       {item.description}
                     </span>
                   )}
@@ -189,6 +272,19 @@ export default function MobileMoreSheet({
               );
             })}
           </div>
+        </div>
+
+        {/* Bottom Sign Out / Switch Account */}
+        <div className="p-4 pt-2 pb-[calc(24px+env(safe-area-inset-bottom,0px))] border-t border-slate-100 dark:border-white/5 shrink-0">
+          <button
+            type="button"
+            disabled={loggingOut}
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-500/20 transition-all cursor-pointer active:scale-[0.98] min-h-[48px] touch-manipulation"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{loggingOut ? "Signing Out..." : "Sign Out / Switch Account"}</span>
+          </button>
         </div>
       </div>
     </div>

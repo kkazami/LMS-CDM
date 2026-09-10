@@ -34,7 +34,12 @@ function isMonacoCancel(arg: unknown): boolean {
   return false;
 }
 
-if (typeof window !== "undefined") {
+let isInitialized = false;
+
+function initMonacoConfig() {
+  if (typeof window === "undefined" || isInitialized) return;
+  isInitialized = true;
+
   // Pin Monaco CDN to stable version aligned with package.json
   loader.config({
     paths: {
@@ -77,7 +82,7 @@ if (typeof window !== "undefined") {
 
 export default function MonacoInit() {
   useEffect(() => {
-    // Ensure handlers are active on mount
+    initMonacoConfig();
   }, []);
 
   return null;

@@ -1,57 +1,71 @@
-import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import { StyleSheet, LogBox, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../src/lib/query-client';
+import { useThemeStore } from '../src/stores/theme-store';
 import { useAuthStore } from '../src/stores/auth-store';
+import { OfflineNotice } from '../src/components/common/OfflineNotice';
+
+// Prevent splash from auto-hiding until we explicitly dismiss it
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Suppress known Expo Router 55 / React Native 0.83 warnings
+LogBox.ignoreLogs([
+  "Can't perform a React state update on a component that hasn't mounted yet",
+  /useLinking/,
+]);
 
 export default function RootLayout() {
-  const { isLoading, isAuthenticated, user, initialize } = useAuthStore();
-  const segments = useSegments();
-  const router = useRouter();
+  const isDark = useThemeStore((s) => s.isDark);
+  const initializeTheme = useThemeStore((s) => s.initializeTheme);
+  const initializeAuth = useAuthStore((s) => s.initialize);
 
   useEffect(() => {
-    initialize();
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup && user) {
-      router.replace(`/(tabs)/${user.institute?.code || 'ics'}`);
+    async function bootstrap() {
+      try {
+        await Promise.all([
+          initializeTheme(),
+          initializeAuth(),
+        ]);
+      } catch (err) {
+        console.error('ROOT_BOOTSTRAP_ERROR', err);
+      } finally {
+        await SplashScreen.hideAsync().catch(() => {});
+      }
     }
-  }, [isLoading, isAuthenticated, segments, user]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF7517" />
-      </View>
-    );
-  }
+    bootstrap();
+  }, [initializeTheme, initializeAuth]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={isDark ? '#0F1117' : '#FFFFFF'} />
+          <View
+            style={[
+              styles.container,
+              { backgroundColor: isDark ? '#0F1117' : '#FAF8F1' },
+            ]}
+          >
+            <OfflineNotice />
+            <Slot />
+          </View>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
-
 const styles = StyleSheet.create({
-  loadingContainer: {
+  root: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#2C2727',
+  },
+  container: {
+    flex: 1,
   },
 });

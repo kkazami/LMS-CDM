@@ -132,17 +132,17 @@ export default function AssignmentDetailClient({
   return (
     <div className="min-h-screen">
       {/* Breadcrumb header */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-6 py-4 mb-6 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center gap-3">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-4 py-3 sm:px-6 sm:py-4 mb-6 shadow-xs">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 sm:gap-3 min-w-0">
           <Link
             href={`/${instituteCode}/courses/${courseId}/classwork`}
-            className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors"
+            className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors shrink-0"
           >
-            <ArrowLeft className="h-4 w-4" />
-            {item.course.title}
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate max-w-[120px] sm:max-w-[200px]">{item.course.title}</span>
           </Link>
-          <ChevronRight className="h-4 w-4 text-slate-300 dark:text-white/10" />
-          <span className="text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate max-w-[300px]">
+          <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300 dark:text-white/10 shrink-0" />
+          <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">
             {item.title}
           </span>
         </div>

@@ -8,6 +8,7 @@ interface ThemeState {
   themePreference: ThemePreference;
   isDark: boolean;
   setThemePreference: (pref: ThemePreference) => Promise<void>;
+  toggleTheme: () => Promise<void>;
   initializeTheme: () => Promise<void>;
 }
 
@@ -33,6 +34,17 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const systemDark = Appearance.getColorScheme() === 'dark';
     const isDark = pref === 'system' ? systemDark : pref === 'dark';
     set({ themePreference: pref, isDark });
+    try {
+      await SecureStore.setItemAsync(THEME_PREF_KEY, pref);
+    } catch {
+      // Fallback
+    }
+  },
+
+  toggleTheme: async () => {
+    const nextDark = !get().isDark;
+    const pref: ThemePreference = nextDark ? 'dark' : 'light';
+    set({ themePreference: pref, isDark: nextDark });
     try {
       await SecureStore.setItemAsync(THEME_PREF_KEY, pref);
     } catch {

@@ -10,6 +10,7 @@ import NotificationBell from "@/components/layout/NotificationBell";
 import LevelBadge from "@/components/common/LevelBadge";
 import SearchModal from "@/components/layout/SearchModal";
 import { useTheme } from "@/lib/theme-context";
+import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 
 type TopbarProps = {
   theme: InstituteTheme;
@@ -52,22 +53,34 @@ export default function Topbar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Close dropdown whenever route changes
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    setIsDropdownOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   async function handleLogout() {
     try {
+      triggerNativeHaptic("light");
+      logoutFromNative();
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = `/login?institute=${instituteCode}`;
+      window.location.href = `/login?institute=${instituteCode}&force=true`;
     } catch (error) {
       console.error("Logout failed", error);
+      window.location.href = `/login?institute=${instituteCode}&force=true`;
     }
   }
 
@@ -115,28 +128,28 @@ export default function Topbar({
     dynamicTitle = titleMap[segment];
   }
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white/95 dark:bg-[#1A1D27]/95 backdrop-blur-md transition-colors duration-200 min-h-[52px] sm:min-h-[56px] flex flex-col justify-center">
-      <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 lg:px-8 py-2 sm:py-3">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
+      <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
         {/* Left Side: Menu + Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
           <button
             type="button"
             onClick={onOpenMobileMenu}
-            className="rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1.5 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
+            className="rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
             aria-label="Open menu"
           >
-            <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+            <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
 
-          {/* Mobile Institute Badge & Title (Static) */}
-          <div className="md:hidden flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          {/* Mobile Institute Badge & Title */}
+          <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
             <span
-              className="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center"
+              className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center"
               style={{ backgroundColor: theme.colors.primary }}
             >
               {instituteCode.toUpperCase()}
             </span>
-            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate">
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate min-w-0 flex-1" title={dynamicTitle}>
               {dynamicTitle}
             </h1>
           </div>
@@ -169,7 +182,7 @@ export default function Topbar({
         </div>
 
         {/* Right Side Controls */}
-        <div className="flex flex-none items-center justify-end gap-1.5 sm:gap-2 lg:gap-2.5 shrink-0">
+        <div className="flex flex-none items-center justify-end gap-1 sm:gap-1.5 lg:gap-2.5 shrink-0">
           {/* Search bar Desktop (Wide only on xl+) */}
           <button
             type="button"
@@ -190,14 +203,14 @@ export default function Topbar({
             </kbd>
           </button>
           
-          {/* Mobile & Tablet Compact Search Button */}
+          {/* Mobile & Tablet Compact Search Button - only on sm+ to keep mobile header clean */}
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
-            className="xl:hidden relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1.5 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
+            className="hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0"
             aria-label="Search"
           >
-            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </button>
 
           {/* Light / Dark Mode Toggle Button */}
@@ -206,20 +219,20 @@ export default function Topbar({
             onClick={toggleTheme}
             aria-label="Toggle theme"
             aria-pressed={themeMode === "dark"}
-            className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1.5 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
+            className="relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation"
             title={`Switch to ${themeMode === "light" ? "Dark" : "Light"} mode`}
           >
             {themeMode === "dark" ? (
-              <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
+              <Sun className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
             ) : (
-              <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 transition-transform duration-300 -rotate-12 hover:rotate-0" />
+              <Moon className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-slate-600 transition-transform duration-300 -rotate-12 hover:rotate-0" />
             )}
           </button>
 
           {/* Settings link - visible on 2xl+ screens (always available in user menu) */}
           <Link
             href={`/${instituteCode}/settings`}
-            className="hidden 2xl:flex relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-10 w-10 items-center justify-center shrink-0"
+            className="hidden 2xl:flex relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-10 w-10 items-center justify-center shrink-0 touch-manipulation"
             aria-label="Settings"
           >
             <Settings className="h-5 w-5" />
@@ -231,7 +244,7 @@ export default function Topbar({
           <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-white/10" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-1.5 sm:gap-2.5 rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-9 sm:h-10 shrink-0"
+              className="flex items-center gap-1 sm:gap-2.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-0.5 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-8 sm:h-10 shrink-0 touch-manipulation active:scale-95"
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
             >

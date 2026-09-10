@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
-import MonacoInit from "@/components/common/MonacoInit";
 import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
 export const viewport: Viewport = {
@@ -48,7 +47,6 @@ export default function RootLayout({
         <OfflineBanner />
         <InAppBrowserPrompt />
         <ServiceWorkerRegister />
-        <MonacoInit />
         {children}
       </body>
     </html>

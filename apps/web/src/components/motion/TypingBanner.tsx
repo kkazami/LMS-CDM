@@ -103,8 +103,8 @@ export function TypingBanner({
     };
   }, [mounted, text, speed, shouldSkipAnimation, keepCursor]);
 
-  const currentText = !mounted ? "" : shouldSkipAnimation ? text : displayed;
-  const currentCursor = !mounted ? keepCursor : shouldSkipAnimation ? false : (keepCursor || showCursor);
+  const currentText = !mounted ? text : shouldSkipAnimation ? text : displayed;
+  const currentCursor = !mounted ? false : shouldSkipAnimation ? false : (keepCursor || showCursor);
 
   return (
     <span className={className} aria-label={text} suppressHydrationWarning>
