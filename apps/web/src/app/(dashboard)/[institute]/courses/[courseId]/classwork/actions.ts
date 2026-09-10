@@ -36,6 +36,8 @@ const syllabusItemSchema = z.object({
   description: z.string().optional().default(""),
   dueDate: z.string().optional().nullable(),
   maxPoints: z.string().optional().nullable(),
+  enableIntegrityMonitoring: z.boolean().optional().default(false),
+  requireFullscreen: z.boolean().optional().default(false),
   targetGroupIds: z.string().optional().default(""),
   attachments: z.string().optional().default("[]"), // JSON array of {type, url, fileName}
   instituteCode: z.string(),
@@ -52,6 +54,8 @@ export async function createSyllabusItem(
     description: formData.get("description") || "",
     dueDate: formData.get("dueDate") || null,
     maxPoints: formData.get("maxPoints") || null,
+    enableIntegrityMonitoring: formData.get("enableIntegrityMonitoring") === "true" || formData.get("enableIntegrityMonitoring") === "on",
+    requireFullscreen: formData.get("requireFullscreen") === "true" || formData.get("requireFullscreen") === "on",
     targetGroupIds: formData.get("targetGroupIds") || "",
     attachments: formData.get("attachments") || "[]",
     instituteCode: formData.get("instituteCode"),
@@ -91,6 +95,8 @@ export async function createSyllabusItem(
         description: data.description,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
         maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
+        enableIntegrityMonitoring: data.enableIntegrityMonitoring,
+        requireFullscreen: data.requireFullscreen,
         orderIndex: (lastItem?.orderIndex ?? -1) + 1,
       },
     });
@@ -172,6 +178,8 @@ export async function updateSyllabusItem(
     description: formData.get("description") || "",
     dueDate: formData.get("dueDate") || null,
     maxPoints: formData.get("maxPoints") || null,
+    enableIntegrityMonitoring: formData.get("enableIntegrityMonitoring") === "true" || formData.get("enableIntegrityMonitoring") === "on",
+    requireFullscreen: formData.get("requireFullscreen") === "true" || formData.get("requireFullscreen") === "on",
     targetGroupIds: formData.get("targetGroupIds") || "",
     attachments: formData.get("attachments") || "[]",
     instituteCode: formData.get("instituteCode"),
@@ -200,6 +208,8 @@ export async function updateSyllabusItem(
         description: data.description,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
         maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
+        enableIntegrityMonitoring: data.enableIntegrityMonitoring,
+        requireFullscreen: data.requireFullscreen,
       },
     });
 

@@ -4,7 +4,7 @@ const OFFLINE_URL = '/offline.html';
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
-  '/logos/logo.png',
+  '/images/cdm-logo.png',
   '/offline.html',
 ];
 

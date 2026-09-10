@@ -73,6 +73,8 @@ export default async function ClassworkPage({ params }: PageProps) {
     description: item.description,
     dueDate: item.dueDate ? item.dueDate.toISOString() : null,
     maxPoints: item.maxPoints,
+    enableIntegrityMonitoring: Boolean(item.enableIntegrityMonitoring),
+    requireFullscreen: Boolean(item.requireFullscreen),
     targetGroups: item.targetGroups.map((tg) => ({
       groupId: tg.groupId,
       group: tg.group,

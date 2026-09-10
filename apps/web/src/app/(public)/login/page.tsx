@@ -5,12 +5,13 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 type LoginPageProps = {
   searchParams?: Promise<{
     institute?: string;
+    dept?: string;
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const instituteCode = resolvedSearchParams?.institute ?? "ics";
+  const instituteCode = resolvedSearchParams?.dept ?? resolvedSearchParams?.institute ?? "ics";
   const theme = getInstituteTheme(instituteCode);
 
   return (

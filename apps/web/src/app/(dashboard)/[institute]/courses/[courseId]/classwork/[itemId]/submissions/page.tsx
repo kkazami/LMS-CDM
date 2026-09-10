@@ -20,7 +20,14 @@ export default async function SubmissionsPage({ params }: Props) {
 
   const item = await db.syllabusItem.findUnique({
     where: { id: itemId },
-    select: { id: true, title: true, maxPoints: true, courseId: true },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      maxPoints: true,
+      courseId: true,
+      enableIntegrityMonitoring: true,
+    },
   });
 
   if (!item || item.courseId !== courseId) notFound();
@@ -44,10 +51,27 @@ export default async function SubmissionsPage({ params }: Props) {
     orderBy: { submittedAt: "desc" },
   });
 
+  // Get all logged integrity events for this item
+  const integrityEvents = await db.integrityEvent.findMany({
+    where: { syllabusItemId: itemId },
+    select: {
+      id: true,
+      studentId: true,
+      eventType: true,
+      severity: true,
+      metadata: true,
+      timestamp: true,
+    },
+    orderBy: { timestamp: "asc" },
+  });
+
   return (
     <SubmissionsClient
       submissions={submissions as Parameters<typeof SubmissionsClient>[0]["submissions"]}
       allStudents={allStudents}
+      integrityEvents={integrityEvents}
+      enableIntegrityMonitoring={Boolean(item.enableIntegrityMonitoring)}
+      itemType={item.type}
       maxPoints={item.maxPoints}
       itemTitle={item.title}
       instituteCode={institute}

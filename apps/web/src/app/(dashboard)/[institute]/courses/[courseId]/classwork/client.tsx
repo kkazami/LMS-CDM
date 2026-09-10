@@ -10,7 +10,7 @@ import type { AttachmentItem } from "@/components/courses/AttachmentModal";
 import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
-import { Plus, Loader2, Paperclip, FileText, Link2 } from "lucide-react";
+import { Plus, Loader2, Paperclip, FileText, Link2, Shield } from "lucide-react";
 import {
   createSyllabusItem,
   updateSyllabusItem,
@@ -32,6 +32,8 @@ interface SyllabusItemData {
   description: string;
   dueDate: string | null;
   maxPoints: number | null;
+  enableIntegrityMonitoring?: boolean;
+  requireFullscreen?: boolean;
   targetGroups: { groupId: string; group: { groupName: string } }[];
   attachments?: SyllabusItemAttachment[];
 }
@@ -85,6 +87,8 @@ export default function ClassworkClient({
   
   const [selectedType, setSelectedType] = useState<string>("ASSIGNMENT");
   const [isCustomType, setIsCustomType] = useState(false);
+  const [enableIntegrity, setEnableIntegrity] = useState(false);
+  const [requireFullscreen, setRequireFullscreen] = useState(false);
 
   const predefinedTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL", "ACTIVITY", "RECITATION", "MIDTERM_EXAM", "FINAL_EXAM"];
 
@@ -101,6 +105,8 @@ export default function ClassworkClient({
       setEditingItem(null);
       setSelectedGroups([]);
       setAttachments([]);
+      setEnableIntegrity(false);
+      setRequireFullscreen(false);
     }
   }, [state]);
 
@@ -110,12 +116,16 @@ export default function ClassworkClient({
     setAttachments([]);
     setSelectedType("ASSIGNMENT");
     setIsCustomType(false);
+    setEnableIntegrity(false);
+    setRequireFullscreen(false);
     setIsModalOpen(true);
   };
 
   const handleEdit = (item: SyllabusItemData) => {
     setEditingItem(item);
     setSelectedGroups(item.targetGroups.map((tg) => tg.groupId));
+    setEnableIntegrity(Boolean(item.enableIntegrityMonitoring));
+    setRequireFullscreen(Boolean(item.requireFullscreen));
     // Load existing attachments for this item
     setAttachments(
       (item.attachments ?? []).map((a) => ({
@@ -205,7 +215,7 @@ export default function ClassworkClient({
           setEditingItem(null);
         }}
       >
-        <form ref={formRef} action={formAction} className="space-y-4">
+        <form ref={formRef} action={formAction} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
           <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="instituteCode" value={instituteCode} />
           <input
@@ -310,6 +320,59 @@ export default function ClassworkClient({
               theme={theme}
             />
           </div>
+
+          {/* Proctoring & Integrity Monitoring Settings */}
+          {(selectedType !== "MATERIAL") && (
+            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.04] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-orange-500" />
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-[#F0F2F8]">
+                  Anti-Cheating & Integrity Settings
+                </p>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  name="enableIntegrityMonitoring"
+                  checked={enableIntegrity}
+                  onChange={(e) => {
+                    setEnableIntegrity(e.target.checked);
+                    if (!e.target.checked) setRequireFullscreen(false);
+                  }}
+                  className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-orange-500 focus:ring-orange-500"
+                />
+                <div className="text-xs">
+                  <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
+                    Enable Integrity Monitoring
+                  </span>
+                  <p className="text-slate-500 dark:text-[#8B92A5] mt-0.5">
+                    Tracks tab switches, clipboard activity, and window focus during attempts. Results are presented for instructor review without auto-failing students.
+                  </p>
+                </div>
+              </label>
+
+              {enableIntegrity && (
+                <label className="flex items-start gap-3 cursor-pointer select-none pl-6 border-t border-orange-500/10 pt-2.5">
+                  <input
+                    type="checkbox"
+                    name="requireFullscreen"
+                    checked={requireFullscreen}
+                    onChange={(e) => setRequireFullscreen(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-orange-500 focus:ring-orange-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
+                      Require Fullscreen Mode
+                    </span>
+                    <p className="text-slate-500 dark:text-[#8B92A5] mt-0.5">
+                      Prompts student to take the assessment in fullscreen and logs when fullscreen is exited.
+                    </p>
+                  </div>
+                </label>
+              )}
+            </div>
+          )}
 
           {/* Attachments section */}
           <div className="grid gap-2">

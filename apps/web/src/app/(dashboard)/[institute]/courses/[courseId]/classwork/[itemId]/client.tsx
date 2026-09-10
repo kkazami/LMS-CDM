@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users } from "lucide-react";
+import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Shield, Maximize2 } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
 import type { InstituteTheme } from "@/lib/theme";
+import { useQuizIntegrityMonitor } from "@/hooks/useQuizIntegrityMonitor";
+import IntegrityFeedbackToast from "@/components/courses/IntegrityFeedbackToast";
+import FullscreenEnforcementModal from "@/components/courses/FullscreenEnforcementModal";
 
 interface Attachment {
   id: string;
@@ -35,6 +38,8 @@ interface SyllabusItem {
   description: string;
   dueDate: Date | null;
   maxPoints: number | null;
+  enableIntegrityMonitoring?: boolean;
+  requireFullscreen?: boolean;
   attachments: Attachment[];
   course: {
     id: string;
@@ -129,6 +134,26 @@ export default function AssignmentDetailClient({
   const isPastDeadline = item.dueDate ? new Date() > item.dueDate : false;
   const typeMeta = TYPE_META[item.type] ?? TYPE_META.MATERIAL;
 
+  const isQuizOrActivity = item.type === "QUIZ" || item.type === "ACTIVITY";
+  const isSubmissionOpen = !submission || submission.status === "DRAFT";
+  const shouldMonitor = isStudent && isQuizOrActivity && Boolean(item.enableIntegrityMonitoring) && isSubmissionOpen;
+
+  const {
+    toast,
+    dismissToast,
+    isMonitoringActive,
+    isFullscreen,
+    hasEnteredFullscreenOnce,
+    hasExitedFullscreen,
+    enterFullscreen,
+  } = useQuizIntegrityMonitor({
+    syllabusItemId: item.id,
+    submissionId: submission?.id,
+    enabled: shouldMonitor,
+    requireFullscreen: Boolean(item.requireFullscreen),
+    isStudent,
+  });
+
   return (
     <div className="min-h-screen">
       {/* Breadcrumb header */}
@@ -154,10 +179,22 @@ export default function AssignmentDetailClient({
           <div className="space-y-6 min-w-0">
             {/* Header card */}
             <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
-              <div className="flex items-start gap-3 mb-4">
+              <div className="flex items-start gap-2.5 mb-4 flex-wrap">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
                   {typeMeta.label}
                 </span>
+                {item.enableIntegrityMonitoring && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20">
+                    <Shield className="w-3 h-3 text-orange-500" />
+                    Integrity Monitored
+                  </span>
+                )}
+                {item.requireFullscreen && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+                    <Maximize2 className="w-3 h-3 text-purple-500" />
+                    Fullscreen Required
+                  </span>
+                )}
               </div>
 
               <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>
@@ -244,6 +281,23 @@ export default function AssignmentDetailClient({
           )}
         </div>
       </div>
+
+      {/* Non-punitive subtle on-screen integrity feedback toast & status indicator */}
+      <IntegrityFeedbackToast
+        toast={toast}
+        onDismiss={dismissToast}
+        isMonitoringActive={isMonitoringActive}
+      />
+
+      {/* Fullscreen enforcement prompt & exit warning for required assessments */}
+      {shouldMonitor && item.requireFullscreen && (
+        <FullscreenEnforcementModal
+          isOpen={(!hasEnteredFullscreenOnce && !isFullscreen) || (hasEnteredFullscreenOnce && hasExitedFullscreen && !isFullscreen)}
+          isInitialPrompt={!hasEnteredFullscreenOnce && !isFullscreen}
+          onEnterFullscreen={enterFullscreen}
+          quizTitle={item.title}
+        />
+      )}
     </div>
   );
 }
