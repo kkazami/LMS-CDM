@@ -101,6 +101,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
         <ConvertFlashcardsButton
           attachmentId={activeAttachment.id}
           attachmentName={activeAttachment.fileName || "Document"}
+          attachmentUrl={activeAttachment.url}
           courseId={courseId}
           instituteCode={institute}
         />

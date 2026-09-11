@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import ConvertFlashcardsModal from "@/components/courses/ConvertFlashcardsModal";
+import dynamic from "next/dynamic";
 
+const ConvertFlashcardsModal = dynamic(
+  () => import("@/components/courses/ConvertFlashcardsModal"),
+  { ssr: false }
+);
 interface ConvertFlashcardsButtonProps {
   attachmentId: string;
   attachmentName: string;
+  attachmentUrl?: string;
   courseId: string;
   instituteCode: string;
 }
@@ -25,6 +30,7 @@ function isConvertibleFile(fileName: string): boolean {
 export default function ConvertFlashcardsButton({
   attachmentId,
   attachmentName,
+  attachmentUrl,
   courseId,
   instituteCode,
 }: ConvertFlashcardsButtonProps) {
@@ -47,6 +53,7 @@ export default function ConvertFlashcardsButton({
         <ConvertFlashcardsModal
           attachmentId={attachmentId}
           attachmentName={attachmentName}
+          attachmentUrl={attachmentUrl}
           courseId={courseId}
           instituteCode={instituteCode}
           onClose={() => setShowModal(false)}
@@ -55,3 +62,4 @@ export default function ConvertFlashcardsButton({
     </>
   );
 }
+

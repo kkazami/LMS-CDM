@@ -23,6 +23,7 @@ export default function CardEditorModal({
 }: CardEditorModalProps) {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [hint, setHint] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,11 +55,13 @@ export default function CardEditorModal({
       if (editingCard) {
         setFront(editingCard.front);
         setBack(editingCard.back);
+        setHint(editingCard.hint || "");
         const imgAtt = editingCard.attachments?.find((a) => a.type === "image");
         setImageUrl(imgAtt?.url || "");
       } else {
         setFront("");
         setBack("");
+        setHint("");
         setImageUrl("");
       }
       setError(null);
@@ -81,7 +84,7 @@ export default function CardEditorModal({
         deckId,
         front: front.trim(),
         back: back.trim(),
-        hint: "", // Send empty since we removed the field
+        hint: hint.trim(),
         attachments: imageUrl.trim() ? [{ type: "image", url: imageUrl.trim(), label: "Question Image" }] : [],
       };
 
@@ -191,6 +194,20 @@ export default function CardEditorModal({
             placeholder="Type the exact answer here..."
             rows={3}
             className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+          />
+        </div>
+
+        {/* Hint (Optional) */}
+        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
+          <label className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
+            <span className="text-amber-500">💡</span> Hint (Optional)
+          </label>
+          <textarea
+            value={hint}
+            onChange={(e) => setHint(e.target.value)}
+            placeholder="Add a helpful hint for when you are stuck..."
+            rows={2}
+            className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/10"
           />
         </div>
 

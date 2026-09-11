@@ -15,9 +15,9 @@ function requireStudentRole(role: string): NextResponse | null {
   return null;
 }
 
-const answerSchema = z.object({
+const progressSchema = z.object({
   cardId: z.string().min(1),
-  answer: z.string(),
+  selfRating: z.enum(["knew_it", "still_learning"]),
 });
 
 export async function POST(request: Request) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (roleBlock) return roleBlock;
 
   const body = await request.json();
-  const parsed = answerSchema.safeParse(body);
+  const parsed = progressSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -53,10 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Card not found." }, { status: 404 });
   }
 
-  // Case-insensitive trimmed comparison
-  const studentAnswer = parsed.data.answer.trim().toLowerCase();
-  const correctAnswer = card.back.trim().toLowerCase();
-  const isCorrect = studentAnswer === correctAnswer;
+  const isCorrect = parsed.data.selfRating === "knew_it";
 
   // Upsert progress
   const existing = await db.flashcardProgress.findUnique({
@@ -75,7 +72,7 @@ export async function POST(request: Request) {
         status: isCorrect ? "correct" : "incorrect",
         attemptCount: existing.attemptCount + 1,
         correctCount: isCorrect ? existing.correctCount + 1 : existing.correctCount,
-        lastAnswer: parsed.data.answer.trim(),
+        lastAnswer: parsed.data.selfRating,
         lastReviewedAt: new Date(),
       },
     });
@@ -87,7 +84,7 @@ export async function POST(request: Request) {
         status: isCorrect ? "correct" : "incorrect",
         attemptCount: 1,
         correctCount: isCorrect ? 1 : 0,
-        lastAnswer: parsed.data.answer.trim(),
+        lastAnswer: parsed.data.selfRating,
         lastReviewedAt: new Date(),
       },
     });
@@ -98,3 +95,4 @@ export async function POST(request: Request) {
     correctAnswer: card.back,
   });
 }
+

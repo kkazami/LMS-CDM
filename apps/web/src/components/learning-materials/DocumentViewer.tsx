@@ -149,11 +149,13 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   const isLink = type === "LINK";
   const fileExt = (fileName || url).split('.').pop()?.toLowerCase();
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '');
-  const isOffice = ['pptx', 'docx', 'xlsx', 'ppt', 'doc', 'xls'].includes(fileExt || '');
+  const isOffice = ['docx', 'xlsx', 'doc', 'xls', 'pptx', 'ppt'].includes(fileExt || '');
   const isText = ['txt', 'csv'].includes(fileExt || '');
   
   // If it's a link, we assume it's NOT a PDF. If it's a file, default to PDF if not something else.
   const isPdf = !isLink && !isImage && !isOffice && !isText;
+
+  const showPdfControls = isPdf;
 
   // Load text content if it's a text file
   useEffect(() => {
@@ -191,10 +193,10 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
     <div className="flex h-full flex-col md:flex-row gap-6">
       {/* Main Document Viewer */}
       <div className="flex-1 flex flex-col rounded-3xl bg-slate-100 dark:bg-[#0B0D13] border border-slate-200/80 dark:border-white/5 overflow-hidden shadow-inner">
-        {/* Toolbar - Only show pagination and zoom for PDFs */}
+        {/* Toolbar - Show pagination and zoom for PDFs and converted PPTXs */}
         <div className="flex items-center justify-between bg-white dark:bg-[#141721] px-4 py-3 border-b border-slate-200/80 dark:border-white/5">
           <div className="flex items-center gap-2">
-            {isPdf && (
+            {showPdfControls && (
               <>
                 <button
                   onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
@@ -215,7 +217,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                 </button>
               </>
             )}
-            {!isPdf && (
+            {!showPdfControls && (
               <span className="text-sm font-bold text-slate-700 dark:text-[#F0F2F8] flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#F97316]" />
                 {isLink ? "External Link Preview" : (fileName || "File Preview")}
@@ -260,7 +262,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
               <span className="text-sm font-semibold hidden sm:inline">Notes</span>
             </button>
             
-            {isPdf && (
+            {showPdfControls && (
               <>
                 <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
                 <button onClick={() => setScale((s) => Math.max(0.5, s - 0.1))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8] cursor-pointer">
@@ -342,7 +344,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             </div>
           )}
 
-          {/* 5. Office Files (Localhost fallback) */}
+          {/* 5. Office Files (DOCX, XLSX, PPTX) — Localhost fallback */}
           {isOffice && requiresPublicUrlForOffice && (
             <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-[#0B0D13]">
               <div className="bg-white dark:bg-[#141721] p-8 rounded-3xl shadow-xs border border-slate-200/80 dark:border-white/5 max-w-md">
@@ -378,7 +380,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             </div>
           )}
 
-          {/* 7. PDF Document */}
+          {/* 8. PDF Document */}
           {isPdf && (
             <div className="w-full flex justify-center p-4">
               <Document
