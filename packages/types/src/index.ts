@@ -15,3 +15,4 @@ export * from './gamification';
 export * from './material';
 export * from './notification';
 export * from './user-preferences';
+export * from './bridge';

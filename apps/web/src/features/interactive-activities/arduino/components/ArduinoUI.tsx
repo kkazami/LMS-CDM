@@ -7,6 +7,7 @@ import { arduinoSim } from "../utils/interpreter";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
 import { Play, Square, Terminal } from "lucide-react";
+import MonacoInit from "@/components/common/MonacoInit";
 
 export interface ArduinoUIProps {
   assignmentId: string;
@@ -57,6 +58,7 @@ export default function ArduinoUI({
 
   return (
     <>
+      <MonacoInit />
       {/* Active Wiring Hint overlay */}
       {wiringState.active && (
         <div className="absolute top-6 left-6 z-50 bg-blue-600 text-white px-4 py-2 rounded shadow-lg animate-pulse flex items-center gap-2">

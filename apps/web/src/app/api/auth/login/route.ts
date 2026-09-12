@@ -82,9 +82,10 @@ export async function POST(request: Request) {
     const session = await createSession(user.id);
 
     // Process Daily Login Rewards asynchronously / before responding
+    let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
     try {
       if (user.role === "STUDENT") {
-        await processLoginReward(user.id);
+        loginRewardResult = await processLoginReward(user.id);
       }
     } catch (rewardErr) {
       console.error("LOGIN_REWARD_ERROR", rewardErr);
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
       {
         message: "Login successful.",
         token: session.id,
+        expiresAt: session.expiresAt.toISOString(),
         user: {
           id: user.id,
           name: user.name,
@@ -108,6 +110,11 @@ export async function POST(request: Request) {
             name: instituteName,
           },
         },
+        rewardReceipt: loginRewardResult ? {
+          rewarded: loginRewardResult.rewarded,
+          streak: loginRewardResult.streak,
+          expEarned: loginRewardResult.rewarded ? 10 : 0,
+        } : null,
       },
       { status: 200 }
     );

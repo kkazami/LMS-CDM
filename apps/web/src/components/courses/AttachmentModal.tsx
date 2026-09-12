@@ -17,6 +17,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
+import { isMobileApp, pickNativeImage, pickNativeDocument } from "@/lib/mobile-bridge";
 
 // ─── Types ───
 
@@ -114,7 +115,7 @@ function AttachmentChip({
       <button
         type="button"
         onClick={onRemove}
-        className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all cursor-pointer"
+        className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center active:scale-95"
         aria-label={`Remove ${attachment.fileName || "attachment"}`}
       >
         <X className="h-3.5 w-3.5" />
@@ -193,6 +194,45 @@ export default function AttachmentModal({
     }
     // Reset input so the same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleNativeImagePick = async () => {
+    setUploadError("");
+    try {
+      const picked = await pickNativeImage();
+      if (!picked) return;
+      if (picked.base64) {
+        setUploading(true);
+        const byteCharacters = atob(picked.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/jpeg" });
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+        await uploadFile(file);
+      }
+    } catch {
+      setUploadError("Could not load selected photo.");
+      setUploading(false);
+    }
+  };
+
+  const handleNativeDocPick = async () => {
+    setUploadError("");
+    try {
+      const picked = await pickNativeDocument();
+      if (!picked) return;
+      setUploading(true);
+      const res = await fetch(picked.uri);
+      const blob = await res.blob();
+      const file = new File([blob], picked.name, { type: blob.type || "application/octet-stream" });
+      await uploadFile(file);
+    } catch {
+      setUploadError("Could not load selected document.");
+      setUploading(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -290,20 +330,52 @@ export default function AttachmentModal({
           <div className="space-y-3">
             {/* Mobile-optimized Direct Picker Button (sm:hidden) */}
             <div className="sm:hidden space-y-2">
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl text-white font-bold text-sm shadow-md transition-all active:scale-[0.98] cursor-pointer min-h-[52px]"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
-                {uploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-white" />
-                ) : (
-                  <Upload className="h-5 w-5 text-white" />
-                )}
-                <span>{uploading ? "Uploading File..." : "Choose File or Photo"}</span>
-              </button>
+              {isMobileApp() ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={handleNativeImagePick}
+                    className="flex items-center justify-center gap-2 py-3.5 px-3 rounded-2xl text-white font-bold text-xs shadow-md transition-all active:scale-[0.98] cursor-pointer min-h-[48px]"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4 text-white" />
+                    )}
+                    <span>Photo / Image</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={handleNativeDocPick}
+                    className="flex items-center justify-center gap-2 py-3.5 px-3 rounded-2xl text-white font-bold text-xs shadow-md transition-all active:scale-[0.98] cursor-pointer min-h-[48px] bg-slate-800 dark:bg-slate-700"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-white" />
+                    )}
+                    <span>Document / PDF</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-2xl text-white font-bold text-sm shadow-md transition-all active:scale-[0.98] cursor-pointer min-h-[52px]"
+                  style={{ backgroundColor: theme.colors.primary }}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-white" />
+                  )}
+                  <span>{uploading ? "Uploading File..." : "Choose File or Photo"}</span>
+                </button>
+              )}
               <p className="text-center text-[11px] text-slate-500 dark:text-[#8B92A5]">
                 Select from Photos, Files, or Documents (Max 25 MB)
               </p>

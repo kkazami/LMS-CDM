@@ -12,9 +12,11 @@ export default function FloatingStudyTimer() {
 
   const lastActivityRef = useRef(Date.now());
 
-  // Listen for user activity to reset AFK status
+  // Listen for user activity to reset AFK status (throttled to 5s to eliminate scroll jank)
   const handleActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
+    const now = Date.now();
+    if (now - lastActivityRef.current < 5000) return;
+    lastActivityRef.current = now;
     if (!isActive) setIsActive(true);
   }, [isActive]);
 
@@ -78,7 +80,7 @@ export default function FloatingStudyTimer() {
   const progressPercent = Math.min(Math.round((minutes / nextMilestoneMinutes) * 100), 100);
 
   return (
-    <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] left-3 lg:bottom-5 lg:left-5 z-40">
+    <div className="hidden lg:block fixed bottom-5 left-5 z-40">
       {/* Toast popup when reward unlocked */}
       {lastRewardMsg && (
         <div className="mb-2 p-3 bg-emerald-600 text-white text-xs font-bold rounded-2xl shadow-xl animate-in slide-in-from-bottom-2 duration-200 flex items-center gap-2">

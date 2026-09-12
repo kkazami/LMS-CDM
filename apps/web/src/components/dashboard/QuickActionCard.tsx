@@ -51,30 +51,31 @@ export function QuickActionCard({
             onClick();
           }
         }}
-        className="flex flex-col gap-2.5 rounded-2xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#141721] p-4 shadow-xs hover:shadow-md transition-shadow cursor-pointer block h-full"
+        className="flex flex-col gap-2 sm:gap-2.5 rounded-2xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#141721] p-3 sm:p-4 shadow-xs hover:shadow-md transition-shadow cursor-pointer block h-full overflow-hidden"
       >
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-1.5 min-w-0">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shrink-0"
             style={{ backgroundColor: `${color}14` }}
           >
-            <Icon className="h-[18px] w-[18px]" style={{ color }} aria-hidden="true" />
+            <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" style={{ color }} aria-hidden="true" />
           </div>
           {badge && (
             <span
-              className="rounded-full px-2 py-0.5 text-[11px] font-semibold font-mono tabular-nums"
+              className="rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold font-mono tabular-nums shrink-0 max-w-[85px] truncate"
               style={{ backgroundColor: bs.bg, color: bs.text }}
+              title={badge}
             >
               {badge}
             </span>
           )}
         </div>
-        <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
             {label}
           </p>
           {sublabel && (
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-[#8B92A5] truncate">
+            <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 dark:text-[#8B92A5] truncate">
               {sublabel}
             </p>
           )}

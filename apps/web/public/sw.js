@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lumina-lms-v1';
+const CACHE_NAME = 'cdm-lms-v1';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_ASSETS = [

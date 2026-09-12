@@ -191,7 +191,7 @@ export default function Sidebar({
             <span
               className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap transition-colors"
             >
-              Lumina LMS
+              CdM LMS
             </span>
             <span
               className="h-2 w-2 rounded-full shrink-0 animate-pulse"

@@ -7,6 +7,7 @@ import { CodeLabLanguage } from "../utils/starter-code";
 import { AlertTriangle, Code2 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { LANGUAGE_LABELS } from "../problems/types";
+import MonacoInit from "@/components/common/MonacoInit";
 
 /** Maps our language keys to Monaco editor language identifiers. */
 const MONACO_LANGUAGE_MAP: Record<CodeLabLanguage, string> = {
@@ -57,6 +58,7 @@ export function CodeEditor() {
 
   return (
     <div ref={editorContainerRef} className="flex flex-col h-full bg-white dark:bg-[#1e1e1e]">
+      <MonacoInit />
       {/* Subtle paste warning banner */}
       {pasteCount >= 1 && (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs animate-in fade-in slide-in-from-top-1 duration-200">

@@ -17,10 +17,16 @@ export async function middleware(request: NextRequest) {
   // The cookie is 'lumina_session'
   const sessionId = request.cookies.get("lumina_session")?.value;
 
-  // Dashboard routes are anything besides /login, /register, or the root /
-  // Let's assume all /something/something... are dashboard routes (e.g. /[institute]/...)
-  // Except for specific public routes.
-  const isPublicRoute = pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
+  // If hitting root '/' without a session, immediately redirect to login
+  if (pathname === "/") {
+    if (!sessionId) {
+      return NextResponse.redirect(new URL("/login?institute=ics", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Dashboard routes are anything besides /login, /register, or /forgot-password
+  const isPublicRoute = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
 
   if (!isPublicRoute && !sessionId) {
     // If we're on a non-public route without a session, we redirect to login

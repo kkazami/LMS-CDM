@@ -61,9 +61,9 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
         <button
           id="chatbot-bubble"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-40 flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer"
+          className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-[60] flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer touch-manipulation active:scale-95"
           style={{ backgroundColor: theme.colors.primary }}
-          aria-label="Open Lumina Assistant"
+          aria-label="Open CdM Assistant"
         >
           <MessageCircle className="h-6 w-6 text-white" />
           {/* Pulse animation */}
@@ -78,7 +78,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
       {isOpen && (
         <div
           id="chatbot-panel"
-          className="fixed inset-x-2 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] sm:inset-auto sm:bottom-6 sm:right-6 z-50 flex flex-col sm:w-90 h-[70vh] sm:h-125 rounded-2xl bg-white dark:bg-[#1A1D27] border border-slate-200 dark:border-white/10 shadow-2xl ring-1 ring-black/5 overflow-hidden"
+          className="fixed inset-x-2 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] sm:inset-auto sm:bottom-6 sm:right-6 z-[70] flex flex-col sm:w-90 h-[65vh] max-h-[calc(100dvh-130px)] sm:h-125 rounded-2xl bg-white dark:bg-[#1A1D27] border border-slate-200 dark:border-white/10 shadow-2xl ring-1 ring-black/5 overflow-hidden"
           style={{
             animation: "chatbot-slide-up 0.3s ease-out",
           }}
@@ -93,7 +93,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white">Lumina Assistant</h3>
+                <h3 className="text-sm font-semibold text-white">CdM Assistant</h3>
                 <p className="text-[10px] text-white/70">Always here to help</p>
               </div>
             </div>

@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
-import MonacoInit from "@/components/common/MonacoInit";
 import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
 export const viewport: Viewport = {
@@ -15,7 +14,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lumina LMS",
+  title: "CdM LMS",
   description: "Next-Generation Higher Education Learning Management System",
   manifest: "/manifest.json",
   icons: {
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lumina LMS",
+    title: "CdM LMS",
   },
   formatDetection: {
     telephone: false,
@@ -48,7 +47,6 @@ export default function RootLayout({
         <OfflineBanner />
         <InAppBrowserPrompt />
         <ServiceWorkerRegister />
-        <MonacoInit />
         {children}
       </body>
     </html>

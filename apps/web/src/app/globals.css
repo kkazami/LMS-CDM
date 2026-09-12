@@ -701,4 +701,13 @@ button:active:not(:disabled),
 }
 .pb-bottom-nav {
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem);
-}
+}
+
+/* ─── Mobile Viewport Form Controls (Prevent iOS Safari Auto-Zoom) ─── */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

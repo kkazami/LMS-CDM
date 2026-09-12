@@ -26,6 +26,7 @@ import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import SubmitBar from "../../shared/components/SubmitBar";
 import { toast } from "@/components/common/Toast";
+import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import {
   Terminal,
   Play,
@@ -454,6 +455,7 @@ export default function CodeLabScene({
       updateStateCheck("totalEditingMs", elapsedSeconds * 1000);
 
       if (data.score >= 60) {
+        triggerNativeHaptic("success");
         markComplete(true);
 
         const earned = data.grantedExp || (data.score === 100 ? 80 : 30);
@@ -474,13 +476,20 @@ export default function CodeLabScene({
             activityType: "codelab",
             variantSeed,
             startedAt,
-            completionTimeSeconds: elapsedSeconds,
-            attempts: 1,
-            stateCheck: {
-              level,
+            completedAt: new Date().toISOString(),
+            timeSpentSeconds: elapsedSeconds,
+            stateChecks: {
               language: fixedLanguage,
+              level,
+              pasteCount,
+              typingVelocityCharsPerMin: cpm,
               testPassCount: data.totalPassed,
               totalTestCases: data.totalCases,
+              hintUsed: hintWasShown || showHint,
+              errorTypes: collectedErrorTypes.join(","),
+              attemptChurnCount: failedRunCount,
+              firstRunMs: Math.max(firstRunDelta, 0),
+              totalEditingMs: elapsedSeconds * 1000,
             },
             score: data.score,
             maxScore: 100,
@@ -495,12 +504,14 @@ export default function CodeLabScene({
           setTimeout(() => setShowConfetti(false), 2500);
         }
       } else {
+        triggerNativeHaptic("error");
         incrementFailedRun();
         addErrorType("assertion");
         setHintShown();
         setShowHint(true);
       }
     } catch (err: unknown) {
+      triggerNativeHaptic("error");
       incrementFailedRun();
       addErrorType("runtime");
       const message = err instanceof Error ? err.message : "Evaluation failed";

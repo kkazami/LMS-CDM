@@ -58,7 +58,7 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-screen bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
+      className="min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--focus-ring": theme.colors.primary,
       } as React.CSSProperties}
@@ -124,7 +124,7 @@ export default function DashboardLayout({
             exp={exp}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
-          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(72px+env(safe-area-inset-bottom,0px))] lg:pb-8">
+          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {children}
             </AvatarProvider>
@@ -140,6 +140,8 @@ export default function DashboardLayout({
         instituteCode={instituteCode}
         primaryColor={theme.colors.primary}
         userRole={userRole}
+        userName={userName}
+        avatarUrl={avatarUrl ?? null}
       />
 
       {/* Gamification Badge Toasts */}
@@ -154,10 +156,8 @@ export default function DashboardLayout({
             expEarned={10}
             totalExp={exp}
           />
-          <div className="fixed right-4 z-50 flex flex-col gap-4 bottom-[calc(72px+env(safe-area-inset-bottom,0px))] lg:bottom-4 pointer-events-none *:pointer-events-auto items-end">
-            <FloatingStudyTimer />
-            <ChatbotWidget theme={theme} />
-          </div>
+          <FloatingStudyTimer />
+          <ChatbotWidget theme={theme} />
         </>
       )}
     </div>

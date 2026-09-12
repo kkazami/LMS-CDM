@@ -1,11 +1,17 @@
 {
   "expo": {
-    "name": "Lumina LMS",
+    "name": "CdM LMS",
     "slug": "lumina-lms",
     "scheme": "lumina-lms",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F1117"
+    },
     "platforms": [
       "ios",
       "android",
@@ -13,16 +19,35 @@
     ],
     "ios": {
       "bundleIdentifier": "com.lumina.lms",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "NSCameraUsageDescription": "CdM LMS needs camera access for profile photos and document scanning.",
+        "NSPhotoLibraryUsageDescription": "CdM LMS needs photo library access for uploading profile photos and assignments.",
+        "NSFaceIDUsageDescription": "Use Face ID for quick login to CdM LMS."
+      }
     },
     "android": {
-      "package": "com.lumina.lms"
+      "package": "com.lumina.lms",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F1117"
+      }
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
       "expo-font",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF7517"
+        }
+      ]
     ]
   }
 }

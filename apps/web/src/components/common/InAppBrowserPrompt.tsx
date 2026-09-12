@@ -24,6 +24,29 @@ function detectInAppBrowser(): InAppDetectionResult {
     return { isInApp: false, isAndroid: false, isIOS: false };
   }
 
+  // Never display in the official Lumina LMS Mobile Application
+  const win = window as unknown as { isLMSMobileApp?: boolean; __LMS_MOBILE_PLATFORM__?: string };
+  if (win.isLMSMobileApp || win.__LMS_MOBILE_PLATFORM__) {
+    return { isInApp: false, isAndroid: false, isIOS: false };
+  }
+
+  try {
+    if (
+      sessionStorage.getItem("lumina_is_mobile_app") === "true" ||
+      localStorage.getItem("lumina_is_mobile_app") === "true" ||
+      (typeof document !== "undefined" && document.cookie.includes("lumina_is_mobile_app=true"))
+    ) {
+      return { isInApp: false, isAndroid: false, isIOS: false };
+    }
+  } catch {
+    // ignore storage access errors
+  }
+
+  const ua = navigator.userAgent || navigator.vendor || "";
+  if (/LuminaLMS/i.test(ua) || /LMSMobile/i.test(ua)) {
+    return { isInApp: false, isAndroid: false, isIOS: false };
+  }
+
   // Developer preview override via URL query ?preview_iab=1 or global flag
   try {
     const searchParams = new URLSearchParams(window.location.search);
@@ -34,7 +57,6 @@ function detectInAppBrowser(): InAppDetectionResult {
     // Ignore URL parse errors
   }
 
-  const ua = navigator.userAgent || navigator.vendor || "";
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
@@ -258,7 +280,7 @@ export default function InAppBrowserPrompt() {
             {/* Content & Steps */}
             <div className="py-4 space-y-3.5 text-xs text-slate-600 dark:text-slate-300">
               <p className="leading-relaxed">
-                In-app browsers (like {detection.appName}) often restrict file downloads, 3D activity simulations, and session logins. For the complete Lumina experience:
+                In-app browsers (like {detection.appName}) often restrict file downloads, 3D activity simulations, and session logins. For the complete CdM LMS experience:
               </p>
 
               {/* Step list */}

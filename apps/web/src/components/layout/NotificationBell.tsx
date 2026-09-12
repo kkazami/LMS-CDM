@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Bell,
   Megaphone,
@@ -94,17 +94,28 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Close on outside click
+  const pathname = usePathname();
+
+  // Close panel whenever route changes
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Close on outside click or touch
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, { passive: true });
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [isOpen]);
 
   // Also fetch when opening the panel
@@ -173,15 +184,15 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
       <button
         id="notification-bell"
         onClick={handleToggle}
-        className="relative rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1.5 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
+        className="relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
         aria-label="Notifications"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Bell className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-1 -top-1 grid h-4 w-4 sm:h-5 sm:w-5 place-items-center rounded-full text-[9px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
+            className="absolute -right-1 -top-1 grid h-3.5 w-3.5 sm:h-5 sm:w-5 place-items-center rounded-full text-[8px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
             style={{ backgroundColor: theme.colors.primary }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -191,7 +202,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
 
       {/* Dropdown panel */}
       <div
-        className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white dark:bg-[#1A1D27] shadow-xl border border-slate-200/80 dark:border-white/10 ring-1 ring-black/5 dark:ring-0 transition-all duration-200 origin-top-right z-50 ${
+        className={`absolute -right-8 sm:right-0 mt-2 w-[min(340px,calc(100vw-24px))] sm:w-96 rounded-xl bg-white dark:bg-[#1A1D27] shadow-xl border border-slate-200/80 dark:border-white/10 ring-1 ring-black/5 dark:ring-0 transition-all duration-200 origin-top-right z-50 ${
           isOpen
             ? "opacity-100 scale-100 pointer-events-auto"
             : "opacity-0 scale-95 pointer-events-none"

@@ -2,8 +2,8 @@
   "name": "desktop",
   "private": true,
   "version": "1.0.0",
-  "productName": "Lumina LMS Admin Console",
-  "description": "Administrator desktop console for the Lumina Learning Management System.",
+  "productName": "CdM LMS Admin Console",
+  "description": "Administrator desktop console for CdM LMS.",
   "main": "electron/main.ts",
   "scripts": {
     "dev": "electron -r tsx electron/main.ts",

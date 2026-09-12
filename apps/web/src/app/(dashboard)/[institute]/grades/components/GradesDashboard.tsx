@@ -200,11 +200,11 @@ export default function GradesDashboard({
                       >
                         <Icon className="h-4 w-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
                           {row.itemTitle}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono">
+                        <p className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono truncate">
                           {row.courseCode} · {row.itemType === "ASSIGNMENT" ? "Assignment" : "Quiz"}
                         </p>
                       </div>

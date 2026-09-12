@@ -8,6 +8,8 @@ export interface Course {
   room: string | null;
   isArchived: boolean;
   instructorName: string | null;
+  description?: string | null;
+  studentCount?: number;
   enrolledCount?: number;
   displayOrderIndex?: number;
   coverImage?: string | null;

@@ -29,7 +29,7 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
     {
       id: "welcome",
       role: "bot",
-      text: "👋 Hi! I'm the Lumina Assistant. Ask me about grades, assignments, announcements, courses, or anything else you need help with!",
+      text: "👋 Hi! I'm the CdM Assistant. Ask me about grades, assignments, announcements, courses, or anything else you need help with!",
       timestamp: new Date(),
     },
   ]);

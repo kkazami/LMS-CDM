@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 interface CardProps {
@@ -7,7 +7,7 @@ interface CardProps {
   subtitle?: string;
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   themedBorder?: boolean;
 }
 
