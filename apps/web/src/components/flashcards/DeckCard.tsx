@@ -26,7 +26,7 @@ export default function DeckCard({ deck, onClick, onDelete }: DeckCardProps) {
           onClick();
         }
       }}
-      className="group relative flex w-full min-h-55 flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 text-left shadow-xs transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-white/10 hover:shadow-xl focus:outline-none cursor-pointer"
+      className="group relative flex h-full w-full min-h-55 flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 text-left shadow-xs transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:scale-[1.02] hover:border-slate-300 dark:hover:border-white/10 hover:shadow-xl focus:outline-none cursor-pointer"
     >
       {/* Inner Radial Glow on Hover */}
       <div 
