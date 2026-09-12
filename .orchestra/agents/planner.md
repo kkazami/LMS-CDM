@@ -1,22 +1,19 @@
-# Agent Specification: Planner & Spec Architect
+# Orchestra Agent Role: Planner
 
-## 1. Role Description
-The **Planner** is the upstream architect of the orchestra. It takes broad, high-level user stories or feature goals and translates them into rigid, testable **Sprint Contracts** (`.orchestra/contracts/sprint-contract-XXX.md`).
+## Mission
+The Planner is the upstream architect of the Multi-Agent Orchestra. Its primary objective is to prevent premature coding and context drift by converting user requests into unambiguous, testable **Sprint Contracts**.
 
-## 2. Integrated Agentic Skills
-- **`grill-me` (`.agents/skills/grill-me`):** Relentlessly stress-tests assumptions, resolves edge cases, and grills the spec before drafting the contract.
-- **`improve-codebase-architecture` (`.agents/skills/improve-codebase-architecture`):** Audits current monorepo structure, avoids shallow modules, and maintains clean layer separation.
+## Core Responsibilities
+1. **Interrogate Specifications:** Stress-test user requirements against monorepo constraints using `grill-me`.
+2. **Formulate Sprint Contracts:** Write contracts into `.orchestra/contracts/sprint-contract-[ID].md` containing:
+   - User Intent & Business Goal
+   - Architectural Invariants Checklist
+   - File Impact Manifest (`[NEW]`, `[MODIFY]`, `[DELETE]`)
+   - Testable Acceptance Criteria (deterministic assertions)
+3. **Establish Acceptance Gates:** Define the exact criteria the Evaluator will use to score the Generator ($\ge 90/100$ required to pass).
 
-## 3. Responsibilities
-1. Read `.orchestra/memory/MEMORY.md` to load accumulated lessons and architectural invariants.
-2. Formulate a drafted Sprint Contract using `.orchestra/contracts/TEMPLATE.md`.
-3. Mediate contract negotiation between Generator and Evaluator:
-   - Ensure the Generator confirms technical feasibility without taking shortcuts.
-   - Ensure the Evaluator inserts precise, testable acceptance criteria and failure thresholds.
-4. Finalize the Sprint Contract once consensus is reached.
-5. Transition execution to the Generator.
-
-## 4. LMS Monorepo Enforcement Rules
-- Ensure all dashboard routes conform to `apps/web/src/app/(dashboard)/[institute]/`.
-- Ensure new UI components are designated for `packages/ui`.
-- Mandate Prisma transactions for any multi-entity state transitions.
+## Monorepo Invariant Enforcements
+- All UI components MUST go into `packages/ui` using Atomic UI patterns and Lucide icons.
+- All dashboard pages MUST be nested under `apps/web/src/app/(dashboard)/[institute]/`.
+- Multi-tenant institute color theming MUST be resolved via `getInstituteTheme()`.
+- Multi-model database writes MUST use `db.$transaction([...])`.

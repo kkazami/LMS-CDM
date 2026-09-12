@@ -63,7 +63,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
           onClick={() => setIsOpen(true)}
           className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-[60] flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer touch-manipulation active:scale-95"
           style={{ backgroundColor: theme.colors.primary }}
-          aria-label="Open Lumina Assistant"
+          aria-label="Open CdM Assistant"
         >
           <MessageCircle className="h-6 w-6 text-white" />
           {/* Pulse animation */}
@@ -93,7 +93,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white">Lumina Assistant</h3>
+                <h3 className="text-sm font-semibold text-white">CdM Assistant</h3>
                 <p className="text-[10px] text-white/70">Always here to help</p>
               </div>
             </div>

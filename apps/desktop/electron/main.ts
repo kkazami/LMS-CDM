@@ -27,7 +27,7 @@ function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    title: 'Lumina LMS — Administrator Console',
+    title: 'CdM LMS — Administrator Console',
     ...(hasIcon ? { icon: iconPath } : {}),
     backgroundColor: '#0d0f17',
     show: false,

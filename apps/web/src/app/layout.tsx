@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lumina LMS",
+  title: "CdM LMS",
   description: "Next-Generation Higher Education Learning Management System",
   manifest: "/manifest.json",
   icons: {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lumina LMS",
+    title: "CdM LMS",
   },
   formatDetection: {
     telephone: false,

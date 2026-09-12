@@ -40,7 +40,7 @@ export default function TeacherMoreScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out of Lumina LMS?', [
+    Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out',

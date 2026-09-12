@@ -22,7 +22,7 @@ export default function Index() {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.loadingBox}>
-          <Text style={[styles.brandTitle, { color: theme.colors.primary }]}>LUMINA</Text>
+          <Text style={[styles.brandTitle, { color: theme.colors.primary }]}>CdM LMS</Text>
           <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
             Learning Management System
           </Text>

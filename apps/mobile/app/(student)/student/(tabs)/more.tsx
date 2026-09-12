@@ -41,7 +41,7 @@ export default function StudentMoreScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out of Lumina LMS?', [
+    Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out',
@@ -199,7 +199,7 @@ export default function StudentMoreScreen() {
               <View style={styles.menuItemText}>
                 <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Institute Code</Text>
                 <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
-                  {user?.institute?.code?.toUpperCase() || 'ICS'} - Lumina LMS Mobile v1.0.0
+                  {user?.institute?.code?.toUpperCase() || 'ICS'} - CdM LMS Mobile v1.0.0
                 </Text>
               </View>
             </View>

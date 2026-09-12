@@ -167,7 +167,7 @@ export default function LoginForm({
       </Button>
 
       <div className="flex items-center justify-between gap-3 text-sm text-gray-600">
-        <span>{isDesktopMode ? "New Administrator?" : "New to Lumina LMS?"}</span>
+        <span>{isDesktopMode ? "New Administrator?" : "New to CdM LMS?"}</span>
         <Link
           href={registerLink}
           className="font-medium hover:underline"

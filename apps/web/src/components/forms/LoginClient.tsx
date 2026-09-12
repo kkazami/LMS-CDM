@@ -136,7 +136,7 @@ export default function LoginClient({
             )}
           </div>
           <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            {isDesktopAdminMode ? "Lumina LMS — Desktop Console" : "Lumina LMS Portal"}
+            {isDesktopAdminMode ? "CdM LMS — Desktop Console" : "CdM LMS Portal"}
           </h1>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {theme.name}
@@ -146,7 +146,7 @@ export default function LoginClient({
         {activeUser ? (
           <Card
             title="Welcome Back"
-            description="You are currently signed into Lumina LMS."
+            description="You are currently signed into CdM LMS."
           >
             <div className="space-y-6 pt-2 text-center">
               <div className="flex flex-col items-center gap-3">

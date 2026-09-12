@@ -85,9 +85,9 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
           <WifiOff size={36} color="#EF4444" />
         </View>
 
-        <Text style={styles.title}>Connecting to Lumina LMS</Text>
+        <Text style={styles.title}>Connecting to CdM LMS</Text>
         <Text style={styles.subtitle}>
-          Unable to establish a connection with the Lumina LMS web server. Ensure Next.js is running on your computer.
+          Unable to establish a connection with the CdM LMS web server. Ensure Next.js is running on your computer.
         </Text>
 
         {targetUrl && (

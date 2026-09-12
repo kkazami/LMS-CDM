@@ -127,13 +127,13 @@ export function setupMenu(mainWindow: BrowserWindow) {
       label: 'Help',
       submenu: [
         {
-          label: 'About Lumina LMS Admin Console',
+          label: 'About CdM LMS Admin Console',
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'Lumina LMS — Administrator Console',
-              message: 'Lumina LMS Desktop Admin',
-              detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing the Lumina Learning Management System.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
+              title: 'CdM LMS — Administrator Console',
+              message: 'CdM LMS Desktop Admin',
+              detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing CdM LMS.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
             });
           },
         },

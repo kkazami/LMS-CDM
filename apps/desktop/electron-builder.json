@@ -1,6 +1,6 @@
 {
   "appId": "com.lumina.lms.admin",
-  "productName": "Lumina LMS Admin",
+  "productName": "CdM LMS Admin",
   "directories": {
     "output": "dist"
   },

@@ -1,5 +1,5 @@
 /**
- * Lumina LMS Standardized Motion Tokens
+ * CdM LMS Standardized Motion Tokens
  * Enforces consistent timing curves, physics springs, and durations across all UI components.
  */
 

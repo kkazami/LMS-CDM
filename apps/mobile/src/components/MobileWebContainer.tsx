@@ -173,7 +173,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
           let success = false;
           if (hasHardware && isEnrolled) {
             const authRes = await LocalAuthentication.authenticateAsync({
-              promptMessage: 'Authenticate to access Lumina LMS',
+              promptMessage: 'Authenticate to access CdM LMS',
               fallbackLabel: 'Use Passcode',
             }).catch(() => ({ success: false }));
             success = authRes.success;
@@ -350,7 +350,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
       <View style={styles.container}>
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FF7517" />
-          <Text style={styles.loadingText}>Starting Lumina LMS...</Text>
+          <Text style={styles.loadingText}>Starting CdM LMS...</Text>
         </View>
       </View>
     );
@@ -411,7 +411,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
       {isLoading && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <ActivityIndicator size="large" color="#FF7517" />
-          <Text style={styles.loadingText}>Connecting to Lumina LMS...</Text>
+          <Text style={styles.loadingText}>Connecting to CdM LMS...</Text>
         </View>
       )}
     </View>

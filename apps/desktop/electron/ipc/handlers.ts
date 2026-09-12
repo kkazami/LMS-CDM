@@ -36,7 +36,7 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
 
     const result = await dialog.showSaveDialog(mainWindow, {
       title: 'Save as PDF',
-      defaultPath: "lumina-admin-report-" + new Date().toISOString().slice(0, 10) + ".pdf",
+      defaultPath: "cdm-lms-admin-report-" + new Date().toISOString().slice(0, 10) + ".pdf",
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     });
 

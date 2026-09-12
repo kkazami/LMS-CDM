@@ -16,12 +16,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Password must be at least 6 characters long." }, { status: 400 });
     }
 
+    const cleanOtp = String(otp).trim().replace(/\s+/g, "");
+
+    if (!cleanOtp) {
+      return NextResponse.json({ message: "OTP code is required." }, { status: 400 });
+    }
+
     const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (!user) {
       return NextResponse.json({ message: "Invalid OTP or email." }, { status: 400 });
+    }
+
+    if (user.isActive === false) {
+      return NextResponse.json(
+        { message: "This account has been deactivated. Please contact an administrator." },
+        { status: 403 }
+      );
     }
 
     // Find the latest active OTP for this user
@@ -41,7 +54,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "OTP has expired. Please request a new one." }, { status: 400 });
     }
 
-    const isValidOtp = await compare(otp, latestOtpRecord.otpCodeHash);
+    const isValidOtp = await compare(cleanOtp, latestOtpRecord.otpCodeHash);
 
     if (!isValidOtp) {
       return NextResponse.json({ message: "Invalid OTP." }, { status: 400 });

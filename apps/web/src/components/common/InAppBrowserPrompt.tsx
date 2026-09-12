@@ -280,7 +280,7 @@ export default function InAppBrowserPrompt() {
             {/* Content & Steps */}
             <div className="py-4 space-y-3.5 text-xs text-slate-600 dark:text-slate-300">
               <p className="leading-relaxed">
-                In-app browsers (like {detection.appName}) often restrict file downloads, 3D activity simulations, and session logins. For the complete Lumina experience:
+                In-app browsers (like {detection.appName}) often restrict file downloads, 3D activity simulations, and session logins. For the complete CdM LMS experience:
               </p>
 
               {/* Step list */}

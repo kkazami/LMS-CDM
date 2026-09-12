@@ -97,7 +97,7 @@ export default function LoginScreen() {
             <View style={[styles.brandLogo, { backgroundColor: currentTheme.colors.primary }]}>
               <GraduationCap size={36} color="#FFFFFF" />
             </View>
-            <Text style={[styles.appName, { color: currentTheme.colors.text }]}>LUMINA LMS</Text>
+            <Text style={[styles.appName, { color: currentTheme.colors.text }]}>CdM LMS</Text>
             <Text style={[styles.instituteSubheading, { color: currentTheme.colors.primary }]}>
               {currentTheme.name}
             </Text>
@@ -164,7 +164,7 @@ export default function LoginScreen() {
 
             <Input
               label="Email Address"
-              placeholder="e.g. user@lumina.edu"
+              placeholder="e.g. user@cdm.edu.ph"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -198,7 +198,7 @@ export default function LoginScreen() {
           {/* Quick Registration Link */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: currentTheme.colors.textSecondary }]}>
-              New student at Lumina?
+              New student at CdM LMS?
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}
