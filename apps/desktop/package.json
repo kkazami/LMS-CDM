@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "productName": "CdM LMS Admin Console",
-  "description": "Administrator desktop console for the CdM Learning Management System.",
+  "description": "Administrator desktop console for CdM LMS.",
   "main": "electron/main.ts",
   "scripts": {
     "dev": "electron -r tsx electron/main.ts",

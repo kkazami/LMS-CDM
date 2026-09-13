@@ -15,7 +15,8 @@
     "build:web": "prisma generate && pnpm --filter web build",
     "build:mobile": "pnpm --filter mobile build",
     "build:desktop": "pnpm --filter desktop build",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "harness:check": "tsx scripts/harness-check.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.21.0",

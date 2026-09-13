@@ -58,10 +58,14 @@ export default function FlashcardDashboard({
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newTags, setNewTags] = useState("");
-  const [newColor, setNewColor] = useState(DECK_COLORS[0]);
+  const [newColor, setNewColor] = useState(theme.colors.primary);
   const [newCourseId, setNewCourseId] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // Delete confirmation state
+  const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filtered decks
   const filteredDecks = useMemo(() => {
@@ -86,7 +90,7 @@ export default function FlashcardDashboard({
 
   const handleCreateDeck = async () => {
     if (!newTitle.trim()) {
-      setCreateError("Deck title is required.");
+      setCreateError("Flashcard title is required.");
       return;
     }
 
@@ -131,24 +135,32 @@ export default function FlashcardDashboard({
     setNewTitle("");
     setNewDescription("");
     setNewTags("");
-    setNewColor(DECK_COLORS[0]);
+    setNewColor(theme.colors.primary);
     setNewCourseId("");
     setCreateError(null);
   };
 
-  const handleDeleteDeck = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this flashcard? This action cannot be undone.")) return;
+  const confirmDeleteDeck = async () => {
+    if (!deckToDelete) return;
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(`/api/flashcards/decks?id=${id}`, {
+      const res = await fetch(`/api/flashcards/decks?id=${deckToDelete}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete deck");
-      setDecks((prev) => prev.filter((d) => d.id !== id));
-      if (activeDeck?.id === id) setActiveDeck(null);
+      setDecks((prev) => prev.filter((d) => d.id !== deckToDelete));
+      if (activeDeck?.id === deckToDelete) setActiveDeck(null);
+      setDeckToDelete(null);
     } catch {
       // Handle error
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteDeck = (id: string) => {
+    setDeckToDelete(id);
   };
 
   const handleDeckUpdated = (updated: FlashcardDeck) => {
@@ -220,7 +232,7 @@ export default function FlashcardDashboard({
           <div className="shrink-0 flex items-center gap-3">
             <button
               onClick={() => setCreateOpen(true)}
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-11"
               style={{ backgroundColor: theme.colors.primary }}
             >
               <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
@@ -239,7 +251,7 @@ export default function FlashcardDashboard({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search your flashcards by title, topic, or tags..."
-            className="w-full min-h-[48px] rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-3.5 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
+            className="w-full min-h-12 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-3.5 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
           />
           {searchQuery && (
             <button
@@ -253,7 +265,7 @@ export default function FlashcardDashboard({
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
+          className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
             showFilters || filterCourse
               ? ""
               : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-[#181B26] hover:border-slate-300 dark:hover:border-white/10"
@@ -303,7 +315,7 @@ export default function FlashcardDashboard({
             {filterCourse && (
               <button
                 onClick={() => setFilterCourse("")}
-                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors cursor-pointer min-h-[44px]"
+                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors cursor-pointer min-h-11"
                 style={{ color: theme.colors.primary }}
               >
                 Clear filter
@@ -336,7 +348,7 @@ export default function FlashcardDashboard({
           {!searchQuery && !filterCourse && (
             <button
               onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer min-h-[44px]"
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer min-h-11"
               style={{ backgroundColor: theme.colors.primary }}
             >
               <Plus className="h-5 w-5" />
@@ -438,27 +450,7 @@ export default function FlashcardDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
-            <label className="mb-4 block text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-              Accent Color
-            </label>
-            <div className="flex flex-wrap gap-3">
-              {DECK_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setNewColor(c)}
-                  className={`h-10 w-10 rounded-full border-[3px] transition-all duration-300 cursor-pointer ${
-                    newColor === c
-                      ? "border-slate-900 dark:border-white scale-110 shadow-lg"
-                      : "border-transparent hover:scale-110 hover:shadow-md"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  aria-label={`Select color ${c}`}
-                />
-              ))}
-            </div>
-          </div>
+
 
           <div className="flex items-center justify-end gap-3 pt-4">
             <button
@@ -467,7 +459,7 @@ export default function FlashcardDashboard({
                 setCreateOpen(false);
                 resetCreateForm();
               }}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-[44px]"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-11"
             >
               Cancel
             </button>
@@ -475,10 +467,43 @@ export default function FlashcardDashboard({
               type="button"
               onClick={handleCreateDeck}
               disabled={creating}
-              className="rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer min-h-[44px]"
+              className="rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer min-h-11"
               style={{ backgroundColor: theme.colors.primary }}
             >
               {creating ? "Creating..." : "Create Flashcard"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={!!deckToDelete}
+        title="Delete Flashcard"
+        onClose={() => {
+          if (!isDeleting) setDeckToDelete(null);
+        }}
+      >
+        <div className="space-y-6">
+          <p className="text-sm text-slate-600 dark:text-[#8B92A5]">
+            Are you sure you want to delete this entire flashcard? All cards inside it will be permanently removed. This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setDeckToDelete(null)}
+              disabled={isDeleting}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteDeck}
+              disabled={isDeleting}
+              className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+            >
+              {isDeleting ? "Deleting..." : "Delete Flashcard"}
             </button>
           </div>
         </div>

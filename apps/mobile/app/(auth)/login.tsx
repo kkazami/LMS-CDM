@@ -198,7 +198,7 @@ export default function LoginScreen() {
           {/* Quick Registration Link */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: currentTheme.colors.textSecondary }]}>
-              New student at CdM?
+              New student at CdM LMS?
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}

@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "CdM LMS",
-    "slug": "cdm-lms",
-    "scheme": "cdm-lms",
+    "slug": "lumina-lms",
+    "scheme": "lumina-lms",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",

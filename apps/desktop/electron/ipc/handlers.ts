@@ -35,8 +35,8 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
     });
 
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: "Export File",
-      defaultPath: "cdm-admin-report-" + new Date().toISOString().slice(0, 10) + ".pdf",
+      title: 'Save as PDF',
+      defaultPath: "cdm-lms-admin-report-" + new Date().toISOString().slice(0, 10) + ".pdf",
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     });
 

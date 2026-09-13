@@ -133,7 +133,7 @@ export function setupMenu(mainWindow: BrowserWindow) {
               type: 'info',
               title: 'CdM LMS — Administrator Console',
               message: 'CdM LMS Desktop Admin',
-              detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing the CdM Learning Management System.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
+              detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing CdM LMS.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
             });
           },
         },

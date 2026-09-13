@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     // Expires in 15 mins
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    await db.passwordResetOtp.create({
+    const otpRecord = await db.passwordResetOtp.create({
       data: {
         userId: user.id,
         otpCodeHash,
@@ -59,27 +59,57 @@ export async function POST(request: Request) {
       },
     });
 
+    if (process.env.NODE_ENV !== "production") {
+      console.log("=================================================");
+      console.log(`🔑 [DEV OTP] Code for ${user.email}: ${otpCode}`);
+      console.log("=================================================");
+    }
+
     // Send email
     const emailHtml = `
-      <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto;">
-        <h2>Password Reset Request</h2>
-        <p>Hello ${user.name},</p>
-        <p>You requested a password reset for your account. Please use the following 6-digit verification code to complete the process.</p>
-        <div style="margin: 32px 0; padding: 24px; background: #f3f4f6; border-radius: 8px; text-align: center;">
-          <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #1f2937;">${otpCode}</span>
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1f2937;">
+        <h2 style="color: #111827; margin-bottom: 8px;">Password Reset Request</h2>
+        <p>Hello ${user.name || "Student"},</p>
+        <p>You requested a password reset for your CdM LMS account. Please use the following 6-digit verification code to complete the process:</p>
+        <div style="margin: 28px 0; padding: 20px; background: #f3f4f6; border-radius: 12px; text-align: center;">
+          <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #1f2937; font-family: monospace;">${otpCode}</span>
         </div>
-        <p>This code will expire in 15 minutes.</p>
-        <p>If you did not request this, you can safely ignore this email.</p>
+        <p style="color: #6b7280; font-size: 14px;">This code will expire in 15 minutes.</p>
+        <p style="color: #6b7280; font-size: 14px;">If you did not request this, you can safely ignore this email.</p>
       </div>
     `;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Your Password Reset Code",
-      html: emailHtml,
-    });
+    try {
+      const emailResult = await sendEmail({
+        to: user.email,
+        subject: "CdM LMS — Your Password Reset Code",
+        html: emailHtml,
+      });
 
-    return NextResponse.json({ message: "If that email exists, an OTP has been sent." }, { status: 200 });
+      const isDevFallback = emailResult?.deliveredVia === "console_fallback" || emailResult?.deliveredVia === "console";
+
+      return NextResponse.json(
+        {
+          message: isDevFallback
+            ? "Reset code generated! (Dev mode: Check server terminal for code)"
+            : "If that email exists, an OTP has been sent.",
+          devOtp: process.env.NODE_ENV !== "production" ? otpCode : undefined,
+        },
+        { status: 200 }
+      );
+    } catch (emailError: any) {
+      // If email sending failed completely in production, remove the newly created OTP
+      // so the user does NOT get locked out by rate limiting on delivery failures
+      await db.passwordResetOtp.delete({
+        where: { id: otpRecord.id },
+      }).catch(() => {});
+
+      console.error("FORGOT_PASSWORD_EMAIL_FAILED", emailError);
+      return NextResponse.json(
+        { message: "Unable to send email right now. Please check your SMTP configuration or try again later." },
+        { status: 502 }
+      );
+    }
   } catch (error) {
     console.error("FORGOT_PASSWORD_ERROR", error);
     return NextResponse.json(

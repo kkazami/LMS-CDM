@@ -5,6 +5,7 @@ import type { FlashcardCard, FlashcardDeck } from "@/lib/lms-types";
 import CardEditorModal from "./CardEditorModal";
 import StudyMode from "./StudyMode";
 import ProgressRing from "./ProgressRing";
+import Modal from "@/components/common/Modal";
 import {
   ArrowLeft,
   Plus,
@@ -37,6 +38,10 @@ export default function DeckDetailView({
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  
+  // Delete confirmation modals
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
+  const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
 
   const fetchCards = async () => {
     try {
@@ -71,7 +76,7 @@ export default function DeckDetailView({
     });
   };
 
-  const handleDeleteSelected = async () => {
+  const confirmDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     setDeleting(true);
 
@@ -86,6 +91,7 @@ export default function DeckDetailView({
       setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       setSelectedIds(new Set());
       setBatchMode(false);
+      setConfirmBatchDelete(false);
 
       onDeckUpdated({
         ...deck,
@@ -98,24 +104,38 @@ export default function DeckDetailView({
     }
   };
 
-  const handleDeleteCard = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this flashcard?")) return;
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    setConfirmBatchDelete(true);
+  };
+
+  const confirmDeleteCard = async () => {
+    if (!cardToDelete) return;
+    setDeleting(true);
     
     try {
-      const res = await fetch(`/api/flashcards/cards?ids=${id}`, {
+      const res = await fetch(`/api/flashcards/cards?ids=${cardToDelete}`, {
         method: "DELETE",
       });
 
       if (!res.ok) throw new Error("Failed to delete card");
 
-      setCards((prev) => prev.filter((c) => c.id !== id));
+      setCards((prev) => prev.filter((c) => c.id !== cardToDelete));
+      setCardToDelete(null);
+      
       onDeckUpdated({
         ...deck,
         cardCount: Math.max(0, cards.length - 1),
       });
     } catch {
       // Handle error silently or show a toast
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleDeleteCard = (id: string) => {
+    setCardToDelete(id);
   };
 
   const toggleSelect = (id: string) => {
@@ -411,6 +431,72 @@ export default function DeckDetailView({
         editingCard={editingCard}
         onSaved={handleCardSaved}
       />
+
+      {/* Delete Single Card Modal */}
+      <Modal
+        open={!!cardToDelete}
+        title="Delete Flashcard"
+        onClose={() => {
+          if (!deleting) setCardToDelete(null);
+        }}
+      >
+        <div className="space-y-6">
+          <p className="text-sm text-slate-600 dark:text-[#8B92A5]">
+            Are you sure you want to delete this flashcard? This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setCardToDelete(null)}
+              disabled={deleting}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteCard}
+              disabled={deleting}
+              className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+            >
+              {deleting ? "Deleting..." : "Delete Card"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Batch Modal */}
+      <Modal
+        open={confirmBatchDelete}
+        title="Delete Multiple Flashcards"
+        onClose={() => {
+          if (!deleting) setConfirmBatchDelete(false);
+        }}
+      >
+        <div className="space-y-6">
+          <p className="text-sm text-slate-600 dark:text-[#8B92A5]">
+            Are you sure you want to delete {selectedIds.size} flashcards? This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setConfirmBatchDelete(false)}
+              disabled={deleting}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteSelected}
+              disabled={deleting}
+              className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+            >
+              {deleting ? "Deleting..." : `Delete ${selectedIds.size} Cards`}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Shield, Maximize2 } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
+import ConvertFlashcardsModal from "@/components/courses/ConvertFlashcardsModal";
 import type { InstituteTheme } from "@/lib/theme";
 import { useQuizIntegrityMonitor } from "@/hooks/useQuizIntegrityMonitor";
 import IntegrityFeedbackToast from "@/components/courses/IntegrityFeedbackToast";
@@ -71,16 +73,24 @@ function formatDueDate(dueDate: Date | null): string {
   });
 }
 
+// Check if a file extension supports flashcard conversion
+function isConvertibleFile(fileName: string): boolean {
+  const ext = fileName.toLowerCase();
+  return ext.endsWith(".pdf") || ext.endsWith(".pptx") || ext.endsWith(".docx") || ext.endsWith(".txt");
+}
+
 function AttachmentChip({ 
   attachment, 
   item, 
   instituteCode, 
-  isStudent 
+  isStudent,
+  onConvertClick,
 }: { 
   attachment: Attachment;
   item: SyllabusItem;
   instituteCode: string;
   isStudent: boolean;
+  onConvertClick?: (attachmentId: string, attachmentName: string) => void;
 }) {
   const isLink = attachment.type === "LINK";
   const Icon = isLink ? Link2 : FileText;
@@ -90,28 +100,48 @@ function AttachmentChip({
     ? `/${instituteCode}/learning-materials/${item.course.id}/${item.id}/read?attachmentId=${attachment.id}`
     : attachment.url;
 
+  // Show the convert button only for MATERIAL items with supported file types
+  const showConvertBtn = isStudent && item.type === "MATERIAL" && !isLink && isConvertibleFile(attachment.fileName);
+
   // Use Link for internal navigation, otherwise use 'a'
   const Component = isMaterialFile ? Link : "a";
 
   return (
-    <Component
-      href={href}
-      target={isMaterialFile ? undefined : "_blank"}
-      rel={isMaterialFile ? undefined : "noopener noreferrer"}
-      download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
-      className="flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:border-orange-500/30 hover:shadow-xs transition-all group"
-    >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] transition-colors">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate">
-          {attachment.fileName || attachment.url}
-        </p>
-        <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{isLink ? "Link" : "File"}</p>
-      </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-[#F97316] transition-colors" />
-    </Component>
+    <div className="flex items-center gap-2">
+      <Component
+        href={href}
+        target={isMaterialFile ? undefined : "_blank"}
+        rel={isMaterialFile ? undefined : "noopener noreferrer"}
+        download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
+        className="flex-1 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:border-orange-500/30 hover:shadow-xs transition-all group"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] transition-colors">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate">
+            {attachment.fileName || attachment.url}
+          </p>
+          <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{isLink ? "Link" : "File"}</p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-[#F97316] transition-colors" />
+      </Component>
+
+      {/* Convert to Flashcards button — only for MATERIAL file attachments */}
+      {showConvertBtn && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onConvertClick?.(attachment.id, attachment.fileName);
+          }}
+          title="Convert to Flashcards"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
+        >
+          <Sparkles className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -168,6 +198,7 @@ export default function AssignmentDetailClient({
           </Link>
           <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300 dark:text-white/10 shrink-0" />
           <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">
+
             {item.title}
           </span>
         </div>
@@ -244,6 +275,7 @@ export default function AssignmentDetailClient({
                       item={item}
                       instituteCode={instituteCode}
                       isStudent={isStudent}
+                      onConvertClick={(id, name) => setConvertModal({ attachmentId: id, attachmentName: name })}
                     />
                   ))}
                 </div>

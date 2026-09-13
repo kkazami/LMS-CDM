@@ -1,6 +1,6 @@
-# LUMINA LMS — EXPO MOBILE APPLICATION COMPREHENSIVE SPECIFICATION & CONTEXT DOSSIER FOR GPT ASTRA
+# CDM LMS — EXPO MOBILE APPLICATION COMPREHENSIVE SPECIFICATION & CONTEXT DOSSIER FOR GPT ASTRA
 
-> **Purpose of this Document**: This document contains all architectural context, data models, API endpoints, design systems, and feature specifications required by **GPT Astra** to formulate a detailed, production-ready, step-by-step implementation plan for the **Lumina LMS Expo Mobile Application (`apps/mobile`)**.
+> **Purpose of this Document**: This document contains all architectural context, data models, API endpoints, design systems, and feature specifications required by **GPT Astra** to formulate a detailed, production-ready, step-by-step implementation plan for the **CdM LMS Expo Mobile Application (`apps/mobile`)**.
 >
 > **Target Roles**: **Student View** and **Instructor / Professor View** ONLY. *(The Administrator View is strictly web/desktop only and MUST NOT be included in this mobile application).*
 >
@@ -117,7 +117,7 @@ Physical mobile devices and emulators connect dynamically to the development ser
 
 ## 3. MULTI-INSTITUTE IDENTITY & DYNAMIC THEMING SYSTEM
 
-Lumina LMS is institute-differentiated. The mobile app UI dynamically inherits the user's institute palette, supporting both **Light Mode** and **Dark Mode**.
+CdM LMS is institute-differentiated. The mobile app UI dynamically inherits the user's institute palette, supporting both **Light Mode** and **Dark Mode**.
 
 ### 3.1 Institute Palettes (`apps/mobile/src/lib/theme.ts`)
 
@@ -592,7 +592,7 @@ When presenting this dossier to GPT Astra, use the following prompt:
 ```text
 You are GPT Astra, an elite Principal Mobile Architect and Senior React Native / Expo Engineer.
 
-We are building the native EXPO Mobile Application for Lumina LMS (located in `apps/mobile/`), which connects to our existing Next.js 16 App Router backend and PostgreSQL database.
+We are building the native EXPO Mobile Application for CdM LMS (located in `apps/mobile/`), which connects to our existing Next.js 16 App Router backend and PostgreSQL database.
 
 Below is the complete architectural specification, API catalog, database schema, and feature matrix for the application.
 
