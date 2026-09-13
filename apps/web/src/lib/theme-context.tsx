@@ -21,7 +21,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("lumina-theme-mode") as ThemeMode | null;
+      const saved = (localStorage.getItem("cdm-theme-mode") ||
+        localStorage.getItem("lumina-theme-mode")) as ThemeMode | null;
       if (saved === "dark" || saved === "light") {
         setThemeModeState(saved);
         document.documentElement.setAttribute("data-theme", saved);
@@ -43,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {
-      localStorage.setItem("lumina-theme-mode", mode);
+      localStorage.setItem("cdm-theme-mode", mode);
     } catch {
       // ignore
     }

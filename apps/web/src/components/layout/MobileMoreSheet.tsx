@@ -149,7 +149,7 @@ export default function MobileMoreSheet({
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-1 rounded-full bg-slate-300 dark:bg-white/20 mx-auto absolute top-2.5 left-1/2 -translate-x-1/2" />
             <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] mt-1">
-              Explore Lumina
+              Explore CdM LMS
             </h2>
             <span
               className="mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-white shrink-0"

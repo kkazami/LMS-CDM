@@ -10,6 +10,7 @@ export default function ServiceWorkerRegister() {
     const isMobile =
       Boolean((window as unknown as { ReactNativeWebView?: unknown }).ReactNativeWebView) ||
       Boolean((window as unknown as { isLMSMobileApp?: boolean }).isLMSMobileApp) ||
+      navigator.userAgent.includes("CdMLMS") ||
       navigator.userAgent.includes("LuminaLMS");
 
     if (process.env.NODE_ENV !== "production" || isMobile) {

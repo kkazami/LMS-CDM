@@ -66,7 +66,7 @@ export function getBotResponse(message: string): string {
   // ── Greeting ──
   if (/^(hi|hello|hey|good morning|good afternoon|good evening|sup|what's up)\b/.test(lower)) {
     return (
-      "👋 Hello! I'm the Lumina Assistant. I can help you navigate the LMS. Try asking me about:\n\n" +
+      "👋 Hello! I'm the CdM Assistant. I can help you navigate the LMS. Try asking me about:\n\n" +
       "• **Grades** — where to find your scores\n" +
       "• **Assignments** — deadlines and submissions\n" +
       "• **Announcements** — class updates from instructors\n" +

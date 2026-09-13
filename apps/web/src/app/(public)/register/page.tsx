@@ -19,6 +19,7 @@ export default async function RegisterPage({
   const isDesktopAdmin =
     resolvedSearchParams?.desktop === "admin" ||
     userAgent.includes("Electron") ||
+    userAgent.includes("CdMDesktopAdmin") ||
     userAgent.includes("LuminaDesktopAdmin");
 
   return (

@@ -250,7 +250,7 @@ export default function StudentDashboardClient({
                 <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                   <TypingBanner
                     text={`Welcome back, ${userName}!`}
-                    sessionKey={typingSessionKey ?? "lumina_typed_greeting"}
+                    sessionKey={typingSessionKey ?? "cdm_typed_greeting"}
                   />
                 </h1>
 

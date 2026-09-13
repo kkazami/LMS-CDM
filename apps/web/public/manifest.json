@@ -1,6 +1,6 @@
 {
-  "name": "Lumina LMS",
-  "short_name": "Lumina",
+  "name": "CdM LMS",
+  "short_name": "CdM LMS",
   "description": "Next-Generation Higher Education Learning Management System",
   "start_url": "/",
   "display": "standalone",

@@ -35,6 +35,7 @@ export function isElectronApp(): boolean {
     window.electronAPI?.isElectron === true ||
     (typeof navigator !== "undefined" &&
       (navigator.userAgent.includes("Electron") ||
+        navigator.userAgent.includes("CdMDesktopAdmin") ||
         navigator.userAgent.includes("LuminaDesktopAdmin")))
   );
 }
@@ -46,6 +47,7 @@ export function isDesktopAdmin(): boolean {
     window.electronAPI?.isDesktopAdmin === true ||
     (typeof navigator !== "undefined" &&
       (navigator.userAgent.includes("Electron") ||
+        navigator.userAgent.includes("CdMDesktopAdmin") ||
         navigator.userAgent.includes("LuminaDesktopAdmin"))) ||
     new URLSearchParams(window.location.search).get("desktop") === "admin"
   );

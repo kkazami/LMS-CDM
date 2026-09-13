@@ -137,7 +137,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     select: { exp: true, loginStreakCurrent: true, level: true },
   });
 
-  const typingSessionKey = `lumina_typed_${studentId.slice(0, 8)}`;
+  const typingSessionKey = `cdm_typed_${studentId.slice(0, 8)}`;
 
   return (
     <StudentDashboardClient

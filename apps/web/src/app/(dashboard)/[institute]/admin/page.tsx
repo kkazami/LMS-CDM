@@ -129,7 +129,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
     },
   ];
 
-  const typingSessionKey = `lumina_typed_${session.user.id.slice(0, 8)}`;
+  const typingSessionKey = `cdm_typed_${session.user.id.slice(0, 8)}`;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto page-enter">

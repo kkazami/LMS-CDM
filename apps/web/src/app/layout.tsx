@@ -22,14 +22,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lumina LMS — Colegio de Montalban",
+  title: "CdM LMS — Colegio de Montalban",
   description:
     "The official Learning Management System of Colegio de Montalban, Rodriguez, Rizal. Access ICS/ITE and IBE programs.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lumina LMS",
+    title: "CdM LMS",
   },
   formatDetection: {
     telephone: false,
@@ -47,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
       <body className="antialiased font-[family-name:var(--font-inter)] selection:bg-orange-500 selection:text-white">
         <OfflineBanner />
         <InAppBrowserPrompt />

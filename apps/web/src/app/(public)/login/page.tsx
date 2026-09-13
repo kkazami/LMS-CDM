@@ -21,7 +21,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const isDesktopAdmin =
     resolvedSearchParams?.desktop === "admin" ||
     userAgent.includes("Electron") ||
-    userAgent.includes("LuminaDesktopAdmin");
+    userAgent.includes("LuminaDesktopAdmin") ||
+    userAgent.includes("CdMDesktopAdmin");
 
   let existingUser = null;
 
