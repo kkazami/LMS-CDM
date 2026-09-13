@@ -672,7 +672,7 @@ export default function StudentCourseHubScreen() {
                       {people?.instructor?.name || 'Professor'}
                     </Text>
                     <Text style={[styles.personEmail, { color: theme.colors.textSecondary }]}>
-                      {people?.instructor?.email || 'instructor@lumina.edu'}
+                      {people?.instructor?.email || 'instructor@cdm.edu.ph'}
                     </Text>
                   </View>
                   <Badge label="FACULTY" variant="primary" size="sm" />

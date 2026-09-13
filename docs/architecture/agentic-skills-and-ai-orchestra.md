@@ -1,6 +1,6 @@
-﻿# Agentic Skills, AI Orchestra & AI Engineering Guide
+# Agentic Skills, AI Orchestra & AI Engineering Guide
 
-This document catalogs all **agentic skills**, the **Multi-Agent AI Orchestra**, and the exact **AI engineering and prompting methodologies** employed in architecting, developing, and auditing the **Lumina LMS** monorepo (Web, Native Mobile, Desktop, and Shared Backend Packages).
+This document catalogs all **agentic skills**, the **Multi-Agent AI Orchestra**, and the exact **AI engineering and prompting methodologies** employed in architecting, developing, and auditing the **CdM LMS** monorepo (Web, Native Mobile, Desktop, and Shared Backend Packages).
 
 ---
 

@@ -13,7 +13,7 @@ export const getHostFromUri = (uri?: string | null): string | null => {
 };
 
 /**
- * Resolves the default API base URL for the Lumina LMS Mobile App.
+ * Resolves the default API base URL for the CdM LMS Mobile App.
  * Prioritizes dynamic Metro host resolution so physical devices connected
  * over Wi-Fi or Hotspot automatically resolve the host PC's IP.
  */
@@ -93,6 +93,6 @@ export const resolveEffectiveApiUrl = async (): Promise<string> => {
 };
 
 export const API_BASE_URL = getDefaultApiUrl();
-export const APP_NAME = 'Lumina LMS';
+export const APP_NAME = 'CdM LMS';
 
 

@@ -1,6 +1,6 @@
 /**
- * Auto-update module for Lumina LMS Desktop.
- *
+ * Auto-update module for CdM LMS Desktop.
+ */
  * Currently a placeholder — will be enabled when electron-updater
  * and a release server (e.g., GitHub Releases) are configured.
  *

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-08-18T17:50:45.000Z",
-  "title": "Design System: Lumina LMS",
+  "title": "Design System: CdM LMS",
   "extensions": {
     "colorMeta": {
       "primary": {
@@ -137,7 +137,7 @@
   ],
   "narrative": {
     "northStar": "The Polymath Campus",
-    "overview": "Lumina LMS creates an immersive, high-utility academic environment tailored for multi-tenant higher education institutes. The interface balances high-density information architecture with clean editorial breathing room.",
+    "overview": "CdM LMS creates an immersive, high-utility academic environment tailored for multi-tenant higher education institutes. The interface balances high-density information architecture with clean editorial breathing room.",
     "keyCharacteristics": [
       "Dynamic Institute Accentuation",
       "Dual-Mode Precision",

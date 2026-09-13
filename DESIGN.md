@@ -1,5 +1,5 @@
 ---
-name: Lumina LMS
+name: CdM LMS
 description: Adaptive multi-tenant learning management system with institute-differentiated aesthetics and interactive coursework labs.
 colors:
   primary: "#FF7517"
@@ -86,13 +86,13 @@ components:
     padding: "24px"
 ---
 
-# Design System: Lumina LMS
+# Design System: CdM LMS
 
 ## Overview
 
 **Creative North Star: "The Polymath Campus"**
 
-Lumina LMS creates an immersive, high-utility academic environment tailored for multi-tenant higher education institutes. The interface balances high-density information architecture (course streams, grade matrices, interactive 3D simulations, and code playgrounds) with clean editorial breathing room. It does not feel like a generic corporate dashboard or an unstyled utility wireframe; it feels like an authentic digital campus workshop built for focused study and real academic progress.
+CdM LMS creates an immersive, high-utility academic environment tailored for multi-tenant higher education institutes. The interface balances high-density information architecture (course streams, grade matrices, interactive 3D simulations, and code playgrounds) with clean editorial breathing room. It does not feel like a generic corporate dashboard or an unstyled utility wireframe; it feels like an authentic digital campus workshop built for focused study and real academic progress.
 
 Rather than imposing a single rigid color theme across all disciplines, the interface establishes a unified canvas geometry while allowing each Institute to assert its distinct academic identity through dynamic primary accents, tailored badges, and institute-specific tooling.
 
@@ -155,7 +155,7 @@ The application employs a fluid yet disciplined structural grid designed for sti
 
 ## Elevation & Depth
 
-Lumina LMS uses **tonal layering and hairline borders** as its primary depth mechanism rather than heavy, blurry drop shadows.
+CdM LMS uses **tonal layering and hairline borders** as its primary depth mechanism rather than heavy, blurry drop shadows.
 
 ### Shadow Vocabulary
 - **Subtle Surface (`shadow-xs` / `0 1px 2px 0 rgba(0, 0, 0, 0.05)`)**: Default at-rest card elevation against the background canvas.

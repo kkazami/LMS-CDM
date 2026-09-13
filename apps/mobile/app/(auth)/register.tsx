@@ -73,7 +73,7 @@ export default function RegisterScreen() {
       try {
         Burnt.toast({
           title: 'Account Created!',
-          message: 'Signing you into Lumina LMS...',
+          message: 'Signing you into CdM LMS...',
           preset: 'done',
         });
       } catch {
@@ -199,7 +199,7 @@ export default function RegisterScreen() {
 
             <Input
               label="Email Address"
-              placeholder="e.g. msantos@lumina.edu"
+              placeholder="e.g. msantos@cdm.edu.ph"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"

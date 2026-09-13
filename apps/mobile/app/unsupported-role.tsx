@@ -30,7 +30,7 @@ export default function UnsupportedRoleScreen() {
 
         <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
           Administrator and campus management tools are not supported on the mobile app.
-          Please use the Lumina Web Portal or Desktop App on a computer to access administrative controls.
+          Please use the CdM LMS Web Portal or Desktop App on a computer to access administrative controls.
         </Text>
 
         {user && (
@@ -50,7 +50,7 @@ export default function UnsupportedRoleScreen() {
         <View style={[styles.infoBox, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}>
           <Laptop size={20} color={theme.colors.primary} style={styles.infoIcon} />
           <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-            Students and Instructors can continue using Lumina Mobile. If you have a separate student or faculty account, please switch accounts below.
+            Students and Instructors can continue using CdM LMS Mobile. If you have a separate student or faculty account, please switch accounts below.
           </Text>
         </View>
 

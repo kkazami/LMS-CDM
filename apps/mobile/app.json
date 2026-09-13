@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Lumina LMS",
-    "slug": "lumina-lms",
-    "scheme": "lumina-lms",
+    "name": "CdM LMS",
+    "slug": "cdm-lms",
+    "scheme": "cdm-lms",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -24,9 +24,9 @@
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         },
-        "NSCameraUsageDescription": "Lumina LMS needs camera access for profile photos and document scanning.",
-        "NSPhotoLibraryUsageDescription": "Lumina LMS needs photo library access for uploading profile photos and assignments.",
-        "NSFaceIDUsageDescription": "Use Face ID for quick login to Lumina LMS."
+        "NSCameraUsageDescription": "CdM LMS needs camera access for profile photos and document scanning.",
+        "NSPhotoLibraryUsageDescription": "CdM LMS needs photo library access for uploading profile photos and assignments.",
+        "NSFaceIDUsageDescription": "Use Face ID for quick login to CdM LMS."
       }
     },
     "android": {

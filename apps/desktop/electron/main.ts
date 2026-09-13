@@ -27,7 +27,7 @@ function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    title: 'Lumina LMS — Administrator Console',
+    title: 'CdM LMS — Administrator Console',
     ...(hasIcon ? { icon: iconPath } : {}),
     backgroundColor: '#0d0f17',
     show: false,
@@ -43,7 +43,7 @@ function createWindow() {
   });
 
   mainWindow = win;
-  win.webContents.setUserAgent(`${win.webContents.getUserAgent()} LuminaDesktopAdmin/1.0.0`);
+  win.webContents.setUserAgent(`${win.webContents.getUserAgent()} CdMDesktopAdmin/1.0.0 LuminaDesktopAdmin/1.0.0`);
 
   // ─── Splash Screen ───
   const splashWindow = new BrowserWindow({
