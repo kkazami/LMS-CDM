@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "CdM LMS",
-    title: "CdM LMS",
+    
   },
   formatDetection: {
     telephone: false,
