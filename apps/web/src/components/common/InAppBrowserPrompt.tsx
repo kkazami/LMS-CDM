@@ -24,7 +24,7 @@ function detectInAppBrowser(): InAppDetectionResult {
     return { isInApp: false, isAndroid: false, isIOS: false };
   }
 
-  // Never display in the official Lumina LMS Mobile Application
+  // Never display in the official CdM LMS Mobile Application
   const win = window as unknown as { isLMSMobileApp?: boolean; __LMS_MOBILE_PLATFORM__?: string };
   if (win.isLMSMobileApp || win.__LMS_MOBILE_PLATFORM__) {
     return { isInApp: false, isAndroid: false, isIOS: false };
@@ -32,6 +32,9 @@ function detectInAppBrowser(): InAppDetectionResult {
 
   try {
     if (
+      sessionStorage.getItem("cdm_is_mobile_app") === "true" ||
+      localStorage.getItem("cdm_is_mobile_app") === "true" ||
+      (typeof document !== "undefined" && document.cookie.includes("cdm_is_mobile_app=true")) ||
       sessionStorage.getItem("lumina_is_mobile_app") === "true" ||
       localStorage.getItem("lumina_is_mobile_app") === "true" ||
       (typeof document !== "undefined" && document.cookie.includes("lumina_is_mobile_app=true"))
@@ -43,7 +46,7 @@ function detectInAppBrowser(): InAppDetectionResult {
   }
 
   const ua = navigator.userAgent || navigator.vendor || "";
-  if (/LuminaLMS/i.test(ua) || /LMSMobile/i.test(ua)) {
+  if (/CdMLMS|LuminaLMS|LMSMobile/i.test(ua)) {
     return { isInApp: false, isAndroid: false, isIOS: false };
   }
 

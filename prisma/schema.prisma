@@ -71,6 +71,7 @@ model User {
   sentBroadcasts      NotificationBroadcast[] @relation("BroadcastSender")
   expTransactions     ExpTransaction[]
   createdGradeIncentives GradeIncentiveRule[] @relation("GradeIncentiveCreator")
+  integrityEvents     IntegrityEvent[]     @relation("StudentIntegrityEvents")
 }
 
 model Session {
@@ -148,6 +149,9 @@ model SyllabusItem {
   attachments   Attachment[]
   submissions   StudentSubmission[]
   studySessions StudySessionLog[]
+  enableIntegrityMonitoring Boolean               @default(false)
+  requireFullscreen         Boolean               @default(false)
+  integrityEvents           IntegrityEvent[]
   course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
   targetGroups  SyllabusTargetGroup[]
 
@@ -274,6 +278,7 @@ model StudentSubmission {
   student        User                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   syllabusItem   SyllabusItem           @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
   attachments    SubmissionAttachment[]
+  integrityEvents IntegrityEvent[]
 
   @@unique([syllabusItemId, studentId])
   @@index([syllabusItemId])
@@ -680,3 +685,24 @@ model MaterialAnnotation {
 
   @@index([userId, attachmentId])
 }
+
+// ─── Quiz & Activity Anti-Cheating Integrity Monitoring ───
+model IntegrityEvent {
+  id             String             @id @default(cuid())
+  studentId      String
+  syllabusItemId String
+  submissionId   String?
+  eventType      String             // "TAB_SWITCH" | "COPY_PASTE" | "FULLSCREEN_EXIT" | "RIGHT_CLICK"
+  severity       String             @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH"
+  metadata       String             @default("{}")     // JSON payload (e.g. details, duration)
+  timestamp      DateTime           @default(now())
+
+  student        User               @relation("StudentIntegrityEvents", fields: [studentId], references: [id], onDelete: Cascade)
+  syllabusItem   SyllabusItem       @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  submission     StudentSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([syllabusItemId, studentId])
+  @@index([syllabusItemId, timestamp])
+  @@index([studentId])
+}
+

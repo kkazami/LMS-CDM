@@ -17,11 +17,8 @@ export async function middleware(request: NextRequest) {
   // The cookie is 'lumina_session'
   const sessionId = request.cookies.get("lumina_session")?.value;
 
-  // If hitting root '/' without a session, immediately redirect to login
+  // Allow root '/' as public landing page
   if (pathname === "/") {
-    if (!sessionId) {
-      return NextResponse.redirect(new URL("/login?institute=ics", request.url));
-    }
     return NextResponse.next();
   }
 

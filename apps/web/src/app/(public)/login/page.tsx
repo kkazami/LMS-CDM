@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 type LoginPageProps = {
   searchParams?: Promise<{
     institute?: string;
+    dept?: string;
     desktop?: string;
     force?: string;
   }>;
@@ -13,14 +14,15 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const instituteCode = resolvedSearchParams?.institute ?? "ics";
+  const instituteCode = resolvedSearchParams?.institute ?? resolvedSearchParams?.dept ?? "ics";
   
   const headersList = await headers();
   const userAgent = headersList.get("user-agent") || "";
   const isDesktopAdmin =
     resolvedSearchParams?.desktop === "admin" ||
     userAgent.includes("Electron") ||
-    userAgent.includes("LuminaDesktopAdmin");
+    userAgent.includes("LuminaDesktopAdmin") ||
+    userAgent.includes("CdMDesktopAdmin");
 
   let existingUser = null;
 

@@ -189,7 +189,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     requestedAt: p.createdAt.toISOString(),
   }));
 
-  const typingSessionKey = `lumina_typed_${teacherId.slice(0, 8)}`;
+  const typingSessionKey = `cdm_typed_${teacherId.slice(0, 8)}`;
 
   return (
     <TeacherDashboardClient

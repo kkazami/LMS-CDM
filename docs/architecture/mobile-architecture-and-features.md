@@ -1,6 +1,6 @@
-﻿# Lumina LMS - Mobile Application Scope, Architecture & Features
+# CdM LMS - Mobile Application Scope, Architecture & Features
 
-This document provides a comprehensive technical overview and feature specification for the mobile client in the **Lumina LMS** monorepo. It details everything from the frontend runtime, UI/UX structure, navigation patterns, and institute-specific theming to the backend API services, database interactions, and shared monorepo packages.
+This document provides a comprehensive technical overview and feature specification for the mobile client in the **CdM LMS** monorepo. It details everything from the frontend runtime, UI/UX structure, navigation patterns, and institute-specific theming to the backend API services, database interactions, and shared monorepo packages.
 
 ---
 

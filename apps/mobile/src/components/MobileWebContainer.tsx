@@ -268,6 +268,9 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
       window.isLMSMobileApp = true;
       window.__LMS_MOBILE_PLATFORM__ = '${Platform.OS}';
       try {
+        sessionStorage.setItem('cdm_is_mobile_app', 'true');
+        localStorage.setItem('cdm_is_mobile_app', 'true');
+        document.cookie = 'cdm_is_mobile_app=true; path=/; max-age=31536000; SameSite=Lax';
         sessionStorage.setItem('lumina_is_mobile_app', 'true');
         localStorage.setItem('lumina_is_mobile_app', 'true');
         document.cookie = 'lumina_is_mobile_app=true; path=/; max-age=31536000; SameSite=Lax';
@@ -300,8 +303,8 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
 
   const customUserAgent =
     Platform.OS === 'android'
-      ? 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 LuminaLMSMobile/1.0'
-      : 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 LuminaLMSMobile/1.0';
+      ? 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 CdMLMSMobile/1.0 LuminaLMSMobile/1.0'
+      : 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 CdMLMSMobile/1.0 LuminaLMSMobile/1.0';
 
   // Intercept navigation to external URLs — open in system browser
   const handleShouldStartLoad = useCallback(

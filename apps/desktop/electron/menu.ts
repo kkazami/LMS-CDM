@@ -140,7 +140,7 @@ export function setupMenu(mainWindow: BrowserWindow) {
         { type: 'separator' },
         {
           label: 'Report Issue',
-          click: () => shell.openExternal('https://github.com/your-org/lumina-lms/issues'),
+          click: () => shell.openExternal('https://github.com/your-org/cdm-lms/issues'),
         },
       ],
     },

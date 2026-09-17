@@ -165,7 +165,7 @@ However, cross-device and multi-engine viewport testing reveals systemic respons
 -          className="fixed bottom-6 right-6 z-50 flex items-center justify-center h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
 +          className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-40 flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
            style={{ backgroundColor: theme.colors.primary }}
-           aria-label="Open Lumina Assistant"
+           aria-label="Open CdM Assistant"
          >
 ```
 
@@ -225,7 +225,7 @@ Following Sprints 1–3, all 12 defects (DEF-01 through DEF-12) are functionally
 ## 7. Anti-Slop Visual Audit
 
 ### 7.1 What "AI Slop" Looks Like in This Codebase
-Functional correctness is not enough. When evaluating Lumina LMS under the `design-taste-frontend` and `high-end-visual-design` heuristics, several patterns reveal a templated, AI-generated aesthetic:
+Functional correctness is not enough. When evaluating CdM LMS under the `design-taste-frontend` and `high-end-visual-design` heuristics, several patterns reveal a templated, AI-generated aesthetic:
 - **Gradient Overuse:** Every hero or header section relies on full-width gradients as a default background treatment.
 - **Uniform Icon Sizing:** Every Lucide icon is rendered at `h-5 w-5` or `h-4 w-4` regardless of context.
 - **Instantaneous State Snapping:** Absence of physical feedback on button presses, tab switches, and card hovers.
@@ -698,7 +698,7 @@ interface TypingBannerProps {
 export function TypingBanner({
   text,
   speed = 38,
-  sessionKey = 'lumina_typed_greeting',
+  sessionKey = 'cdm_typed_greeting',
   className,
 }: TypingBannerProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -1081,7 +1081,7 @@ Active skills: impeccable, design-taste-frontend, high-end-visual-design, ui-ux-
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      LUMINA LMS — SCORE PROGRESSION CHART                   │
+│                       CDM LMS — SCORE PROGRESSION CHART                     │
 ├─────────────────────────────┬──────────┬────────────┬───────────────────────┤
 │ Dimension                   │ Baseline │ After S1–3 │ After S4–6 (Final)    │
 ├─────────────────────────────┼──────────┼────────────┼───────────────────────┤
@@ -1112,7 +1112,7 @@ This block represents the single source of truth for all CSS-based motion in `ap
 
 ```css
 /* ============================================================
-   LUMINA LMS — GLOBALS.CSS ANIMATION & MOTION LAYER
+   CDM LMS — GLOBALS.CSS ANIMATION & MOTION LAYER
    ============================================================ */
 
 :root {

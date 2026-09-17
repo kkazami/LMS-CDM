@@ -2,7 +2,7 @@
 
 @variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
-/* ─── UI UX Pro Max: Lumina LMS Theme Tokens ─── */
+/* ─── UI UX Pro Max: CdM LMS Theme Tokens ─── */
 :root {
   color-scheme: light;
   --bg-canvas: #F8FAFC;

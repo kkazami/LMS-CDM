@@ -63,6 +63,8 @@ export function TypingBanner({
         if (sessionKey) {
           sessionStorage.removeItem(sessionKey);
         }
+        sessionStorage.removeItem("cdm_typed_greeting");
+        sessionStorage.removeItem("cdm_faculty_typed_greeting");
         sessionStorage.removeItem("lumina_typed_greeting");
         sessionStorage.removeItem("lumina_faculty_typed_greeting");
       } catch {
