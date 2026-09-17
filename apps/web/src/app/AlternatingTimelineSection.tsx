@@ -100,7 +100,7 @@ function TimelineCardContent({ entry }: { entry: TimelineEntry }) {
     <div className="relative w-full">
       {/* Soft radial lighter area behind card creating a gentle pool of light */}
       <div
-        className="absolute -inset-6 sm:-inset-10 pointer-events-none -z-10 rounded-full opacity-60"
+        className="absolute inset-0 scale-105 pointer-events-none -z-10 rounded-2xl sm:rounded-3xl opacity-60 blur-lg"
         style={{
           background:
             "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 50%, transparent 80%)",
@@ -223,7 +223,7 @@ function MobileTimelineRow({
   const isInView = useInView(rowRef, { once: false, amount: 0.15 });
 
   return (
-    <div ref={rowRef} className="relative flex items-center w-full">
+    <div ref={rowRef} className="relative flex items-center w-full overflow-hidden">
       <motion.div
         initial={{ opacity: 0, x: reducedMotion ? 0 : 28 }}
         animate={
@@ -236,7 +236,7 @@ function MobileTimelineRow({
           ease: [0.16, 1, 0.3, 1],
           delay: reducedMotion ? 0 : index * 0.06,
         }}
-        className="w-full relative z-20 pl-12 sm:pl-16"
+        className="w-full relative z-20 pl-10 sm:pl-16"
       >
         <TimelineCardContent entry={entry} />
       </motion.div>
@@ -274,7 +274,7 @@ export default function AlternatingTimelineSection({
     <section
       id="why-cdm-lms"
       ref={sectionRef}
-      className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-[850px] lg:min-h-[920px]"
+      className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-[850px] lg:min-h-[920px] overflow-hidden"
       style={{ backgroundColor: "#04060A" }}
     >
       <div className="relative z-10 max-w-5xl mx-auto">

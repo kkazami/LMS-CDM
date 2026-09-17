@@ -13,15 +13,14 @@ export default function PageTransition({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence initial={false}>
       <motion.div
         key={pathname}
         initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
         transition={{
-          duration: shouldReduceMotion ? 0 : 0.3,
-          ease: "easeInOut",
+          duration: shouldReduceMotion ? 0 : 0.25,
+          ease: "easeOut",
         }}
         className="w-full min-h-screen"
       >

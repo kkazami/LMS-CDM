@@ -12,7 +12,7 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isDesktopAdmin as isDesktopAdminCheck } from "@/lib/electron-detect";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 import type { InstituteCode } from "@/lib/theme";
-import { ShieldCheck, GraduationCap, ArrowRight, UserCheck } from "lucide-react";
+import { ShieldCheck, GraduationCap, ArrowRight, ArrowLeft, UserCheck } from "lucide-react";
 
 type ExistingUser = {
   id: string;
@@ -116,9 +116,24 @@ export default function LoginClient({
 
   return (
     <main
-      className="flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto transition-colors duration-300"
+      className="relative flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto transition-colors duration-300"
       style={{ backgroundColor: theme.colors.background }}
     >
+      {/* Top navigation button to return to the Landing Page */}
+      <div className="fixed top-4 left-4 sm:top-6 sm:left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-850 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-sm hover:text-slate-950 dark:hover:text-white transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+          aria-label="Back to Landing Page"
+        >
+          <ArrowLeft
+            className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5"
+            style={{ color: theme.colors.primary }}
+          />
+          <span>Back to Landing Page</span>
+        </Link>
+      </div>
+
       <div className="w-full max-w-md my-auto">
         <div className="mb-6 text-center">
           <div
@@ -269,6 +284,16 @@ export default function LoginClient({
             </div>
           </Card>
         )}
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors group focus:outline-none focus-visible:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" />
+            <span>Back to Landing Page</span>
+          </Link>
+        </div>
       </div>
     </main>
   );

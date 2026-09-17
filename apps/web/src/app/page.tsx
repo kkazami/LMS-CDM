@@ -22,6 +22,8 @@ import {
   FileText,
   Code2,
   TrendingUp,
+  Menu,
+  X,
 } from "lucide-react";
 import {
   motion,
@@ -39,7 +41,6 @@ import GamificationSection from "./GamificationSection";
 import AlternatingTimelineSection from "./AlternatingTimelineSection";
 import MultiPlatformSection from "./MultiPlatformSection";
 import FaqAndCtaSection from "./FaqAndCtaSection";
-import IntroPreloader from "./IntroPreloader";
 
 /* ─── CDM Brand Palette (sampled from the school crest) ─── */
 const brand = {
@@ -621,10 +622,10 @@ function CoverflowDepartmentPortal({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* ─── DESKTOP COVERFLOW 3D DECK (md:flex) ─── */}
+      {/* ─── DESKTOP COVERFLOW 3D DECK (lg:flex) ─── */}
       <motion.div
         ref={deckRef}
-        className="w-full hidden md:flex justify-center"
+        className="w-full hidden lg:flex justify-center overflow-hidden"
         initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
         animate={
           isDeckInView
@@ -926,7 +927,7 @@ function CoverflowDepartmentPortal({
       {/* ─── INTERACTIVE DOTS / PILLS (Desktop Carousel Indicators) ─── */}
       <motion.div
         ref={tabBarRef}
-        className="hidden md:flex items-center justify-center gap-2 mt-6"
+        className="hidden lg:flex items-center justify-center gap-2 mt-6"
         initial={{ opacity: 0, y: reducedMotion ? 0 : 16 }}
         animate={
           isTabBarInView
@@ -966,10 +967,10 @@ function CoverflowDepartmentPortal({
         })}
       </motion.div>
 
-      {/* ─── MOBILE STACKED CARDS (md:hidden) ─── */}
+      {/* ─── MOBILE STACKED CARDS (lg:hidden) ─── */}
       <motion.div
         ref={deckRef}
-        className="md:hidden w-full space-y-5 mt-4"
+        className="lg:hidden w-full space-y-5 mt-4"
         initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
         animate={
           isDeckInView
@@ -1272,6 +1273,14 @@ function MarqueeSection({ reducedMotion, scrollY }: MarqueeSectionProps) {
   );
 }
 
+const navLinks = [
+  { href: "departments", label: "Institutes" },
+  { href: "dashboard-preview", label: "Preview" },
+  { href: "faq", label: "FAQs" },
+  { href: "mission-vision", label: "Mission & Vision" },
+  { href: "about", label: "About" },
+] as const;
+
 export default function HomePage() {
   const currentYear = new Date().getFullYear();
   const heroRef = useRef<HTMLElement>(null);
@@ -1280,41 +1289,56 @@ export default function HomePage() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Intro sequence states:
-  // 1. Initial/load: solid dark overlay covers bg; logo is stationary in hero position; text & navbar hidden
-  // 2. (~350ms): solid dark overlay fades out smoothly, revealing campus background photo beneath stationary logo
-  // 3. (~750ms): hero text and top navbar smoothly perform independent opacity fade-in
-  const [bgRevealed, setBgRevealed] = useState(false);
+  // Hero entrance: smooth fade-in without full-screen blackout
   const [textRevealed, setTextRevealed] = useState(false);
+
+  // Responsive mobile navigation drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile drawer on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Prevent background body scrolling when mobile menu drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   // Interactive Platform Preview State
   const [previewInstitute, setPreviewInstitute] = useState<PreviewInstitute>("ics");
   const [previewRole, setPreviewRole] = useState<PreviewRole>("student");
   const [previewSidebarItem, setPreviewSidebarItem] = useState<PreviewSidebarItem>("dashboard");
 
-  const handleIntroComplete = useCallback(() => {
-    setBgRevealed(true);
-    setTextRevealed(true);
-  }, []);
-
   useEffect(() => {
     if (shouldReduceMotion) {
       setReducedMotion(true);
+      setTextRevealed(true);
+    } else {
+      // Smooth fade-in of hero text and controls without full screen blackout
+      const revealTimer = setTimeout(() => {
+        setTextRevealed(true);
+      }, 100);
+      return () => clearTimeout(revealTimer);
     }
     setMounted(true);
     const resizeTimer = setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
     }, 100);
 
-    // Safety fallback timer ensuring hero text/bg reveal even if preloader is skipped
-    const safetyTimer = setTimeout(() => {
-      setBgRevealed(true);
-      setTextRevealed(true);
-    }, 3500);
-
     return () => {
       clearTimeout(resizeTimer);
-      clearTimeout(safetyTimer);
     };
   }, [shouldReduceMotion]);
 
@@ -1496,17 +1520,11 @@ export default function HomePage() {
 
   return (
     <motion.div
-      className="relative min-h-screen w-full"
+      className="relative min-h-screen w-full overflow-x-clip max-w-[100vw]"
       style={{ backgroundColor: "#0B0F19" }}
       animate={{ opacity: isNavigating ? 0 : 1 }}
       transition={{ duration: reducedMotion ? 0 : 0.3, ease: "easeInOut" }}
     >
-      {/* ─── FULLSCREEN INTRO PRELOADER (Animated "Welcome") ─── */}
-      <IntroPreloader
-        reducedMotion={reducedMotion}
-        onIntroComplete={handleIntroComplete}
-      />
-
       {/* ═══════════════════ SCROLL-REACTIVE FLOATING NAVIGATION BAR ═══════════════════ */}
       {/*
         Two visual states, both always fixed at top — never hides:
@@ -1515,7 +1533,7 @@ export default function HomePage() {
       */}
       <motion.header
         role="banner"
-        className="fixed top-0 left-0 right-0 z-50 flex justify-center"
+        className="fixed top-0 left-0 right-0 z-50 flex justify-center px-2 sm:px-4 w-full max-w-[100vw]"
         initial={false}
         animate={{
           opacity: textRevealed ? 1 : 0,
@@ -1526,36 +1544,36 @@ export default function HomePage() {
       >
         <motion.nav
           aria-label="Main navigation"
-          className="flex items-center justify-between"
+          className="flex items-center justify-between w-full box-border"
           animate={
             isScrolled
               ? {
                   // Compact floating box state
-                  maxWidth: "860px",
-                  width: "calc(100% - 2rem)",
-                  marginTop: "12px",
-                  paddingLeft: "20px",
-                  paddingRight: "20px",
-                  paddingTop: "10px",
-                  paddingBottom: "10px",
+                  maxWidth: "960px",
+                  width: "100%",
+                  marginTop: "8px",
+                  paddingLeft: "12px",
+                  paddingRight: "12px",
+                  paddingTop: "8px",
+                  paddingBottom: "8px",
                   borderRadius: "16px",
-                  backgroundColor: "rgba(0, 0, 0, 0)",
-                  backdropFilter: "blur(14px)",
+                  backgroundColor: "rgba(11, 15, 25, 0.85)",
+                  backdropFilter: "blur(16px)",
                   boxShadow:
-                    "0 4px 24px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset",
+                    "0 4px 24px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08) inset",
                   borderWidth: "1px",
                   borderStyle: "solid",
-                  borderColor: "rgba(255,255,255,0.09)",
+                  borderColor: "rgba(255,255,255,0.12)",
                 }
               : {
                   // Transparent full-width state
                   maxWidth: "1152px",
                   width: "100%",
                   marginTop: "0px",
-                  paddingLeft: "32px",
-                  paddingRight: "32px",
-                  paddingTop: "16px",
-                  paddingBottom: "16px",
+                  paddingLeft: "14px",
+                  paddingRight: "14px",
+                  paddingTop: "14px",
+                  paddingBottom: "14px",
                   borderRadius: "0px",
                   backgroundColor: "rgba(0,0,0,0)",
                   backdropFilter: "blur(0px)",
@@ -1577,11 +1595,12 @@ export default function HomePage() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
+              setMobileMenuOpen(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-lg p-1 shrink-0"
+            className="flex items-center gap-2 sm:gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-lg p-1 shrink-0"
           >
-            <div className="relative w-8 h-8 aspect-square rounded-full overflow-hidden bg-white p-0.5 border border-amber-400/40 shadow-sm shrink-0">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8 aspect-square rounded-full overflow-hidden bg-white p-0.5 border border-amber-400/40 shadow-sm shrink-0">
               <Image
                 src="/images/cdm-logo.png"
                 alt="Colegio de Montalban Seal"
@@ -1592,14 +1611,14 @@ export default function HomePage() {
               />
             </div>
             <span
-              className="font-bold text-base tracking-tight text-white group-hover:text-amber-400 transition-colors"
+              className="font-bold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-400 transition-colors whitespace-nowrap"
               style={{
                 textShadow: isScrolled ? "none" : "0 1px 8px rgba(0,0,0,0.7)",
               }}
             >
               CdM LMS
             </span>
-            {/* Year badge — same position-based flag as the navbar box */}
+            {/* Year badge — large desktop only so it never crowds tablet or mobile */}
             <AnimatePresence>
               {yearBadgeVisible && (
                 <motion.span
@@ -1611,7 +1630,7 @@ export default function HomePage() {
                     reducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
                   }
                   aria-label="Academic year 2026 to 2027"
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider leading-none border select-none"
+                  className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider leading-none border select-none shrink-0"
                   style={{
                     backgroundColor: "rgba(245, 196, 0, 0.12)",
                     borderColor: "rgba(245, 196, 0, 0.35)",
@@ -1624,15 +1643,9 @@ export default function HomePage() {
             </AnimatePresence>
           </a>
 
-          {/* Right: Anchor navigation links */}
-          <div className="flex items-center gap-4 sm:gap-6 lg:gap-7">
-            {([
-              { href: "departments", label: "Institutes" },
-              { href: "dashboard-preview", label: "Preview" },
-              { href: "faq", label: "FAQs" },
-              { href: "mission-vision", label: "Mission & Vision" },
-              { href: "about", label: "About" },
-            ] as const).map(({ href, label }) => (
+          {/* Desktop Links (Hidden below 1024px) */}
+          <div className="hidden lg:flex items-center gap-5 xl:gap-7 shrink-0">
+            {navLinks.map(({ href, label }) => (
               <a
                 key={href}
                 href={`#${href}`}
@@ -1640,17 +1653,108 @@ export default function HomePage() {
                   e.preventDefault();
                   document.getElementById(href)?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="text-sm font-medium transition-colors hover:text-amber-400"
+                className="text-xs xl:text-sm font-medium transition-colors hover:text-amber-400 whitespace-nowrap"
                 style={{
-                  color: isScrolled ? "rgba(203,213,225,1)" : "rgba(255,255,255,0.75)",
+                  color: isScrolled ? "rgba(203,213,225,1)" : "rgba(255,255,255,0.85)",
                   textShadow: isScrolled ? "none" : "0 1px 8px rgba(0,0,0,0.65)",
                 }}
               >
                 {label}
               </a>
             ))}
+
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 transition-all duration-150 shadow-xs hover:shadow-sm active:scale-95 ml-2 shrink-0 whitespace-nowrap"
+            >
+              <span>Sign In</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Mobile & Tablet Right Controls: Sign In + Hamburger Toggle (Visible below 1024px) */}
+          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 shrink-0">
+            <Link
+              href="/login"
+              className="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition-colors shadow-xs shrink-0 whitespace-nowrap"
+            >
+              Sign In
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="p-1.5 sm:p-2 rounded-lg text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer shrink-0"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </motion.nav>
+
+        {/* Mobile Navigation Drawer / Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+              />
+
+              {/* Dropdown Card */}
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="fixed top-14 left-3 right-3 sm:left-auto sm:right-4 sm:w-80 z-50 lg:hidden rounded-2xl border border-white/15 bg-slate-950/95 backdrop-blur-2xl shadow-2xl p-4 overflow-hidden"
+              >
+                <div className="flex flex-col space-y-1">
+                  {navLinks.map(({ href, label }) => (
+                    <a
+                      key={href}
+                      href={`#${href}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMobileMenuOpen(false);
+                        setTimeout(() => {
+                          document.getElementById(href)?.scrollIntoView({ behavior: "smooth" });
+                        }, 100);
+                      }}
+                      className="flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors"
+                    >
+                      <span>{label}</span>
+                      <ArrowRight className="w-4 h-4 text-amber-400/70" />
+                    </a>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-white/10 flex flex-col gap-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-sm"
+                  >
+                    <span>Sign In to Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                  >
+                    <span>Register Student Account</span>
+                  </Link>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </motion.header>
 
       {/* ═══════════════════ STICKY HERO SECTION ═══════════════════ */}
@@ -1686,11 +1790,6 @@ export default function HomePage() {
               background:
                 "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245,196,0,0.06) 0%, transparent 60%)",
             }}
-          />
-          <div
-            className={`absolute inset-0 bg-neutral-950 transition-opacity duration-700 ease-out ${
-              bgRevealed ? "opacity-0" : "opacity-100"
-            }`}
           />
         </div>
 
