@@ -12,3 +12,12 @@ build
 # Ignore uploads
 apps/web/public/uploads/*
 *.backup
+
+# Playwright
+playwright/.auth/
+playwright/report/
+playwright/results/
+test-results/
+
+# Orchestra run artifacts
+.orchestra/runs/*/

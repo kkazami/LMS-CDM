@@ -1,0 +1,18 @@
+{
+  "name": "Mobile",
+  "intent": ["feature", "refactor", "bug_fix"],
+  "domain": ["mobile"],
+  "requiresBrowserVerification": false,
+  "agents": {
+    "standard": ["requirement", "planner", "executor", "test", "qa"],
+    "strict": ["requirement", "planner", "executor", "test", "qa", "code-review"],
+    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
+  },
+  "checks": {
+    "standard": ["typecheck"],
+    "strict": ["typecheck", "code-review"],
+    "maximum": ["typecheck", "code-review"]
+  },
+  "skills": ["full-output-enforcement"],
+  "knowledge": ["PRODUCT.md", "ARCHITECTURE.md", "CONVENTIONS.md"]
+}

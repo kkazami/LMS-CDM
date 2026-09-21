@@ -1,0 +1,50 @@
+{
+  "requirement": {
+    "filesystem": ["read"],
+    "terminal": [],
+    "browser": false,
+    "git": ["log", "diff"]
+  },
+  "planner": {
+    "filesystem": ["read"],
+    "terminal": [],
+    "browser": false,
+    "git": ["log", "diff", "status"]
+  },
+  "executor": {
+    "filesystem": ["read", "write"],
+    "terminal": ["pnpm", "npx", "prisma"],
+    "browser": false,
+    "git": ["diff", "status"]
+  },
+  "test": {
+    "filesystem": ["read", "write"],
+    "terminal": [],
+    "browser": false,
+    "git": ["diff"]
+  },
+  "qa": {
+    "filesystem": ["read"],
+    "terminal": ["pnpm test:e2e", "pnpm harness:check", "pnpm build:web"],
+    "browser": true,
+    "git": ["diff"]
+  },
+  "security": {
+    "filesystem": ["read"],
+    "terminal": [],
+    "browser": false,
+    "git": ["diff"]
+  },
+  "code-review": {
+    "filesystem": ["read"],
+    "terminal": [],
+    "browser": false,
+    "git": ["diff"]
+  },
+  "repair": {
+    "filesystem": ["read", "write"],
+    "terminal": ["pnpm", "npx"],
+    "browser": false,
+    "git": ["diff", "status"]
+  }
+}

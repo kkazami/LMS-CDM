@@ -1,0 +1,12 @@
+{
+  "id": "webapp-testing",
+  "name": "Web Application Testing Strategy",
+  "category": "testing",
+  "skillPath": null,
+  "triggers": ["test", "verify", "qa", "acceptance", "regression", "test strategy"],
+  "requiredContext": ["CONVENTIONS.md", "ARCHITECTURE.md"],
+  "capabilities": ["test-design", "verification-strategy", "acceptance-testing"],
+  "domain": ["frontend", "backend", "fullstack", "api"],
+  "riskLevel": "low",
+  "notes": "Built-in knowledge for test design principles: tests verify behavior not implementation."
+}

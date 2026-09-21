@@ -1,0 +1,11 @@
+{
+  "id": "grill-me",
+  "name": "Requirement Interrogation",
+  "category": "planning",
+  "skillPath": ".agents/skills/grill-me/SKILL.md",
+  "triggers": ["requirements", "specification", "plan", "design decision", "architecture"],
+  "requiredContext": ["PRODUCT.md"],
+  "capabilities": ["requirement-analysis", "edge-case-probing", "stress-testing"],
+  "domain": ["frontend", "backend", "fullstack", "api", "database"],
+  "riskLevel": "low"
+}

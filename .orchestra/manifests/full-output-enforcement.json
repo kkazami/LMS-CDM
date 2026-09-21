@@ -1,0 +1,12 @@
+{
+  "id": "full-output-enforcement",
+  "name": "Full Output Enforcement",
+  "category": "code-quality",
+  "skillPath": ".agents/skills/full-output-enforcement/SKILL.md",
+  "triggers": ["implementation", "code", "feature", "build"],
+  "requiredContext": [],
+  "capabilities": ["complete-code-generation", "anti-truncation", "no-placeholders"],
+  "domain": ["frontend", "backend", "fullstack", "api", "database", "mobile"],
+  "riskLevel": "low",
+  "notes": "Should be included in nearly all implementation tasks"
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Raw Task Request",
+  "description": "Minimal schema for the user's raw input before classification",
+  "type": "object",
+  "required": ["id", "prompt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique run identifier (e.g. run_20260921_001)"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "The user's natural-language development request"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["user", "automated", "repair"],
+      "default": "user"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths to attached files or images"
+    }
+  }
+}

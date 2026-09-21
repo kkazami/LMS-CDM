@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Classified Task",
+  "description": "Fully classified task with harness routing metadata. Fields are derived by classification, not user input.",
+  "type": "object",
+  "required": ["id", "prompt", "intent", "domain", "risk", "requiresBrowserVerification", "harnessProfile", "qualityLevel"],
+  "properties": {
+    "id": { "type": "string" },
+    "prompt": { "type": "string" },
+    "intent": {
+      "type": "string",
+      "enum": ["feature", "bug_fix", "refactor", "testing", "documentation", "security", "deployment"]
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["frontend", "backend", "api", "database", "mobile", "fullstack", "devops"]
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "requiresBrowserVerification": {
+      "type": "boolean",
+      "description": "True for any task changing browser-visible behavior: UI, routes, forms, navigation, auth UI, responsive layout, accessibility"
+    },
+    "harnessProfile": {
+      "type": "string",
+      "description": "Selected profile from .orchestra/harness/profiles/ (e.g. frontend, api, fullstack)"
+    },
+    "qualityLevel": {
+      "type": "string",
+      "enum": ["standard", "strict", "maximum"]
+    },
+    "scope": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Affected file paths or route patterns"
+    },
+    "classifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

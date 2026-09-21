@@ -1,0 +1,11 @@
+{
+  "id": "improve",
+  "name": "Codebase Improvement Advisor",
+  "category": "architecture",
+  "skillPath": ".agents/skills/improve/SKILL.md",
+  "triggers": ["audit", "improve", "tech debt", "review", "roadmap", "suggest"],
+  "requiredContext": ["ARCHITECTURE.md", "CONVENTIONS.md"],
+  "capabilities": ["codebase-audit", "improvement-plans", "tech-debt-analysis"],
+  "domain": ["frontend", "backend", "fullstack"],
+  "riskLevel": "low"
+}

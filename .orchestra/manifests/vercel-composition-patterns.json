@@ -1,0 +1,11 @@
+{
+  "id": "vercel-composition-patterns",
+  "name": "React Composition Patterns",
+  "category": "frontend-engineering",
+  "skillPath": ".agents/skills/vercel-composition-patterns/SKILL.md",
+  "triggers": ["refactor", "component architecture", "compound component", "render prop", "context provider"],
+  "requiredContext": ["ARCHITECTURE.md"],
+  "capabilities": ["component-architecture", "composition-patterns", "api-design"],
+  "domain": ["frontend"],
+  "riskLevel": "low"
+}

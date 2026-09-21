@@ -1,0 +1,11 @@
+{
+  "id": "impeccable",
+  "name": "Impeccable UI/UX",
+  "category": "frontend-design",
+  "skillPath": ".agents/skills/impeccable/SKILL.md",
+  "triggers": ["landing page", "dashboard", "UI", "frontend design", "redesign", "polish", "audit", "component", "page"],
+  "requiredContext": ["PRODUCT.md", "DESIGN.md"],
+  "capabilities": ["visual-design", "responsive-design", "accessibility", "typography", "color", "spacing"],
+  "domain": ["frontend", "ui"],
+  "riskLevel": "low"
+}

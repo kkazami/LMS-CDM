@@ -1,0 +1,11 @@
+{
+  "id": "design-taste-frontend",
+  "name": "Design Taste Frontend",
+  "category": "frontend-design",
+  "skillPath": ".agents/skills/design-taste-frontend/SKILL.md",
+  "triggers": ["landing page", "portfolio", "redesign", "frontend", "anti-slop"],
+  "requiredContext": ["PRODUCT.md", "DESIGN.md"],
+  "capabilities": ["visual-design", "layout", "typography", "anti-generic"],
+  "domain": ["frontend"],
+  "riskLevel": "low"
+}

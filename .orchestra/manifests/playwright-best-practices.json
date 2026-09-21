@@ -1,0 +1,13 @@
+{
+  "id": "playwright-best-practices",
+  "name": "Playwright E2E Testing",
+  "category": "testing",
+  "skillPath": null,
+  "triggers": ["e2e", "browser test", "playwright", "UI test", "acceptance test", "end-to-end"],
+  "requiredContext": ["CONVENTIONS.md"],
+  "capabilities": ["e2e-testing", "browser-automation", "visual-verification", "accessibility-testing"],
+  "domain": ["frontend", "fullstack"],
+  "riskLevel": "low",
+  "mandatoryWhen": "requiresBrowserVerification === true",
+  "notes": "Built-in knowledge — no separate SKILL.md required. Selector preference: getByRole > getByLabel > getByText > getByPlaceholder > getByTestId."
+}

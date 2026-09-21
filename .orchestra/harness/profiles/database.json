@@ -1,0 +1,19 @@
+{
+  "name": "Database",
+  "intent": ["feature", "refactor"],
+  "domain": ["database"],
+  "requiresBrowserVerification": false,
+  "agents": {
+    "standard": ["requirement", "planner", "executor", "test", "qa"],
+    "strict": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
+  },
+  "checks": {
+    "standard": ["prisma-validate", "typecheck", "build"],
+    "strict": ["prisma-validate", "typecheck", "build", "security-scan", "code-review"],
+    "maximum": ["prisma-validate", "typecheck", "build", "security-scan", "code-review"]
+  },
+  "skills": ["full-output-enforcement"],
+  "knowledge": ["DOMAIN.md", "ARCHITECTURE.md", "CONVENTIONS.md"],
+  "approvalRequired": ["migration"]
+}

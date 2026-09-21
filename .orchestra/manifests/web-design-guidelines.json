@@ -1,0 +1,11 @@
+{
+  "id": "web-design-guidelines",
+  "name": "Web Design Guidelines",
+  "category": "frontend-design",
+  "skillPath": ".agents/skills/web-design-guidelines/SKILL.md",
+  "triggers": ["accessibility", "UI review", "UX audit", "design review", "WCAG"],
+  "requiredContext": [],
+  "capabilities": ["accessibility-audit", "ux-review", "design-compliance"],
+  "domain": ["frontend"],
+  "riskLevel": "low"
+}

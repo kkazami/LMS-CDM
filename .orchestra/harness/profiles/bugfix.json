@@ -1,0 +1,19 @@
+{
+  "name": "Bug Fix",
+  "intent": ["bug_fix"],
+  "domain": ["frontend", "backend", "api", "database", "fullstack"],
+  "requiresBrowserVerification": "depends_on_domain",
+  "agents": {
+    "standard": ["requirement", "planner", "executor", "test", "qa"],
+    "strict": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
+  },
+  "checks": {
+    "standard": ["typecheck", "build"],
+    "strict": ["typecheck", "build", "security-scan", "code-review"],
+    "maximum": ["typecheck", "build", "security-scan", "code-review", "playwright-e2e"]
+  },
+  "skills": ["full-output-enforcement"],
+  "knowledge": ["ARCHITECTURE.md", "CONVENTIONS.md"],
+  "notes": "If domain is frontend/ui, requiresBrowserVerification becomes true and playwright-e2e is added to standard checks"
+}

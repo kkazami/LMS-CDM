@@ -1,0 +1,21 @@
+{
+  "standard": {
+    "description": "Core verification: typecheck, build, Playwright E2E (if browser task)",
+    "agents": ["requirement", "planner", "executor", "test", "qa"],
+    "securityRequired": false,
+    "codeReviewRequired": false
+  },
+  "strict": {
+    "description": "Adds independent security and code review gates",
+    "agents": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "securityRequired": true,
+    "codeReviewRequired": true
+  },
+  "maximum": {
+    "description": "Full verification including visual regression, performance, accessibility, broader browser coverage",
+    "agents": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "securityRequired": true,
+    "codeReviewRequired": true,
+    "extras": ["visual-regression", "performance", "accessibility", "broader-browser-coverage"]
+  }
+}

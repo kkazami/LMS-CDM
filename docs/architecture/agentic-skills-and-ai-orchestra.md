@@ -83,59 +83,106 @@ These are composable, deterministic backend skills baked into the LMS server log
 
 ---
 
-## 2. The Multi-Agent AI Orchestra System
+## 2. The Dynamic AI Software Engineering Harness
 
-The LMS development pipeline is governed by a **3-Role Multi-Agent Orchestra** operating through an autonomous, contract-driven debugging loop.
+The LMS development pipeline has evolved from a 3-role multi-agent loop into a full **AI Software Engineering Harness**. Governed by modular Antigravity rules (`.agents/rules/orchestra-*.md`), the harness converts natural-language development prompts into machine-readable requirements, dynamically routes them to task-specific harness profiles, executes changes, runs deterministic tests, performs independent QA/security/code review, and enforces bounded repair loops.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant U as User / Product Owner
-    participant P as Planner (planner.md)
-    participant G as Generator (generator.md)
-    participant E as Evaluator (evaluator.md)
-    participant M as Memory (MEMORY.md)
+    participant Main as Antigravity Orchestrator
+    participant Req as Requirement Agent
+    participant Plan as Planner Agent
+    participant Exec as Executor Agent
+    participant Test as Test Agent
+    participant Runner as Test Runner (Deterministic)
+    participant QA as QA Agent
+    participant Sec as Security / Code Review
+    participant Rep as Repair Agent
 
-    U->>P: Feature Request / Sprint Goal
-    P->>P: Interrogate specs with grill-me & load MEMORY.md
-    P->>P: Draft Sprint Contract (.orchestra/contracts/)
-    P->>G: Negotiate technical feasibility
-    P->>E: Negotiate testable acceptance criteria
-    P->>G: Finalize Sprint Contract & Hand off
+    U->>Main: Natural-Language Development Prompt
+    Main->>Req: Ingest & Classify (Intent, Domain, Browser Verification, Risk)
+    Req->>Req: Generate Requirements & Measurable Acceptance Criteria (AC)
+    Req-->>Main: Classified Task & AC with Verification Metadata
+    Main->>Plan: Create Implementation & Verification Plan
+    Plan-->>Main: Plan + Harness Profile + Selected Skills
+    Main->>Test: Design Acceptance-Oriented Tests (Playwright / Unit)
+    Test-->>Main: Test Specs created (tests/e2e/)
+    Main->>Exec: Implement Code Changes (Monorepo Invariants)
+    Exec-->>Main: Changed Files Manifest
     
-    loop Autonomous Debugging Loop (5 - 15 Iterations)
-        G->>G: Implement feature in Monorepo
-        G->>E: Submit for Audit
-        E->>E: Inspect with Playwright & evaluate 4 Pillars (Score /100)
-        E->>E: Write critique to .orchestra/logs/evaluator.log
-        alt Score < 90 or Defects Found
-            E->>G: Reject Gate & Trigger Iteration
-            G->>G: Read log, diagnose root cause, self-update directive
-            G->>G: Refactor code & fix types
-        else Score >= 90 & 100% Contract Passed
-            E-->>P: Pass Sprint Gate
+    loop Bounded Verification & Repair Loop (Max 5 Iterations)
+        Main->>Runner: Execute Tests (pnpm test:e2e, harness:check, build:web)
+        Runner-->>Main: Exit Codes, Traces, Screenshots, JSON Results
+        Main->>QA: Evidence-Based Verification (Criterion -> Test -> Evidence)
+        alt Quality Level >= STRICT
+            Main->>Sec: Independent Security & Code Review Gates
+        end
+        alt Verification FAILED or Blocking Findings
+            Main->>Rep: Root-Cause Diagnosis & Targeted Repair Plan
+            Rep-->>Main: Actionable Fix Instructions
+            Main->>Exec: Apply Targeted Fixes
+            Note over Main,Runner: ALL mandatory verification re-runs after repair!
+        else All Criteria PASSED & Fresh Evidence Verified
+            Note over Main,QA: Gate Passed: NO FRESH EVIDENCE = NO PASS
         end
     end
 
-    E->>M: Record post-mortem & update MEMORY.md
-    P->>U: Deliver Verified Feature
+    Main->>U: Deliver Verified Feature with Run Artifacts (.orchestra/runs/)
 ```
 
-### 2.1 Agent Role Specifications
+### 2.1 The 8 Specialist Agent Roles (`.agents/agents/`)
 
-#### 1. Planner (`.orchestra/agents/planner.md`)
-- **Mission:** Upstream architect. Prevents premature coding by drafting rigid **Sprint Contracts** (`.orchestra/contracts/sprint-contract-[ID].md`).
-- **Core Skills:** `grill-me`, `improve-codebase-architecture`.
-- **Enforcement:** Enforces monorepo design invariants (Atomic UI in `packages/ui`, dynamic theming, Prisma transactions).
+The harness separates concerns across dedicated, tool-scoped Antigravity subagents:
 
-#### 2. Generator (`.orchestra/agents/generator.md`)
-- **Mission:** Fullstack implementation engine. Writes Next.js App Router code, Expo Native Mobile screens, Prisma queries, and state management.
-- **Core Skills:** `vercel-react-best-practices`, `vercel-composition-patterns`, `full-output-enforcement`.
-- **Autonomous Debug Loop:** Reads evaluator logs, diagnoses root causes, self-updates `.orchestra/prompts/generator-directive.md`, and refactors code.
+1. **Requirement Agent (`.agents/agents/requirement/agent.md`)**:
+   - Analyzes raw requests against project knowledge (`.orchestra/knowledge/`).
+   - Produces structured requirements (`REQ-xxx`) and measurable acceptance criteria (`AC-xxx`) with explicit verification metadata (`playwright`, `command`, test paths).
+   - Determines `requiresBrowserVerification` and risk rating.
 
-#### 3. Evaluator (`.orchestra/agents/evaluator.md`)
-- **Mission:** Uncompromising, harsh QA auditor. Never accepts "good enough". Grills the implementation with live browser inspection, Playwright tools, and accessibility checks.
-- **Core Skills:** `impeccable`, `design-taste-frontend`, `high-end-visual-design`, `ui-ux-pro-max`, `web-design-guidelines`.
+2. **Planner Agent (`.agents/agents/planner/agent.md`)**:
+   - Formulates dual-track `implementation_tasks[]` and `verification_tasks[]`.
+   - Selects domain harness profiles (`frontend.json`, `api.json`, `fullstack.json`, etc.) and activates relevant skills.
+   - The AI knows exactly how it will be judged before writing any implementation.
+
+3. **Executor Agent (`.agents/agents/executor/agent.md`)**:
+   - Fullstack implementation engine adhering to LMS invariants (Atomic UI, dynamic theming, Prisma transactions, strict TypeScript).
+   - Produces artifact manifests (`filesCreated`, `filesModified`, `filesDeleted`).
+   - **Critical principle:** The Executor does NOT judge its own work.
+
+4. **Test Agent (`.agents/agents/test/agent.md`)**:
+   - Designs verification strategy and authoritatively writes acceptance-oriented tests (`tests/e2e/`, unit, integration).
+   - Derives tests from user requirements and expected behavior, not implementation details.
+   - Follows resilient selector hierarchy: `getByRole` > `getByLabel` > `getByText` > `getByPlaceholder` > `getByTestId`.
+   - **Critical principle:** Does NOT execute tests or decide pass/fail.
+
+5. **Test Runner (Deterministic Infrastructure)**:
+   - Non-LLM execution engine (`playwright test`, `pnpm harness:check`, `pnpm build:web`).
+   - Evaluates purely on exit codes, stdout/stderr, and machine-readable JSON reports.
+   - Captures screenshots, traces, and browser errors on failure.
+
+6. **QA Agent (`.agents/agents/qa/agent.md`)**:
+   - Evidence-based verifier. Never accepts claims without empirical proof.
+   - Traces each Acceptance Criterion $\to$ Executed Test $\to$ Raw Result $\to$ Preserved Evidence.
+   - Enforces the strict rule: **NO FRESH EVIDENCE = NO PASS**.
+
+7. **Security & Code Review Agents (`.agents/agents/{security,code-review}/agent.md`)**:
+   - Independent verification lanes activated for `STRICT` and `MAXIMUM` quality levels.
+   - Scrutinizes route gating, RBAC checks, session token isolation, zero-`any` TypeScript strictness, and monorepo conventions.
+
+8. **Repair Agent (`.agents/agents/repair/agent.md`)**:
+   - Ingests failure evidence from QA, Security, or Code Review.
+   - Formulates targeted root-cause repairs without re-discovering bugs.
+   - Bounded to a maximum of 5 iterations before triggering `HUMAN_REVIEW_REQUIRED`.
+
+### 2.2 Playwright as a Core Verification Layer
+
+Browser-visible features are subject to mandatory Playwright E2E verification:
+- **Zero-Manual-Intervention:** Configured with `webServer` in `playwright.config.ts` to automatically launch `pnpm dev:web` and wait for health checks.
+- **Headless Browser Execution:** Runs headless Chrome (`channel: 'chrome'`) testing desktop and mobile (`Pixel 7`) viewports.
+- **Multi-Role Authentication:** Pre-authenticates Student, Instructor, and Admin personas using seeded test accounts (`tests/e2e/fixtures/test-accounts.ts`) into reusable `playwright/.auth/` states.
+- **Evidence Pipeline:** Preserves video/trace/screenshots and full JSON output in `playwright/results/` and per-run directories (`.orchestra/runs/<run-id>/`).
 
 ---
 

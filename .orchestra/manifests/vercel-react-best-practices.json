@@ -1,0 +1,11 @@
+{
+  "id": "vercel-react-best-practices",
+  "name": "React & Next.js Best Practices",
+  "category": "frontend-engineering",
+  "skillPath": ".agents/skills/vercel-react-best-practices/SKILL.md",
+  "triggers": ["React", "Next.js", "component", "performance", "SSR", "hydration", "bundle"],
+  "requiredContext": ["ARCHITECTURE.md"],
+  "capabilities": ["react-patterns", "performance", "server-components", "bundle-optimization"],
+  "domain": ["frontend"],
+  "riskLevel": "low"
+}

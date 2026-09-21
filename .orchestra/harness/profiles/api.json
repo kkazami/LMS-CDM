@@ -1,0 +1,18 @@
+{
+  "name": "API",
+  "intent": ["feature", "bug_fix"],
+  "domain": ["backend", "api"],
+  "requiresBrowserVerification": false,
+  "agents": {
+    "standard": ["requirement", "planner", "executor", "test", "qa"],
+    "strict": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
+  },
+  "checks": {
+    "standard": ["prisma-validate", "typecheck", "build"],
+    "strict": ["prisma-validate", "typecheck", "build", "security-scan", "code-review"],
+    "maximum": ["prisma-validate", "typecheck", "build", "security-scan", "code-review", "api-contract"]
+  },
+  "skills": ["full-output-enforcement"],
+  "knowledge": ["PRODUCT.md", "ARCHITECTURE.md", "DOMAIN.md", "CONVENTIONS.md"]
+}

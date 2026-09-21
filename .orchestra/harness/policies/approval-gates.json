@@ -1,0 +1,24 @@
+{
+  "auto": [
+    "create-component",
+    "modify-css",
+    "create-tests",
+    "add-route",
+    "add-api-endpoint",
+    "modify-ui",
+    "create-page"
+  ],
+  "review": [
+    "database-migration",
+    "modify-authorization",
+    "change-rbac",
+    "modify-middleware",
+    "modify-session-handling"
+  ],
+  "human_approval": [
+    "production-deployment",
+    "delete-production-data",
+    "major-auth-change",
+    "modify-env-secrets"
+  ]
+}

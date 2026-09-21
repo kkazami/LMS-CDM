@@ -1,0 +1,41 @@
+{
+  "executor": {
+    "allowed": [
+      "apps/web/src/**",
+      "packages/**",
+      "prisma/schema.prisma",
+      "prisma/migrations/**"
+    ],
+    "forbidden": [
+      ".env",
+      ".env.local",
+      "apps/web/.env.local",
+      ".agents/**",
+      ".orchestra/**"
+    ]
+  },
+  "test": {
+    "allowed": [
+      "tests/**",
+      "playwright/**",
+      "playwright.config.ts"
+    ],
+    "forbidden": [
+      ".env",
+      "apps/web/src/**"
+    ]
+  },
+  "repair": {
+    "allowed": [
+      "apps/web/src/**",
+      "packages/**",
+      "tests/**"
+    ],
+    "forbidden": [
+      ".env",
+      ".env.local",
+      ".agents/**",
+      ".orchestra/**"
+    ]
+  }
+}
