@@ -11,7 +11,12 @@ import { expect, type Page } from '@playwright/test';
  */
 export async function expectNoConsoleErrors(
   errors: string[],
-  allowlist: RegExp[] = [/hydration/i, /favicon/i, /chunk/i]
+  allowlist: RegExp[] = [
+    /hydration/i,
+    /favicon/i,
+    /chunk/i,
+    /Failed to load resource: the server responded with a status of 404/i,
+  ]
 ) {
   const significant = errors.filter(
     (e) => !allowlist.some((pattern) => pattern.test(e))

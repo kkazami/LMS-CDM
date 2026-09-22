@@ -18,6 +18,7 @@ model Institute {
   notes          Note[]
   taskItems      TaskItem[]
   users          User[]
+  kxPosts        KxPost[]
 }
 
 model User {
@@ -72,6 +73,20 @@ model User {
   expTransactions     ExpTransaction[]
   createdGradeIncentives GradeIncentiveRule[] @relation("GradeIncentiveCreator")
   integrityEvents     IntegrityEvent[]     @relation("StudentIntegrityEvents")
+
+  // ─── Knowledge Exchange relations ───
+  kxPosts               KxPost[]               @relation("KxPostAuthor")
+  kxAnswers             KxAnswer[]             @relation("KxAnswerAuthor")
+  kxVerifiedAnswers     KxAnswer[]             @relation("KxAnswerVerifier")
+  kxComments            KxComment[]            @relation("KxCommentAuthor")
+  kxVotes               KxVote[]               @relation("KxUserVotes")
+  kxRevisions           KxRevision[]           @relation("KxRevisionEditor")
+  kxReportedFlags       KxFlag[]               @relation("KxFlagReporter")
+  kxReviewedFlags       KxFlag[]               @relation("KxFlagReviewer")
+  kxBookmarks           KxBookmark[]           @relation("KxUserBookmarks")
+  kxFollows             KxFollow[]             @relation("KxUserFollows")
+  kxModerationActions   KxModerationAction[]   @relation("KxModeratorActions")
+  kxNotifications       KxNotification[]       @relation("KxUserNotifications")
 }
 
 model Session {
@@ -115,6 +130,7 @@ model Course {
   weeklyChallenges  WeeklyChallenge[]
   broadcasts        NotificationBroadcast[]
   gradeIncentiveRules GradeIncentiveRule[]
+  kxPosts             KxPost[]
 
   @@index([instituteId])
   @@index([instructorId])
@@ -154,6 +170,7 @@ model SyllabusItem {
   integrityEvents           IntegrityEvent[]
   course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
   targetGroups  SyllabusTargetGroup[]
+  kxPosts       KxPost[]
 
   @@index([courseId, type])
   @@index([courseId, orderIndex])
@@ -516,6 +533,7 @@ model GamificationProfile {
   lastActivityDate        DateTime?
   totalPoints             Int            @default(0)
   isLeaderboardAnonymized Boolean        @default(false)
+  publicLeaderboardOptIn  Boolean        @default(true)
 
   // ── EXP & Level ──
   exp                     Int            @default(0)      // Current total EXP
@@ -705,4 +723,259 @@ model IntegrityEvent {
   @@index([syllabusItemId, timestamp])
   @@index([studentId])
 }
+
+// ─────────────────────────────────────────────────────────────
+// ─── Knowledge Exchange (KX) Q&A Models (ICS Exclusive) ──────
+// ─────────────────────────────────────────────────────────────
+
+model KxPost {
+  id             String                @id @default(cuid())
+  title          String
+  body           String
+  postType       String                @default("QUESTION") // "QUESTION" | "DISCUSSION"
+  status         String                @default("OPEN")     // "OPEN" | "ANSWERED" | "CLOSED" | "LOCKED"
+  isAnonymous    Boolean               @default(false)
+  authorId       String
+  instituteId    String
+  courseId       String?
+  syllabusItemId String?
+  viewCount      Int                   @default(0)
+  voteCount      Int                   @default(0)
+  answerCount    Int                   @default(0)
+  isPinned       Boolean               @default(false)
+  isDeleted      Boolean               @default(false)
+  closeReason    String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  author         User                  @relation("KxPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  institute      Institute             @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  course         Course?               @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  syllabusItem   SyllabusItem?         @relation(fields: [syllabusItemId], references: [id], onDelete: SetNull)
+
+  answers        KxAnswer[]
+  comments       KxComment[]
+  tags           KxPostTag[]
+  votes          KxVote[]
+  revisions      KxRevision[]
+  flags          KxFlag[]
+  bookmarks      KxBookmark[]
+  follows        KxFollow[]
+  moderationActions KxModerationAction[]
+
+  @@index([instituteId, createdAt])
+  @@index([instituteId, status])
+  @@index([authorId])
+  @@index([courseId])
+  @@index([syllabusItemId])
+  @@index([isPinned, createdAt])
+}
+
+model KxAnswer {
+  id           String      @id @default(cuid())
+  postId       String
+  authorId     String
+  body         String
+  isAnonymous  Boolean     @default(false)
+  isAccepted   Boolean     @default(false)
+  isVerified   Boolean     @default(false)
+  verifiedById String?
+  voteCount    Int         @default(0)
+  isDeleted    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  post         KxPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       User        @relation("KxAnswerAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  verifiedBy   User?       @relation("KxAnswerVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  comments     KxComment[]
+  votes        KxVote[]
+  flags        KxFlag[]
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+  @@index([isAccepted])
+  @@index([isVerified])
+}
+
+model KxComment {
+  id          String    @id @default(cuid())
+  postId      String?
+  answerId    String?
+  authorId    String
+  body        String
+  isAnonymous Boolean   @default(false)
+  isDeleted   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  post        KxPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answer      KxAnswer? @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  author      User      @relation("KxCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  flags       KxFlag[]
+
+  @@index([postId])
+  @@index([answerId])
+  @@index([authorId])
+}
+
+model KxTag {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String      @default("")
+  category    String      @default("TOPIC") // "CPE" | "IT" | "GENERAL" | "TOPIC"
+  postCount   Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  posts       KxPostTag[]
+  follows     KxFollow[]
+
+  @@index([category])
+  @@index([postCount])
+}
+
+model KxPostTag {
+  id        String   @id @default(cuid())
+  postId    String
+  tagId     String
+
+  post      KxPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       KxTag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@index([tagId])
+  @@index([postId])
+}
+
+model KxVote {
+  id        String    @id @default(cuid())
+  userId    String
+  postId    String?
+  answerId  String?
+  value     Int       // 1 for upvote, -1 for downvote
+  createdAt DateTime  @default(now())
+
+  user      User      @relation("KxUserVotes", fields: [userId], references: [id], onDelete: Cascade)
+  post      KxPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answer    KxAnswer? @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, answerId])
+  @@index([postId])
+  @@index([answerId])
+  @@index([userId])
+}
+
+model KxRevision {
+  id        String   @id @default(cuid())
+  postId    String
+  editorId  String
+  title     String
+  body      String
+  summary   String   @default("")
+  createdAt DateTime @default(now())
+
+  post      KxPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  editor    User     @relation("KxRevisionEditor", fields: [editorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([editorId])
+}
+
+model KxFlag {
+  id           String    @id @default(cuid())
+  reporterId   String
+  postId       String?
+  answerId     String?
+  commentId    String?
+  reason       String    // "SPAM" | "OFFENSIVE" | "CHEATING" | "OFF_TOPIC" | "OTHER"
+  description  String    @default("")
+  status       String    @default("PENDING") // "PENDING" | "REVIEWED" | "DISMISSED" | "ACTIONED"
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  reporter     User      @relation("KxFlagReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy   User?     @relation("KxFlagReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  post         KxPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answer       KxAnswer? @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  comment      KxComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([reporterId])
+  @@index([postId])
+  @@index([answerId])
+  @@index([commentId])
+}
+
+model KxBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation("KxUserBookmarks", fields: [userId], references: [id], onDelete: Cascade)
+  post      KxPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId, createdAt])
+  @@index([postId])
+}
+
+model KxFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  tagId     String?
+  postId    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation("KxUserFollows", fields: [userId], references: [id], onDelete: Cascade)
+  tag       KxTag?   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  post      KxPost?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tagId])
+  @@unique([userId, postId])
+  @@index([userId])
+  @@index([tagId])
+  @@index([postId])
+}
+
+model KxModerationAction {
+  id          String   @id @default(cuid())
+  moderatorId String
+  actionType  String   // "CLOSE" | "REOPEN" | "LOCK" | "UNLOCK" | "PIN" | "UNPIN" | "DELETE" | "RESTORE"
+  targetType  String   // "POST" | "ANSWER" | "COMMENT"
+  targetId    String
+  postId      String?
+  reason      String   @default("")
+  createdAt   DateTime @default(now())
+
+  moderator   User     @relation("KxModeratorActions", fields: [moderatorId], references: [id], onDelete: Cascade)
+  post        KxPost?  @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([moderatorId])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model KxNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "ANSWER" | "COMMENT" | "ACCEPTED" | "VERIFIED" | "UPVOTE" | "MENTION" | "WEEKLY_DIGEST"
+  title     String
+  message   String
+  link      String   @default("")
+  isRead    Boolean  @default(false)
+  metadata  String   @default("{}")
+  createdAt DateTime @default(now())
+
+  user      User     @relation("KxUserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
 

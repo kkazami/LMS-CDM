@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { X, Mail, Phone, BookOpen, Loader2, Flame, Trophy } from "lucide-react";
@@ -40,8 +40,10 @@ interface PublicUserProfile {
 interface UserMiniCardProps {
   userId: string;
   instituteCode: string;
-  /** Position anchor — the popover opens relative to this */
-  anchorRect: DOMRect;
+  /** Position anchor rect — the popover opens relative to this */
+  anchorRect?: DOMRect | null;
+  /** Position anchor element — allows dynamic tracking on scroll */
+  anchorElement?: HTMLElement | null;
   onClose: () => void;
   theme: InstituteTheme;
 }
@@ -50,6 +52,7 @@ export default function UserMiniCard({
   userId,
   instituteCode,
   anchorRect,
+  anchorElement,
   onClose,
   theme,
 }: UserMiniCardProps) {
@@ -61,16 +64,8 @@ export default function UserMiniCard({
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     setMounted(true);
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Fetch user profile on mount
@@ -98,46 +93,138 @@ export default function UserMiniCard({
     };
   }, [userId]);
 
-  // Calculate position after mount/load for desktop popover
-  useEffect(() => {
-    if (isMobile) {
-      setVisible(true);
-      return;
-    }
+  const isFlippedRef = useRef<boolean | null>(null);
 
-    const cardWidth = 320;
-    const cardHeight = 440;
+  // Dynamically position the card relative to the clicked element in document coordinates
+  const updatePosition = useCallback(() => {
+    let rect: DOMRect | null = null;
+    if (anchorElement && document.body.contains(anchorElement)) {
+      rect = anchorElement.getBoundingClientRect();
+    } else if (anchorRect) {
+      rect = anchorRect;
+    }
+    if (!rect) return;
+
+    const cardEl = cardRef.current;
+    const cardWidth = cardEl?.offsetWidth || 320;
+    const cardHeight = cardEl?.offsetHeight || 440;
     const gap = 8;
 
-    let top = anchorRect.bottom + gap;
-    let left = anchorRect.left;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const scrollX = window.scrollX || window.pageXOffset || 0;
 
-    const spaceBelow = window.innerHeight - anchorRect.bottom;
-    const spaceAbove = anchorRect.top;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 
-    // Flip above if it doesn't fit below AND there is more space above
-    if (cardHeight > spaceBelow && spaceAbove > spaceBelow) {
-      top = Math.max(16, anchorRect.top - cardHeight - gap);
+    // Decide flip orientation once on initial positioning so it stays stable during scrolling
+    if (isFlippedRef.current === null) {
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      isFlippedRef.current = cardHeight > spaceBelow && spaceAbove > spaceBelow;
     }
 
-    // Keep within viewport horizontally
-    if (left + cardWidth > window.innerWidth - 16) {
-      left = Math.max(16, window.innerWidth - cardWidth - 16);
+    const anchorDocTop = rect.top + scrollY;
+    const anchorDocBottom = rect.bottom + scrollY;
+    const anchorDocLeft = rect.left + scrollX;
+    const anchorDocRight = rect.right + scrollX;
+
+    let top: number;
+    if (isFlippedRef.current) {
+      top = anchorDocTop - cardHeight - gap;
+    } else {
+      top = anchorDocBottom + gap;
     }
-    if (left < 16) {
-      left = 16;
+
+    // Keep within document top bounds (never clamp to viewport scrollY, so it scrolls naturally with page)
+    if (top < 8) {
+      top = 8;
+    }
+
+    // Horizontal placement: align with anchor, constrained within viewport margins
+    let left = anchorDocLeft;
+    if (rect.left + cardWidth > viewportWidth - 16) {
+      left = Math.max(16 + scrollX, anchorDocRight - cardWidth);
+    }
+    if (left < 16 + scrollX) {
+      left = 16 + scrollX;
     }
 
     setPosition({ top, left });
-    requestAnimationFrame(() => {
-      setVisible(true);
-    });
-  }, [anchorRect, isMobile]);
+    setVisible(true);
+  }, [anchorElement, anchorRect]);
 
-  // Close on outside click
+  // Initial and subsequent position updates
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+    if (mounted) {
+      updatePosition();
+    }
+  }, [mounted, updatePosition]);
+
+  // Re-measure after user details load since card height expands
+  useEffect(() => {
+    if (mounted) {
+      requestAnimationFrame(() => {
+        updatePosition();
+      });
+    }
+  }, [loading, user, mounted, updatePosition]);
+
+  // Window resize: recalculate position if layout shifts
+  useEffect(() => {
+    if (!mounted) return;
+    const handleResize = () => {
+      updatePosition();
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mounted, updatePosition]);
+
+  // Scroll listener: ONLY re-calculate if the anchor element's document position changes
+  // (e.g. inside an inner scrollable div or if content above it shifts).
+  // For standard page/window scroll, native CSS absolute positioning keeps the card
+  // attached to the document in 1:1 hardware sync without re-rendering or sticking to the screen.
+  useEffect(() => {
+    if (!mounted) return;
+    let lastDocTop = 0;
+    let lastDocLeft = 0;
+
+    if (anchorElement && document.body.contains(anchorElement)) {
+      const r = anchorElement.getBoundingClientRect();
+      lastDocTop = r.top + (window.scrollY || window.pageYOffset || 0);
+      lastDocLeft = r.left + (window.scrollX || window.pageXOffset || 0);
+    }
+
+    const handleScroll = () => {
+      if (!anchorElement || !document.body.contains(anchorElement)) return;
+      const r = anchorElement.getBoundingClientRect();
+      const curDocTop = r.top + (window.scrollY || window.pageYOffset || 0);
+      const curDocLeft = r.left + (window.scrollX || window.pageXOffset || 0);
+
+      if (Math.abs(curDocTop - lastDocTop) > 1 || Math.abs(curDocLeft - lastDocLeft) > 1) {
+        lastDocTop = curDocTop;
+        lastDocLeft = curDocLeft;
+        updatePosition();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, [mounted, anchorElement, updatePosition]);
+
+  // Close on outside click or escape
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
+      const target = e.target as Node;
+      if (
+        cardRef.current &&
+        !cardRef.current.contains(target) &&
+        (!anchorElement || !anchorElement.contains(target))
+      ) {
         onClose();
       }
     }
@@ -146,12 +233,14 @@ export default function UserMiniCard({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [anchorElement, onClose]);
 
   if (!mounted) return null;
 
@@ -168,41 +257,18 @@ export default function UserMiniCard({
   const badgeCount = user?.gamificationProfile?.badges?.length || 0;
 
   return createPortal(
-    <>
-      {/* Backdrop scrim on mobile */}
-      {isMobile && (
-        <div
-          className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-xs transition-opacity duration-200"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-
-      <div
-        ref={cardRef}
-        role="dialog"
-        aria-label={`${user?.name || "User"} mini profile`}
-        className={
-          isMobile
-            ? `fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] w-full max-w-md mx-auto rounded-t-[28px] border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-transform duration-300 ease-out overflow-y-auto pb-[env(safe-area-inset-bottom,16px)] ${
-                visible ? "translate-y-0" : "translate-y-full"
-              }`
-            : `fixed z-[9999] w-[320px] rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
-                visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
-              }`
-        }
-        style={
-          !isMobile
-            ? {
-                top: position.top,
-                left: position.left,
-              }
-            : undefined
-        }
-      >
-        {isMobile && (
-          <div className="w-10 h-1 bg-slate-300 dark:bg-white/20 rounded-full mx-auto my-2.5" />
-        )}
+    <div
+      ref={cardRef}
+      role="dialog"
+      aria-label={`${user?.name || "User"} mini profile`}
+      className={`absolute z-[9999] w-[320px] max-w-[calc(100vw-24px)] rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl transition-opacity duration-200 ease-out overflow-hidden ${
+        visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+      }`}
+      style={{
+        top: position.top,
+        left: position.left,
+      }}
+    >
       {loading ? (
         <div className="flex items-center justify-center p-10">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400 dark:text-slate-500" />
@@ -338,8 +404,7 @@ export default function UserMiniCard({
           </div>
         </div>
       )}
-    </div>
-    </>,
+    </div>,
     document.body
   );
 }

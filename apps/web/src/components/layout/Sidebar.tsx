@@ -29,6 +29,7 @@ import {
   PenTool,
   Settings,
   HelpCircle,
+  MessageSquareQuote,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +61,8 @@ interface SidebarProps {
   onCloseMobileDrawer?: () => void;
   /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
   isEligibleForActivities?: boolean;
+  /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
+  isEligibleForKnowledgeExchange?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -115,6 +118,7 @@ export default function Sidebar({
   isMobileDrawer = false,
   onCloseMobileDrawer,
   isEligibleForActivities,
+  isEligibleForKnowledgeExchange,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -139,6 +143,17 @@ export default function Sidebar({
         { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
       ];
     }
+  }
+
+  if (isEligibleForKnowledgeExchange) {
+    links = [
+      ...links,
+      {
+        label: "Knowledge Exchange",
+        href: `/${instituteCode}/knowledge-exchange`,
+        icon: MessageSquareQuote,
+      },
+    ];
   }
 
 

@@ -42,7 +42,11 @@ export default function AnnouncementCard({
   onUpdate,
   onDelete,
 }: AnnouncementCardProps) {
-  const [miniCard, setMiniCard] = useState<{ userId: string; anchorRect: DOMRect } | null>(null);
+  const [miniCard, setMiniCard] = useState<{
+    userId: string;
+    anchorRect: DOMRect;
+    anchorElement: HTMLElement;
+  } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(announcement.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,9 +96,13 @@ export default function AnnouncementCard({
           avatarUrl={announcement.author.avatarUrl}
           size="md"
           color={theme.colors.primary}
-          onClick={(e: React.MouseEvent) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setMiniCard({ userId: announcement.author.id, anchorRect: rect });
+          onClick={(e: React.MouseEvent<HTMLElement>) => {
+            const el = e.currentTarget;
+            setMiniCard({
+              userId: announcement.author.id,
+              anchorRect: el.getBoundingClientRect(),
+              anchorElement: el,
+            });
           }}
         />
         <div className="min-w-0 flex-1">
@@ -185,6 +193,7 @@ export default function AnnouncementCard({
           userId={miniCard.userId}
           instituteCode={instituteCode}
           anchorRect={miniCard.anchorRect}
+          anchorElement={miniCard.anchorElement}
           onClose={() => setMiniCard(null)}
           theme={theme}
         />

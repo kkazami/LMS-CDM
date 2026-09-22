@@ -95,7 +95,11 @@ export default function PeopleClient({
   );
 
   // MiniCard state
-  const [miniCard, setMiniCard] = useState<{ userId: string; anchorRect: DOMRect } | null>(null);
+  const [miniCard, setMiniCard] = useState<{
+    userId: string;
+    anchorRect: DOMRect;
+    anchorElement?: HTMLElement;
+  } | null>(null);
 
   const openCommentDrawer = async (student: Student) => {
     setSelectedStudent(student);
@@ -205,9 +209,13 @@ export default function PeopleClient({
               avatarUrl={instructor.avatarUrl}
               size="md"
               color={theme.colors.primary}
-              onClick={(e: React.MouseEvent) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setMiniCard({ userId: instructor.id, anchorRect: rect });
+              onClick={(e: React.MouseEvent<HTMLElement>) => {
+                const el = e.currentTarget;
+                setMiniCard({
+                  userId: instructor.id,
+                  anchorRect: el.getBoundingClientRect(),
+                  anchorElement: el,
+                });
               }}
             />
             <div>
@@ -256,9 +264,13 @@ export default function PeopleClient({
                     avatarUrl={req.avatarUrl}
                     size="sm"
                     color="#F59E0B"
-                    onClick={(e: React.MouseEvent) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setMiniCard({ userId: req.id, anchorRect: rect });
+                    onClick={(e: React.MouseEvent<HTMLElement>) => {
+                      const el = e.currentTarget;
+                      setMiniCard({
+                        userId: req.id,
+                        anchorRect: el.getBoundingClientRect(),
+                        anchorElement: el,
+                      });
                     }}
                   />
                   <div>
@@ -317,9 +329,13 @@ export default function PeopleClient({
                     size="sm"
                     color={theme.colors.primary}
                     className="shrink-0"
-                    onClick={(e: React.MouseEvent) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setMiniCard({ userId: student.id, anchorRect: rect });
+                    onClick={(e: React.MouseEvent<HTMLElement>) => {
+                      const el = e.currentTarget;
+                      setMiniCard({
+                        userId: student.id,
+                        anchorRect: el.getBoundingClientRect(),
+                        anchorElement: el,
+                      });
                     }}
                   />
                   <div className="min-w-0 flex-1">
@@ -484,6 +500,7 @@ export default function PeopleClient({
           userId={miniCard.userId}
           instituteCode={instituteCode}
           anchorRect={miniCard.anchorRect}
+          anchorElement={miniCard.anchorElement}
           onClose={() => setMiniCard(null)}
           theme={theme}
         />

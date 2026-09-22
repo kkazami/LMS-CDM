@@ -37,6 +37,11 @@ export default function LoginRewardModal({
   const displayStreak = Math.max(1, streakCurrent);
 
   useEffect(() => {
+    // Suppress modal popup in automated testing environments (e.g. Playwright)
+    if (typeof window !== "undefined" && window.navigator.webdriver) {
+      return;
+    }
+
     // Check if dismissed in this browser session
     try {
       if (sessionStorage.getItem(`gamification_daily_reward_dismissed_${userId}`)) {

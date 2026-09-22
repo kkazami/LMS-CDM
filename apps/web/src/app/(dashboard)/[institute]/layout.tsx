@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleForActivities } from "@/lib/activity-eligibility";
+import { isEligibleForKnowledgeExchange } from "@/lib/kx-eligibility";
 import { db } from "@/lib/db";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
@@ -47,6 +48,16 @@ export default async function InstituteLayout({
       instituteId: session.user.instituteId as string,
     },
   });
+
+  // Compute Knowledge Exchange eligibility for the sidebar
+  const isKxSessionEligible = await isEligibleForKnowledgeExchange({
+    user: {
+      id: session.user.id,
+      role: session.user.role as string,
+      instituteId: session.user.instituteId as string,
+    },
+  });
+  const kxEligible = institute.toLowerCase() === "ics" && isKxSessionEligible;
 
   const role = (session.user.role as string).toUpperCase();
   const isStudent = role === "STUDENT";
@@ -117,6 +128,7 @@ export default async function InstituteLayout({
       avatarUrl={(session.user as Record<string, unknown>).avatarUrl as string | null ?? null}
       theme={theme}
       isEligibleForActivities={activityEligible}
+      isEligibleForKnowledgeExchange={kxEligible}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp || 0}
       streakCurrent={gamification?.loginStreakCurrent || 1}

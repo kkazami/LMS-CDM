@@ -26,6 +26,8 @@ interface DashboardLayoutProps {
   theme: InstituteTheme;
   /** Whether this user qualifies for ICS Interactive Activities. Controls sidebar entry visibility. */
   isEligibleForActivities?: boolean;
+  /** Whether this user qualifies for Knowledge Exchange. Controls sidebar entry visibility. */
+  isEligibleForKnowledgeExchange?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -45,6 +47,7 @@ export default function DashboardLayout({
   avatarUrl,
   theme,
   isEligibleForActivities,
+  isEligibleForKnowledgeExchange,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -76,6 +79,7 @@ export default function DashboardLayout({
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           isEligibleForActivities={isEligibleForActivities}
+          isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
           enrolledCourses={enrolledCourses}
         />
 
@@ -105,6 +109,7 @@ export default function DashboardLayout({
               isMobileDrawer={true}
               onCloseMobileDrawer={() => setMobileOpen(false)}
               isEligibleForActivities={isEligibleForActivities}
+              isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
               enrolledCourses={enrolledCourses}
             />
           </div>
