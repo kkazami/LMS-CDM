@@ -87,6 +87,12 @@ model User {
   kxFollows             KxFollow[]             @relation("KxUserFollows")
   kxModerationActions   KxModerationAction[]   @relation("KxModeratorActions")
   kxNotifications       KxNotification[]       @relation("KxUserNotifications")
+
+  // ─── GitHub Integration relations ───
+  githubToken           GithubToken?
+  githubRepoLinks       GithubRepoLink[]       @relation("UserGithubRepoLinks")
+  githubSubmissions     GithubSubmission[]     @relation("UserGithubSubmissions")
+  githubComments        GithubInlineComment[]  @relation("UserGithubInlineComments")
 }
 
 model Session {
@@ -171,6 +177,7 @@ model SyllabusItem {
   course        Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
   targetGroups  SyllabusTargetGroup[]
   kxPosts       KxPost[]
+  githubSubmissions GithubSubmission[]
 
   @@index([courseId, type])
   @@index([courseId, orderIndex])
@@ -296,6 +303,7 @@ model StudentSubmission {
   syllabusItem   SyllabusItem           @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
   attachments    SubmissionAttachment[]
   integrityEvents IntegrityEvent[]
+  githubRepoLinks GithubRepoLink[]
 
   @@unique([syllabusItemId, studentId])
   @@index([syllabusItemId])
@@ -762,6 +770,7 @@ model KxPost {
   bookmarks      KxBookmark[]
   follows        KxFollow[]
   moderationActions KxModerationAction[]
+  githubRepoLinks GithubRepoLink[]
 
   @@index([instituteId, createdAt])
   @@index([instituteId, status])
@@ -977,5 +986,141 @@ model KxNotification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
 }
+
+// ─────────────────────────────────────────────────────────────
+// ─── GitHub Integration Models (Knowledge Exchange) ──────────
+// ─────────────────────────────────────────────────────────────
+
+model GithubToken {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  encryptedToken String
+  scope          String
+  connectedAt    DateTime  @default(now())
+  lastUsedAt     DateTime?
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model GithubRepoLink {
+  id             String                @id @default(cuid())
+  userId         String
+  postId         String?
+  submissionId   String?
+  owner          String
+  repo           String
+  branch         String                @default("main")
+  commitSha      String?
+  filePath       String?
+  lineStart      Int?
+  lineEnd        Int?
+  visibility     String                @default("cohort") // "cohort" | "instructor_only" | "anonymous"
+  linkedAt       DateTime              @default(now())
+
+  user           User                  @relation("UserGithubRepoLinks", fields: [userId], references: [id], onDelete: Cascade)
+  post           KxPost?               @relation(fields: [postId], references: [id], onDelete: SetNull)
+  submission     StudentSubmission?    @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+  comments       GithubInlineComment[]
+  ciResults      GithubCiResult[]
+  githubSubmissions GithubSubmission[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([submissionId])
+  @@index([owner, repo])
+}
+
+model GithubSubmission {
+  id             String                @id @default(cuid())
+  syllabusItemId String
+  userId         String
+  repoLinkId     String
+  commitSha      String
+  submittedAt    DateTime              @default(now())
+  snapshotPath   String?
+  isLate         Boolean               @default(false)
+  attemptNumber  Int                   @default(1)
+
+  syllabusItem   SyllabusItem          @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  user           User                  @relation("UserGithubSubmissions", fields: [userId], references: [id], onDelete: Cascade)
+  repoLink       GithubRepoLink        @relation(fields: [repoLinkId], references: [id], onDelete: Cascade)
+  similaritiesA  SubmissionSimilarity[] @relation("SimilaritySubmissionA")
+  similaritiesB  SubmissionSimilarity[] @relation("SimilaritySubmissionB")
+
+  @@unique([syllabusItemId, userId, attemptNumber])
+  @@index([syllabusItemId])
+  @@index([userId])
+  @@index([repoLinkId])
+}
+
+model GithubInlineComment {
+  id              String               @id @default(cuid())
+  repoLinkId      String
+  authorId        String
+  filePath        String
+  lineNumber      Int
+  body            String
+  githubCommentId BigInt?
+  parentId        String?
+  resolved        Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  repoLink        GithubRepoLink       @relation(fields: [repoLinkId], references: [id], onDelete: Cascade)
+  author          User                 @relation("UserGithubInlineComments", fields: [authorId], references: [id], onDelete: Cascade)
+  parent          GithubInlineComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies         GithubInlineComment[] @relation("CommentReplies")
+
+  @@index([repoLinkId, filePath])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model GithubWebhookEvent {
+  id           String    @id @default(cuid())
+  deliveryId   String    @unique
+  eventType    String
+  repoFullName String
+  payload      String    // JSON stringified payload
+  processed    Boolean   @default(false)
+  receivedAt   DateTime  @default(now())
+
+  @@index([deliveryId])
+  @@index([repoFullName])
+  @@index([processed])
+}
+
+model GithubCiResult {
+  id           String         @id @default(cuid())
+  repoLinkId   String
+  commitSha    String
+  workflowName String?
+  status       String         // "success" | "failure" | "pending" | "cancelled"
+  conclusion   String?
+  runUrl       String?
+  fetchedAt    DateTime       @default(now())
+
+  repoLink     GithubRepoLink @relation(fields: [repoLinkId], references: [id], onDelete: Cascade)
+
+  @@index([repoLinkId, commitSha])
+}
+
+model SubmissionSimilarity {
+  id              String           @id @default(cuid())
+  submissionAId   String
+  submissionBId   String
+  score           Float            // 0.00 to 100.00
+  flagged         Boolean          @default(false)
+  checkedAt       DateTime         @default(now())
+
+  submissionA     GithubSubmission @relation("SimilaritySubmissionA", fields: [submissionAId], references: [id], onDelete: Cascade)
+  submissionB     GithubSubmission @relation("SimilaritySubmissionB", fields: [submissionBId], references: [id], onDelete: Cascade)
+
+  @@index([submissionAId])
+  @@index([submissionBId])
+}
+
 
 
