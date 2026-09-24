@@ -10,7 +10,10 @@ import {
   AlertCircle,
   ExternalLink,
   Loader2,
+  GitBranch,
+  X,
 } from "lucide-react";
+import { RepoLinkerModal } from "./github/RepoLinkerModal";
 import KxRichTextEditor from "./KxRichTextEditor";
 import KxTagSelector from "./KxTagSelector";
 import KxAnonymousToggle from "./KxAnonymousToggle";
@@ -43,6 +46,16 @@ export default function KxAskForm({
   );
   const [syllabusItemId, setSyllabusItemId] = useState<string | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
+  const [attachedRepo, setAttachedRepo] = useState<{
+    owner: string;
+    repo: string;
+    branch?: string;
+    filePath?: string;
+    lineStart?: number;
+    lineEnd?: number;
+    visibility: 'cohort' | 'instructor_only' | 'anonymous';
+  } | null>(null);
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,14 +144,7 @@ export default function KxAskForm({
       return;
     }
 
-    const finalTagIds =
-      selectedTagIds.length > 0
-        ? selectedTagIds
-        : availableTags.length > 0
-        ? [availableTags[0].id]
-        : [];
-
-    if (finalTagIds.length < KX_VALIDATION.MIN_TAGS) {
+    if (selectedTagIds.length < KX_VALIDATION.MIN_TAGS) {
       setErrorMsg("Please select at least one relevant tag.");
       return;
     }
@@ -154,7 +160,7 @@ export default function KxAskForm({
           body,
           postType,
           isAnonymous,
-          tagIds: finalTagIds,
+          tagIds: selectedTagIds,
           courseId,
           syllabusItemId,
         }),
@@ -168,6 +174,26 @@ export default function KxAskForm({
         return;
       }
 
+      // If a GitHub repository was attached, link it to the newly created post
+      if (attachedRepo && data?.post?.id) {
+        try {
+          const linkRes = await fetch('/api/github/repos/link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...attachedRepo,
+              postId: data.post.id,
+            }),
+          });
+          if (!linkRes.ok) {
+            const errData = await linkRes.json().catch(() => ({}));
+            console.error('Failed to link attached GitHub repo to post:', errData);
+          }
+        } catch (linkErr) {
+          console.error('Failed to link attached GitHub repo to post:', linkErr);
+        }
+      }
+
       // Success! Navigate to created post
       router.push(`/${instituteCode}/knowledge-exchange/post/${data.post.id}`);
     } catch {
@@ -177,7 +203,8 @@ export default function KxAskForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Post Type Selector */}
       <div className="flex items-center gap-3">
         <button
@@ -302,45 +329,117 @@ export default function KxAskForm({
         />
       )}
 
-      {/* Anonymous Posting Toggle */}
-      <KxAnonymousToggle checked={isAnonymous} onChange={setIsAnonymous} />
+      {/* GitHub Repository Attachment */}
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#151924] p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
+              <GitBranch className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="block text-sm font-semibold text-slate-900 dark:text-white">
+                Attach GitHub Code or Repository
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Link code files, line ranges, or an entire repository with custom visibility controls.
+              </span>
+            </div>
+          </div>
 
-      {/* Validation Error Message */}
-      {errorMsg && (
-        <div className="flex items-center gap-2 p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400 text-xs font-medium">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Submit Action */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold shadow-md shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Publishing...</span>
-            </>
+          {!attachedRepo ? (
+            <button
+              type="button"
+              onClick={() => setIsRepoModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-orange-500/30 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors cursor-pointer"
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>Attach Repository</span>
+            </button>
           ) : (
-            <>
-              <Send className="h-4 w-4" />
-              <span>Publish {postType === "QUESTION" ? "Question" : "Discussion"}</span>
-            </>
+            <button
+              type="button"
+              onClick={() => setAttachedRepo(null)}
+              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 hover:underline cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span>Remove</span>
+            </button>
           )}
-        </button>
+        </div>
+
+        {attachedRepo && (
+          <div className="flex items-center justify-between p-3 rounded-lg border border-orange-500/20 bg-orange-50/50 dark:bg-orange-950/20 text-xs flex-wrap gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {attachedRepo.owner}/{attachedRepo.repo}
+              </span>
+              <span className="text-slate-500 dark:text-slate-400">
+                ({attachedRepo.branch || 'main'})
+              </span>
+              {attachedRepo.filePath && (
+                <span className="px-1.5 py-0.5 rounded bg-white dark:bg-neutral-800 border border-slate-200 dark:border-white/10 font-mono text-[11px] text-orange-600 dark:text-orange-400">
+                  {attachedRepo.filePath}
+                  {attachedRepo.lineStart && attachedRepo.lineEnd ? `:${attachedRepo.lineStart}-${attachedRepo.lineEnd}` : ''}
+                </span>
+              )}
+            </div>
+
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 capitalize">
+              Visibility: {attachedRepo.visibility.replace('_', ' ')}
+            </span>
+          </div>
+        )}
       </div>
-    </form>
+
+        {/* Anonymous Posting Toggle */}
+        <KxAnonymousToggle checked={isAnonymous} onChange={setIsAnonymous} />
+
+        {/* Validation Error Message */}
+        {errorMsg && (
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400 text-xs font-medium">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Submit Action */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold shadow-md shadow-orange-500/20 disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Publishing...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                <span>Publish {postType === "QUESTION" ? "Question" : "Discussion"}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+
+      <RepoLinkerModal
+        isOpen={isRepoModalOpen}
+        onClose={() => setIsRepoModalOpen(false)}
+        onLinked={(linked) => {
+          setAttachedRepo(linked);
+          setIsRepoModalOpen(false);
+        }}
+      />
+    </>
   );
 }

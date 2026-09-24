@@ -9,7 +9,8 @@ import {
   Camera,
   X,
   ExternalLink,
-  ThumbsUp,
+  ChevronUp,
+  ChevronDown,
   MoreHorizontal,
   User,
   UserX,
@@ -113,8 +114,10 @@ export default function KxCommentThread({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 
-  // Likes tracking (client-side interactive feedback)
-  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(new Set());
+  // Comment votes tracking: commentId -> { score: number; userVote: 1 | -1 | 0 }
+  const [commentVotes, setCommentVotes] = useState<
+    Record<string, { score: number; userVote: 1 | -1 | 0 }>
+  >({});
 
   // 3-dot dropdown menu state
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -167,14 +170,42 @@ export default function KxCommentThread({
     }
   }, [lightboxImage]);
 
-  const toggleCommentLike = (commentId: string) => {
-    setLikedCommentIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(commentId)) {
-        next.delete(commentId);
-      } else {
-        next.add(commentId);
+  // Load saved comment votes from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("kx_comment_votes");
+      if (saved) {
+        setCommentVotes(JSON.parse(saved));
       }
+    } catch {}
+  }, []);
+
+  const handleVoteComment = (
+    commentId: string,
+    direction: 1 | -1,
+    isAuthorSelf: boolean
+  ) => {
+    if (isAuthorSelf) return;
+
+    setCommentVotes((prev) => {
+      const current = prev[commentId] || { score: 0, userVote: 0 };
+      const targetVote: 1 | -1 | 0 =
+        current.userVote === direction ? 0 : direction;
+      const diff = targetVote - current.userVote;
+      const newScore = current.score + diff;
+
+      const next = {
+        ...prev,
+        [commentId]: {
+          score: newScore,
+          userVote: targetVote,
+        },
+      };
+
+      try {
+        localStorage.setItem("kx_comment_votes", JSON.stringify(next));
+      } catch {}
+
       return next;
     });
   };
@@ -544,28 +575,52 @@ export default function KxCommentThread({
                     </div>
                   )}
 
-                  {/* Facebook Action Row: Like · Reply · Time */}
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
-                    {/* Like Button */}
-                    <button
-                      type="button"
-                      onClick={() => toggleCommentLike(c.id)}
-                      className={`hover:underline cursor-pointer flex items-center gap-1 transition-colors ${
-                        likedCommentIds.has(c.id)
-                          ? "text-blue-600 dark:text-blue-400 font-bold"
-                          : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                      }`}
-                    >
-                      <ThumbsUp
-                        className={`h-3 w-3 ${
-                          likedCommentIds.has(c.id) ? "fill-current" : ""
+                  {/* Action Row: Up/Down Vote · Reply · Time */}
+                  <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
+                    {/* Upvote & Downvote Control */}
+                    <div className="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-white/5 p-0.5 border border-slate-200/60 dark:border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => handleVoteComment(c.id, 1, isCommentAuthor)}
+                        disabled={isCommentAuthor}
+                        title={isCommentAuthor ? "You cannot vote on your own comment" : "Upvote"}
+                        aria-label="Upvote comment"
+                        className={`p-0.5 rounded transition-colors ${
+                          (commentVotes[c.id]?.userVote ?? 0) === 1
+                            ? "bg-orange-500 text-white shadow-xs"
+                            : "text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                        } ${isCommentAuthor ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </button>
+
+                      <span
+                        className={`font-mono text-[11px] font-bold px-1 min-w-[12px] text-center ${
+                          (commentVotes[c.id]?.score ?? 0) > 0
+                            ? "text-orange-600 dark:text-orange-400"
+                            : (commentVotes[c.id]?.score ?? 0) < 0
+                            ? "text-red-500 dark:text-red-400"
+                            : "text-slate-500 dark:text-slate-400"
                         }`}
-                      />
-                      <span>Like</span>
-                      {likedCommentIds.has(c.id) && (
-                        <span className="text-[10px] ml-0.5">1</span>
-                      )}
-                    </button>
+                      >
+                        {commentVotes[c.id]?.score ?? 0}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleVoteComment(c.id, -1, isCommentAuthor)}
+                        disabled={isCommentAuthor}
+                        title={isCommentAuthor ? "You cannot vote on your own comment" : "Downvote"}
+                        aria-label="Downvote comment"
+                        className={`p-0.5 rounded transition-colors ${
+                          (commentVotes[c.id]?.userVote ?? 0) === -1
+                            ? "bg-red-500 text-white shadow-xs"
+                            : "text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-200/60 dark:hover:bg-white/10"
+                        } ${isCommentAuthor ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
 
                     <span>·</span>
 

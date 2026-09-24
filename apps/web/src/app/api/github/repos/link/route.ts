@@ -4,15 +4,15 @@ import { db } from '@/lib/db';
 import { z } from 'zod';
 
 const linkRepoSchema = z.object({
-  postId: z.string().optional(),
-  submissionId: z.string().optional(),
-  owner: z.string().min(1),
-  repo: z.string().min(1),
-  branch: z.string().default('main'),
-  commitSha: z.string().optional(),
-  filePath: z.string().optional(),
-  lineStart: z.number().int().positive().optional(),
-  lineEnd: z.number().int().positive().optional(),
+  postId: z.string().nullish(),
+  submissionId: z.string().nullish(),
+  owner: z.string().trim().min(1, 'Repository owner is required'),
+  repo: z.string().trim().min(1, 'Repository name is required'),
+  branch: z.string().nullish().transform((b) => b?.trim() || 'main'),
+  commitSha: z.string().nullish(),
+  filePath: z.string().nullish(),
+  lineStart: z.coerce.number().int().positive().nullish(),
+  lineEnd: z.coerce.number().int().positive().nullish(),
   visibility: z.enum(['cohort', 'instructor_only', 'anonymous']).default('cohort'),
 });
 
@@ -26,19 +26,32 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = linkRepoSchema.parse(body);
 
+    const cleanOwner = parsed.owner.replace(/^https?:\/\/(?:www\.)?github\.com\//i, '').split('/')[0].trim();
+    const cleanRepo = parsed.repo.replace(/\.git$/i, '').trim();
+    const cleanFilePath = parsed.filePath ? parsed.filePath.trim().replace(/^\/+/, '') : null;
+
     const repoLink = await db.githubRepoLink.create({
       data: {
         userId: session.user.id,
-        postId: parsed.postId,
-        submissionId: parsed.submissionId,
-        owner: parsed.owner,
-        repo: parsed.repo,
-        branch: parsed.branch,
-        commitSha: parsed.commitSha,
-        filePath: parsed.filePath,
-        lineStart: parsed.lineStart,
-        lineEnd: parsed.lineEnd,
+        postId: parsed.postId || null,
+        submissionId: parsed.submissionId || null,
+        owner: cleanOwner,
+        repo: cleanRepo,
+        branch: parsed.branch || 'main',
+        commitSha: parsed.commitSha || null,
+        filePath: cleanFilePath || null,
+        lineStart: parsed.lineStart || null,
+        lineEnd: parsed.lineEnd || null,
         visibility: parsed.visibility,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, avatarUrl: true, role: true },
+        },
+        ciResults: {
+          take: 3,
+          orderBy: { fetchedAt: 'desc' },
+        },
       },
     });
 

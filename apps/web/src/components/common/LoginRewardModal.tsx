@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Sparkles, Flame, CheckCircle2, ArrowRight } from "lucide-react";
 import { useLoginRewardStore } from "@/stores/login-reward-store";
 import CountUpNumber from "@/features/interactive-activities/codelab/components/analytics/CountUpNumber";
@@ -32,6 +33,11 @@ export default function LoginRewardModal({
 }: LoginRewardModalProps) {
   const { shown, markShown } = useLoginRewardStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Safe streak display (at least Day 1)
   const displayStreak = Math.max(1, streakCurrent);
@@ -76,6 +82,26 @@ export default function LoginRewardModal({
     }
   }, [shown, markShown, userId]);
 
+  // Lock body scroll and handle Escape key while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   const levelInfo = computeLevelInfo(totalExp);
   const tierConfig = TIER_CONFIG[levelInfo.tier] || TIER_CONFIG.newcomer;
 
@@ -90,7 +116,7 @@ export default function LoginRewardModal({
     }
   }
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const now = new Date();
@@ -98,8 +124,10 @@ export default function LoginRewardModal({
   const phtNow = new Date(utc + 8 * 3600000);
   const currentDayIndex = (phtNow.getDay() + 6) % 7; // 0 = Mon, 6 = Sun
 
-  return (
+  const modalContent = (
     <div
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
@@ -109,9 +137,9 @@ export default function LoginRewardModal({
           handleClose();
         }
       }}
-      className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:pb-4 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-200"
     >
-      <div className="relative w-full max-w-md max-h-[calc(100dvh-100px)] overflow-y-auto bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-8 text-center transition-all duration-200">
+      <div className="relative w-full max-w-md max-h-[calc(100dvh-60px)] overflow-y-auto bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-8 text-center transition-all duration-200">
         {/* Ambient Top Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-orange-500/20 blur-3xl rounded-full pointer-events-none" />
 
@@ -223,4 +251,6 @@ export default function LoginRewardModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
