@@ -71,7 +71,7 @@ export const getDefaultApiUrl = (): string => {
   // 4. Smart fallback for Android physical devices:
   // Fall back to the active development host LAN IP instead of unreachable localhost
   if (Platform.OS === 'android') {
-    return 'http://192.168.1.8:3000';
+    return 'http://10.0.2.2:3000';
   }
 
   return 'http://localhost:3000';

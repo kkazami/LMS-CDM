@@ -93,6 +93,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      await SecureStore.deleteItemAsync('lumina_user_institute').catch(() => {});
+      await SecureStore.deleteItemAsync('lumina_user_role').catch(() => {});
+      try {
+        const { clearCachedData } = await import('../lib/offline-storage');
+        await clearCachedData();
+      } catch {
+        // Ignore cache clear error
+      }
       set({ token: null, user: null, isAuthenticated: false, rewardReceipt: null });
     },
 

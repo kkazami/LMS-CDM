@@ -1,53 +1,81 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getSecurityHeaders } from "@/lib/security-headers";
+import { getCorsHeaders } from "@/lib/cors";
+
+// Known static file extensions to safely skip page-level redirects
+const STATIC_EXTENSION_REGEX = /\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot|webp|json|map|txt|xml)$/i;
 
 export async function middleware(request: NextRequest) {
-  // Extract institute code from URL if possible. e.g. /ics/courses -> institute = ics
   const pathname = request.nextUrl.pathname;
-  
-  // Exclude static files, _next, api routes
+  const securityHeaders = getSecurityHeaders();
+  const corsHeaders = getCorsHeaders(request);
+
+  // Exclude static assets and _next internals
   if (
-    pathname.match(/\.(.*)$/) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api")
+    STATIC_EXTENSION_REGEX.test(pathname) ||
+    pathname.startsWith("/_next")
   ) {
     return NextResponse.next();
   }
 
-  // The cookie is 'lumina_session'
-  const sessionId = request.cookies.get("lumina_session")?.value;
-
-  // Allow root '/' as public landing page
-  if (pathname === "/") {
-    return NextResponse.next();
+  // Handle API routes: apply security and CORS headers, then pass to API route handlers
+  if (pathname.startsWith("/api")) {
+    const response = NextResponse.next();
+    for (const [key, value] of Object.entries(securityHeaders)) {
+      response.headers.set(key, value);
+    }
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      response.headers.set(key, value);
+    }
+    return response;
   }
 
-  // Dashboard routes are anything besides /login, /register, or /forgot-password
-  const isPublicRoute = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password";
+  // Session token presence check (web cookie)
+  const token = request.cookies.get("lumina_session")?.value;
 
-  if (!isPublicRoute && !sessionId) {
-    // If we're on a non-public route without a session, we redirect to login
-    // Try to extract the institute safely for the redirect
-    const segments = pathname.split('/').filter(Boolean);
-    const possibleInstitute = segments[0] || "ics"; // default to ics if none
-    
-    const loginUrl = new URL(`/login?institute=${possibleInstitute}`, request.url);
-    return NextResponse.redirect(loginUrl);
+  // Public routes allowlist (no session needed)
+  const isPublicRoute =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
+
+  if (!isPublicRoute && !token) {
+    // Extract institute slug dynamically from path (e.g., /ics/courses -> ics)
+    const segments = pathname.split("/").filter(Boolean);
+    const possibleInstitute = segments[0] || "ics";
+
+    const loginUrl = new URL(`/login?institute=${encodeURIComponent(possibleInstitute)}`, request.url);
+    const redirectResponse = NextResponse.redirect(loginUrl);
+
+    for (const [key, value] of Object.entries(securityHeaders)) {
+      redirectResponse.headers.set(key, value);
+    }
+    return redirectResponse;
   }
 
-  // Let Next.js handle it
-  return NextResponse.next();
+  // Standard response with security headers
+  const response = NextResponse.next();
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value);
+  }
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    response.headers.set(key, value);
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except for static files:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

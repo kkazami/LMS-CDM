@@ -18,6 +18,21 @@ interface MobileWebContainerProps {
   onReady?: () => void;
 }
 
+/**
+ * Validates that two URLs have the exact same scheme and host (exact parsed-origin comparison).
+ * Replaces insecure string startsWith() matching.
+ */
+function isSameOrigin(targetUrl?: string, referenceUrl?: string): boolean {
+  if (!targetUrl || !referenceUrl) return false;
+  try {
+    const target = new URL(targetUrl);
+    const reference = new URL(referenceUrl);
+    return target.protocol === reference.protocol && target.host === reference.host;
+  } catch {
+    return false;
+  }
+}
+
 export default function MobileWebContainer({ onReady }: MobileWebContainerProps) {
   const webViewRef = useRef<WebView>(null);
   const insets = useSafeAreaInsets();
@@ -44,6 +59,15 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
   // Handle messages sent from Web App to Native App
   const handleMessage = async (event: WebViewMessageEvent) => {
     try {
+      // Security: Validate message origin strictly against the authorized LMS domain
+      const senderUrl = event.nativeEvent?.url;
+      const expectedUrl = initialUri || API_BASE_URL;
+
+      if (!isSameOrigin(senderUrl, expectedUrl)) {
+        console.warn('Rejected bridge message from untrusted origin:', senderUrl);
+        return;
+      }
+
       const data = JSON.parse(event.nativeEvent.data);
       switch (data.type) {
         case 'HAPTIC_FEEDBACK': {
@@ -73,7 +97,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
         }
 
         case 'SESSION_SYNC': {
-          if (data.token) {
+          if (data.token && typeof data.token === 'string') {
             await SecureStore.setItemAsync('lumina_auth_token', data.token).catch(() => {});
           }
           if (data.user && typeof data.user === 'object') {
@@ -105,27 +129,34 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
             });
             if (!res.canceled && res.assets && res.assets[0]) {
               const asset = res.assets[0];
-              const escapedUri = asset.uri ? asset.uri.replace(/'/g, "\\'") : '';
-              const safeBase64 = asset.base64 ? asset.base64.replace(/'/g, "\\'") : '';
+              const detail = JSON.stringify({
+                requestId: data.requestId,
+                uri: asset.uri || null,
+                base64: asset.base64 || null,
+              });
               webViewRef.current?.injectJavaScript(`
-                window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', {
-                  detail: { requestId: '${data.requestId}', uri: '${escapedUri}', base64: '${safeBase64}' }
-                }));
+                window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', { detail: ${detail} }));
                 true;
               `);
             } else {
+              const detail = JSON.stringify({
+                requestId: data.requestId,
+                uri: null,
+                canceled: true,
+              });
               webViewRef.current?.injectJavaScript(`
-                window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', {
-                  detail: { requestId: '${data.requestId}', uri: null, canceled: true }
-                }));
+                window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', { detail: ${detail} }));
                 true;
               `);
             }
           } catch {
+            const detail = JSON.stringify({
+              requestId: data.requestId,
+              uri: null,
+              error: true,
+            });
             webViewRef.current?.injectJavaScript(`
-              window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', {
-                detail: { requestId: '${data.requestId}', uri: null, error: true }
-              }));
+              window.dispatchEvent(new CustomEvent('MOBILE_IMAGE_PICKED', { detail: ${detail} }));
               true;
             `);
           }
@@ -140,27 +171,35 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
             });
             if (!res.canceled && res.assets && res.assets[0]) {
               const doc = res.assets[0];
-              const escapedUri = doc.uri ? doc.uri.replace(/'/g, "\\'") : '';
-              const escapedName = doc.name ? doc.name.replace(/'/g, "\\'") : 'file';
+              const detail = JSON.stringify({
+                requestId: data.requestId,
+                name: doc.name || 'file',
+                size: doc.size || 0,
+                uri: doc.uri || '',
+              });
               webViewRef.current?.injectJavaScript(`
-                window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', {
-                  detail: { requestId: '${data.requestId}', name: '${escapedName}', size: ${doc.size || 0}, uri: '${escapedUri}' }
-                }));
+                window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', { detail: ${detail} }));
                 true;
               `);
             } else {
+              const detail = JSON.stringify({
+                requestId: data.requestId,
+                uri: null,
+                canceled: true,
+              });
               webViewRef.current?.injectJavaScript(`
-                window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', {
-                  detail: { requestId: '${data.requestId}', uri: null, canceled: true }
-                }));
+                window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', { detail: ${detail} }));
                 true;
               `);
             }
           } catch {
+            const detail = JSON.stringify({
+              requestId: data.requestId,
+              uri: null,
+              error: true,
+            });
             webViewRef.current?.injectJavaScript(`
-              window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', {
-                detail: { requestId: '${data.requestId}', uri: null, error: true }
-              }));
+              window.dispatchEvent(new CustomEvent('MOBILE_DOCUMENT_PICKED', { detail: ${detail} }));
               true;
             `);
           }
@@ -178,10 +217,12 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
             }).catch(() => ({ success: false }));
             success = authRes.success;
           }
+          const detail = JSON.stringify({
+            requestId: data.requestId || '',
+            success,
+          });
           webViewRef.current?.injectJavaScript(`
-            window.dispatchEvent(new CustomEvent('MOBILE_BIOMETRIC_RESULT', {
-              detail: { requestId: '${data.requestId || ''}', success: ${success} }
-            }));
+            window.dispatchEvent(new CustomEvent('MOBILE_BIOMETRIC_RESULT', { detail: ${detail} }));
             true;
           `);
           break;
@@ -207,7 +248,6 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
         if (!isMounted) return;
 
         if (token) {
-          // Let the web app handle role-based redirect from /{institute}
           setInitialUri(`${baseUri}/${institute}`);
         } else {
           setInitialUri(`${baseUri}/login?institute=${institute}`);
@@ -224,70 +264,47 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
     };
   }, []);
 
-  // Safety Timeout: Never let the screen hang indefinitely on a stalled connection.
+  // Safety Timeout
   useEffect(() => {
     if (!isLoading) return;
     const timeout = setTimeout(() => {
       if (isLoading) {
         setIsLoading(false);
         setHasError(true);
-        setErrorMessage(`Connection timed out after ${LOAD_TIMEOUT_MS / 1000}s. Unable to reach ${initialUri || 'the server'}.`);
+        setErrorMessage('Connection timed out. The LMS server may be unreachable.');
       }
     }, LOAD_TIMEOUT_MS);
     return () => clearTimeout(timeout);
-  }, [isLoading, initialUri]);
+  }, [isLoading]);
 
-  // Retry handler: resolve new URI before reloading
-  const handleRetry = useCallback(async () => {
+  const handleRetry = useCallback(() => {
     setHasError(false);
+    setIsLoading(true);
     setErrorMessage(null);
-    try {
-      const baseUri = await resolveEffectiveApiUrl();
-      const token = await SecureStore.getItemAsync('lumina_auth_token');
-      const institute = (await SecureStore.getItemAsync('lumina_user_institute')) || 'ics';
-      const nextUri = token
-        ? `${baseUri}/${institute}`
-        : `${baseUri}/login?institute=${institute}`;
-      setInitialUri(nextUri);
-      setIsLoading(true);
-    } catch {
-      setIsLoading(true);
-      webViewRef.current?.reload();
-    }
+    webViewRef.current?.reload();
   }, []);
 
+  // Injected scripts
   const injectedBefore = `
-    window.isLMSMobileApp = true;
-    window.__LMS_MOBILE_PLATFORM__ = '${Platform.OS}';
+    window.isLuminaMobileApp = true;
+    window.__LUMINA_NATIVE_BRIDGE__ = true;
+    window.__LUMINA_PLATFORM__ = '${Platform.OS}';
     true;
   `;
 
-  // Inject initialization script to signal native environment and ensure viewport/safe-area
   const injectedJavaScript = `
     (function() {
-      window.isLMSMobileApp = true;
-      window.__LMS_MOBILE_PLATFORM__ = '${Platform.OS}';
-      try {
-        sessionStorage.setItem('cdm_is_mobile_app', 'true');
-        localStorage.setItem('cdm_is_mobile_app', 'true');
-        document.cookie = 'cdm_is_mobile_app=true; path=/; max-age=31536000; SameSite=Lax';
-        sessionStorage.setItem('lumina_is_mobile_app', 'true');
-        localStorage.setItem('lumina_is_mobile_app', 'true');
-        document.cookie = 'lumina_is_mobile_app=true; path=/; max-age=31536000; SameSite=Lax';
-      } catch(e) {}
-      // Ensure viewport meta exists for proper mobile rendering
-      if (!document.querySelector('meta[name="viewport"]')) {
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-        document.head.appendChild(meta);
+      window.isLuminaMobileApp = true;
+      window.__LUMINA_NATIVE_BRIDGE__ = true;
+      window.__LUMINA_PLATFORM__ = '${Platform.OS}';
+
+      if (${insets.top} > 0) {
+        document.documentElement.style.setProperty('--sat', '${insets.top}px');
       }
-      // Inject native safe area insets as CSS custom properties
-      document.documentElement.style.setProperty('--sat', '${insets.top}px');
-      document.documentElement.style.setProperty('--sar', '${insets.right}px');
-      document.documentElement.style.setProperty('--sab', '${insets.bottom}px');
-      document.documentElement.style.setProperty('--sal', '${insets.left}px');
-      // Ensure fixed bottom navigation respects device safe area
+      if (${insets.bottom} > 0) {
+        document.documentElement.style.setProperty('--sab', '${insets.bottom}px');
+      }
+
       if (${insets.bottom} > 0) {
         var safeStyle = document.getElementById('lms-mobile-safe-area');
         if (!safeStyle) {
@@ -306,31 +323,38 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
       ? 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 CdMLMSMobile/1.0 LuminaLMSMobile/1.0'
       : 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 CdMLMSMobile/1.0 LuminaLMSMobile/1.0';
 
-  // Intercept navigation to external URLs — open in system browser
+  // Intercept navigation to external URLs using exact parsed origin comparison
   const handleShouldStartLoad = useCallback(
     (request: { url: string }) => {
       const url = request.url;
-      // Derive the origin from our initialUri
-      const origin = initialUri ? initialUri.split('/').slice(0, 3).join('/') : '';
-      // Allow same-origin navigation
-      if (origin && url.startsWith(origin)) {
+      const expectedUrl = initialUri || API_BASE_URL;
+
+      // Allow same-origin navigation strictly
+      if (isSameOrigin(url, expectedUrl)) {
         return true;
       }
-      // Allow about:blank, data:, blob: URIs
+
+      // Allow safe scheme URIs
       if (/^(about:|data:|blob:)/.test(url)) {
         return true;
       }
-      // Open external URLs in the system browser
-      Linking.openURL(url).catch(() => {});
+
+      // Open external URLs in system browser, verifying https: protocol strictly
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'https:' || (__DEV__ && parsed.hostname === 'localhost')) {
+          Linking.openURL(url).catch(() => {});
+        }
+      } catch {
+        // Discard invalid URLs
+      }
       return false;
     },
     [initialUri]
   );
 
-  // Handle navigation state changes: detect forced login redirect (stale token)
   const handleNavigationStateChange = useCallback((navState: WebViewNavigation) => {
     setCanGoBack(navState.canGoBack);
-    // Detect forced redirect to login (session expired in web app)
     if (navState.url && /\/login(\?|$)/.test(navState.url)) {
       SecureStore.deleteItemAsync('lumina_auth_token').catch(() => {});
       SecureStore.deleteItemAsync('lumina_user_institute').catch(() => {});
@@ -392,10 +416,10 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
             setErrorMessage(`Server returned HTTP ${code}`);
           }
         }}
-        originWhitelist={['*']}
-        mixedContentMode="always"
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
+        originWhitelist={['https://*', 'http://localhost:*', 'http://127.0.0.1:*', API_BASE_URL]}
+        mixedContentMode="never"
+        allowFileAccess={false}
+        allowUniversalAccessFromFileURLs={false}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
         domStorageEnabled={true}
@@ -433,14 +457,14 @@ const styles = StyleSheet.create({
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0F1117',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
     zIndex: 10,
+    gap: 12,
   },
   loadingText: {
     color: '#9CA3AF',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

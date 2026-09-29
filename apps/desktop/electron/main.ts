@@ -14,9 +14,44 @@ const ADMIN_LOGIN_URL = WEB_URL + '/login?institute=ics&desktop=admin';
 
 let mainWindow: BrowserWindow | null = null;
 
+/**
+ * Validates and safely opens an external URL in the default system browser.
+ * Only allows https: protocols (or http: on localhost during local development).
+ * Rejects non-HTTP schemes (file:, smb:, tel:, mailto:, local application launchers).
+ */
+function safeOpenExternal(rawUrl: string): void {
+  try {
+    const parsed = new URL(rawUrl);
+    const isHttps = parsed.protocol === 'https:';
+    const isLocalDev = IS_DEV && parsed.protocol === 'http:' && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+
+    if (isHttps || isLocalDev) {
+      shell.openExternal(rawUrl).catch((err) => {
+        console.warn('Failed to open external URL:', err.message);
+      });
+    } else {
+      console.warn('Blocked external URL navigation with untrusted scheme:', rawUrl);
+    }
+  } catch {
+    // Malformed URL, reject
+  }
+}
+
 function createWindow() {
   const adminSession = electronSession.fromPartition('persist:lumina-admin', {
     cache: true,
+  });
+
+  // ─── Enforce Content Security Policy on Electron session ───
+  adminSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http://localhost:* ws: wss:; img-src 'self' data: blob: https:; font-src 'self' https: data:; worker-src 'self' blob:;",
+        ],
+      },
+    });
   });
 
   const iconPath = path.join(__dirname, '..', 'assets', 'icon.png');
@@ -84,18 +119,16 @@ function createWindow() {
       const webHost = new URL(WEB_URL).host;
       if (parsed.host !== webHost) {
         event.preventDefault();
-        shell.openExternal(url);
+        safeOpenExternal(url);
       }
     } catch {
-      // ignore
+      event.preventDefault();
     }
   });
 
   // ─── External Links ───
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('http')) {
-      shell.openExternal(url);
-    }
+    safeOpenExternal(url);
     return { action: 'deny' };
   });
 
@@ -124,7 +157,7 @@ function createWindow() {
   });
 
   setupMenu(win);
-  registerIpcHandlers(win);
+  registerIpcHandlers(win, WEB_URL);
 }
 
 app.whenReady().then(createWindow);
@@ -143,9 +176,7 @@ app.on('activate', () => {
 
 app.on('web-contents-created', (_, contents) => {
   contents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('http')) {
-      shell.openExternal(url);
-    }
+    safeOpenExternal(url);
     return { action: 'deny' };
   });
 });

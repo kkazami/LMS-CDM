@@ -1,5 +1,6 @@
 import { db } from './db';
 import { cookies } from 'next/headers';
+import { hashToken } from './auth-session';
 
 /**
  * Resolves a session from either the lumina_session cookie (web/desktop)
@@ -10,9 +11,9 @@ export async function getSessionFromRequest(request?: Request) {
   // 1. Try cookie first (web/desktop path)
   try {
     const cookieStore = await cookies();
-    const cookieSessionId = cookieStore.get('lumina_session')?.value;
-    if (cookieSessionId) {
-      const session = await validateSessionId(cookieSessionId);
+    const cookieToken = cookieStore.get('lumina_session')?.value;
+    if (cookieToken) {
+      const session = await validateToken(cookieToken);
       if (session) return session;
     }
   } catch {
@@ -23,8 +24,8 @@ export async function getSessionFromRequest(request?: Request) {
   if (request) {
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      const session = await validateSessionId(token);
+      const token = authHeader.slice(7).trim();
+      const session = await validateToken(token);
       if (session) return session;
     }
   }
@@ -32,10 +33,16 @@ export async function getSessionFromRequest(request?: Request) {
   return null;
 }
 
-async function validateSessionId(sessionId: string) {
+async function validateToken(rawToken: string) {
+  if (!rawToken) return null;
+
   try {
-    const session = await db.session.findUnique({
-      where: { id: sessionId },
+    const tokenHash = hashToken(rawToken);
+
+    const session = await db.session.findFirst({
+      where: {
+        OR: [{ tokenHash }, { id: rawToken }],
+      },
       include: {
         user: {
           include: { institute: true },
@@ -44,13 +51,17 @@ async function validateSessionId(sessionId: string) {
     });
 
     if (!session) return null;
+
     if (session.expiresAt.getTime() < Date.now()) {
       await db.session.delete({ where: { id: session.id } }).catch(() => {});
       return null;
     }
 
     const user = session.user as Record<string, unknown>;
-    if (user.isActive === false) return null;
+    if (user.isActive === false) {
+      await db.session.delete({ where: { id: session.id } }).catch(() => {});
+      return null;
+    }
 
     return session;
   } catch {

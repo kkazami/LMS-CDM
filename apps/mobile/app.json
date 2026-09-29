@@ -22,7 +22,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
+          "NSAllowsLocalNetworking": true
         },
         "NSCameraUsageDescription": "CdM LMS needs camera access for profile photos and document scanning.",
         "NSPhotoLibraryUsageDescription": "CdM LMS needs photo library access for uploading profile photos and assignments.",

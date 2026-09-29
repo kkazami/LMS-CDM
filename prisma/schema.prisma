@@ -97,10 +97,16 @@ model User {
 
 model Session {
   id        String   @id @default(cuid())
+  tokenHash String   @unique @default(cuid())
   userId    String
+  userAgent String?
+  ipAddress String?
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 model Course {
