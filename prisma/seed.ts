@@ -3,10 +3,29 @@ import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 import "dotenv/config";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
+const connectionString =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL;
+
+if (!connectionString) {
+  console.error("Error: DATABASE_URL (or POSTGRES_PRISMA_URL) is not set.");
+  process.exit(1);
+}
+
+const isLocalhost =
+  connectionString.includes("localhost") ||
+  connectionString.includes("127.0.0.1") ||
+  connectionString.includes("::1");
+
+const poolConfig: PoolConfig = {
+  connectionString,
+  ssl: !isLocalhost ? { rejectUnauthorized: false } : undefined,
+};
+
+const pool = new Pool(poolConfig);
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

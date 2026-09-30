@@ -14,7 +14,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["officeparser"],
+  serverExternalPackages: ["officeparser", "pg", "@prisma/adapter-pg"],
   async headers() {
     return [
       {
