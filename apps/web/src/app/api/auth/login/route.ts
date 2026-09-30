@@ -88,10 +88,13 @@ export async function POST(request: Request) {
     }
 
     // 6. Enforce dynamic institute scoping
+    const userRole = (user.role || "").toUpperCase();
+    const isAdmin = userRole === "ADMIN";
     const userInstituteCode = user.institute?.code?.toLowerCase();
     const targetInstituteCode = requestedInstituteCode.toLowerCase();
 
-    if (userInstituteCode !== targetInstituteCode) {
+    // Students and teachers are locked to their appointed portal. Admins can log in from any portal.
+    if (!isAdmin && userInstituteCode !== targetInstituteCode) {
       const userInstituteName = user.institute?.name || userInstituteCode?.toUpperCase();
       return NextResponse.json(
         {

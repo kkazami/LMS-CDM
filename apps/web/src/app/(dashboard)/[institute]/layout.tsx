@@ -22,7 +22,11 @@ export default async function InstituteLayout({
     redirect(`/login?institute=${institute}`);
   }
 
-  // Enforce institute scoping: users are strictly locked to their registered institute
+  // Enforce institute scoping: students and teachers are strictly locked to their registered institute.
+  // Admins are system administrators who can view, switch, and manage any institute campus.
+  const userRole = ((session.user as Record<string, unknown>).role as string || "").toUpperCase();
+  const isAdmin = userRole === "ADMIN";
+
   let userInstituteCode = "ics";
   if (session.user.instituteId) {
     const userInstitute = await db.institute.findUnique({
@@ -34,7 +38,7 @@ export default async function InstituteLayout({
     }
   }
 
-  if (userInstituteCode !== institute.toLowerCase()) {
+  if (!isAdmin && userInstituteCode !== institute.toLowerCase()) {
     redirect(`/${userInstituteCode}`);
   }
 

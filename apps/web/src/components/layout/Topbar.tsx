@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Menu, Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon } from "lucide-react";
+import { Bell, Menu, Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, ChevronDown, Check, Building2 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -11,6 +11,12 @@ import LevelBadge from "@/components/common/LevelBadge";
 import SearchModal from "@/components/layout/SearchModal";
 import { useTheme } from "@/lib/theme-context";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
+
+const ALL_INSTITUTES = [
+  { code: "ics", name: "Institute of Computer Studies", short: "ICS", color: "#E06A26" },
+  { code: "ibe", name: "Institute of Business and Education", short: "IBE", color: "#EAB308" },
+  { code: "ite", name: "Institute of Technology and Engineering", short: "ITE", color: "#0284C7" },
+];
 
 type TopbarProps = {
   theme: InstituteTheme;
@@ -38,9 +44,26 @@ export default function Topbar({
   const pathname = usePathname();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isInstituteSwitcherOpen, setIsInstituteSwitcherOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const instituteSwitcherRef = useRef<HTMLDivElement>(null);
   const { themeMode, toggleTheme } = useTheme();
+
+  const isAdmin = userRole.toUpperCase() === "ADMIN";
+
+  function handleSwitchInstitute(targetCode: string) {
+    setIsInstituteSwitcherOpen(false);
+    setIsDropdownOpen(false);
+    if (targetCode.toLowerCase() === instituteCode.toLowerCase()) return;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length > 0 && segments[0].toLowerCase() === instituteCode.toLowerCase()) {
+      segments[0] = targetCode.toLowerCase();
+      router.push("/" + segments.join("/"));
+    } else {
+      router.push(`/${targetCode.toLowerCase()}/admin`);
+    }
+  }
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -53,15 +76,19 @@ export default function Topbar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Close dropdown whenever route changes
+  // Close dropdowns whenever route changes
   useEffect(() => {
     setIsDropdownOpen(false);
+    setIsInstituteSwitcherOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (instituteSwitcherRef.current && !instituteSwitcherRef.current.contains(event.target as Node)) {
+        setIsInstituteSwitcherOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -143,35 +170,152 @@ export default function Topbar({
 
           {/* Mobile Institute Badge & Title */}
           <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
-            <span
-              className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {instituteCode.toUpperCase()}
-            </span>
+            {isAdmin ? (
+              <div className="relative" ref={instituteSwitcherRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsInstituteSwitcherOpen((prev) => !prev)}
+                  className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center gap-1 active:scale-95 transition-transform"
+                  style={{ backgroundColor: theme.colors.primary }}
+                  aria-label="Switch institute campus"
+                >
+                  {instituteCode.toUpperCase()}
+                  <ChevronDown className={`h-2.5 w-2.5 transition-transform duration-200 ${isInstituteSwitcherOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isInstituteSwitcherOpen && (
+                  <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-white/10 p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      Switch Campus
+                    </div>
+                    <div className="space-y-1 mt-1">
+                      {ALL_INSTITUTES.map((inst) => {
+                        const isCurrent = inst.code.toLowerCase() === instituteCode.toLowerCase();
+                        return (
+                          <button
+                            key={inst.code}
+                            type="button"
+                            onClick={() => handleSwitchInstitute(inst.code)}
+                            className={`flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                              isCurrent
+                                ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase text-white shrink-0"
+                                style={{ backgroundColor: inst.color }}
+                              >
+                                {inst.short}
+                              </span>
+                              <span className="truncate text-left text-xs">{inst.name}</span>
+                            </div>
+                            {isCurrent && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 ml-1.5" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <span
+                className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center"
+                style={{ backgroundColor: theme.colors.primary }}
+              >
+                {instituteCode.toUpperCase()}
+              </span>
+            )}
             <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate min-w-0 flex-1" title={dynamicTitle}>
               {dynamicTitle}
             </h1>
           </div>
 
-          {/* Desktop & Tablet Title & Institute Badge (Static) */}
+          {/* Desktop & Tablet Title & Institute Badge / Switcher */}
           <div className="hidden md:flex items-center gap-3 min-w-0">
-            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
-              <span
-                className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
-                {instituteCode.toUpperCase()}
-              </span>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
-                  Campus
-                </span>
-                <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
-                  {instituteName}
-                </span>
+            {isAdmin ? (
+              <div className="relative" ref={instituteSwitcherRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsInstituteSwitcherOpen((prev) => !prev)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all shadow-xs cursor-pointer text-left group"
+                  title="Click to switch institute campus"
+                  aria-expanded={isInstituteSwitcherOpen}
+                >
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  >
+                    {instituteCode.toUpperCase()}
+                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5 flex items-center gap-1">
+                      Campus Switcher
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
+                      {instituteName}
+                    </span>
+                  </div>
+                  <ChevronDown className={`h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform duration-200 shrink-0 ${isInstituteSwitcherOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Institute Switcher Dropdown */}
+                {isInstituteSwitcherOpen && (
+                  <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-white/10 p-2.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Building2 className="h-3 w-3" />
+                      Switch Campus Portal
+                    </div>
+                    <div className="space-y-1 mt-1.5">
+                      {ALL_INSTITUTES.map((inst) => {
+                        const isCurrent = inst.code.toLowerCase() === instituteCode.toLowerCase();
+                        return (
+                          <button
+                            key={inst.code}
+                            type="button"
+                            onClick={() => handleSwitchInstitute(inst.code)}
+                            className={`flex items-center justify-between w-full px-2.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                              isCurrent
+                                ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span
+                                className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase text-white shrink-0"
+                                style={{ backgroundColor: inst.color }}
+                              >
+                                {inst.short}
+                              </span>
+                              <span className="truncate text-left text-xs">{inst.name}</span>
+                            </div>
+                            {isCurrent && <Check className="h-4 w-4 text-emerald-500 shrink-0 ml-1.5" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
+                <span
+                  className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
+                  style={{ backgroundColor: theme.colors.primary }}
+                >
+                  {instituteCode.toUpperCase()}
+                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
+                    Campus
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
+                    {instituteName}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
 
@@ -321,9 +465,42 @@ export default function Topbar({
                 <HelpCircle className="mr-3 h-4 w-4 text-slate-400 dark:text-[#8B92A5]" aria-hidden="true" />
                 Help
               </Link>
+
+              {isAdmin && (
+                <div className="border-t border-slate-200 dark:border-white/10 my-1 py-1">
+                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Switch Campus
+                  </div>
+                  {ALL_INSTITUTES.map((inst) => {
+                    const isCurrent = inst.code.toLowerCase() === instituteCode.toLowerCase();
+                    return (
+                      <button
+                        key={inst.code}
+                        type="button"
+                        onClick={() => handleSwitchInstitute(inst.code)}
+                        className={`flex items-center justify-between w-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                          isCurrent
+                            ? "text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: inst.color }}
+                          />
+                          {inst.short} Campus
+                        </span>
+                        {isCurrent && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors font-semibold cursor-pointer"
+                className="flex w-full items-center px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors font-semibold cursor-pointer border-t border-slate-200/60 dark:border-white/5"
               >
                 <LogOut className="mr-3 h-4 w-4 text-rose-500" aria-hidden="true" />
                 Logout

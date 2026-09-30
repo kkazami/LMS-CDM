@@ -29,6 +29,7 @@ export default function UserProfileModal({
   const [uniqueId, setUniqueId] = useState(user?.uniqueId ?? "");
   const [studentNumber, setStudentNumber] = useState(user?.studentNumber ?? "");
   const [role, setRole] = useState(user?.role ?? "STUDENT");
+  const [selectedInstitute, setSelectedInstitute] = useState(user?.instituteCode ?? instituteCode ?? "ics");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [tempPassword, setTempPassword] = useState("");
@@ -46,7 +47,7 @@ export default function UserProfileModal({
         const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId, studentNumber, role, instituteCode }),
+          body: JSON.stringify({ name, email, uniqueId, studentNumber, role, instituteCode: selectedInstitute }),
         });
 
         const data = await res.json();
@@ -62,7 +63,7 @@ export default function UserProfileModal({
         const res = await fetch(`/api/admin/users/${user?.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId, studentNumber }),
+          body: JSON.stringify({ name, email, uniqueId, studentNumber, instituteCode: selectedInstitute }),
         });
 
         const data = await res.json();
@@ -228,6 +229,28 @@ export default function UserProfileModal({
               </select>
             </div>
           )}
+
+          {/* Appointed Institute Campus */}
+          <div>
+            <label htmlFor="user-institute" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
+              Appointed Institute Campus
+            </label>
+            <select
+              id="user-institute"
+              value={selectedInstitute}
+              onChange={(e) => setSelectedInstitute(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+            >
+              <option value="ics">Institute of Computer Studies (ICS)</option>
+              <option value="ibe">Institute of Business and Education (IBE)</option>
+              <option value="ite">Institute of Technology and Engineering (ITE)</option>
+            </select>
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-[#8B92A5]">
+              {mode === "create"
+                ? "Select the institute campus this user account will be appointed to."
+                : "Reassign this user account to a different institute campus if required."}
+            </p>
+          </div>
 
           {/* Error */}
           {error && (

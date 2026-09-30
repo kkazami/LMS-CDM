@@ -92,7 +92,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Try writing to local filesystem (works in local development environment)
+    // 2. For images without Vercel Blob configured, generate a portable Base64 Data URL
+    // so images load reliably across all user sessions, domains, and devices without 404s
+    const isImage = file.type.startsWith("image/");
+    if (isImage && file.size <= 5 * 1024 * 1024) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const base64 = buffer.toString("base64");
+      const mimeType = file.type || "image/jpeg";
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+
+      // Also save to local disk in dev as cache if writable
+      try {
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, uniqueName), buffer);
+      } catch {}
+
+      return NextResponse.json({
+        url: dataUrl,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    }
+
+    // 3. Try writing to local filesystem (for larger files or documents)
     try {
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       await mkdir(uploadDir, { recursive: true });
@@ -112,7 +135,7 @@ export async function POST(req: NextRequest) {
         fsErr
       );
 
-      // 3. Fallback for read-only serverless environment (Vercel without Vercel Blob configured)
+      // 4. Fallback for read-only serverless environment (Vercel without Vercel Blob configured)
       const buffer = Buffer.from(await file.arrayBuffer());
       const base64 = buffer.toString("base64");
       const mimeType = file.type || "application/octet-stream";

@@ -75,10 +75,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { userId } = await context.params;
     const body = await request.json();
 
-    const { name, email, uniqueId } = body as {
+    const { name, email, uniqueId, instituteCode } = body as {
       name?: string;
       email?: string;
       uniqueId?: string;
+      instituteCode?: string;
     };
 
     // Check user exists
@@ -107,6 +108,15 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email.toLowerCase();
     if (uniqueId !== undefined) updateData.uniqueId = uniqueId;
+
+    if (instituteCode) {
+      const inst = await db.institute.findUnique({
+        where: { code: instituteCode.toLowerCase() },
+      });
+      if (inst) {
+        updateData.instituteId = inst.id;
+      }
+    }
 
     const updated = await db.user.update({
       where: { id: userId },
