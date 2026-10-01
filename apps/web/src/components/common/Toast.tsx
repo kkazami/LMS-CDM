@@ -93,21 +93,21 @@ export default function Toaster() {
         <div
           key={msg.id}
           className={cn(
-            "flex items-start gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-gray-200",
+            "flex items-start gap-3 rounded-xl bg-white dark:bg-[#1A1D27] px-4 py-3 shadow-lg ring-1 ring-gray-200 dark:ring-white/10",
             "animate-[slideInRight_0.3s_ease-out_both]"
           )}
           role="alert"
         >
           {ICONS[msg.type]}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900">{msg.title}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-[#F0F2F8]">{msg.title}</p>
             {msg.description && (
-              <p className="mt-0.5 text-xs text-gray-500">{msg.description}</p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B92A5]">{msg.description}</p>
             )}
           </div>
           <button
             onClick={() => removeToast(msg.id)}
-            className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+            className="shrink-0 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
             aria-label="Dismiss notification"
           >
             <X className="h-4 w-4" />

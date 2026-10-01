@@ -86,3 +86,39 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Something went wrong." }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/notifications
+ * Body: { action: "clearAll" } or { action: "delete", id: "..." }
+ */
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const body = (await request.json()) as { action: string; id?: string };
+
+    if (body.action === "clearAll") {
+      await db.notification.deleteMany({
+        where: { userId },
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    if ((body.action === "delete" || !body.action) && body.id) {
+      await db.notification.deleteMany({
+        where: { id: body.id, userId },
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ message: "Invalid action." }, { status: 400 });
+  } catch (error) {
+    console.error("NOTIFICATIONS_DELETE_ERROR", error);
+    return NextResponse.json({ message: "Something went wrong." }, { status: 500 });
+  }
+}
+

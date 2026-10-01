@@ -4,7 +4,7 @@ import { getSecurityHeaders } from "@/lib/security-headers";
 import { getCorsHeaders } from "@/lib/cors";
 
 // Known static file extensions to safely skip page-level redirects
-const STATIC_EXTENSION_REGEX = /\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot|webp|json|map|txt|xml)$/i;
+const STATIC_EXTENSION_REGEX = /\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i;
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;

@@ -152,3 +152,166 @@ export async function sendBroadcast(
     return { message: "Failed to send broadcast." };
   }
 }
+
+/**
+ * Update an existing broadcast message & category, and synchronize student notifications.
+ */
+export async function updateBroadcast(data: {
+  broadcastId: string;
+  courseId: string;
+  instituteCode: string;
+  message: string;
+  category: "GENERAL" | "REMINDER" | "ALERT";
+}) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const role = session.user.role.toUpperCase();
+  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    return { success: false, error: "Only instructors can edit broadcasts." };
+  }
+
+  const { broadcastId, courseId, instituteCode, message, category } = data;
+
+  const trimmedMessage = message.trim();
+  if (!trimmedMessage) {
+    return { success: false, error: "Message cannot be empty." };
+  }
+  if (trimmedMessage.length > 500) {
+    return { success: false, error: "Message cannot exceed 500 characters." };
+  }
+
+  try {
+    const broadcast = await db.notificationBroadcast.findUnique({
+      where: { id: broadcastId },
+      include: {
+        course: {
+          select: { instructorId: true, code: true },
+        },
+      },
+    });
+
+    if (!broadcast || broadcast.courseId !== courseId) {
+      return { success: false, error: "Broadcast not found." };
+    }
+
+    const isSender = broadcast.senderId === session.user.id;
+    const isInstructor = broadcast.course.instructorId === session.user.id;
+    const isAdmin = role === "ADMIN";
+
+    if (!isSender && !isInstructor && !isAdmin) {
+      return { success: false, error: "You are not authorized to edit this broadcast." };
+    }
+
+    const oldFormattedMessage = `${broadcast.course.code}: ${broadcast.message}`;
+    const newFormattedMessage = `${broadcast.course.code}: ${trimmedMessage}`;
+    const newTitle = categoryToTitle(category);
+    const newType = categoryToNotificationType(category);
+
+    // Update broadcast record
+    await db.notificationBroadcast.update({
+      where: { id: broadcastId },
+      data: {
+        message: trimmedMessage,
+        category,
+      },
+    });
+
+    // Synchronize existing student notifications (within a 5-minute window around broadcast creation)
+    const windowStart = new Date(broadcast.createdAt.getTime() - 5 * 60 * 1000);
+    const windowEnd = new Date(broadcast.createdAt.getTime() + 5 * 60 * 1000);
+
+    await db.notification.updateMany({
+      where: {
+        link: `/${instituteCode}/courses/${courseId}/stream`,
+        message: oldFormattedMessage,
+        createdAt: {
+          gte: windowStart,
+          lte: windowEnd,
+        },
+      },
+      data: {
+        title: newTitle,
+        type: newType,
+        message: newFormattedMessage,
+      },
+    });
+
+    revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/broadcast`);
+    return { success: true };
+  } catch (error) {
+    console.error("updateBroadcast error:", error);
+    return { success: false, error: "Failed to update broadcast." };
+  }
+}
+
+/**
+ * Delete a broadcast from history and retract its corresponding student notifications.
+ */
+export async function deleteBroadcast(data: {
+  broadcastId: string;
+  courseId: string;
+  instituteCode: string;
+}) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const role = session.user.role.toUpperCase();
+  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    return { success: false, error: "Only instructors can delete broadcasts." };
+  }
+
+  const { broadcastId, courseId, instituteCode } = data;
+
+  try {
+    const broadcast = await db.notificationBroadcast.findUnique({
+      where: { id: broadcastId },
+      include: {
+        course: {
+          select: { instructorId: true, code: true },
+        },
+      },
+    });
+
+    if (!broadcast || broadcast.courseId !== courseId) {
+      return { success: false, error: "Broadcast not found." };
+    }
+
+    const isSender = broadcast.senderId === session.user.id;
+    const isInstructor = broadcast.course.instructorId === session.user.id;
+    const isAdmin = role === "ADMIN";
+
+    if (!isSender && !isInstructor && !isAdmin) {
+      return { success: false, error: "You are not authorized to delete this broadcast." };
+    }
+
+    const formattedMessage = `${broadcast.course.code}: ${broadcast.message}`;
+
+    // Retract student notifications within 5 minutes of broadcast creation
+    const windowStart = new Date(broadcast.createdAt.getTime() - 5 * 60 * 1000);
+    const windowEnd = new Date(broadcast.createdAt.getTime() + 5 * 60 * 1000);
+
+    await db.notification.deleteMany({
+      where: {
+        link: `/${instituteCode}/courses/${courseId}/stream`,
+        message: formattedMessage,
+        createdAt: {
+          gte: windowStart,
+          lte: windowEnd,
+        },
+      },
+    });
+
+    // Delete broadcast record
+    await db.notificationBroadcast.delete({
+      where: { id: broadcastId },
+    });
+
+    revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/broadcast`);
+    return { success: true };
+  } catch (error) {
+    console.error("deleteBroadcast error:", error);
+    return { success: false, error: "Failed to delete broadcast." };
+  }
+}
+
