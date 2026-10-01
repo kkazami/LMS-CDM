@@ -162,16 +162,12 @@ export async function deleteSession(tokenOverride?: string) {
   if (rawToken) {
     try {
       const tokenHash = hashToken(rawToken);
-      // Delete matching session by tokenHash or id
-      const session = await db.session.findFirst({
+      // Delete matching session by tokenHash or id in a single query
+      await db.session.deleteMany({
         where: {
           OR: [{ tokenHash }, { id: rawToken }],
         },
       });
-
-      if (session) {
-        await db.session.delete({ where: { id: session.id } });
-      }
     } catch (error) {
       console.error("Error deleting session from DB:", error);
     }

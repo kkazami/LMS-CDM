@@ -55,6 +55,10 @@ export default function LoginClient({
     }
   }, [isDesktopAdminMode]);
 
+  useEffect(() => {
+    setActiveUser(existingUser);
+  }, [existingUser]);
+
   const theme = getInstituteTheme(instituteCode);
 
   const handleInstituteSelect = (code: InstituteCode) => {
@@ -104,13 +108,14 @@ export default function LoginClient({
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore
-    }
-    setActiveUser(null);
-    setSwitching(false);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("force", "true");
-      window.history.replaceState({}, "", url.toString());
+    } finally {
+      setActiveUser(null);
+      setSwitching(false);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("force", "true");
+        window.history.replaceState({}, "", url.toString());
+      }
     }
   };
 
@@ -226,20 +231,14 @@ export default function LoginClient({
                   {!continuing && <ArrowRight className="h-4 w-4" />}
                 </Link>
 
-                <Link
-                  href={`/login?institute=${activeUser?.instituteCode || instituteCode}&force=true`}
-                  onClick={() => {
-                    try {
-                      triggerNativeHaptic("medium");
-                      logoutFromNative();
-                      fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-                    } catch {}
-                    setSwitching(true);
-                  }}
-                  className="w-full py-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer min-h-[44px] flex items-center justify-center active:scale-[0.98] touch-manipulation"
+                <button
+                  type="button"
+                  disabled={switching}
+                  onClick={handleSwitchAccount}
+                  className="w-full py-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer min-h-[44px] flex items-center justify-center active:scale-[0.98] touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {switching ? "Signing out..." : "Sign in with a different account"}
-                </Link>
+                </button>
               </div>
             </div>
           </Card>

@@ -49,6 +49,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <LoginClient
+      key={resolvedSearchParams?.force ? "force" : existingUser?.id || "anon"}
       initialInstituteCode={instituteCode}
       initialIsDesktopAdmin={isDesktopAdmin}
       existingUser={existingUser}
