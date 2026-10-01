@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth-session";
+import { getSessionFromRequest } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { grantExp } from "@/lib/gamification/grant-exp";
 import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { processLoginReward } from "@/lib/gamification/login-rewards";
+import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
+
+export async function OPTIONS(request: Request) {
+  return handleCorsPreflight(request) ?? new NextResponse(null, { status: 204 });
+}
 
 // Active time milestones in seconds & reward EXP
 const TIMER_MILESTONES = [
@@ -14,10 +20,58 @@ const TIMER_MILESTONES = [
   { seconds: 7200, exp: 120, label: "2 Hours Scholar Milestone" }, // 120 min
 ];
 
-export async function POST(req: Request) {
-  const session = await getSession();
+export async function GET(req: Request) {
+  const corsHeaders = getCorsHeaders(req);
+  const session = await getSessionFromRequest(req);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
+  }
+
+  try {
+    let rewardResult: { rewarded: boolean; streak: number } | null = null;
+    if (session.user.role === "STUDENT") {
+      try {
+        rewardResult = await processLoginReward(session.user.id);
+      } catch (err) {
+        console.error("HEARTBEAT_LOGIN_REWARD_ERROR", err);
+      }
+    }
+
+    const profile = await db.gamificationProfile.findUnique({
+      where: { studentId: session.user.id },
+    });
+
+    return NextResponse.json(
+      {
+        profile: profile || {
+          exp: 0,
+          level: 1,
+          loginStreakCurrent: 1,
+          loginStreakLongest: 1,
+          currentStreak: 1,
+          longestStreak: 1,
+        },
+        rewardReceipt: rewardResult
+          ? {
+              rewarded: rewardResult.rewarded,
+              streak: rewardResult.streak,
+              expEarned: rewardResult.rewarded ? 10 : 0,
+            }
+          : null,
+      },
+      { headers: corsHeaders }
+    );
+  } catch (error) {
+    console.error("GET_HEARTBEAT_ERROR", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500, headers: corsHeaders });
+  }
+}
+
+export async function POST(req: Request) {
+  const corsHeaders = getCorsHeaders(req);
+  const session = await getSessionFromRequest(req);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -28,7 +82,7 @@ export async function POST(req: Request) {
 
     // If student was idle, acknowledge without incrementing study time
     if (!isActive) {
-      return NextResponse.json({ ok: true, activeDuration: 0, expAwarded: 0 });
+      return NextResponse.json({ ok: true, activeDuration: 0, expAwarded: 0 }, { headers: corsHeaders });
     }
 
     const today = new Date();
@@ -89,14 +143,17 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      ok: true,
-      totalSecondsToday: currentDuration,
-      expAwarded,
-      milestoneLabel: expAwarded > 0 ? milestoneLabel : null,
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        totalSecondsToday: currentDuration,
+        expAwarded,
+        milestoneLabel: expAwarded > 0 ? milestoneLabel : null,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error("HEARTBEAT_ERROR", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error" }, { status: 500, headers: corsHeaders });
   }
 }

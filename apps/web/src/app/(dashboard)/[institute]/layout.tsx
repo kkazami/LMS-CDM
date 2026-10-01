@@ -4,6 +4,7 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleForActivities } from "@/lib/activity-eligibility";
 import { isEligibleForKnowledgeExchange } from "@/lib/kx-eligibility";
 import { db } from "@/lib/db";
+import { processLoginReward } from "@/lib/gamification/login-rewards";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export const dynamic = "force-dynamic";
@@ -113,6 +114,15 @@ export default async function InstituteLayout({
       });
 
       enrolledCourses = taught;
+    }
+  }
+
+  // Process daily login reward for student (increments streak & awards EXP on new day)
+  if (session.user.role === "STUDENT") {
+    try {
+      await processLoginReward(session.user.id);
+    } catch (err) {
+      console.error("Failed to process login reward on layout load:", err);
     }
   }
 

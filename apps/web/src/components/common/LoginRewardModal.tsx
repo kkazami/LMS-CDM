@@ -18,10 +18,7 @@ interface LoginRewardModalProps {
 }
 
 function getPHTDateString(): string {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const pht = new Date(utc + 8 * 3600000);
-  return pht.toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 }
 
 export default function LoginRewardModal({

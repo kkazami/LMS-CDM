@@ -44,6 +44,7 @@ export default function StudentDashboardScreen() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState<number>(rewardReceipt?.streak ?? 1);
 
   // Daily reward modal visibility
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -69,10 +70,11 @@ export default function StudentDashboardScreen() {
       if (cachedCourses || cachedAnnouncements || cachedTasks) setLoading(false);
 
       const instituteCode = user?.institute?.code || 'ics';
-      const [coursesRes, announcementsRes, tasksRes] = await Promise.allSettled([
+      const [coursesRes, announcementsRes, tasksRes, heartbeatRes] = await Promise.allSettled([
         api.courses.list(instituteCode),
         api.announcements.list(instituteCode),
         api.workspace.getTasks(instituteCode),
+        api.gamification.getHeartbeat(),
       ]);
 
       if (coursesRes.status === 'fulfilled' && coursesRes.value?.courses) {
@@ -86,6 +88,17 @@ export default function StudentDashboardScreen() {
       if (tasksRes.status === 'fulfilled' && tasksRes.value?.tasks) {
         setTasks(tasksRes.value.tasks);
         await setCachedData('student_tasks', tasksRes.value.tasks);
+      }
+      if (heartbeatRes.status === 'fulfilled' && heartbeatRes.value) {
+        const hbData = heartbeatRes.value as unknown as {
+          profile?: { loginStreakCurrent?: number; currentStreak?: number; exp?: number };
+          rewardReceipt?: { rewarded: boolean; streak: number; expEarned: number } | null;
+        };
+        const currentStreak = hbData.profile?.loginStreakCurrent ?? hbData.profile?.currentStreak ?? 1;
+        setStreak(currentStreak);
+        if (hbData.rewardReceipt && hbData.rewardReceipt.rewarded) {
+          setShowRewardModal(true);
+        }
       }
     } catch {
       // Handled gracefully with fallback data
@@ -114,14 +127,12 @@ export default function StudentDashboardScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       {/* Daily Reward Modal */}
-      {rewardReceipt && (
-        <LoginRewardModal
-          visible={showRewardModal}
-          streak={rewardReceipt.streak}
-          expEarned={rewardReceipt.expEarned}
-          onClaim={handleClaimReward}
-        />
-      )}
+      <LoginRewardModal
+        visible={showRewardModal}
+        streak={streak}
+        expEarned={rewardReceipt?.expEarned ?? 10}
+        onClaim={handleClaimReward}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -163,7 +174,7 @@ export default function StudentDashboardScreen() {
             <View style={styles.statItem}>
               <Flame size={16} color="#F59E0B" />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>
-                {rewardReceipt?.streak ?? 1}d
+                {streak}d
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />

@@ -288,7 +288,16 @@ export function createApiClient(config: ApiClientConfig) {
 
     gamification: {
       getProfile: () =>
-        request<{ profile: GamificationProfile }>('/api/gamification/heartbeat'),
+        request<{
+          profile: GamificationProfile;
+          rewardReceipt?: { rewarded: boolean; streak: number; expEarned: number } | null;
+        }>('/api/gamification/heartbeat'),
+
+      getHeartbeat: () =>
+        request<{
+          profile: GamificationProfile;
+          rewardReceipt?: { rewarded: boolean; streak: number; expEarned: number } | null;
+        }>('/api/gamification/heartbeat'),
 
       sendHeartbeat: () =>
         request<{ success: boolean; expEarned: number; newBadges: StudentBadge[] }>('/api/gamification/heartbeat', {

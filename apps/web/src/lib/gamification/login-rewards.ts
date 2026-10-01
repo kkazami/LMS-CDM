@@ -10,26 +10,34 @@ import { EXP_VALUES } from "./exp-engine";
 import { awardBadgeIfEarned } from "./badge-checker";
 
 /**
- * Returns a Date object representing 00:00:00 in PST/PHT (GMT+8)
+ * Returns date string formatted as "YYYY-MM-DD" in PST/PHT (GMT+8 / Asia/Manila)
  */
-export function getPHTMidnight(d: Date = new Date()): Date {
-  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
-  const pht = new Date(utc + 8 * 3600000);
-  pht.setHours(0, 0, 0, 0);
-  return pht;
+export function getPHTDateString(d: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(d);
 }
 
 /**
- * Returns today's date string formatted as "YYYY-MM-DD" in GMT+8
+ * Returns yesterday's date string formatted as "YYYY-MM-DD" relative to d in Asia/Manila
  */
-export function getPHTDateString(d: Date = new Date()): string {
-  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
-  const pht = new Date(utc + 8 * 3600000);
-  return pht.toISOString().slice(0, 10);
+export function getPHTYesterdayString(d: Date = new Date()): string {
+  const todayStr = getPHTDateString(d);
+  const [y, m, day] = todayStr.split("-").map(Number);
+  const prev = new Date(Date.UTC(y, m - 1, day - 1));
+  return prev.toISOString().slice(0, 10);
+}
+
+/**
+ * Returns a Date object representing 00:00:00 in PST/PHT (GMT+8)
+ */
+export function getPHTMidnight(d: Date = new Date()): Date {
+  const dateStr = getPHTDateString(d);
+  return new Date(`${dateStr}T00:00:00+08:00`);
 }
 
 export async function processLoginReward(userId: string): Promise<{ rewarded: boolean; streak: number }> {
-  const today = getPHTMidnight();
+  const now = new Date();
+  const todayStr = getPHTDateString(now);
+  const yesterdayStr = getPHTYesterdayString(now);
 
   const profile = await db.gamificationProfile.findUnique({
     where: { studentId: userId },
@@ -48,11 +56,11 @@ export async function processLoginReward(userId: string): Promise<{ rewarded: bo
     await db.gamificationProfile.create({
       data: {
         studentId: userId,
-        lastLoginDate: today,
+        lastLoginDate: now,
         loginStreakCurrent: 1,
         loginStreakLongest: 1,
         totalLoginDays: 1,
-        lastDailyRewardAt: today,
+        lastDailyRewardAt: now,
       },
     });
     await grantExp({ userId, amount: EXP_VALUES.login_daily, reason: "First login! Welcome!", source: "daily_login" });
@@ -60,31 +68,28 @@ export async function processLoginReward(userId: string): Promise<{ rewarded: bo
     return { rewarded: true, streak: 1 };
   }
 
-  // Check if already rewarded today in GMT+8
+  // Check if already rewarded today in GMT+8 (PHT)
   if (profile.lastDailyRewardAt) {
-    const lastReward = getPHTMidnight(new Date(profile.lastDailyRewardAt));
-    if (lastReward.getTime() === today.getTime()) {
+    const lastRewardStr = getPHTDateString(new Date(profile.lastDailyRewardAt));
+    if (lastRewardStr === todayStr) {
       return { rewarded: false, streak: Math.max(1, profile.loginStreakCurrent) };
     }
   }
 
-  // Calculate streak
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const lastRewardDate = profile.lastDailyRewardAt ? getPHTMidnight(new Date(profile.lastDailyRewardAt)) : null;
-
-  const isConsecutive = lastRewardDate ? lastRewardDate.getTime() === yesterday.getTime() : false;
+  // Calculate streak based on yesterday in PHT
+  const lastRewardStr = profile.lastDailyRewardAt ? getPHTDateString(new Date(profile.lastDailyRewardAt)) : null;
+  const isConsecutive = lastRewardStr === yesterdayStr;
   const newStreak = isConsecutive ? profile.loginStreakCurrent + 1 : 1;
   const newLongest = Math.max(newStreak, profile.loginStreakLongest);
 
   await db.gamificationProfile.update({
     where: { studentId: userId },
     data: {
-      lastLoginDate: today,
+      lastLoginDate: now,
       loginStreakCurrent: newStreak,
       loginStreakLongest: newLongest,
       totalLoginDays: { increment: 1 },
-      lastDailyRewardAt: today,
+      lastDailyRewardAt: now,
     },
   });
 
