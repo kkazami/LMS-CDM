@@ -18,6 +18,12 @@
     "postinstall": "prisma generate",
     "harness:check": "tsx scripts/harness-check.ts",
     "harness:verify": "tsx scripts/harness-verify-run.ts",
+    "harness": "tsx scripts/harness-cli.ts",
+    "harness:test": "node --import tsx --test --test-reporter ./scripts/harness/test-reporter.cjs tests/harness/*.test.ts",
+    "harness:typecheck": "pnpm --filter web exec tsc --project ../../scripts/harness/tsconfig.json",
+    "harness:host": "tsx scripts/harness-host.ts",
+    "harness:smoke": "tsx scripts/harness-smoke.ts",
+    "harness:key": "tsx scripts/harness-key.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report playwright/report"

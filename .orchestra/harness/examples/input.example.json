@@ -1,0 +1,39 @@
+{
+  "prompt": "Review and improve engineering harness controls only; do not change LMS functionality.",
+  "profile": "harness",
+  "quality": "standard",
+  "deployment": false,
+  "operations": [
+    "security-control-change"
+  ],
+  "actors": {
+    "requirement": "host-requirement-session",
+    "recon": "host-recon-session",
+    "architecture-red-team": "host-architecture-red-team-session",
+    "architecture-adjudicator": "host-architecture-adjudicator-session",
+    "planner": "host-planner-session",
+    "executor": "host-executor-session",
+    "test": "host-test-session",
+    "runner": "host-runner-session",
+    "qa": "host-qa-session",
+    "security": "host-security-session",
+    "code-review": "host-code-review-session",
+    "release": "host-release-session",
+    "deployer": "host-deployer-session"
+  },
+  "actorCapabilities": {
+    "requirement": "0000000000000000000000000000000000000000000000000000000000000001",
+    "recon": "0000000000000000000000000000000000000000000000000000000000000002",
+    "architecture-red-team": "0000000000000000000000000000000000000000000000000000000000000003",
+    "architecture-adjudicator": "0000000000000000000000000000000000000000000000000000000000000004",
+    "planner": "0000000000000000000000000000000000000000000000000000000000000005",
+    "executor": "0000000000000000000000000000000000000000000000000000000000000006",
+    "test": "0000000000000000000000000000000000000000000000000000000000000007",
+    "runner": "0000000000000000000000000000000000000000000000000000000000000008",
+    "qa": "0000000000000000000000000000000000000000000000000000000000000009",
+    "security": "000000000000000000000000000000000000000000000000000000000000000a",
+    "code-review": "000000000000000000000000000000000000000000000000000000000000000b",
+    "release": "000000000000000000000000000000000000000000000000000000000000000c",
+    "deployer": "000000000000000000000000000000000000000000000000000000000000000d"
+  }
+}

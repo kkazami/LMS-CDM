@@ -1,19 +1,29 @@
 {
-  "name": "Bug Fix",
-  "intent": ["bug_fix"],
-  "domain": ["frontend", "backend", "api", "database", "fullstack"],
-  "requiresBrowserVerification": "depends_on_domain",
-  "agents": {
-    "standard": ["requirement", "planner", "executor", "test", "qa"],
-    "strict": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
-    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
-  },
-  "checks": {
-    "standard": ["typecheck", "build"],
-    "strict": ["typecheck", "build", "security-scan", "code-review"],
-    "maximum": ["typecheck", "build", "security-scan", "code-review", "playwright-e2e"]
-  },
-  "skills": ["full-output-enforcement"],
-  "knowledge": ["ARCHITECTURE.md", "CONVENTIONS.md"],
-  "notes": "If domain is frontend/ui, requiresBrowserVerification becomes true and playwright-e2e is added to standard checks"
+  "version": 2,
+  "name": "bugfix",
+  "agents": [
+    "requirement",
+    "recon",
+    "architecture-red-team",
+    "architecture-adjudicator",
+    "planner",
+    "executor",
+    "test",
+    "runner",
+    "qa",
+    "security",
+    "code-review",
+    "release"
+  ],
+  "skillsOptional": [],
+  "safetyFloor": "Compiled in scripts/harness/gates.ts; no profile/quality waiver",
+  "requiresBrowserVerification": "Inferred from actual planned paths",
+  "validation": [
+    "web-typecheck",
+    "web-build",
+    "runtime-regression"
+  ],
+  "database": "All nine database domains when applicable",
+  "security": "Independent reviewer always; direct boundary tests for sensitive product changes",
+  "approval": "Derived from actual paths and operations, never profile preference"
 }

@@ -1,12 +1,15 @@
 # Orchestra Memory & Lessons Learned Ledger
 
+> Historical context only. Scores, declarations and old sprint approvals never satisfy v2 gates.
+> Verify every architectural claim against current source and the active run's reconnaissance.
+
 This ledger records architectural invariants, recurring agent failure modes, and critical lessons learned across sprints to ensure past regressions are never repeated.
 
 ---
 
 ## 1. Monorepo Architectural Invariants
 - **Database Driver Adapter:** Prisma 7 uses `@prisma/adapter-pg`. Do not import default Prisma client directly in `apps/web`. Always import `{ db }` from `@/lib/db`.
-- **Atomic UI Enforcement:** Shared components belong in `packages/ui`. Do not duplicate basic button or card implementations inside `apps/web/src/components`.
+- **Web UI Reality:** Web reuses apps/web/src/components. packages/ui is currently unused by web; extraction needs its own adjudicated plan.
 - **Dynamic Theming:** Never hardcode HEX colors for institute accents. Always query `getInstituteTheme(instituteCode)` to support `ics` (orange), `ibe` (gold/yellow), and `ite` (blue).
 - **Mobile Viewport 16px Defense:** Always ensure text inputs have `fontSize: 16` (`text-base`) on mobile viewports to prevent iOS Safari auto-zoom behavior.
 

@@ -1,21 +1,3 @@
-# Generator Autonomous Debug Directive
+# Repair context (non-authoritative)
 
-## Active Contract
-- Contract: [e.g., .orchestra/contracts/sprint-contract-001.md]
-- Iteration: 1 / 10
-
-## Root-Cause Analysis (from Evaluator Log)
-[Populated autonomously by the Generator after reading .orchestra/logs/evaluator.log]
-- Identified Flaw: 
-- Root Cause:
-- Impacted Files:
-
-## Targeted Refactoring Action Plan
-1. Fix syntax/type errors.
-2. Address stylistic/theming critique.
-3. Re-run `pnpm harness:check`.
-
-## Invariant Defense Verification
-- [ ] TypeScript: Passed (`pnpm harness:check`)
-- [ ] Prisma: Validated
-- [ ] Mobile safe viewport & touch targets ($\ge 44\text{px}$)
+Use only immutable failure evidence from the active v2 run. Include run ID, attempt, failure IDs, root cause, approved file scope and proposed repair tasks. The repair proposal cannot edit the plan, relax acceptance criteria, change policies or approve itself. Use controller repair, then executor, test author, full runner validation and all independent reviews. Five repairs maximum; repeated failures escalate.

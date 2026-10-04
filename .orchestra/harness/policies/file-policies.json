@@ -1,17 +1,14 @@
 {
+  "version": 2,
+  "enforcement": "Host sandbox required; controller additionally checks source deltas and manifests",
+  "secretReads": "deny; only runner/host inject disposable credentials",
   "executor": {
-    "allowed": [
-      "apps/web/src/**",
-      "packages/**",
-      "prisma/schema.prisma",
-      "prisma/migrations/**"
-    ],
+    "allowed": "Exact reviewed plan paths",
     "forbidden": [
-      ".env",
-      ".env.local",
-      "apps/web/.env.local",
-      ".agents/**",
-      ".orchestra/**"
+      "secret files",
+      "test-author files",
+      "run artifacts",
+      "harness controls in product runs"
     ]
   },
   "test": {
@@ -21,21 +18,22 @@
       "playwright.config.ts"
     ],
     "forbidden": [
-      ".env",
-      "apps/web/src/**"
+      "product files",
+      "harness controls",
+      "secret files"
     ]
   },
-  "repair": {
-    "allowed": [
-      "apps/web/src/**",
-      "packages/**",
-      "tests/**"
+  "reviewers": {
+    "source": "read-only",
+    "outputs": "Only own controller-submitted artifact"
+  },
+  "controller": {
+    "owns": [
+      ".orchestra/runs/**"
     ],
-    "forbidden": [
-      ".env",
-      ".env.local",
-      ".agents/**",
-      ".orchestra/**"
-    ]
+    "agentsMayWrite": false
+  },
+  "harnessMaintenance": {
+    "requires": "Explicit harness scope and signed HIGH/CRITICAL approval; product/Prisma files forbidden"
   }
 }

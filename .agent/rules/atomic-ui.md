@@ -2,4 +2,4 @@
 trigger: always_on
 ---
 
-"New UI components must go into packages/ui. Use Tailwind CSS and Lucide React. Follow the existing Button component pattern."
+Web uses apps/web/src/components; reuse its existing components. packages/ui is currently unused by web. Do not move components across packages without repository evidence and an adjudicated plan. Follow incumbent Tailwind and Lucide patterns.

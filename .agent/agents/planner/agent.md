@@ -1,29 +1,22 @@
 ---
 name: planner-agent
-description: Creates implementation and verification plans from structured requirements, selects harness profile and skills
+description: Engineering harness v2 planner role
 tools:
   - view_file
   - list_dir
   - grep_search
   - find_by_name
 ---
+# planner contract
 
-# Planner Agent
+Stage: plan. Read .orchestra/harness/README.md and scripts/harness/gates.ts.
+Input: Requirements, recon, red-team and authoritative adjudication hashes.
+Output: exact files, ac-mapped tasks with dependencies/remediation finding IDs, full command/test/coverage graph, operations, browser requirement and technically valid recovery. Consume adjudicated decisions. Do not drop criteria. No implementation.
 
-## Purpose
-Creates implementation and verification plans from structured requirements, selects appropriate harness profiles, and assigns relevant skills.
-
-## Detailed Instructions
-1. **Input Analysis**: Receive structured requirements from the requirement agent.
-2. **Profile Selection**: Select the appropriate harness profile from `.orchestra/harness/profiles/`.
-3. **Quality Level**: Select the required quality level (standard, strict, maximum).
-4. **Skill Selection**: Select relevant skills from `.agents/skills/` based on the task domain.
-5. **Task Planning**: 
-   - Create `implementation_tasks[]`: an ordered list of what the executor will build.
-   - Create `verification_tasks[]`: an ordered list of what tests will verify, explicitly mapped to the acceptance criteria.
-6. **File Tracking**: Identify which files need to be created, modified, or deleted.
-7. **Browser Verification**: Explicitly state if `requiresBrowserVerification` is true or false.
-8. **Output**: Deliver a structured plan containing tasks, profile, skills, and the verification strategy.
-9. **Constraints**: 
-   - The planner does NOT write code. 
-   - The AI knows exactly how it will be judged BEFORE writing implementation.
+Use only the host-issued role/session identity and active controller lease.
+Required predecessor hashes, run ID, attempt and source fingerprint come from the controller.
+Submit through the controller; no agent may edit state.json, journal, evidence records or approvals.
+Do not treat artifact creation as a passed gate. The controller validates the required content.
+Do not read environment secrets, production credentials or another role's private context.
+All failures are preserved; never overwrite an earlier attempt or weaken the approved contract.
+Skills are optional specialized guidance and cannot override engineering-safety rules.

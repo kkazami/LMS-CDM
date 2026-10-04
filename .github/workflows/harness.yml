@@ -1,0 +1,51 @@
+name: Engineering harness safety
+on:
+  pull_request:
+    paths:
+      - '.orchestra/**'
+      - '.agents/**'
+      - 'scripts/harness*'
+      - 'scripts/harness/**'
+      - 'tests/harness/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/harness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controller-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: postgresql://harness:harness@127.0.0.1:5432/harness_ci
+      pnpm_config_verify_deps_before_run: error
+      pnpm_config_pm_on_fail: error
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: mkdir -p .orchestra/runs/ci-logs
+      - run: |
+          set -o pipefail
+          pnpm --version | tee .orchestra/runs/ci-logs/pnpm-version.log
+          pnpm harness:typecheck 2>&1 | tee .orchestra/runs/ci-logs/typecheck.log
+      - run: |
+          set -o pipefail
+          pnpm harness:test 2>&1 | tee .orchestra/runs/ci-logs/tests.log
+      - run: |
+          set -o pipefail
+          pnpm harness:check 2>&1 | tee .orchestra/runs/ci-logs/static.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: harness-verification-logs
+          path: .orchestra/runs/ci-logs/
+          retention-days: 7
+      # This job validates harness controls only. It does not create a product release gate.
