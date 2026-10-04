@@ -179,6 +179,9 @@ or production credentials were used by isolated smoke/behavioral checks.
 | node --import tsx scripts/harness-ci.ts --publish --prepared .orchestra/runs/codex-harness-operational-0dea7d0ab390/ci-publication.json | 0; pushed reviewed branch, draft PR 50 | Actual approved remote publication | Merge, deployment or a successful workflow by itself |
 | node --import tsx scripts/harness-ci.ts --watch 785f9fae44ecbd0d76c29348caa6d7ebd2ea5bc7 | 0; workflow 37177615126 completed success | Actual GitHub Actions conclusion for this commit | Checks for a later commit |
 | node --import tsx scripts/harness-ci.ts --inspect 37177615126 --download-logs | 0; actual jobs/steps success; 3035-byte verification log artifact downloaded | Actual pinned pnpm 10.32.1 log, frozen install, typecheck, 64 tests at that commit, four static sensors, artifact retention/upload/download | Database, deployment, full product security or later commit results |
+| git push origin codex/harness-operational-0dea7d0ab390 | 0; final operational code commit 0573dbcfb0de392414239f565484af5bdc7224c2 published from isolated CI checkout | Approved five-file harness-only follow-up, primary checkout/HEAD untouched | Merge or deployment |
+| node --import tsx scripts/harness-ci.ts --watch 0573dbcfb0de392414239f565484af5bdc7224c2 | 0; actual workflow 37178014169 observed | Actual per-commit CI execution | Local/provider/database safety |
+| node --import tsx scripts/harness-ci.ts --inspect 37178014169 --download-logs | 0; completed success, all job steps successful, 3069-byte log artifact downloaded | Final operational code: pnpm 10.32.1, frozen install, typecheck, all 66 tests including actual Playwright rejection, four sensors, log retention/upload/download | PostgreSQL rehearsal, provider OS isolation, product authorization, deployment |
 
 The approved draft [PR 50](https://github.com/kkazami/LMS-CDM/pull/50) includes the prior redesign
 and this follow-up because the redesign was not committed in the primary checkout. The initial
@@ -186,7 +189,10 @@ and this follow-up because the redesign was not committed in the primary checkou
 with configured Node 22. Downloaded pnpm-version.log reports exactly 10.32.1. The checked-in
 workflow sets dependency verification/pm-on-fail to error and pipefail preserves command failures.
 This positive run does not experimentally prove every possible GitHub outage/failure mode.
-Subsequent PR checks validate the final 66-case source; per-commit metadata/logs are retained in
+The [final operational code Actions run](https://github.com/kkazami/LMS-CDM/actions/runs/37178014169)
+passed all 66 cases, including the actual focused/skipped Playwright rejection checks. It also passed
+typecheck, frozen installation and all four static sensors; its retained logs were downloaded and read.
+Per-commit metadata/logs are retained in
 .orchestra/runs/ci-inspections and GitHub, rather than treating the earlier 64-case run as final-source evidence.
 
 The provider rejected quoted JSON string enums for dependencies; exact-valued object properties
