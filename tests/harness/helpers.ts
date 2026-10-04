@@ -13,7 +13,7 @@ export function fixture(t: TestContext, operations: string[] = [], initialFiles:
   const parent = fs.realpathSync(os.tmpdir()), root = fs.mkdtempSync(path.join(parent, 'lms-harness-test-'));
   t.after(() => { if (!root.startsWith(parent + path.sep + 'lms-harness-test-')) throw new Error('Unsafe cleanup'); fs.rmSync(root, { recursive: true, force: true }); });
   const write = (file: string, content: string) => { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), content); };
-  write('README.md', 'fixture'); write('.gitignore', '.orchestra/runs/\n'); write('docs/note.md', 'before');
+  write('README.md', 'fixture'); write('.gitignore', '.orchestra/runs/\nnode_modules/\n'); write('docs/note.md', 'before');
   write('tests/behavior.ts', 'export const behavior = true;');
   write('apps/web/src/lib/api-auth.ts', 'export const auth = true;'); write('prisma/schema.prisma', 'fixture schema');
   Object.entries(initialFiles).forEach(([file, content]) => write(file, content));

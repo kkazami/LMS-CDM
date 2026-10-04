@@ -47,6 +47,30 @@ async function main() {
     ensure(response.ok, `GitHub ${method} ${suffix} returned ${response.status}`); return response.json() as Promise<T>;
   };
   const metadata = await request<{ default_branch: string }>('');
+  const inspectIndex = process.argv.indexOf('--inspect');
+  if (inspectIndex >= 0) {
+    const id = process.argv[inspectIndex + 1]; ensure(/^\d+$/.test(id), 'Invalid workflow run ID');
+    const [run, jobs, artifacts] = await Promise.all([
+      request<WorkflowRun>(`/actions/runs/${id}`),
+      request<{ jobs: { id: number; name: string; conclusion: string | null; steps: { name: string; conclusion: string | null }[] }[] }>(`/actions/runs/${id}/jobs`),
+      request<{ artifacts: { id: number; name: string; size_in_bytes: number; expired: boolean }[] }>(`/actions/runs/${id}/artifacts`),
+    ]);
+    const record = { run: { id: run.id, status: run.status, conclusion: run.conclusion, url: run.html_url }, jobs: jobs.jobs, artifacts: artifacts.artifacts };
+    const dir = safePath(root, `.orchestra/runs/ci-inspections/${id}`); fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'inspection.json'), JSON.stringify(record, null, 2));
+    if (process.argv.includes('--download-logs')) {
+      const artifact = artifacts.artifacts.find(item => item.name === 'harness-verification-logs' && !item.expired);
+      ensure(artifact, 'Verification logs artifact missing');
+      const response = await fetch(`${endpoint}/actions/artifacts/${artifact.id}/zip`, { redirect: 'manual', headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' } });
+      ensure(response.status === 302, 'Artifact download redirect missing');
+      const location = response.headers.get('location'); ensure(location, 'Artifact download location missing');
+      const url = new URL(location);
+      ensure(url.protocol === 'https:' && (url.hostname.endsWith('.blob.core.windows.net') || url.hostname.endsWith('.actions.githubusercontent.com')), 'Unexpected artifact storage host');
+      const download = await fetch(url, { redirect: 'error' }); ensure(download.ok, 'Artifact storage download failed');
+      fs.writeFileSync(path.join(dir, 'verification-logs.zip'), Buffer.from(await download.arrayBuffer()));
+    }
+    console.log(JSON.stringify(record)); return;
+  }
   const watchIndex = process.argv.indexOf('--watch');
   if (watchIndex >= 0) { const head = process.argv[watchIndex + 1]; ensure(/^[a-f0-9]{40}$/.test(head), 'Invalid CI head'); console.log(JSON.stringify((await request<{ workflow_runs: WorkflowRun[] }>(`/actions/runs?head_sha=${head}`)).workflow_runs.map(run => ({ id: run.id, workflow: run.name, status: run.status, conclusion: run.conclusion, url: run.html_url })))); return; }
   if (!process.argv.includes('--publish')) { console.log(JSON.stringify({ repository: `${owner}/${repo}`, defaultBranch: metadata.default_branch, authenticated: true, actionsEnabled: 'not yet verified', published: false })); return; }

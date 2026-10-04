@@ -115,9 +115,10 @@ export async function execute(controller: Controller, stage: Stage, actor: strin
         try {
           const raw = JSON.parse(fs.readFileSync(environment.env.HARNESS_RESULT_PATH!, 'utf8'));
           const reportData = spec.domain === 'browser' ? normalizePlaywright(raw, environment.identity) : raw;
-          checkResults(reportData, spec, environment.identity, deployment?.target);
           const sanitized = environment.redact(JSON.stringify(reportData)); fs.writeFileSync(environment.env.HARNESS_RESULT_PATH!, sanitized);
           finished.result = report; finished.resultHash = hash(sanitized);
+          // Preserve named failed/skipped outcomes as evidence before rejecting the command.
+          checkResults(reportData, spec, environment.identity, deployment?.target);
         } catch (e) { finished.status = 'FAIL'; finished.error = [finished.error, environment.redact((e as Error).message)].filter(Boolean).join('; '); }
       }
       controller.store.locked(() => controller.store.append({ type: 'COMMAND_FINISHED', evidence: finished }));
