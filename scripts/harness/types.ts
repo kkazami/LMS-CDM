@@ -53,6 +53,7 @@ export interface Run {
   approvals: Approval[]; failures: Failure[]; history: ArtifactRef[]; claim: Claim | null;
   resumeNext: Stage | null; deploymentUncertain: boolean;
   approvalKeyHash?: string | null;
+  preflightKeyHash?: string | null;
   expectedSnapshot?: Snapshot;
 }
 export type Event =

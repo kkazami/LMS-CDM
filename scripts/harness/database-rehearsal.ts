@@ -4,8 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { ensure, object, words } from './contracts';
-import { digest, safePath } from './repository';
-import { assertCleanTestCheckout, pnpmEntry } from './runner';
+import { digest, hash, safePath, snapshot } from './repository';
+import { assertCleanTestCheckout } from './runner';
 import { sanitize } from './redaction';
 
 export function disposableDatabase(value: string): URL {
@@ -25,47 +25,65 @@ export async function rehearse(root: string, specFile: string): Promise<unknown>
   const preservation = words(spec.preservationQueries, 'preservation queries');
   const compatibility = words(spec.compatibilityQueries, 'compatibility queries');
   ensure(typeof spec.seedSQL === 'string' && spec.seedSQL.trim(), 'Upgrade requires reviewed representative seed SQL');
-  const migrationRoot = safePath(root, 'prisma/migrations');
+  const fixture = spec.fixture === undefined ? undefined : String(spec.fixture);
+  if (fixture) ensure(/^\.orchestra\/harness\/fixtures\/[a-zA-Z0-9/_-]+$/.test(fixture), 'Rehearsal fixture must be an explicit harness fixture');
+  const schemaFile = safePath(root, fixture ? `${fixture}/schema.prisma` : 'prisma/schema.prisma');
+  const migrationRoot = safePath(root, fixture ? `${fixture}/migrations` : 'prisma/migrations');
   const migrations = fs.readdirSync(migrationRoot).filter(name => fs.statSync(path.join(migrationRoot, name)).isDirectory()).sort();
   ensure(migrations.length > baseline.length && baseline.every((name, i) => name === migrations[i]), 'Baseline must be an ordered prefix with at least one pending migration');
   ensure(typeof spec.migrationReview === 'string' && spec.migrationReview.trim(), 'Reviewed SQL/compatibility assessment is required');
   const migrationDigests = Object.fromEntries(migrations.map(name => [name, digest(fs.readFileSync(path.join(migrationRoot, name, 'migration.sql'), 'utf8'))]));
   const requireRoot = createRequire(path.join(root, 'package.json'));
+  const prismaCLI = requireRoot.resolve('prisma/build/index.js');
   const { Client } = requireRoot('pg') as typeof import('pg');
   const adminURL = new URL(url); adminURL.pathname = '/postgres';
-  const admin = new Client({ connectionString: adminURL.href, connectionTimeoutMillis: 5000 }); await admin.connect();
+  const admin = new Client({ connectionString: adminURL.href, connectionTimeoutMillis: 5000 });
   const suffix = randomUUID().replace(/-/g, ''), names = ['fresh', 'upgrade', 'recovery'].map(name => `harness_${name}_${suffix}`);
+  const source = snapshot(root), evidenceDir = safePath(root, `.orchestra/runs/database-rehearsal-${suffix}`);
+  fs.mkdirSync(evidenceDir, { recursive: true });
+  const executions: { argv: string[]; targetFingerprint: string; exitCode: number | null; signal: string | null; output: string; outputHash: string }[] = [];
+  const prepare = (name: string, selected: string[]) => {
+    const work = path.join(evidenceDir, name); fs.mkdirSync(path.join(work, 'prisma/migrations'), { recursive: true });
+    fs.copyFileSync(schemaFile, path.join(work, 'prisma/schema.prisma'));
+    selected.forEach(migration => fs.cpSync(path.join(migrationRoot, migration), path.join(work, 'prisma/migrations', migration), { recursive: true }));
+    fs.writeFileSync(path.join(work, 'prisma/migrations/migration_lock.toml'), 'provider = "postgresql"\n');
+    fs.writeFileSync(path.join(work, 'prisma.config.ts'), `import {defineConfig} from 'prisma/config'; export default defineConfig({schema:'prisma/schema.prisma',migrations:{path:'prisma/migrations'},datasource:{url:process.env.DATABASE_URL!}});`);
+    fs.symlinkSync(safePath(root, 'node_modules'), path.join(work, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
+    return work;
+  };
+  const candidate = prepare('candidate', migrations), baselineWork = prepare('baseline', baseline);
   const clients: InstanceType<typeof Client>[] = [];
   const created: string[] = [];
   const tests: { id: string; status: string; executed: boolean }[] = [];
   const passed = (id: string) => tests.push({ id, status: 'passed', executed: true });
   const databaseURL = (name: string) => { const target = new URL(url); target.pathname = '/' + name; return target.href; };
-  const prisma = async (cwd: string, target: string, config: string) => {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn(process.execPath, [pnpmEntry(), 'exec', 'prisma', 'migrate', 'deploy', '--config', config], { cwd, shell: false, windowsHide: true,
+  const prisma = async (cwd: string, target: string, operation = ['migrate', 'deploy'], expectFailure = false) => {
+    const argv = [prismaCLI, ...operation, '--config', 'prisma.config.ts'];
+    const result = await new Promise<{ code: number | null; signal: string | null; output: string }>((resolve, reject) => {
+      const child = spawn(process.execPath, argv, { cwd, shell: false, windowsHide: true,
         env: { PATH: process.env.PATH, Path: process.env.Path, SystemRoot: process.env.SystemRoot, USERPROFILE: process.env.USERPROFILE, HOME: process.env.HOME, DATABASE_URL: target, pnpm_config_verify_deps_before_run: 'warn', pnpm_config_pm_on_fail: 'error' } });
-      let output = ''; const timer = setTimeout(() => child.kill(), 120000);
-      child.stdout.on('data', b => output += b.toString()); child.stderr.on('data', b => output += b.toString());
-      child.on('error', e => { clearTimeout(timer); reject(e); }); child.on('close', code => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error(sanitize('Prisma rehearsal failed: ' + output))); });
+      let output = '', timedOut = false; const timer = setTimeout(() => { timedOut = true; if (process.platform === 'win32' && child.pid) spawn('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' }); else if (child.pid) child.kill('SIGKILL'); }, 120000);
+      child.stdout.on('data', b => { if (output.length < 8_000_000) output += b.toString(); }); child.stderr.on('data', b => { if (output.length < 8_000_000) output += b.toString(); });
+      child.on('error', e => { clearTimeout(timer); reject(e); }); child.on('close', (code, signal) => { clearTimeout(timer); timedOut ? reject(new Error('Prisma rehearsal timed out')) : resolve({ code, signal, output }); });
     });
+    const output = sanitize(result.output, [target, decodeURIComponent(url.password)].filter(Boolean));
+    const outputFile = path.join(evidenceDir, `prisma-${executions.length}.log`); fs.writeFileSync(outputFile, output);
+    executions.push({ argv: [process.execPath, ...argv], targetFingerprint: digest(target), exitCode: result.code, signal: result.signal, output: path.relative(root, outputFile).replaceAll('\\', '/'), outputHash: hash(output) });
+    ensure(!result.signal && (expectFailure ? result.code !== 0 && /P3018/.test(output) && /42703/.test(output) : result.code === 0), 'Unexpected Prisma rehearsal outcome: ' + output);
   };
   const connect = async (name: string) => { const client = new Client({ connectionString: databaseURL(name) }); await client.connect(); clients.push(client); return client; };
   const schema = async (client: InstanceType<typeof Client>) => digest((await client.query(`SELECT table_name,column_name,data_type,is_nullable,column_default FROM information_schema.columns WHERE table_schema='public' AND table_name <> '_prisma_migrations' ORDER BY table_name,ordinal_position`)).rows);
   const rows = async (client: InstanceType<typeof Client>, queries: string[]) => Promise.all(queries.map(async sql => { ensure(/^\s*SELECT\b/i.test(sql) && !/;|\b(FOR\s+UPDATE|INTO|pg_|dblink|COPY)\b/i.test(sql), 'Preservation/compatibility queries must be reviewed single SELECTs'); return (await client.query(sql)).rows; }));
   let beforeSchemaHash = '', afterSchemaHash = '';
+  let migrationRecovery: unknown = null;
   try {
+    await admin.connect();
     for (const name of names) { await admin.query(`CREATE DATABASE "${name}"`); created.push(name); } passed('database: disposable creation');
-    await prisma(root, databaseURL(names[0]), 'prisma.config.ts'); const fresh = await connect(names[0]); passed('database: fresh replay');
-    const work = safePath(root, `.orchestra/runs/database-rehearsal-${suffix}/baseline`); fs.mkdirSync(path.join(work, 'prisma/migrations'), { recursive: true });
-    fs.copyFileSync(safePath(root, 'prisma/schema.prisma'), path.join(work, 'prisma/schema.prisma'));
-    for (const name of baseline) fs.cpSync(path.join(migrationRoot, name), path.join(work, 'prisma/migrations', name), { recursive: true });
-    const lock = path.join(migrationRoot, 'migration_lock.toml'); if (fs.existsSync(lock)) fs.copyFileSync(lock, path.join(work, 'prisma/migrations/migration_lock.toml'));
-    // The adapter generates its own no-dotenv config inside ignored output; no live config is copied.
-    fs.writeFileSync(path.join(work, 'prisma.config.ts'), `import {defineConfig} from 'prisma/config'; export default defineConfig({schema:'prisma/schema.prisma',migrations:{path:'prisma/migrations'},datasource:{url:process.env.DATABASE_URL!}});`);
-    fs.symlinkSync(safePath(root, 'node_modules'), path.join(work, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
-    await prisma(work, databaseURL(names[1]), 'prisma.config.ts'); const upgrade = await connect(names[1]);
+    await prisma(candidate, databaseURL(names[0]), ['validate']); passed('database: schema validation');
+    await prisma(candidate, databaseURL(names[0])); const fresh = await connect(names[0]); passed('database: fresh replay');
+    await prisma(baselineWork, databaseURL(names[1])); const upgrade = await connect(names[1]);
     await upgrade.query(String(spec.seedSQL)); beforeSchemaHash = await schema(upgrade); const preserved = await rows(upgrade, preservation); passed('database: baseline and representative data');
-    await prisma(root, databaseURL(names[1]), 'prisma.config.ts'); afterSchemaHash = await schema(upgrade); passed('database: migration application');
+    await prisma(candidate, databaseURL(names[1])); afterSchemaHash = await schema(upgrade); passed('database: migration application');
     ensure(digest(await rows(upgrade, preservation)) === digest(preserved), 'Migration changed representative preserved data'); passed('database: data preservation');
     ensure(afterSchemaHash === await schema(fresh), 'Upgrade schema differs from fresh replay'); passed('database: post schema');
     for (const result of await rows(upgrade, compatibility)) ensure(result.length && result.every(row => Object.values(row).every(value => value === true)), 'Compatibility SELECT must return true assertions'); passed('database: compatibility');
@@ -74,12 +92,39 @@ export async function rehearse(root: string, specFile: string): Promise<unknown>
     await recovery.query('BEGIN'); let detected = false;
     try { await recovery.query('DELETE FROM recovery_probe; SELECT missing_column FROM recovery_probe'); } catch { detected = true; await recovery.query('ROLLBACK'); }
     ensure(detected && (await recovery.query('SELECT id FROM recovery_probe')).rows[0]?.id === 1, 'Failure detection/transaction recovery failed'); passed('database: failure detection and transaction recovery');
+    await recovery.query('DROP TABLE recovery_probe'); // This exact table was created above in our unique disposable database.
+    if (spec.failureMigration) {
+      const failure = object(spec.failureMigration, 'failure migration');
+      ensure(fixture && typeof failure.name === 'string' && /^[0-9]{12}_[a-z0-9_]+$/.test(failure.name) && !migrations.includes(failure.name), 'Failure injection requires a distinct reviewed fixture migration');
+      ensure(typeof failure.failedSQL === 'string' && typeof failure.forwardSQL === 'string', 'Failure/recovery SQL required');
+      const recoveryWork = prepare('recovery-candidate', migrations);
+      await prisma(recoveryWork, databaseURL(names[2])); await recovery.query(String(spec.seedSQL));
+      const before = await schema(recovery), beforeRows = await rows(recovery, preservation);
+      const directory = path.join(recoveryWork, 'prisma/migrations', failure.name); fs.mkdirSync(directory);
+      fs.writeFileSync(path.join(directory, 'migration.sql'), failure.failedSQL);
+      await prisma(recoveryWork, databaseURL(names[2]), ['migrate', 'deploy'], true);
+      const afterFailure = await schema(recovery);
+      ensure(afterFailure === before && digest(await rows(recovery, preservation)) === digest(beforeRows), 'Failed fixture migration modified schema/data');
+      passed('database: actual failed Prisma migration rolled back');
+      await prisma(recoveryWork, databaseURL(names[2]), ['migrate', 'resolve', '--rolled-back', failure.name]);
+      fs.writeFileSync(path.join(directory, 'migration.sql'), failure.forwardSQL);
+      await prisma(recoveryWork, databaseURL(names[2]));
+      for (const result of await rows(recovery, words(failure.verificationQueries, 'recovery verification queries'))) ensure(result.length && result.every(row => Object.values(row).every(value => value === true)), 'Forward recovery assertion failed');
+      ensure(digest(await rows(recovery, preservation)) === digest(beforeRows), 'Forward recovery lost seeded data');
+      passed('database: corrected Prisma forward recovery');
+      migrationRecovery = { migration: failure.name, failedSQLHash: hash(failure.failedSQL), forwardSQLHash: hash(failure.forwardSQL), beforeSchemaHash: before, afterFailureSchemaHash: afterFailure, recoveredSchemaHash: await schema(recovery), preservedRowsHash: digest(beforeRows) };
+    }
     ensure(typeof spec.recoveryAssessment === 'string' && spec.recoveryAssessment.trim(), 'Human-reviewed forward/backup recovery assessment is required');
-    return { environment: process.env.HARNESS_ENVIRONMENT_ID, tests, database: { targetFingerprint: digest({ host: url.hostname, port: url.port, databases: names }), beforeSchemaHash, afterSchemaHash,
-      coverage: ['migration-review', 'migration-apply', 'fresh-replay', 'existing-upgrade', 'compatibility', 'recovery', 'data-preservation', 'post-schema'], disposable: true, migrationDigests }, migrationReview: spec.migrationReview, recoveryAssessment: spec.recoveryAssessment };
+    ensure(snapshot(root).digest === source.digest, 'Source changed during database rehearsal');
+    return { environment: process.env.HARNESS_ENVIRONMENT_ID, source, tests, executions, evidenceDir: path.relative(root, evidenceDir).replaceAll('\\', '/'), fixture: fixture ?? null, database: { names, targetFingerprint: digest({ host: url.hostname, port: url.port, databases: names }), beforeSchemaHash, afterSchemaHash,
+      coverage: ['schema-validation', 'migration-review', 'migration-apply', 'fresh-replay', 'existing-upgrade', 'compatibility', 'recovery', 'data-preservation', 'post-schema'], disposable: true, migrationDigests }, migrationRecovery, migrationReview: spec.migrationReview, recoveryAssessment: spec.recoveryAssessment };
   } finally {
     await Promise.allSettled(clients.map(client => client.end()));
     for (const name of created) { await admin.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()', [name]); await admin.query(`DROP DATABASE IF EXISTS "${name}"`); }
+    const remaining = (await admin.query('SELECT datname FROM pg_database WHERE datname=ANY($1)', [created])).rows;
+    ensure(remaining.length === 0, 'Disposable database cleanup failed');
+    fs.writeFileSync(path.join(evidenceDir, 'cleanup.json'), JSON.stringify({ names: created, remaining: [], verifiedAt: new Date().toISOString() }));
+    passed('database: cleanup');
     await admin.end();
   }
 }

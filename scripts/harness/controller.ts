@@ -7,14 +7,16 @@ import { changed, classify, destructiveDiff, digest, failureSignature, hash, max
 import { Store } from './store';
 import { sanitize } from './redaction';
 import { Approval, ArtifactRef, Envelope, Input, OWNERS, Run, Snapshot, Stage, STAGES, VERSION } from './types';
+import { requireExternalPreflight } from './external-preflight';
 
 export class Controller {
   readonly store: Store;
-  constructor(readonly root: string, readonly runId: string, readonly publicKey = process.env.HARNESS_APPROVAL_PUBLIC_KEY) { this.store = new Store(root, runId, publicKey); }
+  constructor(readonly root: string, readonly runId: string, readonly publicKey = process.env.HARNESS_APPROVAL_PUBLIC_KEY, readonly preflightPublicKey = process.env.HARNESS_PREFLIGHT_PUBLIC_KEY) { this.store = new Store(root, runId, publicKey); }
   init(value: unknown): Run {
     const input = validateInput(value), base = snapshot(this.root), now = new Date().toISOString();
     const run: Run = { version: VERSION, runId: this.runId, input, createdAt: now, baseline: base, state: 'DRAFT', next: 'requirements', attempt: 0, repairCount: 0, risk: maxRisk(classify([], input.operations), input.deployment ? 'CRITICAL' : 'LOW'), artifacts: {}, commands: [], approvals: [], failures: [], history: [], claim: null, resumeNext: null, deploymentUncertain: false };
     run.approvalKeyHash = this.publicKey ? hash(this.publicKey) : null;
+    run.preflightKeyHash = this.preflightPublicKey ? hash(this.preflightPublicKey) : null;
     run.expectedSnapshot = base;
     return this.store.locked(() => this.store.append({ type: 'INIT', run }), true);
   }
@@ -28,7 +30,7 @@ export class Controller {
     const files = run.artifacts.plan ? words(data(run, 'plan').files, 'plan.files') : [];
     const delta = changed(expected, current);
     const risk = classify(delta, []);
-    const material = !run.artifacts.plan || expected.head !== current.head || delta.some(f => !files.includes(f)) || maxRisk(run.risk, risk) !== run.risk;
+    const material = !run.artifacts.plan || expected.head !== current.head || delta.some(f => !files.includes(f)) || maxRisk(run.risk, risk) !== run.risk || (!run.artifacts.implementation && delta.length > 0);
     return this.store.append({ type: 'INVALIDATE', next: !run.artifacts.requirements ? 'requirements' : material ? 'recon' : 'implementation', reason: 'Repository identity changed; previous evidence is stale', snapshot: current });
   }
   status(): Run { return this.store.locked(() => this.synchronize(this.read(), snapshot(this.root))); }
@@ -36,6 +38,7 @@ export class Controller {
     ensure(STAGES.includes(stage), 'Unknown stage');
     return this.store.locked(() => {
       const current = snapshot(this.root); let run = this.synchronize(this.read(), current);
+      requireExternalPreflight(run, this.root, this.preflightPublicKey);
       ensure(capability && hash(capability) === run.input.actorCapabilities[OWNERS[stage]], 'Missing or wrong host-issued role capability');
       const token = randomUUID(), startedAt = new Date().toISOString();
       let diff: { path: string; hash: string; snapshot: string } | undefined;
@@ -132,6 +135,7 @@ export class Controller {
     ensure(!['FAILED', 'INTERRUPTED', 'HUMAN_REVIEW_REQUIRED'].includes(run.state), `Run requires attention: ${run.state}`);
     const ready = run.state === 'RELEASE_READY' || run.state === 'COMPLETE';
     if (ready) {
+      requireExternalPreflight(run, this.root, this.preflightPublicKey);
       ensure(run.artifacts.release, 'Missing release gate');
       // Re-evaluate current approval validity rather than historical event time.
       const release = run.artifacts.release.envelope;

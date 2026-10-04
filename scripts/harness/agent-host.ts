@@ -9,6 +9,7 @@ import { digest, hash, safePath, snapshot, secret } from './repository';
 import { sanitize } from './redaction';
 import { execute } from './runner';
 import { Input, MAX_REPAIRS, OWNERS, Role, ROLES, Stage } from './types';
+import { controlledRequired } from './external-preflight';
 
 export interface AgentResponse {
   runId: string; attempt: number; stage: Stage; dependencies: Record<string, string>;
@@ -16,7 +17,7 @@ export interface AgentResponse {
 }
 export interface AgentRequest { context: Record<string, unknown>; view: string; output: string; schema: string }
 export interface AgentResult { response: AgentResponse; session: string; transcript: string; argv: string[] }
-export interface AgentProvider { run(request: AgentRequest): Promise<AgentResult> }
+export interface AgentProvider { readonly isolation?: 'microvm' | 'os-container'; run(request: AgentRequest): Promise<AgentResult> }
 
 // This interface intentionally grants no repository write, controller, signer or deployment tools.
 // All roles are read-only provider sessions; executor/test return proposals for host-scoped writes.
@@ -116,6 +117,7 @@ export class AgentHost {
   }
   async adviseRepair(): Promise<void> {
     const run = this.c.read(); ensure(run.state === 'FAILED' && run.repairCount < MAX_REPAIRS && !run.deploymentUncertain, 'Repair advice requires a repairable failed run');
+    ensure(!controlledRequired(run) || this.provider.isolation, 'Controlled LMS repair requires the isolated provider; native fallback is blocked');
     const id = randomUUID(), dir = safePath(this.c.store.dir, `sessions/${id}`), view = path.join(dir, 'view'); fs.mkdirSync(view, { recursive: true });
     const files = words(data(run, 'plan').files, 'plan.files');
     const sources = Object.fromEntries(files.filter(file => fs.existsSync(safePath(this.c.root, file))).map(file => [file, sanitize(fs.readFileSync(safePath(this.c.root, file), 'utf8'))]));
@@ -137,6 +139,7 @@ export class AgentHost {
   }
   async step(): Promise<void> {
     const initial = this.c.status(); ensure(initial.next, 'Run has no next stage');
+    ensure(!controlledRequired(initial) || this.provider.isolation, 'Controlled LMS work requires the isolated provider; native fallback is blocked');
     const stage = initial.next, role = OWNERS[stage], actor = initial.input.actors[role];
     const { token, run } = this.c.begin(stage, actor, this.capabilities[role]);
     console.log(`DISPATCH ${run.runId} attempt=${run.attempt} stage=${stage} actor=${actor}`);

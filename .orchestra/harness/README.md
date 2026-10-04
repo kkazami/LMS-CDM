@@ -62,6 +62,22 @@ Exported views exclude env/signing/credential files and journal/session director
 provider flags and checked proposed writes are not an OS-wide read boundary: a same-user process
 may have ambient access outside its view. Production signing requires a separate protected principal.
 
+HIGH/CRITICAL Codex-managed product work additionally requires the external preflight in
+`scripts/harness/external-preflight.ts`. The host pins `HARNESS_PREFLIGHT_PUBLIC_KEY` at initialization
+and supplies `HARNESS_PREFLIGHT_RECEIPT` from protected storage outside the task repository. Its
+signature binds the run, input, baseline, approval key, lifetime, dependency evidence, actual worker
+denial probes and reviewed test source. Missing or expired input blocks before any stage lease.
+This host attestation never replaces the separately signed human plan approval. The native Codex
+adapter cannot dispatch controlled product work; an actually verified isolated provider is required.
+
+`scripts/harness-infra.ts` provisions an explicitly selected loopback disposable PostgreSQL service.
+`scripts/harness-signer.ts` provisions a separate encrypted Ed25519 signer; its passphrase and the
+host seed must stay in externally protected storage. Sign only a reviewed controller approval
+request after the actual human confirms it. `--human-confirmed` is a trusted operator assertion,
+not independent proof of human intent. Explicit infrastructure tests live in
+`tests/harness-integration`; portable tests do not silently skip unavailable external dependencies.
+See `docs/architecture/harness-controlled-readiness.md` for actual evidence and current blockers.
+
 ## Lifecycle and commands
 
 ```text
