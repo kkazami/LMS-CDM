@@ -162,19 +162,19 @@ export default function DashboardLayout({
             totalExp={exp}
           />
           <FloatingStudyTimer />
-          <ChatbotWidget theme={theme} />
         </>
       )}
+
+      {/* CdM Assistant Chatbot Widget (Students & Faculty) */}
+      <ChatbotWidget theme={theme} />
     </div>
   );
 
   return (
     <ThemeProvider>
-      {isStudent ? (
-        <ChatbotProvider>{layoutContent}</ChatbotProvider>
-      ) : (
-        layoutContent
-      )}
+      <ChatbotProvider userName={userName} userRole={userRole}>
+        {layoutContent}
+      </ChatbotProvider>
     </ThemeProvider>
   );
 }

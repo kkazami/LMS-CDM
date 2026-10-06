@@ -72,11 +72,11 @@ export default function FaqAndCtaSection({
 }: FaqAndCtaSectionProps) {
   // ─── FAQ Section InView ───
   const faqRef = useRef<HTMLDivElement>(null);
-  const isFaqInView = useInView(faqRef, { once: false, amount: 0.1 });
+  const isFaqInView = useInView(faqRef, { once: true, amount: 0.1 });
 
   // ─── Closing CTA Panel InView ───
   const ctaRef = useRef<HTMLDivElement>(null);
-  const isCtaInView = useInView(ctaRef, { once: false, amount: 0.1 });
+  const isCtaInView = useInView(ctaRef, { once: true, amount: 0.1 });
 
   // Synthetic resize-nudge on mount to ensure observers measure immediately on first paint
   useEffect(() => {

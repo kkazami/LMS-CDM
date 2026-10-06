@@ -5,8 +5,41 @@ import { API_BASE_URL } from '../lib/constants';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 import type { AuthUser, LoginResponse } from '@lms/types';
 
+import { Platform } from 'react-native';
+
 const TOKEN_KEY = 'lumina_auth_token';
 const USER_KEY = 'lumina_user';
+
+const storage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      try {
+        return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+      } catch {
+        return null;
+      }
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (typeof window !== 'undefined') window.localStorage.setItem(key, value);
+      } catch {}
+      return;
+    }
+    return SecureStore.setItemAsync(key, value);
+  },
+  deleteItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (typeof window !== 'undefined') window.localStorage.removeItem(key);
+      } catch {}
+      return;
+    }
+    return SecureStore.deleteItemAsync(key);
+  },
+};
 
 interface AuthState {
   token: string | null;
@@ -39,8 +72,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     initialize: async () => {
       try {
-        const token = await SecureStore.getItemAsync(TOKEN_KEY);
-        const userStr = await SecureStore.getItemAsync(USER_KEY);
+        const token = await storage.getItem(TOKEN_KEY);
+        const userStr = await storage.getItem(USER_KEY);
 
         if (token && userStr) {
           const user = JSON.parse(userStr) as AuthUser;
@@ -50,12 +83,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
           try {
             const response = await api.auth.me();
             set({ user: response.user });
-            await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+            await storage.setItem(USER_KEY, JSON.stringify(response.user));
             registerForPushNotificationsAsync(api).catch(() => {});
           } catch {
             // Token invalid, clear state
-            await SecureStore.deleteItemAsync(TOKEN_KEY);
-            await SecureStore.deleteItemAsync(USER_KEY);
+            await storage.deleteItem(TOKEN_KEY);
+            await storage.deleteItem(USER_KEY);
             set({ token: null, user: null, isAuthenticated: false, isLoading: false });
           }
         } else {
@@ -69,8 +102,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     login: async (email: string, password: string, instituteCode?: string) => {
       const response = await api.auth.login({ email, password, instituteCode });
 
-      await SecureStore.setItemAsync(TOKEN_KEY, response.token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+      await storage.setItem(TOKEN_KEY, response.token);
+      await storage.setItem(USER_KEY, JSON.stringify(response.user));
 
       set({
         token: response.token,
@@ -91,10 +124,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
         // Ignore logout API errors
       }
 
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(USER_KEY);
-      await SecureStore.deleteItemAsync('lumina_user_institute').catch(() => {});
-      await SecureStore.deleteItemAsync('lumina_user_role').catch(() => {});
+      await storage.deleteItem(TOKEN_KEY);
+      await storage.deleteItem(USER_KEY);
+      await storage.deleteItem('lumina_user_institute').catch(() => {});
+      await storage.deleteItem('lumina_user_role').catch(() => {});
       try {
         const { clearCachedData } = await import('../lib/offline-storage');
         await clearCachedData();

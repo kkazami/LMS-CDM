@@ -61,13 +61,16 @@ export function createApiClient(config: ApiClientConfig) {
     if (!response.ok) {
       let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
       let errors: any = undefined;
+      let bodyData: any = undefined;
 
       try {
         const text = await response.text();
         try {
           const json = JSON.parse(text);
           if (json && typeof json === 'object') {
-            if (json.message) message = json.message;
+            bodyData = json;
+            if (json.reply) message = json.reply;
+            else if (json.message) message = json.message;
             else if (json.error) message = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
             if (json.errors) errors = json.errors;
           }
@@ -82,7 +85,7 @@ export function createApiClient(config: ApiClientConfig) {
         // Fallback to HTTP status message
       }
 
-      throw new ApiClientError(response.status, message, errors);
+      throw new ApiClientError(response.status, message, errors, bodyData);
     }
 
     const text = await response.text();
@@ -518,6 +521,22 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify(data),
         }),
     },
+
+    chatbot: {
+      sendMessage: (
+        message: string,
+        history?: Array<{ role: 'user' | 'bot' | 'model'; text: string }>
+      ) =>
+        request<{
+          reply: string;
+          role?: string;
+          rateLimited?: boolean;
+          error?: string;
+        }>('/api/chatbot/message', {
+          method: 'POST',
+          body: JSON.stringify({ message, history }),
+        }),
+    },
   };
 }
 
@@ -525,7 +544,8 @@ export class ApiClientError extends Error {
   constructor(
     public status: number,
     message: string,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
+    public data?: any
   ) {
     super(message);
     this.name = 'ApiClientError';

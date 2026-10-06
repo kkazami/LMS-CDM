@@ -8,6 +8,7 @@
     "start": "next start -H 0.0.0.0"
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "@lms/types": "workspace:*",
     "@monaco-editor/react": "^4.7.0",
     "@octokit/rest": "^22.0.1",

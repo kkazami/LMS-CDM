@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 import { useChatbot } from "@/lib/chatbot-context";
-import { getBotResponse } from "@/lib/chatbot-responses";
 import type { InstituteTheme } from "@/lib/theme";
 
 interface ChatbotWidgetProps {
@@ -29,22 +28,57 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
     }
   }, [isOpen]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim();
     if (!text || isTyping) return;
 
     // Add user message
     addMessage("user", text);
     setInput("");
-
-    // Simulate bot typing delay (500-800ms)
     setIsTyping(true);
-    const delay = 500 + Math.random() * 300;
-    setTimeout(() => {
-      const response = getBotResponse(text);
-      addMessage("bot", response);
+
+    try {
+      const res = await fetch("/api/chatbot/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: messages
+            .filter((m) => m.id !== "welcome")
+            .map((m) => ({ role: m.role, text: m.text })),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.reply) {
+        addMessage("bot", data.reply);
+      } else if (res.status === 429) {
+        // Expected rate limit: quiet debug log, no console.error
+        console.log("[Chatbot] Rate limit reached (429):", data.reply || "Too Many Requests");
+        addMessage("bot", data.reply || "The assistant is busy, try again in a moment.");
+      } else {
+        const fallbackMsg =
+          data.reply ||
+          data.error ||
+          "Sorry, I ran into an issue connecting to the assistant. Please try again.";
+        console.error("Chatbot response error:", res.status, fallbackMsg);
+        addMessage("bot", fallbackMsg);
+      }
+    } catch (err: any) {
+      const is429 = err?.status === 429 || err?.message?.includes("429");
+      if (is429) {
+        console.log("[Chatbot] Rate limit reached (429):", err?.message);
+        addMessage("bot", "The assistant is busy, try again in a moment.");
+      } else {
+        console.error("Chatbot request error:", err);
+        addMessage(
+          "bot",
+          "Connection issue: unable to reach the CdM Assistant service. Please check your internet connection."
+        );
+      }
+    } finally {
       setIsTyping(false);
-    }, delay);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -30,6 +30,9 @@ export const getDefaultApiUrl = (): string => {
   // 2. Web platform
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && window.location) {
+      if (window.location.port && window.location.port !== '3000') {
+        return `${window.location.protocol}//${window.location.hostname}:3000`;
+      }
       return window.location.origin;
     }
     return 'http://localhost:3000';

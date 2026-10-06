@@ -15,7 +15,7 @@ import {
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
-import { getBotResponse } from '../../lib/chatbot-responses';
+import { useAuthStore } from '../../stores/auth-store';
 
 interface Message {
   id: string;
@@ -24,20 +24,62 @@ interface Message {
   createdAt: string;
 }
 
-const INITIAL_MESSAGE: Message = {
-  id: 'init-msg-1',
-  role: 'bot',
-  text: "Hi! I'm the CdM Assistant. Ask me about grades, assignments, announcements, courses, or anything else you need help with!",
-  createdAt: new Date().toISOString(),
-};
+export function getChatbotGreeting(userName?: string | null, userRole?: string | null): string {
+  const role = (userRole || '').toUpperCase();
+  const isInstructor = role === 'PROFESSOR' || role === 'TEACHER' || role === 'ADMIN';
+  const rawName = (userName || '').trim();
+
+  if (isInstructor) {
+    if (!rawName) {
+      return "👋 Hi Professor! Need help drafting an announcement, checking at-risk students, or something else?";
+    }
+    const cleaned = rawName.replace(/^(Professor|Prof\.)\s+/i, '').trim();
+    const parts = cleaned.split(/\s+/).filter(Boolean);
+    const lastName = parts.length > 0 ? parts[parts.length - 1] : rawName;
+    return `👋 Hi Professor ${lastName}! Need help drafting an announcement, checking at-risk students, or something else?`;
+  }
+
+  // Student (or default)
+  if (!rawName) {
+    return "👋 Hi! I'm the CdM Assistant. Ask me about your grades, deadlines, or courses — how can I help?";
+  }
+  const firstName = rawName.split(/\s+/)[0];
+  return `👋 Hi ${firstName}! I'm the CdM Assistant. Ask me about your grades, deadlines, or courses — how can I help?`;
+}
 
 export function ChatbotFAB() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const api = useAuthStore((s) => s.api);
+  const user = useAuthStore((s) => s.user);
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState<Message[]>(() => [
+    {
+      id: 'init-msg-1',
+      role: 'bot',
+      text: getChatbotGreeting(user?.name, user?.role),
+      createdAt: new Date().toISOString(),
+    },
+  ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  // Sync welcome greeting when session details load or change
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'init-msg-1') {
+        return [
+          {
+            id: 'init-msg-1',
+            role: 'bot',
+            text: getChatbotGreeting(user?.name, user?.role),
+            createdAt: prev[0].createdAt,
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [user?.name, user?.role]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -51,7 +93,7 @@ export function ChatbotFAB() {
     }
   }, [messages, isTyping, isOpen]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim();
     if (!text || isTyping) return;
 
@@ -62,23 +104,59 @@ export function ChatbotFAB() {
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput('');
     setIsTyping(true);
 
-    // Realistic bot response delay (450ms - 750ms)
-    const delay = 450 + Math.random() * 300;
-    setTimeout(() => {
-      const botReply = getBotResponse(text);
+    try {
+      // Build conversation history from active messages, excluding the initial greeting
+      const history = messages
+        .filter((m) => m.id !== 'init-msg-1')
+        .map((m) => ({ role: m.role, text: m.text }));
+
+      const res = await api.chatbot.sendMessage(text, history);
+
       const botMsg: Message = {
         id: `bot-${Date.now()}`,
         role: 'bot',
-        text: botReply,
+        text: res.reply || 'Sorry, I could not process your request.',
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, botMsg]);
+    } catch (err: any) {
+      const is429 =
+        err?.status === 429 ||
+        err?.message?.includes('429') ||
+        err?.message?.toLowerCase().includes('rate') ||
+        err?.message?.toLowerCase().includes('busy') ||
+        (err?.name === 'ApiClientError' && err?.status === 429);
+
+      let replyMessage: string;
+
+      if (is429) {
+        // Expected rate limit: quiet debug log, no console.error
+        console.log('[Chatbot] Rate limit reached (429):', err?.message || 'Too Many Requests');
+        replyMessage =
+          err?.data?.reply ||
+          (err?.message && !err.message.startsWith('HTTP 429') ? err.message : 'The assistant is busy, try again in a moment.');
+      } else {
+        console.error('Mobile chatbot error:', err);
+        replyMessage =
+          err?.message ||
+          "I'm having trouble connecting right now. Please check your network connection and try again.";
+      }
+
+      const botMsg: Message = {
+        id: `bot-${Date.now()}`,
+        role: 'bot',
+        text: replyMessage,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, delay);
+    }
   };
 
   // Bottom tab bar height clearance:
