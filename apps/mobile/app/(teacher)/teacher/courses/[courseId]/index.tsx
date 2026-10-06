@@ -6,7 +6,6 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   TextInput,
   Modal,
@@ -33,11 +32,15 @@ import {
   Calendar,
   AlertTriangle,
   BookOpen,
+  Pencil,
+  Trash2,
 } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../../src/hooks/useResponsive';
+import { ScreenWrapper, ScreenHeaderContainer } from '../../../../../src/components/common/ScreenWrapper';
 import { Badge } from '../../../../../src/components/common/Badge';
 import { Card } from '../../../../../src/components/common/Card';
 import { Button } from '../../../../../src/components/common/Button';
@@ -68,6 +71,7 @@ export default function TeacherCourseDetailScreen() {
   const api = useAuthStore((s) => s.api);
   const user = useAuthStore((s) => s.user);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier, bottomClearance } = useResponsive();
 
   const [activeTab, setActiveTab] = useState<TeacherTab>(
     (initialTab as TeacherTab) || 'STREAM'
@@ -86,6 +90,12 @@ export default function TeacherCourseDetailScreen() {
   // Announcement Composer state
   const [newAnnouncement, setNewAnnouncement] = useState('');
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
+
+  // Edit Announcement Modal state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null);
+  const [editAnnouncementContent, setEditAnnouncementContent] = useState('');
+  const [savingEditAnnouncement, setSavingEditAnnouncement] = useState(false);
 
   // Create Classwork Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -179,6 +189,78 @@ export default function TeacherCourseDetailScreen() {
     } finally {
       setPostingAnnouncement(false);
     }
+  };
+
+  // Open Edit Announcement Modal
+  const handleOpenEditAnnouncement = (ann: { id: string; content: string }) => {
+    setEditingAnnouncementId(ann.id);
+    setEditAnnouncementContent(ann.content);
+    setEditModalVisible(true);
+  };
+
+  // Save Announcement Edits
+  const handleSaveEditAnnouncement = async () => {
+    if (!editingAnnouncementId || !editAnnouncementContent.trim() || !courseId) return;
+
+    setSavingEditAnnouncement(true);
+    try {
+      await api.courses.updateStream(courseId, editingAnnouncementId, editAnnouncementContent.trim());
+      try {
+        Burnt.toast({
+          title: 'Announcement Updated',
+          message: 'Changes saved to class stream.',
+          preset: 'done',
+        });
+      } catch {
+        // Fallback
+      }
+      setEditModalVisible(false);
+      setEditingAnnouncementId(null);
+      setEditAnnouncementContent('');
+      // Refresh stream
+      const s = await api.courses.getStream(courseId);
+      setStream(s);
+    } catch (err: any) {
+      Alert.alert('Update Failed', err?.message || 'Could not update announcement.');
+    } finally {
+      setSavingEditAnnouncement(false);
+    }
+  };
+
+  // Delete Announcement with Native Confirmation
+  const handleDeleteAnnouncement = (ann: { id: string; content: string }) => {
+    if (!courseId) return;
+
+    Alert.alert(
+      'Delete Announcement',
+      'Are you sure you want to delete this announcement? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.courses.deleteStream(courseId, ann.id);
+              try {
+                Burnt.toast({
+                  title: 'Announcement Deleted',
+                  message: 'Removed from class stream.',
+                  preset: 'done',
+                });
+              } catch {
+                // Fallback
+              }
+              // Refresh stream
+              const s = await api.courses.getStream(courseId);
+              setStream(s);
+            } catch (err: any) {
+              Alert.alert('Delete Failed', err?.message || 'Could not delete announcement.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Attach Document for New Classwork
@@ -343,19 +425,35 @@ export default function TeacherCourseDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Top Banner & Header */}
-      <View style={[styles.headerBanner, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <View style={styles.headerTopRow}>
+    <ScreenWrapper>
+      {/* Top Banner & Header Container with Safe Area Inset */}
+      <ScreenHeaderContainer
+        style={[
+          styles.headerBanner,
+          {
+            paddingHorizontal: s(16),
+            paddingBottom: 0,
+          },
+        ]}
+      >
+        <View style={[styles.headerTopRow, { marginBottom: s(6) }]}>
           <TouchableOpacity
             onPress={() => router.back()}
-            style={[styles.backBtn, { borderColor: theme.colors.border }]}
+            style={[
+              styles.backBtn,
+              {
+                borderColor: theme.colors.border,
+                width: s(32),
+                height: s(32),
+                borderRadius: s(16),
+              },
+            ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ArrowLeft size={20} color={theme.colors.text} />
+            <ArrowLeft size={s(17)} color={theme.colors.text} />
           </TouchableOpacity>
 
-          <View style={styles.headerBadges}>
+          <View style={[styles.headerBadges, { gap: s(5) }]}>
             <Badge label={course?.code || course?.courseCode || 'COURSE'} variant="primary" size="sm" />
             {course?.section && (
               <Badge label={course.section} variant="default" size="sm" />
@@ -366,11 +464,19 @@ export default function TeacherCourseDetailScreen() {
           </View>
         </View>
 
-        <Text style={[styles.courseTitle, { color: theme.colors.text }]} numberOfLines={2}>
+        <Text
+          style={[styles.courseTitle, { color: theme.colors.text, fontSize: font(18.5), marginBottom: s(2) }]}
+          numberOfLines={2}
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
+        >
           {course?.title || 'Class Management Hub'}
         </Text>
 
-        <Text style={[styles.courseSubtitle, { color: theme.colors.textSecondary }]}>
+        <Text
+          style={[styles.courseSubtitle, { color: theme.colors.textSecondary, fontSize: font(11.5), marginBottom: s(8) }]}
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
+          numberOfLines={1}
+        >
           Faculty: {course?.instructorName || user?.name} &bull; {people?.totalEnrolled ?? 0} Students Enrolled
         </Text>
 
@@ -381,16 +487,22 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'STREAM' }}
             style={[
               styles.tabBtn,
+              { paddingVertical: s(8), minHeight: s(36) },
               activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('STREAM')}
           >
-            <Radio size={16} color={activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Radio size={s(14)} color={activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary} />
             <Text
               style={[
                 styles.tabLabel,
-                { color: activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary, fontWeight: activeTab === 'STREAM' ? '700' : '500' },
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'STREAM' ? '700' : '500',
+                },
               ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               Stream
             </Text>
@@ -401,16 +513,22 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'CLASSWORK' }}
             style={[
               styles.tabBtn,
+              { paddingVertical: s(8), minHeight: s(36) },
               activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('CLASSWORK')}
           >
-            <FileText size={16} color={activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary} />
+            <FileText size={s(14)} color={activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary} />
             <Text
               style={[
                 styles.tabLabel,
-                { color: activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary, fontWeight: activeTab === 'CLASSWORK' ? '700' : '500' },
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'CLASSWORK' ? '700' : '500',
+                },
               ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               Classwork
             </Text>
@@ -421,16 +539,22 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'GRADEBOOK' }}
             style={[
               styles.tabBtn,
+              { paddingVertical: s(8), minHeight: s(36) },
               activeTab === 'GRADEBOOK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('GRADEBOOK')}
           >
-            <Award size={16} color={activeTab === 'GRADEBOOK' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Award size={s(14)} color={activeTab === 'GRADEBOOK' ? theme.colors.primary : theme.colors.textSecondary} />
             <Text
               style={[
                 styles.tabLabel,
-                { color: activeTab === 'GRADEBOOK' ? theme.colors.primary : theme.colors.textSecondary, fontWeight: activeTab === 'GRADEBOOK' ? '700' : '500' },
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'GRADEBOOK' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'GRADEBOOK' ? '700' : '500',
+                },
               ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               Gradebook
             </Text>
@@ -441,26 +565,38 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'PEOPLE' }}
             style={[
               styles.tabBtn,
+              { paddingVertical: s(8), minHeight: s(36) },
               activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('PEOPLE')}
           >
-            <Users size={16} color={activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Users size={s(14)} color={activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary} />
             <Text
               style={[
                 styles.tabLabel,
-                { color: activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary, fontWeight: activeTab === 'PEOPLE' ? '700' : '500' },
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'PEOPLE' ? '700' : '500',
+                },
               ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               Roster
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScreenHeaderContainer>
 
       {/* Main Tab Content */}
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            padding: s(13),
+            paddingBottom: bottomClearance,
+          },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -529,30 +665,60 @@ export default function TeacherCourseDetailScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  stream.announcements.map((ann) => (
-                    <View
-                      key={ann.id}
-                      style={[styles.streamCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-                    >
-                      <View style={styles.streamCardHeader}>
-                        <View style={[styles.authorAvatar, { backgroundColor: theme.colors.primary }]}>
-                          <Text style={styles.avatarLetter}>{getInitials(ann.author?.name)}</Text>
+                  stream.announcements.map((ann) => {
+                    const canManage =
+                      user?.role?.toUpperCase() === 'ADMIN' ||
+                      user?.id === ann.author?.id ||
+                      (course as any)?.instructor?.id === user?.id ||
+                      (course as any)?.instructorId === user?.id;
+
+                    return (
+                      <View
+                        key={ann.id}
+                        style={[styles.streamCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      >
+                        <View style={styles.streamCardHeader}>
+                          <View style={[styles.authorAvatar, { backgroundColor: theme.colors.primary }]}>
+                            <Text style={styles.avatarLetter}>{getInitials(ann.author?.name)}</Text>
+                          </View>
+                          <View style={styles.authorMeta}>
+                            <Text style={[styles.authorName, { color: theme.colors.text }]}>
+                              {ann.author?.name}
+                            </Text>
+                            <Text style={[styles.annTimestamp, { color: theme.colors.textSecondary }]}>
+                              {new Date(ann.createdAt).toLocaleDateString()} at{' '}
+                              {new Date(ann.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                          </View>
+                          {canManage && (
+                            <View style={styles.annActions}>
+                              <TouchableOpacity
+                                accessibilityRole="button"
+                                accessibilityLabel="Edit announcement"
+                                onPress={() => handleOpenEditAnnouncement(ann)}
+                                style={[styles.annActionBtn, { borderColor: theme.colors.border }]}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Pencil size={14} color={theme.colors.textSecondary} />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                accessibilityRole="button"
+                                accessibilityLabel="Delete announcement"
+                                onPress={() => handleDeleteAnnouncement(ann)}
+                                style={[styles.annActionBtn, { borderColor: theme.colors.border }]}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              >
+                                <Trash2 size={14} color={theme.colors.danger} />
+                              </TouchableOpacity>
+                            </View>
+                          )}
                         </View>
-                        <View style={styles.authorMeta}>
-                          <Text style={[styles.authorName, { color: theme.colors.text }]}>
-                            {ann.author?.name}
-                          </Text>
-                          <Text style={[styles.annTimestamp, { color: theme.colors.textSecondary }]}>
-                            {new Date(ann.createdAt).toLocaleDateString()} at{' '}
-                            {new Date(ann.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </Text>
-                        </View>
+                        <Text style={[styles.annContent, { color: theme.colors.text }]}>
+                          {ann.content}
+                        </Text>
                       </View>
-                      <Text style={[styles.annContent, { color: theme.colors.text }]}>
-                        {ann.content}
-                      </Text>
-                    </View>
-                  ))
+                    );
+                  })
                 )}
               </View>
             )}
@@ -1044,7 +1210,68 @@ export default function TeacherCourseDetailScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+
+      {/* ==================== EDIT ANNOUNCEMENT MODAL ==================== */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                  Edit Announcement
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: theme.colors.textSecondary }]}>
+                  Update message on the class stream
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setEditModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <X size={20} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ padding: 20 }}>
+              <TextInput
+                style={[
+                  styles.postInput,
+                  {
+                    backgroundColor: theme.colors.cardSecondary,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.text,
+                    minHeight: 120,
+                    textAlignVertical: 'top',
+                  },
+                ]}
+                multiline
+                numberOfLines={5}
+                placeholder="Edit announcement content..."
+                placeholderTextColor={theme.colors.textSecondary}
+                value={editAnnouncementContent}
+                onChangeText={setEditAnnouncementContent}
+              />
+            </View>
+
+            <View style={styles.modalBottomActions}>
+              <Button
+                title="Save Changes"
+                onPress={handleSaveEditAnnouncement}
+                loading={savingEditAnnouncement}
+                disabled={!editAnnouncementContent.trim()}
+                icon={Check}
+                style={{ borderRadius: 12 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScreenWrapper>
   );
 }
 
@@ -1170,6 +1397,20 @@ const styles = StyleSheet.create({
   annContent: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  annActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 'auto',
+  },
+  annActionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   createTriggerBtn: {
     flexDirection: 'row',

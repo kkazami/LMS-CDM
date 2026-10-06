@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
   AlertCircle,
@@ -15,10 +15,17 @@ import {
   GraduationCap,
   FileWarning,
   RefreshCw,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import type { TaughtCourseOption } from "./page";
 import { useAtRiskStudents, type AtRiskStudentItem } from "@/hooks/useAtRiskStudents";
+import { exportAnalyticsToCsv, exportAnalyticsToPdf, type ExportContextInfo } from "@/lib/analytics-export";
+import SupplementaryImportModal from "@/components/analytics/SupplementaryImportModal";
 
 interface AnalyticsClientProps {
   taughtCourses: TaughtCourseOption[];
@@ -72,6 +79,12 @@ export default function AnalyticsClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
+  // Export & Import state
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState<"csv" | "pdf" | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
   const { students, isLoading, error, refetch } = useAtRiskStudents(selectedCourseId);
 
   // Statistics counters
@@ -104,6 +117,75 @@ export default function AnalyticsClient({
     return true;
   });
 
+  // Close export dropdown on click outside or Escape
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsExportMenuOpen(false);
+      }
+    }
+    if (isExportMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isExportMenuOpen]);
+
+  const getExportContext = (): ExportContextInfo => {
+    const selectedCourse = taughtCourses.find((c) => c.id === selectedCourseId);
+    const scopeName = selectedCourse ? `${selectedCourse.code} - ${selectedCourse.title}` : "All My Classes";
+    const tabLabel = activeTab === "attention" ? "Students Needing Attention" : "All Enrolled Students";
+    const riskFilterLabel =
+      activeTab === "attention"
+        ? filterLevel === "HIGH"
+          ? "High Risk Only"
+          : filterLevel === "MEDIUM"
+          ? "Medium Risk Only"
+          : "All Flagged"
+        : "All Students";
+
+    return {
+      scopeName,
+      tabLabel,
+      riskFilterLabel,
+      highCount: highRiskCount,
+      mediumCount: mediumRiskCount,
+      lowCount: lowRiskCount,
+    };
+  };
+
+  const handleExportCsv = () => {
+    if (displayedStudents.length === 0) return;
+    try {
+      setIsExporting("csv");
+      exportAnalyticsToCsv(displayedStudents, getExportContext());
+    } finally {
+      setIsExporting(null);
+      setIsExportMenuOpen(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (displayedStudents.length === 0) return;
+    try {
+      setIsExporting("pdf");
+      await exportAnalyticsToPdf(displayedStudents, getExportContext());
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsExporting(null);
+      setIsExportMenuOpen(false);
+    }
+  };
+
   const toggleExpand = (studentId: string) => {
     setExpandedStudentId((prev) => (prev === studentId ? null : studentId));
   };
@@ -119,15 +201,95 @@ export default function AnalyticsClient({
           </p>
         </div>
 
-        {/* Refresh button */}
-        <button
-          onClick={() => refetch()}
-          disabled={isLoading}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-slate-400" : "text-slate-500 dark:text-[#8B92A5]"}`} />
-          <span>Refresh Data</span>
-        </button>
+        {/* Action Buttons: Import, Export & Refresh */}
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          {/* Import Supplementary Data Button */}
+          <button
+            id="analytics-import-btn"
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs"
+            title="Import supplementary assessment scores via CSV"
+          >
+            <Upload className="h-4 w-4 text-slate-500 dark:text-[#8B92A5]" />
+            <span>Import</span>
+          </button>
+
+          {/* Export Dropdown */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              id="analytics-export-dropdown-trigger"
+              type="button"
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              disabled={isLoading || displayedStudents.length === 0}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs"
+              aria-haspopup="true"
+              aria-expanded={isExportMenuOpen}
+              title={displayedStudents.length === 0 ? "No student data to export" : "Export current view"}
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+              ) : (
+                <Download className="h-4 w-4 text-slate-500 dark:text-[#8B92A5]" />
+              )}
+              <span>Export</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-150 ${isExportMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-1.5 w-64 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] shadow-lg z-30 py-1 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3.5 py-2 border-b border-slate-100 dark:border-white/5">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-[#F0F2F8]">Export Current View</p>
+                  <p className="text-[11px] text-slate-500 dark:text-[#8B92A5] truncate mt-0.5">
+                    {displayedStudents.length} student{displayedStudents.length === 1 ? "" : "s"} included
+                  </p>
+                </div>
+
+                <div className="p-1 space-y-0.5">
+                  <button
+                    id="analytics-export-csv-btn"
+                    type="button"
+                    onClick={handleExportCsv}
+                    disabled={isExporting !== null}
+                    className="w-full flex items-start gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium">Export as CSV (.csv)</p>
+                      <p className="text-[10px] text-slate-500 dark:text-[#8B92A5]">Spreadsheet with all risk indicators</p>
+                    </div>
+                  </button>
+
+                  <button
+                    id="analytics-export-pdf-btn"
+                    type="button"
+                    onClick={handleExportPdf}
+                    disabled={isExporting !== null}
+                    className="w-full flex items-start gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium">Export as PDF (.pdf)</p>
+                      <p className="text-[10px] text-slate-500 dark:text-[#8B92A5]">Printable summary report table</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={() => refetch()}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shrink-0 self-start sm:self-auto cursor-pointer shadow-xs"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin text-slate-400" : "text-slate-500 dark:text-[#8B92A5]"}`} />
+            <span>Refresh Data</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Class Filter & Overview Cards ── */}
@@ -549,6 +711,18 @@ export default function AnalyticsClient({
           })}
         </div>
       )}
+
+      {/* Supplementary Assessment CSV Import Modal */}
+      <SupplementaryImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        taughtCourses={taughtCourses}
+        initialCourseId={selectedCourseId}
+        theme={theme}
+        onImportSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 }

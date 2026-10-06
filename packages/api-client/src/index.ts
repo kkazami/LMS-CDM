@@ -59,11 +59,41 @@ export function createApiClient(config: ApiClientConfig) {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiClientError(response.status, error.message || 'Request failed', error.errors);
+      let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
+      let errors: any = undefined;
+
+      try {
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          if (json && typeof json === 'object') {
+            if (json.message) message = json.message;
+            else if (json.error) message = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
+            if (json.errors) errors = json.errors;
+          }
+        } catch {
+          // If non-JSON, surface raw text if short and not HTML
+          const trimmed = text.trim();
+          if (trimmed.length > 0 && trimmed.length <= 150 && !trimmed.startsWith('<')) {
+            message = trimmed;
+          }
+        }
+      } catch {
+        // Fallback to HTTP status message
+      }
+
+      throw new ApiClientError(response.status, message, errors);
     }
 
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new ApiClientError(
+        response.status,
+        `HTTP ${response.status}: Received non-JSON response from server`
+      );
+    }
   }
 
   return {
@@ -114,6 +144,23 @@ export function createApiClient(config: ApiClientConfig) {
           {
             method: 'POST',
             body: JSON.stringify({ content }),
+          }
+        ),
+
+      updateStream: (courseId: string, announcementId: string, content: string) =>
+        request<{ success: boolean; announcement: CourseAnnouncementItem }>(
+          `/api/courses/${courseId}/stream`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ announcementId, content }),
+          }
+        ),
+
+      deleteStream: (courseId: string, announcementId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/stream?announcementId=${encodeURIComponent(announcementId)}`,
+          {
+            method: 'DELETE',
           }
         ),
 
@@ -179,16 +226,59 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify({ enrollmentId, action }),
         }),
 
-      broadcast: (courseId: string, message: string, category = 'GENERAL') =>
+      getBroadcasts: (courseId: string) =>
+        request<{
+          broadcasts: Array<{
+            id: string;
+            message: string;
+            category: string;
+            scope: string;
+            scopeLabel: string;
+            recipientCount: number;
+            createdAt: string;
+            senderName?: string;
+            senderAvatar?: string | null;
+          }>;
+          enrolledStudents: Array<{
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+          }>;
+        }>(`/api/courses/${courseId}/broadcast`),
+
+      broadcast: (courseId: string, message: string, category = 'GENERAL', scope: string = 'ALL') =>
         request<{ success: boolean; broadcast: any }>(`/api/courses/${courseId}/broadcast`, {
           method: 'POST',
-          body: JSON.stringify({ message, category }),
+          body: JSON.stringify({ message, category, scope }),
         }),
+
+      updateBroadcast: (courseId: string, broadcastId: string, message: string, category?: string) =>
+        request<{ success: boolean; broadcast: any }>(`/api/courses/${courseId}/broadcast`, {
+          method: 'PATCH',
+          body: JSON.stringify({ broadcastId, message, category }),
+        }),
+
+      deleteBroadcast: (courseId: string, broadcastId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/broadcast?broadcastId=${encodeURIComponent(broadcastId)}`,
+          {
+            method: 'DELETE',
+          }
+        ),
     },
 
     announcements: {
-      list: (instituteCode: string) =>
-        request<{ announcements: Announcement[] }>(`/api/announcements?institute=${instituteCode}`),
+      list: (instituteCode: string, params?: { courseId?: string; page?: number; limit?: number }) => {
+        const query = new URLSearchParams({ institute: instituteCode });
+        if (params?.courseId) query.set('courseId', params.courseId);
+        if (params?.page) query.set('page', String(params.page));
+        if (params?.limit) query.set('limit', String(params.limit));
+        return request<{
+          announcements: Announcement[];
+          pagination?: { page: number; limit: number; totalCount: number; totalPages: number; hasMore: boolean };
+        }>(`/api/announcements?${query.toString()}`);
+      },
     },
 
     grades: {
@@ -335,6 +425,16 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify({ action: 'markAllRead' }),
         }),
 
+      delete: (notificationId: string) =>
+        request<{ success: boolean; count?: number }>(`/api/notifications?id=${encodeURIComponent(notificationId)}`, {
+          method: 'DELETE',
+        }),
+
+      clearAll: () =>
+        request<{ success: boolean; count?: number }>('/api/notifications?all=true', {
+          method: 'DELETE',
+        }),
+
       registerPushToken: (data: RegisterPushTokenInput) =>
         request<{ success: boolean }>('/api/notifications/push-token', {
           method: 'POST',
@@ -375,6 +475,48 @@ export function createApiClient(config: ApiClientConfig) {
     institutes: {
       list: () =>
         request<{ institutes: Array<{ id: string; code: string; name: string }> }>('/api/institutes'),
+    },
+
+    analytics: {
+      getAtRisk: (courseId?: string) => {
+        const query = courseId && courseId !== 'all' ? `?courseId=${encodeURIComponent(courseId)}` : '';
+        return request<{ atRiskStudents: any[] }>(`/api/analytics/at-risk${query}`);
+      },
+      importSupplementary: (data: {
+        courseId: string;
+        rows: Array<{
+          studentEmail?: string;
+          studentNumber?: string;
+          supplementaryScore: any;
+        }>;
+        commit?: boolean;
+      }) =>
+        request<{
+          courseTitle: string;
+          courseCode: string;
+          totalRows: number;
+          validCount: number;
+          invalidCount: number;
+          canCommit: boolean;
+          results: Array<{
+            identifier: string;
+            matchedStudent: {
+              id: string;
+              name: string;
+              email: string;
+              studentNumber: string | null;
+            } | null;
+            score: number | null;
+            isValid: boolean;
+            error?: string;
+          }>;
+          message?: string;
+          createdAssignmentId?: string;
+          updatedCount?: number;
+        }>('/api/analytics/supplementary-import', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
     },
   };
 }

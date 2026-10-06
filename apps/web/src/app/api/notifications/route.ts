@@ -86,3 +86,55 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Something went wrong." }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/notifications
+ * Query params: ?id=... (single delete) or ?all=true (delete all for user)
+ * Body: { id?: string; action?: "deleteAll" | "clearAll" }
+ */
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const { searchParams } = new URL(request.url);
+    const idParam = searchParams.get("id");
+    const allParam = searchParams.get("all") === "true";
+
+    let bodyId: string | undefined;
+    let bodyAction: string | undefined;
+
+    try {
+      const body = (await request.json()) as { id?: string; action?: string };
+      if (body) {
+        bodyId = body.id;
+        bodyAction = body.action;
+      }
+    } catch {
+      // Body may be empty if invoked via query params
+    }
+
+    if (allParam || bodyAction === "deleteAll" || bodyAction === "clearAll") {
+      const result = await db.notification.deleteMany({
+        where: { userId },
+      });
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
+    const notifId = idParam || bodyId;
+    if (notifId) {
+      const result = await db.notification.deleteMany({
+        where: { id: notifId, userId },
+      });
+      return NextResponse.json({ success: true, count: result.count });
+    }
+
+    return NextResponse.json({ message: "Notification ID or action required." }, { status: 400 });
+  } catch (error) {
+    console.error("NOTIFICATIONS_DELETE_ERROR", error);
+    return NextResponse.json({ message: "Something went wrong." }, { status: 500 });
+  }
+}

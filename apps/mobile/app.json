@@ -47,7 +47,8 @@
           "icon": "./assets/notification-icon.png",
           "color": "#FF7517"
         }
-      ]
+      ],
+      "expo-splash-screen"
     ]
   }
 }

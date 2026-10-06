@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { Bell, CheckCheck, BookOpen, Award, Info, AlertTriangle } from 'lucide-react-native';
+import { Bell, CheckCheck, BookOpen, Award, Info, AlertTriangle, Trash2 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
@@ -69,6 +70,39 @@ export default function StudentAlertsScreen() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const previous = notifications;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await api.notifications.delete(id);
+    } catch {
+      setNotifications(previous);
+    }
+  };
+
+  const handleClearAll = () => {
+    Alert.alert(
+      'Clear All Notifications',
+      'Are you sure you want to delete all notifications? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            const previous = notifications;
+            setNotifications([]);
+            try {
+              await api.notifications.clearAll();
+            } catch {
+              setNotifications(previous);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const filteredNotifications = notifications.filter((n) => {
     if (filter === 'UNREAD') return !n.isRead;
     return true;
@@ -99,20 +133,31 @@ export default function StudentAlertsScreen() {
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Notifications</Text>
           <View style={styles.headerRightGroup}>
             {unreadCount > 0 && (
-              <>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Mark all as read"
-                  onPress={handleMarkAllRead}
-                  style={styles.markAllBtn}
-                >
-                  <CheckCheck size={16} color={theme.colors.primary} />
-                  <Text style={[styles.markAllText, { color: theme.colors.primary }]}>
-                    Mark all read
-                  </Text>
-                </TouchableOpacity>
-                <Badge label={`${unreadCount} New`} variant="primary" size="sm" />
-              </>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Mark all as read"
+                onPress={handleMarkAllRead}
+                style={styles.actionBtn}
+              >
+                <CheckCheck size={14} color={theme.colors.primary} />
+                <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>
+                  Read all
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {notifications.length > 0 && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Clear all notifications"
+                onPress={handleClearAll}
+                style={styles.actionBtn}
+              >
+                <Trash2 size={14} color="#EF4444" />
+                <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>
+                  Clear all
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -195,7 +240,7 @@ export default function StudentAlertsScreen() {
             </Card>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <View
               style={[
                 styles.notificationCard,
                 {
@@ -204,34 +249,49 @@ export default function StudentAlertsScreen() {
                   borderLeftWidth: item.isRead ? 1 : 4,
                 },
               ]}
-              onPress={() => {
-                if (!item.isRead) handleMarkRead(item.id);
-              }}
-              activeOpacity={0.8}
             >
-              <View style={styles.iconCircle}>
-                {getNotificationIcon(item.type)}
-              </View>
-
-              <View style={styles.notificationBody}>
-                <View style={styles.cardTopLine}>
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-                    {item.title}
-                  </Text>
-                  {!item.isRead && (
-                    <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
-                  )}
+              <TouchableOpacity
+                style={styles.cardMainTouch}
+                onPress={() => {
+                  if (!item.isRead) handleMarkRead(item.id);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.iconCircle}>
+                  {getNotificationIcon(item.type)}
                 </View>
 
-                <Text style={[styles.cardMessage, { color: theme.colors.textSecondary }]}>
-                  {item.message}
-                </Text>
+                <View style={styles.notificationBody}>
+                  <View style={styles.cardTopLine}>
+                    <Text style={[styles.cardTitle, { color: theme.colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    {!item.isRead && (
+                      <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
+                    )}
+                  </View>
 
-                <Text style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
-                  {new Date(item.createdAt).toLocaleString()}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                  <Text style={[styles.cardMessage, { color: theme.colors.textSecondary }]}>
+                    {item.message}
+                  </Text>
+
+                  <Text style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
+                    {new Date(item.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => handleDelete(item.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Delete notification"
+                activeOpacity={0.6}
+              >
+                <Trash2 size={16} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
           )}
         />
       )}
@@ -263,6 +323,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardMainTouch: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  deleteBtn: {
+    padding: 6,
+    marginLeft: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   markAllBtn: {
     flexDirection: 'row',

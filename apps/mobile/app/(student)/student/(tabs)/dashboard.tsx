@@ -306,7 +306,7 @@ export default function StudentDashboardScreen() {
               Campus Bulletins & Announcements
             </Text>
             <TouchableOpacity
-              onPress={() => router.push('/student/alerts')}
+              onPress={() => router.push('/student/announcements' as any)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
@@ -327,12 +327,14 @@ export default function StudentDashboardScreen() {
             </Card>
           ) : (
             announcements.slice(0, 2).map((item) => (
-              <View
+              <TouchableOpacity
                 key={item.id}
                 style={[styles.announcementCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                onPress={() => router.push('/student/announcements' as any)}
+                activeOpacity={0.85}
               >
                 <View style={styles.announcementHeader}>
-                  <Badge label="NOTICE" variant="info" size="sm" />
+                  <Badge label={item.courseCode || 'NOTICE'} variant="info" size="sm" />
                   {item.createdAt && (
                     <Text style={[styles.announcementDate, { color: theme.colors.textSecondary }]}>
                       {new Date(item.createdAt).toLocaleDateString()}
@@ -348,7 +350,7 @@ export default function StudentDashboardScreen() {
                 >
                   {item.content}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>

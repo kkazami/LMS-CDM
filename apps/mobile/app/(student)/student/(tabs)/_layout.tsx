@@ -1,16 +1,18 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { LayoutDashboard, BookOpen, GraduationCap, Bell, Menu } from 'lucide-react-native';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChatbotFAB } from '../../../../src/components/chatbot/ChatbotFAB';
 
 export default function StudentTabsLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <Tabs
+    <View style={styles.container}>
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
@@ -66,5 +68,13 @@ export default function StudentTabsLayout() {
         }}
       />
     </Tabs>
+    <ChatbotFAB />
+  </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

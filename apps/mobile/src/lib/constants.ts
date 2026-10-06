@@ -18,7 +18,11 @@ export const getHostFromUri = (uri?: string | null): string | null => {
  * over Wi-Fi or Hotspot automatically resolve the host PC's IP.
  */
 export const getDefaultApiUrl = (): string => {
-  // 1. Explicit environment variable override
+  // 1. Explicit environment variable override.
+  // Note: Do NOT hardcode LAN IP (e.g. 192.168.x.x) in apps/mobile/.env as the primary source,
+  // as that breaks when moving networks. The dynamic Metro packager host detection below remains
+  // the primary resolution mechanism for local development and physical devices, while
+  // EXPO_PUBLIC_API_URL is reserved as an explicit manual override when intentionally set.
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '');
   }

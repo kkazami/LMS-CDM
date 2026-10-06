@@ -9,6 +9,7 @@ export default function StudentLayout() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="announcements/index" options={{ headerShown: false }} />
     </Stack>
   );
 }
