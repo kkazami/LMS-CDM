@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../../workspace/_shared";
 import { grantExp } from "@/lib/gamification/grant-exp";
 import { EXP_VALUES, DAILY_EXP_CAPS } from "@/lib/gamification/exp-engine";
 import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,21 @@ export async function POST(request: Request) {
 
       await awardBadgeIfEarned(session.user.id, "flashcard-first");
     }
+
+    // Log FLASHCARD_REVIEW event (no-op for non-ITE)
+    after(async () => {
+      try {
+        await logActivity({
+          userId: session.user.id,
+          instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+          courseId: deck.courseId ?? undefined,
+          type: "FLASHCARD_REVIEW",
+          refId: deck.id,
+        });
+      } catch (err) {
+        console.error("[activity-logger] flashcard review error:", err);
+      }
+    });
 
     return NextResponse.json({
       success: true,

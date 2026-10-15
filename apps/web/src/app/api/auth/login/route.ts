@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
@@ -11,6 +11,7 @@ import {
   createRateLimitResponse,
 } from "@/lib/rate-limit";
 import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
+import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,19 @@ export async function POST(request: Request) {
     } catch (rewardErr) {
       console.error("LOGIN_REWARD_ERROR", rewardErr);
     }
+
+    // 8b. ITE Participation: log LOGIN activity event (silent no-op for non-ITE)
+    after(async () => {
+      try {
+        await logActivity({
+          userId: user.id,
+          instituteId: user.instituteId,
+          type: "LOGIN",
+        });
+      } catch (err) {
+        console.error("[activity-logger] login error:", err);
+      }
+    });
 
     const instituteCode = user.institute?.code || targetInstituteCode;
     const instituteName = user.institute?.name || `${instituteCode.toUpperCase()} Institute`;

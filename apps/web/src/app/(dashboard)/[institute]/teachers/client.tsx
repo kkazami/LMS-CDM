@@ -33,6 +33,7 @@ import { TypingBanner } from "@/components/motion/TypingBanner";
 import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
+import InstructorAtRiskWidget from "@/components/institute/ite/InstructorAtRiskWidget";
 
 interface TaughtCourse {
   id: string;
@@ -603,8 +604,11 @@ export default function TeacherDashboardClient({
             )}
           </div>
 
-          {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests ─── */}
+          {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests & ITE At-Risk Widget ─── */}
           <div className="space-y-6">
+            {instituteCode.toLowerCase() === "ite" && (
+              <InstructorAtRiskWidget theme={theme} instituteCode={instituteCode} />
+            )}
             {/* ─── 3a. Pending Work by Class Widget ─── */}
             <div className="space-y-4" id="pending-work">
               <div className="flex items-center justify-between">

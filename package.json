@@ -18,6 +18,7 @@
     "postinstall": "prisma generate",
     "harness:check": "tsx scripts/harness-check.ts",
     "harness:verify": "tsx scripts/harness-verify-run.ts",
+    "test:unit": "pnpm --filter web run test:unit",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report playwright/report"

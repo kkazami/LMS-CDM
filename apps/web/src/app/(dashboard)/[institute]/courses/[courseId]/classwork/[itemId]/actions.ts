@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getSession } from "@/lib/auth-session";
 
 // ─── Shared helpers ───
@@ -45,6 +46,7 @@ export async function getOrCreateSubmission(syllabusItemId: string) {
 import { grantExp } from "@/lib/gamification/grant-exp";
 import { EXP_VALUES } from "@/lib/gamification/exp-engine";
 import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { logActivity } from "@/lib/ite/activity-logger";
 
 export async function submitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
   const user = await getStudentSession();
@@ -79,6 +81,21 @@ export async function submitWork(submissionId: string, instituteCode: string, co
   } catch (gamiErr) {
     console.error("GAMIFICATION_ASSIGNMENT_SUBMIT_ERROR", gamiErr);
   }
+
+  // Log TASK_SUBMITTED event (no-op for non-ITE)
+  after(async () => {
+    try {
+      await logActivity({
+        userId: user.id,
+        instituteId: (user as Record<string, unknown>).instituteId as string | undefined,
+        courseId,
+        type: "TASK_SUBMITTED",
+        refId: itemId,
+      });
+    } catch (err) {
+      console.error("[activity-logger] submit task error:", err);
+    }
+  });
 
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
   return { success: true };

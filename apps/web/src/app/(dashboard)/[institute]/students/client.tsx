@@ -34,6 +34,7 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { ExpRing } from "@/components/dashboard/ExpRing";
 import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
+import StudentParticipationCard from "@/components/institute/ite/StudentParticipationCard";
 
 interface EnrolledCourse {
   id: string;
@@ -580,8 +581,12 @@ export default function StudentDashboardClient({
             )}
           </div>
 
-          {/* ─── 4. Right 1 Column: Due Soon / Pending Tasks (Urgent Deadlines Feed) ─── */}
-          <div className="space-y-4">
+          {/* ─── 4. Right 1 Column: Due Soon / Pending Tasks & ITE Participation ─── */}
+          <div className="space-y-6">
+            {instituteCode.toLowerCase() === "ite" && (
+              <StudentParticipationCard theme={theme} instituteCode={instituteCode} />
+            )}
+            <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div
@@ -688,6 +693,7 @@ export default function StudentDashboardClient({
                 </Link>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

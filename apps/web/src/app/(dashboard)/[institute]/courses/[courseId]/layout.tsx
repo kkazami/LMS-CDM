@@ -2,6 +2,9 @@ import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { isIteInstituteCode } from "@/lib/ite/ite-eligibility";
+import { logActivity } from "@/lib/ite/activity-logger";
 import CourseHeader from "@/components/courses/CourseHeader";
 import CourseTabs from "@/components/courses/CourseTabs";
 
@@ -58,6 +61,20 @@ export default async function CourseInteriorLayout({
     if (!enrollment || enrollment.status !== "APPROVED") {
       redirect(`/${institute}/courses`);
     }
+
+    // Log COURSE_VIEW event (deduplicated, no-op for non-ITE)
+    after(async () => {
+      try {
+        await logActivity({
+          userId: session.user.id,
+          instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+          courseId: course.id,
+          type: "COURSE_VIEW",
+        });
+      } catch (err) {
+        console.error("[activity-logger] course view error:", err);
+      }
+    });
   }
 
   const showPendingCount =
@@ -73,6 +90,9 @@ export default async function CourseInteriorLayout({
           },
         })
       : 0;
+
+  // ITE-only: Participation tab is shown to the course instructor only
+  const showParticipation = isIteInstituteCode(institute) && (isInstructor || isAdmin);
 
   return (
     <div className="-m-4 lg:-m-8">
@@ -94,6 +114,7 @@ export default async function CourseInteriorLayout({
           pendingCount={showPendingCount}
           pendingWorkCount={pendingWorkCount}
           isInstructor={isInstructor || isAdmin}
+          showParticipation={showParticipation}
         />
       </div>
       <div className="px-4 py-6 md:px-8">{children}</div>

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -8,6 +9,7 @@ import DocumentViewerDynamic from "@/components/learning-materials/DocumentViewe
 import PomodoroTimer from "@/components/learning-materials/PomodoroTimer";
 import FocusSidebar from "@/components/learning-materials/FocusSidebar";
 import ConvertFlashcardsButton from "@/components/courses/ConvertFlashcardsButton";
+import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +59,21 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   if (!material || material.courseId !== courseId || material.type !== "MATERIAL") {
     redirect(`/${institute}/learning-materials/${courseId}`);
   }
+
+  // Log MATERIAL_VIEW event (deduplicated, no-op for non-ITE)
+  after(async () => {
+    try {
+      await logActivity({
+        userId,
+        instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+        courseId,
+        type: "MATERIAL_VIEW",
+        refId: materialId,
+      });
+    } catch (err) {
+      console.error("[activity-logger] material view error:", err);
+    }
+  });
 
   // Determine which attachment to show
   let activeAttachment = material.attachments[0];

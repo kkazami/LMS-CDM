@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { logActivity } from "@/lib/ite/activity-logger";
 import StreamClient from "./client";
 
 type PageProps = {
@@ -42,6 +44,23 @@ export default async function StreamPage({ params }: PageProps) {
     createdAt: a.createdAt.toISOString(),
     author: a.author,
   }));
+
+  // Log ANNOUNCEMENT_READ event for students (deduplicated, no-op for non-ITE)
+  if (role === "STUDENT") {
+    after(async () => {
+      try {
+        await logActivity({
+          userId: session.user.id,
+          instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+          courseId,
+          type: "ANNOUNCEMENT_READ",
+          refId: announcements[0]?.id ?? null,
+        });
+      } catch (err) {
+        console.error("[activity-logger] announcement read error:", err);
+      }
+    });
+  }
 
   return (
     <StreamClient

@@ -1,7 +1,9 @@
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
+import { logActivity } from "@/lib/ite/activity-logger";
 import AssignmentDetailClient from "./client";
 import { getOrCreateSubmission } from "./actions";
 
@@ -57,6 +59,39 @@ export default async function AssignmentDetailPage({ params }: Props) {
   let submission = null;
   if (isStudent && item.type !== "MATERIAL") {
     submission = await getOrCreateSubmission(itemId);
+  }
+
+  // Log activity event for ITE students (MATERIAL_VIEW or QUIZ_ATTEMPT)
+  if (isStudent) {
+    if (item.type === "MATERIAL") {
+      after(async () => {
+        try {
+          await logActivity({
+            userId: session.user.id,
+            instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+            courseId,
+            type: "MATERIAL_VIEW",
+            refId: itemId,
+          });
+        } catch (err) {
+          console.error("[activity-logger] material view error:", err);
+        }
+      });
+    } else if (item.type === "QUIZ") {
+      after(async () => {
+        try {
+          await logActivity({
+            userId: session.user.id,
+            instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+            courseId,
+            type: "QUIZ_ATTEMPT",
+            refId: itemId,
+          });
+        } catch (err) {
+          console.error("[activity-logger] quiz attempt error:", err);
+        }
+      });
+    }
   }
 
   return (
