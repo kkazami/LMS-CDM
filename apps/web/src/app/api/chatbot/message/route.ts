@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
@@ -10,6 +11,118 @@ export const dynamic = "force-dynamic";
 
 export async function OPTIONS(request: Request) {
   return handleCorsPreflight(request) ?? new NextResponse(null, { status: 204 });
+}
+
+function getGroqApiKey(): string {
+  let key = (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+  if (
+    !key ||
+    key.toLowerCase().includes("your") ||
+    key.toLowerCase().includes("api-key") ||
+    key.toLowerCase().includes("placeholder") ||
+    key.length < 15
+  ) {
+    try {
+      const candidatePaths = [
+        path.resolve(process.cwd(), ".env"),
+        path.resolve(process.cwd(), ".env.local"),
+        path.resolve(process.cwd(), "apps/web/.env"),
+        path.resolve(process.cwd(), "apps/web/.env.local"),
+        path.resolve(process.cwd(), "../../.env"),
+      ];
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, "utf8");
+          const match = content.match(/^GROQ_API_KEY=(.*)$/m);
+          if (match) {
+            const parsed = match[1].trim().replace(/^["']|["']$/g, "");
+            if (
+              parsed &&
+              !parsed.toLowerCase().includes("your") &&
+              !parsed.toLowerCase().includes("api-key") &&
+              !parsed.toLowerCase().includes("placeholder") &&
+              parsed.length >= 15
+            ) {
+              return parsed;
+            }
+          }
+        }
+      }
+    } catch {
+      // fallback to key
+    }
+  }
+  return key;
+}
+
+async function callGroqFallback({
+  systemInstruction,
+  history,
+  message,
+  temperature,
+}: {
+  systemInstruction: string;
+  history?: IncomingMessage[];
+  message: string;
+  temperature: number;
+}): Promise<string | null> {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) {
+    console.warn("[Chatbot Fallback] Cannot fallback to Groq: GROQ_API_KEY is not configured.");
+    return null;
+  }
+
+  const preferredModel = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+  const candidateModels = Array.from(
+    new Set([preferredModel, "openai/gpt-oss-120b", "qwen/qwen3.8-27b"])
+  );
+
+  console.log(`[Chatbot Fallback] Triggering Groq fallback (preferred: ${preferredModel}) using identical system prompt and grounded data context...`);
+
+  const groq = new Groq({ apiKey });
+
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemInstruction },
+  ];
+
+  if (Array.isArray(history) && history.length > 0) {
+    const recentHistory = history.slice(-6);
+    for (const h of recentHistory) {
+      if (!h.text) continue;
+      messages.push({
+        role: h.role === "user" ? "user" : "assistant",
+        content: h.text,
+      });
+    }
+  }
+
+  messages.push({
+    role: "user",
+    content: message,
+  });
+
+  for (const model of candidateModels) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model,
+        messages,
+        temperature,
+      });
+
+      const reply = completion.choices?.[0]?.message?.content || null;
+      if (reply) {
+        console.log(`[Chatbot Fallback] Groq (${model}) successfully generated response.`);
+        return reply;
+      }
+    } catch (err: any) {
+      console.warn(`[Chatbot Fallback] Groq model [${model}] failed: ${err?.message || err}`);
+      if (err?.status === 401 || err?.status === 429) {
+        throw err;
+      }
+    }
+  }
+
+  return null;
 }
 
 function getGeminiApiKey(): string {
@@ -397,20 +510,38 @@ ${atRiskSummary.slice(0, 8).join("\n") || "No students currently flagged below p
       rawApiKey.length < 20;
 
     if (isPlaceholder) {
+      // Check if Groq fallback is available
+      const groqKey = getGroqApiKey();
+      if (groqKey) {
+        console.warn("[Chatbot Fallback] Gemini API key not configured. Falling back to Groq directly...");
+        const groqReply = await callGroqFallback({
+          systemInstruction,
+          history,
+          message,
+          temperature: isInstructor ? 0.7 : 0.4,
+        });
+        if (groqReply) {
+          return NextResponse.json(
+            { reply: groqReply, role: rawRole, provider: "groq" },
+            { headers: corsHeaders }
+          );
+        }
+      }
+
       return NextResponse.json(
         {
           reply:
-            "⚠️ **CdM Assistant Setup Note**: The Gemini API key (`GEMINI_API_KEY`) is not yet configured in the server environment. Please set your free Google AI Studio API key in `.env` as `GEMINI_API_KEY` to enable live responses.",
+            "⚠️ **CdM Assistant Setup Note**: Neither Gemini API key (`GEMINI_API_KEY`) nor Groq fallback key (`GROQ_API_KEY`) is configured in the server environment. Please configure at least one API key in `.env` to enable live responses.",
         },
         { headers: corsHeaders }
       );
     }
 
     // 6. Initialize Google GenAI client
-    // Primary model: gemini-3.5-flash (Google GenAI current stable flash)
-    // Fallback chain: gemini-flash-latest -> gemini-2.5-flash-lite
+    // Primary model: gemini-3.1-flash-lite (high efficiency, fast latency, budget-friendly tier)
+    // Fallback chain: gemini-3.5-flash-lite -> gemini-flash-latest -> Groq (llama-3.3-70b-versatile)
     const ai = new GoogleGenAI({ apiKey: rawApiKey });
-    const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+    const modelName = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
     // Build multi-turn contents from history if provided
     const contents: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = [];
@@ -434,23 +565,9 @@ ${atRiskSummary.slice(0, 8).join("\n") || "No students currently flagged below p
       parts: [{ text: message }],
     });
 
-    // Helper to identify rate limits
-    const checkIsRateLimited = (err: any) =>
-      err?.status === "RESOURCE_EXHAUSTED" ||
-      err?.code === 429 ||
-      err?.status === 429 ||
-      String(err?.message).includes("RESOURCE_EXHAUSTED") ||
-      String(err?.message).includes("429") ||
-      String(err?.message).toLowerCase().includes("quota");
-
-    // Helper to identify invalid API key
-    const checkIsInvalidApiKey = (err: any) =>
-      err?.status === 400 &&
-      (String(err?.message).includes("API key not valid") ||
-        String(err?.message).includes("API_KEY_INVALID"));
-
-    // 7. Invoke Gemini
+    // 7. Invoke Gemini (primary + fallback models), then Groq fallback
     let replyText = "";
+    let providerUsed = "gemini";
     try {
       const response = await ai.models.generateContent({
         model: modelName,
@@ -461,40 +578,15 @@ ${atRiskSummary.slice(0, 8).join("\n") || "No students currently flagged below p
         },
       });
 
-      replyText = response.text || "I'm sorry, I couldn't generate a response. Please try again.";
+      replyText = response.text || "";
     } catch (genErr: any) {
-      console.error("Gemini primary model API call error:", genErr);
+      console.warn(`[Chatbot] Gemini primary model [${modelName}] failed (${genErr?.message || genErr}). Trying Gemini fallback models...`);
 
-      // Handle 429 / RESOURCE_EXHAUSTED rate limit per requirement 4
-      if (checkIsRateLimited(genErr)) {
-        return NextResponse.json(
-          {
-            reply: "The assistant is busy, try again in a moment.",
-            rateLimited: true,
-          },
-          { status: 429, headers: corsHeaders }
-        );
-      }
-
-      // Handle invalid API key
-      if (checkIsInvalidApiKey(genErr)) {
-        return NextResponse.json(
-          {
-            reply:
-              "⚠️ **CdM Assistant Setup Note**: The configured `GEMINI_API_KEY` in `.env` is invalid. Please verify your API key generated from Google AI Studio.",
-          },
-          { headers: corsHeaders }
-        );
-      }
-
-      // Fallback model chain:
-      // 1. gemini-flash-latest: Google's pointer to latest general availability flash
-      // 2. gemini-2.5-flash-lite: lightweight high-availability fallback
-      const fallbackModels = ["gemini-flash-latest", "gemini-2.5-flash-lite"].filter(
+      // Fallback model chain within Gemini:
+      const fallbackModels = ["gemini-3.5-flash-lite", "gemini-flash-latest"].filter(
         (m) => m !== modelName
       );
 
-      let fallbackSuccess = false;
       for (const fallbackModel of fallbackModels) {
         try {
           const fallbackRes = await ai.models.generateContent({
@@ -505,32 +597,45 @@ ${atRiskSummary.slice(0, 8).join("\n") || "No students currently flagged below p
               temperature: isInstructor ? 0.7 : 0.4,
             },
           });
-          replyText = fallbackRes.text || "I'm here to help. What would you like to know?";
-          if (replyText) {
-            fallbackSuccess = true;
+          if (fallbackRes.text) {
+            replyText = fallbackRes.text;
             break;
           }
         } catch (fallbackErr: any) {
-          console.error(`Gemini fallback model [${fallbackModel}] error:`, fallbackErr);
-          if (checkIsRateLimited(fallbackErr)) {
-            return NextResponse.json(
-              {
-                reply: "The assistant is busy, try again in a moment.",
-                rateLimited: true,
-              },
-              { status: 429, headers: corsHeaders }
-            );
-          }
+          console.warn(`[Chatbot] Gemini fallback model [${fallbackModel}] failed: ${fallbackErr?.message || fallbackErr}`);
         }
       }
 
-      if (!fallbackSuccess && !replyText) {
+      // If all Gemini models failed (rate limit 429, quota exhaustion, outage, or any API error)
+      if (!replyText) {
+        console.warn(
+          `[Chatbot Fallback] Gemini models exhausted. Triggering automatic fallback to Groq (llama-3.3-70b-versatile)... Reason: ${genErr?.message || "Unknown error"}`
+        );
+        try {
+          const groqReply = await callGroqFallback({
+            systemInstruction,
+            history,
+            message,
+            temperature: isInstructor ? 0.7 : 0.4,
+          });
+
+          if (groqReply) {
+            replyText = groqReply;
+            providerUsed = "groq";
+            console.log("[Chatbot Fallback] Successfully served request using Groq fallback.");
+          }
+        } catch (groqErr: any) {
+          console.error("[Chatbot Fallback] Groq fallback also failed:", groqErr?.message || groqErr);
+        }
+      }
+
+      if (!replyText) {
         return NextResponse.json(
           {
             reply: "The assistant is busy, try again in a moment.",
-            error: genErr?.message,
+            rateLimited: true,
           },
-          { status: 503, headers: corsHeaders }
+          { status: 429, headers: corsHeaders }
         );
       }
     }
@@ -539,6 +644,7 @@ ${atRiskSummary.slice(0, 8).join("\n") || "No students currently flagged below p
       {
         reply: replyText,
         role: rawRole,
+        provider: providerUsed,
       },
       { headers: corsHeaders }
     );
