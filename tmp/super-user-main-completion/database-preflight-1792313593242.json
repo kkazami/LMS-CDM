@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-18T08:53:13.241Z",
+  "readOnly": true,
+  "requestedAccounts": [
+    {
+      "email": "admin@ics.edu.ph",
+      "role": "ADMIN",
+      "isActive": true
+    },
+    {
+      "email": "programhead@bscpe.edu.ph",
+      "role": "PROFESSOR",
+      "isActive": true
+    },
+    {
+      "email": "programhead@bsit.edu.ph",
+      "role": "PROFESSOR",
+      "isActive": true
+    }
+  ],
+  "structure": {
+    "guarded": false,
+    "programs": true
+  },
+  "principal": {
+    "rolsuper": false,
+    "rolcreaterole": true,
+    "rolcreatedb": true,
+    "rolbypassrls": true,
+    "owns_public_objects": true
+  },
+  "metadata": [
+    {
+      "code": "ibe",
+      "activeCourses": 1,
+      "identifierJoinCodeCollisions": 0
+    },
+    {
+      "code": "ics",
+      "activeCourses": 5,
+      "identifierJoinCodeCollisions": 1
+    },
+    {
+      "code": "ite",
+      "activeCourses": 1,
+      "identifierJoinCodeCollisions": 0
+    }
+  ]
+}

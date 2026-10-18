@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { executeSkill } from "./index";
@@ -26,6 +28,8 @@ export async function resolveGroupPermissions(
   courseId: string,
   studentId: string
 ): Promise<SkillResult<PermissionResolution>> {
+  await requireLegacyActor("apps/web/src/lib/skills/group-permission-resolver.ts#resolveGroupPermissions", { courseId });
+
   return executeSkill("resolveGroupPermissions", async () => {
     // 1. Get all groups the student belongs to in this course
     const studentMemberships = await db.studentGroupMember.findMany({

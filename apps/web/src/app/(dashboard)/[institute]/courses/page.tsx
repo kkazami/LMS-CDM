@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import CoursesClient from "./client";
@@ -9,6 +10,8 @@ export default async function CoursesPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/page.tsx", await params);
+
   const { institute } = await params;
   const theme = getInstituteTheme(institute);
   const session = await getSession();

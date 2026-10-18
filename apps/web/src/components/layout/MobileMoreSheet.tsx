@@ -10,6 +10,7 @@ import {
   Award,
   BarChart2,
   Archive,
+  Network,
   PlusSquare,
   ShieldCheck,
   Users,
@@ -95,12 +96,13 @@ export default function MobileMoreSheet({
     { label: "Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage rankings" },
     { label: "Create Tasks", href: `/${instituteCode}/create-tasks`, icon: PlusSquare, description: "Assign activities" },
     { label: "Archived", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Previous courses" },
+    ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
   ];
 
   const adminItems: NavItem[] = [
     { label: "Courses", href: `/${instituteCode}/admin/courses`, icon: Library, description: "All classes" },
     { label: "Accounts", href: `/${instituteCode}/accounts`, icon: Users, description: "Users & students" },
-    { label: "Permissions", href: `/${instituteCode}/accounts/permissions`, icon: ShieldCheck, description: "Role matrix" },
+    ...(instituteCode === "ics" ? [{ label: "Faculty & Program Heads", href: `/${instituteCode}/admin/faculty`, icon: Users, description: "BSIT and BSCpE faculty" }] : []),
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
   ];
 

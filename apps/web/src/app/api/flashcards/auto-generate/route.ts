@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -1319,6 +1320,9 @@ function sanitizeCards(cards: RawCard[]): RawCard[] {
 
 // ─── API Route Handler ───────────────────────────────────────────────────────
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST flashcards/auto-generate/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Agentic Skills Layer — Core Infrastructure
  *
@@ -30,6 +31,8 @@ export async function executeSkill<T>(
   skillName: string,
   fn: () => Promise<T>
 ): Promise<SkillResult<T>> {
+  await requireLegacyActor("apps/web/src/lib/skills/index.ts#executeSkill");
+
   const start = Date.now();
   try {
     const data = await fn();

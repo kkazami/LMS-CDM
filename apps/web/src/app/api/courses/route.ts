@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  * Fetches lightweight course list for the authenticated user/institute.
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET courses/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -16,7 +20,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const instituteCode = searchParams.get('institute') || 'ics';
+    const instituteCode = searchParams.get('institute') || session.user.institute.code;
     const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '15', 10), 1), 50);
     const skip = (page - 1) * limit;

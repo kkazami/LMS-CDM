@@ -14,7 +14,7 @@
 
 ## Components
 - Use reusable components before creating duplicates
-- New shared UI components go in packages/ui (Tailwind + Lucide React)
+- Web components reuse apps/web/src/components (Tailwind + Lucide React); packages/ui is not integrated into web
 - Web-specific components stay in apps/web/src/components/
 - Use Lucide React for icons exclusively
 
@@ -26,7 +26,7 @@
 
 ## Auth & Security
 - Protected routes check session via getSession()
-- API routes verify session independently (middleware excludes /api)
+- API routes verify session independently; middleware header handling is not resource authorization
 - Use RBAC checks from src/lib/rbac.ts
 - Never expose .env contents or credentials
 

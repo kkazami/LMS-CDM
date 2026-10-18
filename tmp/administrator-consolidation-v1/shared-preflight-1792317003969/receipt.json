@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-10-18T09:50:03.969Z",
+  "mode": "--preflight",
+  "profile": "trusted-local",
+  "OSIsolation": false,
+  "sql": {
+    "path": "prisma/super-user-v1/administrator-consolidation.sql",
+    "sha256": "c7e525b50b45625eb6957264151d19249837dc10034130db9dd2f07cd3f34b9f"
+  },
+  "localEvidence": {
+    "path": "tmp/program-head-integration/feature-1792316934760/report.json",
+    "sha256": "609588bd98aeb81deeddaabd4b740d844707e379694b6844934a7f1b820a80b0"
+  },
+  "accountMutations": false,
+  "credentialMutations": false,
+  "CalendarChanges": false,
+  "status": "PREFLIGHT_ONLY",
+  "preflight": {
+    "existingAdministrator": {
+      "role": "ADMIN",
+      "isActive": true,
+      "institute": "ics",
+      "legacyNullState": true
+    },
+    "retiredRoleAccounts": 0,
+    "runtimeQualified": true
+  },
+  "finishedAt": "2026-10-18T09:50:06.093Z"
+}

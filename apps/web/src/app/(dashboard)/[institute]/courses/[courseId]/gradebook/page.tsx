@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export default async function GradebookPage({ params }: Props) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/page.tsx", await params);
+
   const { institute, courseId } = await params;
 
   const session = await getSession();

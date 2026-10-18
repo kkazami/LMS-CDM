@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/evaluate
  *
@@ -19,9 +20,8 @@ import { evaluateVariables, substituteTemplate } from "@/features/interactive-ac
 import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { db } from "@/lib/db";
-import { grantExp } from "@/lib/gamification/grant-exp";
-import { EXP_VALUES } from "@/lib/gamification/exp-engine";
-import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+
+import { CodeLabCompletionError, getCodeLabCompletion, getCodeLabReward, saveCodeLabCompletion } from "@/lib/codelab-completion";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +32,9 @@ interface EvaluateRequest {
   seed: string;
   sourceCode: string;
   languageId: number;
+  startedAt?: string;
+  completionTimeSeconds?: number;
+  attempts?: number;
 }
 
 interface PublicTestResult {
@@ -68,6 +71,9 @@ async function executeTestCaseOnJudge0(
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/evaluate/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Session check
     const session = await getSession();
@@ -100,6 +106,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (typeof templateId !== "string" || typeof seed !== "string" || typeof sourceCode !== "string" || !Number.isInteger(languageId)) {
+      return NextResponse.json({ error: "Invalid evaluation fields." }, { status: 400 });
+    }
+    if (await getCodeLabCompletion(session.user.id, templateId) || await getCodeLabReward(session.user.id, templateId)) {
+      return NextResponse.json({ error: "This level is already completed. Use Run Tests to practice.", completed: true }, { status: 409 });
+    }
+
     // 4. Resolve problem definition (from Problem Bank or DB)
     const problem = getProblemById(templateId);
 
@@ -109,6 +122,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    if (problem && languageId !== problem.languageId) return NextResponse.json({ error: "Incorrect language for this level." }, { status: 400 });
 
     function getLanguageFromId(id: number): WrapperLanguage {
       switch (id) {
@@ -249,46 +264,20 @@ export async function POST(request: Request) {
     const totalCases = testCasesToRun.length;
     const score = totalCases > 0 ? Math.round((totalPassed / totalCases) * 100) : 0;
 
-    // Grant EXP and award badges if student passed this level (≥60%)
-    let grantedExp = 0;
-    let leveledUp = false;
-    let newLevel = 1;
-
+    let reward = { grantedExp: 0, leveledUp: false, newLevel: 1 };
     if (score >= 60) {
-      try {
-        const studentId = eligibility.session.user.id;
-        if (score === 100) {
-          const expRes = await grantExp({
-            userId: studentId,
-            amount: EXP_VALUES.codelab_level_perfect,
-            reason: `CodeLab: ${problem?.title || templateId} — Perfect Score (100%)`,
-            source: "codelab",
-            idempotencyKey: `codelab_perfect_${templateId}`,
-          });
-          grantedExp = expRes.grantedAmount;
-          leveledUp = expRes.leveledUp;
-          newLevel = expRes.newLevel;
-
-          await awardBadgeIfEarned(studentId, "codelab-first");
-          await awardBadgeIfEarned(studentId, "codelab-perfect-level");
-          await awardBadgeIfEarned(studentId, "perfect-score");
-        } else {
-          const expRes = await grantExp({
-            userId: studentId,
-            amount: EXP_VALUES.codelab_level_complete,
-            reason: `CodeLab: ${problem?.title || templateId} — Passed`,
-            source: "codelab",
-            idempotencyKey: `codelab_pass_${templateId}`,
-          });
-          grantedExp = expRes.grantedAmount;
-          leveledUp = expRes.leveledUp;
-          newLevel = expRes.newLevel;
-
-          await awardBadgeIfEarned(studentId, "codelab-first");
-        }
-      } catch (gamiErr) {
-        console.error("GAMIFICATION_EVALUATE_ERROR", gamiErr);
-      }
+      const now = new Date().toISOString();
+      const result = await saveCodeLabCompletion({
+        studentId: session.user.id, assignmentId: templateId, activityType: "codelab", variantSeed: seed,
+        startedAt: typeof body.startedAt === "string" && Number.isFinite(Date.parse(body.startedAt)) ? body.startedAt : now,
+        completionTimeSeconds: Number.isInteger(body.completionTimeSeconds) && body.completionTimeSeconds! >= 0 ? body.completionTimeSeconds! : 0,
+        attempts: Number.isInteger(body.attempts) && body.attempts! > 0 ? body.attempts! : 1,
+        stateCheck: { sourceCode, language: problem?.language ?? wrapperLang, level: problem?.level ?? 1,
+          testPassCount: totalPassed, totalTestCases: totalCases, testResults: JSON.stringify(publicResults) },
+        score, maxScore: 100, passed: true,
+      }, session.user.instituteId);
+      if (result.alreadyCompleted) return NextResponse.json({ error: "This level is already completed. Use Run Tests to practice.", completed: true }, { status: 409 });
+      reward = { grantedExp: result.grantedExp, leveledUp: result.leveledUp, newLevel: result.newLevel };
     }
 
     const responsePayload: EvaluateResponse = {
@@ -297,13 +286,12 @@ export async function POST(request: Request) {
       totalPassed,
       totalCases,
       score,
-      grantedExp,
-      leveledUp,
-      newLevel,
+      ...reward,
     };
 
     return NextResponse.json(responsePayload);
   } catch (error: unknown) {
+    if (error instanceof CodeLabCompletionError) return NextResponse.json({ error: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("CODELAB_EVALUATE_ERROR", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

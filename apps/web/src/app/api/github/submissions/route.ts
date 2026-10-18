@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { db } from '@/lib/db';
@@ -13,6 +14,9 @@ const submitRepoSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "POST github/submissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -169,6 +173,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "GET github/submissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

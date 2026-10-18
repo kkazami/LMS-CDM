@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth-session";
@@ -27,6 +28,8 @@ type PageProps = {
 };
 
 export default async function AdminDashboardPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/admin/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -40,13 +43,8 @@ export default async function AdminDashboardPage({ params }: PageProps) {
 
   const theme = getInstituteTheme(institute);
 
-  // Resolve institute record
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true, name: true },
-  });
-
-  if (!instituteRecord) {
+  const instituteRecord = session.user.institute;
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 
@@ -95,14 +93,11 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       color: "#10B981",
       count: `${totalStudents + totalInstructors} Accounts`,
     },
-    {
-      title: "Permission Matrix",
-      description: "Configure granular role permissions and access levels",
-      href: `/${institute}/accounts/permissions`,
-      icon: ShieldCheck,
-      color: "#8B5CF6",
-      count: "RBAC Controls",
-    },
+    ...(institute === 'ics' ? [{
+      title: 'Faculty & Program Heads',
+      description: 'Assign BSIT and BSCpE faculty and Program Heads',
+      href: '/ics/admin/faculty', icon: Users, color: '#8B5CF6', count: 'ICS Programs',
+    }] : []),
     {
       title: "Audit Logs",
       description: "Trace system operations, logins, and security events",

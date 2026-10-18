@@ -1,120 +1,51 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { hash } from "bcryptjs";
-import { sendEmail } from "@/lib/mailer";
+import { randomInt } from 'node:crypto';
+import { hash } from 'bcryptjs';
+import { z } from 'zod';
+import { db } from '@/lib/db';
+import { sendEmail } from '@/lib/mailer';
+import { lockAccounts } from '@/lib/super-user-v1/account-lock';
+import { mayUsePublicReset } from '@/lib/super-user-v1/capabilities';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
+const input = z.object({ email: z.string().email().max(254) }).strict();
+const generic = () => Response.json({ message: 'If that email exists, an OTP has been sent.' });
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
-
-    if (!email) {
-      return NextResponse.json({ message: "Email is required." }, { status: 400 });
-    }
-
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+    const parsed = input.safeParse(await request.json());
+    if (!parsed.success) return Response.json({ message: 'Invalid request.' }, { status: 400 });
+    const user = await db.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
+    if (!user) return generic();
+    const otp = randomInt(100000, 1000000).toString();
+    const otpCodeHash = await hash(otp, 10);
+    const pending = await db.$transaction(async tx => {
+      await lockAccounts(tx, [user.id]);
+      const current = await tx.user.findUnique({ where: { id: user.id } });
+      if (!current || !mayUsePublicReset(current)) return null;
+      const recent = await tx.passwordResetOtp.count({ where: { userId: user.id, createdAt: { gte: new Date(Date.now() - 3600000) } } });
+      if (recent >= 3) throw new AccessError(429, 'Too many password reset requests. Please try again later.');
+      await tx.passwordResetOtp.updateMany({ where: { userId: user.id, isUsed: false }, data: { isUsed: true } });
+      const grant = await tx.passwordResetOtp.create({ data: { userId: user.id, otpCodeHash, isUsed: true, expiresAt: new Date(Date.now() + 900000) } });
+      return { grant, email: current.email, password: current.password, role: current.role };
     });
-
-    if (!user) {
-      // For security, don't reveal that the user doesn't exist
-      return NextResponse.json({ message: "If that email exists, an OTP has been sent." }, { status: 200 });
-    }
-
-    // Rate Limiting check (max 3 per hour)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentRequests = await db.passwordResetOtp.count({
-      where: {
-        userId: user.id,
-        createdAt: { gte: oneHourAgo },
-      },
-    });
-
-    if (recentRequests >= 3) {
-      return NextResponse.json(
-        { message: "Too many password reset requests. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    // Clear any unused previous OTPs for this user
-    await db.passwordResetOtp.updateMany({
-      where: { userId: user.id, isUsed: false },
-      data: { isUsed: true },
-    });
-
-    // Generate 6-digit numeric OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpCodeHash = await hash(otpCode, 10);
-    
-    // Expires in 15 mins
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-    const otpRecord = await db.passwordResetOtp.create({
-      data: {
-        userId: user.id,
-        otpCodeHash,
-        expiresAt,
-      },
-    });
-
-    if (process.env.NODE_ENV !== "production") {
-      console.log("=================================================");
-      console.log(`🔑 [DEV OTP] Code for ${user.email}: ${otpCode}`);
-      console.log("=================================================");
-    }
-
-    // Send email
-    const emailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1f2937;">
-        <h2 style="color: #111827; margin-bottom: 8px;">Password Reset Request</h2>
-        <p>Hello ${user.name || "Student"},</p>
-        <p>You requested a password reset for your CdM LMS account. Please use the following 6-digit verification code to complete the process:</p>
-        <div style="margin: 28px 0; padding: 20px; background: #f3f4f6; border-radius: 12px; text-align: center;">
-          <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #1f2937; font-family: monospace;">${otpCode}</span>
-        </div>
-        <p style="color: #6b7280; font-size: 14px;">This code will expire in 15 minutes.</p>
-        <p style="color: #6b7280; font-size: 14px;">If you did not request this, you can safely ignore this email.</p>
-      </div>
-    `;
-
+    if (!pending) return generic();
     try {
-      const emailResult = await sendEmail({
-        to: user.email,
-        subject: "CdM LMS — Your Password Reset Code",
-        html: emailHtml,
-      });
-
-      const isDevFallback = emailResult?.deliveredVia === "console_fallback" || emailResult?.deliveredVia === "console";
-
-      return NextResponse.json(
-        {
-          message: isDevFallback
-            ? "Reset code generated! (Dev mode: Check server terminal for code)"
-            : "If that email exists, an OTP has been sent.",
-          devOtp: process.env.NODE_ENV !== "production" ? otpCode : undefined,
-        },
-        { status: 200 }
-      );
-    } catch (emailError: any) {
-      // If email sending failed completely in production, remove the newly created OTP
-      // so the user does NOT get locked out by rate limiting on delivery failures
-      await db.passwordResetOtp.delete({
-        where: { id: otpRecord.id },
-      }).catch(() => {});
-
-      console.error("FORGOT_PASSWORD_EMAIL_FAILED", emailError);
-      return NextResponse.json(
-        { message: "Unable to send email right now. Please check your SMTP configuration or try again later." },
-        { status: 502 }
-      );
+      await sendEmail({ to: pending.email, subject: 'CdM LMS — Password reset', html: `<p>Your password reset code is <strong>${otp}</strong>. It expires in 15 minutes and permits one attempt. Request a new code after an unsuccessful attempt.</p>` });
+    } catch {
+      // Grant was never usable. Cleanup failure cannot activate it.
+      await db.passwordResetOtp.deleteMany({ where: { id: pending.grant.id, isUsed: true } }).catch(() => {});
+      return Response.json({ message: 'Unable to deliver a reset code.' }, { status: 502 });
     }
-  } catch (error) {
-    console.error("FORGOT_PASSWORD_ERROR", error);
-    return NextResponse.json(
-      { message: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
-  }
+    await db.$transaction(async tx => {
+      await lockAccounts(tx, [user.id]);
+      const current = await tx.user.findUnique({ where: { id: user.id } });
+      const latest = await tx.passwordResetOtp.findFirst({ where: { userId: user.id }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] });
+      if (!current || !mayUsePublicReset(current) || current.email !== pending.email || current.password !== pending.password || current.role !== pending.role || latest?.id !== pending.grant.id || latest.expiresAt <= new Date()) {
+        throw new AccessError(503, 'Reset issuance unavailable.');
+      }
+      await tx.passwordResetOtp.update({ where: { id: pending.grant.id }, data: { isUsed: false } });
+    });
+    return generic();
+  } catch (error) { return accountErrorResponse(error); }
 }

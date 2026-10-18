@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
@@ -11,6 +12,9 @@ export const dynamic = "force-dynamic";
  * Each student enrollment in a course produces a separate risk assessment card.
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET analytics/at-risk/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -33,7 +37,7 @@ export async function GET(request: Request) {
       courseIds = [courseId];
     } else {
       const taughtCourses = await db.course.findMany({
-        where: role === "ADMIN" ? {} : { instructorId: session.user.id },
+        where: role === "ADMIN" ? { instituteId: session.user.instituteId } : { instructorId: session.user.id },
         select: { id: true },
       });
       courseIds = taughtCourses.map((c) => c.id);

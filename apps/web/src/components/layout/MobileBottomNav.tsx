@@ -69,7 +69,7 @@ export default function MobileBottomNav({
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-[90] lg:hidden bg-white dark:bg-[#1A1D27] border-t border-slate-200/80 dark:border-white/10 pb-[env(safe-area-inset-bottom)] shadow-lg">
+      <nav data-mobile-bottom-nav className="fixed bottom-0 left-0 right-0 z-[90] lg:hidden bg-white dark:bg-[#1A1D27] border-t border-slate-200/80 dark:border-white/10 pb-[env(safe-area-inset-bottom)] shadow-lg">
         <div className="flex justify-around items-center min-h-[56px] px-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;

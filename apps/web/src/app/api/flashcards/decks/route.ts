@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -26,6 +27,9 @@ const deckSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET flashcards/decks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 
@@ -90,6 +94,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST flashcards/decks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 
@@ -133,6 +140,9 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH flashcards/decks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 
@@ -184,6 +194,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE flashcards/decks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 

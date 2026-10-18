@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { createNotification } from "@/lib/notifications";
@@ -15,6 +16,9 @@ interface TriageAlertBody {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/instructor/alert/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

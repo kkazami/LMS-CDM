@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { executeSkill } from "./index";
 import type { SkillResult } from "./index";
@@ -66,6 +68,8 @@ const POSITIVE_TRIGGERS = [
 export async function flagSentiment(
   content: string
 ): Promise<SkillResult<SentimentResult>> {
+  await requireLegacyActor("apps/web/src/lib/skills/sentiment-flagger.ts#flagSentiment");
+
   return executeSkill("flagSentiment", async () => {
     const lowerContent = content.toLowerCase();
 

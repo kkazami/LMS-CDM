@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
-import { isEligibleForActivities } from "@/lib/activity-eligibility";
-import { isEligibleForKnowledgeExchange } from "@/lib/kx-eligibility";
 import { db } from "@/lib/db";
-import { processLoginReward } from "@/lib/gamification/login-rewards";
+import { processLoginReward, getPHTDateString } from "@/lib/gamification/login-rewards";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import SuperUserShell from '@/components/super-user-v1/SuperUserShell';
+import { canonicalRole, supportedInstitute } from '@/lib/super-user-v1/capabilities';
+import { notFound } from 'next/navigation';
 
 export const dynamic = "force-dynamic";
 
@@ -23,114 +24,117 @@ export default async function InstituteLayout({
     redirect(`/login?institute=${institute}`);
   }
 
+  const dedicatedRole = canonicalRole(session.user.role);
+  if (dedicatedRole === 'SUPER_USER') {
+    if (!supportedInstitute(institute)) notFound();
+    return <SuperUserShell institute={institute.toLowerCase()}>{children}</SuperUserShell>;
+  }
+  if (dedicatedRole === 'UNKNOWN') notFound();
+
   // Enforce institute scoping: students and teachers are strictly locked to their registered institute.
   // Admins are system administrators who can view, switch, and manage any institute campus.
-  const userRole = ((session.user as Record<string, unknown>).role as string || "").toUpperCase();
+  const user = session.user as typeof session.user & {
+    institute?: { id: string; code: string; name: string };
+  };
+  const userRole = (user.role || "").toUpperCase();
   const isAdmin = userRole === "ADMIN";
 
-  let userInstituteCode = "ics";
-  if (session.user.instituteId) {
-    const userInstitute = await db.institute.findUnique({
-      where: { id: session.user.instituteId },
-      select: { code: true },
-    });
-    if (userInstitute?.code) {
-      userInstituteCode = userInstitute.code.toLowerCase();
-    }
-  }
+  // Use pre-loaded institute code from session without extra database query
+  const userInstituteCode = (user.institute?.code || "ics").toLowerCase();
 
-  if (!isAdmin && userInstituteCode !== institute.toLowerCase()) {
+  if (userInstituteCode !== institute.toLowerCase()) {
     redirect(`/${userInstituteCode}`);
   }
 
   const theme = getInstituteTheme(institute);
 
-  // Compute activity eligibility for the sidebar
-  const activityEligible = await isEligibleForActivities({
-    user: {
-      id: session.user.id,
-      role: session.user.role as string,
-      instituteId: session.user.instituteId as string,
-    },
-  });
+  // Compute activity & KX eligibility synchronously from session in 0ms (no DB queries)
+  const activityEligible = userInstituteCode === "ics" || isAdmin;
+  const kxEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
 
-  // Compute Knowledge Exchange eligibility for the sidebar
-  const isKxSessionEligible = await isEligibleForKnowledgeExchange({
-    user: {
-      id: session.user.id,
-      role: session.user.role as string,
-      instituteId: session.user.instituteId as string,
-    },
-  });
-  const kxEligible = institute.toLowerCase() === "ics" && isKxSessionEligible;
-
-  const role = (session.user.role as string).toUpperCase();
+  const role = userRole;
   const isStudent = role === "STUDENT";
   const isProfessor = role === "PROFESSOR" || role === "TEACHER";
-  let enrolledCourses: { id: string; title: string; code: string }[] = [];
 
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true },
-  });
+  // Determine institute ID: use in-memory ID if current institute matches user's institute
+  let targetInstituteId =
+    institute.toLowerCase() === userInstituteCode && user.institute?.id
+      ? user.institute.id
+      : null;
 
-  if (instituteRecord) {
-    if (isStudent) {
-      const enrollments = await db.enrollment.findMany({
-        where: {
-          studentId: session.user.id,
-          status: "APPROVED",
-          course: {
-            instituteId: instituteRecord.id,
-            isArchived: false,
-          },
-        },
-        select: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              code: true,
+  if (!targetInstituteId) {
+    const instRecord = await db.institute.findUnique({
+      where: { code: institute.toLowerCase() },
+      select: { id: true },
+    });
+    targetInstituteId = instRecord?.id || null;
+  }
+
+  // Fetch enrolled courses and gamification profile concurrently in a single parallel batch
+  const [enrolledCourses, gamification] = await Promise.all([
+    (async () => {
+      if (!targetInstituteId) return [];
+      if (isStudent) {
+        const enrollments = await db.enrollment.findMany({
+          where: {
+            studentId: session.user.id,
+            status: "APPROVED",
+            course: {
+              instituteId: targetInstituteId,
+              isArchived: false,
             },
           },
-        },
-        orderBy: { displayOrderIndex: "asc" },
-      });
+          select: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                code: true,
+              },
+            },
+          },
+          orderBy: { displayOrderIndex: "asc" },
+        });
+        return enrollments.map((e) => e.course);
+      } else if (isProfessor) {
+        return db.course.findMany({
+          where: {
+            instructorId: session.user.id,
+            instituteId: targetInstituteId,
+            isArchived: false,
+          },
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+          orderBy: { code: "asc" },
+        });
+      }
+      return [];
+    })(),
 
-      enrolledCourses = enrollments.map((e) => e.course);
-    } else if (isProfessor) {
-      const taught = await db.course.findMany({
-        where: {
-          instructorId: session.user.id,
-          instituteId: instituteRecord.id,
-          isArchived: false,
-        },
-        select: {
-          id: true,
-          title: true,
-          code: true,
-        },
-        orderBy: { code: "asc" },
-      });
+    isStudent
+      ? db.gamificationProfile.findUnique({
+          where: { studentId: session.user.id },
+          select: { exp: true, loginStreakCurrent: true, lastDailyRewardAt: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
-      enrolledCourses = taught;
+  // Process daily login reward asynchronously without blocking the layout render if already awarded today
+  if (isStudent) {
+    const todayStr = getPHTDateString();
+    const lastRewardStr = gamification?.lastDailyRewardAt
+      ? getPHTDateString(gamification.lastDailyRewardAt)
+      : null;
+
+    if (lastRewardStr !== todayStr) {
+      processLoginReward(session.user.id).catch((err) => {
+        console.error("Failed to process login reward on layout load:", err);
+      });
     }
   }
-
-  // Process daily login reward for student (increments streak & awards EXP on new day)
-  if (session.user.role === "STUDENT") {
-    try {
-      await processLoginReward(session.user.id);
-    } catch (err) {
-      console.error("Failed to process login reward on layout load:", err);
-    }
-  }
-
-  // Fetch gamification profile for user (level badge in topbar & streak modal)
-  let gamification = await db.gamificationProfile.findUnique({
-    where: { studentId: session.user.id },
-    select: { exp: true, loginStreakCurrent: true },
-  });
 
   return (
     <DashboardLayout

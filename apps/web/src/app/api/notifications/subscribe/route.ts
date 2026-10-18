@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { db } from '@/lib/db';
@@ -14,6 +15,9 @@ const pushSubscriptions = new Map<string, { endpoint: string; keys?: { auth: str
  * Registers a Web Push / APNs / FCM subscription for the user.
  */
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST notifications/subscribe/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -49,6 +53,9 @@ export async function POST(request: Request) {
  * Unsubscribes the user device from push notifications.
  */
 export async function DELETE(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE notifications/subscribe/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

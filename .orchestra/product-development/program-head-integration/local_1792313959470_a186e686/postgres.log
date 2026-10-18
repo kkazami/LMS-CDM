@@ -1,0 +1,22 @@
+2026-10-18 16:59:23.971 +08 [20260] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-18 16:59:23.973 +08 [20260] LOG:  listening on IPv4 address "127.0.0.1", port 51816
+2026-10-18 16:59:24.056 +08 [33240] LOG:  database system was shut down at 2026-10-18 16:59:22 +08
+2026-10-18 16:59:24.088 +08 [20260] LOG:  database system is ready to accept connections
+2026-10-18 16:59:27.089 +08 [15136] ERROR:  permission denied for table AuditLog
+2026-10-18 16:59:27.199 +08 [23120] ERROR:  academic assignments require migration-owner authority
+2026-10-18 16:59:27.199 +08 [23120] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-18 16:59:27.201 +08 [23120] ERROR:  course program mapping requires migration-owner authority
+2026-10-18 16:59:27.201 +08 [23120] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-18 16:59:27.223 +08 [15136] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 16:59:27.318 +08 [24444] WARNING:  there is already a transaction in progress
+2026-10-18 16:59:27.429 +08 [36736] ERROR:  permission denied for schema public at character 14
+2026-10-18 16:59:27.430 +08 [36736] ERROR:  permission denied for table writer_bindings
+2026-10-18 16:59:27.434 +08 [36736] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-18 16:59:27.434 +08 [36736] CONTEXT:  PL/pgSQL function guard_user() line 18 at RAISE
+2026-10-18 16:59:27.810 +08 [20260] LOG:  received fast shutdown request
+2026-10-18 16:59:27.812 +08 [20260] LOG:  aborting any active transactions
+2026-10-18 16:59:27.821 +08 [20260] LOG:  background worker "logical replication launcher" (PID 14808) exited with exit code 1
+2026-10-18 16:59:27.822 +08 [9136] LOG:  shutting down
+2026-10-18 16:59:27.824 +08 [9136] LOG:  checkpoint starting: shutdown immediate
+2026-10-18 16:59:28.575 +08 [9136] LOG:  checkpoint complete: wrote 1256 buffers (7.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.048 s, sync=0.694 s, total=0.754 s; sync files=774, longest=0.008 s, average=0.001 s; distance=7253 kB, estimate=7253 kB; lsn=0/1C8A648, redo lsn=0/1C8A648
+2026-10-18 16:59:28.661 +08 [20260] LOG:  database system is shut down

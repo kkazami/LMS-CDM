@@ -24,7 +24,6 @@ import {
 } from "../problems/types";
 import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
-import SubmitBar from "../../shared/components/SubmitBar";
 import { toast } from "@/components/common/Toast";
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import {
@@ -141,6 +140,10 @@ export default function CodeLabScene({
     score: currentScore,
   } = useActivityStore();
 
+  const [completed, setCompleted] = useState(false);
+  const [completionLoading, setCompletionLoading] = useState(true);
+  const [completionError, setCompletionError] = useState("");
+  const [savedScore, setSavedScore] = useState<number | null>(null);
   const [mounted, setMounted] = useState<boolean>(false);
   const [mobilePanel, setMobilePanel] = useState<"tutorial" | "editor" | "results">("tutorial");
   const [expandedTests, setExpandedTests] = useState<Set<number>>(new Set());
@@ -178,6 +181,36 @@ export default function CodeLabScene({
     startTimer();
   }, [assignmentId, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    setCompletionLoading(true);
+    setCompleted(false);
+    setSavedScore(null);
+    setCompletionError("");
+    void (async () => {
+      try {
+        const response = await fetch(`/api/codelab/progress?templateId=${encodeURIComponent(assignmentId)}`, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error("Unable to load saved progress. Reload this page before submitting.");
+        const data = await response.json();
+        if (controller.signal.aborted) return;
+        if (data.completed) {
+          setCompleted(true);
+          markComplete(true);
+        }
+        if (data.submission) {
+          setSavedScore(data.submission.score);
+          setScore(data.submission.score);
+          if (typeof data.submission.stateCheck?.sourceCode === "string") updateCode(data.submission.stateCheck.sourceCode);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) setCompletionError(error instanceof Error ? error.message : "Unable to load progress. Reload this page.");
+      } finally {
+        if (!controller.signal.aborted) setCompletionLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [assignmentId, fixedLanguage, updateCode, setScore, markComplete]);
+
   // Format timer as MM:SS
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -201,7 +234,7 @@ export default function CodeLabScene({
   };
 
   /** Client-side evaluation for HTML/CSS preview tracks */
-  const handleHTMLCSSEvaluation = useCallback(async () => {
+  const handleHTMLCSSEvaluation = useCallback(async (saveCompletion = false) => {
     if (isExecuting) return;
     setExecuting(true);
     setActiveTab("tests");
@@ -253,49 +286,50 @@ export default function CodeLabScene({
     updateStateCheck("typingVelocityCharsPerMin", cpm);
     updateStateCheck("pasteCount", pasteCount);
 
-    if (computedScore >= 60) {
-      markComplete(true);
-
-      const earned = computedScore === 100 ? 80 : 30;
-      toast.success(`Level Passed! +${earned} EXP Earned! ✨`);
-
-      // Auto-sync submission to activity records
-      fetch("/api/activities/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId,
-          assignmentId,
-          activityType: "codelab",
-          variantSeed,
-          startedAt,
-          completionTimeSeconds: elapsedSeconds,
-          attempts: 1,
-          stateCheck: {
-            level,
-            language: fixedLanguage,
-            testPassCount: passedCount,
-            totalTestCases: totalCount,
-          },
-          score: computedScore,
-          maxScore: 100,
-          passed: true,
-        }),
-      }).catch(() => {
-        // silent background sync
-      });
-
-      if (computedScore === 100) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 2500);
+    if (computedScore >= 60 && !completed && saveCompletion) {
+      try {
+        const response = await fetch("/api/activities/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId, assignmentId, activityType: "codelab", variantSeed, startedAt,
+            completionTimeSeconds: elapsedSeconds,
+            attempts: Math.max(1, submissionCount + 1),
+            stateCheck: { level, language: fixedLanguage, sourceCode: code, testPassCount: passedCount, totalTestCases: totalCount },
+            score: computedScore, maxScore: 100, passed: true,
+          }),
+        });
+        const result = await response.json();
+        if (response.status === 409 && (result.completed || result.alreadyCompleted)) {
+          setCompleted(true);
+          toast.success("Level already completed", "You can keep running code for practice. No additional EXP is awarded.");
+        } else {
+          if (!response.ok) throw new Error(result.message || "Unable to save this level. Please try again.");
+          setCompleted(true);
+          setSavedScore(result.submission.score);
+          markComplete(true);
+          toast.success("Level completed and saved!", result.grantedExp > 0 ? `+${result.grantedExp} EXP earned.` : "No additional EXP awarded.");
+          if (computedScore === 100) {
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 2500);
+          }
+        }
+      } catch (error) {
+        toast.error("Completion was not saved", error instanceof Error ? error.message : "Please try again.");
       }
-    } else {
+    } else if (computedScore < 60) {
       // Auto-reveal hint after first wrong attempt
       setShowHint(true);
     }
 
     setExecuting(false);
   }, [
+    completed,
+    submissionCount,
+    studentId,
+    assignmentId,
+    variantSeed,
+    startedAt,
     isExecuting,
     fixedLanguage,
     codeByLanguage,
@@ -317,7 +351,7 @@ export default function CodeLabScene({
 
   /** Run single test (Freeform execution with stdout/stderr via Judge0) */
   const handleRun = useCallback(async () => {
-    if (isExecuting) return;
+    if (isExecuting || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
       await handleHTMLCSSEvaluation();
@@ -364,6 +398,8 @@ export default function CodeLabScene({
       setExecuting(false);
     }
   }, [
+    completionLoading,
+    completionError,
     isExecuting,
     executionMethod,
     handleHTMLCSSEvaluation,
@@ -378,10 +414,10 @@ export default function CodeLabScene({
 
   /** Full Evaluation (Runs against public + hidden test cases via /api/codelab/evaluate) */
   const handleSubmitAndEvaluate = useCallback(async () => {
-    if (isExecuting) return;
+    if (isExecuting || completed || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
-      await handleHTMLCSSEvaluation();
+      await handleHTMLCSSEvaluation(true);
       return;
     }
 
@@ -402,11 +438,19 @@ export default function CodeLabScene({
           seed: variantSeed,
           sourceCode: code,
           languageId: langId,
+          startedAt,
+          completionTimeSeconds: elapsedSeconds,
+          attempts: Math.max(1, submissionCount + 1),
         }),
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        if (res.status === 409 && errData.completed) {
+          setCompleted(true);
+          toast.success("Level already completed", "Use Run Tests for practice. No additional EXP is awarded.");
+          return;
+        }
         throw new Error((errData as Record<string, string>).error || `HTTP ${res.status}`);
       }
 
@@ -458,46 +502,15 @@ export default function CodeLabScene({
         triggerNativeHaptic("success");
         markComplete(true);
 
-        const earned = data.grantedExp || (data.score === 100 ? 80 : 30);
+        setCompleted(true);
+        setSavedScore(data.score);
+        const earned = data.grantedExp ?? 0;
         if (earned > 0) {
           toast.success(
             `Level Passed! +${earned} EXP Earned! ✨`,
             data.leveledUp ? `🎉 Level Up! You reached Level ${data.newLevel}!` : undefined
           );
         }
-
-        // Auto-sync submission to activity records
-        fetch("/api/activities/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId,
-            assignmentId,
-            activityType: "codelab",
-            variantSeed,
-            startedAt,
-            completedAt: new Date().toISOString(),
-            timeSpentSeconds: elapsedSeconds,
-            stateChecks: {
-              language: fixedLanguage,
-              level,
-              pasteCount,
-              typingVelocityCharsPerMin: cpm,
-              testPassCount: data.totalPassed,
-              totalTestCases: data.totalCases,
-              hintUsed: hintWasShown || showHint,
-              errorTypes: collectedErrorTypes.join(","),
-              attemptChurnCount: failedRunCount,
-              firstRunMs: Math.max(firstRunDelta, 0),
-              totalEditingMs: elapsedSeconds * 1000,
-            },
-            score: data.score,
-            maxScore: 100,
-            passed: true,
-          }),
-        }).catch(() => {
-          // silent background sync
-        });
 
         if (data.score === 100) {
           setShowConfetti(true);
@@ -526,6 +539,11 @@ export default function CodeLabScene({
       setExecuting(false);
     }
   }, [
+    completed,
+    completionLoading,
+    completionError,
+    startedAt,
+    submissionCount,
     isExecuting,
     executionMethod,
     handleHTMLCSSEvaluation,
@@ -676,7 +694,7 @@ export default function CodeLabScene({
           {/* Run button */}
           <button
             onClick={handleRun}
-            disabled={isExecuting}
+            disabled={isExecuting || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs"
           >
@@ -687,12 +705,12 @@ export default function CodeLabScene({
           {/* Submit button */}
           <button
             onClick={handleSubmitAndEvaluate}
-            disabled={isExecuting}
+            disabled={isExecuting || completed || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
             className="flex items-center gap-1.5 px-4 py-1.5 bg-[#F97316] hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-40 active:scale-95 cursor-pointer"
           >
             {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Submit Solution</span>
+            <span>{completed ? "Completed" : completionLoading ? "Loading progress…" : "Submit Solution"}</span>
           </button>
         </div>
       </header>
@@ -1055,16 +1073,10 @@ export default function CodeLabScene({
         </aside>
       </div>
 
-      {/* ──── Bottom Activity Submit Bar ──── */}
-      <footer className="flex-none">
-        <SubmitBar
-          activityType="codelab"
-          assignmentId={assignmentId}
-          studentId={studentId}
-          variantSeed={variantSeed}
-          startedAt={startedAt}
-          maxScore={100}
-        />
+      <footer className="flex-none border-t border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-950" role="status">
+        {completionError ? <span className="text-rose-600">{completionError}</span> : completed ? (
+          <span className="text-emerald-600 dark:text-emerald-400">Level completed{savedScore !== null ? ` · Saved score: ${savedScore}/100` : ""}. Your completion is recorded. You can edit and run code for practice; no further submissions or completion EXP.</span>
+        ) : completionLoading ? "Loading saved progress…" : "Submit Solution evaluates and saves your passing solution."}
       </footer>
     </div>
   );

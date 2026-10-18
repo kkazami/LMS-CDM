@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -9,6 +10,8 @@ type PageProps = {
 };
 
 export default async function BroadcastPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/page.tsx", await params);
+
   const { institute, courseId } = await params;
   const session = await getSession();
 

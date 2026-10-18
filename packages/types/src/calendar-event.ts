@@ -5,6 +5,11 @@ export interface CalendarEvent {
   professorName: string;
   maxPoints: number | null;
   eventDate: string;
+  endDate?: string | null;
+  courseCode?: string | null;
+  source?: "personal" | "institution" | "classwork" | "class";
+  room?: string;
+  recurrence?: string;
   eventType: "assignment" | "exam" | "submission" | string;
   deepLink: string;
   courseId: string | null;
@@ -15,4 +20,4 @@ export interface CalendarEvent {
   updatedAt: string;
 }
 
-export type LmsCalendarEvent = CalendarEvent;
+export type LmsCalendarEvent = CalendarEvent;

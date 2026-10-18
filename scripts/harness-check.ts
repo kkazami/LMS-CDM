@@ -11,6 +11,7 @@
 import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { sanitize } from './harness/redaction';
 
 interface CheckResult {
   name: string;
@@ -30,12 +31,13 @@ function runSensor(name: string, fn: () => void) {
     const durationMs = Date.now() - start;
     results.push({ name, passed: true, durationMs });
     console.log(`✅ PASSED (${durationMs}ms)`);
-  } catch (error: any) {
+  } catch (caught: unknown) {
+    const error = caught as Error & { stderr?: Buffer; stdout?: Buffer };
     const durationMs = Date.now() - start;
     results.push({
       name,
       passed: false,
-      message: error.stderr?.toString() || error.stdout?.toString() || error.message,
+      message: sanitize(error.stderr?.toString() || error.stdout?.toString() || error.message),
       durationMs,
     });
     console.log(`❌ FAILED (${durationMs}ms)`);
@@ -48,9 +50,10 @@ console.log("=======================================================\n");
 
 // 1. Prisma Schema Sensor
 runSensor("Prisma Schema Sensor", () => {
-  execSync("npx prisma validate", {
+  execSync("pnpm exec prisma validate", {
     cwd: ROOT_DIR,
     stdio: "pipe",
+    timeout: 120000,
   });
 });
 
@@ -59,6 +62,7 @@ runSensor("Web TypeScript Sensor", () => {
   execSync("pnpm --filter web exec tsc --noEmit", {
     cwd: ROOT_DIR,
     stdio: "pipe",
+    timeout: 180000,
   });
 });
 
@@ -68,15 +72,15 @@ runSensor("Architecture Sensor: Institute Route Scoping", () => {
   if (fs.existsSync(dashboardDir)) {
     const entries = fs.readdirSync(dashboardDir);
     // Any top-level directory in (dashboard) must either be [institute], layout.tsx, loading.tsx, page.tsx, etc.
-    const forbidden = entries.filter(
-      (e) => !e.startsWith("[institute]") && !e.includes(".") && !e.startsWith("_")
-    );
+    const forbidden = entries.filter((e) => fs.statSync(path.join(dashboardDir, e)).isDirectory() && e !== '[institute]' && !e.startsWith('_'));
+    if (!entries.includes('[institute]')) throw new Error('Missing required institute dashboard directory');
+    if (entries.some(e => /^(page|route)\.[cm]?[jt]sx?$/.test(e))) throw new Error('Unscoped dashboard page/route at dashboard root');
     if (forbidden.length > 0) {
       throw new Error(
         `Architectural Invariant Violation: All dashboard routes must be nested under [institute]/. Found unscoped folders: ${forbidden.join(", ")}`
       );
     }
-  }
+  } else throw new Error('Dashboard directory is missing');
 });
 
 // 4. Invariant Sensor: Agentic Rules Integrity
@@ -86,12 +90,7 @@ runSensor("Architecture Sensor: Agent Rules & Invariants", () => {
     throw new Error("AGENTS.md is missing from repository root!");
   }
 
-  const requiredRules = [
-    path.join(ROOT_DIR, ".agent", "rules", "atomic-ui.md"),
-    path.join(ROOT_DIR, ".agent", "rules", "database.md"),
-    path.join(ROOT_DIR, ".agent", "rules", "routing.md"),
-    path.join(ROOT_DIR, ".agent", "rules", "security.md"),
-  ];
+  const requiredRules = ['atomic-ui', 'database', 'routing', 'security', 'engineering-safety', 'orchestra-protocol', 'verification-gates'].map(name => path.join(ROOT_DIR, '.agents', 'rules', name + '.md'));
 
   for (const rulePath of requiredRules) {
     if (!fs.existsSync(rulePath)) {
@@ -109,6 +108,7 @@ let allPassed = true;
 for (const res of results) {
   const badge = res.passed ? "✅ [PASS]" : "❌ [FAIL]";
   console.log(`${badge} ${res.name.padEnd(45)} ${res.durationMs}ms`);
+  if (!res.passed) allPassed = false;
   if (!res.passed && res.message) {
     console.log(`\n   Error Details:\n   ${res.message.trim().split("\n").join("\n   ")}\n`);
     allPassed = false;
@@ -117,7 +117,7 @@ for (const res of results) {
 
 console.log("-------------------------------------------------------");
 if (allPassed) {
-  console.log("🎉 ALL HARNESS SENSORS PASSED. System is safe for deployment / agent execution.\n");
+  console.log("Static sensors passed: schema syntax, web types, route-folder placement and rule presence. Runtime correctness, authorization, migration compatibility and deployment readiness remain unverified.\n");
   process.exit(0);
 } else {
   console.error("🚨 SENSOR FAILURE DETECTED. Gate rejection triggered.\n");

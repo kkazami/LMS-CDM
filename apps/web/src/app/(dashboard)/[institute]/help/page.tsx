@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -10,6 +11,8 @@ export default async function HelpPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/help/page.tsx", await params);
+
   const session = await getSession();
   const { institute } = await params;
 

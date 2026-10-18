@@ -1,0 +1,21 @@
+2026-10-18 16:38:28.248 +08 [24796] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-18 16:38:28.249 +08 [24796] LOG:  listening on IPv4 address "127.0.0.1", port 54224
+2026-10-18 16:38:28.349 +08 [4072] LOG:  database system was shut down at 2026-10-18 16:38:25 +08
+2026-10-18 16:38:28.398 +08 [24796] LOG:  database system is ready to accept connections
+2026-10-18 16:38:31.174 +08 [20368] ERROR:  permission denied for table AuditLog
+2026-10-18 16:38:31.286 +08 [9320] ERROR:  academic assignments require migration-owner authority
+2026-10-18 16:38:31.286 +08 [9320] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-18 16:38:31.288 +08 [9320] ERROR:  course program mapping requires migration-owner authority
+2026-10-18 16:38:31.288 +08 [9320] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-18 16:38:31.312 +08 [20368] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 16:38:39.652 +08 [31960] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 16:38:39.652 +08 [11564] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 16:38:39.770 +08 [24796] LOG:  received fast shutdown request
+2026-10-18 16:38:39.778 +08 [24796] LOG:  aborting any active transactions
+2026-10-18 16:38:39.795 +08 [24796] LOG:  background worker "logical replication launcher" (PID 9504) exited with exit code 1
+2026-10-18 16:38:39.797 +08 [24492] LOG:  shutting down
+2026-10-18 16:38:39.800 +08 [24492] LOG:  checkpoint starting: shutdown immediate
+2026-10-18 16:38:41.410 +08 [24492] LOG:  checkpoint complete: wrote 1254 buffers (7.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.063 s, sync=1.531 s, total=1.614 s; sync files=775, longest=0.065 s, average=0.002 s; distance=7183 kB, estimate=7183 kB; lsn=0/1C78BE8, redo lsn=0/1C78BE8
+2026-10-18 16:38:41.566 +08 [24796] LOG:  database system is shut down

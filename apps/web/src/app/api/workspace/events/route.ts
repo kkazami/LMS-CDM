@@ -1,22 +1,25 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession, getQueryId } from "../_shared";
+import { calendarEventSchema as eventSchema } from "@/lib/calendar-validation";
+import { visibleCalendarEvents } from "@/lib/student-calendar-data";
 
 export const dynamic = "force-dynamic";
 
-const eventSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().default(""),
-  professorName: z.string().default(""),
-  maxPoints: z.number().int().nullable().optional(),
-  eventDate: z.string().datetime(),
-  eventType: z.string().default("assignment"),
-  deepLink: z.string().default("#"),
-  courseId: z.string().nullable().optional(),
-});
+async function canUseCourse(courseId: string | null | undefined, user: { id: string; instituteId: string; role: string }) {
+  if (!courseId) return true;
+  return !!await db.course.findFirst({ where: {
+    id: courseId, instituteId: user.instituteId, isArchived: false,
+    ...(user.role === "STUDENT" ? { enrollments: { some: { studentId: user.id, status: "APPROVED" } } }
+      : user.role === "ADMIN" ? {} : { instructorId: user.id }),
+  }, select: { id: true } });
+}
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET workspace/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
@@ -27,9 +30,9 @@ export async function GET(request: Request) {
     const event = await db.calendarEvent.findFirst({
       where: {
         id,
-        instituteId: session.user.instituteId,
+        ...visibleCalendarEvents(session.user),
       },
-      include: { course: { select: { title: true } } },
+      include: { course: { select: { title: true, code: true } } },
     });
 
     return event
@@ -38,8 +41,8 @@ export async function GET(request: Request) {
   }
 
   const events = await db.calendarEvent.findMany({
-    where: { instituteId: session.user.instituteId },
-    include: { course: { select: { title: true } } },
+    where: visibleCalendarEvents(session.user),
+    include: { course: { select: { title: true, code: true } } },
     orderBy: [{ eventDate: "asc" }, { updatedAt: "desc" }],
   });
 
@@ -47,11 +50,14 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST workspace/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = eventSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -61,6 +67,9 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!await canUseCourse(parsed.data.courseId, session.user)) {
+    return NextResponse.json({ message: "Course not found." }, { status: 403 });
+  }
   const event = await db.calendarEvent.create({
     data: {
       title: parsed.data.title,
@@ -68,38 +77,43 @@ export async function POST(request: Request) {
       professorName: parsed.data.professorName,
       maxPoints: parsed.data.maxPoints ?? null,
       eventDate: new Date(parsed.data.eventDate),
+      endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
       eventType: parsed.data.eventType,
       deepLink: parsed.data.deepLink,
       courseId: parsed.data.courseId ?? null,
       creatorId: session.user.id,
       instituteId: session.user.instituteId,
     },
-    include: { course: { select: { title: true } } },
+    include: { course: { select: { title: true, code: true } } },
   });
 
   return NextResponse.json(event, { status: 201 });
 }
 
 export async function PATCH(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH workspace/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
 
-  const body = await request.json();
-  const payloadSchema = eventSchema.extend({ id: z.string().min(1) });
-  const parsed = payloadSchema.safeParse(body);
+  const body = await request.json().catch(() => null);
+  const parsed = eventSchema.safeParse(body);
+  const id = body && typeof body.id === "string" ? body.id : "";
 
-  if (!parsed.success) {
+  if (!parsed.success || !id) {
     return NextResponse.json(
-      { message: "Validation failed.", errors: parsed.error.flatten().fieldErrors },
+      { message: "Validation failed." },
       { status: 400 }
     );
   }
 
   const existing = await db.calendarEvent.findFirst({
     where: {
-      id: parsed.data.id,
+      id,
       instituteId: session.user.instituteId,
+      creatorId: session.user.id,
     },
   });
 
@@ -107,6 +121,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Event not found." }, { status: 404 });
   }
 
+  if (!await canUseCourse(parsed.data.courseId, session.user)) {
+    return NextResponse.json({ message: "Course not found." }, { status: 403 });
+  }
   const event = await db.calendarEvent.update({
     where: { id: existing.id },
     data: {
@@ -115,17 +132,21 @@ export async function PATCH(request: Request) {
       professorName: parsed.data.professorName,
       maxPoints: parsed.data.maxPoints ?? null,
       eventDate: new Date(parsed.data.eventDate),
+      endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
       eventType: parsed.data.eventType,
       deepLink: parsed.data.deepLink,
       courseId: parsed.data.courseId ?? null,
     },
-    include: { course: { select: { title: true } } },
+    include: { course: { select: { title: true, code: true } } },
   });
 
   return NextResponse.json(event);
 }
 
 export async function DELETE(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE workspace/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
@@ -140,6 +161,7 @@ export async function DELETE(request: Request) {
     where: {
       id,
       instituteId: session.user.instituteId,
+      creatorId: session.user.id,
     },
   });
 

@@ -1,21 +1,66 @@
 {
+  "version": 2,
   "standard": {
-    "description": "Core verification: typecheck, build, Playwright E2E (if browser task)",
-    "agents": ["requirement", "planner", "executor", "test", "qa"],
-    "securityRequired": false,
-    "codeReviewRequired": false
-  },
-  "strict": {
-    "description": "Adds independent security and code review gates",
-    "agents": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
-    "securityRequired": true,
-    "codeReviewRequired": true
-  },
-  "maximum": {
-    "description": "Full verification including visual regression, performance, accessibility, broader browser coverage",
-    "agents": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
+    "agents": [
+      "requirement",
+      "recon",
+      "architecture-red-team",
+      "architecture-adjudicator",
+      "planner",
+      "executor",
+      "test",
+      "runner",
+      "qa",
+      "security",
+      "code-review",
+      "release"
+    ],
     "securityRequired": true,
     "codeReviewRequired": true,
-    "extras": ["visual-regression", "performance", "accessibility", "broader-browser-coverage"]
+    "description": "Mandatory safety floor"
+  },
+  "strict": {
+    "agents": [
+      "requirement",
+      "recon",
+      "architecture-red-team",
+      "architecture-adjudicator",
+      "planner",
+      "executor",
+      "test",
+      "runner",
+      "qa",
+      "security",
+      "code-review",
+      "release"
+    ],
+    "securityRequired": true,
+    "codeReviewRequired": true,
+    "description": "Same safety floor with deeper reviewer scrutiny"
+  },
+  "maximum": {
+    "agents": [
+      "requirement",
+      "recon",
+      "architecture-red-team",
+      "architecture-adjudicator",
+      "planner",
+      "executor",
+      "test",
+      "runner",
+      "qa",
+      "security",
+      "code-review",
+      "release"
+    ],
+    "securityRequired": true,
+    "codeReviewRequired": true,
+    "extras": [
+      "visual-regression",
+      "performance",
+      "accessibility",
+      "broader-browser-coverage"
+    ],
+    "description": "Browser tasks require measured extras; controller enforces these in the plan"
   }
 }

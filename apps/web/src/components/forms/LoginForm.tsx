@@ -98,11 +98,13 @@ export default function LoginForm({
 
       let targetPath = `/${data.user.institute.code}`;
 
-      if (isDesktopMode || role === "ADMIN") {
+      if (role === 'SUPER_USER') {
+        targetPath += '/academic-operations/courses';
+      } else if (isDesktopMode || role === "ADMIN") {
         targetPath += "/admin";
       } else if (role === "STUDENT") {
         targetPath += "/students";
-      } else if (role === "PROFESSOR" || role === "TEACHER") {
+      } else if (role === "PROFESSOR" || role === "TEACHER" || role === 'INSTRUCTOR') {
         targetPath += "/teachers";
       }
 

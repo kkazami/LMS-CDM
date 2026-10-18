@@ -1,0 +1,17 @@
+{
+  "program": "pg_ctl.exe",
+  "args": [
+    "stop",
+    "-D",
+    "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\product-development\\program-head-integration\\local_1792338739184_5e422c90\\postgres-data",
+    "-m",
+    "fast",
+    "-w",
+    "-t",
+    "20"
+  ],
+  "code": 0,
+  "signal": null,
+  "stdout": "waiting for server to shut down.... done\r\nserver stopped\r\n",
+  "stderr": ""
+}

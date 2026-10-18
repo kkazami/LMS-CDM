@@ -1,0 +1,12 @@
+{
+  "program": "pwsh.exe",
+  "args": [
+    "-NoProfile",
+    "-Command",
+    "$ErrorActionPreference='Stop'; $directory='C:\\Users\\kirby\\AppData\\Local\\Packages\\sandbox.{a07871ce-fb80-4d4b-8a7e-62885b64d16b}\\AC\\Temp\\su-v1-1707a90396d2e51d4b5208162a82baa3'; if(Test-Path -LiteralPath $directory){throw 'Temporary path already exists'}; New-Item -ItemType Directory -Path $directory | Out-Null; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=Get-Acl -LiteralPath $directory; $acl.SetAccessRuleProtection($true,$false); $rule=[Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -LiteralPath $directory -AclObject $acl; $verified=Get-Acl -LiteralPath $directory; if(-not $verified.AreAccessRulesProtected -or @($verified.Access | Where-Object {$_.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value -ne $sid.Value}).Count){throw 'Temporary ACL validation failed'}; $password=[Console]::In.ReadToEnd(); if($password -notmatch '^[a-f0-9]{64}$'){throw 'Invalid synthetic password'}; [IO.File]::WriteAllText((Join-Path $directory 'initdb.pw'),$password); Write-Output 'Temporary synthetic password ACL verified; no secret output.'"
+  ],
+  "code": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "ParentContainsErrorRecordException: Exception calling \"WriteAllText\" with \"2\" argument(s): \"Access to the path 'C:\\Users\\kirby\\AppData\\Local\\Packages\\sandbox.{a07871ce-fb80-4d4b-8a7e-62885b64d16b}\\AC\\Temp\\su-v1-1707a90396d2e51d4b5208162a82baa3\\initdb.pw' is denied.\"\r\n"
+}

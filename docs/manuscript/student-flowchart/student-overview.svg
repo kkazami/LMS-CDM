@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1710" viewBox="0 0 1100 1710">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#52616b"/></marker></defs>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif" fill="#172027">
+<text x="550.0" y="33" text-anchor="middle" font-size="25" font-weight="bold">STUDENT VIEW - STUDENT OVERVIEW</text>
+<text x="550.0" y="59" text-anchor="middle" font-size="16" fill="#52616b">Web Portal overview. Mobile access follows the evaluated client coverage.</text>
+<polyline points="500,130 500,170" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="500,235 500,275" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="500,350 500,395" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="500,460 500,500" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,660 280,660" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,660 585,660" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,660 1010,660 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,755 280,755" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,755 585,755" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,755 1010,755 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,850 280,850" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,850 585,850" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,850 1010,850 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,945 280,945" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,945 585,945" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,945 1010,945 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,1040 280,1040" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1040 585,1040" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,1040 1010,1040 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,1135 280,1135" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1135 585,1135" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,1135 1010,1135 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,1230 280,1230" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1230 585,1230" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,1230 1010,1230 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="350,532.5 180,532.5 180,1325 280,1325" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1325 585,1325" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,1325 1010,1325 1010,1440 875,1440" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="645,1440 65,1440 65,427.5 350,427.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="760,1490 760,1530" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="760,1590 760,1630" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<ellipse cx="500.0" cy="105.0" rx="110.0" ry="25.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="500.0" y="111.0" text-anchor="middle" font-size="18">START</text>
+<rect x="350" y="170" width="300" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="500.0" y="208.5" text-anchor="middle" font-size="18">Open Student Web Portal</text>
+<rect x="350" y="275" width="300" height="75" fill="white" stroke="#263238" stroke-width="1.8"/><path d="M 362 275 V 350 M 638 275 V 350" stroke="#263238" fill="none" stroke-width="1.8"/><text x="500.0" y="306.5" text-anchor="middle" font-size="18">Authenticate Student</text><text x="500.0" y="330.5" text-anchor="middle" font-size="18">See Account Access page</text>
+<rect x="350" y="395" width="300" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="500.0" y="433.5" text-anchor="middle" font-size="18">Student Dashboard</text>
+<rect x="350" y="500" width="300" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="500.0" y="538.5" text-anchor="middle" font-size="18">Select One Authorized Module</text>
+<rect x="280" y="625" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="666.0" text-anchor="middle" font-size="18">My Courses / Coursework</text>
+<rect x="585" y="625" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="642.0" text-anchor="middle" font-size="17">Approved courses, materials,</text><text x="757.5" y="666.0" text-anchor="middle" font-size="17">announcements, activities,</text><text x="757.5" y="690.0" text-anchor="middle" font-size="17">and permitted submissions</text>
+<rect x="280" y="720" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="761.0" text-anchor="middle" font-size="18">Join Course</text>
+<rect x="585" y="720" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="749.0" text-anchor="middle" font-size="18">Submit enrollment request</text><text x="757.5" y="773.0" text-anchor="middle" font-size="18">See Enrollment page</text>
+<rect x="280" y="815" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="856.0" text-anchor="middle" font-size="18">Personal Grades</text>
+<rect x="585" y="815" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="844.0" text-anchor="middle" font-size="18">View own grades and</text><text x="757.5" y="868.0" text-anchor="middle" font-size="18">descriptive progress summaries</text>
+<rect x="280" y="910" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="951.0" text-anchor="middle" font-size="18">Personal Workspace</text>
+<rect x="585" y="910" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="927.0" text-anchor="middle" font-size="17">Owned notes and tasks;</text><text x="757.5" y="951.0" text-anchor="middle" font-size="17">authorized events and deadlines;</text><text x="757.5" y="975.0" text-anchor="middle" font-size="17">private note-event snapshots</text>
+<rect x="280" y="1005" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="1046.0" text-anchor="middle" font-size="18">Flashcards / Study Tools</text>
+<rect x="585" y="1005" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="1022.0" text-anchor="middle" font-size="17">Create and review cards;</text><text x="757.5" y="1046.0" text-anchor="middle" font-size="17">use enabled focus timers</text><text x="757.5" y="1070.0" text-anchor="middle" font-size="17">and study-session tracking</text>
+<rect x="280" y="1100" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="1141.0" text-anchor="middle" font-size="18">Gamification</text>
+<rect x="585" y="1100" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="1129.0" text-anchor="middle" font-size="18">EXP, levels, achievements,</text><text x="757.5" y="1153.0" text-anchor="middle" font-size="18">badges, streaks, and rankings</text>
+<rect x="280" y="1195" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="1236.0" text-anchor="middle" font-size="18">Knowledge Exchange</text>
+<rect x="585" y="1195" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="1212.0" text-anchor="middle" font-size="17">Questions, answers, resources,</text><text x="757.5" y="1236.0" text-anchor="middle" font-size="17">faculty-verified answers,</text><text x="757.5" y="1260.0" text-anchor="middle" font-size="17">and forum reputation</text>
+<rect x="280" y="1290" width="260" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="410.0" y="1331.0" text-anchor="middle" font-size="18">Programming Coursework</text>
+<rect x="585" y="1290" width="345" height="70" fill="white" stroke="#263238" stroke-width="1.8"/><text x="757.5" y="1307.0" text-anchor="middle" font-size="17">Authorized CodeLab activities</text><text x="757.5" y="1331.0" text-anchor="middle" font-size="17">or Git repository submissions</text><text x="757.5" y="1355.0" text-anchor="middle" font-size="17">through separate workflows</text>
+<polygon points="760.0,1390 875,1440.0 760.0,1490 645,1440.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="760.0" y="1446.0" text-anchor="middle" font-size="18">Another Action?</text>
+<rect x="620" y="1530" width="280" height="60" fill="white" stroke="#263238" stroke-width="1.8"/><text x="760.0" y="1566.0" text-anchor="middle" font-size="18">Log Out / End Session</text>
+<ellipse cx="760.0" cy="1655.0" rx="105.0" ry="25.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="760.0" y="1661.0" text-anchor="middle" font-size="18">END</text>
+<rect x="587.0" y="1406" width="36" height="21" fill="white"/><text x="605" y="1422" text-anchor="middle" font-size="16">Yes</text>
+<rect x="773.0" y="1494" width="28" height="21" fill="white"/><text x="787" y="1510" text-anchor="middle" font-size="16">No</text>
+</g></svg>

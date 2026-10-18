@@ -1,0 +1,50 @@
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth-session";
+import { getInstituteTheme } from "@/lib/get-institute-theme";
+import WorkspaceDashboard from "@/components/workspace/WorkspaceDashboard";
+import { serializeNote, serializeTask } from "@/lib/workspace";
+
+type PageProps = {
+  params: Promise<{
+    institute: string;
+  }>;
+};
+
+export default async function TasksPage({ params }: PageProps) {
+  const { institute } = await params;
+  const session = await getSession();
+
+  if (!session) {
+    redirect(`/login?institute=${institute}`);
+  }
+
+  const [notes, tasks, courses] = await Promise.all([
+    db.note.findMany({
+      where: { creatorId: session.user.id, instituteId: session.user.instituteId },
+      orderBy: [{ pinned: "desc" }, { orderIndex: "asc" }, { updatedAt: "desc" }],
+    }),
+    db.taskItem.findMany({
+      where: { creatorId: session.user.id, instituteId: session.user.instituteId },
+      include: { course: { select: { title: true } } },
+      orderBy: [{ completed: "asc" }, { orderIndex: "asc" }, { updatedAt: "desc" }],
+    }),
+    db.course.findMany({
+      where: { instituteId: session.user.instituteId },
+      select: { id: true, title: true, code: true },
+      orderBy: { title: "asc" },
+    }),
+  ]);
+
+  const theme = getInstituteTheme(institute);
+
+  return (
+    <WorkspaceDashboard
+      instituteCode={institute}
+      notes={notes.map(serializeNote)}
+      tasks={tasks.map(serializeTask)}
+      courseOptions={courses}
+      theme={theme}
+    />
+  );
+}

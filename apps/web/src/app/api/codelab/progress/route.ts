@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * GET /api/codelab/progress
  *
@@ -9,11 +10,15 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
+import { getCodeLabCompletion, getCodeLabReward } from "@/lib/codelab-completion";
 import { ProblemLanguage } from "@/features/interactive-activities/codelab/problems/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET codelab/progress/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {
@@ -26,6 +31,15 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
+    const templateId = searchParams.get("templateId");
+    if (templateId) {
+      const submission = await getCodeLabCompletion(session.user.id, templateId);
+      const completed = Boolean(submission || await getCodeLabReward(session.user.id, templateId));
+      return NextResponse.json({ completed, submission: submission ? {
+        id: submission.id, score: submission.score, submittedAt: submission.submittedAt,
+        stateCheck: JSON.parse(submission.stateCheck || "{}"),
+      } : null }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     const targetLanguage = searchParams.get("language") as ProblemLanguage | null;
 
     // Fetch student's CodeLab submissions

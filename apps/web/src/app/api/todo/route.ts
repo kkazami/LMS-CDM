@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -96,6 +97,9 @@ function bucketItems(
 // ─── Route Handler ───
 
 export async function GET(request: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(request, "GET todo/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

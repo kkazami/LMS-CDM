@@ -1,0 +1,66 @@
+import type { Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
+import type { CalendarEvent } from "@/lib/lms-types";
+import { serializeCalendarEvent } from "@/lib/workspace";
+
+export function visibleCalendarEvents(user: { id: string; instituteId: string; role: string }): Prisma.CalendarEventWhereInput {
+  const courseAccess: Prisma.CourseWhereInput = user.role === "STUDENT"
+    ? { enrollments: { some: { studentId: user.id, status: "APPROVED" } } }
+    : user.role === "ADMIN" ? {} : { instructorId: user.id };
+  return {
+    instituteId: user.instituteId,
+    OR: [
+      { creatorId: user.id, OR: [{ courseId: null }, { course: { isArchived: false, ...courseAccess } }] },
+      { eventType: { not: "personal" }, creator: { role: { in: ["ADMIN", "PROFESSOR", "TEACHER"] } }, OR: [
+        { courseId: null },
+        { course: { instituteId: user.instituteId, isArchived: false, ...courseAccess } },
+      ] },
+    ],
+  };
+}
+
+export async function getDashboardCalendar(user: { id: string; instituteId: string; role: string }, institute: string) {
+  const isStudent = user.role === "STUDENT";
+  const courseScope: Prisma.CourseWhereInput = {
+    instituteId: user.instituteId, isArchived: false,
+    ...(isStudent ? { enrollments: { some: { studentId: user.id, status: "APPROVED" } } } : { instructorId: user.id }),
+  };
+  const [events, courses, assignments] = await Promise.all([
+    db.calendarEvent.findMany({
+      where: {
+        ...visibleCalendarEvents(user),
+        ...(!isStudent ? { eventType: { notIn: ["assignment", "exam", "quiz", "submission"] } } : {}),
+      },
+      include: { course: { select: { title: true, code: true } } },
+      orderBy: { eventDate: "asc" },
+    }),
+    db.course.findMany({
+      where: courseScope,
+      select: { id: true, title: true, code: true, room: true, scheduleDays: true, scheduleStart: true, scheduleEnd: true, scheduleStartDate: true, scheduleEndDate: true, createdAt: true, instructor: { select: { name: true } } },
+    }),
+    isStudent ? db.syllabusItem.findMany({
+      where: {
+        dueDate: { not: null }, type: { not: "MATERIAL" },
+        course: courseScope,
+        AND: [
+          { OR: [{ targetGroups: { none: {} } }, { targetGroups: { some: { group: { members: { some: { studentId: user.id } } } } } }] },
+          { OR: [{ form: null }, { form: { status: { in: ["PUBLISHED", "CLOSED"] } } }] },
+        ],
+      },
+      include: { course: { select: { code: true, title: true, instructor: { select: { name: true } } } } },
+    }) : Promise.resolve([]),
+  ]);
+  const assignmentEvents: CalendarEvent[] = assignments.map((item) => ({
+    id: `syllabus_${item.id}`, title: item.title, description: item.description,
+    professorName: item.course.instructor?.name ?? "", maxPoints: item.maxPoints,
+    eventDate: item.dueDate!.toISOString(), eventType: item.type === "EXAM" || item.type === "QUIZ" ? "exam" : "assignment",
+    deepLink: `/${institute}/courses/${item.courseId}/classwork/${item.id}`,
+    courseId: item.courseId, courseTitle: item.course.title, courseCode: item.course.code,
+    source: "classwork", creatorId: "", instituteId: user.instituteId,
+    createdAt: item.createdAt.toISOString(), updatedAt: item.updatedAt.toISOString(),
+  }));
+  return {
+    events: [...events.map((event) => ({ ...serializeCalendarEvent(event), source: event.creatorId === user.id ? "personal" as const : "institution" as const })), ...assignmentEvents],
+    schedules: courses.map(({ instructor, createdAt, scheduleStartDate, scheduleEndDate, ...course }) => ({ ...course, scheduleStartDate: scheduleStartDate?.toISOString().slice(0, 10) ?? null, scheduleEndDate: scheduleEndDate?.toISOString().slice(0, 10) ?? null, instructorName: instructor?.name ?? "", createdAt: createdAt.toISOString() })),
+  };
+}

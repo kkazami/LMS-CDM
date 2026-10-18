@@ -9,6 +9,7 @@
  */
 
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { computeLevelInfo } from "./exp-engine";
 
 export interface GrantExpArgs {
@@ -45,9 +46,9 @@ export async function grantExp({
   courseId,
   idempotencyKey,
   dailyCap,
-}: GrantExpArgs): Promise<GrantExpResult> {
+}: GrantExpArgs, transaction?: Prisma.TransactionClient): Promise<GrantExpResult> {
   if (amount <= 0) {
-    const profile = await db.gamificationProfile.findUnique({
+    const profile = await (transaction ?? db).gamificationProfile.findUnique({
       where: { studentId: userId },
       select: { exp: true, level: true },
     });
@@ -61,7 +62,7 @@ export async function grantExp({
     };
   }
 
-  return await db.$transaction(async (tx) => {
+  const award = async (tx: Prisma.TransactionClient) => {
     // 1. Check Idempotency Key if provided (e.g. specific assignment, level, material)
     const formattedReason = idempotencyKey
       ? `[KEY:${idempotencyKey}] ${reason}`
@@ -185,5 +186,6 @@ export async function grantExp({
       transactionId: transaction.id,
       grantedAmount: finalAmount,
     };
-  });
+  };
+  return transaction ? award(transaction) : db.$transaction(award);
 }

@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { executeSkill } from "./index";
@@ -15,6 +17,8 @@ const CODE_LENGTH = 6;
  * Can be called programmatically for batch course creation.
  */
 export async function generateCourseCode(): Promise<SkillResult<string>> {
+  await requireLegacyActor("apps/web/src/lib/skills/generate-course-code.ts#generateCourseCode");
+
   return executeSkill("generateCourseCode", async () => {
     let attempts = 0;
     const maxAttempts = 10;

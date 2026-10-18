@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/run-tests
  *
@@ -57,6 +58,9 @@ async function executeOnJudge0(
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/run-tests/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Auth + eligibility
     const eligibility = await checkActivityEligibility();

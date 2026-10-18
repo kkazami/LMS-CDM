@@ -1,0 +1,81 @@
+{
+  "startedAt": "2026-10-18T08:59:17.680Z",
+  "sharedDatabase": false,
+  "OSIsolation": false,
+  "checks": [
+    {
+      "name": "operator setup requires a real ICS Admin and preserves unrelated Calendar data",
+      "result": "PASS"
+    },
+    {
+      "name": "chart uses persisted memberships and ICS-only scope",
+      "result": "PASS"
+    },
+    {
+      "name": "real chart handler authenticates and rejects unknown/admin/student roles",
+      "result": "PASS"
+    },
+    {
+      "name": "head-only chart edit, stale version, origin and protected root",
+      "result": "PASS"
+    },
+    {
+      "name": "class list and Stream/Meet are read-only and program-scoped",
+      "result": "PASS"
+    },
+    {
+      "name": "audit failure rolls back chart and version atomically",
+      "result": "PASS"
+    },
+    {
+      "name": "current designation and account status are revalidated",
+      "result": "PASS"
+    },
+    {
+      "name": "database rejects application-minted program authority",
+      "result": "PASS"
+    },
+    {
+      "name": "existing Calendar data and timestamp semantics remain intact",
+      "result": "PASS"
+    },
+    {
+      "name": "restricted local writer qualifies only with actual guards and bindings",
+      "result": "PASS"
+    }
+  ],
+  "schemaCommand": {
+    "command": "pnpm exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    "code": 0,
+    "signal": null,
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\n"
+  },
+  "target": {
+    "database": "harness_superuser_1792313964156",
+    "port": 51816,
+    "host": "127.0.0.1",
+    "provenance": ".orchestra\\product-development\\program-head-integration\\local_1792313959470_a186e686"
+  },
+  "boundaryInstallation": {
+    "commitAcknowledged": true,
+    "runtimePrincipal": "lms_local_runtime",
+    "operatorPrincipal": "lms_local_operator",
+    "files": [
+      {
+        "path": "prisma/super-user-v1/current-target-security.sql",
+        "sha256": "2b6975b8a08345971e2f35e8819d1946e5aefddff079a8ba44964abafa6972d3"
+      },
+      {
+        "path": "prisma/super-user-v1/guard-validation.sql",
+        "sha256": "c2ed136ba091470ca9f08d1bc8e0a88fd73b6534a20d88a30f6c7b2282dff95d"
+      },
+      {
+        "path": "prisma/super-user-v1/ics-faculty-designation.sql",
+        "sha256": "22408a30e5d831c872087492a7ef79760fa54a9b3af38dea952b8faab0113800"
+      }
+    ]
+  },
+  "browser": "NOT_EXECUTED",
+  "clusterStopped": true,
+  "finishedAt": "2026-10-18T08:59:28.682Z"
+}

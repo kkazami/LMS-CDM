@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 
@@ -8,6 +9,7 @@ type PageProps = {
 };
 
 export default async function InstituteDashboardPage({ params }: PageProps) {
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -16,6 +18,9 @@ export default async function InstituteDashboardPage({ params }: PageProps) {
   }
 
   const role = session.user.role.toUpperCase();
+
+  if (role === 'SUPER_USER') redirect(`/${institute}/academic-operations/courses`);
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/page.tsx", await params);
 
   if (role === "STUDENT") {
     redirect(`/${institute}/students`);

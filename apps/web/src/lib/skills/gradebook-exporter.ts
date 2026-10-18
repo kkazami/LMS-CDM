@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Gradebook Exporter Skill
  *
@@ -8,6 +9,9 @@
  * Output format: RFC 4180 compliant CSV with BOM for Excel compatibility.
  */
 
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { administratorCourse } from '@/lib/administrator-scope';
+import { requireCourseRelationship } from '@/lib/super-user-v1/actor';
 import { db } from "@/lib/db";
 
 export interface GradebookExportResult {
@@ -18,6 +22,10 @@ export interface GradebookExportResult {
 }
 
 export async function exportGradebookSkill(courseId: string): Promise<GradebookExportResult> {
+  const actor = await requireLegacyActor("apps/web/src/lib/skills/gradebook-exporter.ts#exportGradebookSkill", { courseId });
+
+  if (canonicalRole(actor.role) === 'ADMIN') await administratorCourse(actor, courseId);
+  else await requireCourseRelationship(actor, courseId, true);
   const [course, enrollments, syllabusItems, submissions] = await Promise.all([
     db.course.findUnique({
       where: { id: courseId },

@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -11,6 +12,8 @@ interface PageProps {
 }
 
 export default async function KnowledgeExchangeAdminPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/admin/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 

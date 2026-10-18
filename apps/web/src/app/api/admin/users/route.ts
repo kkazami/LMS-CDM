@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Users API — List & Create
  *
@@ -5,6 +6,9 @@
  * POST /api/admin/users  — Create a new user account
  */
 
+import { randomBytes } from 'node:crypto';
+import { administratorInstitute } from '@/lib/administrator-scope';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
@@ -25,8 +29,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET admin/users/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -37,7 +44,7 @@ export async function GET(request: Request) {
     const instituteCode = searchParams.get('instituteCode') ?? '';
 
     // Build where clause
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { instituteId: session.user.instituteId, role: { in: ['STUDENT','student','PROFESSOR','professor','INSTRUCTOR','instructor','TEACHER','teacher'] } };
 
     // Search across name, email, uniqueId
     if (search) {
@@ -50,13 +57,12 @@ export async function GET(request: Request) {
 
     // Role filter — normalize and match both upper/lowercase variants
     if (roleFilter) {
-      const normalized = normalizeRole(roleFilter);
+      const normalized = canonicalRole(roleFilter);
+      if (!['INSTRUCTOR','STUDENT'].includes(normalized)) return NextResponse.json({ message: 'Only students and instructors may be listed.' }, { status: 403 });
       if (normalized === 'INSTRUCTOR') {
         where.role = { in: ['PROFESSOR', 'professor', 'TEACHER', 'teacher', 'INSTRUCTOR', 'instructor'] };
       } else if (normalized === 'STUDENT') {
         where.role = { in: ['STUDENT', 'student'] };
-      } else if (normalized === 'ADMIN') {
-        where.role = { in: ['ADMIN', 'admin'] };
       }
     }
 
@@ -124,6 +130,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST admin/users/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const body = await request.json();
@@ -176,13 +185,15 @@ export async function POST(request: Request) {
     }
 
     // Normalize role and get default permissions
+    if (role && !['INSTRUCTOR','STUDENT'].includes(canonicalRole(role))) return NextResponse.json({ message: 'Only Super User may create Administrators.' }, { status: 403 });
+    await administratorInstitute(session.user, instituteCode);
     const normalizedRole = role ? normalizeRole(role) : 'STUDENT';
     // Store as DB-compatible role string
     const dbRole = normalizedRole === 'INSTRUCTOR' ? 'PROFESSOR' : normalizedRole;
     const defaultPerms = DEFAULT_ROLE_PERMISSIONS[normalizedRole];
 
     // Generate or use provided password
-    const rawPassword = password ?? Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    const rawPassword = password ?? randomBytes(18).toString('base64url');
     const hashedPassword = await hash(rawPassword, 10);
 
     const user = await db.user.create({

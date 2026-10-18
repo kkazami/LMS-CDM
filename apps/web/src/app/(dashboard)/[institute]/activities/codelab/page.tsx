@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * CodeLab Track Browser Page
  * Route: /[institute]/activities/codelab
@@ -93,6 +94,8 @@ export default async function CodeLabTrackBrowserPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 

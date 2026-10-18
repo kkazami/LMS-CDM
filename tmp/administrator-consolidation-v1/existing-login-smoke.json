@@ -1,0 +1,63 @@
+{
+  "startedAt": "2026-10-18T09:52:17.475Z",
+  "base": "http://localhost:3000",
+  "scope": "requested account login, own identity, scoped chart/approved metadata and logout only",
+  "accounts": [
+    {
+      "email": "programhead@bsit.edu.ph",
+      "loginStatus": 200,
+      "role": "PROFESSOR",
+      "identityStatus": 200,
+      "chartStatus": 200,
+      "currentHead": true,
+      "facultyCount": 1,
+      "organizationPageStatus": 200,
+      "logoutStatus": 200
+    },
+    {
+      "email": "programhead@bscpe.edu.ph",
+      "loginStatus": 200,
+      "role": "PROFESSOR",
+      "identityStatus": 200,
+      "chartStatus": 200,
+      "currentHead": true,
+      "facultyCount": 1,
+      "organizationPageStatus": 200,
+      "logoutStatus": 200
+    },
+    {
+      "email": "superuser@ics.edu.ph",
+      "loginStatus": 200,
+      "role": "SUPER_USER",
+      "identityStatus": 200,
+      "oversight": [
+        {
+          "institute": "ics",
+          "status": 200,
+          "courseCount": 5,
+          "joinCodesBlank": true,
+          "firstCourseDetailStatus": 200
+        },
+        {
+          "institute": "ibe",
+          "status": 200,
+          "courseCount": 1,
+          "joinCodesBlank": true,
+          "firstCourseDetailStatus": 200
+        },
+        {
+          "institute": "ite",
+          "status": 200,
+          "courseCount": 1,
+          "joinCodesBlank": true,
+          "firstCourseDetailStatus": 200
+        }
+      ],
+      "administratorListStatus": 200,
+      "canonicalAdministratorRoles": true,
+      "existingAdministratorPresent": true,
+      "logoutStatus": 200
+    }
+  ],
+  "finishedAt": "2026-10-18T09:52:34.368Z"
+}

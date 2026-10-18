@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -8,6 +9,8 @@ export default async function SubmissionReplayPage({
 }: {
   params: Promise<{ institute: string; courseId: string; submissionId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/submissions/[submissionId]/page.tsx", await params);
+
   const { institute, courseId, submissionId } = await params;
 
   const submission = await db.activitySubmission.findUnique({

@@ -1,3 +1,5 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
@@ -8,6 +10,8 @@ export default async function TemplateEditorPage({
 }: {
   params: Promise<{ institute: string; courseId: string; templateId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx", await params);
+
   const { institute, courseId, templateId } = await params;
   const isNew = templateId === "new";
 
@@ -23,6 +27,8 @@ export default async function TemplateEditorPage({
 
   async function saveTemplate(formData: FormData) {
     "use server";
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx#saveTemplate", await params);
+
     const session = await getSession();
     if (!session) throw new Error("Unauthorized");
 

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -14,6 +15,9 @@ interface RouteContext {
  * Returns enrollment records for a course (Instructors/Admins only).
  */
 export async function GET(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "GET courses/[courseId]/enrollments/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -84,6 +88,9 @@ export async function GET(request: Request, context: RouteContext) {
  * Body: { enrollmentId: string, action: 'APPROVE' | 'REJECT' }
  */
 export async function PATCH(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH courses/[courseId]/enrollments/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

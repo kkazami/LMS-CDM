@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Unified CodeLab Problem / Level Execution Page
  * Route: /[institute]/activities/codelab/[slug]/[sub]
@@ -43,6 +44,8 @@ const VALID_LANGUAGES = new Set<ProblemLanguage>([
 ]);
 
 export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDynamicPageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/[slug]/[sub]/page.tsx", await params);
+
   const { institute, slug, sub } = await params;
   const session = await getSession();
 

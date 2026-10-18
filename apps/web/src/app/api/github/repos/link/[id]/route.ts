@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { db } from '@/lib/db';
@@ -6,6 +7,9 @@ export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(req, "GET github/repos/link/[id]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -52,6 +56,9 @@ export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(req, "DELETE github/repos/link/[id]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +16,8 @@ interface PageProps {
 }
 
 export default async function KnowledgeExchangeEditPostPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/post/[postId]/edit/page.tsx", await params);
+
   const { institute, postId } = await params;
   const session = await getSession();
 

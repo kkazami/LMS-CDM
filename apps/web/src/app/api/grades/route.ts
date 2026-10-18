@@ -1,9 +1,13 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET grades/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

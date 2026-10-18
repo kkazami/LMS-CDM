@@ -1,0 +1,597 @@
+[
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/accounts/page.tsx",
+    "before": "4af28314f5ffbaecc2244a56cee0ae06b0ccb99265ae9737f51b543ab8a33dfb",
+    "after": "343d2470cb3c97bf775473eaf0df04ca93481d61fdaec110b63a8610b1c4ce26"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/accounts/permissions/page.tsx",
+    "before": "c4594df74ae265bb8bcb1e7705c52ebf03aed31370b2ed3d3b6b0895289b1146",
+    "after": "1f5c5aa4d71622ba1ae7ac10a0ed23593f037357604360c0626f13985f75863c"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/achievements/page.tsx",
+    "before": "e5f94bf5795e02d577f9f1c91efd011b919765f06cebb3703f3d9005419faf5e",
+    "after": "7085fa320b59da0606657b19513358bcb6e8c85e0c7ec2d1ed4679b0b745472b"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/arduino/[templateId]/[seed]/page.tsx",
+    "before": "9f108abe13d6f543f30fab367e791289cf48293aa5ac56e9771e69696a9e11d5",
+    "after": "25ebd40cf4aea1fe4bba2d70711b3adaa306f8cf94f28385f45fe8fa356c4d00"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/codelab/[slug]/[sub]/page.tsx",
+    "before": "066f462bf343d5c3df79ca52c6b723cb5583f311105ed1f6f31bd6b82aaea6c0",
+    "after": "d0bb35c02d009ef5228dc984112cf5a854cf03a164391762312756a2906ef4c6"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/codelab/[slug]/page.tsx",
+    "before": "d0a34d26358ae7e4f22331b6cd63abaebb29bf6b6f72e70f76d93902aab468a0",
+    "after": "2ebcd3f11b896cb2f84724f21e58ab6261f3254959d81a93498910e9d3385b02"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/codelab/instructor/page.tsx",
+    "before": "5e84b28f978f8317a1315bd8839af296583c93d2e0575133e63f0e5513147030",
+    "after": "3fe1d11550bb77d4bfe41e8cf7cf9b5385f42ed137d827b4774294ac5e6920bc"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/codelab/page.tsx",
+    "before": "fc19fc7bbe974c2e7e8303e429158fa07002c8dc963340b7207e75a0c2fb35a1",
+    "after": "c34b8be2e956a4015b7ddd56338155a081aef238d6410e16070c39868f4a97e6"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/logic-gate/[templateId]/[seed]/page.tsx",
+    "before": "46bc6bcae2e412a5e8582d34caa43f906370e21b45f4f45ad3f07aebf2ab0e34",
+    "after": "a88024574fe93ffdee9e9ae7c4de0d9cf555c7454449df94bb09c7db947968d9"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/page.tsx",
+    "before": "0534faeedb47b5ee8c764e5f224764ae469b59b4b4cc7d0924bcd74e774682b5",
+    "after": "45d260d0e67174fab006b92da5dd07334b74a62af4e54bbf4bf8dc804d47bea4"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/pc-build/[templateId]/[seed]/page.tsx",
+    "before": "b902c07c227449c7bb8b46ace6048f5cdced22ef065a54cf834e6a0a7f867883",
+    "after": "af0993bb6a9fac3ff19610df7341e9f0c33caa44ebbd7aa4aa477c1dba2187af"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/activities/server-rack/[templateId]/[seed]/page.tsx",
+    "before": "1ef0963110cf075a5c2524ef43257bba587f2b37332683e7b84855e85ed83acf",
+    "after": "b9df719ed3fc69dd2455d7178626679319703fd91d422f4b0898469a9a53b2c1"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+    "before": "739ae619c5eb53db9dd9fb75cf42318cfe8a2233a773a72f05524837b025d1eb",
+    "after": "392347ece0a53950de8dec3e38dbd3926eba0ca4eefdc5c07925bf653cf32258"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/page.tsx",
+    "before": "31d123a4a0de7c52f9cd446d994ef30277a4759c5e91f1561c3ff0d3161321cd",
+    "after": "1512f07048220f4afacc6fc547e04846b0db21b7fef38f98efa5a85bba99c696"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/admin/page.tsx",
+    "before": "1d493139e00f1f172fe43c0801d33411f4d1694eed97bd9af76e278815274146",
+    "after": "b2f69dec9993d920784bc58750550faf2c87a6cbeabcd81103f4e4127a44db12"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/analytics/page.tsx",
+    "before": "393af6d596fe8f8e85c147cb8f91fbcc54d4538f74009ecce0ed36aaa1e0c39b",
+    "after": "8c8ca16c06406df0e5eeaa657461517151842422e823ae96e1426b96bfb30c6e"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/announcements/page.tsx",
+    "before": "06e7dbf37c484a358277a65286e515a5aa8dcb5a9cb9f426e451049271c34984",
+    "after": "bbb6f94b9fb1576c8f98a9d36e7e87e39d1ba95f232d9954bf289c4dec47995d"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/assignments/page.tsx",
+    "before": "d2c16a37aa320d3cfe01279f3538aecf0aab79292d2caf4deae78da46c28a91b",
+    "after": "e87c6246d6cae71e22a0fda46cad7671b2e7036f5218bfdc55aaf2ad71a81461"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/attendance/page.tsx",
+    "before": "eb9215bb779b46e6c384aa74d81ccd6b085f7d30982e253f63dca5c7365afbc6",
+    "after": "f4a93760c2ad588747f04aba77edf95485b6803566821cbf301c505000ebaa92"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/classes/page.tsx",
+    "before": "c898702b5732965aed90a5301502afc0625cceef3201ae9593e972941d2866d7",
+    "after": "bd52cf9c3577d5fa0927412c9afc721622f8a78b863b728e54558872d892b420"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/arduino/new/page.tsx",
+    "before": "5e521e86711082b007f7f5331ec1811e9cea6ca939d6e19a7c3d494b873e58e3",
+    "after": "052d8f68e6098669c8ba5af1f9bf855289f33f3afc82fdec4e699ed0452c20f6"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/codelab/new/page.tsx",
+    "before": "4d20edc8f438fb610ef859ed9ab21673fcb94b4c30a18bdeeb6497f710174ddf",
+    "after": "2fd441da1a87c4ee29ed560befae7dc0b8c4c4607411c943fd3a666fcd7958f9"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/analytics/[templateId]/page.tsx",
+    "before": "b8066248f41588ab0837e33c796d73ad377a0d82435b72b79d9613078e43e3d4",
+    "after": "a9930193b06826bf90f69ea9fab5083cff1d10bb33919562b9f53032573a0922"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/page.tsx",
+    "before": "9f600b49eb38f2fb92b1330a361e41b083f6f740c9eeef66fbe35d0d25859ca1",
+    "after": "8969b3e75948720f93180b05adbebd72b28148886ee9d1b72fca50acc1606e48"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/submissions/[submissionId]/page.tsx",
+    "before": "097de9bca54b1b379bf8de6c29aacbd5ce16298faf39c26cbebb15e20f31c5bc",
+    "after": "a728a8dae05fae945a6ad7dd7025b486b4c16ec7d10171d4957c7fdeec645d4f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx",
+    "before": "3be1a9d04b58ccc57f92d1fd57da1284b92e1f92fd04790f5e97c36e23d77f80",
+    "after": "744d9eae7e7b3576b9c64af65a868b6b80f4c65127ee0a2ed782386c83a37964"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/leaderboard/page.tsx",
+    "before": "a34785209f11b4ec0bb48ecc80039697aa53851b09b6f5f72b3701c6f1c82c3e",
+    "after": "0f93af93c8aedd643a1bf4ce1b0fa6eab20d76b7592cb04d3f4c9fdd35745d92"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/logic-gate/new/page.tsx",
+    "before": "eda285b9e502cd14eab3cab4981bffc802935c9255d74158ab1ab3154a0e331e",
+    "after": "c8e6e3899b7dec9aa3611231b135031d9ec1a4019de5581da61f3f17a37be88e"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/pc-build/new/page.tsx",
+    "before": "d202876bc6afb5ab6344114fc4046b91c982877e67ab6227e4b79208dab70cc6",
+    "after": "04b90c08669e65cd7a5adb1d075fe8558e195a7f03f2c65d0d313356c3f609a2"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/server-rack/new/page.tsx",
+    "before": "e529f134d10e8d3dedcfa5ef96c8996d88f7f87577125afa0e8afe5ccf9398a6",
+    "after": "797dc800f2c034cf3aa497e313cce6544e5663850830a3dffa1e241e8a481d7c"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/actions.ts",
+    "before": "20dbb6cf1f6bad306da4dbebe25739acc685152314e3788c549c3309b7c0a6e6",
+    "after": "b655db27269cdccc0fd89df230dc32f2c4fe1ed80f84ce8c67941d68e2caf6eb"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/page.tsx",
+    "before": "059fc35357c5180b84bc49434c2c6e184da973457d4da56b1aa67b0e2b2fc9ef",
+    "after": "d7018441869cd937c58c32a124963b11ebfdbc50d9daf74ac75d59c7c6217773"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+    "before": "1b682a070e040e0bd40201be171a56e6924e766832b6a36a4c0954a696dcebbe",
+    "after": "042a357521941276329b07ec7a1acaf62dbeb7a2cc5d31c3fd87663c3ba75553"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/page.tsx",
+    "before": "33633a528a1f9b3ae5fcf9799f77805417168bfe91e43f1b1a8a50ea0c1d5136",
+    "after": "67288a4769c46d9fe1aedf24fddd170b0e8d939e8d69b63ccdbe958b6812987a"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/submissions/page.tsx",
+    "before": "c63edc09dc923c714a960f7909cc661ff686d7cbef95980915ad3bdb0b7e7319",
+    "after": "726041dd90e38ce58e24933d8aa8492ee6c1095317590a395a3c43efc59fe67b"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+    "before": "311713fa67c7c4593895a4228e821e354ba01c968a1c67456627d7d7eb74dec3",
+    "after": "5236e0ee4d253ec3319b14606244682db1ffc4cfa9725ec6046cf37ad4ef590a"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/builder/page.tsx",
+    "before": "ce6f1391cab3173d1b6f935df6e40e109d034d1ad52ba20112fad265e01ee5c5",
+    "after": "7731d1bec7851ac5a9534bf5d6a89cb910911ade5bd979ba9f4c9c720ecce17e"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/page.tsx",
+    "before": "536c270a568d4015b77998e5537f7f110b471b631dce52ca8c9b5a531b3ee677",
+    "after": "0d386053df0df0fc34b197738686fbe92235dcade457ac4212e625a4ee810059"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/preview/page.tsx",
+    "before": "1eba0259a34f61b0ac729a8cc1d02b49a44e191fb827b5c04628225daae04cc5",
+    "after": "b4fb5308c796545052f5cfb11f5cb5d6ac77c3f9976a4383d6b7b46b25eb6a96"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/respond/page.tsx",
+    "before": "eb0f866d3d68e8c43c56671c71f1eed1fb86bbfd8e44839f43f6569734c4b35f",
+    "after": "58947655a81c22ceb5e0799bf2954738c7690b83284934cbd3ed16d2b6864630"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/responses/[attemptId]/page.tsx",
+    "before": "b5d1af617c451c2b2e33d196fb91d87170d0b9fa3997c319eb3091bd8ae1f443",
+    "after": "1bcac9d1499e04162cebd1555805585ad3f48770fce10dc26b1010d0d1b59bb3"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/[formId]/responses/page.tsx",
+    "before": "dab0efbe87b8b4002457341bc99ef64c0d7c6704a9ce99c56019aeaff047acc6",
+    "after": "c1376757989332b1b4bbd326edd8301c086d69e59750e8af6f99d9f1c968a258"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/forms/new/page.tsx",
+    "before": "224d2594b0b1adcc86b36f6c98e01c8ebce5fe79cf87f152a7404cbf5063bbd5",
+    "after": "3875e2ee12e39467151f0c71b179518f60f3ae65bfc368013c8c93ade60d554f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/page.tsx",
+    "before": "09bfd3adeef142c20f6104d38002ba6a2e6475a3e767f92ce047b227dae744d2",
+    "after": "03b018d8e5316bf78d757c921e2ed76e3f74a4f5d0eb780da459dbef1f6a6d7b"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+    "before": "791e6e67e59bbca2e875de2031cea0cdc30fd50b12e9e4b2a87713f9cd6a7ae1",
+    "after": "3aaa3529a11444a8edb9544c35aaf0ce6510a874701ce9be9a3763c9882030b7"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/page.tsx",
+    "before": "ab327937b1d9e0d386f4830ca2165798972478699fc4d04181218dda538e962b",
+    "after": "1fc9b3bbe4a0d5e1447d4c4d2f3473d068819af70b8fcd9ea834cfefa20bf0a8"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/page.tsx",
+    "before": "dedc6fae22575977e3157374cd4b5199451c05ce9c654627d9160c9d42c10397",
+    "after": "c65d2f32547278f5f5c7dbad4331e589712ff14624f6b6c83c440f1ebfcdf01f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+    "before": "50b024a10db76e1c0aaa0d66fc27e9ef5565b984ee2f206d2f2f8375828723ec",
+    "after": "3afc0ece162ec19fca6496da828356138afa697247c8ecbfa56a90dae86cc406"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/page.tsx",
+    "before": "b64ed8ee3cfeaff3598ef10cebd020482884faedffd85936911d8efd75cf6a08",
+    "after": "4abd82f2543b44cc7a1b6e64f1ebaaf9906888eba05598f1085e461a193f3297"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+    "before": "5f4ff6c3d07805a1e2ddb7f936d6f6caa3015be2674c99ca7c87d11bf7b7c6d6",
+    "after": "3b536656051589432adbdcf863f7d777b92f1bd2da8f0ae183db93273e92a244"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/page.tsx",
+    "before": "ea3746b01e016b5b5c4c7d11edf319590dcfbfae77aa0c0ddba7585b1033760b",
+    "after": "73ac5db21416e2aa34c7fd9211044a9e74e101559e58de576c5ac872a33b94a6"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+    "before": "6d21d1c39ccf91c02a91d44b519b8b4437605ddf0fc9f39ea5a216a7be5c64db",
+    "after": "f136ae6168ef3fd0578d8ca5362682c6399c4cc67fa4d5ee5ed09607abc6f6c0"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/archived/page.tsx",
+    "before": "15c8d1916d9637389510bd8b7b064541f8166f3ddc9b055ce2754b772171ecf3",
+    "after": "b1a28084bcde24cdec9c0a3f9834886195c6daf3b610e57e4e06e89736c81741"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/courses/page.tsx",
+    "before": "3b757737b15d6edd3bed15e01386bafc9fcc05eb6fe2d8ecde2fac575ab7d5b8",
+    "after": "cbfee23334559dcd2f45a25b845d82ed06697e810224550961e0e64f70867f25"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/flashcards/page.tsx",
+    "before": "e7cb0c522ac53ea384bb86f2b81a4f866610649cd3cd8add3e58e49d626f0a5d",
+    "after": "ddd61b1320fd3d5b510a810fd3f0d1cfeaad32e28e47488d806028b73c887384"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/grades/page.tsx",
+    "before": "e35f3dbbb65a39856f67fdbbddd2db5eca2d91d28e662e91f20f73c1bdda3ed2",
+    "after": "7647742a6f7deaeba4eff619eba7f0d099ec9e981004b235026d206e508acbe3"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/help/page.tsx",
+    "before": "aff0621c2069efa27dae283d490ccaeec176717eb3eef8f57de142a0f9da1d98",
+    "after": "db412b127cfdd8284d3026cd0b8bdd9c4c71c0debb44e572f037405a3515363d"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/institute-administration/accounts/page.tsx",
+    "before": "cf155ff00c88e98e527c1e97a51543da7403effdbf63b6a16c8ed8e559c7773f",
+    "after": "48e132cc68a0826d55549a9ac3235350dfedc04cf43bc87d59321ad32ed21e68"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/institute-administration/courses/page.tsx",
+    "before": "89f46a5a37b5a99f963694306d24f0dbfd2fe34ae39fdd064da84dd870e2975f",
+    "after": "e3e66e8b9ef40a1fef8487843b905ababeb47f0350ef35220b0639bce1e8348c"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/institute-administration/faculty/page.tsx",
+    "before": "92244e410c76b224d3d62be1e4e601d719b14810569ba89d537b51efb8379528",
+    "after": "954b78b1d9db5bccbe21e1cd5485031b61b36885b9d1f811026beb43dd28cbe0"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/institute-administration/layout.tsx",
+    "before": "0e9298337026002d6d9f36234aae79fcc97588c29116252b1791f5428331f3d2",
+    "after": "7703664b16d2ddefa1913b78aab9b0aa0e1f27e3406d0bc4e249c0eb3ad3f370"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/admin/page.tsx",
+    "before": "2243ea937caa71da76a2f04db082db9fcdc09f5ed3b28a639e7004bca7d44b7d",
+    "after": "1ba2b53df0617007e664192a5ebc84d84d09d41f7221a7d38de8e47249d52800"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/analytics/page.tsx",
+    "before": "290c66c80516c7adb0e9614bb84538123ff39e637b3616f91b3fb61b31a82ede",
+    "after": "052418276d0e59e52ae81f94a1d6f518099cbfc8285e4ca1e863e360debcb34e"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/ask/page.tsx",
+    "before": "63e20087d96105fecc6380cdf158456e690adf948c9f6f2d7ea4de58f8e71282",
+    "after": "5f221e89ff69d6fd735a7a28489fa79c470b09c540b6de830fbe67920140040e"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/bookmarks/page.tsx",
+    "before": "25b8eebca0861130a73be08386e317dbadd16a05a1d13ad30263e918115750e4",
+    "after": "473517a526026f5dc688c9dd2289018fa608ada3d31064f91d2863f99129cbdf"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/moderation/page.tsx",
+    "before": "7a0a2b3beb36ae2b3aca44e9df257fb22f92d5b2b604c5b461efa4dd3d90406f",
+    "after": "6bfb1b8d2a57ba9274b3ffb38cb600d12ac49dd433a476e70dd935128f01dad5"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/my-posts/page.tsx",
+    "before": "d19cc97b0511e91c98b3f2c5ad5ec1d4ca7d73ea9933aba25772296ee5d02061",
+    "after": "aa471da72d87e97851ce52d43a38d2388f02d1eb21fd8547acca032acc3fd801"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/page.tsx",
+    "before": "672eb6ec4a693ee1d4fbb6e70bc007c01d7eba551917363cd02001c8adb6f481",
+    "after": "b432afefa459e44987f6ceb2962a4caac92623afca584d0001d871232346e700"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/post/[postId]/edit/page.tsx",
+    "before": "bf4b46fc3b69b24eb6972b928f37dad4168a6878eac29d101ac5937e26e5441f",
+    "after": "e09963443abf48c426aab5be802ce52f7e779bd8feccf924b550b02d8f59d571"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/post/[postId]/page.tsx",
+    "before": "e0fd8865c18342416298169de6a1b9ed868a49cdfac7bf58badeb7e2f7591d33",
+    "after": "62fafd6ec2b22b1e7b527a3319f8bc822f7fbff5e0ef0f00dda3cb7e3dd3eb83"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/post/[postId]/revisions/page.tsx",
+    "before": "538b9ad813fd89701101720aec67421baaba5838dee7f184337f49231001b0b6",
+    "after": "bfb98d5aa75ed35669bb4b9676628627e26104cc6a8a74f75382dd69369467a1"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/tags/page.tsx",
+    "before": "00522510078f987d407d56307be5485dbce4c36124599dad9b3fd2396cc7e9f2",
+    "after": "12d1f95e88d587a63b145e9a90bc61abf3a69d691bb44c663b26aefc2bc87b7f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/layout.tsx",
+    "before": "d0be9d8f9252aaaaa75c1d231ac680142a03d252f3020c2f219460ae2cf7d2d4",
+    "after": "a2a1f33e3be644d98510e26500dfb1e1a6a37832c628e3b0e68722ef7c636c04"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/leaderboards/page.tsx",
+    "before": "567a9d814c17903eeb26ee4d57c8f62e9b561c6b115575aa1e0f9bf11cd87550",
+    "after": "d2b5487035605c6dafff147aba7d094466ebf4faee3845282e184d67543f5f24"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/learning-materials/[courseId]/[materialId]/read/page.tsx",
+    "before": "ec74f2ba54fed8c6d1d339700501619de244effea30bd3ef46ed8d7c2cd1f681",
+    "after": "d03826619515ee3b82216bda66e70c0481bb114997209efe5c6714cfef1fbe91"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/learning-materials/[courseId]/page.tsx",
+    "before": "9a7d961333690147590061baaeb9cfb278e37e96677a5c682abc76cc782c3742",
+    "after": "56c9a42b7b08ebcab5cd7f7b6f3ac97a5f2cf7ea2015d6daa98b569cac75e2d2"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/learning-materials/page.tsx",
+    "before": "56f9a7acb8e377a3525107992a15fcd1e5fd8a58213ff3d75d29ef39640ff546",
+    "after": "ce7b662ee1eb5dbb91590b3188e191f07b7609a2357dcf5af47adb8dac127f4c"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/logs/page.tsx",
+    "before": "45df88ec265d9f5ef4697cc33f68976e6f7bb8cc11cf4c53b38f77aa6eecd0ac",
+    "after": "35e7592bdc9e1a32c1457ea59f59ccd03009d0886be9d2c9d253fe78d80c7d0a"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/manage-leaderboard/page.tsx",
+    "before": "9694f01ea3901375de3a62f4aada377d4af5f033e8e85323ced104b25ac8a757",
+    "after": "7732c8d85fb8510ab03757c2d2f876243a416ac1ba26a6d75010906dd804ce0a"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/page.tsx",
+    "before": "7bbb1a763598eae2879aa6a9b01e6469a711a15c11a82dc3667e7d03d93d55d0",
+    "after": "e745caba3296f5e2f8d9b2d0bf2f9a524c9651602a7b6979142191eab188d2d9"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx",
+    "before": "836dded9eb6261122135d1ec7dc9347abfa17af9e06600f3bd383aebfc75f8c6",
+    "after": "5b516b23cb9754e82ae002fc75223ca81fba3555e5dba1b88a6dad38626a9367"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/profile/page.tsx",
+    "before": "5508f537cced6f1414b0f54eb5ffab33f792bb5d320d16cc76004f7bba036bbf",
+    "after": "fb695244ad80f8cdf6391cd176e87345b0367ae2723ad652547e9bcc10a1fe0f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/settings/page.tsx",
+    "before": "dcc00053ccfae5de2af45d21767d00bb62b77e3de69368f007947883cedf18ae",
+    "after": "10c08496f5aa739a607080ca5ac6ddaebbaeddfff8824fa0630e2195e073d302"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/students/page.tsx",
+    "before": "cc07fec256a154274a91d6bc58d91a1deb72aa92d104669aacfa616d08565a81",
+    "after": "d5b216dd021f61e483f4285e8737a9f6da23ff5dfefdeacb58abbc50e8fb275f"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/tasks/page.tsx",
+    "before": "9ed1d79280597a1fd4a0bfe2c49853b6bb23110a595dda3edc6fa4871afa0c68",
+    "after": "8f3b8447b76948427fdad7cc18efbc7b5e9f717797de508fd96a03284635f4b0"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/teachers/page.tsx",
+    "before": "62689d76cc0d1e38dfe9df027b9dd9c4b65839e98b8953b9501b79adaec6a585",
+    "after": "68452bed09b80f56b52e310974b8a9394c47e76ec494483f6940618b02425348"
+  },
+  {
+    "path": "apps/web/src/app/(dashboard)/[institute]/users/[userId]/page.tsx",
+    "before": "b8974445057b55cc49aa2747a5c5ccbd2dd32845303af2cb7083915f1ddd06a7",
+    "after": "91467cbc9be18f2e1853356034fa219e36cf006af7453cd07e6236b50890a221"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/audit-logs/route.ts",
+    "before": "d95be3c353443f36aa8ea5f8d3f7d754c919e9f3afd793a8abd88188b3c63b07",
+    "after": "728eef8f3571301765802e6665ea3a8158600b3dc5dd5ffa918ad1f12ad5a139"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/users/[userId]/role/route.ts",
+    "before": "d2ee4da6618b8ad243e1ef0768cb54cee3839dcb2afb1c41c8af1919bb40c1cd",
+    "after": "67f69d4063df9ccb86829bf08f56c10259e34109019356d45f91785081814ae2"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+    "before": "42494368f06a4208352b44ed44fe06a79beed36c8d0287fc23d4e8178365428e",
+    "after": "548528c1811ec5d341222a30d5492f3406aab84b111a943b51083ba076646c1b"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/users/[userId]/status/route.ts",
+    "before": "3ae2d5b57b9d79d850d048a409c4481e872f192d34a3d8aa76c817332736914b",
+    "after": "df1672a7110042cbee71b4f365845de9876d68a197b70e56363828e416962c86"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/users/bulk/route.ts",
+    "before": "813004902166d5b1bb85c3574bd1c4f2d5d9a1a65c431a666f29fe7c80aea054",
+    "after": "157d90795335cf58f71e51102a7f40d1a9f380fb91354f7bd03b6162fbc26434"
+  },
+  {
+    "path": "apps/web/src/app/api/admin/users/route.ts",
+    "before": "95c2afc15c57364ab92db999e4a6441aa7f4e8ae7837c8b7bfb11cb5f9e81b24",
+    "after": "093a71d79db0806687f0169ebe947583e97bd2b83e6a685d70daa5d3b768f8db"
+  },
+  {
+    "path": "apps/web/src/app/api/analytics/at-risk/route.ts",
+    "before": "a8b735ad1a21a84230c5eb7f49403391b0a138e4b6df247d74b6da265a124b31",
+    "after": "dc8dfd2b154452caa50587741f659bbad4cf09f4432cfc597ae69537bea384a5"
+  },
+  {
+    "path": "apps/web/src/app/api/courses/[courseId]/route.ts",
+    "before": "13eecc44625c052b510732ea302df741a46ccd33280ef944523e02126a63e0b7",
+    "after": "0c0ea56d75487408fd548d4034970f73329992c883fc75222ebb01f6d1c4ce85"
+  },
+  {
+    "path": "apps/web/src/app/api/courses/route.ts",
+    "before": "89e923a0548b66cc5c40ef0b50c536440bee1553c67c111220aa50677d8ebf3a",
+    "after": "b51948763d3b887f8c1720c9cad975443997fe5e1f31a7a5408bbc947de329f3"
+  },
+  {
+    "path": "apps/web/src/components/academic-structure/FacultyManagement.tsx",
+    "before": "7ef9718d0a1d191bbcda7447918d8c93a5643535ea5821745315868c66a6967d",
+    "after": "5a1a7816056d462a5dd8c0af6ad4336c1e11a304069281d2653c41520680dff6"
+  },
+  {
+    "path": "apps/web/src/components/admin/AccountsManagementClient.tsx",
+    "before": "fc5038246a30385ae24091991e1b667c74a37e86ff6f68e4d9f94115d5bac4a2",
+    "after": "e9fe395173fcfe442bb5b93728e94afaff832bdd3e716f5f55f692d648b57e1d"
+  },
+  {
+    "path": "apps/web/src/components/admin/BulkImportModal.tsx",
+    "before": "d66fd3b4b2fc343e70f5d72aba8602c1b3f0d20a59db604db64e85c20c3aac2a",
+    "after": "19531e944fc9d46ccd50db98c6151458e0f3e0b9a03cf1f67296b5dcec9e7fff"
+  },
+  {
+    "path": "apps/web/src/components/admin/RoleChangeModal.tsx",
+    "before": "09c6eca84f53c05aaee04adbd6dd845a6c26ea1cea314b756a459a631226670b",
+    "after": "5a4ca981d524509076205960f088d3b11b4cb8922c0a5f27481c72ae583fddff"
+  },
+  {
+    "path": "apps/web/src/components/admin/UserProfileModal.tsx",
+    "before": "caf21f0913e475464c28956de211732d52db8789582c0e360d2058a4181c1adb",
+    "after": "9c99b2c5db9fa29f427bfaa34fad6caf108b8f96c8febc6a8ba4f5c8b3b3cdb0"
+  },
+  {
+    "path": "apps/web/src/components/forms/LoginForm.tsx",
+    "before": "ca21305a49833c467b9d5b2f215c3a821e82a6dee12771cb57fc08c9f458c659",
+    "after": "42cdcce9111109cc6925c2b3098ff4eefba6451c3107a58ff85e23fb1ba8490e"
+  },
+  {
+    "path": "apps/web/src/components/layout/MobileMoreSheet.tsx",
+    "before": "52d69b99dcab0c2ba50d76099dbf0aef1129be78a6360c7e176cfe1db6efc715",
+    "after": "be5d1948645c858a3af48f389b773aa84afbf59acc37350a4a46eecdeac75578"
+  },
+  {
+    "path": "apps/web/src/components/layout/SearchModal.tsx",
+    "before": "2eb41de2d2740bcb65f958fe27a32ef7e9a4dbf828e56a9ad4c2186a708d49b9",
+    "after": "174c4629ed124121433bc51fa27df674c2c67ed30e40c99d982da55cad8b9b47"
+  },
+  {
+    "path": "apps/web/src/components/layout/Sidebar.tsx",
+    "before": "33906374692665efd35b483a1420973d9eafb00dde56a3228fd530cdf4a04f94",
+    "after": "cd8bf5e2f221fe62898c2143009158d86f17ac6ad2c01c1defbadfb087be201e"
+  },
+  {
+    "path": "apps/web/src/components/layout/Topbar.tsx",
+    "before": "3480804942b5469829475dcfc870e973b092718ef05eb59d85902de57d5c4893",
+    "after": "3317617f4a58e2f1ac9a4612c1cbeabcbc7fe97c9383fb88676cb1c1578debe1"
+  },
+  {
+    "path": "apps/web/src/components/super-user-v1/InstituteAdminManagement.tsx",
+    "before": "a1b5b2260124473e2dedba69999835e62e58d426afee8118d8a395d0712f70af",
+    "after": "dc0c344183a2ddcadbac8225401e180d6722dc1e957debfd623e85152ea5a2fe"
+  },
+  {
+    "path": "apps/web/src/components/super-user-v1/InstituteAdminShell.tsx",
+    "before": "d439060de8754717b346b594c33e76ec546e6ec4452986df67dc461d0fb7bd65",
+    "after": "0f51e3d4e944d52f3c258d0e2c0e290099022f8344e487e1d3a36c1f8ef148cd"
+  },
+  {
+    "path": "apps/web/src/components/super-user-v1/SuperUserShell.tsx",
+    "before": "3decb551ff7eb471535385707c7a772a1f94346a668b21efb35fd4f4545269dd",
+    "after": "87366abfeb9a10d1a79c810681bf7a3b75ba2f61023f6694052fa88a8ee5d2f4"
+  },
+  {
+    "path": "apps/web/src/lib/academic-structure/faculty.ts",
+    "before": "2e37028567fb9dd8e947931209afa740f8851c4e5fdf2ff6def4c6c7782a6428",
+    "after": "60364ee86e60419259c6b2b09f099c9e3f9c7201bfa53b731ec03001347cd44c"
+  },
+  {
+    "path": "apps/web/src/lib/skills/bulk-assign-instructor.ts",
+    "before": "2f3962ce5853572d5beaf72b8a699c09111b0e7c413582ffd8c68470fd6f2265",
+    "after": "00498d6ee00bac45cbbaf1ad1c35c9ce524c808b6c09bedf5b946b27071fb9eb"
+  },
+  {
+    "path": "apps/web/src/lib/skills/bulk-user-ingestion.ts",
+    "before": "def4b3f1c4c15e48f2cfc05b9bcc657d7c37e156dc44b1f1973a4d9391befd66",
+    "after": "3a432ad3bc48b4ec7f0d5646f602fe8640a5afd6564f5713ca1292eb025a3fa8"
+  },
+  {
+    "path": "apps/web/src/lib/skills/enrollment-manager.ts",
+    "before": "7be921db207aedf13e1ccfeb977eed1a298797d8c3a1fe476c687f9f9d0d56a0",
+    "after": "4b2193d3fbf2a63db35bcb07b542dc36831e40f8c9605712a83ea1a64bae2ee0"
+  },
+  {
+    "path": "apps/web/src/lib/skills/gradebook-exporter.ts",
+    "before": "19193a0f32402711c9ea57eb659eb9ed2f3aa039cbac56bd17cd12ad8664f963",
+    "after": "3c63853cedfafe5f7f33f230f8f70ddd24eda622f783ebf2bf8078bc4ec06524"
+  },
+  {
+    "path": "apps/web/src/lib/skills/group-permission-resolver.ts",
+    "before": "da9985e263114def9960a96d3b462630950f99da8e3b9044ea106e9791a4b4fb",
+    "after": "691bf0174c2f32bb137dd4bb6fa110f4ba8dc7d1ed5a6dd2c1923ba756d9f482"
+  },
+  {
+    "path": "apps/web/src/lib/super-user-v1/capabilities.ts",
+    "before": "6ef50246e354f2ca8a477d0e2e808d8f777ed225889ca3ec46e382a7639f5b0d",
+    "after": "a3cc59cdfb25840b2818f99f673aefbca4b557d54d1283b61bbebdff1e76ddeb"
+  },
+  {
+    "path": "apps/web/src/lib/super-user-v1/institute-admin.ts",
+    "before": "c9a142bfde6a97b9203e24e77234ca243363e442a9f4d68f5973641eaf63ba25",
+    "after": "494cac08924166871b5824717e8a77dc1ff93cf55bd3f31ebceb0171fe730154"
+  },
+  {
+    "path": "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts",
+    "before": "6e6b139b935f6b59fa3bf23d64febd6940bca6af47602cb3d9ce644a5430e29a",
+    "after": "cdb78c65de113e7df8720514c963d37ec6c9cb5d12476185941e4ae90b9f7213"
+  },
+  {
+    "path": "tests/program-head/main-integration.mjs",
+    "before": "13c0553332d97716986c919d8fc82d8c7efa98928803c2a6edfe61eaef1e2da1",
+    "after": "088d9c33b5f5b0a62371555ee2f177cf3b4501e19528ab0425e16c76781944b1"
+  }
+]

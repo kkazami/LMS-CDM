@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Single User API — Get, Update, Delete
  *
@@ -6,6 +7,7 @@
  * DELETE /api/admin/users/[userId] — Deactivate user
  */
 
+import { administratorInstitute } from '@/lib/administrator-scope';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
@@ -23,6 +25,9 @@ type RouteContext = {
 };
 
 export async function GET(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "GET admin/users/[userId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     await requireAdmin();
     const { userId } = await context.params;
@@ -70,6 +75,9 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH admin/users/[userId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const { userId } = await context.params;
@@ -110,6 +118,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (uniqueId !== undefined) updateData.uniqueId = uniqueId;
 
     if (instituteCode) {
+      await administratorInstitute(session.user, instituteCode);
       const inst = await db.institute.findUnique({
         where: { code: instituteCode.toLowerCase() },
       });
@@ -164,6 +173,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE admin/users/[userId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const { userId } = await context.params;

@@ -1,9 +1,13 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { UserPreferences } from "@lms/types";
 
 export async function PATCH(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "PATCH settings/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

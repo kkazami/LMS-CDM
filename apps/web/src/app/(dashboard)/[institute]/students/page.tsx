@@ -1,8 +1,11 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import type { InstituteTheme } from "@/lib/theme";
+import { getDashboardCalendar } from "@/lib/student-calendar-data";
+import { schoolDateKey } from "@/lib/student-calendar";
 import StudentDashboardClient from "./client";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +17,8 @@ interface StudentDashboardProps {
 }
 
 export default async function StudentDashboardPage({ params }: StudentDashboardProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/students/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -21,49 +26,55 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     redirect(`/login?institute=${institute}`);
   }
 
+  if (session.user.role !== "STUDENT") redirect(`/${institute}`);
+
+  const calendarPromise = getDashboardCalendar(session.user, institute);
   const theme: InstituteTheme = getInstituteTheme(institute);
   const studentId = session.user.id;
 
-  // Resolve institute record
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true, name: true },
-  });
-
-  if (!instituteRecord) {
+  const instituteRecord = session.user.institute;
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 
+  const gamificationPromise = db.gamificationProfile.findUnique({
+    where: { studentId },
+    select: { exp: true, loginStreakCurrent: true, level: true },
+  });
+
   // 1. Fetch student's approved enrolled courses
-  const enrollments = await db.enrollment.findMany({
-    where: {
-      studentId,
-      status: "APPROVED",
-      course: {
-        instituteId: instituteRecord.id,
-        isArchived: false,
+  const [enrollments, gamification] = await Promise.all([
+    db.enrollment.findMany({
+      where: {
+        studentId,
+        status: "APPROVED",
+        course: {
+          instituteId: instituteRecord.id,
+          isArchived: false,
+        },
       },
-    },
-    select: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          code: true,
-          section: true,
-          room: true,
-          description: true,
-          coverImage: true,
-          instructor: {
-            select: {
-              name: true,
+      select: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            section: true,
+            room: true,
+            description: true,
+            coverImage: true,
+            instructor: {
+              select: {
+                name: true,
+              },
             },
           },
         },
       },
-    },
-    orderBy: { displayOrderIndex: "asc" },
-  });
+      orderBy: { displayOrderIndex: "asc" },
+    }),
+    gamificationPromise,
+  ]);
 
   const enrolledCourses = enrollments.map((e) => ({
     id: e.course.id,
@@ -78,21 +89,6 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
 
   const courseIds = enrolledCourses.map((c) => c.id);
 
-  // 2. Fetch submissions to exclude completed classwork
-  const submissions = await db.studentSubmission.findMany({
-    where: {
-      studentId,
-      syllabusItem: { courseId: { in: courseIds } },
-    },
-    select: { syllabusItemId: true, status: true },
-  });
-
-  const submittedIds = new Set(
-    submissions
-      .filter((s) => ["SUBMITTED", "GRADED", "RETURNED"].includes(s.status))
-      .map((s) => s.syllabusItemId)
-  );
-
   // 3. Fetch classwork due in the next 7 days (or overdue and pending)
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -101,13 +97,17 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     where: {
       courseId: { in: courseIds },
       type: { not: "MATERIAL" },
-      id: { notIn: [...submittedIds] },
+      submissions: { none: { studentId, status: { in: ["SUBMITTED", "GRADED", "RETURNED"] } } },
       dueDate: {
         not: null,
         lte: sevenDaysFromNow,
       },
     },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      dueDate: true,
       course: {
         select: {
           id: true,
@@ -131,12 +131,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     courseSection: item.course.section,
   }));
 
-  // 4. Fetch gamification profile
-  const gamification = await db.gamificationProfile.findUnique({
-    where: { studentId },
-    select: { exp: true, loginStreakCurrent: true, level: true },
-  });
-
+  const calendar = await calendarPromise;
   const typingSessionKey = `cdm_typed_${studentId.slice(0, 8)}`;
 
   return (
@@ -146,6 +141,9 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       instituteCode={institute}
       theme={theme}
       initialCourses={enrolledCourses}
+      calendar={calendar}
+      userId={studentId}
+      today={schoolDateKey(now)}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
       exp={gamification?.exp ?? 0}

@@ -1,9 +1,13 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { db } from '@/lib/db';
 import { getOctokitForUser } from '@/lib/github/octokit-client';
 
 export async function GET(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "GET github/auth/status/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -14,6 +15,9 @@ const completeSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST materials/complete/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const { session, response } = await requireWorkspaceSession();
     if (response) return response;

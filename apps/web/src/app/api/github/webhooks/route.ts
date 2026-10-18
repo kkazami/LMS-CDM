@@ -1,9 +1,13 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { invalidateRepoCache } from '@/lib/github/octokit-client';
 
 export async function POST(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "POST github/webhooks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const secret = process.env.GITHUB_WEBHOOK_SECRET || 'dev_test_webhook_secret';
 
 

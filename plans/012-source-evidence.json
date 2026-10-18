@@ -1,0 +1,435 @@
+{
+  "classification": "SOURCE-VERIFIED",
+  "kind": "DOCUMENT_ONLY_SOURCE_EVIDENCE_NOT_LIFECYCLE_INPUT",
+  "date": "2026-10-09",
+  "observedAtUtc": "2026-10-08T17:28:40.3994394Z",
+  "rootR": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton",
+  "rootT": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task",
+  "currentRun": {
+    "id": "run_superuser_20261004",
+    "state": "DRAFT",
+    "next": "requirements",
+    "risk": "HIGH",
+    "attempt": 1,
+    "claim": null,
+    "approvalCount": 0,
+    "artifactCount": 0
+  },
+  "snapshot": {
+    "recordedHead": "aac054bfc42171b7de90c049a319f0d34ecf64b5",
+    "recordedDigest": "9c4cc7834a8615bfad1b11fe243287a49af292a866103dfe7e0de50b3922a1af",
+    "expectedFiles": 1337,
+    "matchedFiles": 1337,
+    "mismatches": [],
+    "independentlyReconstructedDigest": false,
+    "runtimeProof": false
+  },
+  "package": {
+    "path": "plans/012-v1-super-user-hierarchy-contract-adjudication.md",
+    "sha256": "9d7f33e4c9622bb3691bfa3ecdd68cf8035dbe89f1c8edf06ebdc9e9da6dc639",
+    "classification": "PROPOSED",
+    "architecturePassClaimed": false,
+    "reviewDispatched": false,
+    "sourceImplemented": false
+  },
+  "sources": [
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E01",
+      "tree": "T",
+      "path": "prisma/schema.prisma",
+      "sha256": "fd96e91928ac13376d7ba7a7de53a157d1e239bbd3889de990aa49211b6737a9",
+      "methods": "Institute/User/Session/AuditLog/PasswordResetOtp; course scope; no Program or must-change representation",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E02",
+      "tree": "T",
+      "path": "apps/web/src/lib/admin-types.ts",
+      "sha256": "8626d80b42ce1f49a4d2cb1e3f28660dda37c36a6b246c58247562d5cb8c2cba",
+      "methods": "normalizeRole/UserRole/DEFAULT_ROLE_PERMISSIONS/AUDIT_ACTIONS",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E03",
+      "tree": "T",
+      "path": "apps/web/src/lib/rbac.ts",
+      "sha256": "74400c5360711c1087991f86a3efcff62df2762d459c0a1f9f93848f204f0ab8",
+      "methods": "getValidSession/requireAdmin/requirePermission/requireReAuth/createAuditLog",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E04",
+      "tree": "T",
+      "path": "apps/web/src/lib/auth-session.ts",
+      "sha256": "320f39906e2d006046a381375a01ccedff4eef3e274b038faea993e31d13bf14",
+      "methods": "createSession/getSession/deleteSession/hashToken",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E05",
+      "tree": "T",
+      "path": "apps/web/src/lib/api-auth.ts",
+      "sha256": "f8b746b1bdaa2707a18219e6dea2c5b9bfaf9f97c56fbebaefc3c3cd8250f037",
+      "methods": "getSessionFromRequest/validateToken",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E06",
+      "tree": "T",
+      "path": "apps/web/src/lib/auth-schema.ts",
+      "sha256": "28da44acf97b9658774ac097185ed3ee7b7e1a62ef33b042d72a966e7d0d6123",
+      "methods": "instituteCodeSchema/passwordSchema/registerSchema/loginSchema",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E07",
+      "tree": "T",
+      "path": "apps/web/src/lib/db.ts",
+      "sha256": "4a1feaa5965d93f3e8d86ef9d091bb6547fb925b3c15620ab4188d3b8d2f65d3",
+      "methods": "createPrismaClient/singleton; source inspection only",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E08",
+      "tree": "T",
+      "path": "apps/web/src/app/api/auth/login/route.ts",
+      "sha256": "91926498cd818d544b4c96d03fbe4f1d9fbbb2197a3200cdffdd73a72162f087",
+      "methods": "POST; OPTIONS preflight",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E09",
+      "tree": "T",
+      "path": "apps/web/src/app/api/auth/forgot-password/route.ts",
+      "sha256": "853560dc1ee3287c6c2da94f2494a9b5648f3e8d6cf90495d94c2c4200b456ce",
+      "methods": "POST",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E10",
+      "tree": "T",
+      "path": "apps/web/src/app/api/auth/reset-password/route.ts",
+      "sha256": "99143ca4ee4025e79eb94526aa82677ac208dd9016a656907e30d67417b6b00b",
+      "methods": "POST",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E11",
+      "tree": "T",
+      "path": "apps/web/src/lib/mailer.ts",
+      "sha256": "c76c9fab84b41c7f4fb206e76a3a2df25e6377a7eeaff511bd35c9efe4413a42",
+      "methods": "sendEmail/createTransport/getSmtpConfig; no config execution",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E12",
+      "tree": "T",
+      "path": "apps/web/src/app/api/admin/users/route.ts",
+      "sha256": "663b7609c1ac8cb17a00f76a099f338cc08032d4ce530487a94e4a14ced27c19",
+      "methods": "GET/POST",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E13",
+      "tree": "T",
+      "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+      "sha256": "707498a4fc4dde9f6b9f4a0f813ff35be88aca0f5693dc09d8f09dd931a329a8",
+      "methods": "GET/PATCH; DELETE prohibited boundary",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E14",
+      "tree": "T",
+      "path": "apps/web/src/app/api/admin/users/[userId]/status/route.ts",
+      "sha256": "030c78f96a70b0fae2b7550e560e7781bb2c398ec38d8cb0c3a91da5ed0d2b2a",
+      "methods": "PATCH suspension/reactivation",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E15",
+      "tree": "T",
+      "path": "apps/web/src/app/api/admin/users/[userId]/reset-password/route.ts",
+      "sha256": "f41aba25098f6032d57c9a2b13858e0a346eec3340258e7e22aba7af9701cd58",
+      "methods": "POST feasibility only; operation prohibited",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E16",
+      "tree": "T",
+      "path": "apps/web/src/app/api/courses/route.ts",
+      "sha256": "87684c7e642d6ff92e8eea91b1eb0b36348e1f2b1a4381af93a87b244fd3680e",
+      "methods": "GET",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E17",
+      "tree": "T",
+      "path": "apps/web/src/app/api/courses/[courseId]/route.ts",
+      "sha256": "5c910e68ade26ef746a1808a631b7759810635606b01033776493a18fb49c5b7",
+      "methods": "GET",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E18",
+      "tree": "T",
+      "path": "apps/web/src/app/(dashboard)/[institute]/layout.tsx",
+      "sha256": "09362bbeea16ed3dec16ee9f456f995808dcd9980754643fc1bd27cfb562606f",
+      "methods": "InstituteLayout",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E19",
+      "tree": "T",
+      "path": ".orchestra/harness/README.md",
+      "sha256": "dd4fd0b1e22b6474e8af153237401756dfd0c36b03978c845253e98878822b7b",
+      "methods": "Lifecycle/trust/preflight requirements",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E20",
+      "tree": "T",
+      "path": "scripts/harness/types.ts",
+      "sha256": "fb1a7b2b0c399d07d804dded301e6228f1e35b2ae2346c6e447cd63873b5b145",
+      "methods": "STAGES/OWNERS/STATES",
+      "method": "Read source text and SHA-256 bytes only; no import/execution"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E21",
+      "tree": "T",
+      "path": ".orchestra/runs/run_superuser_20261004/state.json",
+      "sha256": "84cdd3d81d77a35fc6553d6794cf4839dcaf3f36a88c028150eb803263bbea4c",
+      "method": "State projection or journal hash only; no mutation or raw credential transmission"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "E22",
+      "tree": "T",
+      "path": ".orchestra/runs/run_superuser_20261004/journal.jsonl",
+      "sha256": "840daff481602965173a75d374b587327defa3fb2b0359fd471581f336ba3aa8",
+      "method": "State projection or journal hash only; no mutation or raw credential transmission"
+    }
+  ],
+  "references": [
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R01",
+      "tree": "R",
+      "path": ".orchestra/runs/controlled-superuser-20261004/controlled-input.json",
+      "sha256": "85070cff2d6993726257ca1ad59d4e0d9b553c9342983ef208bea22e04f2f2b2",
+      "method": "Prompt excerpt only; never transmit actor capabilities"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R02",
+      "tree": "R",
+      "path": "plans/001-super-user-preparation.md",
+      "sha256": "54958ce3b8807730b2f5cbc90db0eb9bf76f2b51036c6fbea2427d8be7104485",
+      "method": "Document reference; no historical rewrite"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R03",
+      "tree": "R",
+      "path": "plans/002-super-user-architecture-adjudication.md",
+      "sha256": "ebf18972df692c542d355086e27dece5e38a500c67fe4c2fa3610c486d5ce32b",
+      "method": "Document reference; no historical rewrite"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R04",
+      "tree": "R",
+      "path": "plans/008-revised-super-user-architecture.md",
+      "sha256": "e4bb9f6eb901866d0116942c9da91b2b7cbd5e1d5bbadc035541659eb169634f",
+      "method": "Document reference; no historical rewrite"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R05",
+      "tree": "R",
+      "path": "plans/011-v1-super-user-scope-correction.md",
+      "sha256": "d03e55e148e3ed8b74e1f2f2a3b7982f8823764a36de56f1696ee564f418726f",
+      "method": "Document reference; no historical rewrite"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R06",
+      "tree": "R",
+      "path": "plans/011-corrected-172-operation-inventory.json",
+      "sha256": "29ea2bcff2cbfabd190f458b03dd12c3ce063657a761ef16bb909bbca350a59f",
+      "method": "Hash/reference only; contents not reopened"
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "R07",
+      "tree": "R",
+      "path": "plans/011-lms-security-backlog.json",
+      "sha256": "263fcc1273ea00f57a143b5b8b3a86b670601017ecdc0eba2c337990c542202b",
+      "method": "Hash/reference only; contents not reopened"
+    }
+  ],
+  "frozenFixtures": [
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F01",
+      "tree": "T",
+      "path": "tests/e2e/controlled/fixture.ts",
+      "frozenSha256": "07ca56d76f370d82cbeca62e82611d4f5ff22c700c7da7d4ec0810b3a36f2155",
+      "observedSha256": "07ca56d76f370d82cbeca62e82611d4f5ff22c700c7da7d4ec0810b3a36f2155",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F02",
+      "tree": "T",
+      "path": "tests/e2e/controlled/seed-fixture.cjs",
+      "frozenSha256": "8dd4a47a2fdf99bbacbe500fc86082d5f03ad5e45392ca8805249a837873eff8",
+      "observedSha256": "8dd4a47a2fdf99bbacbe500fc86082d5f03ad5e45392ca8805249a837873eff8",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F03",
+      "tree": "T",
+      "path": "tests/e2e/controlled/superuser-oversight.spec.ts",
+      "frozenSha256": "683a330a1fab4023348381226e4a41e5c9e3a906b23d9497c7c7843823849a3d",
+      "observedSha256": "683a330a1fab4023348381226e4a41e5c9e3a906b23d9497c7c7843823849a3d",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F04",
+      "tree": "T",
+      "path": "tests/e2e/controlled/CONTRACT.md",
+      "frozenSha256": "d4e0e501912f440b9afe5840907e0f7824940adad00c7796cdbb4c59ee7bdbb5",
+      "observedSha256": "d4e0e501912f440b9afe5840907e0f7824940adad00c7796cdbb4c59ee7bdbb5",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F05",
+      "tree": "T",
+      "path": "tests/e2e/fixtures/test-accounts.ts",
+      "frozenSha256": "238390c87d27b047c5453a1f523663bc0895397b1d3ecf1c0549f76251d76b81",
+      "observedSha256": "238390c87d27b047c5453a1f523663bc0895397b1d3ecf1c0549f76251d76b81",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F06",
+      "tree": "T",
+      "path": "tests/server/controlled/bootstrap.mjs",
+      "frozenSha256": "aba346b2686656110b6af03ca01d681a8664e188d718ff52d2afb3a052974852",
+      "observedSha256": "aba346b2686656110b6af03ca01d681a8664e188d718ff52d2afb3a052974852",
+      "unchanged": true,
+      "productExecuted": false
+    },
+    {
+      "classification": "SOURCE-VERIFIED",
+      "id": "F07",
+      "tree": "T",
+      "path": "tests/server/controlled/superuser-actions.test.mjs",
+      "frozenSha256": "a182ac934937b0a73ebe8856b962224ec6b8cb2aee55629b42165466ac2f04fe",
+      "observedSha256": "a182ac934937b0a73ebe8856b962224ec6b8cb2aee55629b42165466ac2f04fe",
+      "unchanged": true,
+      "productExecuted": false
+    }
+  ],
+  "decisionStatus": {
+    "classification": "HUMAN-DECIDED",
+    "OPEN1": "HUMAN-DECIDED: Program Head is an essential approved capstone requirement deferred beyond V1 to V1.1/V2; no V1 storage, assignment, authority or future global role",
+    "OPEN2": "HUMAN-DECIDED: A selected for comparative architecture review only; no mapping, compatibility grant, run, plan acceptance or implementation approval",
+    "OPEN3": "Two initial identities; outside-app operator bootstrap",
+    "OPEN4": "Dedicated IA reactivate added",
+    "OPEN5": "HUMAN-DECIDED: C selected for comparative architecture review only; operator handoff/audit assignments and ambient credential/reset risks remain unresolved",
+    "V1D09": "Deny-by-default; operational assignments awaiting human",
+    "remainingHumanDecisions": [
+      "Actual per-account transition reviewers/approvers/operator and eligibility ledger",
+      "Temporary legacy compatibility capability entries, expiry/exit date, rollback criteria/window and frozen-positive applicability",
+      "Operator credential handoff, real-holder verification, audit receipt attribution and failed-handoff/reset containment",
+      "Any authentication-contract revision required by independent review",
+      "Bootstrap holders/operator approvals and actual ICS home binding",
+      "Production metadata approver/maintainer/dataset binding/expiry/revocation assignments",
+      "Separate authorization for independent comparative review; final architecture/intake/implementation approvals remain absent"
+    ]
+  },
+  "limitations": [
+    "Source inspection only; no product tests or DB operations",
+    "No provider sessions or review verdict authored",
+    "No accepted stage, approval, lease or new run/input/state",
+    "No credential/environment/signing key values inspected",
+    "172-operation inventory and C backlog referenced/hashed only"
+  ],
+  "programHeadDeferredRequirement": {
+    "classification": "FUTURE REQUIREMENT",
+    "productRequirementApproved": true,
+    "implementationDeferred": "V1.1/V2",
+    "v1Authority": false,
+    "v1DesignationStorage": false,
+    "v1AssignmentWorkflow": false,
+    "speculativeGlobalRole": false,
+    "obligations": [
+      "Authoritative Program model bound to actual institute",
+      "Authoritative course-program relationship",
+      "Eligible Instructor designation for specific program through authorized audited assignment and revocation",
+      "Explicit program-scoped capabilities with current assignment and institute checks on every operation",
+      "No unrelated-program, foreign-institute, IA or global-permission access inferred from designation",
+      "Preserve Instructor behavior and existing course access rules",
+      "Explicit unassociated-course policy; no silent association/backfill/access broadening",
+      "Reviewed migration/backfill plus authorization/concurrency/regression tests before activation",
+      "New approved V1.1/V2 intake, independent architecture, migration and verification plans before implementation"
+    ],
+    "runtimeCompatibilityProved": false
+  },
+  "clarificationRecord": {
+    "classification": "HUMAN-DECIDED",
+    "date": "2026-10-09",
+    "scope": "Document-only clarification; review-candidate selections only",
+    "previousPackageSha256": "b93c44bdc6c4ef3fd4fd60090f6efbae9b74a3786ce40879e33ba1d9c6296ef4",
+    "previousEvidenceManifestSha256": "ddde127dbc5b93a91c523b951d3e022b46b98cecb0ca73dc0f75ff06361e14d5",
+    "currentPackageSha256": "9d7f33e4c9622bb3691bfa3ecdd68cf8035dbe89f1c8edf06ebdc9e9da6dc639",
+    "historicalFindingsReceiptsPassRecordsChanged": false,
+    "independentReviewLaunched": false,
+    "runInitialized": false,
+    "approvalGranted": false,
+    "leaseAcquired": false,
+    "applicationSchemaTestsFixturesHarnessChanged": false
+  },
+  "integrityRecheck": {
+    "classification": "SOURCE-VERIFIED",
+    "clientDate": "2026-10-09",
+    "expectedSnapshotFiles": 1337,
+    "matchedSnapshotFiles": 1337,
+    "frozenFixtureCount": 7,
+    "sourceAndHistoricalReferenceMismatches": [],
+    "stateUnchanged": true,
+    "journalUnchanged": true,
+    "productTestsExecuted": false,
+    "databaseOperationsExecuted": false
+  }
+}

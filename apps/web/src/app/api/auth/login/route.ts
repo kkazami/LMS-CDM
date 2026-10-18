@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
-import { createSession } from "@/lib/auth-session";
+import { createSession, SessionAdmissionError } from "@/lib/auth-session";
+import { canonicalRole, mayAdmitAccount, supportedInstitute } from '@/lib/super-user-v1/capabilities';
 import { processLoginReward } from "@/lib/gamification/login-rewards";
 import {
   getClientIp,
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Account status check
-    if (user.isActive === false) {
+    if (!mayAdmitAccount(user)) {
       return NextResponse.json(
         { message: "Your account has been deactivated. Please contact administration." },
         { status: 403, headers: corsHeaders }
@@ -90,11 +91,15 @@ export async function POST(request: Request) {
     // 6. Enforce dynamic institute scoping
     const userRole = (user.role || "").toUpperCase();
     const isAdmin = userRole === "ADMIN";
+    const isSuperUser = canonicalRole(userRole) === 'SUPER_USER';
     const userInstituteCode = user.institute?.code?.toLowerCase();
     const targetInstituteCode = requestedInstituteCode.toLowerCase();
 
     // Students and teachers are locked to their appointed portal. Admins can log in from any portal.
-    if (!isAdmin && userInstituteCode !== targetInstituteCode) {
+    if (isSuperUser && !supportedInstitute(targetInstituteCode)) {
+      return NextResponse.json({ message: 'Unsupported institute.' }, { status: 400, headers: corsHeaders });
+    }
+    if (!isAdmin && !isSuperUser && userInstituteCode !== targetInstituteCode) {
       const userInstituteName = user.institute?.name || userInstituteCode?.toUpperCase();
       return NextResponse.json(
         {
@@ -105,11 +110,13 @@ export async function POST(request: Request) {
     }
 
     // 7. Create database session with 256-bit CSPRNG token (SHA-256 hashed in DB)
+    const initialSuperInstitute = isSuperUser ? await db.institute.findUnique({ where: { code: 'ics' }, select: { code: true, name: true } }) : null;
+    if (isSuperUser && !initialSuperInstitute) return NextResponse.json({ message: 'Institute not found.' }, { status: 404, headers: corsHeaders });
     const userAgent = request.headers.get("user-agent") || undefined;
     const { token, expiresAt } = await createSession(user.id, {
       userAgent,
       ipAddress: clientIp,
-    });
+    }, user.password, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState });
 
     // 8. Daily login rewards (for students)
     let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
@@ -121,8 +128,8 @@ export async function POST(request: Request) {
       console.error("LOGIN_REWARD_ERROR", rewardErr);
     }
 
-    const instituteCode = user.institute?.code || targetInstituteCode;
-    const instituteName = user.institute?.name || `${instituteCode.toUpperCase()} Institute`;
+    const instituteCode = isSuperUser ? 'ics' : user.institute?.code || targetInstituteCode;
+    const instituteName = initialSuperInstitute?.name || user.institute?.name || `${instituteCode.toUpperCase()} Institute`;
 
     // 9. Return opaque token (NOT internal session.id)
     return NextResponse.json(
@@ -152,8 +159,8 @@ export async function POST(request: Request) {
       { status: 200, headers: corsHeaders }
     );
   } catch (error: unknown) {
-    const err = error as { message?: string; stack?: string };
-    console.error("LOGIN_ERROR:", err?.message || error, err?.stack);
+    if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
+    console.error('LOGIN_OPERATION_UNAVAILABLE');
 
     return NextResponse.json(
       {

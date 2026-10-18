@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { CheckCircle2, XCircle, Clock, Calendar, AlertCircle } from "lucide-react";
 
@@ -6,6 +7,8 @@ interface AttendancePageProps {
 }
 
 export default async function AttendancePage({ params }: AttendancePageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/attendance/page.tsx", await params);
+
   const { institute } = await params;
   const theme = getInstituteTheme(institute);
 

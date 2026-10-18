@@ -1,0 +1,35 @@
+{
+  "kind": "narrow-provider-dispatch-availability-diagnosis",
+  "runId": "run_superuser_20261004",
+  "previousRefusal": "docker login service unavailable: cannot determine whether a refresh right now would be safe to guard",
+  "restrictedContext": "Default restricted execution could not use the login-service guard; Windows service inspection was also denied.",
+  "trustedHostEvidence": {
+    "sandboxDaemon": "running and healthy v0.46.0",
+    "sandboxDaemonIPC": "\\\\.\\pipe\\docker_kaname_sandboxd",
+    "supportedDiagnoseAuthentication": "PASS authenticated",
+    "diagnosticFailures": 0,
+    "identicalApprovedWorkerExec": "exit 0; Linux guest v22.22.1",
+    "guestUid": 1000,
+    "hostWorkspaceMountObserved": false,
+    "virtiofsMountsObserved": ["/etc/resolv.conf ro,relatime"]
+  },
+  "diagnosis": "Context-dependent inability to reach the host login-service guard from the restricted execution principal. The trusted host can reach the approved daemon and authenticated login state. This comparison supports a host access/context problem; the exact login-service endpoint ACL was not independently inspected.",
+  "smallestSupportedRecovery": "Execute approved isolated-provider dispatch through the user-authorized trusted host context. No service restart, login command, credential refresh, endpoint editing, policy change or replacement provider.",
+  "harmlessCodexSession": {
+    "session": "01a11b57-0691-7e91-aff4-ccdca29cc7e3",
+    "requestHash": "bcc0a656069e19d3a44b61cb0cdf54525b9859613858c66ee0107bdaafd5a91d",
+    "startedAt": "2026-10-08T11:47:29.075Z",
+    "exitCode": 0,
+    "successful": true,
+    "prohibitedToolItems": 0,
+    "receipt": "005-su-provider-harmless-2d4e7024-ec01-49aa-8fe7-15971bd1fd38.receipt.json"
+  },
+  "provider": "Existing approved microVM worker and Docker Sandboxes Codex OAuth broker",
+  "runtimeRepairReopened": false,
+  "credentialsReadOrRefreshed": false,
+  "signingKeysRead": false,
+  "fallbackUsed": false,
+  "isolationWeakened": false,
+  "implementationLeaseAcquired": false,
+  "formalStageAccepted": false
+}

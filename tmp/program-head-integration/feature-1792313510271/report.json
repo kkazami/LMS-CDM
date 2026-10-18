@@ -1,0 +1,130 @@
+{
+  "startedAt": "2026-10-18T08:51:50.271Z",
+  "sharedDatabase": false,
+  "OSIsolation": false,
+  "checks": [
+    {
+      "name": "operator setup requires a real ICS Admin and preserves unrelated Calendar data",
+      "result": "PASS"
+    },
+    {
+      "name": "chart uses persisted memberships and ICS-only scope",
+      "result": "PASS"
+    },
+    {
+      "name": "real chart handler authenticates and rejects unknown/admin/student roles",
+      "result": "PASS"
+    },
+    {
+      "name": "head-only chart edit, stale version, origin and protected root",
+      "result": "PASS"
+    },
+    {
+      "name": "class list and Stream/Meet are read-only and program-scoped",
+      "result": "PASS"
+    },
+    {
+      "name": "audit failure rolls back chart and version atomically",
+      "result": "PASS"
+    },
+    {
+      "name": "current designation and account status are revalidated",
+      "result": "PASS"
+    },
+    {
+      "name": "database rejects application-minted program authority",
+      "result": "PASS"
+    },
+    {
+      "name": "existing Calendar data and timestamp semantics remain intact",
+      "result": "PASS"
+    },
+    {
+      "name": "restricted local writer qualifies only with actual guards and bindings",
+      "result": "PASS"
+    },
+    {
+      "name": "browser chart icon opens instructor classes and Stream with Meet link",
+      "result": "PASS"
+    },
+    {
+      "name": "browser ordinary faculty sees chart but cannot open oversight",
+      "result": "PASS"
+    },
+    {
+      "name": "browser retains main dashboard Calendar without replacement route",
+      "result": "PASS"
+    },
+    {
+      "name": "actual Super User login and dedicated institute shell",
+      "result": "PASS"
+    },
+    {
+      "name": "all instrumented legacy HTTP operations reject authenticated Super User",
+      "result": "PASS"
+    },
+    {
+      "name": "exported server actions, callable skills and Judge0 tool deny Super User",
+      "result": "PASS"
+    },
+    {
+      "name": "browser has no runtime errors or server failures",
+      "result": "PASS"
+    }
+  ],
+  "schemaCommand": {
+    "command": "pnpm exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    "code": 0,
+    "signal": null,
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\n"
+  },
+  "target": {
+    "database": "harness_superuser_1792313516788",
+    "port": 57668,
+    "host": "127.0.0.1",
+    "provenance": ".orchestra\\product-development\\program-head-integration\\local_1792313511779_78b8f375"
+  },
+  "boundaryInstallation": {
+    "commitAcknowledged": true,
+    "runtimePrincipal": "lms_local_runtime",
+    "operatorPrincipal": "lms_local_operator",
+    "files": [
+      {
+        "path": "prisma/super-user-v1/current-target-security.sql",
+        "sha256": "2b6975b8a08345971e2f35e8819d1946e5aefddff079a8ba44964abafa6972d3"
+      },
+      {
+        "path": "prisma/super-user-v1/guard-validation.sql",
+        "sha256": "c2ed136ba091470ca9f08d1bc8e0a88fd73b6534a20d88a30f6c7b2282dff95d"
+      },
+      {
+        "path": "prisma/super-user-v1/ics-faculty-designation.sql",
+        "sha256": "22408a30e5d831c872087492a7ef79760fa54a9b3af38dea952b8faab0113800"
+      }
+    ]
+  },
+  "server": {
+    "argv": [
+      "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\node_modules\\.pnpm\\next@16.2.0_@babel+core@7.2_830e0b59bc6b1bdfcaa297e2fa12b30a\\node_modules\\next\\dist\\bin\\next",
+      "start",
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      "60219"
+    ],
+    "pid": 35876,
+    "base": "http://127.0.0.1:60219",
+    "buildId": "qXpYU7Sy6B0Jj5S9kbChG"
+  },
+  "superLoginStatus": 200,
+  "superBrowserCookieStatus": 200,
+  "superOversightStatus": 200,
+  "deniedExportedCallables": 54,
+  "deniedJudge0Tool": true,
+  "serverClose": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "clusterStopped": true,
+  "finishedAt": "2026-10-18T08:52:13.517Z"
+}

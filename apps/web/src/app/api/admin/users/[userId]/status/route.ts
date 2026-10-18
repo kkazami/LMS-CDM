@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Account Status API — Activate / Suspend
  *
@@ -22,6 +23,9 @@ type RouteContext = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH admin/users/[userId]/status/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const { userId } = await context.params;

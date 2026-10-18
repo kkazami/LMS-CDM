@@ -154,7 +154,7 @@ export default function BulkImportModal({
               <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-xs text-blue-700 dark:text-blue-300">
                 <p className="font-semibold">CSV Format Required</p>
                 <p className="mt-1">Headers: <code className="rounded bg-blue-500/20 px-1 py-0.5 font-mono">name,email,uniqueId,role</code></p>
-                <p className="mt-1">Roles: STUDENT, INSTRUCTOR, ADMIN. Default is STUDENT if omitted.</p>
+                <p className="mt-1">Roles: STUDENT, INSTRUCTOR. Default is STUDENT if omitted.</p>
               </div>
 
               {/* File upload */}

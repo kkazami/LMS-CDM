@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -13,6 +14,9 @@ interface RouteContext {
  * Fetches student rosters, assignments, submission states, and grade matrix for instructor review.
  */
 export async function GET(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "GET courses/[courseId]/gradebook/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

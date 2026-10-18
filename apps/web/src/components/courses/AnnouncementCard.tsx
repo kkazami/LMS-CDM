@@ -6,6 +6,8 @@ import UserAvatar from "@/components/common/UserAvatar";
 import UserMiniCard from "@/components/common/UserMiniCard";
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { googleMeetLinks } from "@/lib/academic-structure/meeting-links";
+import GoogleMeetLinks from "./GoogleMeetLinks";
 
 interface AnnouncementCardProps {
   announcement: {
@@ -181,9 +183,12 @@ export default function AnnouncementCard({
               </div>
             </div>
           ) : (
-            <div className="mt-2 text-sm text-slate-700 dark:text-[#D1D5DB] whitespace-pre-wrap leading-relaxed">
-              {announcement.content}
-            </div>
+            <>
+              <div className="mt-2 text-sm text-slate-700 dark:text-[#D1D5DB] whitespace-pre-wrap break-words leading-relaxed [overflow-wrap:anywhere]">
+                {announcement.content}
+              </div>
+              <GoogleMeetLinks links={googleMeetLinks(announcement.content)} />
+            </>
           )}
         </div>
       </div>

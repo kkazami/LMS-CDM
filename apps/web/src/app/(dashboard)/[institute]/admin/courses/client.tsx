@@ -13,6 +13,7 @@ import {
   adminUpdateCourse,
   adminDeleteCourse,
   getInstructors,
+  adminSetCourseProgram,
 } from "./actions";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -26,10 +27,36 @@ interface CourseWithInstructor {
   subject: string;
   room: string;
   description: string;
+  programId: string | null;
+  program: (Program & { isActive: boolean }) | null;
   instructorId: string | null;
   instructor: { id: string; name: string; email: string } | null;
   createdAt: Date;
   _count: { enrollments: number };
+}
+
+type Program = { id: string; code: string; name: string };
+const selectClass = "w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] focus-visible:outline-2 focus-visible:outline-orange-600";
+
+function ProgramOptions({ programs, course }: { programs: Program[]; course?: CourseWithInstructor | null }) {
+  return <>
+    <option value="">No program assigned</option>
+    {course?.program && !programs.some(p => p.id === course.programId) && <option value={course.program.id}>{course.program.code} (inactive)</option>}
+    {programs.map(program => <option key={program.id} value={program.id}>{program.code} · {program.name}</option>)}
+  </>;
+}
+
+function CourseProgramEditor({ course, programs, instituteCode }: { course: CourseWithInstructor; programs: Program[]; instituteCode: string }) {
+  const [state, action, pending] = useActionState(adminSetCourseProgram, { message: "" });
+  return <form action={action} className="min-w-52 space-y-2">
+    <input type="hidden" name="id" value={course.id} />
+    <input type="hidden" name="instituteCode" value={instituteCode} />
+    <select key={course.programId ?? ''} name="programId" aria-label={`Program for ${course.code} ${course.section}`} defaultValue={course.programId ?? ''} disabled={pending} className={selectClass}>
+      <ProgramOptions programs={programs} course={course} />
+    </select>
+    <button disabled={pending} className="min-h-9 rounded-lg border border-slate-300 px-3 py-2 font-semibold hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-orange-600 disabled:opacity-50 dark:border-white/20 dark:hover:bg-white/5">{pending ? 'Saving…' : 'Save program'}</button>
+    <p role="status" className="text-xs">{state.message}</p>
+  </form>;
 }
 
 interface Instructor {
@@ -89,13 +116,18 @@ const initialState = {
 
 export default function AdminCoursesClient({
   courses,
+  programs,
+  initialInstructorId = "",
   instituteCode,
   theme,
 }: {
   courses: CourseWithInstructor[];
+  programs: Program[];
+  initialInstructorId?: string;
   instituteCode: string;
   theme: InstituteTheme;
 }) {
+  const [instructorFilter, setInstructorFilter] = useState(initialInstructorId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseWithInstructor | null>(null);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -138,6 +170,8 @@ export default function AdminCoursesClient({
   const columns: TableColumn<CourseWithInstructor>[] = [
     { key: "code", header: "Code" },
     { key: "title", header: "Title" },
+    { key: "section", header: "Section" },
+    { key: "program", header: "Program", render: row => <CourseProgramEditor key={row.id} course={row} programs={programs} instituteCode={instituteCode} /> },
     {
       key: "courseCode",
       header: "Join Code",
@@ -187,7 +221,14 @@ export default function AdminCoursesClient({
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <label className="grid gap-2 text-sm font-semibold">Instructor
+          <select aria-label="Instructor" value={instructorFilter} onChange={event => setInstructorFilter(event.target.value)} className={selectClass}>
+            <option value="">All instructors</option>
+            <option value="unassigned">No instructor assigned</option>
+            {Array.from(new Map(courses.flatMap(course => course.instructor ? [[course.instructor.id, course.instructor] as const] : [])).values()).sort((a, b) => a.name.localeCompare(b.name)).map(instructor => <option key={instructor.id} value={instructor.id}>{instructor.name}</option>)}
+          </select>
+        </label>
         <Button theme={theme} onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" /> New Course
         </Button>
@@ -196,8 +237,8 @@ export default function AdminCoursesClient({
       <Table
         theme={theme}
         columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
-        rows={courses as unknown as Record<string, unknown>[]}
-        emptyMessage="No courses created yet. Click 'New Course' to get started."
+        rows={courses.filter(course => !instructorFilter || (instructorFilter === "unassigned" ? !course.instructorId : course.instructorId === instructorFilter)) as unknown as Record<string, unknown>[]}
+        emptyMessage="No classes found for this instructor."
       />
 
       <Modal
@@ -208,7 +249,7 @@ export default function AdminCoursesClient({
           setEditingCourse(null);
         }}
       >
-        <form action={formAction} className="space-y-4">
+        <form key={editingCourse?.id ?? "new"} action={formAction} className="space-y-4">
           <input type="hidden" name="instituteCode" value={instituteCode} />
           {editingCourse && (
             <input type="hidden" name="id" value={editingCourse.id} />
@@ -300,6 +341,13 @@ export default function AdminCoursesClient({
                 {field}: {(msgs as string[]).join(", ")}
               </p>
             ))}
+
+          <label className="grid gap-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Program
+            <select aria-label="Program" name="programId" defaultValue={editingCourse?.programId ?? ''} className={selectClass} aria-describedby="course-program-help">
+              <ProgramOptions programs={programs} course={editingCourse} />
+            </select>
+            <span id="course-program-help" className="font-normal text-slate-500 dark:text-slate-400">Optional. Choose the actual program; the section name does not assign one.</span>
+          </label>
 
           <SubmitButton isEdit={!!editingCourse} theme={theme} />
         </form>

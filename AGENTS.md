@@ -13,7 +13,8 @@ LMS monorepo. pnpm@10.32.1 workspaces + Turbo. Read `.agents/rules/current-lms-a
 - Web dev: `pnpm dev:web` (binds `0.0.0.0`). Web build: `pnpm build:web` (regenerates Prisma first).
 - Mobile: `pnpm dev:mobile`; typecheck `pnpm --filter mobile typecheck` (excludes `src/legacy-app`).
 - Desktop: `pnpm dev:desktop`; `pnpm build:desktop`.
-- No test framework, no test files, no CI, and no root lint/typecheck script. `turbo lint` only runs mobile's `echo`. For web, use `pnpm --filter web exec tsc --noEmit` or `pnpm build:web`.
+- Playwright E2E tests live in tests/e2e; harness safety tests use Node's test runner in tests/harness. Run pnpm harness:test and pnpm harness:typecheck. There is no root product lint/typecheck script; turbo lint only runs mobile's echo. For web, use pnpm --filter web exec tsc --noEmit or pnpm build:web.
+- Engineering harness: read .orchestra/harness/README.md. pnpm harness controls v2 runs; pnpm harness:verify validates a release run. pnpm harness:check proves static sensors only. Historical rubric scores and manually edited state are not evidence.
 
 ## Prisma / database
 - Provider is **PostgreSQL** only; the `file:./dev.db` line in `.env.example` is stale.
@@ -31,7 +32,7 @@ LMS monorepo. pnpm@10.32.1 workspaces + Turbo. Read `.agents/rules/current-lms-a
 ## Security
 - Gated routes MUST be protected. Do not rely on `middleware.ts` alone for authorization — it only checks cookie presence.
 - Always enforce RBAC for student vs. professor vs. admin views using `src/lib/rbac.ts` and the `(dashboard)/[institute]/layout.tsx` scoping.
-- API route handlers are not covered by middleware (`/api` is excluded). Each handler must verify the session itself (see `src/lib/api-auth.ts`).
+- Each API handler must verify the session itself (see src/lib/api-auth.ts). Current middleware may apply API headers and pass through; it does not authorize API resources.
 
 ## Gotchas
 - Interactive activities (`codelab`, `arduino`, `logic-gate`, `pc-build`, `server-rack`) use react-three-fiber + Monaco and depend on an external Judge0 service: `docker compose -f docker/docker-compose.judge0.yml up -d` (localhost:2358).

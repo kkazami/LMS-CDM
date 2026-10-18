@@ -1,0 +1,2 @@
+import InstituteCourseList from '@/components/super-user-v1/InstituteCourseList';
+export default async function Courses({ params }: { params: Promise<{ institute: string }> }) { const { institute } = await params; return <InstituteCourseList institute={institute} administrative />; }

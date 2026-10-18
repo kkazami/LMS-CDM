@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
@@ -60,6 +61,9 @@ function checkRateLimit(userId: string): boolean {
 }
 
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST judge0/submit/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Session check
     const session = await getSession();

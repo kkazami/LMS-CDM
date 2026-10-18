@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/auth-session";
@@ -20,6 +21,8 @@ export default async function KnowledgeExchangeAskPage({
   params,
   searchParams,
 }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/ask/page.tsx", await params);
+
   const { institute } = await params;
   const { courseId } = await searchParams;
   const session = await getSession();

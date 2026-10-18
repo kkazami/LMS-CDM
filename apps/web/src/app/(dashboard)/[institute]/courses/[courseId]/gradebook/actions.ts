@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -54,6 +56,8 @@ export interface GradebookData {
 }
 
 export async function getGradebookData(courseId: string): Promise<GradebookData> {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#getGradebookData", () => ({ courseId }));
+
   await ensureInstructor(courseId);
 
   const [enrollments, syllabusItems, submissions, gradingPolicy] = await Promise.all([
@@ -142,6 +146,8 @@ export async function getGradebookData(courseId: string): Promise<GradebookData>
 }
 
 export async function updateGrade(submissionId: string, rawGrade: number) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#updateGrade", () => ({ submissionId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
@@ -210,6 +216,8 @@ export async function updateGrade(submissionId: string, rawGrade: number) {
 }
 
 export async function upsertGrade(syllabusItemId: string, studentId: string, rawGrade: number) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#upsertGrade", () => ({ syllabusItemId, studentId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
@@ -286,6 +294,8 @@ export async function upsertGrade(syllabusItemId: string, studentId: string, raw
 }
 
 export async function clearGrade(syllabusItemId: string, studentId: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#clearGrade", () => ({ syllabusItemId, studentId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
@@ -330,6 +340,8 @@ export async function saveGradingPolicy(
   courseId: string, 
   weights: { category: string; weightPercentage: number }[]
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#saveGradingPolicy", () => ({ courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
@@ -370,6 +382,8 @@ export async function saveGradingPolicy(
 }
 
 export async function exportGradebook(courseId: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#exportGradebook", () => ({ courseId }));
+
   return executeSkill("gradebook-exporter", async () => {
     await ensureInstructor(courseId);
 

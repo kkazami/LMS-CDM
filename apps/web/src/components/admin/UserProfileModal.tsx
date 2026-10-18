@@ -224,9 +224,7 @@ export default function UserProfileModal({
                 className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
               >
                 <option value="STUDENT">Student</option>
-                <option value="INSTRUCTOR">Instructor</option>
-                <option value="ADMIN">Admin</option>
-              </select>
+                <option value="INSTRUCTOR">Instructor</option>              </select>
             </div>
           )}
 
