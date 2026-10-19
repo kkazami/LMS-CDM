@@ -1,20 +1,10 @@
 "use client";
-
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Modal from "@/components/common/Modal";
 import type { InstituteTheme } from "@/lib/theme";
 import type { LMSUser } from "@/lib/admin-types";
-
-interface UserProfileModalProps {
-  open: boolean;
-  mode: "create" | "edit";
-  theme: InstituteTheme;
-  instituteCode: string;
-  user?: LMSUser;
-  onClose: () => void;
-  onSuccess: (message: string) => void;
-}
-
+import { fieldClass, secondaryClass, rosterRequest } from "./roster-client";
 export default function UserProfileModal({
   open,
   mode,
@@ -23,267 +13,239 @@ export default function UserProfileModal({
   user,
   onClose,
   onSuccess,
-}: UserProfileModalProps) {
-  const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [uniqueId, setUniqueId] = useState(user?.uniqueId ?? "");
-  const [studentNumber, setStudentNumber] = useState(user?.studentNumber ?? "");
-  const [role, setRole] = useState(user?.role ?? "STUDENT");
-  const [selectedInstitute, setSelectedInstitute] = useState(user?.instituteCode ?? instituteCode ?? "ics");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [tempPassword, setTempPassword] = useState("");
-
-  if (!open) return null;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+}: {
+  open: boolean;
+  mode: "create" | "edit";
+  theme: InstituteTheme;
+  instituteCode: string;
+  user?: LMSUser;
+  onClose: () => void;
+  onSuccess: (message: string) => void;
+}) {
+  const [role, setRole] = useState(user?.role ?? "STUDENT"),
+    [name, setName] = useState(user?.name ?? "");
+  const [first, setFirst] = useState(user?.firstName ?? ""),
+    [last, setLast] = useState(user?.lastName ?? "");
+  const [email, setEmail] = useState(user?.email ?? ""),
+    [id, setId] = useState(user?.studentNumber ?? user?.uniqueId ?? "");
+  const [program, setProgram] = useState(user?.program ?? ""),
+    [section, setSection] = useState(user?.section ?? "");
+  const [programs, setPrograms] = useState<
+      Array<{ code: string; name: string }>
+    >([]),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [temporary, setTemporary] = useState("");
+  useEffect(() => {
+    if (open)
+      rosterRequest<{ programs: Array<{ code: string; name: string }> }>(
+        "/api/admin/terms",
+      )
+        .then((data) => setPrograms(data.programs))
+        .catch((e) => setError(e.message));
+  }, [open]);
+  async function submit() {
+    setBusy(true);
     setError("");
-    setTempPassword("");
-
     try {
-      if (mode === "create") {
-        const res = await fetch("/api/admin/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId, studentNumber, role, instituteCode: selectedInstitute }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-
-        if (data.temporaryPassword) {
-          setTempPassword(data.temporaryPassword);
-          return; // Don't close yet — show the password
-        }
-
-        onSuccess("User created successfully.");
-      } else {
-        const res = await fetch(`/api/admin/users/${user?.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, uniqueId, studentNumber, instituteCode: selectedInstitute }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-
-        onSuccess("User updated successfully.");
+      const student = role === "STUDENT";
+      const body = student
+        ? {
+            first_name: first,
+            last_name: last,
+            email,
+            studentNumber: id,
+            program,
+            section,
+            role,
+            instituteCode,
+          }
+        : { name, email, uniqueId: id, role, instituteCode };
+      const response = await rosterRequest<{
+        temporaryPassword?: string;
+        message: string;
+      }>(
+        mode === "create" ? "/api/admin/users" : "/api/admin/users/" + user?.id,
+        body,
+        mode === "create" ? "POST" : "PATCH",
+      );
+      if (response.temporaryPassword && !student) {
+        setTemporary(response.temporaryPassword);
+        return;
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred.");
+      onSuccess(response.message);
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
-
-  // If we're showing the temp password after creation
-  if (tempPassword) {
-    return (
-      <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">Account Created</h3>
-            <button
-              onClick={() => {
-                setTempPassword("");
-                onSuccess("User created successfully.");
-              }}
-              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Temporary Password</p>
-              <p className="mt-1 text-[11px] text-amber-600/90 dark:text-amber-300/80">
-                This password is shown only once. Share it securely with the user.
-              </p>
-              <div className="mt-3 rounded-xl bg-white dark:bg-[#1E2132] px-3 py-2 font-mono text-sm text-slate-900 dark:text-[#F0F2F8] border border-amber-500/30 text-center font-bold tracking-wider">
-                {tempPassword}
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(tempPassword);
-                setTempPassword("");
-                onSuccess("User created. Password copied to clipboard.");
-              }}
-              className="w-full rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              Copy & Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-6 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">
-            {mode === "create" ? "Create New User" : "Edit User Profile"}
-          </h3>
+    <Modal
+      open={open}
+      title={mode === "create" ? "Create User" : "Edit User"}
+      onClose={onClose}
+    >
+      {temporary ? (
+        <div className="space-y-4">
+          <p>Instructor credentials are shown once. Share them securely.</p>
+          <p className="break-all rounded-lg border p-4 font-mono">
+            {temporary}
+          </p>
           <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-            aria-label="Close modal"
+            className={secondaryClass}
+            onClick={() => onSuccess("Instructor created.")}
           >
-            <X className="h-4 w-4" />
+            Done
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label htmlFor="user-name" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-              Full Name
-            </label>
-            <input
-              id="user-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
-              placeholder="e.g. Juan Dela Cruz"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label htmlFor="user-email" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-              Institutional Email
-            </label>
-            <input
-              id="user-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
-              placeholder="e.g. jdelacruz@university.edu"
-            />
-          </div>
-
-          {/* Unique ID */}
-          <div>
-            <label htmlFor="user-uniqueid" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-              {role === "STUDENT" ? "Student ID / Internal Reference" : "Employee / User ID"}
-            </label>
-            <input
-              id="user-uniqueid"
-              type="text"
-              value={uniqueId}
-              onChange={(e) => setUniqueId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
-              placeholder="e.g. 24-00123 or EMP-042"
-            />
-          </div>
-
-          {role === "STUDENT" && (
-            <div>
-              <label htmlFor="user-studentnumber" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-                Official Student Number
-              </label>
-              <input
-                id="user-studentnumber"
-                type="text"
-                value={studentNumber}
-                onChange={(e) => {
-                  let val = e.target.value.replace(/[^\d-]/g, "");
-                  if (val.length === 2 && !val.includes("-") && e.target.value.length > studentNumber.length) {
-                    val = val + "-";
-                  }
-                  setStudentNumber(val.slice(0, 8));
-                }}
-                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
-                placeholder="Format: XX-XXXXX (e.g. 23-00875)"
-              />
-              <p className="mt-1.5 text-[11px] text-slate-400 dark:text-[#8B92A5]">Must be in the format XX-XXXXX (e.g. 23-00875)</p>
-            </div>
-          )}
-
-          {/* Role — only on create */}
+      ) : (
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
           {mode === "create" && (
-            <div>
-              <label htmlFor="user-role" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-                Role
-              </label>
+            <label className="grid gap-2 text-sm">
+              Account type
               <select
-                id="user-role"
+                className={fieldClass}
                 value={role}
-                onChange={(e) => setRole(e.target.value as "ADMIN" | "INSTRUCTOR" | "STUDENT")}
-                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+                onChange={(e) =>
+                  setRole(e.target.value as "STUDENT" | "INSTRUCTOR")
+                }
               >
                 <option value="STUDENT">Student</option>
-                <option value="INSTRUCTOR">Instructor</option>              </select>
-            </div>
-          )}
-
-          {/* Appointed Institute Campus */}
-          <div>
-            <label htmlFor="user-institute" className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
-              Appointed Institute Campus
+                <option value="INSTRUCTOR">Instructor</option>
+              </select>
             </label>
-            <select
-              id="user-institute"
-              value={selectedInstitute}
-              onChange={(e) => setSelectedInstitute(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
-            >
-              <option value="ics">Institute of Computer Studies (ICS)</option>
-              <option value="ibe">Institute of Business and Education (IBE)</option>
-              <option value="ite">Institute of Technology and Engineering (ITE)</option>
-            </select>
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-[#8B92A5]">
-              {mode === "create"
-                ? "Select the institute campus this user account will be appointed to."
-                : "Reassign this user account to a different institute campus if required."}
-            </p>
-          </div>
-
-          {/* Error */}
+          )}
+          {role === "STUDENT" ? (
+            <>
+              <label className="grid gap-2 text-sm">
+                First name
+                <input
+                  className={fieldClass}
+                  required
+                  maxLength={100}
+                  value={first}
+                  onChange={(e) => setFirst(e.target.value)}
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                Last name
+                <input
+                  className={fieldClass}
+                  required
+                  maxLength={100}
+                  value={last}
+                  onChange={(e) => setLast(e.target.value)}
+                />
+              </label>
+            </>
+          ) : (
+            <label className="grid gap-2 text-sm">
+              Full name
+              <input
+                className={fieldClass}
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+          )}
+          <label className="grid gap-2 text-sm">
+            Email
+            <input
+              className={fieldClass}
+              type="email"
+              required
+              value={email}
+              readOnly={
+                mode === "edit" &&
+                user?.activationStatus === "PENDING_ACTIVATION"
+              }
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          {mode === "edit" &&
+            user?.activationStatus === "PENDING_ACTIVATION" && (
+              <Link
+                className="inline-block text-sm underline underline-offset-4"
+                href={"/" + instituteCode + "/admin/onboarding?tab=invitations"}
+              >
+                Correct Email and Send New Invitation
+              </Link>
+            )}
+          <label className="grid gap-2 text-sm">
+            {role === "STUDENT" ? "Student ID" : "Employee ID"}
+            <input
+              className={fieldClass}
+              value={id}
+              required={role === "STUDENT"}
+              readOnly={mode === "edit" && role === "STUDENT"}
+              maxLength={64}
+              pattern={role === "STUDENT" ? "[A-Za-z0-9-]+" : undefined}
+              onChange={(e) => setId(e.target.value)}
+            />
+          </label>
+          {role === "STUDENT" && (
+            <>
+              <label className="grid gap-2 text-sm">
+                Program
+                <select
+                  className={fieldClass}
+                  value={program}
+                  required
+                  onChange={(e) => setProgram(e.target.value)}
+                >
+                  <option value="">Choose an active program</option>
+                  {programs.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.code} · {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm">
+                Section
+                <input
+                  className={fieldClass}
+                  required
+                  maxLength={100}
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                />
+              </label>
+              {mode === "create" && (
+                <p className="text-sm">
+                  Students set their own password through an activation
+                  invitation. No temporary password is created.
+                </p>
+              )}
+            </>
+          )}
+          <p className="text-sm">Institute: {instituteCode.toUpperCase()}</p>
           {error && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-red-700 dark:text-red-300">
               {error}
-            </div>
+            </p>
           )}
-
-          {/* Info for create */}
-          {mode === "create" && (
-            <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-700 dark:text-blue-300">
-              A temporary password will be auto-generated and displayed after creation.
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/80 dark:border-white/10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {loading ? "Saving..." : mode === "create" ? "Create User" : "Save Changes"}
-            </button>
-          </div>
+          <button
+            className={secondaryClass + " w-full"}
+            style={{ borderColor: theme.colors.primary }}
+            disabled={busy}
+          >
+            {busy
+              ? "Saving…"
+              : mode === "create"
+                ? "Create User"
+                : "Save Changes"}
+          </button>
         </form>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }

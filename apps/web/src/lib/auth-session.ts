@@ -149,7 +149,7 @@ export async function validateSessionToken(rawToken: string) {
     // Check if user account is active
     // Retain authenticated unknown-role identity solely so entry-point ceilings
     // can return 403. Unknown roles cannot create sessions or pass any role guard.
-    if (session.user.isActive && canonicalRole(session.user.role) === 'UNKNOWN' && session.tokenHash === tokenHash) return session;
+    if (session.user.isActive && session.user.activationStatus === 'ACTIVE' && canonicalRole(session.user.role) === 'UNKNOWN' && session.tokenHash === tokenHash) return session;
     if (!mayAdmitAccount(session.user) || (privilegedRole(session.user.role) && session.tokenHash !== tokenHash)) {
       // Purge session for deactivated user
       await db.session.delete({ where: { id: session.id } }).catch(() => {});

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Clock, ChevronDown, ChevronUp, Filter, Inbox, BookOpen } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import { useTheme } from "@/lib/theme-context";
+import GoogleMeetLinks from "@/components/courses/GoogleMeetLinks";
+import { googleMeetLinks } from "@/lib/academic-structure/meeting-links";
 import type { AnnouncementItem, EnrolledCourseOption } from "./page";
 
 interface AnnouncementsClientProps {
@@ -264,7 +266,7 @@ export default function AnnouncementsClient({
 
                       {/* Body */}
                       <div className="mt-3">
-                        <p className="text-sm text-slate-700 dark:text-[#D1D5DB] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-sm text-slate-700 dark:text-[#D1D5DB] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                           {isExpanded ? ann.content : truncated}
                         </p>
                       </div>
@@ -287,6 +289,7 @@ export default function AnnouncementsClient({
                           )}
                         </button>
                       )}
+                      <GoogleMeetLinks links={googleMeetLinks(ann.content)} />
                     </div>
                   </div>
                 </div>

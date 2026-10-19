@@ -52,11 +52,12 @@ export async function POST(request: Request, context: RouteContext) {
     // Check target user exists
     const targetUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, activationStatus: true },
     });
     if (!targetUser) {
       return NextResponse.json({ message: 'User not found.' }, { status: 404 });
     }
+    if (targetUser.activationStatus !== 'ACTIVE') return NextResponse.json({ message: 'This account must be activated by its owner. Send an activation invitation instead.' }, { status: 409 });
 
     // Generate or use provided password
     const rawPassword = body.newPassword ?? generateSecurePassword();

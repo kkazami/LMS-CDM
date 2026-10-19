@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon } from "lucide-react";
+import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -22,7 +22,6 @@ type TopbarProps = {
   studentNumber?: string | null;
   avatarUrl?: string | null;
   exp?: number;
-  onOpenMobileMenu?: () => void;
 };
 
 export default function Topbar({
@@ -34,7 +33,6 @@ export default function Topbar({
   studentNumber,
   avatarUrl,
   exp = 0,
-  onOpenMobileMenu,
 }: TopbarProps) {
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -105,6 +103,7 @@ export default function Topbar({
     admin: "Administrator Dashboard",
     faculty: "Faculty & Program Heads",
     accounts: "Account Management",
+    onboarding: "Students and Classes",
     permissions: "Permission Matrix",
     logs: "Audit Logs",
     backup: "Backup & Recovery",
@@ -133,15 +132,6 @@ export default function Topbar({
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
         {/* Left Side: Menu + Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={onOpenMobileMenu}
-            className="rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
-            aria-label="Open menu"
-          >
-            <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
-
           {/* Mobile Institute Badge & Title */}
           <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
 
@@ -150,7 +140,7 @@ export default function Topbar({
                 style={{ backgroundColor: theme.colors.primary }}
               >
                 {instituteCode.toUpperCase()}
-              </span>
+              </span>
             <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate min-w-0 flex-1" title={dynamicTitle}>
               {dynamicTitle}
             </h1>
@@ -174,7 +164,7 @@ export default function Topbar({
                     {instituteName}
                   </span>
                 </div>
-              </div>
+              </div>
 
             <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
 
@@ -205,7 +195,7 @@ export default function Topbar({
               ⌘K
             </kbd>
           </button>
-          
+
           {/* Mobile & Tablet Compact Search Button - only on sm+ to keep mobile header clean */}
           <button
             type="button"

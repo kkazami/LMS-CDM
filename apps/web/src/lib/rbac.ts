@@ -150,7 +150,7 @@ export async function requireReAuth(
     select: { password: true },
   });
 
-  if (!admin) {
+  if (!admin?.password) {
     throw { status: 404, message: 'Admin user not found.' };
   }
 

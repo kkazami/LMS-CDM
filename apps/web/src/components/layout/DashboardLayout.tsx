@@ -56,7 +56,6 @@ export default function DashboardLayout({
   userId,
   children,
 }: DashboardLayoutProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
@@ -85,39 +84,7 @@ export default function DashboardLayout({
           enrolledCourses={enrolledCourses}
         />
 
-        {/* Mobile Sidebar Drawer (Slides in on burger menu click) */}
-        <div
-          className={`fixed inset-0 z-[60] lg:hidden transition-all duration-300 ${
-            mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          aria-hidden={!mobileOpen}
-        >
-          {/* Backdrop scrim */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setMobileOpen(false)}
-          />
-          {/* Drawer container */}
-          <div
-            className={`relative z-10 h-full max-w-[280px] w-[80vw] transition-transform duration-300 ease-in-out ${
-              mobileOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-          >
-            <Sidebar
-              instituteCode={instituteCode}
-              theme={theme}
-              userRole={userRole}
-              isCollapsed={false}
-              isMobileDrawer={true}
-              onCloseMobileDrawer={() => setMobileOpen(false)}
-              isEligibleForActivities={isEligibleForActivities}
-              isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-              enrolledCourses={enrolledCourses}
-            />
-          </div>
-        </div>
-
-        <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+        <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
         }`}>
           <Topbar
@@ -129,7 +96,6 @@ export default function DashboardLayout({
             avatarUrl={avatarUrl ?? null}
             instituteCode={instituteCode}
             exp={exp}
-            onOpenMobileMenu={() => setMobileOpen(true)}
           />
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
@@ -149,6 +115,8 @@ export default function DashboardLayout({
         userRole={userRole}
         userName={userName}
         avatarUrl={avatarUrl ?? null}
+        isEligibleForActivities={isEligibleForActivities}
+        isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
       />
 
       {/* Student Gamification Widgets */}

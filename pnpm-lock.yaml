@@ -228,6 +228,9 @@ importers:
       compromise:
         specifier: ^14.16.0
         version: 14.16.0
+      csv-parse:
+        specifier: ^7.0.3
+        version: 7.0.3
       framer-motion:
         specifier: ^13.2.0
         version: 13.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -3762,6 +3765,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  csv-parse@7.0.3:
+    resolution: {integrity: sha512-YFd3QM/yo17vH91L1IOZuvl09zM0zEEtdfTcOCKWcMdM++MNaQSyp09slXyFCLaPXvHstQFx/xC8myiFHSMUvw==}
 
   d3-array@3.2.1:
     resolution: {integrity: sha512-gUY/qeHq/yNqqoCKNq4vtpFLdoCdvyNpWoC/KNjhGbhDuQpAM9sIQQKkXSNpXa9h5KySs/gzm7R88WkUutgwWQ==}
@@ -11524,6 +11530,8 @@ snapshots:
   css-what@6.2.2: {}
 
   csstype@3.2.3: {}
+
+  csv-parse@7.0.3: {}
 
   d3-array@3.2.1:
     dependencies:

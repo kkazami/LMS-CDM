@@ -39,6 +39,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/activate" ||
     pathname === "/forgot-password" ||
     pathname === "/reset-password";
 

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { calculateRiskLevel, type StudentActivityData } from "@/lib/risk-scoring";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
 export const dynamic = "force-dynamic";
 
@@ -24,88 +25,78 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const now = new Date();
 
-    // Resolve target course IDs
-    let courseIds: string[] = [];
-    if (courseId && courseId !== "all") {
-      courseIds = [courseId];
-    } else {
-      const taughtCourses = await db.course.findMany({
-        where: role === "ADMIN" ? { instituteId: session.user.instituteId } : { instructorId: session.user.id },
-        select: { id: true },
-      });
-      courseIds = taughtCourses.map((c) => c.id);
-    }
+    const courseScope = {
+      instituteId: session.user.instituteId,
+      isArchived: false,
+      ...(role === "ADMIN" ? {} : { instructorId: session.user.id }),
+      ...(courseId && courseId !== "all" ? { id: courseId } : {}),
+    };
 
-    if (courseIds.length === 0) {
-      return NextResponse.json({ atRiskStudents: [] });
-    }
-
-    // 1. Fetch APPROVED enrollments for target courses
-    const enrollments = await db.enrollment.findMany({
-      where: {
-        courseId: { in: courseIds },
-        status: "APPROVED",
-        course: { isArchived: false },
-      },
-      include: {
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
+    // Fetch independent metrics together, with the same course access filter.
+    const [enrollments, syllabusItems, submissions] = await Promise.all([
+      db.enrollment.findMany({
+        where: {
+          status: "APPROVED",
+          course: courseScope,
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              code: true,
+            },
           },
         },
-        course: {
-          select: {
-            id: true,
-            title: true,
-            code: true,
+        orderBy: { student: { name: "asc" } },
+      }),
+
+      db.syllabusItem.findMany({
+        where: {
+          course: courseScope,
+        },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          dueDate: true,
+          maxPoints: true,
+          courseId: true,
+        },
+      }),
+
+      db.studentSubmission.findMany({
+        where: {
+          syllabusItem: {
+            course: courseScope,
           },
         },
-      },
-      orderBy: { student: { name: "asc" } },
-    });
-
-    // 2. Fetch all syllabus items for these courses
-    const syllabusItems = await db.syllabusItem.findMany({
-      where: {
-        courseId: { in: courseIds },
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        dueDate: true,
-        maxPoints: true,
-        courseId: true,
-      },
-    });
-
-    // 3. Fetch submissions for these items
-    const submissions = await db.studentSubmission.findMany({
-      where: {
-        syllabusItem: {
-          courseId: { in: courseIds },
+        select: {
+          id: true,
+          syllabusItemId: true,
+          studentId: true,
+          status: true,
+          grade: true,
+          submittedAt: true,
+          updatedAt: true,
         },
-      },
-      select: {
-        id: true,
-        syllabusItemId: true,
-        studentId: true,
-        status: true,
-        grade: true,
-        submittedAt: true,
-        updatedAt: true,
-      },
-    });
+      }),
+    ]);
 
     // Submission lookup map: [studentId][syllabusItemId] -> submission
     const submissionMap = new Map<string, Map<string, typeof submissions[0]>>();
@@ -220,8 +211,6 @@ export async function GET(request: Request) {
 
     // Sort by riskScore descending (High risk first)
     studentRiskResults.sort((a, b) => b.riskScore - a.riskScore);
-
-    console.log(`[AT_RISK_API] Evaluated ${studentRiskResults.length} student-course pairs across ${courseIds.length} course(s).`);
 
     return NextResponse.json({
       atRiskStudents: studentRiskResults,

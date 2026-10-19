@@ -1,6 +1,5 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import type { InstituteTheme } from "@/lib/theme";
@@ -17,22 +16,17 @@ interface StudentDashboardProps {
 }
 
 export default async function StudentDashboardPage({ params }: StudentDashboardProps) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/students/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/students/page.tsx", await params);
 
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
+  if (user.role !== "STUDENT") redirect(`/${institute}`);
 
-  if (session.user.role !== "STUDENT") redirect(`/${institute}`);
-
-  const calendarPromise = getDashboardCalendar(session.user, institute);
+  const calendarPromise = getDashboardCalendar(user, institute);
   const theme: InstituteTheme = getInstituteTheme(institute);
-  const studentId = session.user.id;
+  const studentId = user.id;
 
-  const instituteRecord = session.user.institute;
+  const instituteRecord = user.institute;
   if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
@@ -136,7 +130,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
 
   return (
     <StudentDashboardClient
-      userName={session.user.name as string}
+      userName={user.name as string}
       instituteName={instituteRecord.name}
       instituteCode={institute}
       theme={theme}

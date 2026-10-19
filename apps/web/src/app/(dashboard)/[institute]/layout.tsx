@@ -27,7 +27,7 @@ export default async function InstituteLayout({
   const dedicatedRole = canonicalRole(session.user.role);
   if (dedicatedRole === 'SUPER_USER') {
     if (!supportedInstitute(institute)) notFound();
-    return <SuperUserShell institute={institute.toLowerCase()}>{children}</SuperUserShell>;
+    return <SuperUserShell key={institute.toLowerCase()} institute={institute.toLowerCase()} userName={session.user.name}>{children}</SuperUserShell>;
   }
   if (dedicatedRole === 'UNKNOWN') notFound();
 

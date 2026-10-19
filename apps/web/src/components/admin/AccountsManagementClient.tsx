@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { csvFile } from '@/lib/roster/csv-report';
 import { useState, useEffect, useCallback } from "react";
 import {
   Search,
@@ -175,15 +176,15 @@ export default function AccountsManagementClient({
     const headers = ["ID", "Name", "Email", "Role", "Identifier", "Status", "Created At"];
     const rows = users.map((u) => [
       u.id,
-      `"${u.name.replace(/"/g, '""')}"`,
-      `"${u.email}"`,
+      u.name,
+      u.email,
       u.role,
-      `"${(activeTab === "students" ? u.studentNumber : u.uniqueId) || ""}"`,
-      u.isActive ? "Active" : "Suspended",
+      (activeTab === 'students' ? u.studentNumber : u.uniqueId) || '',
+      !u.isActive ? 'Suspended' : u.activationStatus === 'PENDING_ACTIVATION' ? 'Pending activation' : 'Active',
       new Date(u.createdAt).toISOString(),
     ]);
 
-    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csvContent = csvFile([headers, ...rows]);
     const fileName = `${instituteCode}-${activeTab}-accounts-${new Date().toISOString().split("T")[0]}.csv`;
 
     if (typeof window !== "undefined" && window.electronAPI?.exportFile) {
@@ -271,6 +272,7 @@ export default function AccountsManagementClient({
             <Upload className="h-4 w-4" />
             Bulk Import
           </button>
+          <Link className="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium dark:border-white/20" href={'/' + instituteCode + '/admin/onboarding?tab=invitations'}>Invitations &amp; Enrollment</Link>
           <button
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
@@ -324,6 +326,7 @@ export default function AccountsManagementClient({
         >
           <option value="">All Status</option>
           <option value="active">Active</option>
+          <option value="pending">Pending activation</option>
           <option value="suspended">Suspended</option>
         </select>
 
@@ -408,7 +411,7 @@ export default function AccountsManagementClient({
                             user.isActive ? "bg-emerald-500" : "bg-rose-500"
                           }`}
                         />
-                        {user.isActive ? "Active" : "Suspended"}
+                        {!user.isActive ? 'Suspended' : user.activationStatus === 'PENDING_ACTIVATION' ? 'Pending activation' : 'Active'}
                       </span>
                     </td>
 
@@ -510,7 +513,7 @@ export default function AccountsManagementClient({
                       }`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-rose-500"}`} />
-                      {user.isActive ? "Active" : "Suspended"}
+                      {!user.isActive ? 'Suspended' : user.activationStatus === 'PENDING_ACTIVATION' ? 'Pending activation' : 'Active'}
                     </span>
                   </div>
                 </div>
@@ -616,7 +619,6 @@ export default function AccountsManagementClient({
         onSuccess={(msg) => {
           showToast(msg);
           fetchUsers();
-          setShowBulkModal(false);
         }}
       />
 

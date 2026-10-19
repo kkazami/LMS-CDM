@@ -2,8 +2,21 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
+import { z } from "zod";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
+import { leaderboardCourseWhere } from "@/lib/activity-leaderboard";
 
 export const dynamic = "force-dynamic";
+
+const settingsSchema = z.object({
+  syllabusItemId: z.string().min(1),
+  leaderboardEnabled: z.boolean().optional(),
+  rewardTiers: z.array(z.object({
+    placement: z.number().int().positive().max(2147483647),
+    rewardLabel: z.string().trim().max(500),
+    bonusExp: z.number().int().nonnegative().max(2147483647),
+  })).max(100).refine(tiers => new Set(tiers.map(t => t.placement)).size === tiers.length, "Use each placement only once.").optional(),
+}).refine(data => data.leaderboardEnabled !== undefined || data.rewardTiers !== undefined);
 
 export async function PATCH(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "PATCH leaderboard/manage/route.ts");
@@ -15,72 +28,44 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Forbidden." }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { syllabusItemId, leaderboardEnabled, rewardTiers } = body as {
-      syllabusItemId: string;
-      leaderboardEnabled?: boolean;
-      rewardTiers?: { placement: number; rewardLabel: string; bonusExp: number }[];
-    };
-
-    if (!syllabusItemId) {
-      return NextResponse.json({ message: "syllabusItemId is required." }, { status: 400 });
+    const parsed = settingsSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ message: "Provide an activity and valid leaderboard settings. Use each reward placement only once." }, { status: 400 });
     }
+    const { syllabusItemId, leaderboardEnabled, rewardTiers } = parsed.data;
 
-    const item = await db.syllabusItem.findUnique({
-      where: { id: syllabusItemId },
-      include: {
-        course: { select: { id: true, instructorId: true, code: true, title: true } },
-      },
+    const item = await db.syllabusItem.findFirst({
+      where: { id: syllabusItemId, type: { not: "MATERIAL" }, course: leaderboardCourseWhere(session.user) },
+      select: { id: true },
     });
 
     if (!item) {
       return NextResponse.json({ message: "Activity not found." }, { status: 404 });
     }
 
-    if (role !== "ADMIN" && item.course.instructorId !== session.user.id) {
-      return NextResponse.json({ message: "Unauthorized for this course." }, { status: 403 });
-    }
-
-    // Update leaderboardEnabled if provided
+    // A nested update saves publication and rewards atomically.
     const updated = await db.syllabusItem.update({
       where: { id: syllabusItemId },
       data: {
         ...(typeof leaderboardEnabled === "boolean" ? { leaderboardEnabled } : {}),
+        ...(rewardTiers !== undefined ? {
+          leaderboardRewards: { deleteMany: {}, create: rewardTiers },
+        } : {}),
       },
       include: {
         leaderboardRewards: { orderBy: { placement: "asc" } },
       },
     });
 
-    // Update reward tiers if array is provided
-    if (Array.isArray(rewardTiers)) {
-      await db.leaderboardReward.deleteMany({ where: { syllabusItemId } });
-      if (rewardTiers.length > 0) {
-        await db.leaderboardReward.createMany({
-          data: rewardTiers.map((t) => ({
-            syllabusItemId,
-            placement: Math.max(1, Number(t.placement) || 1),
-            rewardLabel: t.rewardLabel?.trim() || "",
-            bonusExp: Math.max(0, Number(t.bonusExp) || 0),
-          })),
-        });
-      }
-    }
-
-    const refreshedRewards = await db.leaderboardReward.findMany({
-      where: { syllabusItemId },
-      orderBy: { placement: "asc" },
-    });
-
     return NextResponse.json({
       id: updated.id,
       leaderboardEnabled: updated.leaderboardEnabled,
-      rewards: refreshedRewards,
+      rewards: updated.leaderboardRewards,
     });
   } catch (error) {
     console.error("MANAGE_LEADERBOARD_API_ERROR", error);

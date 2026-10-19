@@ -12,8 +12,10 @@ import { getSession } from "@/lib/auth-session";
 import { classScheduleSchema } from "@/lib/calendar-validation";
 import { normalizeRole } from "@/lib/rbac";
 import { generateCourseCode, bulkAssignInstructor } from "@/lib/skills";
+import { courseOffering, joinCode } from '@/lib/roster/terms';
 
 const instructorCreateCourseSchema = z.object({
+  termId: z.string().optional(),
   id: z.string().optional(),
   code: z.string().min(2, "Code must be at least 2 characters."),
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -34,6 +36,7 @@ export async function instructorCreateCourse(
   const user = await ensureRole(["PROFESSOR", "ADMIN"]);
 
   const parse = instructorCreateCourseSchema.safeParse({
+    termId: formData.get('termId') || undefined,
     code: formData.get("code"),
     title: formData.get("title"),
     section: formData.get("section") || "",
@@ -70,13 +73,13 @@ export async function instructorCreateCourse(
     }
 
     const course = await db.$transaction(async tx => {
+      const offering = await courseOffering(tx, { instituteId: institute.id, termId: data.termId, code: data.code, section: data.section });
       await validateCourseProgram(tx, institute.id, data.programId || null);
       const created = await tx.course.create({
         data: {
-          code: data.code,
+          ...offering,
           courseCode: codeResult.data,
           title: data.title,
-          section: data.section,
           subject: data.subject,
           room: data.room,
           scheduleDays: [...new Set(data.scheduleDays)],
@@ -222,6 +225,9 @@ async function ensureRole(allowedRoles: string[]) {
 }
 
 const courseSchema = z.object({
+  termId: z.string().optional(),
+  subject: z.string().optional(),
+  section: z.string().optional(),
   id: z.string().optional(),
   code: z.string().min(2, "Code must be at least 2 characters."),
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -234,6 +240,9 @@ export async function createCourse(prevState: { message: string; errors?: Record
   const user = await ensureRole(["ADMIN", "PROFESSOR"]);
 
   const parse = courseSchema.safeParse({
+    termId: formData.get('termId') || undefined,
+    subject: formData.get('subject') || '',
+    section: formData.get('section') || '',
     code: formData.get("code"),
     title: formData.get("title"),
     instituteCode: formData.get("instituteCode"),
@@ -247,14 +256,11 @@ export async function createCourse(prevState: { message: string; errors?: Record
 
   try {
     const institute = await db.institute.findUnique({ where: { code: instituteCode } });
-    if (!institute) return { message: "Institute not found." };
-
-    await db.course.create({
-      data: {
-        code,
-        title,
-        instituteId: institute.id,
-      },
+    if (!institute || institute.id !== user.instituteId) return { message: "Institute not found." };
+    if (!parse.data.subject?.trim()) return { message: 'Subject is required.' };
+    await db.$transaction(async tx => {
+      const offering = await courseOffering(tx, { instituteId: institute.id, termId: parse.data.termId, code, section: parse.data.section });
+      await tx.course.create({ data: { ...offering, title, subject: parse.data.subject!.trim(), instituteId: institute.id, courseCode: await joinCode(tx), instructorId: canonicalRole(user.role) === 'INSTRUCTOR' ? user.id : null } });
     });
 
     revalidatePath(`/${instituteCode}/courses`);
@@ -642,3 +648,11 @@ export async function updateCourseCoverImage(
   }
 }
 
+
+export async function getCourseTerms(instituteCode: string) {
+  const actor = await requireLegacyActor('getCourseTerms', { institute: instituteCode });
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Instructors and administrators only.');
+  const institute = await db.institute.findFirst({ where: { id: actor.instituteId, code: instituteCode } });
+  if (!institute) throw new AccessError(403, 'Forbidden institute.');
+  return db.academicTerm.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, name: true, isCurrent: true }, orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }] });
+}

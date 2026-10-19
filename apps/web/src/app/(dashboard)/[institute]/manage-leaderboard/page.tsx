@@ -1,9 +1,10 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import ManageLeaderboardClient from "./client";
+import { leaderboardCourseWhere, rankedSubmissionWhere } from "@/lib/activity-leaderboard";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
 export const dynamic = "force-dynamic";
 
@@ -12,111 +13,94 @@ export default async function ManageLeaderboardPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/manage-leaderboard/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/manage-leaderboard/page.tsx", await params);
 
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
-
-  const role = (session.user.role as string).toUpperCase();
-  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+  const role = canonicalRole(user.role);
+  if (role !== "INSTRUCTOR" && role !== "ADMIN") {
     redirect(`/${institute}`);
   }
 
   const theme = getInstituteTheme(institute);
 
-  // 1. Fetch courses taught by the instructor or all courses if admin
-  const taughtCourses = await db.course.findMany({
-    where: role === "ADMIN" ? { instituteId: session.user.instituteId } : { instructorId: session.user.id },
-    select: {
-      id: true,
-      title: true,
-      code: true,
-    },
-    orderBy: { code: "asc" },
-  });
+  const [taughtCourses, rules, recentIncentiveTransactions] = await Promise.all([
+    db.course.findMany({
+      where: leaderboardCourseWhere(user),
+      select: {
+        id: true,
+        title: true,
+        code: true,
+      },
+      orderBy: { code: "asc" },
+    }),
+    db.gradeIncentiveRule.findMany({
+      where: role === "ADMIN" ? { course: { instituteId: user.instituteId } } : { createdBy: user.id },
+      include: {
+        course: { select: { id: true, title: true, code: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.expTransaction.findMany({
+      where: {
+        source: "grade_incentive",
+        user: { instituteId: user.instituteId },
+      },
+      include: {
+        user: { select: { name: true, email: true, studentNumber: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
-  // 2. Fetch existing grade incentive rules
-  const rules = await db.gradeIncentiveRule.findMany({
-    where: role === "ADMIN" ? { course: { instituteId: session.user.instituteId } } : { createdBy: session.user.id },
-    include: {
-      course: { select: { id: true, title: true, code: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // 3. Fetch students enrolled in instructor's courses (for direct commendations)
-  const courseIds = taughtCourses.map((c) => c.id);
-  const enrolledStudents = await db.enrollment.findMany({
-    where: {
-      courseId: { in: courseIds },
-      status: "APPROVED",
-    },
-    select: {
-      student: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          studentNumber: true,
+  const courseIds = taughtCourses.map(c => c.id);
+  const [enrolledStudents, classworkActivities] = await Promise.all([
+    db.enrollment.findMany({
+      where: {
+        courseId: { in: courseIds },
+        status: "APPROVED",
+      },
+      select: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            studentNumber: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            code: true,
+          },
         },
       },
-      course: {
-        select: {
-          id: true,
-          code: true,
+    }),
+    db.syllabusItem.findMany({
+      where: {
+        courseId: { in: courseIds },
+        type: { not: "MATERIAL" },
+      },
+      include: {
+        leaderboardRewards: {
+          orderBy: { placement: "asc" },
+        },
+        submissions: {
+          where: {
+            ...rankedSubmissionWhere,
+            student: { isActive: true, role: "STUDENT", instituteId: user.instituteId },
+          },
+          select: { studentId: true },
         },
       },
-    },
-    distinct: ["studentId"],
-  });
-
-  // 4. Fetch recent grade incentive transaction logs
-  const recentIncentiveTransactions = await db.expTransaction.findMany({
-    where: {
-      source: "grade_incentive",
-      user: { instituteId: session.user.instituteId },
-    },
-    include: {
-      user: { select: { name: true, email: true, studentNumber: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
-
-  // 5. Fetch all classwork items (assignments, quizzes, exams) across instructor courses
-  const classworkActivities = await db.syllabusItem.findMany({
-    where: {
-      courseId: { in: courseIds },
-      type: { not: "MATERIAL" },
-    },
-    include: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          code: true,
-        },
-      },
-      leaderboardRewards: {
-        orderBy: { placement: "asc" },
-      },
-      submissions: {
-        where: {
-          grade: { not: null },
-          status: { in: ["GRADED", "RETURNED"] },
-        },
-        select: { id: true },
-      },
-    },
-    orderBy: [
-      { course: { code: "asc" } },
-      { createdAt: "desc" },
-    ],
-  });
+      orderBy: [
+        { course: { code: "asc" } },
+        { createdAt: "desc" },
+      ],
+    }),
+  ]);
 
   const serializedRules = rules.map((r) => ({
     id: r.id,
@@ -131,16 +115,18 @@ export default async function ManageLeaderboardPage({
     createdAt: r.createdAt.toISOString(),
   }));
 
+  const courseById = new Map(taughtCourses.map(course => [course.id, course]));
+  const approvedMembers = new Set(enrolledStudents.map(e => `${e.course.id}:${e.student.id}`));
   const serializedActivities = classworkActivities.map((a) => ({
     id: a.id,
     courseId: a.courseId,
-    courseCode: a.course.code,
-    courseTitle: a.course.title,
+    courseCode: courseById.get(a.courseId)!.code,
+    courseTitle: courseById.get(a.courseId)!.title,
     title: a.title,
     type: a.type,
     maxPoints: a.maxPoints,
     leaderboardEnabled: a.leaderboardEnabled,
-    participantCount: a.submissions.length,
+    participantCount: a.submissions.filter(s => approvedMembers.has(`${a.courseId}:${s.studentId}`)).length,
     rewards: a.leaderboardRewards.map((r) => ({
       id: r.id,
       placement: r.placement,
@@ -149,7 +135,8 @@ export default async function ManageLeaderboardPage({
     })),
   }));
 
-  const serializedStudents = enrolledStudents.map((e) => ({
+  const uniqueStudents = new Map(enrolledStudents.map(e => [e.student.id, e]));
+  const serializedStudents = [...uniqueStudents.values()].map((e) => ({
     id: e.student.id,
     name: e.student.name,
     email: e.student.email,

@@ -1,9 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { Pool, type PoolConfig } from "pg";
+import { createHash } from "node:crypto";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  prismaSchemaVersion?: string;
   pgPool?: Pool;
 };
 
@@ -58,12 +60,22 @@ const createPrismaClient = () => {
   const adapter = new PrismaPg(globalForPrisma.pgPool);
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    // ORM errors can include credential-bearing query arguments; callers report sanitized errors.
+    log: process.env.NODE_ENV === "development" ? ["warn"] : [],
   });
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+// Next.js retains globals across hot reloads, including clients generated for an older schema.
+const schemaVersion = createHash("sha256")
+  .update(JSON.stringify(Prisma.dmmf.datamodel))
+  .digest("hex");
+const previous = globalForPrisma.prisma;
+export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion
+  ? previous
+  : createPrismaClient();
 
 // Always cache client on globalThis in all environments so warm serverless lambdas reuse the instance
 globalForPrisma.prisma = db;
+globalForPrisma.prismaSchemaVersion = schemaVersion;
+if (previous && previous !== db) void previous.$disconnect().catch(() => {});
 

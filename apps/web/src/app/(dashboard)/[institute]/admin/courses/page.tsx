@@ -37,6 +37,7 @@ export default async function AdminCoursesPage({ params, searchParams }: PagePro
   const courses = await db.course.findMany({
     where: { instituteId: instituteRecord.id },
     include: {
+      term: { select: { name: true } },
       program: { select: { id: true, code: true, name: true, isActive: true } },
       instructor: {
         select: { id: true, name: true, email: true },

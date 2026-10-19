@@ -7,6 +7,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import Modal from "@/components/common/Modal";
 import ClassScheduleFields from "./ClassScheduleFields";
 import CourseProgramField from "./CourseProgramField";
+import CourseTermField from './CourseTermField';
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { toast } from "@/components/common/Toast";
@@ -55,6 +56,7 @@ export default function InstructorCreateCourseModal({
     <Modal open={open} title="Create a New Class" onClose={onClose}>
       <form action={formAction} onSubmit={event => { if (!programReady) event.preventDefault(); }} className="space-y-4">
         <input type="hidden" name="instituteCode" value={instituteCode} />
+        <CourseTermField instituteCode={instituteCode} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">

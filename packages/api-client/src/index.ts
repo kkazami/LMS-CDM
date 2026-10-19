@@ -74,19 +74,6 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify(data),
         }),
 
-      register: (data: {
-        name: string;
-        email: string;
-        studentNumber: string;
-        password: string;
-        confirmPassword: string;
-        instituteCode: string;
-      }) =>
-        request<LoginResponse>('/api/auth/register', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }),
-
       me: () => request<{ user: AuthUser }>('/api/auth/me'),
 
       refresh: () =>

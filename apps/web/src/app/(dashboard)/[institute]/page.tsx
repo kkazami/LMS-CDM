@@ -19,7 +19,7 @@ export default async function InstituteDashboardPage({ params }: PageProps) {
 
   const role = session.user.role.toUpperCase();
 
-  if (role === 'SUPER_USER') redirect(`/${institute}/academic-operations/courses`);
+  if (role === 'SUPER_USER') redirect(`/${institute}/academic-operations`);
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/page.tsx", await params);
 
   if (role === "STUDENT") {

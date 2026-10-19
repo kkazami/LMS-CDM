@@ -11,6 +11,9 @@ import { administratorInstitute } from '@/lib/administrator-scope';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
+import { previewImport, commitImport } from '@/lib/roster/imports';
+import { rosterActor, rosterError } from '@/lib/roster/policy';
+import { HEADERS } from '@/lib/roster/csv';
 import { db } from '@/lib/db';
 import {
   requireAdmin,
@@ -69,6 +72,9 @@ export async function GET(request: Request) {
     // Status filter
     if (statusFilter === 'active') {
       where.isActive = true;
+      where.activationStatus = 'ACTIVE';
+    } else if (statusFilter === 'pending') {
+      where.activationStatus = 'PENDING_ACTIVATION';
     } else if (statusFilter === 'suspended') {
       where.isActive = false;
     }
@@ -87,6 +93,13 @@ export async function GET(request: Request) {
           name: true,
           email: true,
           uniqueId: true,
+          studentNumber: true,
+          firstName: true,
+          lastName: true,
+          section: true,
+          activationStatus: true,
+          invitationVersion: true,
+          programMemberships: { where: { kind: 'STUDENT', isActive: true }, select: { program: { select: { code: true } } } },
           role: true,
           isActive: true,
           permissions: true,
@@ -104,6 +117,13 @@ export async function GET(request: Request) {
       name: u.name,
       email: u.email,
       uniqueId: u.uniqueId,
+      studentNumber: u.studentNumber,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      section: u.section,
+      activationStatus: u.activationStatus,
+      invitationVersion: u.invitationVersion,
+      program: u.programMemberships[0]?.program.code ?? '',
       role: normalizeRole(u.role),
       isActive: u.isActive,
       permissions: parsePermissions(u.permissions),
@@ -136,6 +156,16 @@ export async function POST(request: Request) {
   try {
     const session = await requireAdmin();
     const body = await request.json();
+    if (!body.role || canonicalRole(body.role) === 'STUDENT') {
+      const actor = await rosterActor(request);
+      const values = [body.studentNumber ?? body.student_Id ?? '', body.last_name ?? '', body.first_name ?? '', body.email ?? '', body.program ?? '', body.section ?? ''];
+      const csv = HEADERS.STUDENTS.join(',') + '\r\n' + values.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+      const batch = await previewImport(actor, { type: 'STUDENTS', csv });
+      if (batch.rows[0].proposedAction !== 'NEW') return NextResponse.json({ message: (batch.rows[0].issues as string[]).join(' ') || 'Student already exists.' }, { status: 400 });
+      const result = await commitImport(actor, batch.id, {});
+      if (result.rows[0].outcome !== 'CREATED') return NextResponse.json({ message: result.rows[0].error ?? 'Student creation failed.' }, { status: 409 });
+      return NextResponse.json({ message: 'Student created pending activation. Send an invitation from Account Invitations.' }, { status: 201 });
+    }
 
     const { name, email, uniqueId, role, instituteCode, password } = body as {
       name?: string;
@@ -243,7 +273,7 @@ export async function POST(request: Request) {
     );
   } catch (err) {
     const error = err as { status?: number; message?: string };
-    console.error('ADMIN_CREATE_USER_ERROR', err);
+    if (err instanceof Error && err.name === 'AccessError') return rosterError(err);
     return NextResponse.json(
       { message: error.message ?? 'Internal server error.' },
       { status: error.status ?? 500 }

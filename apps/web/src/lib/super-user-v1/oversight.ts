@@ -1,8 +1,7 @@
 import { db } from '@/lib/db';
 import { AccessError, revalidateActor, type Actor } from './actor';
 import { audit } from './audit';
-import { requireApprovedMetadata } from './metadata-policy';
-import { academicCourse, displayCourseCode } from './dto';
+import { academicCourse } from './dto';
 
 const courseSelect = {
   id: true, code: true, courseCode: true, title: true, section: true, subject: true, room: true,
@@ -28,9 +27,8 @@ export async function oversight(actor: Actor, institute: { id: string; code: str
     const announcements = courseId ? await tx.announcement.findMany({
       where: { courseId }, select: { id: true, createdAt: true }, orderBy: { id: 'asc' },
     }) : [];
-    // Entire response withheld if even one exposed metadata value lacks its exact binding.
-    const metadataCourses = courses.map(course => ({ id: course.id, code: displayCourseCode(course), title: course.title, section: course.section, subject: course.subject, room: course.room, instructor: course.instructor }));
-    await requireApprovedMetadata(institute.id, { institute: instituteRecord, courses: metadataCourses, schedule, materials, announcements });
+    // Read current records through the explicit metadata selects and safe DTO;
+    // course changes must not depend on a separately approved dataset snapshot.
     const mapped = courses.map(course => academicCourse(course, institute.id));
     await audit(tx, { actorId: actor.id, actorSessionId: actor.sessionId, targetId: actor.id, instituteId: institute.id,
       action: courseId ? 'ACADEMIC_OVERSIGHT_COURSE_VIEW' : 'ACADEMIC_OVERSIGHT_COURSE_LIST', ...(courseId ? { courseId } : {}) });

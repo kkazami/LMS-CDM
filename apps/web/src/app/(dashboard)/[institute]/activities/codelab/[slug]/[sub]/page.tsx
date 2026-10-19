@@ -140,8 +140,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
     return (
       <div
-        className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-        style={{ height: "calc(100dvh - 73px)" }}
+        data-codelab-workspace
+        className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
       >
         <CodeLabScene
           key={`codelab-${problem.id}-${levelNumber}`}
@@ -225,8 +225,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
     return (
       <div
-        className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-        style={{ height: "calc(100vh - 73px)" }}
+        data-codelab-workspace
+        className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
       >
         <CodeLabScene
           assignmentId={staticProblem.id}
@@ -277,8 +277,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
   return (
     <div
-      className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-      style={{ height: "calc(100vh - 73px)" }}
+      data-codelab-workspace
+      className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
     >
       <CodeLabScene
         key={`codelab-template-${template.id}-${seed}`}
