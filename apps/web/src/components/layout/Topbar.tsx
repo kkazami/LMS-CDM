@@ -136,6 +136,7 @@ export default function Topbar({
     announcements: "Announcements",
     assignments: "To-do",
     tasks: "Tasks",
+    practicum: "Practicum",
     leaderboards: "Leaderboards",
     // Professor
     teachers: "Teacher Dashboard",

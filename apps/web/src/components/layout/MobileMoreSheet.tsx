@@ -20,6 +20,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -117,7 +118,17 @@ export default function MobileMoreSheet({
     router.push(`/login?institute=${instituteCode}&force=true`);
   };
 
-  const items = isStudent ? studentItems : isProfessor ? teacherItems : adminItems;
+  // Practicum is ITE-only; the server also enforces it on every page and API route.
+  const practicumItems: NavItem[] =
+    instituteCode.toLowerCase() === "ite" && (isStudent || isProfessor)
+      ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
+      : [];
+
+  const items = isStudent
+    ? [...studentItems, ...practicumItems]
+    : isProfessor
+      ? [...teacherItems, ...practicumItems]
+      : adminItems;
 
   if (!isOpen) return null;
 

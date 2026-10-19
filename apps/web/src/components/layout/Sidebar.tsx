@@ -30,6 +30,7 @@ import {
   Settings,
   HelpCircle,
   MessageSquareQuote,
+  NotebookPen,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -63,6 +64,8 @@ interface SidebarProps {
   isEligibleForActivities?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
+  /** When true, renders the "Practicum" nav entry (ITE students and instructors only). */
+  isEligibleForPracticum?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -119,6 +122,7 @@ export default function Sidebar({
   onCloseMobileDrawer,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForPracticum,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -143,6 +147,10 @@ export default function Sidebar({
         { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
       ];
     }
+  }
+
+  if (isEligibleForPracticum && (isStudent || isProfessor)) {
+    links = [...links, { label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen }];
   }
 
   if (isEligibleForKnowledgeExchange) {

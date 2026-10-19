@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { isEligibleKxInstituteCode } from "@/lib/kx-eligibility";
+import { isIteInstituteCode } from "@/lib/ite/ite-eligibility";
 import { db } from "@/lib/db";
 import { getPHTMidnight, processLoginReward } from "@/lib/gamification/login-rewards";
 import { getInstituteByCode, getStudentEnrollments } from "@/lib/dashboard-data";
@@ -44,6 +45,10 @@ export default async function InstituteLayout({
 
   const isStudent = userRole === "STUDENT";
   const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
+
+  // Practicum is ITE-only (students and their instructor-supervisors); hidden everywhere else.
+  const practicumEligible =
+    (isStudent || isProfessor) && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
 
   // The institute lookup and the daily reward are independent: run them together.
   const [instituteRecord] = await Promise.all([
@@ -107,6 +112,7 @@ export default async function InstituteLayout({
       theme={theme}
       isEligibleForActivities={activityEligible}
       isEligibleForKnowledgeExchange={kxEligible}
+      isEligibleForPracticum={practicumEligible}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}

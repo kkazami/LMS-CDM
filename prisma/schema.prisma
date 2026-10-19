@@ -97,6 +97,11 @@ model User {
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventUser")
   riskAssessments RiskAssessment[] @relation("RiskAssessmentStudent")
+
+  // ─── ITE Practicum relations ───
+  practicumPlacements PracticumPlacement[] @relation("PracticumStudent")
+  practicumSupervised PracticumPlacement[] @relation("PracticumSupervisor")
+  practicumFeedback   PracticumFeedback[]  @relation("PracticumFeedbackAuthor")
 }
 
 model Session {
@@ -1201,4 +1206,92 @@ enum RiskLevel {
   LOW
   MEDIUM
   HIGH
+}
+
+// ─── ITE Practicum (student teaching support) ───────────────────────────────
+
+enum PracticumPlacementStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum PracticumSubmissionType {
+  LESSON_PLAN
+  DEMO_VIDEO
+  PORTFOLIO_EVIDENCE
+}
+
+enum PracticumSubmissionStatus {
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED
+}
+
+enum PracticumDecision {
+  COMMENT
+  NEEDS_REVISION
+  APPROVED
+}
+
+model PracticumPlacement {
+  id           String                   @id @default(cuid())
+  studentId    String
+  supervisorId String
+  schoolName   String
+  subject      String
+  gradeLevel   String
+  schoolYear   String
+  startDate    DateTime
+  endDate      DateTime
+  status       PracticumPlacementStatus @default(ACTIVE)
+  createdAt    DateTime                 @default(now())
+
+  student     User                  @relation("PracticumStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor  User                  @relation("PracticumSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  submissions PracticumSubmission[]
+
+  @@unique([studentId, schoolYear])
+  @@index([supervisorId, status])
+}
+
+model PracticumSubmission {
+  id          String                    @id @default(cuid())
+  placementId String
+  type        PracticumSubmissionType
+  title       String
+  description String?
+  fileUrl     String?
+  fileName    String?
+  fileType    String?
+  fileSize    Int?
+  /// External link (e.g. an unlisted YouTube video) used instead of an uploaded file.
+  videoLink   String?
+  status      PracticumSubmissionStatus @default(SUBMITTED)
+  version     Int                       @default(1)
+  submittedAt DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  placement PracticumPlacement  @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  feedback  PracticumFeedback[]
+
+  @@index([placementId, type])
+  @@index([placementId, status])
+  @@index([status])
+}
+
+model PracticumFeedback {
+  id           String            @id @default(cuid())
+  submissionId String
+  authorId     String
+  comment      String
+  decision     PracticumDecision @default(COMMENT)
+  /// Optional rubric score, 0-100.
+  score        Int?
+  createdAt    DateTime          @default(now())
+
+  submission PracticumSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  author     User                @relation("PracticumFeedbackAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([submissionId, createdAt])
+  @@index([authorId])
 }

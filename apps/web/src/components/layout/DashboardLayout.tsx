@@ -28,6 +28,8 @@ interface DashboardLayoutProps {
   isEligibleForActivities?: boolean;
   /** Whether this user qualifies for Knowledge Exchange. Controls sidebar entry visibility. */
   isEligibleForKnowledgeExchange?: boolean;
+  /** Whether this user qualifies for the ITE Practicum module. Controls the sidebar entry. */
+  isEligibleForPracticum?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -50,6 +52,7 @@ export default function DashboardLayout({
   theme,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForPracticum,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -83,6 +86,7 @@ export default function DashboardLayout({
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+          isEligibleForPracticum={isEligibleForPracticum}
           enrolledCourses={enrolledCourses}
         />
 
@@ -113,6 +117,7 @@ export default function DashboardLayout({
               onCloseMobileDrawer={() => setMobileOpen(false)}
               isEligibleForActivities={isEligibleForActivities}
               isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+              isEligibleForPracticum={isEligibleForPracticum}
               enrolledCourses={enrolledCourses}
             />
           </div>

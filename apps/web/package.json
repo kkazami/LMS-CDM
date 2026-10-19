@@ -6,7 +6,7 @@
     "build": "prisma generate --schema=../../prisma/schema.prisma && next build",
     "postinstall": "prisma generate --schema=../../prisma/schema.prisma",
     "start": "next start -H 0.0.0.0",
-    "test:unit": "tsx --env-file=.env --test src/lib/ite/__tests__/*.test.ts src/lib/dashboard/__tests__/*.test.ts"
+    "test:unit": "tsx --env-file=.env --test src/lib/ite/__tests__/*.test.ts src/lib/dashboard/__tests__/*.test.ts src/lib/practicum/__tests__/*.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

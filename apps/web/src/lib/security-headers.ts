@@ -18,6 +18,9 @@ export function getSecurityHeaders(): Record<string, string> {
     "font-src 'self' data: https://fonts.gstatic.com",
     // Connect sources: LMS API, OpenAI API if configured, Judge0 service
     "connect-src 'self' https: http://localhost:* ws: wss:",
+    // Practicum: uploaded demo videos (Vercel Blob) and privacy-friendly YouTube embeds
+    "media-src 'self' blob: https:",
+    "frame-src https://www.youtube-nocookie.com",
     // Worker sources for Monaco Editor and PDF.js
     "worker-src 'self' blob:",
     // Prevent clickjacking: no framing allowed
