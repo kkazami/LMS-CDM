@@ -235,14 +235,18 @@ export default function SearchModal({
         href: `/${instituteCode}/manage-leaderboard`,
         icon: Trophy,
       },
-      {
-        id: "prof-codelab",
-        title: "CodeLab Analytics",
-        subtitle: "Student code submission telemetry and execution metrics",
-        category: "Activities",
-        href: `/${instituteCode}/activities/codelab/instructor`,
-        icon: Terminal,
-      },
+      ...(instituteCode.toLowerCase() === "ics"
+        ? [
+            {
+              id: "prof-codelab",
+              title: "CodeLab Analytics",
+              subtitle: "Student code submission telemetry and execution metrics",
+              category: "Activities" as const,
+              href: `/${instituteCode}/activities/codelab/instructor`,
+              icon: Terminal,
+            },
+          ]
+        : []),
       {
         id: "prof-settings",
         title: "Account Settings",
@@ -327,14 +331,18 @@ export default function SearchModal({
         href: `/${instituteCode}/tasks`,
         icon: CheckSquare,
       },
-      {
-        id: "nav-codelab",
-        title: "CodeLab Interactive IDE",
-        subtitle: "Multi-language online coding exercises",
-        category: "Activities",
-        href: `/${instituteCode}/activities/codelab`,
-        icon: Code2,
-      },
+      ...(instituteCode.toLowerCase() === "ics"
+        ? [
+            {
+              id: "nav-codelab",
+              title: "CodeLab Interactive IDE",
+              subtitle: "Multi-language online coding exercises",
+              category: "Activities" as const,
+              href: `/${instituteCode}/activities/codelab`,
+              icon: Code2,
+            },
+          ]
+        : []),
       {
         id: "nav-leaderboard",
         title: "Leaderboards & EXP",
@@ -400,7 +408,7 @@ export default function SearchModal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-100 flex items-start sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -415,7 +423,7 @@ export default function SearchModal({
         aria-modal="true"
       >
         {/* Search Header Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2">
           <Search className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0" />
           <input
             ref={inputRef}
@@ -429,7 +437,7 @@ export default function SearchModal({
                 ? "Search classes, grading, tools..."
                 : "Search courses, assignments, tools..."
             }
-            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none min-h-[44px]"
+            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none min-h-11"
           />
           {query && (
             <button
@@ -443,7 +451,7 @@ export default function SearchModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/10 transition-colors"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/10 transition-colors"
             aria-label="Close search"
           >
             <X className="h-5 w-5" />
@@ -474,7 +482,7 @@ export default function SearchModal({
                   key={item.id}
                   type="button"
                   onClick={() => handleSelect(item.href)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all text-left group cursor-pointer min-h-[48px]"
+                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all text-left group cursor-pointer min-h-12"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
@@ -511,7 +519,7 @@ export default function SearchModal({
         </div>
 
         {/* Footer info on desktop */}
-        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 text-[11px] text-slate-400 dark:text-slate-500">
           <span>Navigate with 1-tap</span>
           <span>Press ESC to exit</span>
         </div>

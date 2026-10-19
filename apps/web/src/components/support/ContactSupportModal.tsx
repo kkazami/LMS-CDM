@@ -6,6 +6,7 @@ import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import type { InstituteTheme } from "@/lib/theme";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "@/components/common/Toast";
 
 export function ContactSupportModal({
   theme,
@@ -18,28 +19,43 @@ export function ContactSupportModal({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [category, setCategory] = useState("GENERAL");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !message.trim()) return;
 
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch("/api/support-tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, message, category }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit ticket");
+      }
+
       setIsSuccess(true);
+      toast.success("Ticket Submitted", "Your support ticket has been received.");
       setTimeout(() => {
         handleClose();
       }, 2000);
-    }, 1500);
+    } catch (err) {
+      toast.error("Error", "Failed to submit your ticket. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     onClose();
     setTimeout(() => {
       setIsSuccess(false);
+      setCategory("GENERAL");
       setSubject("");
       setMessage("");
     }, 300);
@@ -61,6 +77,23 @@ export function ContactSupportModal({
             <p className="text-slate-600 dark:text-slate-300 text-sm">
               Need more help? Send us a message and our support team will respond as soon as possible.
             </p>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#8B92A5] mb-1.5">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:text-[#F0F2F8] focus:outline-none transition-all disabled:opacity-50"
+              >
+                <option value="GENERAL">General Inquiry</option>
+                <option value="TECHNICAL">Technical Issue</option>
+                <option value="ACCOUNT">Account & Access</option>
+                <option value="COURSE">Course & Academics</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
             <div>
               <Input
                 label="Subject"

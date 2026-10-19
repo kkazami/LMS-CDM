@@ -185,6 +185,8 @@ export default function StudentDashboardClient({
     });
   };
 
+  const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
+
   // Quick action items for mobile and desktop quick navigation bar
   const quickActions = [
     {
@@ -209,11 +211,15 @@ export default function StudentDashboardClient({
       icon: CheckSquare,
       href: `/${instituteCode}/tasks`,
     },
-    {
-      label: "CodeLab",
-      icon: Code2,
-      href: `/${instituteCode}/activities/codelab`,
-    },
+    ...(isCodeLabVisible
+      ? [
+          {
+            label: "CodeLab",
+            icon: Code2,
+            href: `/${instituteCode}/activities/codelab`,
+          },
+        ]
+      : []),
     {
       label: "Leaderboard",
       icon: Trophy,
@@ -247,7 +253,7 @@ export default function StudentDashboardClient({
                   </span>
                 </div>
 
-                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
+                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                   <TypingBanner
                     text={`Welcome back, ${userName}!`}
                     sessionKey={typingSessionKey ?? "cdm_typed_greeting"}
@@ -294,7 +300,7 @@ export default function StudentDashboardClient({
         </FadeIn>
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${isCodeLabVisible ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
           <StaggerItem>
             <QuickActionCard
               icon={Plus}
@@ -337,15 +343,17 @@ export default function StudentDashboardClient({
               color={theme.colors.primary}
             />
           </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={Code2}
-              label="CodeLab"
-              href={`/${instituteCode}/activities/codelab`}
-              sublabel="Interactive labs"
-              color={theme.colors.primary}
-            />
-          </StaggerItem>
+          {isCodeLabVisible && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Code2}
+                label="CodeLab"
+                href={`/${instituteCode}/activities/codelab`}
+                sublabel="Interactive labs"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
           <StaggerItem>
             <QuickActionCard
               icon={Trophy}
@@ -430,7 +438,7 @@ export default function StudentDashboardClient({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6">
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -447,7 +455,7 @@ export default function StudentDashboardClient({
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -498,7 +506,7 @@ export default function StudentDashboardClient({
                             : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
                         }
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/20" />
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
@@ -640,7 +648,7 @@ export default function StudentDashboardClient({
                       <Link
                         key={item.id}
                         href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-[48px]"
+                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/4 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-12"
                         style={{
                           animation: `staggerFadeIn 0.2s ease-out both`,
                           animationDelay: `${Math.min(idx, 10) * 40}ms`,
@@ -716,7 +724,7 @@ export default function StudentDashboardClient({
               <button
                 type="button"
                 onClick={() => setConfirmUnenroll(null)}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px]"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-11"
               >
                 Cancel
               </button>
@@ -724,7 +732,7 @@ export default function StudentDashboardClient({
                 type="button"
                 onClick={() => handleUnenroll(confirmUnenroll)}
                 disabled={isPending}
-                className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-[44px]"
+                className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-11"
               >
                 {isPending ? "Unenrolling..." : "Unenroll"}
               </button>

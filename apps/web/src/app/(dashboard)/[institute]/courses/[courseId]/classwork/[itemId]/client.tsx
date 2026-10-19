@@ -175,7 +175,7 @@ export default function AssignmentDetailClient({
             className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors shrink-0"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" />
-            <span className="truncate max-w-[120px] sm:max-w-[200px]">{item.course.title}</span>
+            <span className="truncate max-w-30 sm:max-w-50">{item.course.title}</span>
           </Link>
           <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300 dark:text-white/10 shrink-0" />
           <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">

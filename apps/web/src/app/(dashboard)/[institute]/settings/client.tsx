@@ -15,6 +15,7 @@ import { UserPreferences } from "@lms/types";
 import { ToggleRow } from "@/components/common/ToggleRow";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun } from "lucide-react";
+import { toast } from "@/components/common/Toast";
 
 interface UserData {
   id: string;
@@ -61,8 +62,10 @@ export default function SettingsClient({
       if (!res.ok) {
         throw new Error("Failed to save settings");
       }
+      toast.success("Preference updated", "Your settings have been saved.");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to save", "Could not update your preferences.");
       // Revert on failure
       setPreferences(preferences);
     } finally {
@@ -91,8 +94,10 @@ export default function SettingsClient({
       if (!res.ok) {
         throw new Error("Failed to save settings");
       }
+      toast.success("Preference updated", "Your settings have been saved.");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to save", "Could not update your preferences.");
       setPreferences(preferences);
     } finally {
       setSaving(false);

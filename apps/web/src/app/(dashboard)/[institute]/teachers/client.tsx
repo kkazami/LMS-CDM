@@ -251,7 +251,7 @@ export default function TeacherDashboardClient({
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{instituteName} • Faculty Portal</span>
               </div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                 <TypingBanner
                   text={`Welcome back, Professor ${userName}!`}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
@@ -295,7 +295,7 @@ export default function TeacherDashboardClient({
               Instruction Controls
             </h2>
           </div>
-          <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${instituteCode.toLowerCase() === "ics" ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
             <StaggerItem>
               <QuickActionCard
                 icon={Plus}
@@ -345,15 +345,17 @@ export default function TeacherDashboardClient({
                 color="#EC4899"
               />
             </StaggerItem>
-            <StaggerItem>
-              <QuickActionCard
-                icon={Compass}
-                label="CodeLab Hub"
-                sublabel="Lab workspace"
-                href={`/${instituteCode}/activities/codelab`}
-                color="#06B6D4"
-              />
-            </StaggerItem>
+            {instituteCode.toLowerCase() === "ics" && (
+              <StaggerItem>
+                <QuickActionCard
+                  icon={Compass}
+                  label="CodeLab Hub"
+                  sublabel="Lab workspace"
+                  href={`/${instituteCode}/activities/codelab`}
+                  color="#06B6D4"
+                />
+              </StaggerItem>
+            )}
           </StaggerGroup>
         </div>
 
@@ -419,7 +421,7 @@ export default function TeacherDashboardClient({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6">
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -436,7 +438,7 @@ export default function TeacherDashboardClient({
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -490,7 +492,7 @@ export default function TeacherDashboardClient({
                               }
                         }
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/20" />
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
@@ -650,7 +652,7 @@ export default function TeacherDashboardClient({
                     {pendingWorkClasses.map((item) => (
                       <div
                         key={item.courseId}
-                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all gap-3"
+                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/3 hover:bg-slate-100/80 dark:hover:bg-white/6 transition-all gap-3"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -740,7 +742,7 @@ export default function TeacherDashboardClient({
                   {pendingRequests.map((req) => (
                     <div
                       key={req.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all gap-3"
+                      className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/3 hover:bg-slate-100/80 dark:hover:bg-white/6 transition-all gap-3"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9] truncate">

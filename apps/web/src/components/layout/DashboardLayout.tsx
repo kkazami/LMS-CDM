@@ -61,7 +61,7 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
+      className="min-h-dvh bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--focus-ring": theme.colors.primary,
       } as React.CSSProperties}
@@ -85,7 +85,7 @@ export default function DashboardLayout({
 
         {/* Mobile Sidebar Drawer (Slides in on burger menu click) */}
         <div
-          className={`fixed inset-0 z-[60] lg:hidden transition-all duration-300 ${
+          className={`fixed inset-0 z-60 lg:hidden transition-all duration-300 ${
             mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
           }`}
           aria-hidden={!mobileOpen}
@@ -97,7 +97,7 @@ export default function DashboardLayout({
           />
           {/* Drawer container */}
           <div
-            className={`relative z-10 h-full max-w-[280px] w-[80vw] transition-transform duration-300 ease-in-out ${
+            className={`relative z-10 h-full max-w-70 w-[80vw] transition-transform duration-300 ease-in-out ${
               mobileOpen ? "translate-x-0" : "-translate-x-full"
             }`}
           >
@@ -116,7 +116,7 @@ export default function DashboardLayout({
         </div>
 
         <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
+          isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
         }`}>
           <Topbar
             theme={theme}
@@ -129,6 +129,7 @@ export default function DashboardLayout({
             exp={exp}
             onOpenMobileMenu={() => setMobileOpen(true)}
           />
+
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {children}

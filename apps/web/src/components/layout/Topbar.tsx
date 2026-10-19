@@ -14,8 +14,8 @@ import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 
 const ALL_INSTITUTES = [
   { code: "ics", name: "Institute of Computer Studies", short: "ICS", color: "#E06A26" },
-  { code: "ibe", name: "Institute of Business and Education", short: "IBE", color: "#EAB308" },
-  { code: "ite", name: "Institute of Technology and Engineering", short: "ITE", color: "#0284C7" },
+  { code: "ibe", name: "Institute of Business and Entrepreneurship", short: "IBE", color: "#EAB308" },
+  { code: "ite", name: "Institute of Teacher Education", short: "ITE", color: "#0284C7" },
 ];
 
 type TopbarProps = {
@@ -155,7 +155,7 @@ export default function Topbar({
     dynamicTitle = titleMap[segment];
   }
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-12 sm:min-h-14 flex flex-col justify-center">
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
         {/* Left Side: Menu + Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
@@ -239,7 +239,7 @@ export default function Topbar({
                 <button
                   type="button"
                   onClick={() => setIsInstituteSwitcherOpen((prev) => !prev)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all shadow-xs cursor-pointer text-left group"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/3 hover:bg-slate-100 dark:hover:bg-white/6 transition-all shadow-xs cursor-pointer text-left group"
                   title="Click to switch institute campus"
                   aria-expanded={isInstituteSwitcherOpen}
                 >
@@ -253,7 +253,7 @@ export default function Topbar({
                     <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5 flex items-center gap-1">
                       Campus Switcher
                     </span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
+                    <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-35 lg:max-w-50 leading-tight">
                       {instituteName}
                     </span>
                   </div>
@@ -299,7 +299,7 @@ export default function Topbar({
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/3 shadow-xs">
                 <span
                   className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
                   style={{ backgroundColor: theme.colors.primary }}
@@ -310,7 +310,7 @@ export default function Topbar({
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
                     Campus
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
+                  <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-35 lg:max-w-50 leading-tight">
                     {instituteName}
                   </span>
                 </div>
@@ -319,7 +319,7 @@ export default function Topbar({
 
             <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
 
-            <h1 className="text-sm lg:text-base xl:text-lg font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate max-w-[160px] lg:max-w-[240px] xl:max-w-none">
+            <h1 className="text-sm lg:text-base xl:text-lg font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate max-w-40 lg:max-w-60 xl:max-w-none">
               {dynamicTitle}
             </h1>
           </div>
@@ -393,13 +393,13 @@ export default function Topbar({
               aria-haspopup="true"
             >
               {/* Tablet Compact User Info (1024px - 1279px) */}
-              <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-[100px]">
+              <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-25">
                 <p className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] truncate">{userRole}</p>
               </div>
 
               {/* Desktop Full User Info (1280px+) */}
-              <div className="text-right hidden xl:block min-w-0 max-w-[150px] 2xl:max-w-[200px]">
+              <div className="text-right hidden xl:block min-w-0 max-w-37.5 2xl:max-w-50">
                 <div className="flex items-center justify-end gap-1.5 min-w-0">
                   <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
                   {userRole === "STUDENT" && <LevelBadge exp={exp} size="sm" />}

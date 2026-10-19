@@ -242,8 +242,8 @@ export default function UserProfileModal({
               className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-xs font-medium text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
             >
               <option value="ics">Institute of Computer Studies (ICS)</option>
-              <option value="ibe">Institute of Business and Education (IBE)</option>
-              <option value="ite">Institute of Technology and Engineering (ITE)</option>
+              <option value="ibe">Institute of Business and Entrepreneurship (IBE)</option>
+              <option value="ite">Institute of Teacher Education (ITE)</option>
             </select>
             <p className="mt-1 text-[11px] text-slate-400 dark:text-[#8B92A5]">
               {mode === "create"

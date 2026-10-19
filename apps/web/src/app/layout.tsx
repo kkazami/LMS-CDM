@@ -49,7 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
-      <body className="antialiased font-[family-name:var(--font-inter)] selection:bg-orange-500 selection:text-white">
+      <body className="antialiased font-(family-name:--font-inter) selection:bg-orange-500 selection:text-white">
         <OfflineBanner />
         <InAppBrowserPrompt />
         <ServiceWorkerRegister />

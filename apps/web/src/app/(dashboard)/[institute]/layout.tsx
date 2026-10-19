@@ -45,14 +45,15 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
-  // Compute activity eligibility for the sidebar
-  const activityEligible = await isEligibleForActivities({
+  // Compute activity eligibility for the sidebar (CodeLab is strictly ICS-only)
+  const isActivitySessionEligible = await isEligibleForActivities({
     user: {
       id: session.user.id,
       role: session.user.role as string,
       instituteId: session.user.instituteId as string,
     },
   });
+  const activityEligible = institute.toLowerCase() === "ics" && isActivitySessionEligible;
 
   // Compute Knowledge Exchange eligibility for the sidebar
   const isKxSessionEligible = await isEligibleForKnowledgeExchange({

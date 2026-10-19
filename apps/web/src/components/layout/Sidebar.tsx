@@ -31,6 +31,7 @@ import {
   HelpCircle,
   MessageSquareQuote,
   X,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -96,8 +97,9 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
   { label: "Permissions", href: `/${code}/accounts/permissions`, icon: ShieldCheck },
   { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
-  { label: "Backup & Recovery", href: `/${code}/backup`, icon: HardDrive },
+  { label: "Database Management", href: `/${code}/admin/database`, icon: HardDrive },
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
+  { label: "Support Tickets", href: `/${code}/admin/support-tickets`, icon: LifeBuoy },
   { label: "Settings", href: `/${code}/settings`, icon: Settings },
   { label: "Help", href: `/${code}/help`, icon: HelpCircle },
 ];
@@ -187,7 +189,7 @@ export default function Sidebar({
         isMobileDrawer
           ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
           : `hidden h-screen border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
-              isCollapsed ? "w-[72px]" : "w-72"
+              isCollapsed ? "w-18" : "w-72"
             }`
       }`}
     >
@@ -219,7 +221,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onCloseMobileDrawer}
-            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
@@ -228,7 +230,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
@@ -267,7 +269,7 @@ export default function Sidebar({
                   className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
                     isSubActive && !isMyCoursesOpen
                       ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
-                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] rounded-xl"
                   }`}
                   style={
                     isSubActive && !isMyCoursesOpen
@@ -318,7 +320,7 @@ export default function Sidebar({
                             pathname === `/${instituteCode}/assignments` ||
                             pathname.startsWith(`/${instituteCode}/assignments/`)
                               ? "font-semibold"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8]"
                           }`}
                           style={
                             pathname === `/${instituteCode}/assignments` ||
@@ -350,7 +352,7 @@ export default function Sidebar({
                             className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
                               isCourseActive
                                 ? "font-semibold"
-                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8]"
                             }`}
                             style={
                               isCourseActive
@@ -383,7 +385,7 @@ export default function Sidebar({
               className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                 active
                   ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
-                  : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+                  : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] rounded-xl"
               }`}
               style={
                 active

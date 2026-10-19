@@ -34,8 +34,8 @@ async function main() {
 
   const institutes = [
     { code: "ics", name: "Institute of Computer Studies" },
-    { code: "ibe", name: "Institute of Business and Education" },
-    { code: "ite", name: "Institute of Technology and Engineering" },
+    { code: "ibe", name: "Institute of Business and Entrepreneurship" },
+    { code: "ite", name: "Institute of Teacher Education" },
   ];
 
   for (const inst of institutes) {
