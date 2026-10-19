@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import {
   Search,
@@ -28,7 +29,7 @@ import BulkImportModal from "./BulkImportModal";
 import ResetPasswordModal from "./ResetPasswordModal";
 import RoleChangeModal from "./RoleChangeModal";
 
-type Tab = "students" | "instructors" | "admins";
+type Tab = "students" | "instructors";
 
 interface AccountsManagementClientProps {
   theme: InstituteTheme;
@@ -73,11 +74,7 @@ export default function AccountsManagementClient({
     setLoading(true);
     try {
       const roleParam =
-        activeTab === "students"
-          ? "STUDENT"
-          : activeTab === "instructors"
-          ? "INSTRUCTOR"
-          : "ADMIN";
+        activeTab === "students" ? "STUDENT" : "INSTRUCTOR";
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: pageSize.toString(),
@@ -225,7 +222,6 @@ export default function AccountsManagementClient({
   const tabs: { key: Tab; label: string; icon: LucideIcon }[] = [
     { key: "students", label: "Student Directory", icon: GraduationCap },
     { key: "instructors", label: "Instructor Directory", icon: Users },
-    { key: "admins", label: "Administrator Directory", icon: ShieldCheck },
   ];
 
   return (
@@ -675,6 +671,14 @@ export default function AccountsManagementClient({
               <Pencil className="h-3.5 w-3.5" />
               Edit Profile
             </button>
+            {activeTab === "instructors" && <Link
+              href={`/${instituteCode}/admin/courses?instructor=${encodeURIComponent(actionMenu.user.id)}`}
+              onClick={() => setActionMenu(null)}
+              className="flex min-h-[38px] w-full items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-white/5"
+            >
+              <GraduationCap className="h-3.5 w-3.5" aria-hidden />
+              Classes &amp; programs
+            </Link>}
             <button
               onClick={() => {
                 handleToggleStatus(actionMenu.user);

@@ -1,0 +1,2 @@
+import InstituteAdminManagement from '@/components/super-user-v1/InstituteAdminManagement';
+export default async function InstituteAdmins({ params }: { params: Promise<{ institute: string }> }) { const { institute } = await params; return <InstituteAdminManagement institute={institute} />; }

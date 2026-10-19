@@ -1,0 +1,7439 @@
+[
+  {
+    "name": "symbol-key",
+    "w": 1200,
+    "h": 660,
+    "nodes": [
+      {
+        "id": "0",
+        "text": "",
+        "x": 30,
+        "y": 20,
+        "w": 220,
+        "h": 100,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label0",
+        "text": "Start or end",
+        "x": 270,
+        "y": 20,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "1",
+        "text": "",
+        "x": 630,
+        "y": 20,
+        "w": 220,
+        "h": 100,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label1",
+        "text": "Action or processing",
+        "x": 870,
+        "y": 20,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "2",
+        "text": "",
+        "x": 30,
+        "y": 180,
+        "w": 220,
+        "h": 100,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label2",
+        "text": "Input or output",
+        "x": 270,
+        "y": 180,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "3",
+        "text": "",
+        "x": 630,
+        "y": 180,
+        "w": 220,
+        "h": 100,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label3",
+        "text": "Decision with labelled branches",
+        "x": 870,
+        "y": 180,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "4",
+        "text": "",
+        "x": 30,
+        "y": 340,
+        "w": 220,
+        "h": 100,
+        "kind": "predefined",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label4",
+        "text": "Detailed subprocess",
+        "x": 270,
+        "y": 340,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "5",
+        "text": "A",
+        "x": 630,
+        "y": 340,
+        "w": 130,
+        "h": 100,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label5",
+        "text": "On-page continuation",
+        "x": 870,
+        "y": 340,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "6",
+        "text": "A",
+        "x": 30,
+        "y": 500,
+        "w": 130,
+        "h": 100,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "label6",
+        "text": "Off-page continuation",
+        "x": 270,
+        "y": 500,
+        "w": 325,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 26
+      }
+    ],
+    "edges": []
+  },
+  {
+    "name": "access",
+    "w": 1200,
+    "h": 1430,
+    "nodes": [
+      {
+        "id": "start",
+        "text": "START",
+        "x": 445,
+        "y": 20,
+        "w": 310,
+        "h": 65,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "open",
+        "text": "Open the role-appropriate client\nWeb Portal or native Admin Console",
+        "x": 345,
+        "y": 120,
+        "w": 510,
+        "h": 85,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "new",
+        "text": "New public account?",
+        "x": 405,
+        "y": 245,
+        "w": 390,
+        "h": 135,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "reg",
+        "text": "R",
+        "x": 990,
+        "y": 260,
+        "w": 110,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "reglabel",
+        "text": "Registration\n(next chart)",
+        "x": 900,
+        "y": 355,
+        "w": 290,
+        "h": 65,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "L",
+        "text": "L",
+        "x": 10,
+        "y": 435,
+        "w": 100,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "Llabel",
+        "text": "From registration",
+        "x": 10,
+        "y": 545,
+        "w": 280,
+        "h": 35,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "input",
+        "text": "Select institute; enter\nemail and password",
+        "x": 360,
+        "y": 425,
+        "w": 480,
+        "h": 85,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "check",
+        "text": "Validate credentials, active status,\nrole and permitted institute",
+        "x": 345,
+        "y": 565,
+        "w": 510,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "ok",
+        "text": "Access permitted?",
+        "x": 405,
+        "y": 705,
+        "w": 390,
+        "h": 140,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "error",
+        "text": "Display reason for denied access",
+        "x": 20,
+        "y": 720,
+        "w": 310,
+        "h": 90,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "retry",
+        "text": "L1",
+        "x": 125,
+        "y": 590,
+        "w": 65,
+        "h": 65,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "L1",
+        "text": "L1",
+        "x": 180,
+        "y": 435,
+        "w": 65,
+        "h": 65,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "session",
+        "text": "Establish session",
+        "x": 380,
+        "y": 895,
+        "w": 440,
+        "h": 75,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "role",
+        "text": "Route by authorized role",
+        "x": 380,
+        "y": 1015,
+        "w": 440,
+        "h": 75,
+        "kind": "predefined",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "S",
+        "text": "S",
+        "x": 85,
+        "y": 1190,
+        "w": 110,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "Slabel",
+        "text": "Student overview",
+        "x": 15,
+        "y": 1290,
+        "w": 270,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "I",
+        "text": "I",
+        "x": 380,
+        "y": 1190,
+        "w": 110,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "Ilabel",
+        "text": "Instructor overview",
+        "x": 310,
+        "y": 1290,
+        "w": 270,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "A",
+        "text": "A",
+        "x": 675,
+        "y": 1190,
+        "w": 110,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "Alabel",
+        "text": "Administrator overview",
+        "x": 605,
+        "y": 1290,
+        "w": 270,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "U",
+        "text": "U",
+        "x": 970,
+        "y": 1190,
+        "w": 110,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "Ulabel",
+        "text": "Super User overview",
+        "x": 900,
+        "y": 1290,
+        "w": 270,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      }
+    ],
+    "edges": [
+      {
+        "a": "start",
+        "b": "open",
+        "pts": [
+          [
+            600.0,
+            85
+          ],
+          [
+            600.0,
+            120
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "open",
+        "b": "new",
+        "pts": [
+          [
+            600.0,
+            205
+          ],
+          [
+            600.0,
+            245
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "new",
+        "b": "reg",
+        "pts": [
+          [
+            795,
+            312
+          ],
+          [
+            990,
+            312
+          ]
+        ],
+        "label": "Yes",
+        "labelpos": [
+          875,
+          280
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "new",
+        "b": "input",
+        "pts": [
+          [
+            600.0,
+            380
+          ],
+          [
+            600.0,
+            425
+          ]
+        ],
+        "label": "No",
+        "labelpos": [
+          640,
+          395
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "L",
+        "b": "input",
+        "pts": [
+          [
+            60,
+            520
+          ],
+          [
+            300,
+            520
+          ],
+          [
+            300,
+            490
+          ],
+          [
+            360,
+            490
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "L1",
+        "b": "input",
+        "pts": [
+          [
+            245,
+            467
+          ],
+          [
+            360,
+            467
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "input",
+        "b": "check",
+        "pts": [
+          [
+            600.0,
+            510
+          ],
+          [
+            600.0,
+            565
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "check",
+        "b": "ok",
+        "pts": [
+          [
+            600.0,
+            655
+          ],
+          [
+            600.0,
+            705
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "ok",
+        "b": "error",
+        "pts": [
+          [
+            405,
+            775
+          ],
+          [
+            330,
+            775
+          ]
+        ],
+        "label": "No",
+        "labelpos": [
+          365,
+          744
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "error",
+        "b": "retry",
+        "pts": [
+          [
+            175,
+            720
+          ],
+          [
+            175,
+            655
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "ok",
+        "b": "session",
+        "pts": [
+          [
+            600.0,
+            845
+          ],
+          [
+            600.0,
+            895
+          ]
+        ],
+        "label": "Yes",
+        "labelpos": [
+          646,
+          865
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "session",
+        "b": "role",
+        "pts": [
+          [
+            600.0,
+            970
+          ],
+          [
+            600.0,
+            1015
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "role",
+        "b": "S",
+        "pts": [
+          [
+            600,
+            1090
+          ],
+          [
+            600,
+            1130
+          ],
+          [
+            140,
+            1130
+          ],
+          [
+            140,
+            1190
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "role",
+        "b": "I",
+        "pts": [
+          [
+            600,
+            1090
+          ],
+          [
+            600,
+            1130
+          ],
+          [
+            435,
+            1130
+          ],
+          [
+            435,
+            1190
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "role",
+        "b": "A",
+        "pts": [
+          [
+            600,
+            1090
+          ],
+          [
+            600,
+            1130
+          ],
+          [
+            730,
+            1130
+          ],
+          [
+            730,
+            1190
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "role",
+        "b": "U",
+        "pts": [
+          [
+            600,
+            1090
+          ],
+          [
+            600,
+            1130
+          ],
+          [
+            1025,
+            1130
+          ],
+          [
+            1025,
+            1190
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "registration",
+    "w": 1200,
+    "h": 1270,
+    "nodes": [
+      {
+        "id": "R",
+        "text": "R",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 90,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "details",
+        "text": "Enter permitted registration details\nStudent or Instructor public account",
+        "x": 350,
+        "y": 170,
+        "w": 500,
+        "h": 100,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "validate",
+        "text": "Validate required fields, institute,\npermitted role and duplicate email",
+        "x": 350,
+        "y": 330,
+        "w": 500,
+        "h": 100,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "valid",
+        "text": "Registration valid?",
+        "x": 405,
+        "y": 490,
+        "w": 390,
+        "h": 160,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "err",
+        "text": "Show validation or duplicate error",
+        "x": 20,
+        "y": 515,
+        "w": 310,
+        "h": 100,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "r1a",
+        "text": "R1",
+        "x": 135,
+        "y": 350,
+        "w": 70,
+        "h": 70,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "r1b",
+        "text": "R1",
+        "x": 135,
+        "y": 185,
+        "w": 70,
+        "h": 70,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "save",
+        "text": "Hash password; create account",
+        "x": 350,
+        "y": 720,
+        "w": 500,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "confirm",
+        "text": "Display registration confirmation",
+        "x": 350,
+        "y": 880,
+        "w": 500,
+        "h": 90,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "L",
+        "text": "L",
+        "x": 535,
+        "y": 1060,
+        "w": 130,
+        "h": 90,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "note",
+        "text": "L returns to the credential step in the access chart.\nAdministrative and Super User accounts are not publicly registered.",
+        "x": 100,
+        "y": 1180,
+        "w": 1000,
+        "h": 70,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      }
+    ],
+    "edges": [
+      {
+        "a": "R",
+        "b": "details",
+        "pts": [
+          [
+            600.0,
+            110
+          ],
+          [
+            600.0,
+            170
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "r1b",
+        "b": "details",
+        "pts": [
+          [
+            205,
+            220
+          ],
+          [
+            350,
+            220
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "details",
+        "b": "validate",
+        "pts": [
+          [
+            600.0,
+            270
+          ],
+          [
+            600.0,
+            330
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "validate",
+        "b": "valid",
+        "pts": [
+          [
+            600.0,
+            430
+          ],
+          [
+            600.0,
+            490
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "valid",
+        "b": "err",
+        "pts": [
+          [
+            405,
+            570
+          ],
+          [
+            330,
+            570
+          ]
+        ],
+        "label": "No",
+        "labelpos": [
+          365,
+          538
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "err",
+        "b": "r1a",
+        "pts": [
+          [
+            170,
+            515
+          ],
+          [
+            170,
+            420
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "valid",
+        "b": "save",
+        "pts": [
+          [
+            600.0,
+            650
+          ],
+          [
+            600.0,
+            720
+          ]
+        ],
+        "label": "Yes",
+        "labelpos": [
+          650,
+          680
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "save",
+        "b": "confirm",
+        "pts": [
+          [
+            600.0,
+            810
+          ],
+          [
+            600.0,
+            880
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "confirm",
+        "b": "L",
+        "pts": [
+          [
+            600.0,
+            970
+          ],
+          [
+            600.0,
+            1060
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "student",
+    "w": 1200,
+    "h": 1480,
+    "nodes": [
+      {
+        "id": "entry",
+        "text": "S",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "entrytext",
+        "text": "From access or a detailed flow",
+        "x": 730,
+        "y": 25,
+        "w": 430,
+        "h": 70,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "return1",
+        "text": "S1",
+        "x": 70,
+        "y": 150,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "dashboard",
+        "text": "Student Dashboard",
+        "x": 370,
+        "y": 155,
+        "w": 460,
+        "h": 85,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "choose",
+        "text": "Select one permitted function",
+        "x": 370,
+        "y": 290,
+        "w": 460,
+        "h": 85,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "buslabel",
+        "text": "Selected function",
+        "x": 20,
+        "y": 335,
+        "w": 260,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 23
+      },
+      {
+        "id": "m0",
+        "text": "My Courses and To-Do",
+        "x": 250,
+        "y": 440,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f0",
+        "text": "Approved coursework, resources,\nsubmissions and deadlines",
+        "x": 655,
+        "y": 440,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m1",
+        "text": "Join Courses",
+        "x": 250,
+        "y": 560,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f1",
+        "text": "Request course enrollment\nDetail starts at E",
+        "x": 655,
+        "y": 560,
+        "w": 390,
+        "h": 88,
+        "kind": "predefined",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "detailE",
+        "text": "E",
+        "x": 1065,
+        "y": 562,
+        "w": 105,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "m2",
+        "text": "Personal Grades",
+        "x": 250,
+        "y": 680,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f2",
+        "text": "Own grades and descriptive\nprogress information",
+        "x": 655,
+        "y": 680,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m3",
+        "text": "Notes, Tasks and Calendar",
+        "x": 250,
+        "y": 800,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f3",
+        "text": "Owned records; permitted events\nand private snapshots",
+        "x": 655,
+        "y": 800,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m4",
+        "text": "Study and Progression",
+        "x": 250,
+        "y": 920,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f4",
+        "text": "Flashcards, focus records, EXP,\nachievements and leaderboards",
+        "x": 655,
+        "y": 920,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m5",
+        "text": "Coding and Knowledge Exchange",
+        "x": 250,
+        "y": 1040,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f5",
+        "text": "Authorized CodeLab, Git coursework,\nquestions, answers and resources",
+        "x": 655,
+        "y": 1040,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "return2",
+        "text": "S1",
+        "x": 1050,
+        "y": 1180,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "returntext",
+        "text": "Return to dashboard",
+        "x": 750,
+        "y": 1187,
+        "w": 280,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "logout",
+        "text": "Log out",
+        "x": 250,
+        "y": 1320,
+        "w": 310,
+        "h": 75,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "end",
+        "text": "END",
+        "x": 655,
+        "y": 1320,
+        "w": 390,
+        "h": 75,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      }
+    ],
+    "edges": [
+      {
+        "a": "entry",
+        "b": "dashboard",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "return1",
+        "b": "dashboard",
+        "pts": [
+          [
+            145,
+            188
+          ],
+          [
+            370,
+            188
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "dashboard",
+        "b": "choose",
+        "pts": [
+          [
+            600.0,
+            240
+          ],
+          [
+            600.0,
+            290
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m0",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            484
+          ],
+          [
+            250,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m0",
+        "b": "f0",
+        "pts": [
+          [
+            560,
+            484
+          ],
+          [
+            655,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f0",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            484
+          ],
+          [
+            1185,
+            484
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m1",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            604
+          ],
+          [
+            250,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m1",
+        "b": "f1",
+        "pts": [
+          [
+            560,
+            604
+          ],
+          [
+            655,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f1",
+        "b": "detailE",
+        "pts": [
+          [
+            1045,
+            604
+          ],
+          [
+            1065,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m2",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            724
+          ],
+          [
+            250,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m2",
+        "b": "f2",
+        "pts": [
+          [
+            560,
+            724
+          ],
+          [
+            655,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f2",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            724
+          ],
+          [
+            1185,
+            724
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m3",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            844
+          ],
+          [
+            250,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m3",
+        "b": "f3",
+        "pts": [
+          [
+            560,
+            844
+          ],
+          [
+            655,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f3",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            844
+          ],
+          [
+            1185,
+            844
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m4",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            964
+          ],
+          [
+            250,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m4",
+        "b": "f4",
+        "pts": [
+          [
+            560,
+            964
+          ],
+          [
+            655,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f4",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            964
+          ],
+          [
+            1185,
+            964
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m5",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1084
+          ],
+          [
+            250,
+            1084
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m5",
+        "b": "f5",
+        "pts": [
+          [
+            560,
+            1084
+          ],
+          [
+            655,
+            1084
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f5",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            1084
+          ],
+          [
+            1185,
+            1084
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "logout",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1357
+          ],
+          [
+            250,
+            1357
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "logout",
+        "b": "end",
+        "pts": [
+          [
+            560,
+            1357
+          ],
+          [
+            655,
+            1357
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "enrollment",
+    "w": 1200,
+    "h": 1290,
+    "nodes": [
+      {
+        "id": "E",
+        "text": "E",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "enter",
+        "text": "Enter course join code",
+        "x": 365,
+        "y": 165,
+        "w": 470,
+        "h": 80,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "lookup",
+        "text": "Check course, institute and\nexisting enrollment status",
+        "x": 355,
+        "y": 295,
+        "w": 490,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "eligible",
+        "text": "Eligible new request?",
+        "x": 405,
+        "y": 445,
+        "w": 390,
+        "h": 160,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "error",
+        "text": "Show invalid code or existing status\nDo not create a duplicate",
+        "x": 20,
+        "y": 455,
+        "w": 310,
+        "h": 110,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "e1a",
+        "text": "E1",
+        "x": 135,
+        "y": 315,
+        "w": 70,
+        "h": 70,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "e1b",
+        "text": "E1",
+        "x": 135,
+        "y": 175,
+        "w": 70,
+        "h": 70,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "pending",
+        "text": "Save enrollment request\nwith PENDING status",
+        "x": 355,
+        "y": 680,
+        "w": 490,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "show",
+        "text": "Display pending status\nNo course access until approval",
+        "x": 355,
+        "y": 840,
+        "w": 490,
+        "h": 90,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "S",
+        "text": "S",
+        "x": 535,
+        "y": 1050,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "E2",
+        "text": "E2",
+        "x": 985,
+        "y": 675,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "later",
+        "text": "Later Instructor review\n(next chart)",
+        "x": 905,
+        "y": 775,
+        "w": 280,
+        "h": 80,
+        "kind": "plain",
+        "dashed": false,
+        "size": 23
+      },
+      {
+        "id": "note",
+        "text": "S returns to the Student overview. The Student can use other modules while waiting.",
+        "x": 90,
+        "y": 1180,
+        "w": 1020,
+        "h": 65,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      }
+    ],
+    "edges": [
+      {
+        "a": "E",
+        "b": "enter",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            165
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "e1b",
+        "b": "enter",
+        "pts": [
+          [
+            205,
+            210
+          ],
+          [
+            365,
+            210
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "enter",
+        "b": "lookup",
+        "pts": [
+          [
+            600.0,
+            245
+          ],
+          [
+            600.0,
+            295
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "lookup",
+        "b": "eligible",
+        "pts": [
+          [
+            600.0,
+            385
+          ],
+          [
+            600.0,
+            445
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "eligible",
+        "b": "error",
+        "pts": [
+          [
+            405,
+            525
+          ],
+          [
+            330,
+            525
+          ]
+        ],
+        "label": "No",
+        "labelpos": [
+          368,
+          493
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "error",
+        "b": "e1a",
+        "pts": [
+          [
+            170,
+            455
+          ],
+          [
+            170,
+            385
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "eligible",
+        "b": "pending",
+        "pts": [
+          [
+            600.0,
+            605
+          ],
+          [
+            600.0,
+            680
+          ]
+        ],
+        "label": "Yes",
+        "labelpos": [
+          650,
+          625
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "pending",
+        "b": "show",
+        "pts": [
+          [
+            600.0,
+            770
+          ],
+          [
+            600.0,
+            840
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "show",
+        "b": "S",
+        "pts": [
+          [
+            600.0,
+            930
+          ],
+          [
+            600.0,
+            1050
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "pending",
+        "b": "E2",
+        "pts": [
+          [
+            845,
+            725
+          ],
+          [
+            985,
+            725
+          ]
+        ],
+        "label": "Review",
+        "labelpos": [
+          910,
+          690
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": true
+      }
+    ]
+  },
+  {
+    "name": "enrollment-review",
+    "w": 1200,
+    "h": 1250,
+    "nodes": [
+      {
+        "id": "E2",
+        "text": "E2",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "queue",
+        "text": "Authorized Instructor opens\nassigned course requests",
+        "x": 340,
+        "y": 165,
+        "w": 520,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "check",
+        "text": "Validate session, course assignment\nand current pending status",
+        "x": 340,
+        "y": 310,
+        "w": 520,
+        "h": 90,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "approve",
+        "text": "Approve request?",
+        "x": 410,
+        "y": 460,
+        "w": 380,
+        "h": 160,
+        "kind": "decision",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "approved",
+        "text": "Save APPROVED status\nGrant enrolled-course access",
+        "x": 50,
+        "y": 730,
+        "w": 440,
+        "h": 100,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "rejected",
+        "text": "Save REJECTED status\nDo not grant course access",
+        "x": 710,
+        "y": 730,
+        "w": 440,
+        "h": 100,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "status",
+        "text": "Updated status becomes available\nto the Student\u2019s permitted course view",
+        "x": 330,
+        "y": 950,
+        "w": 540,
+        "h": 100,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "I",
+        "text": "I",
+        "x": 535,
+        "y": 1120,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      }
+    ],
+    "edges": [
+      {
+        "a": "E2",
+        "b": "queue",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            165
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "queue",
+        "b": "check",
+        "pts": [
+          [
+            600.0,
+            255
+          ],
+          [
+            600.0,
+            310
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "check",
+        "b": "approve",
+        "pts": [
+          [
+            600.0,
+            400
+          ],
+          [
+            600.0,
+            460
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "approve",
+        "b": "approved",
+        "pts": [
+          [
+            410,
+            540
+          ],
+          [
+            270,
+            540
+          ],
+          [
+            270,
+            730
+          ]
+        ],
+        "label": "Yes",
+        "labelpos": [
+          310,
+          507
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "approve",
+        "b": "rejected",
+        "pts": [
+          [
+            790,
+            540
+          ],
+          [
+            930,
+            540
+          ],
+          [
+            930,
+            730
+          ]
+        ],
+        "label": "No",
+        "labelpos": [
+          855,
+          507
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "approved",
+        "b": "status",
+        "pts": [
+          [
+            270,
+            830
+          ],
+          [
+            270,
+            900
+          ],
+          [
+            600,
+            900
+          ],
+          [
+            600,
+            950
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "rejected",
+        "b": "status",
+        "pts": [
+          [
+            930,
+            830
+          ],
+          [
+            930,
+            900
+          ],
+          [
+            600,
+            900
+          ],
+          [
+            600,
+            950
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "status",
+        "b": "I",
+        "pts": [
+          [
+            600.0,
+            1050
+          ],
+          [
+            600.0,
+            1120
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "instructor",
+    "w": 1200,
+    "h": 1480,
+    "nodes": [
+      {
+        "id": "entry",
+        "text": "I",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "entrytext",
+        "text": "From access or a detailed flow",
+        "x": 730,
+        "y": 25,
+        "w": 430,
+        "h": 70,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "return1",
+        "text": "I1",
+        "x": 70,
+        "y": 150,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "dashboard",
+        "text": "Instructor Dashboard",
+        "x": 370,
+        "y": 155,
+        "w": 460,
+        "h": 85,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "choose",
+        "text": "Select one permitted function",
+        "x": 370,
+        "y": 290,
+        "w": 460,
+        "h": 85,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "buslabel",
+        "text": "Selected function",
+        "x": 20,
+        "y": 335,
+        "w": 260,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 23
+      },
+      {
+        "id": "m0",
+        "text": "Assigned Courses",
+        "x": 250,
+        "y": 440,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f0",
+        "text": "Create or manage permitted classes,\nmaterials, activities and announcements",
+        "x": 655,
+        "y": 440,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m1",
+        "text": "Gradebook and Analytics",
+        "x": 250,
+        "y": 560,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f1",
+        "text": "Configured grades, exports and\nrule-based attention summaries",
+        "x": 655,
+        "y": 560,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m2",
+        "text": "Requests Queue",
+        "x": 250,
+        "y": 680,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f2",
+        "text": "Review pending enrollments\nDetail starts at E2",
+        "x": 655,
+        "y": 680,
+        "w": 390,
+        "h": 88,
+        "kind": "predefined",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "detailE2",
+        "text": "E2",
+        "x": 1065,
+        "y": 682,
+        "w": 105,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "m3",
+        "text": "CodeLab and Git Review",
+        "x": 250,
+        "y": 800,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f3",
+        "text": "Programming problems, test results\nand repository coursework review",
+        "x": 655,
+        "y": 800,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m4",
+        "text": "Calendar and Faculty Directory",
+        "x": 250,
+        "y": 920,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f4",
+        "text": "Authorized schedules and events;\nProgram Head publishing if designated",
+        "x": 655,
+        "y": 920,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m5",
+        "text": "Knowledge Exchange and Study",
+        "x": 250,
+        "y": 1040,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f5",
+        "text": "Moderation, verified answers,\nsupported rewards and owned records",
+        "x": 655,
+        "y": 1040,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "return2",
+        "text": "I1",
+        "x": 1050,
+        "y": 1180,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "returntext",
+        "text": "Return to dashboard",
+        "x": 750,
+        "y": 1187,
+        "w": 280,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "logout",
+        "text": "Log out",
+        "x": 250,
+        "y": 1320,
+        "w": 310,
+        "h": 75,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "end",
+        "text": "END",
+        "x": 655,
+        "y": 1320,
+        "w": 390,
+        "h": 75,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      }
+    ],
+    "edges": [
+      {
+        "a": "entry",
+        "b": "dashboard",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "return1",
+        "b": "dashboard",
+        "pts": [
+          [
+            145,
+            188
+          ],
+          [
+            370,
+            188
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "dashboard",
+        "b": "choose",
+        "pts": [
+          [
+            600.0,
+            240
+          ],
+          [
+            600.0,
+            290
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m0",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            484
+          ],
+          [
+            250,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m0",
+        "b": "f0",
+        "pts": [
+          [
+            560,
+            484
+          ],
+          [
+            655,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f0",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            484
+          ],
+          [
+            1185,
+            484
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m1",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            604
+          ],
+          [
+            250,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m1",
+        "b": "f1",
+        "pts": [
+          [
+            560,
+            604
+          ],
+          [
+            655,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f1",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            604
+          ],
+          [
+            1185,
+            604
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m2",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            724
+          ],
+          [
+            250,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m2",
+        "b": "f2",
+        "pts": [
+          [
+            560,
+            724
+          ],
+          [
+            655,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f2",
+        "b": "detailE2",
+        "pts": [
+          [
+            1045,
+            724
+          ],
+          [
+            1065,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m3",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            844
+          ],
+          [
+            250,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m3",
+        "b": "f3",
+        "pts": [
+          [
+            560,
+            844
+          ],
+          [
+            655,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f3",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            844
+          ],
+          [
+            1185,
+            844
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m4",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            964
+          ],
+          [
+            250,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m4",
+        "b": "f4",
+        "pts": [
+          [
+            560,
+            964
+          ],
+          [
+            655,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f4",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            964
+          ],
+          [
+            1185,
+            964
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m5",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1084
+          ],
+          [
+            250,
+            1084
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m5",
+        "b": "f5",
+        "pts": [
+          [
+            560,
+            1084
+          ],
+          [
+            655,
+            1084
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f5",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            1084
+          ],
+          [
+            1185,
+            1084
+          ],
+          [
+            1185,
+            1217
+          ],
+          [
+            1125,
+            1217
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "logout",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1357
+          ],
+          [
+            250,
+            1357
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "logout",
+        "b": "end",
+        "pts": [
+          [
+            560,
+            1357
+          ],
+          [
+            655,
+            1357
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "administrator",
+    "w": 1200,
+    "h": 1360,
+    "nodes": [
+      {
+        "id": "entry",
+        "text": "A",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "entrytext",
+        "text": "From access or a detailed flow; native Console",
+        "x": 730,
+        "y": 25,
+        "w": 430,
+        "h": 70,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "return1",
+        "text": "A1",
+        "x": 70,
+        "y": 150,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "dashboard",
+        "text": "Administrator Dashboard",
+        "x": 370,
+        "y": 155,
+        "w": 460,
+        "h": 85,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "choose",
+        "text": "Select one permitted function",
+        "x": 370,
+        "y": 290,
+        "w": 460,
+        "h": 85,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "buslabel",
+        "text": "Selected function",
+        "x": 20,
+        "y": 335,
+        "w": 260,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 23
+      },
+      {
+        "id": "m0",
+        "text": "Accounts and Roles",
+        "x": 250,
+        "y": 440,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f0",
+        "text": "Permitted status and assignments;\nSuper User provision or revocation",
+        "x": 655,
+        "y": 440,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m1",
+        "text": "Academic Configuration",
+        "x": 250,
+        "y": 560,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f1",
+        "text": "Institute settings, faculty designations\nand authorized course administration",
+        "x": 655,
+        "y": 560,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m2",
+        "text": "Calendar and Schedules",
+        "x": 250,
+        "y": 680,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f2",
+        "text": "Permitted schedule revisions,\nexceptions and shared events",
+        "x": 655,
+        "y": 680,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m3",
+        "text": "Audit and Activity Records",
+        "x": 250,
+        "y": 800,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f3",
+        "text": "Review, filter and export\nsupported records",
+        "x": 655,
+        "y": 800,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m4",
+        "text": "Reports and Continuity",
+        "x": 250,
+        "y": 920,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f4",
+        "text": "Supported reports, security controls,\nbackup and recovery operations",
+        "x": 655,
+        "y": 920,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "return2",
+        "text": "A1",
+        "x": 1050,
+        "y": 1060,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "returntext",
+        "text": "Return to dashboard",
+        "x": 750,
+        "y": 1067,
+        "w": 280,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "logout",
+        "text": "Log out",
+        "x": 250,
+        "y": 1200,
+        "w": 310,
+        "h": 75,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "end",
+        "text": "END",
+        "x": 655,
+        "y": 1200,
+        "w": 390,
+        "h": 75,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      }
+    ],
+    "edges": [
+      {
+        "a": "entry",
+        "b": "dashboard",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "return1",
+        "b": "dashboard",
+        "pts": [
+          [
+            145,
+            188
+          ],
+          [
+            370,
+            188
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "dashboard",
+        "b": "choose",
+        "pts": [
+          [
+            600.0,
+            240
+          ],
+          [
+            600.0,
+            290
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m0",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            484
+          ],
+          [
+            250,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m0",
+        "b": "f0",
+        "pts": [
+          [
+            560,
+            484
+          ],
+          [
+            655,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f0",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            484
+          ],
+          [
+            1185,
+            484
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m1",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            604
+          ],
+          [
+            250,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m1",
+        "b": "f1",
+        "pts": [
+          [
+            560,
+            604
+          ],
+          [
+            655,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f1",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            604
+          ],
+          [
+            1185,
+            604
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m2",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            724
+          ],
+          [
+            250,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m2",
+        "b": "f2",
+        "pts": [
+          [
+            560,
+            724
+          ],
+          [
+            655,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f2",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            724
+          ],
+          [
+            1185,
+            724
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m3",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            844
+          ],
+          [
+            250,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m3",
+        "b": "f3",
+        "pts": [
+          [
+            560,
+            844
+          ],
+          [
+            655,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f3",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            844
+          ],
+          [
+            1185,
+            844
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m4",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            964
+          ],
+          [
+            250,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m4",
+        "b": "f4",
+        "pts": [
+          [
+            560,
+            964
+          ],
+          [
+            655,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f4",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            964
+          ],
+          [
+            1185,
+            964
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "logout",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1237
+          ],
+          [
+            250,
+            1237
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "logout",
+        "b": "end",
+        "pts": [
+          [
+            560,
+            1237
+          ],
+          [
+            655,
+            1237
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "super-user",
+    "w": 1200,
+    "h": 1360,
+    "nodes": [
+      {
+        "id": "entry",
+        "text": "U",
+        "x": 535,
+        "y": 20,
+        "w": 130,
+        "h": 85,
+        "kind": "off",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "entrytext",
+        "text": "From access or a detailed flow",
+        "x": 730,
+        "y": 25,
+        "w": 430,
+        "h": 70,
+        "kind": "plain",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "return1",
+        "text": "U1",
+        "x": 70,
+        "y": 150,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "dashboard",
+        "text": "Super User Dashboard",
+        "x": 370,
+        "y": 155,
+        "w": 460,
+        "h": 85,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "choose",
+        "text": "Select one permitted function",
+        "x": 370,
+        "y": 290,
+        "w": 460,
+        "h": 85,
+        "kind": "input",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "buslabel",
+        "text": "Selected function",
+        "x": 20,
+        "y": 335,
+        "w": 260,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 23
+      },
+      {
+        "id": "m0",
+        "text": "Academic Operations Hub",
+        "x": 250,
+        "y": 440,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f0",
+        "text": "Authorized institute summaries\nand faculty information",
+        "x": 655,
+        "y": 440,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m1",
+        "text": "Faculty and Designations",
+        "x": 250,
+        "y": 560,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f1",
+        "text": "Narrowly permitted leadership\nand program membership operations",
+        "x": 655,
+        "y": 560,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m2",
+        "text": "Timetable and Shared Events",
+        "x": 250,
+        "y": 680,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f2",
+        "text": "Read authorized schedules;\npermitted faculty announcements",
+        "x": 655,
+        "y": 680,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m3",
+        "text": "Course Supervision",
+        "x": 250,
+        "y": 800,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f3",
+        "text": "Safe course and material summaries;\nno individual assessment records",
+        "x": 655,
+        "y": 800,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "m4",
+        "text": "Private Organization",
+        "x": 250,
+        "y": 920,
+        "w": 310,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "f4",
+        "text": "Own notes, events and permitted\nprivate snapshot conversions",
+        "x": 655,
+        "y": 920,
+        "w": 390,
+        "h": 88,
+        "kind": "process",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "return2",
+        "text": "U1",
+        "x": 1050,
+        "y": 1060,
+        "w": 75,
+        "h": 75,
+        "kind": "on",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "returntext",
+        "text": "Return to dashboard",
+        "x": 750,
+        "y": 1067,
+        "w": 280,
+        "h": 60,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "logout",
+        "text": "Log out",
+        "x": 250,
+        "y": 1200,
+        "w": 310,
+        "h": 75,
+        "kind": "process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "end",
+        "text": "END",
+        "x": 655,
+        "y": 1200,
+        "w": 390,
+        "h": 75,
+        "kind": "terminal",
+        "dashed": false,
+        "size": 27
+      }
+    ],
+    "edges": [
+      {
+        "a": "entry",
+        "b": "dashboard",
+        "pts": [
+          [
+            600.0,
+            105
+          ],
+          [
+            600.0,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "return1",
+        "b": "dashboard",
+        "pts": [
+          [
+            145,
+            188
+          ],
+          [
+            370,
+            188
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "dashboard",
+        "b": "choose",
+        "pts": [
+          [
+            600.0,
+            240
+          ],
+          [
+            600.0,
+            290
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m0",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            484
+          ],
+          [
+            250,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m0",
+        "b": "f0",
+        "pts": [
+          [
+            560,
+            484
+          ],
+          [
+            655,
+            484
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f0",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            484
+          ],
+          [
+            1185,
+            484
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m1",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            604
+          ],
+          [
+            250,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m1",
+        "b": "f1",
+        "pts": [
+          [
+            560,
+            604
+          ],
+          [
+            655,
+            604
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f1",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            604
+          ],
+          [
+            1185,
+            604
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m2",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            724
+          ],
+          [
+            250,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m2",
+        "b": "f2",
+        "pts": [
+          [
+            560,
+            724
+          ],
+          [
+            655,
+            724
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f2",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            724
+          ],
+          [
+            1185,
+            724
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m3",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            844
+          ],
+          [
+            250,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m3",
+        "b": "f3",
+        "pts": [
+          [
+            560,
+            844
+          ],
+          [
+            655,
+            844
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f3",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            844
+          ],
+          [
+            1185,
+            844
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "m4",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            964
+          ],
+          [
+            250,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "m4",
+        "b": "f4",
+        "pts": [
+          [
+            560,
+            964
+          ],
+          [
+            655,
+            964
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "f4",
+        "b": "return2",
+        "pts": [
+          [
+            1045,
+            964
+          ],
+          [
+            1185,
+            964
+          ],
+          [
+            1185,
+            1097
+          ],
+          [
+            1125,
+            1097
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "choose",
+        "b": "logout",
+        "pts": [
+          [
+            370,
+            332
+          ],
+          [
+            180,
+            332
+          ],
+          [
+            180,
+            1237
+          ],
+          [
+            250,
+            1237
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "logout",
+        "b": "end",
+        "pts": [
+          [
+            560,
+            1237
+          ],
+          [
+            655,
+            1237
+          ]
+        ],
+        "label": "",
+        "labelpos": null,
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "erd-academic",
+    "w": 1200,
+    "h": 1180,
+    "nodes": [
+      {
+        "id": "inst",
+        "text": "Institute\nPK id\nUK code; name",
+        "x": 400,
+        "y": 20,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "user",
+        "text": "User\nPK id; FK instituteId\nemail; role; isActive",
+        "x": 35,
+        "y": 360,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "course",
+        "text": "Course\nPK id; FK instituteId\nFK instructorId (nullable)\ntitle; section; isArchived",
+        "x": 770,
+        "y": 360,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "session",
+        "text": "Session\nPK id; FK userId\nUK tokenHash; expiresAt",
+        "x": 35,
+        "y": 910,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "enroll",
+        "text": "Enrollment\nPK id; FK courseId, studentId\nUK courseId + studentId\nstatus",
+        "x": 770,
+        "y": 910,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      }
+    ],
+    "edges": [
+      {
+        "a": "inst",
+        "b": "user",
+        "pts": [
+          [
+            400,
+            108
+          ],
+          [
+            232,
+            108
+          ],
+          [
+            232,
+            360
+          ]
+        ],
+        "label": "belongs to",
+        "labelpos": [
+          220,
+          250
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "inst",
+        "b": "course",
+        "pts": [
+          [
+            795,
+            108
+          ],
+          [
+            967,
+            108
+          ],
+          [
+            967,
+            360
+          ]
+        ],
+        "label": "contains",
+        "labelpos": [
+          982,
+          245
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "course",
+        "pts": [
+          [
+            430,
+            445
+          ],
+          [
+            770,
+            445
+          ]
+        ],
+        "label": "assigned Instructor",
+        "labelpos": [
+          600,
+          412
+        ],
+        "kind": "relation",
+        "ends": [
+          "optional-one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "session",
+        "pts": [
+          [
+            232,
+            535
+          ],
+          [
+            232,
+            910
+          ]
+        ],
+        "label": "has sessions",
+        "labelpos": [
+          245,
+          685
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "course",
+        "b": "enroll",
+        "pts": [
+          [
+            967,
+            535
+          ],
+          [
+            967,
+            910
+          ]
+        ],
+        "label": "has enrollments",
+        "labelpos": [
+          980,
+          685
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "enroll",
+        "pts": [
+          [
+            330,
+            535
+          ],
+          [
+            330,
+            755
+          ],
+          [
+            875,
+            755
+          ],
+          [
+            875,
+            910
+          ]
+        ],
+        "label": "Student enrollment",
+        "labelpos": [
+          600,
+          724
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "erd-grading",
+    "w": 1200,
+    "h": 1410,
+    "nodes": [
+      {
+        "id": "course",
+        "text": "Course\nPK id",
+        "x": 405,
+        "y": 20,
+        "w": 395,
+        "h": 130,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "policy",
+        "text": "GradingPolicy\nPK id; UK/FK courseId",
+        "x": 30,
+        "y": 350,
+        "w": 395,
+        "h": 150,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "item",
+        "text": "SyllabusItem\nPK id; FK courseId\ntype; dueDate; maxPoints",
+        "x": 775,
+        "y": 350,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "weight",
+        "text": "CategoryWeight\nPK id; FK gradingPolicyId\ncategory; weightPercentage\nUK gradingPolicyId + category",
+        "x": 30,
+        "y": 740,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "user",
+        "text": "User\nPK id",
+        "x": 30,
+        "y": 1130,
+        "w": 395,
+        "h": 130,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "sub",
+        "text": "StudentSubmission\nPK id; FK syllabusItemId, studentId\ngrade; status; submittedAt\nUK syllabusItemId + studentId",
+        "x": 775,
+        "y": 1130,
+        "w": 395,
+        "h": 190,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      }
+    ],
+    "edges": [
+      {
+        "a": "course",
+        "b": "policy",
+        "pts": [
+          [
+            405,
+            85
+          ],
+          [
+            227,
+            85
+          ],
+          [
+            227,
+            350
+          ]
+        ],
+        "label": "grading policy",
+        "labelpos": [
+          230,
+          250
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-one"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "course",
+        "b": "item",
+        "pts": [
+          [
+            800,
+            85
+          ],
+          [
+            972,
+            85
+          ],
+          [
+            972,
+            350
+          ]
+        ],
+        "label": "course items",
+        "labelpos": [
+          975,
+          250
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "policy",
+        "b": "weight",
+        "pts": [
+          [
+            227,
+            500
+          ],
+          [
+            227,
+            740
+          ]
+        ],
+        "label": "assessment weights",
+        "labelpos": [
+          260,
+          625
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "item",
+        "b": "sub",
+        "pts": [
+          [
+            972,
+            525
+          ],
+          [
+            972,
+            1130
+          ]
+        ],
+        "label": "submitted work",
+        "labelpos": [
+          985,
+          760
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "sub",
+        "pts": [
+          [
+            425,
+            1195
+          ],
+          [
+            775,
+            1195
+          ]
+        ],
+        "label": "Student submissions",
+        "labelpos": [
+          605,
+          1160
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "erd-support",
+    "w": 1200,
+    "h": 1280,
+    "nodes": [
+      {
+        "id": "user",
+        "text": "User\nPK id",
+        "x": 405,
+        "y": 500,
+        "w": 395,
+        "h": 130,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "note",
+        "text": "Note\nPK id; FK creatorId, instituteId\ntitle; content; archived",
+        "x": 20,
+        "y": 20,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "deck",
+        "text": "FlashcardDeck\nPK id; FK creatorId\ntitle; optional courseId",
+        "x": 20,
+        "y": 870,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "event",
+        "text": "CalendarEvent\nPK id; FK creatorId, instituteId\neventDate; optional courseId",
+        "x": 785,
+        "y": 20,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "activity",
+        "text": "ActivityTemplate\nPK id; FK createdBy, courseId\nactivityType",
+        "x": 785,
+        "y": 870,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "note-key",
+        "text": "Selected ownership relationships. Additional card, task, study-session and progression\nrecords remain in the release schema. Nullable course links do not imply enrollment.",
+        "x": 45,
+        "y": 1140,
+        "w": 1110,
+        "h": 100,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      }
+    ],
+    "edges": [
+      {
+        "a": "user",
+        "b": "note",
+        "pts": [
+          [
+            405,
+            550
+          ],
+          [
+            218,
+            550
+          ],
+          [
+            218,
+            195
+          ]
+        ],
+        "label": "owns notes",
+        "labelpos": [
+          230,
+          340
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "event",
+        "pts": [
+          [
+            800,
+            550
+          ],
+          [
+            982,
+            550
+          ],
+          [
+            982,
+            195
+          ]
+        ],
+        "label": "creates events",
+        "labelpos": [
+          965,
+          340
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "deck",
+        "pts": [
+          [
+            405,
+            590
+          ],
+          [
+            218,
+            590
+          ],
+          [
+            218,
+            870
+          ]
+        ],
+        "label": "creates decks",
+        "labelpos": [
+          205,
+          750
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "user",
+        "b": "activity",
+        "pts": [
+          [
+            800,
+            590
+          ],
+          [
+            982,
+            590
+          ],
+          [
+            982,
+            870
+          ]
+        ],
+        "label": "creates activities",
+        "labelpos": [
+          980,
+          750
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "erd-coursework-forum",
+    "w": 1200,
+    "h": 1120,
+    "nodes": [
+      {
+        "id": "activity",
+        "text": "ActivityTemplate\nPK id; FK createdBy",
+        "x": 20,
+        "y": 30,
+        "w": 365,
+        "h": 190,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "asub",
+        "text": "ActivitySubmission\nPK id; FK templateId, studentId\nscore; maxScore; passed",
+        "x": 20,
+        "y": 720,
+        "w": 365,
+        "h": 230,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "repo",
+        "text": "GithubRepoLink\nPK id; FK userId",
+        "x": 420,
+        "y": 30,
+        "w": 365,
+        "h": 190,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "gsub",
+        "text": "GithubSubmission\nPK id; FK repoLinkId, userId\nFK syllabusItemId; commitSha",
+        "x": 420,
+        "y": 720,
+        "w": 365,
+        "h": 230,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "post",
+        "text": "KxPost\nPK id; FK authorId, instituteId",
+        "x": 820,
+        "y": 30,
+        "w": 365,
+        "h": 190,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "answer",
+        "text": "KxAnswer\nPK id; FK postId, authorId\noptional FK verifiedById",
+        "x": 820,
+        "y": 720,
+        "w": 365,
+        "h": 230,
+        "kind": "entity",
+        "dashed": false,
+        "size": 26
+      },
+      {
+        "id": "note",
+        "text": "FK fields also reference the corresponding User or SyllabusItem.\nCodeLab execution, Git coursework and Knowledge Exchange retain separate records.",
+        "x": 60,
+        "y": 1010,
+        "w": 1080,
+        "h": 85,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      }
+    ],
+    "edges": [
+      {
+        "a": "activity",
+        "b": "asub",
+        "pts": [
+          [
+            202,
+            220
+          ],
+          [
+            202,
+            720
+          ]
+        ],
+        "label": "has records",
+        "labelpos": [
+          200,
+          455
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "repo",
+        "b": "gsub",
+        "pts": [
+          [
+            602,
+            220
+          ],
+          [
+            602,
+            720
+          ]
+        ],
+        "label": "has records",
+        "labelpos": [
+          600,
+          455
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      },
+      {
+        "a": "post",
+        "b": "answer",
+        "pts": [
+          [
+            1002,
+            220
+          ],
+          [
+            1002,
+            720
+          ]
+        ],
+        "label": "has records",
+        "labelpos": [
+          1000,
+          455
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "erd-proposed-coordination",
+    "w": 1200,
+    "h": 1300,
+    "nodes": [
+      {
+        "id": "user",
+        "text": "User extended\nPK id; facultyPrograms[]\nnullable headProgram",
+        "x": 25,
+        "y": 30,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "course",
+        "text": "Course extended\nPK id; academicProgram\nscheduleRevision",
+        "x": 775,
+        "y": 30,
+        "w": 395,
+        "h": 175,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "note",
+        "text": "Note extended\nPK id; FK creatorId\nnullable sourceEventId\nUK creatorId + sourceEventId",
+        "x": 25,
+        "y": 495,
+        "w": 395,
+        "h": 195,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "schedule",
+        "text": "CourseSchedule new\nPK id; FK courseId, instructorId\nweekdays; time; date bounds\nroom; timezone; revision",
+        "x": 775,
+        "y": 495,
+        "w": 395,
+        "h": 220,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "event",
+        "text": "CalendarEvent extended\nPK id; FK creatorId\naudience; time kind; start/end\nnullable UK sourceNoteId; version",
+        "x": 25,
+        "y": 950,
+        "w": 395,
+        "h": 210,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "exception",
+        "text": "CourseScheduleException new\nPK id; FK scheduleId\noriginalDate; kind; replacement\nUK scheduleId + originalDate",
+        "x": 775,
+        "y": 950,
+        "w": 395,
+        "h": 210,
+        "kind": "entity",
+        "dashed": true,
+        "size": 26
+      },
+      {
+        "id": "notes",
+        "text": "Dashed entities show the agreed target, not completed migrations.\nEvent-to-note snapshots allow one owned note per creator and source event.\nInstitute.deanId, audience rules and other FK links are described in the text.",
+        "x": 440,
+        "y": 780,
+        "w": 315,
+        "h": 410,
+        "kind": "plain",
+        "dashed": false,
+        "size": 25
+      }
+    ],
+    "edges": [
+      {
+        "a": "user",
+        "b": "note",
+        "pts": [
+          [
+            222,
+            205
+          ],
+          [
+            222,
+            495
+          ]
+        ],
+        "label": "owns notes",
+        "labelpos": [
+          235,
+          355
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": true
+      },
+      {
+        "a": "course",
+        "b": "schedule",
+        "pts": [
+          [
+            972,
+            205
+          ],
+          [
+            972,
+            495
+          ]
+        ],
+        "label": "schedule revisions",
+        "labelpos": [
+          972,
+          355
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": true
+      },
+      {
+        "a": "schedule",
+        "b": "exception",
+        "pts": [
+          [
+            972,
+            715
+          ],
+          [
+            972,
+            950
+          ]
+        ],
+        "label": "occurrence exceptions",
+        "labelpos": [
+          970,
+          823
+        ],
+        "kind": "relation",
+        "ends": [
+          "one",
+          "optional-many"
+        ],
+        "dashed": true
+      },
+      {
+        "a": "note",
+        "b": "event",
+        "pts": [
+          [
+            222,
+            690
+          ],
+          [
+            222,
+            950
+          ]
+        ],
+        "label": "scheduled snapshot",
+        "labelpos": [
+          255,
+          815
+        ],
+        "kind": "relation",
+        "ends": [
+          "optional-one",
+          "optional-one"
+        ],
+        "dashed": true
+      }
+    ]
+  },
+  {
+    "name": "dfd-context",
+    "w": 1200,
+    "h": 970,
+    "nodes": [
+      {
+        "id": "system",
+        "text": "0\nCdM LMS",
+        "x": 450,
+        "y": 80,
+        "w": 300,
+        "h": 770,
+        "kind": "dfd-process",
+        "dashed": false,
+        "size": 34
+      },
+      {
+        "id": "student",
+        "text": "Student",
+        "x": 20,
+        "y": 100,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      },
+      {
+        "id": "instructor",
+        "text": "Instructor",
+        "x": 890,
+        "y": 100,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      },
+      {
+        "id": "super",
+        "text": "Super User",
+        "x": 20,
+        "y": 400,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      },
+      {
+        "id": "admin",
+        "text": "Administrator",
+        "x": 890,
+        "y": 400,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      },
+      {
+        "id": "repository",
+        "text": "Repository provider",
+        "x": 20,
+        "y": 700,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      },
+      {
+        "id": "execution",
+        "text": "Execution service",
+        "x": 890,
+        "y": 700,
+        "w": 270,
+        "h": 150,
+        "kind": "external",
+        "dashed": false,
+        "size": 28
+      }
+    ],
+    "edges": [
+      {
+        "a": "student",
+        "b": "system",
+        "pts": [
+          [
+            290,
+            145
+          ],
+          [
+            450,
+            145
+          ]
+        ],
+        "label": "Coursework data",
+        "labelpos": [
+          370,
+          120
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "student",
+        "pts": [
+          [
+            450,
+            215
+          ],
+          [
+            290,
+            215
+          ]
+        ],
+        "label": "Own records",
+        "labelpos": [
+          370,
+          190
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "instructor",
+        "b": "system",
+        "pts": [
+          [
+            890,
+            145
+          ],
+          [
+            750,
+            145
+          ]
+        ],
+        "label": "Teaching data",
+        "labelpos": [
+          820,
+          120
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "instructor",
+        "pts": [
+          [
+            750,
+            215
+          ],
+          [
+            890,
+            215
+          ]
+        ],
+        "label": "Course records",
+        "labelpos": [
+          820,
+          190
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "super",
+        "b": "system",
+        "pts": [
+          [
+            290,
+            445
+          ],
+          [
+            450,
+            445
+          ]
+        ],
+        "label": "Oversight request",
+        "labelpos": [
+          370,
+          420
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "super",
+        "pts": [
+          [
+            450,
+            515
+          ],
+          [
+            290,
+            515
+          ]
+        ],
+        "label": "Safe summaries",
+        "labelpos": [
+          370,
+          490
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "admin",
+        "b": "system",
+        "pts": [
+          [
+            890,
+            445
+          ],
+          [
+            750,
+            445
+          ]
+        ],
+        "label": "Admin request",
+        "labelpos": [
+          820,
+          420
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "admin",
+        "pts": [
+          [
+            750,
+            515
+          ],
+          [
+            890,
+            515
+          ]
+        ],
+        "label": "Admin results",
+        "labelpos": [
+          820,
+          490
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "repository",
+        "b": "system",
+        "pts": [
+          [
+            290,
+            745
+          ],
+          [
+            450,
+            745
+          ]
+        ],
+        "label": "Repository data",
+        "labelpos": [
+          370,
+          720
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "repository",
+        "pts": [
+          [
+            450,
+            815
+          ],
+          [
+            290,
+            815
+          ]
+        ],
+        "label": "Repo request",
+        "labelpos": [
+          370,
+          790
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "execution",
+        "b": "system",
+        "pts": [
+          [
+            890,
+            745
+          ],
+          [
+            750,
+            745
+          ]
+        ],
+        "label": "Run results",
+        "labelpos": [
+          820,
+          720
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "system",
+        "b": "execution",
+        "pts": [
+          [
+            750,
+            815
+          ],
+          [
+            890,
+            815
+          ]
+        ],
+        "label": "Code / tests",
+        "labelpos": [
+          820,
+          790
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  },
+  {
+    "name": "dfd-level-one",
+    "w": 1200,
+    "h": 1530,
+    "nodes": [
+      {
+        "id": "p1",
+        "text": "1.0 Access and\nadministration",
+        "x": 460,
+        "y": 125,
+        "w": 345,
+        "h": 130,
+        "kind": "dfd-process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "D1",
+        "text": "D1\nAccounts, sessions\nand audit records",
+        "x": 935,
+        "y": 125,
+        "w": 245,
+        "h": 130,
+        "kind": "store",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p1actor0",
+        "text": "Student",
+        "x": 20,
+        "y": 30,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p1actor1",
+        "text": "Instructor",
+        "x": 20,
+        "y": 100,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p1actor2",
+        "text": "Super User",
+        "x": 20,
+        "y": 170,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p1actor3",
+        "text": "Administrator",
+        "x": 20,
+        "y": 240,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p1req",
+        "text": "Credentials or admin requests",
+        "x": 20,
+        "y": 308,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p1res",
+        "text": "Session, status or admin results",
+        "x": 20,
+        "y": 342,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p2",
+        "text": "2.0 Coursework, grades\nand programming",
+        "x": 460,
+        "y": 475,
+        "w": 345,
+        "h": 130,
+        "kind": "dfd-process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "D2",
+        "text": "D2\nCourse, enrollment\nand assessment records",
+        "x": 935,
+        "y": 475,
+        "w": 245,
+        "h": 130,
+        "kind": "store",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p2actor0",
+        "text": "Student",
+        "x": 20,
+        "y": 380,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p2actor1",
+        "text": "Instructor",
+        "x": 20,
+        "y": 450,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p2req",
+        "text": "Coursework or grading data",
+        "x": 20,
+        "y": 575,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p2res",
+        "text": "Course records and results",
+        "x": 20,
+        "y": 625,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p3",
+        "text": "3.0 Study, progression\nand collaboration",
+        "x": 460,
+        "y": 875,
+        "w": 345,
+        "h": 130,
+        "kind": "dfd-process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "D3",
+        "text": "D3\nPersonal study,\nprogression and forum records",
+        "x": 935,
+        "y": 875,
+        "w": 245,
+        "h": 130,
+        "kind": "store",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p3actor0",
+        "text": "Student",
+        "x": 20,
+        "y": 780,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p3actor1",
+        "text": "Instructor",
+        "x": 20,
+        "y": 850,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p3actor2",
+        "text": "Super User",
+        "x": 20,
+        "y": 920,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p3req",
+        "text": "Personal or forum changes",
+        "x": 20,
+        "y": 1058,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p3res",
+        "text": "Permitted saved records",
+        "x": 20,
+        "y": 1106,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p4",
+        "text": "4.0 Academic coordination\nand calendar",
+        "x": 460,
+        "y": 1245,
+        "w": 345,
+        "h": 130,
+        "kind": "dfd-process",
+        "dashed": false,
+        "size": 27
+      },
+      {
+        "id": "D4",
+        "text": "D4\nEvents, faculty and\nproposed schedule records",
+        "x": 935,
+        "y": 1245,
+        "w": 245,
+        "h": 130,
+        "kind": "store",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p4actor0",
+        "text": "Student",
+        "x": 20,
+        "y": 1150,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p4actor1",
+        "text": "Instructor",
+        "x": 20,
+        "y": 1220,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p4actor2",
+        "text": "Super User",
+        "x": 20,
+        "y": 1290,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p4actor3",
+        "text": "Administrator",
+        "x": 20,
+        "y": 1360,
+        "w": 235,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 25
+      },
+      {
+        "id": "p4req",
+        "text": "Permitted coordination request",
+        "x": 20,
+        "y": 1428,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "p4res",
+        "text": "Permitted calendar or safe summary",
+        "x": 20,
+        "y": 1476,
+        "w": 390,
+        "h": 30,
+        "kind": "plain",
+        "dashed": false,
+        "size": 22
+      },
+      {
+        "id": "repo",
+        "text": "Repository provider",
+        "x": 435,
+        "y": 704,
+        "w": 290,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 24
+      },
+      {
+        "id": "exec",
+        "text": "Execution service",
+        "x": 850,
+        "y": 704,
+        "w": 290,
+        "h": 56,
+        "kind": "external",
+        "dashed": false,
+        "size": 24
+      }
+    ],
+    "edges": [
+      {
+        "a": "p1actor0",
+        "b": "p1",
+        "pts": [
+          [
+            255,
+            47
+          ],
+          [
+            310,
+            47
+          ],
+          [
+            310,
+            155
+          ],
+          [
+            460,
+            155
+          ]
+        ],
+        "label": "Requests",
+        "labelpos": [
+          400,
+          128
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1",
+        "b": "p1actor0",
+        "pts": [
+          [
+            460,
+            220
+          ],
+          [
+            365,
+            220
+          ],
+          [
+            365,
+            72
+          ],
+          [
+            255,
+            72
+          ]
+        ],
+        "label": "Results",
+        "labelpos": [
+          413,
+          250
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1actor1",
+        "b": "p1",
+        "pts": [
+          [
+            255,
+            117
+          ],
+          [
+            310,
+            117
+          ],
+          [
+            310,
+            155
+          ],
+          [
+            460,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          128
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1",
+        "b": "p1actor1",
+        "pts": [
+          [
+            460,
+            220
+          ],
+          [
+            365,
+            220
+          ],
+          [
+            365,
+            142
+          ],
+          [
+            255,
+            142
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          250
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1actor2",
+        "b": "p1",
+        "pts": [
+          [
+            255,
+            187
+          ],
+          [
+            310,
+            187
+          ],
+          [
+            310,
+            155
+          ],
+          [
+            460,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          128
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1",
+        "b": "p1actor2",
+        "pts": [
+          [
+            460,
+            220
+          ],
+          [
+            365,
+            220
+          ],
+          [
+            365,
+            212
+          ],
+          [
+            255,
+            212
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          250
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1actor3",
+        "b": "p1",
+        "pts": [
+          [
+            255,
+            257
+          ],
+          [
+            310,
+            257
+          ],
+          [
+            310,
+            155
+          ],
+          [
+            460,
+            155
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          128
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1",
+        "b": "p1actor3",
+        "pts": [
+          [
+            460,
+            220
+          ],
+          [
+            365,
+            220
+          ],
+          [
+            365,
+            282
+          ],
+          [
+            255,
+            282
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          250
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p1",
+        "b": "D1",
+        "pts": [
+          [
+            805,
+            155
+          ],
+          [
+            935,
+            155
+          ]
+        ],
+        "label": "Changes",
+        "labelpos": [
+          870,
+          125
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "D1",
+        "b": "p1",
+        "pts": [
+          [
+            935,
+            220
+          ],
+          [
+            805,
+            220
+          ]
+        ],
+        "label": "Records",
+        "labelpos": [
+          870,
+          250
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2actor0",
+        "b": "p2",
+        "pts": [
+          [
+            255,
+            397
+          ],
+          [
+            310,
+            397
+          ],
+          [
+            310,
+            505
+          ],
+          [
+            460,
+            505
+          ]
+        ],
+        "label": "Requests",
+        "labelpos": [
+          400,
+          478
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2",
+        "b": "p2actor0",
+        "pts": [
+          [
+            460,
+            570
+          ],
+          [
+            365,
+            570
+          ],
+          [
+            365,
+            422
+          ],
+          [
+            255,
+            422
+          ]
+        ],
+        "label": "Results",
+        "labelpos": [
+          413,
+          600
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2actor1",
+        "b": "p2",
+        "pts": [
+          [
+            255,
+            467
+          ],
+          [
+            310,
+            467
+          ],
+          [
+            310,
+            505
+          ],
+          [
+            460,
+            505
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          478
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2",
+        "b": "p2actor1",
+        "pts": [
+          [
+            460,
+            570
+          ],
+          [
+            365,
+            570
+          ],
+          [
+            365,
+            492
+          ],
+          [
+            255,
+            492
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          600
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2",
+        "b": "D2",
+        "pts": [
+          [
+            805,
+            505
+          ],
+          [
+            935,
+            505
+          ]
+        ],
+        "label": "Changes",
+        "labelpos": [
+          870,
+          475
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "D2",
+        "b": "p2",
+        "pts": [
+          [
+            935,
+            570
+          ],
+          [
+            805,
+            570
+          ]
+        ],
+        "label": "Records",
+        "labelpos": [
+          870,
+          600
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3actor0",
+        "b": "p3",
+        "pts": [
+          [
+            255,
+            797
+          ],
+          [
+            310,
+            797
+          ],
+          [
+            310,
+            905
+          ],
+          [
+            460,
+            905
+          ]
+        ],
+        "label": "Requests",
+        "labelpos": [
+          400,
+          878
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3",
+        "b": "p3actor0",
+        "pts": [
+          [
+            460,
+            970
+          ],
+          [
+            365,
+            970
+          ],
+          [
+            365,
+            822
+          ],
+          [
+            255,
+            822
+          ]
+        ],
+        "label": "Results",
+        "labelpos": [
+          413,
+          1000
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3actor1",
+        "b": "p3",
+        "pts": [
+          [
+            255,
+            867
+          ],
+          [
+            310,
+            867
+          ],
+          [
+            310,
+            905
+          ],
+          [
+            460,
+            905
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          878
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3",
+        "b": "p3actor1",
+        "pts": [
+          [
+            460,
+            970
+          ],
+          [
+            365,
+            970
+          ],
+          [
+            365,
+            892
+          ],
+          [
+            255,
+            892
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          1000
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3actor2",
+        "b": "p3",
+        "pts": [
+          [
+            255,
+            937
+          ],
+          [
+            310,
+            937
+          ],
+          [
+            310,
+            905
+          ],
+          [
+            460,
+            905
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          878
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3",
+        "b": "p3actor2",
+        "pts": [
+          [
+            460,
+            970
+          ],
+          [
+            365,
+            970
+          ],
+          [
+            365,
+            962
+          ],
+          [
+            255,
+            962
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          1000
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p3",
+        "b": "D3",
+        "pts": [
+          [
+            805,
+            905
+          ],
+          [
+            935,
+            905
+          ]
+        ],
+        "label": "Changes",
+        "labelpos": [
+          870,
+          875
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "D3",
+        "b": "p3",
+        "pts": [
+          [
+            935,
+            970
+          ],
+          [
+            805,
+            970
+          ]
+        ],
+        "label": "Records",
+        "labelpos": [
+          870,
+          1000
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4actor0",
+        "b": "p4",
+        "pts": [
+          [
+            255,
+            1167
+          ],
+          [
+            310,
+            1167
+          ],
+          [
+            310,
+            1275
+          ],
+          [
+            460,
+            1275
+          ]
+        ],
+        "label": "Requests",
+        "labelpos": [
+          400,
+          1248
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4",
+        "b": "p4actor0",
+        "pts": [
+          [
+            460,
+            1340
+          ],
+          [
+            365,
+            1340
+          ],
+          [
+            365,
+            1192
+          ],
+          [
+            255,
+            1192
+          ]
+        ],
+        "label": "Results",
+        "labelpos": [
+          413,
+          1370
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4actor1",
+        "b": "p4",
+        "pts": [
+          [
+            255,
+            1237
+          ],
+          [
+            310,
+            1237
+          ],
+          [
+            310,
+            1275
+          ],
+          [
+            460,
+            1275
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          1248
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4",
+        "b": "p4actor1",
+        "pts": [
+          [
+            460,
+            1340
+          ],
+          [
+            365,
+            1340
+          ],
+          [
+            365,
+            1262
+          ],
+          [
+            255,
+            1262
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          1370
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4actor2",
+        "b": "p4",
+        "pts": [
+          [
+            255,
+            1307
+          ],
+          [
+            310,
+            1307
+          ],
+          [
+            310,
+            1275
+          ],
+          [
+            460,
+            1275
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          1248
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4",
+        "b": "p4actor2",
+        "pts": [
+          [
+            460,
+            1340
+          ],
+          [
+            365,
+            1340
+          ],
+          [
+            365,
+            1332
+          ],
+          [
+            255,
+            1332
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          1370
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4actor3",
+        "b": "p4",
+        "pts": [
+          [
+            255,
+            1377
+          ],
+          [
+            310,
+            1377
+          ],
+          [
+            310,
+            1275
+          ],
+          [
+            460,
+            1275
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          400,
+          1248
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4",
+        "b": "p4actor3",
+        "pts": [
+          [
+            460,
+            1340
+          ],
+          [
+            365,
+            1340
+          ],
+          [
+            365,
+            1402
+          ],
+          [
+            255,
+            1402
+          ]
+        ],
+        "label": "",
+        "labelpos": [
+          413,
+          1370
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p4",
+        "b": "D4",
+        "pts": [
+          [
+            805,
+            1275
+          ],
+          [
+            935,
+            1275
+          ]
+        ],
+        "label": "Changes",
+        "labelpos": [
+          870,
+          1245
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "D4",
+        "b": "p4",
+        "pts": [
+          [
+            935,
+            1340
+          ],
+          [
+            805,
+            1340
+          ]
+        ],
+        "label": "Records",
+        "labelpos": [
+          870,
+          1370
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2",
+        "b": "repo",
+        "pts": [
+          [
+            530,
+            605
+          ],
+          [
+            530,
+            704
+          ]
+        ],
+        "label": "Repo request",
+        "labelpos": [
+          477,
+          650
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "repo",
+        "b": "p2",
+        "pts": [
+          [
+            680,
+            704
+          ],
+          [
+            680,
+            605
+          ]
+        ],
+        "label": "Repo data",
+        "labelpos": [
+          637,
+          625
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "p2",
+        "b": "exec",
+        "pts": [
+          [
+            745,
+            605
+          ],
+          [
+            745,
+            675
+          ],
+          [
+            995,
+            675
+          ],
+          [
+            995,
+            704
+          ]
+        ],
+        "label": "Code / tests",
+        "labelpos": [
+          895,
+          690
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      },
+      {
+        "a": "exec",
+        "b": "p2",
+        "pts": [
+          [
+            1090,
+            704
+          ],
+          [
+            1090,
+            650
+          ],
+          [
+            785,
+            650
+          ],
+          [
+            785,
+            605
+          ]
+        ],
+        "label": "Run results",
+        "labelpos": [
+          1040,
+          625
+        ],
+        "kind": "arrow",
+        "ends": null,
+        "dashed": false
+      }
+    ]
+  }
+]

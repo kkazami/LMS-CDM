@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { FileEdit, BarChart3, Users, PlusCircle } from "lucide-react";
@@ -7,6 +8,8 @@ export default async function InstructorDashboardPage({
 }: {
   params: Promise<{ institute: string; courseId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/page.tsx", await params);
+
   const { institute, courseId } = await params;
 
   // Fetch all templates for this course

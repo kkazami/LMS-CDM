@@ -30,7 +30,7 @@
 - **Auth:** Session via `getSession()` from `@/lib/auth-session.ts`
 - **RBAC:** `src/lib/rbac.ts` (STUDENT, PROFESSOR/TEACHER, ADMIN)
 - **Theming:** `getInstituteTheme(code)` from `src/lib/get-institute-theme.ts`
-- **Middleware:** `src/middleware.ts` checks cookie presence only. API routes excluded.
+- **Middleware:** `src/middleware.ts` checks cookie presence for pages; current API requests receive headers and pass through. Middleware does not authorize resources. Verify the current matcher in recon.
 - **API Auth:** Each API handler must verify session via `src/lib/api-auth.ts`
 
 ## Architectural Invariants
@@ -40,7 +40,7 @@
 4. API responses use standard error format
 5. Multi-model DB writes MUST use db.$transaction()
 6. Never hardcode institute theme colors
-7. Shared components belong in packages/ui (though web currently keeps its own in src/components/)
+7. Web reuses apps/web/src/components; packages/ui is currently unused by web. Cross-package extraction requires a separately adjudicated change.
 
 ## Ports & URLs
 - Web dev server: http://localhost:3000

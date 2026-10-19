@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/run
  *
@@ -21,6 +22,9 @@ export const dynamic = "force-dynamic";
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/run/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Auth + eligibility
     const eligibility = await checkActivityEligibility();

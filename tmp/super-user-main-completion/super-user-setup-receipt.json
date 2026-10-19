@@ -1,0 +1,53 @@
+{
+  "attempt": "super_user_1792314037305",
+  "startedAt": "2026-10-18T09:00:37.352Z",
+  "profile": "trusted-local",
+  "OSIsolation": false,
+  "authorizingAdministratorEmail": "admin@ics.edu.ph",
+  "reference": "OWNER_REQUEST_2026_10_18_SUPER_USER_AND_METADATA",
+  "checks": [
+    "actual restricted runtime qualified"
+  ],
+  "status": "SETUP_COMPLETED",
+  "calendarBeforeSHA256": "170b4f0eab44d94dd0f838a04f443eed125931a93204d7ad06d03af6d693dfe0",
+  "boundary": {
+    "commitAcknowledged": true,
+    "runtimePrincipal": "lms_web_runtime_v1",
+    "operatorPrincipal": "lms_security_operator_v1",
+    "files": [
+      {
+        "path": "prisma/super-user-v1/current-target-security.sql",
+        "sha256": "2b6975b8a08345971e2f35e8819d1946e5aefddff079a8ba44964abafa6972d3"
+      },
+      {
+        "path": "prisma/super-user-v1/guard-validation.sql",
+        "sha256": "c2ed136ba091470ca9f08d1bc8e0a88fd73b6534a20d88a30f6c7b2282dff95d"
+      },
+      {
+        "path": "prisma/super-user-v1/ics-faculty-designation.sql",
+        "sha256": "22408a30e5d831c872087492a7ef79760fa54a9b3af38dea952b8faab0113800"
+      }
+    ]
+  },
+  "accountId": "bootstrap_5da459f1-39eb-4b5e-b511-2584cf28895f",
+  "bootstrapCommitted": true,
+  "handoffCommitted": true,
+  "activationCommitted": true,
+  "metadata": {
+    "path": "C:\\Users\\kirby\\AppData\\Local\\LuminaLMS\\security\\super_user_1792314037305\\metadata-policy.json",
+    "sha256": "b01916a953136b408d0b1939241883a65fbe3669f151771bf9a74720aec82661",
+    "institutes": 3,
+    "approver": "admin@ics.edu.ph",
+    "maintainer": "admin@ics.edu.ph",
+    "expiresAt": "2026-11-17T09:00:41.154Z",
+    "scope": "owner-approved metadata only; no join codes or summaries"
+  },
+  "calendarAfterSHA256": "170b4f0eab44d94dd0f838a04f443eed125931a93204d7ad06d03af6d693dfe0",
+  "localRuntimeConfigured": true,
+  "handoffFile": "C:\\Users\\kirby\\AppData\\Local\\LuminaLMS\\security\\super_user_1792314037305\\super-user-login.txt",
+  "recoveryDirectory": "C:\\Users\\kirby\\AppData\\Local\\LuminaLMS\\security\\super_user_1792314037305",
+  "ACLValidated": true,
+  "encrypted": false,
+  "email": "superuser@ics.edu.ph",
+  "finishedAt": "2026-10-18T09:00:41.661Z"
+}

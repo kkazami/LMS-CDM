@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Audit Logs API — Paginated Immutable Ledger
  *
@@ -12,8 +13,11 @@ import type { AuditLogEntry, PaginatedResponse } from '@/lib/admin-types';
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET admin/audit-logs/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -22,7 +26,12 @@ export async function GET(request: Request) {
     const adminFilter = searchParams.get('adminId') ?? '';
     const targetFilter = searchParams.get('targetId') ?? '';
 
-    const where: Record<string, unknown> = {};
+    const visibleRoles = ['ADMIN','admin','STUDENT','student','PROFESSOR','professor','INSTRUCTOR','instructor','TEACHER','teacher'];
+    const where: Record<string, unknown> = {
+      admin: { instituteId: session.user.instituteId, role: { in: visibleRoles } },
+      target: { instituteId: session.user.instituteId, role: { in: visibleRoles } },
+      NOT: { action: { startsWith: 'OPERATOR_' } },
+    };
 
     if (actionFilter) {
       where.action = { contains: actionFilter };

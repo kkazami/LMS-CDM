@@ -10,7 +10,8 @@ import type { AttachmentItem } from "@/components/courses/AttachmentModal";
 import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
-import { Plus, Loader2, Paperclip, FileText, Link2, Shield } from "lucide-react";
+import Link from "next/link";
+import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles } from "lucide-react";
 import {
   createSyllabusItem,
   updateSyllabusItem,
@@ -34,6 +35,8 @@ interface SyllabusItemData {
   maxPoints: number | null;
   enableIntegrityMonitoring?: boolean;
   requireFullscreen?: boolean;
+  leaderboardEnabled?: boolean;
+  leaderboardRewards?: { placement: number; rewardLabel: string; bonusExp: number }[];
   targetGroups: { groupId: string; group: { groupName: string } }[];
   attachments?: SyllabusItemAttachment[];
 }
@@ -89,6 +92,8 @@ export default function ClassworkClient({
   const [isCustomType, setIsCustomType] = useState(false);
   const [enableIntegrity, setEnableIntegrity] = useState(false);
   const [requireFullscreen, setRequireFullscreen] = useState(false);
+  const [leaderboardEnabled, setLeaderboardEnabled] = useState(false);
+  const [rewardTiers, setRewardTiers] = useState<{placement: number; rewardLabel: string; bonusExp: number}[]>([]);
 
   const predefinedTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL", "ACTIVITY", "RECITATION", "MIDTERM_EXAM", "FINAL_EXAM"];
 
@@ -107,6 +112,8 @@ export default function ClassworkClient({
       setAttachments([]);
       setEnableIntegrity(false);
       setRequireFullscreen(false);
+      setLeaderboardEnabled(false);
+      setRewardTiers([]);
     }
   }, [state]);
 
@@ -118,6 +125,8 @@ export default function ClassworkClient({
     setIsCustomType(false);
     setEnableIntegrity(false);
     setRequireFullscreen(false);
+    setLeaderboardEnabled(false);
+    setRewardTiers([]);
     setIsModalOpen(true);
   };
 
@@ -126,6 +135,8 @@ export default function ClassworkClient({
     setSelectedGroups(item.targetGroups.map((tg) => tg.groupId));
     setEnableIntegrity(Boolean(item.enableIntegrityMonitoring));
     setRequireFullscreen(Boolean(item.requireFullscreen));
+    setLeaderboardEnabled(Boolean(item.leaderboardEnabled));
+    setRewardTiers(item.leaderboardRewards || []);
     // Load existing attachments for this item
     setAttachments(
       (item.attachments ?? []).map((a) => ({
@@ -172,10 +183,19 @@ export default function ClassworkClient({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {canEdit && (
-        <div className="flex justify-end">
-          <Button theme={theme} onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Item
+        <div className="flex items-center justify-end gap-3">
+          <Link
+            href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: theme.colors.primary }}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>Create Form Assessment</span>
+          </Link>
+
+          <Button theme={theme} variant="secondary" onClick={handleCreate}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Material / Task
           </Button>
         </div>
       )}
@@ -215,7 +235,7 @@ export default function ClassworkClient({
           setEditingItem(null);
         }}
       >
-        <form ref={formRef} action={formAction} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        <form ref={formRef} action={formAction} className="space-y-4 max-h-[75vh] overflow-y-auto px-2 py-1.5">
           <input type="hidden" name="courseId" value={courseId} />
           <input type="hidden" name="instituteCode" value={instituteCode} />
           <input
@@ -234,6 +254,8 @@ export default function ClassworkClient({
               }))
             )}
           />
+          <input type="hidden" name="leaderboardEnabled" value={leaderboardEnabled ? "true" : "false"} />
+          <input type="hidden" name="rewardTiers" value={JSON.stringify(rewardTiers)} />
           {editingItem && (
             <input type="hidden" name="id" value={editingItem.id} />
           )}
@@ -370,6 +392,112 @@ export default function ClassworkClient({
                     </p>
                   </div>
                 </label>
+              )}
+
+              {enableIntegrity && attachments.length > 0 && (
+                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs text-amber-700 dark:text-amber-400">
+                  <p className="font-bold text-[11px]">Notice for external files & links</p>
+                  <p className="text-[10px] text-amber-600/90 dark:text-amber-400/90 mt-0.5">
+                    Opening attached files or links takes students outside the active window, which logs tab switches. For tasks requiring external references, you may want to leave integrity monitoring off.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Leaderboard Settings */}
+          {selectedType !== "MATERIAL" && (
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-[#F0F2F8]">
+                  Leaderboard
+                </p>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={leaderboardEnabled}
+                  onChange={(e) => {
+                    setLeaderboardEnabled(e.target.checked);
+                    if (!e.target.checked) setRewardTiers([]);
+                  }}
+                  className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-amber-500 focus:ring-amber-500"
+                />
+                <div className="text-xs">
+                  <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
+                    Enable Leaderboard
+                  </span>
+                  <p className="text-slate-500 dark:text-[#8B92A5] mt-0.5">
+                    Rank students by score and show results in the Course leaderboard tab.
+                  </p>
+                </div>
+              </label>
+
+              {leaderboardEnabled && (
+                <div className="space-y-2 pt-2 border-t border-amber-500/10">
+                  <p className="text-[11px] font-bold text-slate-600 dark:text-[#8B92A5]">
+                    Rewards (optional)
+                  </p>
+                  {rewardTiers.map((tier, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-[#8B92A5]">Top</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="200"
+                          value={tier.placement}
+                          onChange={(e) => {
+                            const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                            const updated = [...rewardTiers];
+                            updated[idx] = { ...updated[idx], placement: val };
+                            setRewardTiers(updated);
+                          }}
+                          className="w-10 text-center text-xs font-mono font-bold text-slate-900 dark:text-[#F0F2F8] bg-transparent outline-none"
+                          title="Number of top participants who receive this reward"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={tier.rewardLabel}
+                        onChange={(e) => {
+                          const updated = [...rewardTiers];
+                          updated[idx] = { ...updated[idx], rewardLabel: e.target.value };
+                          setRewardTiers(updated);
+                        }}
+                        placeholder="e.g. +5 bonus points on final grade"
+                        className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-xs text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400"
+                      />
+                      <input
+                        type="number"
+                        value={tier.bonusExp || ""}
+                        onChange={(e) => {
+                          const updated = [...rewardTiers];
+                          updated[idx] = { ...updated[idx], bonusExp: parseInt(e.target.value, 10) || 0 };
+                          setRewardTiers(updated);
+                        }}
+                        placeholder="EXP"
+                        className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-xs text-amber-600 font-mono outline-none placeholder:text-slate-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setRewardTiers(rewardTiers.filter((_, i) => i !== idx))}
+                        className="p-1 rounded text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setRewardTiers([...rewardTiers, { placement: rewardTiers.length === 0 ? 1 : (rewardTiers[rewardTiers.length - 1].placement + 2), rewardLabel: "", bonusExp: 0 }])}
+                    className="text-xs text-amber-600 hover:text-amber-500 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" /> Add Reward
+                  </button>
+                </div>
               )}
             </div>
           )}

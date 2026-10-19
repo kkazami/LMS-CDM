@@ -1,5 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
   binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
@@ -19,6 +20,7 @@ model Institute {
   taskItems      TaskItem[]
   users          User[]
   kxPosts        KxPost[]
+  programs       AcademicProgram[]
   supportTickets SupportTicket[]
   arenaQuizzes   ArenaQuiz[]
 }
@@ -33,10 +35,11 @@ model User {
   role          String   @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
   isActive      Boolean  @default(true)
   permissions   String   @default("[]") // JSON array of permission strings
+  securityPin   String?  // 6-digit hashed security PIN for step-up MFA
   instituteId   String
   createdAt     DateTime @default(now())
 
-  // ── Profile fields ──
+  // â”€â”€ Profile fields â”€â”€
   avatarUrl   String? // URL to uploaded avatar image (null = initials fallback)
   bio         String  @default("") // Short biography / description
   phone       String  @default("") // Contact phone number
@@ -44,7 +47,6 @@ model User {
   yearLevel   String  @default("") // For students: "1st Year", "2nd Year", etc.
   coverColor  String  @default("#1E88E5") // Profile page banner accent color (hex)
   preferences String  @default("{}") // JSON object storing notification/theme settings
-  securityPin String? // 6-digit PIN for MFA during sensitive operations
 
   institute           Institute               @relation(fields: [instituteId], references: [id])
   sessions            Session[]
@@ -96,11 +98,21 @@ model User {
   githubRepoLinks       GithubRepoLink[]       @relation("UserGithubRepoLinks")
   githubSubmissions     GithubSubmission[]     @relation("UserGithubSubmissions")
   githubComments        GithubInlineComment[]  @relation("UserGithubInlineComments")
+
+  // ─── Forms Module relations ───
+  createdForms          Form[]                 @relation("FormCreator")
+  formAttempts          FormAttempt[]          @relation("FormAttempts")
+  questionBankItems     QuestionBankItem[]     @relation("QuestionBankCreator")
+  credentialProvisioningState CredentialProvisioningState?
+  programMemberships ProgramMembership[]
+  programHeadAssignments ProgramHeadAssignment[]
+  uploadedAssets PrivateAsset[]
   supportTickets        SupportTicket[]        @relation("UserSupportTickets")
-  authoredArenaQuizzes  ArenaQuiz[]            @relation("ArenaQuizAuthor")
-  hostedArenaSessions   ArenaGameSession[]     @relation("ArenaSessionHost")
+  arenaHostedSessions   ArenaGameSession[]     @relation("ArenaSessionHost")
   arenaParticipations   ArenaParticipant[]     @relation("ArenaUserParticipants")
   arenaAnswers          ArenaPlayerAnswer[]    @relation("ArenaUserAnswers")
+  arenaQuizzes          ArenaQuiz[]            @relation("ArenaQuizAuthor")
+  @@unique([id, instituteId])
 }
 
 model Session {
@@ -125,6 +137,11 @@ model Course {
   section           String                     @default("")
   subject           String                     @default("")
   room              String                     @default("")
+  scheduleDays      Int[]                      @default([])
+  scheduleStart     String                     @default("")
+  scheduleEnd       String                     @default("")
+  scheduleStartDate DateTime?                  @db.Date
+  scheduleEndDate   DateTime?                  @db.Date
   description       String                     @default("")
   coverImage        String                     @default("")
   instructorId      String?
@@ -152,9 +169,13 @@ model Course {
   gradeIncentiveRules GradeIncentiveRule[]
   kxPosts             KxPost[]
   arenaQuizzes        ArenaQuiz[]
+  forms               Form[]
+  questionBankItems   QuestionBankItem[]
 
   @@index([instituteId])
   @@index([instructorId])
+  programId String?
+  program AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
 }
 
 model Enrollment {
@@ -181,6 +202,7 @@ model SyllabusItem {
   dueDate       DateTime?
   maxPoints     Int?
   orderIndex    Int                   @default(0)
+  leaderboardEnabled  Boolean         @default(false)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @default(now()) @updatedAt
   attachments   Attachment[]
@@ -193,6 +215,8 @@ model SyllabusItem {
   targetGroups  SyllabusTargetGroup[]
   kxPosts       KxPost[]
   githubSubmissions GithubSubmission[]
+  leaderboardRewards LeaderboardReward[]
+  form                Form?
 
   @@index([courseId, type])
   @@index([courseId, orderIndex])
@@ -400,6 +424,7 @@ model CalendarEvent {
   professorName String    @default("")
   maxPoints     Int?
   eventDate     DateTime
+  endDate       DateTime?
   eventType     String    @default("assignment")
   deepLink      String    @default("#")
   courseId      String?
@@ -610,6 +635,7 @@ model GradeIncentiveRule {
   label        String                  // e.g. "Perfect Score Bonus", "Passing Grade Reward"
   gradeMin     Float                   // Minimum grade to qualify (0–100)
   bonusExp     Int                     // EXP awarded when threshold is met
+  rewardDescription  String  @default("")  // Custom freeform reward text (e.g. "Certificate of Excellence", "+5 on final grade")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -617,6 +643,18 @@ model GradeIncentiveRule {
   creator      User     @relation("GradeIncentiveCreator", fields: [createdBy], references: [id])
 
   @@index([courseId])
+}
+
+model LeaderboardReward {
+  id              String       @id @default(cuid())
+  syllabusItemId  String
+  placement       Int          // e.g. 1, 3, 5, 10 — "Top N"
+  rewardLabel     String       // e.g. "+5 bonus points on final grade", "Certificate of Excellence"
+  bonusExp        Int          @default(0) // Optional EXP alongside custom reward
+  createdAt       DateTime     @default(now())
+  syllabusItem    SyllabusItem @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+
+  @@index([syllabusItemId])
 }
 
 model ActivityLeaderboardCache {
@@ -1137,6 +1175,315 @@ model SubmissionSimilarity {
   @@index([submissionBId])
 }
 
+// ─────────────────────────────────────────────────────────────
+// ─── LMS Forms & Google Forms Assessment Suite ───────────────
+// ─────────────────────────────────────────────────────────────
+
+model Form {
+  id                  String         @id @default(cuid())
+  courseId            String
+  syllabusItemId      String         @unique
+  createdBy           String
+  title               String
+  description         String         @default("")
+  formType            String         // "QUIZ" | "MIDTERM_EXAM" | "FINAL_EXAM" | "ACTIVITY"
+  status              String         @default("DRAFT") // "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED"
+
+  // Availability & Timing
+  opensAt             DateTime?
+  closesAt            DateTime?
+  timeLimitMins       Int?
+
+  // Attempt Rules
+  maxAttempts         Int            @default(1)
+  scoreToKeep         String         @default("HIGHEST") // "HIGHEST" | "LATEST" | "AVERAGE"
+
+  // Presentation & Order
+  shuffleQuestions    Boolean        @default(false)
+  shuffleOptions      Boolean        @default(false)
+
+  // Feedback & Visibility
+  showScoreAfter      Boolean        @default(true)
+  showAnswersAfter    Boolean        @default(false)
+  showFeedbackAfter   Boolean        @default(false)
+
+  // Exam Security & Proctoring
+  isProctored         Boolean        @default(false)
+  passwordHash        String?
+  disableCopyPaste    Boolean        @default(false)
+  detectTabSwitch     Boolean        @default(false)
+  lockBrowser         Boolean        @default(false)
+
+  // Grading Metrics
+  totalPoints         Float?
+  passingScore        Float?
+
+  // Customization & Confirmation
+  confirmationMessage String?
+  themeColor          String?
+  headerImageUrl      String?
+
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @default(now()) @updatedAt
+
+  course              Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  syllabusItem        SyllabusItem   @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  creator             User           @relation("FormCreator", fields: [createdBy], references: [id])
+  sections            FormSection[]
+  questions           FormQuestion[]
+  attempts            FormAttempt[]
+
+  @@index([courseId, status])
+  @@index([createdBy])
+}
+
+model FormSection {
+  id          String         @id @default(cuid())
+  formId      String
+  title       String?
+  description String?
+  position    Int            @default(0)
+  pageNumber  Int            @default(1)
+
+  form        Form           @relation(fields: [formId], references: [id], onDelete: Cascade)
+  questions   FormQuestion[]
+
+  @@index([formId, position])
+}
+
+model FormQuestion {
+  id               String              @id @default(cuid())
+  formId           String
+  sectionId        String?
+  bankItemId       String?
+  questionType     String              // "MULTIPLE_CHOICE" | "CHECKBOXES" | "SHORT_ANSWER" | "PARAGRAPH" | "DROPDOWN" | "LINEAR_SCALE" | "STAR_RATING" | "DATE" | "FILE_UPLOAD" | "MATRIX" | "RANKING" | "IMAGE_CHOICE" | "CODE_ANSWER" | "SECTION_HEADER"
+  prompt           String
+  description      String?
+  mediaUrl         String?
+  mediaType        String?             // "IMAGE" | "VIDEO" | "AUDIO"
+  position         Int                 @default(0)
+  isRequired       Boolean             @default(true)
+  points           Float               @default(1)
+  partialCredit    Boolean             @default(false)
+
+  // Type-specific options and validation stored as JSON string
+  config           String              @default("{}")
+
+  // Branching / Conditional logic
+  showIfQuestionId String?
+  showIfAnswer     String?
+
+  // Text length boundaries
+  minLength        Int?
+  maxLength        Int?
+
+  createdAt        DateTime            @default(now())
+
+  form             Form                @relation(fields: [formId], references: [id], onDelete: Cascade)
+  section          FormSection?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  bankItem         QuestionBankItem?   @relation(fields: [bankItemId], references: [id], onDelete: SetNull)
+  answers          FormAttemptAnswer[]
+
+  dependentQuestions FormQuestion[]    @relation("QuestionBranching")
+  parentQuestion     FormQuestion?     @relation("QuestionBranching", fields: [showIfQuestionId], references: [id], onDelete: SetNull)
+
+  @@index([formId, position])
+  @@index([sectionId])
+}
+
+model QuestionBankItem {
+  id           String         @id @default(cuid())
+  courseId     String?
+  createdBy    String
+  questionType String
+  prompt       String
+  config       String         @default("{}")
+  points       Float          @default(1)
+  tags         String         @default("[]") // JSON string array of tags
+  timesUsed    Int            @default(0)
+  createdAt    DateTime       @default(now())
+
+  course       Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  creator      User           @relation("QuestionBankCreator", fields: [createdBy], references: [id])
+  questions    FormQuestion[]
+
+  @@index([courseId])
+  @@index([createdBy])
+  @@index([questionType])
+}
+
+model FormAttempt {
+  id                String              @id @default(cuid())
+  formId            String
+  userId            String
+  attemptNumber     Int                 @default(1)
+  status            String              @default("IN_PROGRESS") // "IN_PROGRESS" | "SUBMITTED" | "TIMED_OUT" | "ABANDONED"
+
+  startedAt         DateTime            @default(now())
+  submittedAt       DateTime?
+  timeSpentSecs     Int?
+  deadlineAt        DateTime?
+
+  // Auto-computed scores
+  rawScore          Float?
+  totalPoints       Float?
+  percentage        Float?
+  passed            Boolean?
+
+  // Gradebook synchronization status
+  syncedToGradebook Boolean             @default(false)
+  syncedAt          DateTime?
+
+  // Exam integrity metrics
+  tabSwitchCount    Int                 @default(0)
+  copyPasteCount    Int                 @default(0)
+  ipAddress         String?
+  userAgent         String?
+
+  form              Form                @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user              User                @relation("FormAttempts", fields: [userId], references: [id], onDelete: Cascade)
+  answers           FormAttemptAnswer[]
+
+  @@unique([formId, userId, attemptNumber])
+  @@index([formId, status])
+  @@index([userId])
+}
+
+model FormAttemptAnswer {
+  id               String       @id @default(cuid())
+  attemptId        String
+  questionId       String
+
+  // Storage per answer type
+  answerText       String?
+  answerOptions    String?      // JSON array of selected string IDs
+  answerNumber     Float?
+  answerDate       DateTime?
+  answerRanking    String?      // JSON array of ordered string IDs
+  answerMatrix     String?      // JSON object of key-value row/column map
+  fileUrl          String?
+  fileName         String?
+  fileSizeBytes    Int?
+
+  // Evaluation & Grading
+  isCorrect        Boolean?
+  pointsAwarded    Float?
+  autoGraded       Boolean      @default(false)
+  instructorGraded Boolean      @default(false)
+  feedback         String?
+
+  answeredAt       DateTime     @default(now())
+
+  attempt          FormAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question         FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+
+
+
+
+enum CredentialProvisioningState {
+  PENDING_HANDOFF
+  COMPLETE
+}
+
+
+model AcademicProgram {
+  id String @id @default(cuid())
+  instituteId String
+  code String
+  name String
+  isActive Boolean @default(true)
+  chartVersion Int @default(1)
+  createdAt DateTime @default(now())
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Restrict)
+  memberships ProgramMembership[]
+  courses Course[]
+
+  chartNodes ProgramChartNode[]
+  @@unique([instituteId, code])
+  @@unique([id, instituteId])
+}
+
+
+model ProgramMembership {
+  programId String
+  userId String
+  instituteId String
+  kind String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  program AcademicProgram @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  user User @relation(fields: [userId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  headAssignment ProgramHeadAssignment?
+  chartPlacement ProgramChartNode[]
+  @@id([programId, userId])
+  @@index([userId, isActive])
+}
+
+
+model ProgramHeadAssignment {
+  programId String
+  userId String
+  isActive Boolean @default(true)
+  assignedAt DateTime @default(now())
+  revokedAt DateTime?
+  membership ProgramMembership @relation(fields: [programId, userId], references: [programId, userId], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@id([programId, userId])
+}
+
+
+model ProgramChartNode {
+  id String @id @default(cuid())
+  programId String
+  parentId String?
+  memberUserId String?
+  kind String
+  label String
+  position Int @default(0)
+  program AcademicProgram @relation(fields: [programId], references: [id], onDelete: Restrict)
+  member ProgramMembership? @relation(fields: [programId, memberUserId], references: [programId, userId], onDelete: Restrict)
+  parent ProgramChartNode? @relation("ChartChildren", fields: [parentId, programId], references: [id, programId], onDelete: Restrict, onUpdate: NoAction)
+  children ProgramChartNode[] @relation("ChartChildren")
+  @@unique([id, programId])
+  @@unique([programId, memberUserId])
+  @@index([programId, parentId, position])
+}
+
+
+model PrivateAsset {
+  id String @id @default(cuid())
+  ownerId String
+  instituteId String
+  fileName String
+  mimeType String
+  size Int
+  content Bytes
+  createdAt DateTime @default(now())
+  owner User @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  @@index([instituteId, ownerId])
+}
+
+
+model LegacyAssetBinding {
+  kind String
+  sourceId String
+  url String
+  instituteId String
+  ownerId String
+  courseId String?
+  @@id([kind, sourceId])
+  @@index([url, instituteId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ─── Help Desk & Support Ticket System ───────────────────────
+// ─────────────────────────────────────────────────────────────
 
 model SupportTicket {
   id          String   @id @default(cuid())

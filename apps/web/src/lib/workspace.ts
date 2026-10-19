@@ -51,7 +51,7 @@ export function serializeTask(
 }
 
 export function serializeCalendarEvent(
-  event: CalendarEventRecord & { course?: { title: string } | null }
+  event: CalendarEventRecord & { course?: { title: string; code?: string } | null }
 ): CalendarEvent {
   return {
     id: event.id,
@@ -60,6 +60,8 @@ export function serializeCalendarEvent(
     professorName: event.professorName,
     maxPoints: event.maxPoints,
     eventDate: toIsoString(event.eventDate),
+    endDate: event.endDate ? toIsoString(event.endDate) : null,
+    courseCode: event.course?.code ?? null,
     eventType: event.eventType,
     deepLink: event.deepLink,
     courseId: event.courseId,

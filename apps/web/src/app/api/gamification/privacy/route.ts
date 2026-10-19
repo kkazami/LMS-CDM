@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -5,6 +6,9 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST gamification/privacy/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "CommonJS", "moduleResolution": "Node", "strict": true,
+    "noEmit": true, "esModuleInterop": true, "skipLibCheck": true, "types": ["node"], "typeRoots": ["../../apps/web/node_modules/@types"], "lib": ["ES2023"]
+  },
+  "include": ["./*.ts", "../harness-cli.ts", "../harness-verify-run.ts", "../harness-check.ts", "../harness-smoke.ts", "../harness-host.ts", "../harness-key.ts", "../harness-ci.ts", "../harness-infra.ts", "../harness-signer.ts", "../../tests/harness/**/*.ts", "../../tests/harness-integration/**/*.ts", "../../.orchestra/harness/playwright.config.ts"]
+}

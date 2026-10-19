@@ -1,5 +1,10 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
+
+import { randomBytes } from 'node:crypto';
+import { administratorInstitute } from '@/lib/administrator-scope';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { executeSkill } from "./index";
@@ -97,7 +102,11 @@ function parseCSV(raw: string): Array<Record<string, string>> {
 export async function bulkUserIngestion(
   input: BulkUserIngestionInput
 ): Promise<SkillResult<BulkIngestionOutput>> {
+  const actualActor = await requireLegacyActor("apps/web/src/lib/skills/bulk-user-ingestion.ts#bulkUserIngestion");
+
   return executeSkill("bulkUserIngestion", async () => {
+    if (actualActor.id !== input.actorId) throw new Error("Forbidden actor.");
+    await administratorInstitute(actualActor, input.instituteCode);
     // Validate actor is an admin
     const actor = await db.user.findUnique({
       where: { id: input.actorId },
@@ -193,11 +202,11 @@ export async function bulkUserIngestion(
 
       batchEmailSet.add(email);
 
+      if (row.role && !["INSTRUCTOR","STUDENT"].includes(canonicalRole(row.role))) throw new Error("Only students and instructors may be imported.");
       const normalizedRole = row.role ? normalizeRole(row.role) : "STUDENT";
       const dbRole = normalizedRole === "INSTRUCTOR" ? "PROFESSOR" : normalizedRole;
       const rawPassword =
-        Math.random().toString(36).slice(2) +
-        Math.random().toString(36).slice(2);
+        randomBytes(18).toString('base64url');
       const hashedPassword = await hash(rawPassword, 10);
 
       toCreate.push({

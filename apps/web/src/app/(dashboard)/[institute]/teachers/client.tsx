@@ -22,6 +22,9 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import DashboardCalendar from "@/components/calendar/StudentCalendar";
+import type { CalendarEvent } from "@/lib/lms-types";
+import type { ClassSchedule } from "@/lib/student-calendar";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
 import CustomizeCourseModal from "@/components/courses/CustomizeCourseModal";
 import InstructorCreateCourseModal from "@/components/courses/InstructorCreateCourseModal";
@@ -41,6 +44,11 @@ interface TaughtCourse {
   section: string;
   subject: string;
   room: string;
+  scheduleDays: number[];
+  scheduleStart: string;
+  scheduleEnd: string;
+  scheduleStartDate: string | null;
+  scheduleEndDate: string | null;
   description?: string;
   coverImage?: string;
   enrolledCount: number;
@@ -73,6 +81,9 @@ interface TeacherDashboardClientProps {
   instituteCode: string;
   theme: InstituteTheme;
   initialCourses: TaughtCourse[];
+  calendar: { events: CalendarEvent[]; schedules: ClassSchedule[] };
+  userId: string;
+  today: string;
   initialPendingRequests: PendingRequest[];
   initialPendingWorkClasses?: PendingClassWork[];
   totalPendingWorkCount?: number;
@@ -85,6 +96,9 @@ export default function TeacherDashboardClient({
   instituteCode,
   theme,
   initialCourses,
+  calendar,
+  userId,
+  today,
   initialPendingRequests,
   initialPendingWorkClasses = [],
   totalPendingWorkCount,
@@ -360,6 +374,10 @@ export default function TeacherDashboardClient({
         </div>
 
         {/* ─── 2. Main Grid: Taught Courses & Pending Requests ─── */}
+        <div id="calendar" className="min-w-0 scroll-mt-20">
+          <DashboardCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} showClasswork={false} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left 2 Columns: My Courses */}
           <div className="lg:col-span-2 space-y-4">
@@ -794,13 +812,16 @@ export default function TeacherDashboardClient({
       />
 
       {/* Instructor Edit Course Modal */}
-      <InstructorEditCourseModal
-        open={!!editingCourse}
-        onClose={() => setEditingCourse(null)}
-        theme={theme}
-        instituteCode={instituteCode}
-        course={editingCourse}
-      />
+      {editingCourse && (
+        <InstructorEditCourseModal
+          key={editingCourse.id}
+          open={true}
+          onClose={() => setEditingCourse(null)}
+          theme={theme}
+          instituteCode={instituteCode}
+          course={editingCourse}
+        />
+      )}
 
       {/* Customize Course Cover Modal */}
       {customizingCourse && (

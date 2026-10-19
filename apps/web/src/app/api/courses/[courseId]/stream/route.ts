@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -13,6 +14,9 @@ interface RouteContext {
  * Fetches stream announcements and broadcast alerts for the course.
  */
 export async function GET(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "GET courses/[courseId]/stream/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -98,6 +102,9 @@ export async function GET(request: Request, context: RouteContext) {
  * Creates a new class announcement or discussion item.
  */
 export async function POST(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "POST courses/[courseId]/stream/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

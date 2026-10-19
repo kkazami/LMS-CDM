@@ -1,0 +1,504 @@
+{
+  "version": 1,
+  "kind": "architecture-review-future-test-command-mapping",
+  "runId": "run_superuser_20261004",
+  "sourceDigest": "9c4cc7834a8615bfad1b11fe243287a49af292a866103dfe7e0de50b3922a1af",
+  "implementationAuthorized": false,
+  "executionAllowedNow": false,
+  "frozenHashes": {
+    "tests/e2e/controlled/fixture.ts": "07ca56d76f370d82cbeca62e82611d4f5ff22c700c7da7d4ec0810b3a36f2155",
+    "tests/e2e/controlled/seed-fixture.cjs": "8dd4a47a2fdf99bbacbe500fc86082d5f03ad5e45392ca8805249a837873eff8",
+    "tests/e2e/controlled/superuser-oversight.spec.ts": "683a330a1fab4023348381226e4a41e5c9e3a906b23d9497c7c7843823849a3d",
+    "tests/e2e/controlled/CONTRACT.md": "d4e0e501912f440b9afe5840907e0f7824940adad00c7796cdbb4c59ee7bdbb5",
+    "tests/e2e/fixtures/test-accounts.ts": "238390c87d27b047c5453a1f523663bc0895397b1d3ecf1c0549f76251d76b81",
+    "tests/server/controlled/bootstrap.mjs": "aba346b2686656110b6af03ca01d681a8664e188d718ff52d2afb3a052974852",
+    "tests/server/controlled/superuser-actions.test.mjs": "a182ac934937b0a73ebe8856b962224ec6b8cb2aee55629b42165466ac2f04fe"
+  },
+  "commands": [
+    {
+      "id": "SU-TYPES",
+      "program": "pnpm",
+      "args": [
+        "--filter",
+        "web",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ],
+      "domain": "static",
+      "criteria": [],
+      "coverage": [
+        "web-typecheck"
+      ],
+      "tests": [],
+      "timeoutMs": 300000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-BUILD",
+      "program": "pnpm",
+      "args": [
+        "build:web"
+      ],
+      "domain": "static",
+      "criteria": [],
+      "coverage": [
+        "web-build"
+      ],
+      "tests": [],
+      "timeoutMs": 1800000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-FROZEN-HTTP",
+      "program": "pnpm",
+      "args": [
+        "exec",
+        "playwright",
+        "test",
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "--config",
+        ".orchestra/harness/playwright.config.ts",
+        "--project",
+        "chromium"
+      ],
+      "domain": "browser",
+      "criteria": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011"
+      ],
+      "coverage": [
+        "browser-behavior"
+      ],
+      "tests": [
+        "authenticate as student",
+        "authenticate as instructor",
+        "authenticate as admin",
+        "AC-001 AC-009 AC-010 authentication/authorization: every protected ics endpoint rejects prohibited identities",
+        "AC-001 AC-009 AC-010 authentication/authorization: every protected ibe endpoint rejects prohibited identities",
+        "AC-001 AC-009 AC-010 authentication/authorization: every protected ite endpoint rejects prohibited identities",
+        "AC-002 AC-003 AC-004 AC-007 selected ics: exact safe DTO, scope, course and assigned instructor",
+        "AC-002 AC-003 AC-004 AC-007 selected ibe: exact safe DTO, scope, course and assigned instructor",
+        "AC-002 AC-003 AC-004 AC-007 selected ite: exact safe DTO, scope, course and assigned instructor",
+        "AC-002 AC-005 AC-009 AC-010 IDOR: foreign course IDs, unknown/encoded scopes and fabricated ownership do not expose data",
+        "AC-002 AC-003 AC-009 AC-010 request-manipulation/program-scope: route scope wins; unsupported program claims do not grant activity access",
+        "AC-001 AC-006 AC-007 AC-010: generic course/admin/student/assessment reads cannot bypass the dedicated supervision contract",
+        "AC-001 AC-006 AC-010 AC-011 ics: semantically typed HTTP mutations are forbidden and preserve all state",
+        "AC-001 AC-006 AC-010 AC-011 ibe: semantically typed HTTP mutations are forbidden and preserve all state",
+        "AC-001 AC-006 AC-010 AC-011 ite: semantically typed HTTP mutations are forbidden and preserve all state",
+        "AC-008 AC-010 AC-011: existing Admin administration and assigned-instructor teaching retain real authorized operations",
+        "AC-004 AC-006 AC-007: supervision DOM, links, forms, data responses and final institute route are read-only"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-FROZEN-ACTIONS",
+      "program": "node",
+      "args": [
+        "--import",
+        "./tests/server/controlled/bootstrap.mjs",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter",
+        "./scripts/harness/test-reporter.cjs",
+        "tests/server/controlled/superuser-actions.test.mjs"
+      ],
+      "domain": "security",
+      "criteria": [
+        "AC-001",
+        "AC-006",
+        "AC-008",
+        "AC-010",
+        "AC-011"
+      ],
+      "coverage": [
+        "authorization",
+        "ownership",
+        "institute-scope",
+        "program-scope",
+        "privilege-escalation",
+        "direct-api"
+      ],
+      "tests": [
+        "AC-001 AC-006 AC-010 AC-011 direct actions: role boundary holds even with forged course ownership/enrollment",
+        "AC-008 AC-010 ownership: real existing instructor/student actions retain legitimate access and reject non-owners",
+        "AC-001 AC-006 AC-010 program/role boundary: real execution handler denies before any executor invocation"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-BOUNDARIES",
+      "program": "node",
+      "args": [
+        "--import",
+        "./tests/server/controlled/bootstrap.mjs",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter",
+        "./scripts/harness/test-reporter.cjs",
+        "tests/server/controlled/superuser-architecture-security.test.mjs"
+      ],
+      "domain": "security",
+      "criteria": [
+        "AC-001",
+        "AC-002",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-009",
+        "AC-010",
+        "AC-011"
+      ],
+      "coverage": [
+        "authentication",
+        "authorization",
+        "ownership",
+        "institute-scope",
+        "program-scope",
+        "idor",
+        "privilege-escalation",
+        "direct-api",
+        "request-manipulation",
+        "sensitive-data"
+      ],
+      "tests": [
+        "AC-001 AC-009 AC-010 unknown roles and persisted permissions cannot grant academic or administrative rights",
+        "AC-001 AC-006 AC-010 AC-011 every inventoried legacy HTTP handler denies SUPER_USER before validation and side effects",
+        "AC-001 AC-006 AC-010 AC-011 exported server actions reject SUPER_USER and forged actor identity",
+        "AC-001 AC-006 AC-010 all execution siblings deny before external or local executor invocation",
+        "AC-002 AC-005 AC-009 persisted relationships and selected institute defeat forged ownership and child IDs",
+        "AC-009 AC-010 Cookie and Bearer edge cases select one real actor without mixed privileges",
+        "AC-007 AC-010 join codes and unapproved summaries never enter oversight DTOs"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-ALIASES-AUDIT",
+      "program": "node",
+      "args": [
+        "--import",
+        "./tests/server/controlled/bootstrap.mjs",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter",
+        "./scripts/harness/test-reporter.cjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs"
+      ],
+      "domain": "security",
+      "criteria": [
+        "AC-001",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011"
+      ],
+      "coverage": [
+        "authentication",
+        "authorization",
+        "ownership",
+        "institute-scope",
+        "sensitive-data",
+        "direct-api"
+      ],
+      "tests": [
+        "AC-008 AC-010 PROFESSOR TEACHER and INSTRUCTOR retain assigned scoped teaching and reject non-owners",
+        "AC-007 AC-011 required access audit failure returns no data and preserves prior audit rows",
+        "AC-001 AC-009 login logout and own identity are the only SUPER_USER account support exceptions"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-RUNTIME",
+      "program": "node",
+      "args": [
+        "--import",
+        "./tests/server/controlled/bootstrap.mjs",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter",
+        "./scripts/harness/test-reporter.cjs",
+        "tests/server/controlled/superuser-runtime-regression.test.mjs"
+      ],
+      "domain": "runtime",
+      "criteria": [
+        "AC-001",
+        "AC-006",
+        "AC-008",
+        "AC-012"
+      ],
+      "coverage": [
+        "runtime-regression"
+      ],
+      "tests": [
+        "AC-001 AC-006 AC-008 runtime regression preserves authorized normal roles and forbids SUPER_USER side effects",
+        "AC-012 approval omission and stale source evidence remain blocked by unchanged control gates"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-PRIVACY-DESKTOP",
+      "program": "pnpm",
+      "args": [
+        "exec",
+        "playwright",
+        "test",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts",
+        "--config",
+        ".orchestra/harness/playwright.config.ts",
+        "--project",
+        "chromium"
+      ],
+      "domain": "browser",
+      "criteria": [
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-007",
+        "AC-010",
+        "AC-001",
+        "AC-006"
+      ],
+      "coverage": [
+        "browser-behavior"
+      ],
+      "tests": [
+        "authenticate as student",
+        "authenticate as instructor",
+        "authenticate as admin",
+        "AC-004 AC-007 AC-010 page RSC and full shell exclude join codes student data and legacy widgets",
+        "AC-002 AC-003 AC-004 explicit institute switching reload and foreign-course navigation retain selected scope",
+        "AC-003 AC-004 AC-007 active complete arrays empty courses and archived course denial are deterministic",
+        "AC-001 AC-006 AC-010 inline activity actions deny authenticated SUPER_USER replays"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "SU-PRIVACY-MOBILE",
+      "program": "pnpm",
+      "args": [
+        "exec",
+        "playwright",
+        "test",
+        "tests/e2e/controlled/superuser-shell-mobile.responsive.spec.ts",
+        "--config",
+        ".orchestra/harness/playwright.config.ts",
+        "--project",
+        "mobile-chrome"
+      ],
+      "domain": "browser",
+      "criteria": [
+        "AC-004",
+        "AC-007",
+        "AC-010"
+      ],
+      "coverage": [
+        "browser-behavior"
+      ],
+      "tests": [
+        "authenticate as student",
+        "authenticate as instructor",
+        "authenticate as admin",
+        "AC-004 AC-007 AC-010 mobile shell has scoped navigation and no inherited Admin or student widgets"
+      ],
+      "timeoutMs": 900000,
+      "execution": "NOT_EXECUTED"
+    }
+  ],
+  "criteriaMapping": [
+    {
+      "id": "AC-001",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-FROZEN-ACTIONS",
+        "SU-BOUNDARIES",
+        "SU-ALIASES-AUDIT",
+        "SU-RUNTIME",
+        "SU-PRIVACY-DESKTOP"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-actions.test.mjs",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs",
+        "tests/server/controlled/superuser-runtime-regression.test.mjs",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-002",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-BOUNDARIES",
+        "SU-PRIVACY-DESKTOP"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-003",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-PRIVACY-DESKTOP"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-004",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-PRIVACY-DESKTOP",
+        "SU-PRIVACY-MOBILE"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts",
+        "tests/e2e/controlled/superuser-shell-mobile.responsive.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-005",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-BOUNDARIES"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-architecture-security.test.mjs"
+      ]
+    },
+    {
+      "id": "AC-006",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-FROZEN-ACTIONS",
+        "SU-BOUNDARIES",
+        "SU-RUNTIME",
+        "SU-PRIVACY-DESKTOP"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-actions.test.mjs",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-runtime-regression.test.mjs",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-007",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-BOUNDARIES",
+        "SU-ALIASES-AUDIT",
+        "SU-PRIVACY-DESKTOP",
+        "SU-PRIVACY-MOBILE"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts",
+        "tests/e2e/controlled/superuser-shell-mobile.responsive.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-008",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-FROZEN-ACTIONS",
+        "SU-ALIASES-AUDIT",
+        "SU-RUNTIME"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-actions.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs",
+        "tests/server/controlled/superuser-runtime-regression.test.mjs"
+      ]
+    },
+    {
+      "id": "AC-009",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-BOUNDARIES",
+        "SU-ALIASES-AUDIT"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs"
+      ]
+    },
+    {
+      "id": "AC-010",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-FROZEN-ACTIONS",
+        "SU-BOUNDARIES",
+        "SU-ALIASES-AUDIT",
+        "SU-PRIVACY-DESKTOP",
+        "SU-PRIVACY-MOBILE"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-actions.test.mjs",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs",
+        "tests/e2e/controlled/superuser-architecture-privacy.spec.ts",
+        "tests/e2e/controlled/superuser-shell-mobile.responsive.spec.ts"
+      ]
+    },
+    {
+      "id": "AC-011",
+      "commands": [
+        "SU-FROZEN-HTTP",
+        "SU-FROZEN-ACTIONS",
+        "SU-BOUNDARIES",
+        "SU-ALIASES-AUDIT"
+      ],
+      "tests": [
+        "tests/e2e/controlled/superuser-oversight.spec.ts",
+        "tests/server/controlled/superuser-actions.test.mjs",
+        "tests/server/controlled/superuser-architecture-security.test.mjs",
+        "tests/server/controlled/superuser-aliases-and-audit.test.mjs"
+      ]
+    },
+    {
+      "id": "AC-012",
+      "commands": [
+        "SU-RUNTIME"
+      ],
+      "tests": [
+        "tests/server/controlled/superuser-runtime-regression.test.mjs"
+      ]
+    }
+  ],
+  "notes": [
+    "Supplementary files do not exist yet and must be authored and independently reviewed after actual implementation approval.",
+    "All command suites and security coverage labels require assertion-adequacy review; labels alone prove nothing.",
+    "AC-012 supplemental test exercises real unchanged gate rejection on disposable control fixtures. It does not prove the real run is approved, current or RELEASE_READY.",
+    "No source, fixture, environment, database or harness command is executed by this mapping.",
+    "Every browser command declares the three unchanged auth-setup dependency names explicitly; no --no-deps or configuration change is proposed."
+  ]
+}

@@ -200,6 +200,18 @@ CdM LMS uses **tonal layering and hairline borders** as its primary depth mechan
 - **Style:** Left-bordered active indicator (`border-l-[3px] border-[#F97316]` with `bg-orange-500/10` soft fill).
 - **Transitions:** Smooth accordion expansions for course sub-items and 300ms width collapse/expand.
 
+### Calendar
+
+An inspection-first school calendar: a neutral, bordered grid with Day / Week / Month controls and compact event details.
+
+Use the same calendar above the class list on both student and instructor dashboards. Students see enrolled-course schedules; instructors see their taught-course schedules, with the same date boundaries and interactions. Coursework deadlines and the Tasks & quizzes legend appear only on student calendars.
+
+- **Color:** Institute accents identify today, primary actions, and keyboard focus. Event colors describe kind independently of institute: blue classes, pink exams, green personal/general events, and indigo fallback tasks. Pair color with titles, times, and a legend.
+- **Density:** Start in month view; date cells and overflow links open the selected day. Day/week views expose the full school day on an hourly axis, with GMT+8 visible. Prioritize title and time in event tiles; additional class metadata appears only in taller day-view tiles.
+- **Details:** Open a compact, nonmodal popover with a brief summary and a link to the associated LMS class or task. Clamp its initial placement inside the viewport, above/below the selected tile on narrow screens, clear of the calendar's lower edge and fixed bottom navigation. Page scrolling carries it away normally; scrolling inside the calendar dismisses it. Ignore pending auto-scroll events from the click itself so details remain open. Support outside-click and Escape dismissal, visible focus, and focus return on close.
+- **Responsive behavior:** Fit all seven month and week columns on phones with short event labels; dates and overflow links open Day view for more detail. Use shorter mobile hour rows and a bounded day/week viewport while retaining all 24 hours. Contain timetable scrolling to avoid accidental page scroll chaining. Let the toolbar wrap; stack the personal-event editor's start/end fields on mobile. Weekly class scheduling uses labeled weekday checkboxes and paired native time fields with explicit GMT+8 labels.
+- **Class dates:** Require native start/end date fields in instructor create/edit forms. Recurring classes appear only within that inclusive range; schedules awaiting dates do not recur. Show the range in event details.
+
 ### Signature Components
 - **CodeLab Activity Split-Pane**: Dark-themed Monaco-style editor alongside responsive test suite runner with live execution logs.
 - **Spaced-Repetition Flashcard Deck**: 3D flip card (`preserve-3d`, `rotateY(180deg)`) with interactive self-rating buttons.

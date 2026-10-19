@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -10,6 +11,8 @@ type PageProps = {
 };
 
 export default async function ClassworkPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/page.tsx", await params);
+
   const { institute, courseId } = await params;
   const session = await getSession();
 
@@ -43,6 +46,9 @@ export default async function ClassworkPage({ params }: PageProps) {
         orderBy: { createdAt: "asc" },
         select: { id: true, type: true, url: true, fileName: true, fileSize: true },
       },
+      leaderboardRewards: {
+        orderBy: { placement: "asc" },
+      },
     },
     orderBy: { orderIndex: "asc" },
   });
@@ -75,6 +81,12 @@ export default async function ClassworkPage({ params }: PageProps) {
     maxPoints: item.maxPoints,
     enableIntegrityMonitoring: Boolean(item.enableIntegrityMonitoring),
     requireFullscreen: Boolean(item.requireFullscreen),
+    leaderboardEnabled: Boolean(item.leaderboardEnabled),
+    leaderboardRewards: item.leaderboardRewards?.map((r) => ({
+      placement: r.placement,
+      rewardLabel: r.rewardLabel,
+      bonusExp: r.bonusExp,
+    })) || [],
     targetGroups: item.targetGroups.map((tg) => ({
       groupId: tg.groupId,
       group: tg.group,

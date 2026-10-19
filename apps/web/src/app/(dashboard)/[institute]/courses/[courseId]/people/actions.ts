@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -34,6 +36,8 @@ export async function approveEnrollment(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#approveEnrollment", () => ({ institute: instituteCode, courseId }));
+
   const user = await ensureCourseAccess(courseId);
 
   const result = await enrollmentManager({
@@ -52,6 +56,8 @@ export async function declineEnrollment(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#declineEnrollment", () => ({ institute: instituteCode, courseId }));
+
   const user = await ensureCourseAccess(courseId);
 
   const result = await enrollmentManager({
@@ -69,6 +75,8 @@ export async function approveAllPending(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#approveAllPending", () => ({ institute: instituteCode, courseId }));
+
   const user = await ensureCourseAccess(courseId);
 
   const result = await enrollmentManager({
@@ -94,6 +102,8 @@ export async function sendPrivateComment(
   content: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#sendPrivateComment", () => ({ institute: instituteCode, courseId, recipientId }));
+
   const user = await ensureCourseAccess(courseId);
 
   // Run sentiment analysis via agentic skill
@@ -137,6 +147,8 @@ export async function getPrivateComments(
   courseId: string,
   studentId: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#getPrivateComments", () => ({ courseId, studentId }));
+
   const session = await getSession();
   if (!session) return [];
 
@@ -163,6 +175,8 @@ export async function createStudentGroup(
   studentIds: string[],
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#createStudentGroup", () => ({ institute: instituteCode, courseId, studentIds }));
+
   await ensureCourseAccess(courseId);
 
   const group = await db.studentGroup.create({
@@ -186,6 +200,8 @@ export async function updateStudentGroup(
   studentIds: string[],
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#updateStudentGroup", () => ({ institute: instituteCode, courseId, groupId, studentIds }));
+
   await ensureCourseAccess(courseId);
 
   // Replace all members atomically
@@ -211,6 +227,8 @@ export async function deleteStudentGroup(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#deleteStudentGroup", () => ({ institute: instituteCode, courseId, groupId }));
+
   await ensureCourseAccess(courseId);
 
   await db.studentGroup.delete({ where: { id: groupId } });

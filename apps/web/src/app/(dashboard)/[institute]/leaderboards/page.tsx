@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -11,6 +12,8 @@ export default async function LeaderboardsPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/leaderboards/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
   if (!session) redirect(`/login?institute=${institute}`);
@@ -65,6 +68,27 @@ export default async function LeaderboardsPage({
     },
   });
 
+  // Fetch leaderboard-enabled activities for enrolled courses
+  const leaderboardActivities = await db.syllabusItem.findMany({
+    where: {
+      courseId: { in: userEnrollments.map((e) => e.course.id) },
+      leaderboardEnabled: true,
+    },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      maxPoints: true,
+      courseId: true,
+      course: { select: { code: true, title: true } },
+      leaderboardRewards: {
+        select: { placement: true, rewardLabel: true, bonusExp: true },
+        orderBy: { placement: 'asc' as const },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
   // 3. Serialize and sanitize for client
   const serializedRankings = globalProfiles.map((p, index) => {
     const isSelf = p.studentId === session.user.id;
@@ -97,6 +121,7 @@ export default async function LeaderboardsPage({
     <LeaderboardsClient
       rankings={serializedRankings}
       enrolledCourses={userEnrollments.map((e) => e.course)}
+      leaderboardActivities={leaderboardActivities}
       currentUserId={session.user.id}
       instituteCode={institute}
       theme={theme}

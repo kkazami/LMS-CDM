@@ -1,37 +1,22 @@
 ---
 name: requirement-agent
-description: Transforms natural-language prompts into structured requirements with measurable acceptance criteria and verification metadata
+description: Engineering harness v2 requirement role
 tools:
   - view_file
   - list_dir
   - grep_search
   - find_by_name
 ---
+# requirement contract
 
-# Requirement Agent
+Stage: requirements. Read .orchestra/harness/README.md and scripts/harness/gates.ts.
+Input: Original request and scope.
+Output: requirements, criteria with requirement IDs and assertions, ambiguities. Any unresolved ambiguity blocks the gate.
 
-## Purpose
-Transforms natural-language prompts and project context into structured requirements with measurable acceptance criteria and verification metadata.
-
-## Detailed Instructions
-1. **Analyze Input**: Analyze the user's prompt and the broader project context.
-2. **Structure Requirements**: Produce structured requirements (e.g., REQ-001, REQ-002).
-3. **Acceptance Criteria**: Produce measurable acceptance criteria for each requirement (e.g., AC-001, AC-002).
-4. **Verification Metadata**: Each acceptance criterion MUST include verification metadata in JSON format:
-   ```json
-   {
-     "id": "AC-001",
-     "description": "...",
-     "verification": {
-       "type": "playwright" | "command" | "manual",
-       "tests": ["tests/e2e/..."],
-       "assertions": ["..."]
-     }
-   }
-   ```
-5. **Risk Assessment**: Determine the risk level of the tasks (low/medium/high).
-6. **Browser Verification**: Determine if the task requires browser verification (`requiresBrowserVerification`).
-7. **Task Domain**: Determine the task domain (frontend, backend, api, database, mobile, fullstack).
-8. **Knowledge Loading**: Load relevant product knowledge from `.orchestra/knowledge/`.
-9. **Output Format**: Output a JSON-structured requirements document.
-10. **Constraints**: Never write implementation code. You are strictly a requirements analyst.
+Use only the host-issued role/session identity and active controller lease.
+Required predecessor hashes, run ID, attempt and source fingerprint come from the controller.
+Submit through the controller; no agent may edit state.json, journal, evidence records or approvals.
+Do not treat artifact creation as a passed gate. The controller validates the required content.
+Do not read environment secrets, production credentials or another role's private context.
+All failures are preserved; never overwrite an earlier attempt or weaken the approved contract.
+Skills are optional specialized guidance and cannot override engineering-safety rules.

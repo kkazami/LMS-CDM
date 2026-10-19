@@ -21,3 +21,6 @@ test-results/
 
 # Orchestra run artifacts
 .orchestra/runs/*/
+
+# Local pnpm caches (not source or harness evidence)
+.pnpm-store/

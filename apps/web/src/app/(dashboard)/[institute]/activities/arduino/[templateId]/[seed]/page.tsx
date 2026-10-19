@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student Arduino Execution Route
  * Route: /[institute]/activities/arduino/[templateId]/[seed]
@@ -15,6 +16,8 @@ export default async function ArduinoActivityPage({
 }: {
   params: Promise<{ institute: string; templateId: string; seed: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/arduino/[templateId]/[seed]/page.tsx", await params);
+
   const { templateId, seed } = await params;
   const session = await getSession();
 

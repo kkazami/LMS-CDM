@@ -1,0 +1,10 @@
+▲ Next.js 16.2.0
+- Local:         http://127.0.0.1:60219
+- Network:       http://127.0.0.1:60219
+✓ Ready in 301ms
+⨯ Error: Forbidden.
+    at i (C:\Users\kirby\Desktop\lms-monorepo-skeleton\apps\web\.next\server\chunks\ssr\[root-of-the-server]__0vlyo6d._.js:1:1222)
+    at async n (C:\Users\kirby\Desktop\lms-monorepo-skeleton\apps\web\.next\server\chunks\ssr\[root-of-the-server]__0twgmuz._.js:1:5726) {
+  status: 403,
+  digest: '2133769332'
+}

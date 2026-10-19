@@ -1,0 +1,78 @@
+2026-10-19 01:50:00.373 +08 [15680] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-19 01:50:00.375 +08 [15680] LOG:  listening on IPv4 address "127.0.0.1", port 57154
+2026-10-19 01:50:00.472 +08 [38220] LOG:  database system was shut down at 2026-10-19 01:49:57 +08
+2026-10-19 01:50:00.515 +08 [15680] LOG:  database system is ready to accept connections
+2026-10-19 01:50:04.429 +08 [2280] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-19 01:50:04.785 +08 [376] ERROR:  permission denied for table AuditLog
+2026-10-19 01:50:04.880 +08 [33360] ERROR:  academic assignments require migration-owner authority
+2026-10-19 01:50:04.880 +08 [33360] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-19 01:50:04.883 +08 [33360] ERROR:  course program mapping requires migration-owner authority
+2026-10-19 01:50:04.883 +08 [33360] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-19 01:50:04.903 +08 [376] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-19 01:50:05.003 +08 [28660] WARNING:  there is already a transaction in progress
+2026-10-19 01:50:05.130 +08 [37700] ERROR:  permission denied for schema public at character 14
+2026-10-19 01:50:05.130 +08 [37700] ERROR:  permission denied for table writer_bindings
+2026-10-19 01:50:05.134 +08 [37700] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-19 01:50:05.134 +08 [37700] CONTEXT:  PL/pgSQL function guard_user() line 19 at RAISE
+2026-10-19 01:50:05.979 +08 [3476] ERROR:  only the assigned instructor may edit this class
+2026-10-19 01:50:05.979 +08 [3476] CONTEXT:  PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 19 at RAISE
+2026-10-19 01:50:05.982 +08 [3476] ERROR:  course program mapping requires administrator authority
+2026-10-19 01:50:05.982 +08 [3476] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 10 at RAISE
+2026-10-19 01:50:05.984 +08 [3476] ERROR:  instructor or administrator admission required
+2026-10-19 01:50:05.984 +08 [3476] CONTEXT:  PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 12 at RAISE
+2026-10-19 01:50:06.021 +08 [15380] ERROR:  SYNTHETIC_AUDIT_FAILURE
+2026-10-19 01:50:06.021 +08 [15380] CONTEXT:  PL/pgSQL function reject_mapping_audit() line 1 at RAISE
+	SQL statement "INSERT INTO public."AuditLog"(id,"adminId","targetId",action,metadata,"createdAt") VALUES(gen_random_uuid()::text,actor_id,actor_id,CASE WHEN actor_role='ADMIN' THEN 'ADMIN_COURSE_PROGRAM_SET' ELSE 'INSTRUCTOR_COURSE_PROGRAM_SET' END,jsonb_build_object('instituteId',institute_id,'courseId',course_id,'previousProgramId',previous_program,'programId',selected_program,'result','SUCCESS')::text,clock_timestamp())"
+	PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 23 at SQL statement
+2026-10-19 01:50:06.083 +08 [37408] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-19 01:50:06.083 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-19 01:50:06.084 +08 [37408] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-19 01:50:06.084 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-19 01:50:06.085 +08 [37408] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-19 01:50:06.085 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-19 01:50:06.085 +08 [37408] ERROR:  RETIRED_ROLE_DENIED
+2026-10-19 01:50:06.085 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 4 at RAISE
+2026-10-19 01:50:06.086 +08 [37408] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-19 01:50:06.086 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 19 at RAISE
+2026-10-19 01:50:06.092 +08 [37408] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-19 01:50:06.092 +08 [37408] CONTEXT:  PL/pgSQL function guard_user() line 16 at RAISE
+2026-10-19 01:50:06.547 +08 [15380] ERROR:  SYNTHETIC_AUDIT_FAILURE
+2026-10-19 01:50:06.547 +08 [15380] CONTEXT:  PL/pgSQL function reject_faculty_audit() line 1 at RAISE
+	SQL statement "INSERT INTO public."AuditLog"(id,"adminId","targetId",action,metadata,"createdAt") VALUES(gen_random_uuid()::text,actor_id,target_user,'ICS_FACULTY_DESIGNATION_SET',jsonb_build_object('programId',selected_program,'instituteId',institute_id,'beforeHead',coalesce(previous_head,false),'designation',designation,'version',current_version+1,'correlationId',gen_random_uuid()::text,'result','SUCCESS')::text,clock_timestamp())"
+	PL/pgSQL function super_user_security.set_ics_faculty(text,text,text,text,text,integer) line 34 at SQL statement
+2026-10-19 01:50:07.224 +08 [24756] ERROR:  only the assigned instructor may edit this class
+2026-10-19 01:50:07.224 +08 [24756] CONTEXT:  PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 19 at RAISE
+2026-10-19 01:50:07.229 +08 [24756] ERROR:  instructor or administrator admission required
+2026-10-19 01:50:07.229 +08 [24756] CONTEXT:  PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 12 at RAISE
+2026-10-19 01:50:07.233 +08 [24756] ERROR:  active program not found
+2026-10-19 01:50:07.233 +08 [24756] CONTEXT:  PL/pgSQL function super_user_security.set_course_program(text,text,text,text) line 15 at RAISE
+2026-10-19 01:50:07.472 +08 [15380] ERROR:  eligible institute instructor required
+2026-10-19 01:50:07.472 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 18 at RAISE
+2026-10-19 01:50:07.483 +08 [15380] ERROR:  eligible institute instructor required
+2026-10-19 01:50:07.483 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 18 at RAISE
+2026-10-19 01:50:07.498 +08 [15380] ERROR:  eligible institute instructor required
+2026-10-19 01:50:07.498 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 18 at RAISE
+2026-10-19 01:50:07.514 +08 [15380] ERROR:  program changed
+2026-10-19 01:50:07.514 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 17 at RAISE
+2026-10-19 01:50:07.529 +08 [15380] ERROR:  eligible institute instructor required
+2026-10-19 01:50:07.529 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 18 at RAISE
+2026-10-19 01:50:07.577 +08 [15380] ERROR:  already assigned or protected designation
+2026-10-19 01:50:07.577 +08 [15380] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 19 at RAISE
+2026-10-19 01:50:07.594 +08 [15380] ERROR:  SYNTHETIC_AUDIT_FAILURE
+2026-10-19 01:50:07.594 +08 [15380] CONTEXT:  PL/pgSQL function reject_member_audit() line 1 at RAISE
+	SQL statement "INSERT INTO public."AuditLog"(id,"adminId","targetId",action,metadata,"createdAt") VALUES(gen_random_uuid()::text,actor_id,target_user,'PROGRAM_INSTRUCTOR_ADDED',jsonb_build_object('instituteId',institute_id,'programId',selected_program,'version',current_version+1,'result','SUCCESS')::text,clock_timestamp())"
+	PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 25 at SQL statement
+2026-10-19 01:50:07.660 +08 [38176] ERROR:  current program head required
+2026-10-19 01:50:07.660 +08 [38176] CONTEXT:  PL/pgSQL function super_user_security.add_program_instructor(text,text,text,text,integer) line 16 at RAISE
+2026-10-19 01:50:38.114 +08 [35816] ERROR:  permission denied for table AuditLog
+2026-10-19 01:50:39.004 +08 [32604] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 01:50:39.004 +08 [35816] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-19 01:50:39.100 +08 [15680] LOG:  received fast shutdown request
+2026-10-19 01:50:39.104 +08 [15680] LOG:  aborting any active transactions
+2026-10-19 01:50:39.112 +08 [15680] LOG:  background worker "logical replication launcher" (PID 36560) exited with exit code 1
+2026-10-19 01:50:39.114 +08 [37048] LOG:  shutting down
+2026-10-19 01:50:39.117 +08 [37048] LOG:  checkpoint starting: shutdown immediate
+2026-10-19 01:50:40.323 +08 [37048] LOG:  checkpoint complete: wrote 1275 buffers (7.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.045 s, sync=1.144 s, total=1.209 s; sync files=775, longest=0.232 s, average=0.002 s; distance=7371 kB, estimate=7371 kB; lsn=0/1CA7B60, redo lsn=0/1CA7B60
+2026-10-19 01:50:40.473 +08 [15680] LOG:  database system is shut down

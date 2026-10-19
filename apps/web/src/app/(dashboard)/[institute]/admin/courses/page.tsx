@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { getSession } from "@/lib/auth-session";
@@ -6,9 +7,12 @@ import AdminCoursesClient from "./client";
 
 type PageProps = {
   params: Promise<{ institute: string }>;
+  searchParams: Promise<{ instructor?: string }>;
 };
 
-export default async function AdminCoursesPage({ params }: PageProps) {
+export default async function AdminCoursesPage({ params, searchParams }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/admin/courses/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -33,6 +37,7 @@ export default async function AdminCoursesPage({ params }: PageProps) {
   const courses = await db.course.findMany({
     where: { instituteId: instituteRecord.id },
     include: {
+      program: { select: { id: true, code: true, name: true, isActive: true } },
       instructor: {
         select: { id: true, name: true, email: true },
       },
@@ -45,6 +50,12 @@ export default async function AdminCoursesPage({ params }: PageProps) {
       },
     },
     orderBy: { createdAt: "desc" },
+  });
+
+  const programs = await db.academicProgram.findMany({
+    where: { instituteId: instituteRecord.id, isActive: true },
+    select: { id: true, code: true, name: true },
+    orderBy: { code: "asc" },
   });
 
   return (
@@ -61,6 +72,8 @@ export default async function AdminCoursesPage({ params }: PageProps) {
       </div>
       <AdminCoursesClient
         courses={courses}
+        programs={programs}
+        initialInstructorId={(await searchParams).instructor ?? ""}
         instituteCode={institute}
         theme={theme}
       />

@@ -1,5 +1,8 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
+
+import { administratorInstitute } from '@/lib/administrator-scope';
 import { db } from "@/lib/db";
 import { executeSkill } from "./index";
 import type { SkillResult } from "./index";
@@ -33,7 +36,14 @@ interface BulkAssignOutput {
 export async function bulkAssignInstructor(
   input: BulkAssignInput
 ): Promise<SkillResult<BulkAssignOutput>> {
+  const actor = await requireLegacyActor("apps/web/src/lib/skills/bulk-assign-instructor.ts#bulkAssignInstructor");
+
   return executeSkill("bulkAssignInstructor", async () => {
+    const isAdmin = actor.role.toUpperCase() === 'ADMIN';
+    if (isAdmin) await administratorInstitute(actor);
+    else if (!['PROFESSOR','TEACHER','INSTRUCTOR'].includes(actor.role.toUpperCase())) throw new Error('Instructor or Administrator required.');
+    if (input.instituteId !== actor.instituteId) throw new Error("Forbidden institute.");
+    if (!input.assignments.length || input.assignments.length > 500) throw new Error('Invalid assignment count.');
     const results: BulkAssignOutput["results"] = [];
 
     await db.$transaction(async (tx) => {
@@ -78,7 +88,7 @@ export async function bulkAssignInstructor(
           // Validate course belongs to this institute
           const course = await tx.course.findUnique({
             where: { id: assignment.courseId },
-            select: { id: true, instituteId: true },
+            select: { id: true, instituteId: true, instructorId: true },
           });
 
           if (!course) {
@@ -90,7 +100,7 @@ export async function bulkAssignInstructor(
             continue;
           }
 
-          if (course.instituteId !== input.instituteId) {
+          if (course.instituteId !== input.instituteId || !isAdmin && (course.instructorId !== actor.id || assignment.instructorId !== actor.id)) {
             results.push({
               ...assignment,
               status: "error",

@@ -1,0 +1,17 @@
+{
+  "program": "pg_ctl.exe",
+  "args": [
+    "start",
+    "-D",
+    "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\product-development\\program-head-integration\\local_1792341220740_b6d2ae53\\postgres-data",
+    "-l",
+    "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\product-development\\program-head-integration\\local_1792341220740_b6d2ae53\\postgres.log",
+    "-w",
+    "-t",
+    "20"
+  ],
+  "code": 0,
+  "signal": null,
+  "stdout": "waiting for server to start.... done\r\nserver started\r\n",
+  "stderr": ""
+}

@@ -1,0 +1,21 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "description": "Engineering gates reject unsafe or incomplete transitions."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-001",
+      "requirements": [
+        "REQ-001"
+      ],
+      "description": "Planner cannot proceed without architecture adjudication.",
+      "assertions": [
+        "Attempted planning without adjudication returns a blocking error and no passed plan gate."
+      ]
+    }
+  ],
+  "ambiguities": []
+}

@@ -1,0 +1,122 @@
+{
+  "kind": "READ_ONLY_PROVIDER_RETRY_PREFLIGHT",
+  "clientDate": "2026-10-09",
+  "availableDiskBytes": 45306945536,
+  "availableDiskGiB": 42.2,
+  "drive": "C:",
+  "dockerEngineReadOnlyInfoServerVersion": "29.6.2",
+  "sandboxVersion": "v0.46.0 991967dc90ce0d9a440cd1df1bdf3e395c5a2693",
+  "executable": "C:/Users/kirby/AppData/Local/DockerSandboxes/bin/sbx.exe",
+  "executableSha256": "a2c8d68f3a16851a65e1d43f7330ae6860c5a2f07df8f22fab5dae7a4a232780",
+  "worker": "harness-repair-20261005",
+  "brokerConfigurationSource": "Unchanged 013 driver exact argv: sandboxd, Docker Sandboxes OAuth broker, chatgpt backend-api/codex, read-only ephemeral, configs/rules/MCP/apps/plugins/multi_agent/web disabled",
+  "sourceFilesChecked": 1337,
+  "drift": [],
+  "contractSha256": "9d7f33e4c9622bb3691bfa3ecdd68cf8035dbe89f1c8edf06ebdc9e9da6dc639",
+  "evidenceManifestSha256": "ffce97a9d9895f3e5c093f676874eac8b64e6893154cbd9649b316580c0e1ded",
+  "packetBindings": [
+    {
+      "id": "SU-V1-HIERARCHY-TRANSITION",
+      "file": "013-su-v1-hierarchy-transition.request.json",
+      "sha256": "00d27664c3f76e3aa03220f498b0d4562e02bad195e165cda96c2c2a85f969d0"
+    },
+    {
+      "id": "SU-V1-PROVISIONING-AUDIT",
+      "file": "013-su-v1-provisioning-audit.request.json",
+      "sha256": "05e87a11d72b01e68f3df32f2e033f2b66f3896d3841c90734c7671f1b22f700"
+    },
+    {
+      "id": "SU-V1-CONTRACT-FIXTURES",
+      "file": "013-su-v1-contract-fixtures.request.json",
+      "sha256": "e633a915baee2029348d377fb7b6c254924c007382de70783e712019b0ef0385"
+    }
+  ],
+  "historical013Hashes": [
+    {
+      "path": "plans/013-independent-hierarchy-review-driver.mjs",
+      "sha256": "e80e611666985d69a61e77af0e62ec8ffe6fdc7c63d0c1f482a34bed0a4fe3b3"
+    },
+    {
+      "path": "plans/013-independent-hierarchy-review-manifest.json",
+      "sha256": "10cf684817891e03884b641c3446e13b7c3fadd08bb9f5fc8b40f3f840bfb03a"
+    },
+    {
+      "path": "plans/013-independent-hierarchy-review-results.json",
+      "sha256": "d20e31411a3d219cab880dc0b75936db58dbaca839bceccc3399f4e335ede48d"
+    },
+    {
+      "path": "plans/013-independent-hierarchy-review-status.md",
+      "sha256": "80f31127e369136d4f9ed9c5e895209b5c1b56e525f33dab3e182fdd01f872f0"
+    },
+    {
+      "path": "plans/013-su-v1-contract-fixtures-0f0bf563-7fb9-4f2a-9017-e256e05dcfed.receipt.json",
+      "sha256": "5f8b67b33dec484dcdbb860fd619512c563599dbd59f7fac4fd1c6bbecd87ba2"
+    },
+    {
+      "path": "plans/013-su-v1-contract-fixtures-0f0bf563-7fb9-4f2a-9017-e256e05dcfed.schema.json",
+      "sha256": "56f96fae7ca9f77adad73de07e64cf3c9128ef7a4aa27adf5432c01381c131ad"
+    },
+    {
+      "path": "plans/013-su-v1-contract-fixtures-0f0bf563-7fb9-4f2a-9017-e256e05dcfed.stderr.log",
+      "sha256": "d8c4edcfdaf8e4075355d1d5138af28a485cb366dabbac2bd1fd2b82170a6fa7"
+    },
+    {
+      "path": "plans/013-su-v1-contract-fixtures-0f0bf563-7fb9-4f2a-9017-e256e05dcfed.transcript.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "plans/013-su-v1-contract-fixtures.request.json",
+      "sha256": "e633a915baee2029348d377fb7b6c254924c007382de70783e712019b0ef0385"
+    },
+    {
+      "path": "plans/013-su-v1-hierarchy-transition-dab27f21-ec05-4232-8f0e-1e1fd74ad232.receipt.json",
+      "sha256": "2a1cd8b82e5b34e84bd49dbcdba802c600ff679da5376247f25d1bb95f56814f"
+    },
+    {
+      "path": "plans/013-su-v1-hierarchy-transition-dab27f21-ec05-4232-8f0e-1e1fd74ad232.schema.json",
+      "sha256": "d2247f125be2a4a92060087478396b7ab9bfa7f275d752a65e7ab36882458a4f"
+    },
+    {
+      "path": "plans/013-su-v1-hierarchy-transition-dab27f21-ec05-4232-8f0e-1e1fd74ad232.stderr.log",
+      "sha256": "72461ce54562b717f3799491f8c3506afcdf7e99897c2a515bd89764f9abb820"
+    },
+    {
+      "path": "plans/013-su-v1-hierarchy-transition-dab27f21-ec05-4232-8f0e-1e1fd74ad232.transcript.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "plans/013-su-v1-hierarchy-transition.request.json",
+      "sha256": "00d27664c3f76e3aa03220f498b0d4562e02bad195e165cda96c2c2a85f969d0"
+    },
+    {
+      "path": "plans/013-su-v1-provisioning-audit-e2a9b803-c3da-4410-97bb-fe32587dd0df.receipt.json",
+      "sha256": "bb71230df9ad043ff358dc756b4ba068e7cb07febc4fa0b3f761c51ff7626c23"
+    },
+    {
+      "path": "plans/013-su-v1-provisioning-audit-e2a9b803-c3da-4410-97bb-fe32587dd0df.schema.json",
+      "sha256": "4bc090628f3ca7f5fd24e32376159b502855426c196f47e5949563933f953a8c"
+    },
+    {
+      "path": "plans/013-su-v1-provisioning-audit-e2a9b803-c3da-4410-97bb-fe32587dd0df.stderr.log",
+      "sha256": "2cdc673b4e9a459b219c180b6f088bbb5bf7234f3acb96fd1917dba841f3b26d"
+    },
+    {
+      "path": "plans/013-su-v1-provisioning-audit-e2a9b803-c3da-4410-97bb-fe32587dd0df.transcript.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "plans/013-su-v1-provisioning-audit.request.json",
+      "sha256": "05e87a11d72b01e68f3df32f2e033f2b66f3896d3841c90734c7671f1b22f700"
+    }
+  ],
+  "state": "DRAFT",
+  "risk": "HIGH",
+  "next": "requirements",
+  "claim": null,
+  "approvalCount": 0,
+  "runtimeRecoveryPerformed": false,
+  "credentialsReadOrRefreshed": false,
+  "sourceImplemented": false,
+  "daemonReadOnlyStatus": "Stopped; IPC pipe not connected",
+  "endpointReadOnlyObservation": "Existing zero-length main ttrpc file; existence is not listener-health evidence"
+}

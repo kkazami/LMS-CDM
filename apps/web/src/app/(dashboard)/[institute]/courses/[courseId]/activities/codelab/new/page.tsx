@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Instructor CodeLab Template Editor
  * Route: /[institute]/courses/[courseId]/activities/codelab/new
@@ -25,6 +26,8 @@ export default async function NewCodeLabActivityPage({
 }: {
   params: Promise<{ institute: string; courseId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/codelab/new/page.tsx", await params);
+
   const { institute, courseId } = await params;
   const session = await getSession();
   const theme = getInstituteTheme(institute);

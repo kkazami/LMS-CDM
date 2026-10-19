@@ -1,91 +1,40 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { hash, compare } from "bcryptjs";
+import { compare, hash } from 'bcryptjs';
+import { z } from 'zod';
+import { db } from '@/lib/db';
+import { passwordSchema } from '@/lib/auth-schema';
+import { lockAccounts } from '@/lib/super-user-v1/account-lock';
+import { mayUsePublicReset } from '@/lib/super-user-v1/capabilities';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
+const input = z.object({ email: z.string().email().max(254), otp: z.string().regex(/^\d{6}$/), newPassword: passwordSchema.max(72) }).strict();
+const invalid = () => new AccessError(400, 'Invalid or expired reset.');
 
 export async function POST(request: Request) {
   try {
-    const { email, otp, newPassword } = await request.json();
-
-    if (!email || !otp || !newPassword) {
-      return NextResponse.json({ message: "Missing required fields." }, { status: 400 });
-    }
-
-    if (newPassword.length < 6) {
-      return NextResponse.json({ message: "Password must be at least 6 characters long." }, { status: 400 });
-    }
-
-    const cleanOtp = String(otp).trim().replace(/\s+/g, "");
-
-    if (!cleanOtp) {
-      return NextResponse.json({ message: "OTP code is required." }, { status: 400 });
-    }
-
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    const parsed = input.safeParse(await request.json());
+    if (!parsed.success) throw invalid();
+    const user = await db.user.findUnique({ where: { email: parsed.data.email.toLowerCase() }, select: { id: true } });
+    if (!user) throw invalid();
+    const password = await hash(parsed.data.newPassword, 10);
+    const accepted = await db.$transaction(async tx => {
+      await lockAccounts(tx, [user.id]);
+      const current = await tx.user.findUnique({ where: { id: user.id } });
+      if (!current || !mayUsePublicReset(current)) throw invalid();
+      const grant = await tx.passwordResetOtp.findFirst({ where: { userId: user.id, isUsed: false }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] });
+      if (!grant || grant.expiresAt <= new Date()) return false;
+      // A redemption attempt consumes the grant even when the guess is wrong.
+      // Returning false (rather than throwing) commits the failed-attempt budget.
+      // Together with the persisted issuance cap this bounds guesses without
+      // adding another state store or an unapproved schema field.
+      const consumed = await tx.passwordResetOtp.updateMany({ where: { id: grant.id, isUsed: false, expiresAt: { gt: new Date() } }, data: { isUsed: true } });
+      if (consumed.count !== 1 || !await compare(parsed.data.otp, grant.otpCodeHash)) return false;
+      await tx.user.update({ where: { id: user.id }, data: { password } });
+      await tx.passwordResetOtp.updateMany({ where: { userId: user.id, isUsed: false }, data: { isUsed: true } });
+      await tx.session.deleteMany({ where: { userId: user.id } });
+      return true;
     });
-
-    if (!user) {
-      return NextResponse.json({ message: "Invalid OTP or email." }, { status: 400 });
-    }
-
-    if (user.isActive === false) {
-      return NextResponse.json(
-        { message: "This account has been deactivated. Please contact an administrator." },
-        { status: 403 }
-      );
-    }
-
-    // Find the latest active OTP for this user
-    const latestOtpRecord = await db.passwordResetOtp.findFirst({
-      where: {
-        userId: user.id,
-        isUsed: false,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!latestOtpRecord) {
-      return NextResponse.json({ message: "Invalid or expired OTP." }, { status: 400 });
-    }
-
-    if (latestOtpRecord.expiresAt < new Date()) {
-      return NextResponse.json({ message: "OTP has expired. Please request a new one." }, { status: 400 });
-    }
-
-    const isValidOtp = await compare(cleanOtp, latestOtpRecord.otpCodeHash);
-
-    if (!isValidOtp) {
-      return NextResponse.json({ message: "Invalid OTP." }, { status: 400 });
-    }
-
-    // OTP is valid and not expired. Update password and mark OTP as used.
-    const hashedPassword = await hash(newPassword, 10);
-
-    // Using a transaction to ensure both operations succeed together
-    await db.$transaction([
-      db.user.update({
-        where: { id: user.id },
-        data: { password: hashedPassword },
-      }),
-      db.passwordResetOtp.update({
-        where: { id: latestOtpRecord.id },
-        data: { isUsed: true },
-      }),
-    ]);
-
-    // Optional: Also invalidate all active sessions for this user so they have to log in again
-    await db.session.deleteMany({
-      where: { userId: user.id }
-    });
-
-    return NextResponse.json({ message: "Password has been successfully reset." }, { status: 200 });
-  } catch (error) {
-    console.error("RESET_PASSWORD_ERROR", error);
-    return NextResponse.json(
-      { message: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
-  }
+    if (!accepted) throw invalid();
+    return Response.json({ message: 'Password has been successfully reset.' });
+  } catch (error) { return accountErrorResponse(error); }
 }

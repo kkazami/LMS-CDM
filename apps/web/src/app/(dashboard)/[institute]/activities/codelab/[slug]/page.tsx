@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * CodeLab Track Detail Page (Levels 1–30)
  * Route: /[institute]/activities/codelab/[slug] (where slug is a language: python, cpp, etc.)
@@ -117,6 +118,8 @@ const LANGUAGE_THEMES: Record<ProblemLanguage, {
 };
 
 export default async function CodeLabTrackDetailPage({ params }: TrackDetailPageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/[slug]/page.tsx", await params);
+
   const { institute, slug: rawLanguage } = await params;
   const language = rawLanguage.toLowerCase() as ProblemLanguage;
 

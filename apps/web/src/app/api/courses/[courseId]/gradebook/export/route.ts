@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { executeSkill } from "@/lib/skills";
@@ -9,6 +10,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(_req, "GET courses/[courseId]/gradebook/export/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { courseId } = await params;
 
   const session = await getSession();

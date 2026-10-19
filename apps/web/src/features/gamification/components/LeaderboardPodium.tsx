@@ -24,9 +24,10 @@ export interface PodiumStudent {
 interface LeaderboardPodiumProps {
   top3: PodiumStudent[];
   theme: InstituteTheme;
+  onSelectStudent?: (student: PodiumStudent) => void;
 }
 
-export default function LeaderboardPodium({ top3, theme }: LeaderboardPodiumProps) {
+export default function LeaderboardPodium({ top3, theme, onSelectStudent }: LeaderboardPodiumProps) {
   const first = top3.find((s) => s.rank === 1);
   const second = top3.find((s) => s.rank === 2);
   const third = top3.find((s) => s.rank === 3);
@@ -41,6 +42,7 @@ export default function LeaderboardPodium({ top3, theme }: LeaderboardPodiumProp
           <PodiumCard
             student={second}
             theme={theme}
+            onSelectStudent={onSelectStudent}
             pedestalHeight="h-44 sm:h-52"
             badgeBg="bg-slate-200 dark:bg-slate-700/60"
             badgeText="text-slate-700 dark:text-slate-200"
@@ -58,6 +60,7 @@ export default function LeaderboardPodium({ top3, theme }: LeaderboardPodiumProp
           <PodiumCard
             student={first}
             theme={theme}
+            onSelectStudent={onSelectStudent}
             pedestalHeight="h-56 sm:h-64"
             badgeBg="bg-amber-400 text-amber-950 font-black shadow-lg shadow-amber-500/30"
             badgeText="text-amber-950"
@@ -74,6 +77,7 @@ export default function LeaderboardPodium({ top3, theme }: LeaderboardPodiumProp
           <PodiumCard
             student={third}
             theme={theme}
+            onSelectStudent={onSelectStudent}
             pedestalHeight="h-36 sm:h-44"
             badgeBg="bg-amber-700/20 text-amber-800 dark:text-amber-400"
             badgeText="text-amber-800 dark:text-amber-400"
@@ -100,6 +104,7 @@ function PodiumCard({
   pedestalBorder,
   orderClass,
   isWinner = false,
+  onSelectStudent,
 }: {
   student: PodiumStudent;
   theme: InstituteTheme;
@@ -111,9 +116,13 @@ function PodiumCard({
   pedestalBorder: string;
   orderClass: string;
   isWinner?: boolean;
+  onSelectStudent?: (student: PodiumStudent) => void;
 }) {
   return (
-    <div className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass}`}>
+    <div
+      onClick={() => onSelectStudent?.(student)}
+      className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass} ${onSelectStudent ? "cursor-pointer" : ""}`}
+    >
       {/* Avatar + Rank Badge */}
       <div className="relative mb-2.5 flex flex-col items-center">
         {isWinner && (

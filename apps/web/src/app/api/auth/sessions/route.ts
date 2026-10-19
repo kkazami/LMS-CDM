@@ -1,8 +1,12 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 
 export async function DELETE(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "DELETE auth/sessions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session?.user?.id) {

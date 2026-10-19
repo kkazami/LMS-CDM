@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
-import ConvertFlashcardsModal from "@/components/courses/ConvertFlashcardsModal";
 import type { InstituteTheme } from "@/lib/theme";
+
+const ConvertFlashcardsModal = dynamic(
+  () => import("@/components/courses/ConvertFlashcardsModal"),
+  { ssr: false }
+);
 
 interface Attachment {
   id: string;
@@ -43,6 +48,13 @@ interface SyllabusItem {
     title: string;
     code: string;
   };
+  form?: {
+    id: string;
+    status: string;
+    formType: string;
+    timeLimitMins: number | null;
+    maxAttempts: number;
+  } | null;
 }
 
 interface AssignmentDetailClientProps {
@@ -54,6 +66,9 @@ interface AssignmentDetailClientProps {
   courseId: string;
   enrolledCount?: number;
   theme: InstituteTheme;
+  hasSubmittedForm?: boolean;
+  canRetakeForm?: boolean;
+  formScore?: { rawScore: number; totalPoints: number } | null;
 }
 
 function formatDueDate(dueDate: Date | null): string {
@@ -155,6 +170,9 @@ export default function AssignmentDetailClient({
   courseId,
   enrolledCount,
   theme,
+  hasSubmittedForm = false,
+  canRetakeForm = false,
+  formScore = null,
 }: AssignmentDetailClientProps) {
   const isPastDeadline = item.dueDate ? new Date() > item.dueDate : false;
   const typeMeta = TYPE_META[item.type] ?? TYPE_META.MATERIAL;
@@ -251,8 +269,35 @@ export default function AssignmentDetailClient({
               </div>
             )}
 
+            {/* Form Assessment links for Instructor */}
+            {isInstructor && item.form && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link
+                  href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/builder`}
+                  className="flex items-center justify-between rounded-2xl bg-primary/10 border border-primary/20 p-5 hover:bg-primary/15 transition-all group"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Form Builder</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Edit questions & settings</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                <Link
+                  href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/responses`}
+                  className="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-5 hover:bg-emerald-500/15 transition-all group"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Responses & Analytics</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">View scores & student answers</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            )}
+
             {/* Instructor: view submissions link */}
-            {isInstructor && (
+            {isInstructor && !item.form && (
               <Link
                 href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}/submissions`}
                 className="flex items-center justify-between rounded-2xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 p-5 hover:bg-orange-500/20 transition-all group"
@@ -266,18 +311,67 @@ export default function AssignmentDetailClient({
             )}
           </div>
 
-          {/* Right: Your Work panel (students only) */}
-          {isStudent && submission && item.type !== "MATERIAL" && (
-            <div className="min-w-0">
-              <YourWorkPanel
-                submission={submission}
-                isPastDeadline={isPastDeadline}
-                maxPoints={item.maxPoints}
-                instituteCode={instituteCode}
-                courseId={courseId}
-                itemId={item.id}
-                theme={theme}
-              />
+          {/* Right: Your Work panel / Form Start Panel (students only) */}
+          {isStudent && item.type !== "MATERIAL" && (
+            <div className="min-w-0 space-y-4">
+              {item.form ? (
+                <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Assessment Form
+                    </span>
+                    {formScore ? (
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                        Score: {formScore.rawScore} / {formScore.totalPoints}
+                      </span>
+                    ) : submission?.grade !== null && submission?.grade !== undefined ? (
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                        Score: {item.maxPoints ? `${Math.round((submission.grade / 100) * item.maxPoints)} / ${item.maxPoints}` : submission.grade}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Answer the interactive assessment online. Autosaves as you type.
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/respond${
+                      canRetakeForm && (submission?.status === "SUBMITTED" || hasSubmittedForm)
+                        ? "?retake=true"
+                        : ""
+                    }`}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  >
+                    <span>
+                      {submission?.status === "SUBMITTED" || hasSubmittedForm
+                        ? canRetakeForm
+                          ? "View Submitted Form / Retake"
+                          : "View Submitted Form"
+                        : "Start Assessment Form"}
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : (
+                submission && (
+                  <YourWorkPanel
+                    submission={submission}
+                    isPastDeadline={isPastDeadline}
+                    maxPoints={item.maxPoints}
+                    instituteCode={instituteCode}
+                    courseId={courseId}
+                    itemId={item.id}
+                    theme={theme}
+                  />
+                )
+              )}
             </div>
           )}
         </div>

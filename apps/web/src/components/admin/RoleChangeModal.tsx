@@ -100,7 +100,6 @@ export default function RoleChangeModal({
             >
               {user.role !== "STUDENT" && <option value="STUDENT">Student</option>}
               {user.role !== "INSTRUCTOR" && <option value="INSTRUCTOR">Instructor</option>}
-              {user.role !== "ADMIN" && <option value="ADMIN">Admin</option>}
             </select>
           </div>
 

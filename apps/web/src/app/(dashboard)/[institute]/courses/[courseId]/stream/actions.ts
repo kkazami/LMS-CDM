@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -16,6 +18,8 @@ export async function createAnnouncement(
   prevState: { message: string },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#createAnnouncement", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const session = await getSession();
   if (!session) return { message: "Unauthorized" };
 
@@ -86,6 +90,8 @@ export async function updateAnnouncement(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#updateAnnouncement", () => ({ institute: instituteCode, courseId, announcementId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -138,6 +144,8 @@ export async function deleteAnnouncement(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#deleteAnnouncement", () => ({ institute: instituteCode, courseId, announcementId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 

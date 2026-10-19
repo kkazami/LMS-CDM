@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default async function SubmissionsPage({ params }: Props) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/submissions/page.tsx", await params);
+
   const { institute, courseId, itemId } = await params;
 
   const session = await getSession();

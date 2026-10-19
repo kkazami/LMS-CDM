@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -11,6 +12,8 @@ export default async function ManageLeaderboardPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/manage-leaderboard/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -27,7 +30,7 @@ export default async function ManageLeaderboardPage({
 
   // 1. Fetch courses taught by the instructor or all courses if admin
   const taughtCourses = await db.course.findMany({
-    where: role === "ADMIN" ? {} : { instructorId: session.user.id },
+    where: role === "ADMIN" ? { instituteId: session.user.instituteId } : { instructorId: session.user.id },
     select: {
       id: true,
       title: true,
@@ -38,7 +41,7 @@ export default async function ManageLeaderboardPage({
 
   // 2. Fetch existing grade incentive rules
   const rules = await db.gradeIncentiveRule.findMany({
-    where: role === "ADMIN" ? {} : { createdBy: session.user.id },
+    where: role === "ADMIN" ? { course: { instituteId: session.user.instituteId } } : { createdBy: session.user.id },
     include: {
       course: { select: { id: true, title: true, code: true } },
     },
@@ -75,12 +78,44 @@ export default async function ManageLeaderboardPage({
   const recentIncentiveTransactions = await db.expTransaction.findMany({
     where: {
       source: "grade_incentive",
+      user: { instituteId: session.user.instituteId },
     },
     include: {
       user: { select: { name: true, email: true, studentNumber: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 20,
+  });
+
+  // 5. Fetch all classwork items (assignments, quizzes, exams) across instructor courses
+  const classworkActivities = await db.syllabusItem.findMany({
+    where: {
+      courseId: { in: courseIds },
+      type: { not: "MATERIAL" },
+    },
+    include: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+          code: true,
+        },
+      },
+      leaderboardRewards: {
+        orderBy: { placement: "asc" },
+      },
+      submissions: {
+        where: {
+          grade: { not: null },
+          status: { in: ["GRADED", "RETURNED"] },
+        },
+        select: { id: true },
+      },
+    },
+    orderBy: [
+      { course: { code: "asc" } },
+      { createdAt: "desc" },
+    ],
   });
 
   const serializedRules = rules.map((r) => ({
@@ -92,7 +127,26 @@ export default async function ManageLeaderboardPage({
     gradeMin: r.gradeMin,
     bonusExp: r.bonusExp,
     isActive: r.isActive,
+    rewardDescription: r.rewardDescription,
     createdAt: r.createdAt.toISOString(),
+  }));
+
+  const serializedActivities = classworkActivities.map((a) => ({
+    id: a.id,
+    courseId: a.courseId,
+    courseCode: a.course.code,
+    courseTitle: a.course.title,
+    title: a.title,
+    type: a.type,
+    maxPoints: a.maxPoints,
+    leaderboardEnabled: a.leaderboardEnabled,
+    participantCount: a.submissions.length,
+    rewards: a.leaderboardRewards.map((r) => ({
+      id: r.id,
+      placement: r.placement,
+      rewardLabel: r.rewardLabel,
+      bonusExp: r.bonusExp,
+    })),
   }));
 
   const serializedStudents = enrolledStudents.map((e) => ({
@@ -118,6 +172,7 @@ export default async function ManageLeaderboardPage({
       theme={theme}
       instituteCode={institute}
       courses={taughtCourses}
+      initialActivities={serializedActivities}
       initialRules={serializedRules}
       students={serializedStudents}
       logs={serializedLogs}

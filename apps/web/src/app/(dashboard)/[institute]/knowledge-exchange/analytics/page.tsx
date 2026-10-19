@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import Link from "next/link";
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import { KxAnalyticsDashboard } from "@/features/knowledge-exchange/components/KxAnalyticsDashboard";
@@ -9,6 +10,8 @@ interface PageProps {
 }
 
 export default async function KnowledgeExchangeAnalyticsPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/analytics/page.tsx", await params);
+
   const { institute } = await params;
 
   return (

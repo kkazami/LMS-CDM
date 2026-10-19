@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/tutor
  *
@@ -28,6 +29,9 @@ interface TutorRequestBody {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/tutor/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Authenticate Session
     const session = await getSession();

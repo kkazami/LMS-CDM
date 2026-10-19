@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 // POST /api/upload — File upload endpoint
 
 import { NextRequest, NextResponse } from "next/server";
@@ -39,6 +40,9 @@ function sanitizeFileName(name: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "POST upload/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

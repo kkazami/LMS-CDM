@@ -1,0 +1,15 @@
+{
+  "fixture": ".orchestra/harness/fixtures/database",
+  "baseline": ["202610040001_baseline"],
+  "seedSQL": "INSERT INTO \"HarnessRehearsalRecord\"(id,value) VALUES(1,'retained record'),(2,'second record')",
+  "preservationQueries": ["SELECT id,value FROM \"HarnessRehearsalRecord\" ORDER BY id"],
+  "compatibilityQueries": ["SELECT COUNT(*)=2 AS preserved, COUNT(label)=0 AS optional_null FROM \"HarnessRehearsalRecord\""],
+  "failureMigration": {
+    "name": "202610040003_recovery_probe",
+    "failedSQL": "DO $$ BEGIN ALTER TABLE \"HarnessRehearsalRecord\" ADD COLUMN \"recoveryLabel\" TEXT; PERFORM missing_column FROM \"HarnessRehearsalRecord\"; END $$;",
+    "forwardSQL": "ALTER TABLE \"HarnessRehearsalRecord\" ADD COLUMN \"recoveryLabel\" TEXT;",
+    "verificationQueries": ["SELECT COUNT(*)=2 AS retained, COUNT(\"recoveryLabel\")=0 AS recovered FROM \"HarnessRehearsalRecord\""]
+  },
+  "migrationReview": "Fixture-only additive nullable column; no product schema, production database, destructive SQL, default rewrite or required backfill. Old SELECT/INSERT statements remain valid. SQL and Prisma fixture schema are checked in for review.",
+  "recoveryAssessment": "Rehearse a failing transaction-wrapped Prisma migration on a third disposable database, verify schema and seeded rows unchanged, resolve that failed fixture migration as rolled back, then apply corrected additive SQL and assert retained data. This does not establish rollback of arbitrary deployed migrations; production forward-recovery still needs task-specific human review."
+}

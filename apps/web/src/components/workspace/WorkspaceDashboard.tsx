@@ -3,11 +3,8 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Archive,
-  CalendarDays,
   Check,
   CheckCheck,
-  ChevronLeft,
-  ChevronRight,
   CircleCheckBig,
   Code2,
   Highlighter,
@@ -22,19 +19,16 @@ import {
   X,
   Bold,
 } from "lucide-react";
-import type { CalendarEvent, Note, Task } from "@/lib/lms-types";
-import { buildMonthMatrix, formatDateKey } from "@/lib/calendar";
+import type { Note, Task } from "@/lib/lms-types";
 import { serializeNote, serializeTask } from "@/lib/workspace";
 import type { InstituteTheme } from "@/lib/theme";
 
 type ViewMode = "grid" | "list";
-type ModuleTab = "notes" | "calendar";
 
 type WorkspaceDashboardProps = {
   instituteCode: string;
   notes: Note[];
   tasks: Task[];
-  events: CalendarEvent[];
   courseOptions: Array<{ id: string; title: string; code: string }>;
   theme?: InstituteTheme;
 };
@@ -100,46 +94,6 @@ const NOTE_COVER_OPTIONS = [
   },
 ];
 const NOTE_CATEGORIES = ["Class Notes", "Homework", "Reading", "Exam Prep", "Ideas", "Other"];
-const CALENDAR_MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-// Philippine Holidays (regular & special non-working)
-// Month-Day format → holiday name
-const PH_HOLIDAYS: Record<string, string> = {
-  "01-01": "New Year's Day",
-  "02-25": "EDSA Revolution",
-  "04-09": "Araw ng Kagitingan",
-  "05-01": "Labor Day",
-  "06-12": "Independence Day",
-  "08-21": "Ninoy Aquino Day",
-  "08-26": "National Heroes Day",
-  "11-01": "All Saints' Day",
-  "11-02": "All Souls' Day",
-  "11-30": "Bonifacio Day",
-  "12-08": "Immaculate Conception",
-  "12-24": "Christmas Eve",
-  "12-25": "Christmas Day",
-  "12-30": "Rizal Day",
-  "12-31": "New Year's Eve",
-};
-
-function getPhilippineHoliday(isoDate: string): string | null {
-  const monthDay = isoDate.slice(5); // "MM-DD"
-  return PH_HOLIDAYS[monthDay] ?? null;
-}
-
 function stripHtml(input: string) {
   return input.replace(/<[^>]*>/g, "").trim();
 }
@@ -194,15 +148,11 @@ function toIsoDateTime(dateValue: string) {
   return new Date(`${dateValue}T00:00:00.000Z`).toISOString();
 }
 
-export default function WorkspaceDashboard({ instituteCode, notes: initialNotes, tasks: initialTasks, events: initialEvents, courseOptions, theme }: WorkspaceDashboardProps) {
-  const [moduleTab, setModuleTab] = useState<ModuleTab>("notes");
+export default function WorkspaceDashboard({ instituteCode, notes: initialNotes, tasks: initialTasks, courseOptions, theme }: WorkspaceDashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [notes, setNotes] = useState(initialNotes);
   const [tasks, setTasks] = useState(initialTasks);
-  const [events, setEvents] = useState(initialEvents);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [noteDraft, setNoteDraft] = useState<NoteDraft>({ title: "", content: "", category: "General", color: "#ffffff" });
   const [taskDraft, setTaskDraft] = useState<TaskDraft>({ title: "", description: "", priority: "medium", dueDate: "", courseId: "" });
   const [expandedNoteTitle, setExpandedNoteTitle] = useState("");
@@ -212,49 +162,12 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
   const [showExpandedColorPicker, setShowExpandedColorPicker] = useState(false);
   const [customCategoryDraft, setCustomCategoryDraft] = useState("");
   const [showArchivedNotes, setShowArchivedNotes] = useState(false);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(() => formatDateKey(new Date()));
-  const [calendarDayNotes, setCalendarDayNotes] = useState<Record<string, string>>({});
   const [isSaving, startTransition] = useTransition();
   const noteDraftEditorRef = useRef<HTMLDivElement>(null);
   const expandedNoteEditorRef = useRef<HTMLDivElement>(null);
   const taskInputRef = useRef<HTMLInputElement>(null);
-  const calendarNotePanelRef = useRef<HTMLDivElement>(null);
 
   const activeNote = useMemo(() => notes.find((note) => note.id === activeNoteId) ?? null, [activeNoteId, notes]);
-  const activeEvent = useMemo(() => events.find((event) => event.id === activeEventId) ?? null, [activeEventId, events]);
-
-  const monthMatrix = useMemo(() => buildMonthMatrix(calendarMonth), [calendarMonth]);
-  const calendarMonthLabel = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(calendarMonth);
-  const currentWeekKeys = useMemo(() => {
-    const start = new Date();
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
-
-    const keys = new Set<string>();
-    for (let index = 0; index < 7; index += 1) {
-      const cursor = new Date(start);
-      cursor.setDate(start.getDate() + index);
-      keys.add(formatDateKey(cursor));
-    }
-
-    return keys;
-  }, []);
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 11 }, (_, index) => currentYear - 5 + index);
-  const eventsByDate = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
-
-    for (const event of events) {
-      const key = formatDateKey(new Date(event.eventDate));
-      const existing = map.get(key) ?? [];
-      existing.push(event);
-      map.set(key, existing);
-    }
-
-    return map;
-  }, [events]);
-
   useEffect(() => {
     if (activeNote) {
       const nextContent = activeNote.content ?? "";
@@ -266,21 +179,6 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
       }
     }
   }, [activeNote?.id]);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("workspace-calendar-day-notes");
-      if (stored) {
-        setCalendarDayNotes(JSON.parse(stored) as Record<string, string>);
-      }
-    } catch {
-      // fail silently and keep the in-memory draft state
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("workspace-calendar-day-notes", JSON.stringify(calendarDayNotes));
-  }, [calendarDayNotes]);
 
   function readNoteEditorContent() {
     return noteDraftEditorRef.current?.innerHTML ?? "";
@@ -296,15 +194,6 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
       strikeThrough: document.queryCommandState("strikeThrough"),
       unorderedList: document.queryCommandState("insertUnorderedList"),
     });
-  }
-
-  function handleCalendarDaySelect(day: { isoDate: string; date: Date }) {
-    setSelectedCalendarDate(day.isoDate);
-    setActiveEventId(null);
-    requestAnimationFrame(() => {
-      calendarNotePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    setCalendarMonth(day.date);
   }
 
   function updateLocalNote(nextNote: Note) {
@@ -617,38 +506,15 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-[#8B92A5]">Student Workspace</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Your personal study workspace.</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-[#8B92A5]">
-              Organize your notes, track assignments, and manage your schedule all in one place.
+              Organize your study notes. Find your schedule on the dashboard.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-1">
-            {[
-              { id: "notes", label: "Notes", icon: Highlighter },
-              { id: "calendar", label: "Calendar", icon: CalendarDays },
-            ].map((item) => {
-              const Icon = item.icon;
-              const active = moduleTab === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setModuleTab(item.id as ModuleTab)}
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer",
-                    active ? "bg-white dark:bg-[#1E2132] text-slate-900 dark:text-[#F0F2F8] shadow-xs" : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]",
-                  ].join(" ")}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+          <a href={`/${instituteCode}/students#calendar`} className="text-sm font-medium underline underline-offset-4">Open dashboard calendar</a>
         </div>
       </section>
 
-      {moduleTab === "notes" ? (
-        <section className="space-y-5">
+      <section className="space-y-5">
           <div className="sticky top-4 z-10 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-lg backdrop-blur transition-all focus-within:-translate-y-1 focus-within:shadow-xl">
             {/* Top Toolbar: Title and Save */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 px-5 py-4">
@@ -808,183 +674,6 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
             </div>
           ) : null}
         </section>
-      ) : null}
-
-
-
-      {moduleTab === "calendar" ? (
-        <section className="space-y-5">
-          <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Monthly Calendar</h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-[#8B92A5]">Deadlines update from backend events and open into a detail drawer.</p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => setCalendarMonth(new Date())} className="rounded-full border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] transition hover:bg-white dark:hover:bg-[#1E2132] focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer">Today</button>
-                <select
-                  value={calendarMonth.getMonth()}
-                  onChange={(event) => setCalendarMonth((current) => new Date(current.getFullYear(), Number(event.target.value), 1))}
-                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 cursor-pointer"
-                  aria-label="Select month"
-                >
-                  {CALENDAR_MONTHS.map((month, index) => (
-                    <option key={month} value={index}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={calendarMonth.getFullYear()}
-                  onChange={(event) => setCalendarMonth((current) => new Date(Number(event.target.value), current.getMonth(), 1))}
-                  className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] outline-none transition focus:ring-2 focus:ring-slate-400/20 dark:focus:ring-white/20 cursor-pointer"
-                  aria-label="Select year"
-                >
-                  {yearOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <span className="rounded-full border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] px-4 py-2 text-sm font-medium text-slate-500 dark:text-[#8B92A5]">{calendarMonthLabel}</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">
-              { ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label) => <div key={label} className="py-2">{label}</div>) }
-            </div>
-
-            <div className="mt-2 grid gap-2">
-              {monthMatrix.map((week, weekIndex) => (
-                <div key={weekIndex} className="grid grid-cols-7 gap-2">
-                  {week.map((day) => {
-                    const dayEvents = eventsByDate.get(day.isoDate) ?? [];
-                    const isSelected = selectedCalendarDate === day.isoDate;
-                    const isCurrentWeek = currentWeekKeys.has(day.isoDate);
-                    const holiday = getPhilippineHoliday(day.isoDate);
-
-                    return (
-                      <button
-                        key={day.isoDate}
-                        onClick={() => {
-                          if (day.isCurrentMonth) {
-                            handleCalendarDaySelect(day);
-                          }
-                        }}
-                        disabled={!day.isCurrentMonth}
-                        className={[
-                          "min-h-28 rounded-3xl border p-3 text-left transition",
-                          day.isCurrentMonth ? "hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer border-slate-200/80 dark:border-slate-700/60" : "border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-transparent cursor-default opacity-40",
-                          day.isCurrentMonth && day.isToday ? "bg-amber-50/80 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" : day.isCurrentMonth && isCurrentWeek ? "bg-slate-50/80 dark:bg-slate-800/50" : day.isCurrentMonth ? "bg-white dark:bg-slate-800/20" : "",
-                          isSelected ? "shadow-inner" : "",
-                        ].join(" ")}
-                        style={isSelected ? { borderColor: theme?.colors.primary ?? "#0F172A", boxShadow: `0 0 0 2px ${theme?.colors.primary ?? "#0F172A"}` } : undefined}
-                      >
-                        {day.isCurrentMonth ? (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className={[
-                                "text-sm font-medium font-mono tabular-nums",
-                                day.isToday ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-900 dark:text-[#F0F2F8]",
-                              ].join(" ")}>{day.day}</span>
-                              {dayEvents.length ? (
-                                <span
-                                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white font-mono tabular-nums"
-                                  style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
-                                >
-                                  {dayEvents.length}
-                                </span>
-                              ) : null}
-                            </div>
-
-                            <div className="mt-2 space-y-1 overflow-hidden">
-                              {holiday ? (
-                                <p className="truncate text-[10px] font-semibold text-rose-500 dark:text-rose-400">
-                                  🇵🇭 {holiday}
-                                </p>
-                              ) : null}
-                              {dayEvents.slice(0, 2).map((event) => (
-                                <p key={event.id} className="truncate text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
-                                  📌 {event.title}
-                                </p>
-                              ))}
-                              {dayEvents.length > 2 ? (
-                                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
-                                  +{dayEvents.length - 2} more
-                                </p>
-                              ) : null}
-                            </div>
-                          </>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-
-            {selectedCalendarDate && (eventsByDate.get(selectedCalendarDate) ?? []).length > 0 ? (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <button className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" onClick={() => setSelectedCalendarDate(null)} aria-label="Close events modal" />
-                <div className="relative z-10 w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-6 shadow-2xl">
-                  <div className="flex items-center justify-between gap-3 mb-5">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Due on this day</p>
-                      <h4 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-                        {new Intl.DateTimeFormat(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" }).format(new Date(`${selectedCalendarDate}T00:00:00`))}
-                      </h4>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-                        style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
-                      >
-                        {(eventsByDate.get(selectedCalendarDate) ?? []).length} item{(eventsByDate.get(selectedCalendarDate) ?? []).length !== 1 ? "s" : ""}
-                      </span>
-                      <button onClick={() => setSelectedCalendarDate(null)} className="rounded-full border border-slate-200/80 dark:border-white/10 p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Close">
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(eventsByDate.get(selectedCalendarDate) ?? []).map((event) => (
-                      <button
-                        key={event.id}
-                        onClick={() => { setSelectedCalendarDate(null); setActiveEventId(event.id); }}
-                        className="flex w-full items-center gap-4 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#181B26] p-4 text-left transition hover:bg-white dark:hover:bg-[#1E2132] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer"
-                      >
-                        <div
-                          className="h-10 w-1 shrink-0 rounded-full"
-                          style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{event.title}</h5>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-[#8B92A5]">
-                            {event.courseTitle ? <span>{event.courseTitle}</span> : null}
-                            {event.courseTitle && event.professorName ? <span>•</span> : null}
-                            {event.professorName ? <span>{event.professorName}</span> : null}
-                          </div>
-                        </div>
-                        <span className={[
-                          "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          event.eventType === "exam"
-                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                            : event.eventType === "submission"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
-                        ].join(" ")}>{event.eventType}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-          </div>
-        </section>
-      ) : null}
 
       {activeNote ? (
         <div className="fixed inset-0 z-50">
@@ -1104,71 +793,6 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
         </div>
       ) : null}
 
-      {activeEvent ? (
-        <div className="fixed inset-0 z-50">
-          <button className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" onClick={() => setActiveEventId(null)} aria-label="Close event drawer" />
-          <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] p-6 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Assignment Details</p>
-                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">{activeEvent.title}</h3>
-              </div>
-              <button onClick={() => setActiveEventId(null)} className="rounded-full border border-slate-200/80 dark:border-white/10 p-2 text-slate-500 dark:text-[#8B92A5] transition hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer" aria-label="Close event panel"><X className="h-4 w-4" /></button>
-            </div>
-
-            <div className="mt-6 space-y-4 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5">
-              {activeEvent.courseTitle ? (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Course</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.courseTitle}</p>
-                </div>
-              ) : null}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Title</p>
-                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.title}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Description</p>
-                <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-[#8B92A5]">{activeEvent.description || "No description provided."}</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Professor</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{activeEvent.professorName || "TBD"}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Max Points</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] font-mono tabular-nums">{activeEvent.maxPoints ?? "-"}</p>
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Type</p>
-                  <span className={[
-                    "mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-                    activeEvent.eventType === "exam"
-                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                      : activeEvent.eventType === "submission"
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
-                  ].join(" ")}>{activeEvent.eventType}</span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-[#8B92A5]">Due</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] font-mono tabular-nums">{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(activeEvent.eventDate))}</p>
-                </div>
-              </div>
-              <a
-                href={activeEvent.deepLink}
-                className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-medium text-white transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-slate-400/60 cursor-pointer shadow-xs min-h-11"
-                style={{ backgroundColor: theme?.colors.primary ?? "#0F172A" }}
-              >
-                Go to Assignment
-              </a>
-            </div>
-          </aside>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { getSession } from "@/lib/auth-session";
 import KxFeedPage from "@/features/knowledge-exchange/components/KxFeedPage";
 
@@ -15,6 +16,8 @@ export default async function KnowledgeExchangeHomePage({
   params,
   searchParams,
 }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/page.tsx", await params);
+
   const { institute } = await params;
   const { tag, courseId } = await searchParams;
   const session = await getSession();

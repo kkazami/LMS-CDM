@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { db } from "@/lib/db";
@@ -21,6 +22,9 @@ const TIMER_MILESTONES = [
 ];
 
 export async function GET(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "GET gamification/heartbeat/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const corsHeaders = getCorsHeaders(req);
   const session = await getSessionFromRequest(req);
   if (!session) {
@@ -68,6 +72,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST gamification/heartbeat/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const corsHeaders = getCorsHeaders(req);
   const session = await getSessionFromRequest(req);
   if (!session) {

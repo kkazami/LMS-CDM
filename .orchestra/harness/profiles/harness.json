@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "harness",
+  "agents": [
+    "requirement",
+    "recon",
+    "architecture-red-team",
+    "architecture-adjudicator",
+    "planner",
+    "executor",
+    "test",
+    "runner",
+    "qa",
+    "security",
+    "code-review",
+    "release"
+  ],
+  "skillsOptional": [],
+  "safetyFloor": "Compiled in scripts/harness/gates.ts; no profile/quality waiver",
+  "requiresBrowserVerification": "Inferred from actual planned paths",
+  "validation": [
+    "harness-typecheck",
+    "harness-tests"
+  ],
+  "database": "All nine database domains when applicable",
+  "security": "Independent reviewer always; direct boundary tests for sensitive product changes",
+  "approval": "Derived from actual paths and operations, never profile preference"
+}

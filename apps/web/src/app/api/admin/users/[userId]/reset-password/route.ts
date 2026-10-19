@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Password Reset API
  *
@@ -33,6 +34,9 @@ function generateSecurePassword(): string {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "POST admin/users/[userId]/reset-password/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const { userId } = await context.params;

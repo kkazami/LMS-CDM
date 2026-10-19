@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../workspace/_shared";
@@ -10,6 +11,9 @@ import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 // POST: Log a new study session (Pomodoro focus time)
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST study-sessions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const { session, response } = await requireWorkspaceSession();
     if (response) return response;
@@ -64,6 +68,9 @@ export async function POST(request: Request) {
 
 // GET: Fetch study sessions for the user (can optionally filter by course)
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET study-sessions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const { session, response } = await requireWorkspaceSession();
     if (response) return response;

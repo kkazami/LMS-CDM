@@ -81,11 +81,7 @@ export function isEligibleForKnowledgeExchange(
  * @returns Eligibility result and session, or null if unauthenticated
  */
 export async function checkKxEligibility(request?: Request) {
-  let session = request ? await getSessionFromRequest(request) : await getSession();
-  if (!session && !request) {
-    // Fallback try request if not passed
-    session = await getSession();
-  }
+  const session = request ? await getSessionFromRequest(request) : await getSession();
 
   if (!session) {
     return null;
@@ -120,16 +116,7 @@ export async function checkKxEligibility(request?: Request) {
     }
   }
 
-  let instituteCode = "";
-  if (session.user.instituteId) {
-    const institute = await db.institute.findUnique({
-      where: { id: session.user.instituteId },
-      select: { code: true },
-    });
-    if (institute?.code) {
-      instituteCode = institute.code.toLowerCase();
-    }
-  }
+  const instituteCode = session.user.institute.code.toLowerCase();
 
   const eligible = isEligibleKxInstituteCode(instituteCode);
 

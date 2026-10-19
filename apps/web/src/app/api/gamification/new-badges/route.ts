@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -6,23 +7,21 @@ import { getBadgeById } from "@/lib/gamification/badge-catalog";
 export const dynamic = "force-dynamic";
 
 // GET — Returns any unviewed new badges for the current user
-export async function GET() {
+export async function GET(ceilingRequest: Request) {
+  const ceilingDenial = await denyLegacyApi(ceilingRequest, "GET gamification/new-badges/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json([], { status: 401 });
   }
 
-  const profile = await db.gamificationProfile.findUnique({
-    where: { studentId: session.user.id },
-    select: {
-      badges: {
-        where: { isNew: true },
-        select: { id: true, badgeRuleId: true, earnedAt: true },
-      },
-    },
+  const newBadges = await db.studentBadge.findMany({
+    where: { profile: { studentId: session.user.id }, isNew: true },
+    select: { id: true, badgeRuleId: true, earnedAt: true },
   });
 
-  const badges = (profile?.badges ?? []).map((b) => ({
+  const badges = newBadges.map((b) => ({
     id: b.id,
     badgeRuleId: b.badgeRuleId,
     earnedAt: b.earnedAt.toISOString(),
@@ -34,6 +33,9 @@ export async function GET() {
 
 // POST — Mark badges as viewed (clear the isNew flag)
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST gamification/new-badges/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ ok: false }, { status: 401 });
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
 
     if (Array.isArray(badgeIds) && badgeIds.length > 0) {
       await db.studentBadge.updateMany({
-        where: { id: { in: badgeIds } },
+        where: { id: { in: badgeIds }, profile: { studentId: session.user.id } },
         data: { isNew: false, notifiedAt: new Date() },
       });
     }

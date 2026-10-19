@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../../workspace/_shared";
@@ -23,6 +24,9 @@ function requireStudentRole(role: string): NextResponse | null {
  *   3. "correct" cards last (already mastered)
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET flashcards/study/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 

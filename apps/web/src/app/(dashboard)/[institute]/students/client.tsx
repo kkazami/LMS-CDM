@@ -23,6 +23,9 @@ import {
   Code2,
   Trophy,
 } from "lucide-react";
+import StudentCalendar from "@/components/calendar/StudentCalendar";
+import type { CalendarEvent } from "@/lib/lms-types";
+import type { ClassSchedule } from "@/lib/student-calendar";
 import type { InstituteTheme } from "@/lib/theme";
 import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
@@ -63,6 +66,9 @@ interface StudentDashboardClientProps {
   instituteCode: string;
   theme: InstituteTheme;
   initialCourses: EnrolledCourse[];
+  calendar: { events: CalendarEvent[]; schedules: ClassSchedule[] };
+  userId: string;
+  today: string;
   dueSoonItems: DueSoonItem[];
   serverNow: string;
   exp?: number;
@@ -124,6 +130,9 @@ export default function StudentDashboardClient({
   instituteCode,
   theme,
   initialCourses,
+  calendar,
+  userId,
+  today,
   dueSoonItems,
   serverNow,
   exp = 0,
@@ -366,6 +375,10 @@ export default function StudentDashboardClient({
         </StaggerGroup>
 
         {/* ─── 3. Main Grid: Enrolled Courses & Due Soon ─── */}
+        <div id="calendar" className="min-w-0 scroll-mt-20">
+          <StudentCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left 2 Columns: Enrolled Classes */}
           <div className="lg:col-span-2 space-y-4">

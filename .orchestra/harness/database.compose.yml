@@ -1,0 +1,16 @@
+services:
+  rehearsal:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: harness
+      POSTGRES_PASSWORD: disposable-harness-only
+      POSTGRES_DB: harness_admin
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U harness -d harness_admin"]
+      interval: 2s
+      timeout: 2s
+      retries: 20

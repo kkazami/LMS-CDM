@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="1230" viewBox="0 0 1320 1230">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#52616b"/></marker></defs>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif" fill="#172027">
+<text x="660.0" y="33" text-anchor="middle" font-size="25" font-weight="bold">STUDENT VIEW - ACCOUNT ACCESS</text>
+<text x="660.0" y="59" text-anchor="middle" font-size="16" fill="#52616b">Login, registration, validation, and student session creation.</text>
+<polyline points="360,130 360,170" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="360,230 360,270" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="360,330 360,370" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="360,500 360,550" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="500,435 1000,435 1000,500" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="360,630 360,690" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="360,850 360,900" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="220,932.5 70,932.5 70,590 220,590" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="530,770 665,770 665,900" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="665,965 665,1010" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="665,1075 665,1130" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="1000,590 1000,650" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="1155,725 1227.5,725 1227.5,865" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="1227.5,965 1285,965 1285,545 1140,545" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="1000,800 1000,1030" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="860,1072.5 810,1072.5 810,590 500,590" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<ellipse cx="360.0" cy="105.0" rx="80.0" ry="25.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="111.0" text-anchor="middle" font-size="17">START</text>
+<rect x="220" y="170" width="280" height="60" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="206.0" text-anchor="middle" font-size="18">Open Web Portal</text>
+<polygon points="238,270 500,270 482,330 220,330" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="306.0" text-anchor="middle" font-size="18">Select Institute Portal</text>
+<polygon points="360.0,370 500,435.0 360.0,500 220,435.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="429.0" text-anchor="middle" font-size="18">Already Have</text><text x="360.0" y="453.0" text-anchor="middle" font-size="18">an Account?</text>
+<polygon points="238,550 500,550 482,630 220,630" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="584.0" text-anchor="middle" font-size="18">Enter Email</text><text x="360.0" y="608.0" text-anchor="middle" font-size="18">and Password</text>
+<polygon points="360.0,690 530,770.0 360.0,850 190,770.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="752.0" text-anchor="middle" font-size="17">Credentials, Active Account,</text><text x="360.0" y="776.0" text-anchor="middle" font-size="17">Student Role, and Institute</text><text x="360.0" y="800.0" text-anchor="middle" font-size="17">Access Valid?</text>
+<rect x="220" y="900" width="280" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="360.0" y="938.5" text-anchor="middle" font-size="18">Show Access Error</text>
+<rect x="550" y="900" width="230" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="665.0" y="926.5" text-anchor="middle" font-size="18">Create Student</text><text x="665.0" y="950.5" text-anchor="middle" font-size="18">Session</text>
+<rect x="550" y="1010" width="230" height="65" fill="white" stroke="#263238" stroke-width="1.8"/><text x="665.0" y="1036.5" text-anchor="middle" font-size="18">Open Student</text><text x="665.0" y="1060.5" text-anchor="middle" font-size="18">Dashboard</text>
+<ellipse cx="665.0" cy="1155.0" rx="115.0" ry="25.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="665.0" y="1161.0" text-anchor="middle" font-size="18">ACCESS COMPLETE</text>
+<polygon points="878,500 1140,500 1122,590 860,590" fill="white" stroke="#263238" stroke-width="1.8"/><text x="1000.0" y="539.0" text-anchor="middle" font-size="18">Complete Student</text><text x="1000.0" y="563.0" text-anchor="middle" font-size="18">Registration Form</text>
+<polygon points="1000.0,650 1155,725.0 1000.0,800 845,725.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="1000.0" y="719.0" text-anchor="middle" font-size="18">Registration Details</text><text x="1000.0" y="743.0" text-anchor="middle" font-size="18">Valid and Email Available?</text>
+<rect x="1155" y="865" width="145" height="100" fill="white" stroke="#263238" stroke-width="1.8"/><text x="1227.5" y="909.0" text-anchor="middle" font-size="17">Show Registration</text><text x="1227.5" y="933.0" text-anchor="middle" font-size="17">Validation Error</text>
+<rect x="860" y="1030" width="280" height="85" fill="white" stroke="#263238" stroke-width="1.8"/><text x="1000.0" y="1066.5" text-anchor="middle" font-size="18">Create Student Account</text><text x="1000.0" y="1090.5" text-anchor="middle" font-size="18">and Show Confirmation</text>
+<rect x="370.0" y="510" width="36" height="21" fill="white"/><text x="388" y="526" text-anchor="middle" font-size="16">Yes</text>
+<rect x="546.0" y="402" width="28" height="21" fill="white"/><text x="560" y="418" text-anchor="middle" font-size="16">No</text>
+<rect x="372.0" y="861" width="28" height="21" fill="white"/><text x="386" y="877" text-anchor="middle" font-size="16">No</text>
+<rect x="92.0" y="558" width="52" height="21" fill="white"/><text x="118" y="574" text-anchor="middle" font-size="16">Retry</text>
+<rect x="562.0" y="736" width="36" height="21" fill="white"/><text x="580" y="752" text-anchor="middle" font-size="16">Yes</text>
+<rect x="1178.0" y="691" width="28" height="21" fill="white"/><text x="1192" y="707" text-anchor="middle" font-size="16">No</text>
+<rect x="1175.0" y="511" width="52" height="21" fill="white"/><text x="1201" y="527" text-anchor="middle" font-size="16">Retry</text>
+<rect x="1009.0" y="898" width="36" height="21" fill="white"/><text x="1027" y="914" text-anchor="middle" font-size="16">Yes</text>
+<rect x="612.0" y="557" width="132" height="21" fill="white"/><text x="678" y="573" text-anchor="middle" font-size="16">Return to Login</text>
+</g></svg>

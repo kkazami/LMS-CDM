@@ -1,10 +1,14 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(ceilingRequest: Request) {
+  const ceilingDenial = await denyLegacyApi(ceilingRequest, "GET codelab/courses/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

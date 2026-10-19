@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Instructor Server Rack Activity Template Editor
  * Route: /[institute]/courses/[courseId]/activities/server-rack/new
@@ -22,6 +23,8 @@ export default async function NewServerRackActivityPage({
 }: {
   params: Promise<{ institute: string; courseId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/server-rack/new/page.tsx", await params);
+
   const { institute, courseId } = await params;
   const session = await getSession();
   const theme = getInstituteTheme(institute);

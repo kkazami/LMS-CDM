@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Network,
   BookOpen,
   ClipboardCheck,
   Megaphone,
@@ -86,6 +87,7 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
+  ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },
@@ -95,7 +97,7 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Dashboard", href: `/${code}/admin`, icon: LayoutDashboard },
   { label: "Course Management", href: `/${code}/admin/courses`, icon: Library },
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
-  { label: "Permissions", href: `/${code}/accounts/permissions`, icon: ShieldCheck },
+  ...(code === "ics" ? [{ label: "Faculty & Program Heads", href: `/${code}/admin/faculty`, icon: Network }] : []),
   { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
   { label: "Database Management", href: `/${code}/admin/database`, icon: HardDrive },
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },

@@ -1,0 +1,17 @@
+flowchart TD
+    START([Start]) --> OPEN[Open Web Portal]
+    OPEN --> PORTAL[/Select Institute Portal/]
+    PORTAL --> ACCOUNT{Already Have an Account?}
+    ACCOUNT -->|Yes| LOGIN[/Enter Email and Password/]
+    ACCOUNT -->|No| REGISTER[/Complete Student Registration Form/]
+    REGISTER --> REGVALID{Registration Details Valid and Email Available?}
+    REGVALID -->|No| REGERROR[Show Registration Validation Error]
+    REGERROR -->|Retry| REGISTER
+    REGVALID -->|Yes| CREATE[Create Student Account and Show Confirmation]
+    CREATE -->|Return to Login| LOGIN
+    LOGIN --> VALID{Credentials, Active Account, Student Role, and Institute Access Valid?}
+    VALID -->|No| ERROR[Show Access Error]
+    ERROR -->|Retry| LOGIN
+    VALID -->|Yes| SESSION[Create Student Session]
+    SESSION --> DASH[Open Student Dashboard]
+    DASH --> END([Access Complete])

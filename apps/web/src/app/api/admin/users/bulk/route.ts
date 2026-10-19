@@ -1,9 +1,12 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Bulk User Creation API
  *
  * POST /api/admin/users/bulk — Create multiple users in a single transaction
  */
 
+import { randomBytes } from 'node:crypto';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
@@ -36,6 +39,9 @@ interface BulkResult {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST admin/users/bulk/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const body = await request.json();
@@ -143,12 +149,14 @@ export async function POST(request: Request) {
 
       seenEmails.add(email);
 
+      if (user.role && !['INSTRUCTOR','STUDENT'].includes(canonicalRole(user.role))) {
+        results.push({ email, success: false, error: 'Only students and instructors may be created.' }); continue;
+      }
       const normalizedRole = user.role ? normalizeRole(user.role) : 'STUDENT';
       const dbRole = normalizedRole === 'INSTRUCTOR' ? 'PROFESSOR' : normalizedRole;
       const defaultPerms = DEFAULT_ROLE_PERMISSIONS[normalizedRole];
       const rawPassword =
-        Math.random().toString(36).slice(2) +
-        Math.random().toString(36).slice(2);
+        randomBytes(18).toString('base64url');
       const hashedPassword = await hash(rawPassword, 10);
 
       validUsers.push({

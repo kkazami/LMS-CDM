@@ -1,0 +1,99 @@
+{
+  "startedAt": "2026-10-18T08:38:20.940Z",
+  "sharedDatabase": false,
+  "OSIsolation": false,
+  "checks": [
+    {
+      "name": "operator setup requires a real ICS Admin and preserves unrelated Calendar data",
+      "result": "PASS"
+    },
+    {
+      "name": "chart uses persisted memberships and ICS-only scope",
+      "result": "PASS"
+    },
+    {
+      "name": "real chart handler authenticates and rejects unknown/admin/student roles",
+      "result": "PASS"
+    },
+    {
+      "name": "head-only chart edit, stale version, origin and protected root",
+      "result": "PASS"
+    },
+    {
+      "name": "class list and Stream/Meet are read-only and program-scoped",
+      "result": "PASS"
+    },
+    {
+      "name": "audit failure rolls back chart and version atomically",
+      "result": "PASS"
+    },
+    {
+      "name": "current designation and account status are revalidated",
+      "result": "PASS"
+    },
+    {
+      "name": "database rejects application-minted program authority",
+      "result": "PASS"
+    },
+    {
+      "name": "existing Calendar data and timestamp semantics remain intact",
+      "result": "PASS"
+    },
+    {
+      "name": "restricted local writer qualifies only with actual guards and bindings",
+      "result": "PASS"
+    },
+    {
+      "name": "browser chart icon opens instructor classes and Stream with Meet link",
+      "result": "PASS"
+    },
+    {
+      "name": "browser ordinary faculty sees chart but cannot open oversight",
+      "result": "PASS"
+    },
+    {
+      "name": "browser retains main dashboard Calendar without replacement route",
+      "result": "PASS"
+    },
+    {
+      "name": "actual Super User login and dedicated institute shell",
+      "result": "FAIL",
+      "message": "Expected values to be strictly equal:\n\n401 !== 200\n"
+    }
+  ],
+  "schemaCommand": {
+    "command": "pnpm exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    "code": 0,
+    "signal": null,
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\n"
+  },
+  "target": {
+    "database": "harness_superuser_1792312708468",
+    "port": 54224,
+    "host": "127.0.0.1",
+    "provenance": ".orchestra\\product-development\\program-head-integration\\local_1792312702924_e7f6c9ba"
+  },
+  "server": {
+    "argv": [
+      "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\node_modules\\.pnpm\\next@16.2.0_@babel+core@7.2_830e0b59bc6b1bdfcaa297e2fa12b30a\\node_modules\\next\\dist\\bin\\next",
+      "start",
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      "54233"
+    ],
+    "pid": 31364,
+    "base": "http://127.0.0.1:54233",
+    "buildId": "qXpYU7Sy6B0Jj5S9kbChG"
+  },
+  "error": {
+    "name": "AssertionError",
+    "message": "Expected values to be strictly equal:\n\n401 !== 200\n"
+  },
+  "serverClose": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "clusterStopped": true,
+  "finishedAt": "2026-10-18T08:38:41.604Z"
+}

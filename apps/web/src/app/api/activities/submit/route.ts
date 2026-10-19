@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/activities/submit
  *
@@ -18,14 +19,15 @@ import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { activitySubmissionSchema } from "@/features/interactive-activities/shared/schemas";
 import { db } from "@/lib/db";
 import { processGamificationEvent } from "@/features/interactive-activities/gamification/engine";
+import { CodeLabCompletionError, getCodeLabCompletion, getCodeLabReward, saveCodeLabCompletion } from "@/lib/codelab-completion";
 import { getProblemById } from "@/features/interactive-activities/codelab/problems";
-import { grantExp } from "@/lib/gamification/grant-exp";
-import { EXP_VALUES } from "@/lib/gamification/exp-engine";
-import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST activities/submit/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Auth + eligibility check
     const eligibility = await checkActivityEligibility();
@@ -75,46 +77,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (payload.activityType === "codelab") {
+      const completed = await getCodeLabCompletion(payload.studentId, payload.assignmentId) || await getCodeLabReward(payload.studentId, payload.assignmentId);
+      if (completed) return NextResponse.json({ message: "This level is already completed. You can still run code for practice.", completed: true }, { status: 409 });
+      const problem = getProblemById(payload.assignmentId);
+      if (!problem || problem.executionMethod === "judge0") return NextResponse.json({ message: "Use Submit Solution to evaluate and save this CodeLab level." }, { status: 400 });
+      const sourceCode = payload.stateCheck.sourceCode;
+      if (typeof sourceCode !== "string" || new TextEncoder().encode(sourceCode).length > 64 * 1024) return NextResponse.json({ message: "A solution of at most 64 KB is required." }, { status: 400 });
+      const result = await saveCodeLabCompletion(payload, eligibility.session.user.instituteId);
+      return NextResponse.json({ message: result.alreadyCompleted ? "Level already completed." : "Submission saved.", ...result }, { status: result.alreadyCompleted ? 409 : 201 });
+    }
+
     // 4. Verify the template exists (the assignmentId maps to a templateId)
-    let template = await db.activityTemplate.findUnique({
+    const template = await db.activityTemplate.findUnique({
       where: { id: payload.assignmentId },
       select: { id: true, title: true, activityType: true, courseId: true, syllabusItemId: true },
     });
-
-    if (!template && payload.activityType === "codelab") {
-      const problem = getProblemById(payload.assignmentId);
-      // Find an active course to bind the problem template
-      const enrollment = await db.enrollment.findFirst({
-        where: { studentId: payload.studentId, status: "ACTIVE" },
-        select: { courseId: true },
-      });
-
-      let courseId = enrollment?.courseId;
-      if (!courseId) {
-        const firstCourse = await db.course.findFirst({
-          select: { id: true },
-        });
-        courseId = firstCourse?.id;
-      }
-
-      if (courseId) {
-        template = await db.activityTemplate.upsert({
-          where: { id: payload.assignmentId },
-          update: {},
-          create: {
-            id: payload.assignmentId,
-            title: problem?.title || "CodeLab Problem",
-            activityType: "codelab",
-            courseId: courseId,
-            createdBy: eligibility.session.user.id,
-            difficulty: problem?.stage === "basics" ? 1 : problem?.stage === "building-up" ? 2 : 3,
-            variables: JSON.stringify(problem?.variables || []),
-            hiddenTestCases: JSON.stringify(problem?.testCases.filter((tc) => tc.isHidden) || []),
-          },
-          select: { id: true, title: true, activityType: true, courseId: true, syllabusItemId: true },
-        });
-      }
-    }
 
     if (!template) {
       return NextResponse.json(
@@ -122,6 +100,7 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+    if (template.activityType !== payload.activityType) return NextResponse.json({ message: "Incorrect activity type." }, { status: 400 });
 
     // 5. Write the submission to the database
     const submission = await db.activitySubmission.create({
@@ -164,36 +143,6 @@ export async function POST(request: Request) {
     try {
       await processGamificationEvent(payload, template.courseId);
 
-      // Dedicated EXP and Badge grants with anti-abuse idempotency
-      if (payload.activityType === "codelab" && payload.score >= 60) {
-        if (payload.score === 100) {
-          // Grant with perfect idempotency key
-          await grantExp({
-            userId: payload.studentId,
-            amount: EXP_VALUES.codelab_level_perfect,
-            reason: `CodeLab: ${template.title} — Perfect Score (100%)`,
-            source: "codelab",
-            courseId: template.courseId,
-            idempotencyKey: `codelab_perfect_${payload.assignmentId}`,
-          });
-
-          await awardBadgeIfEarned(payload.studentId, "codelab-first");
-          await awardBadgeIfEarned(payload.studentId, "codelab-perfect-level");
-          await awardBadgeIfEarned(payload.studentId, "perfect-score");
-        } else {
-          // Regular pass (≥60%)
-          await grantExp({
-            userId: payload.studentId,
-            amount: EXP_VALUES.codelab_level_complete,
-            reason: `CodeLab: ${template.title} — Passed`,
-            source: "codelab",
-            courseId: template.courseId,
-            idempotencyKey: `codelab_pass_${payload.assignmentId}`,
-          });
-
-          await awardBadgeIfEarned(payload.studentId, "codelab-first");
-        }
-      }
     } catch (gamiErr) {
       console.error("GAMIFICATION_ERROR", gamiErr);
     }
@@ -240,6 +189,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof CodeLabCompletionError) return NextResponse.json({ message: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("ACTIVITY_SUBMIT_ERROR", error);
 
     return NextResponse.json(

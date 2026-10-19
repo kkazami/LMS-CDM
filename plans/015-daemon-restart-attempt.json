@@ -1,0 +1,18 @@
+{
+  "kind": "AUTHORIZED_SUPPORTED_DAEMON_RESTART_ATTEMPT",
+  "startedAtUtc": "2026-10-09T03:13:48.0997777Z",
+  "finishedAtUtc": "2026-10-09T03:13:50.3597547Z",
+  "executable": "C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\bin\\sbx.exe",
+  "argv": [
+    "daemon",
+    "restart"
+  ],
+  "exitCode": 1,
+  "output": "Stopping daemon at \\\\.\\pipe\\docker_kaname_sandboxd...\n✓ Daemon stopped successfully\nDaemon started (PID: 32944, socket: \\\\.\\pipe\\docker_kaname_sandboxd)\nLogs: C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\daemon.log\nerror: daemon exited unexpectedly: exit status 1 stderr: === sbx v0.46.0 starting sandboxd at 2026-10-05T13:37:14Z === === sbx v0.46.0 starting sandboxd at 2026-10-05T14:01:34Z === === sbx v0.46.0 starting sandboxd at 2026-10-08T10:09:07Z === error: failed to start backend in-process: start backend: starting server: failed to get listener for main ttrpc endpoint: remove C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\containerd\\containerd.sock.ttrpc: The file cannot be accessed by the system. === sbx v0.46.0 starting sandboxd at 2026-10-08T10:16:34Z === === sbx v0.46.0 starting sandboxd at 2026-10-09T02:37:57Z === error: failed to start backend in-process: start backend: starerror: failed to start backend in-process: start backend: starting server: failed to get listener for main ttrpc endpoint: remove C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\containerd\\containerd.sock.ttrpc: The file cannot be accessed by the system. === sbx v0.46.0 starting sandboxd at 2026-10-09T02:37:58Z === error: failed to start backend in-process: start backend: starting server: failed to get listener for main ttrpc endpoint: remove C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\containerd\\containerd.sock.ttrpc: The file cannot be accessed by the system. === sbx v0.46.0 starting sandboxd at 2026-10-09T03:06:30Z === error: failed to start backend in-process: start backend: starting server: failed to get listener for main ttrpc endpoint: remove C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\containerd\\containerd.sock.ttrpc: The file cannot be accessed by the system. === sbx v0.46.0 starting sandboxd at 2026-10-09T03:13:48Z === error: failed to start backend in-process: start backend: starting server: failed to get listener for main ttrpc endpoint: remove C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\containerd\\containerd.sock.ttrpc: The file cannot be accessed by the system. check logs at: C:\\Users\\kirby\\AppData\\Local\\DockerSandboxes\\sandboxes\\state\\sandboxd\\daemon.log",
+  "documentedSource": "https://docs.docker.com/ai/sandboxes/troubleshooting/",
+  "broadReset": false,
+  "endpointDeletedManually": false,
+  "aclChanged": false,
+  "credentialRefresh": false,
+  "providerSubstituted": false
+}

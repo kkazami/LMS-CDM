@@ -1,0 +1,20 @@
+2026-10-18 15:21:12.839 +08 [10596] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-18 15:21:12.840 +08 [10596] LOG:  listening on IPv4 address "127.0.0.1", port 52356
+2026-10-18 15:21:12.898 +08 [28712] LOG:  database system was shut down at 2026-10-18 15:21:10 +08
+2026-10-18 15:21:12.924 +08 [10596] LOG:  database system is ready to accept connections
+2026-10-18 15:21:15.259 +08 [27428] ERROR:  permission denied for table AuditLog
+2026-10-18 15:21:15.340 +08 [33328] ERROR:  academic assignments require migration-owner authority
+2026-10-18 15:21:15.340 +08 [33328] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-18 15:21:15.342 +08 [33328] ERROR:  course program mapping requires migration-owner authority
+2026-10-18 15:21:15.342 +08 [33328] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-18 15:21:21.759 +08 [35828] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 15:21:21.759 +08 [16320] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 15:21:21.824 +08 [10596] LOG:  received fast shutdown request
+2026-10-18 15:21:21.829 +08 [10596] LOG:  aborting any active transactions
+2026-10-18 15:21:21.835 +08 [10596] LOG:  background worker "logical replication launcher" (PID 25436) exited with exit code 1
+2026-10-18 15:21:21.835 +08 [18264] LOG:  shutting down
+2026-10-18 15:21:21.839 +08 [18264] LOG:  checkpoint starting: shutdown immediate
+2026-10-18 15:21:22.566 +08 [18264] LOG:  checkpoint complete: wrote 1236 buffers (7.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.042 s, sync=0.668 s, total=0.731 s; sync files=765, longest=0.010 s, average=0.001 s; distance=7072 kB, estimate=7072 kB; lsn=0/1C5D2C0, redo lsn=0/1C5D2C0
+2026-10-18 15:21:22.640 +08 [10596] LOG:  database system is shut down

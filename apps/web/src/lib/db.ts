@@ -21,6 +21,13 @@ const createPrismaClient = () => {
   }
 
   if (!globalForPrisma.pgPool) {
+    const target = new URL(connectionString);
+    const sslMode = target.searchParams.get("sslmode");
+    // Preserve pg's current certificate and hostname verification across driver upgrades.
+    if (target.searchParams.get("uselibpqcompat") !== "true" &&
+        (sslMode === "prefer" || sslMode === "require" || sslMode === "verify-ca")) {
+      target.searchParams.set("sslmode", "verify-full");
+    }
     const isProduction = process.env.NODE_ENV === "production";
     const isLocalhost =
       connectionString.includes("localhost") ||
@@ -28,11 +35,12 @@ const createPrismaClient = () => {
       connectionString.includes("::1");
 
     const poolConfig: PoolConfig = {
-      connectionString,
-      // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion
-      max: isProduction ? 2 : 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 15000,
+      connectionString: target.toString(),
+      // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
+      // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
+      max: isProduction ? 2 : 15,
+      idleTimeoutMillis: isProduction ? 30000 : 120000,
+      connectionTimeoutMillis: 10000,
       keepAlive: true,
       // Cloud databases (Supabase, Neon, AWS RDS, Railway, Render) require SSL.
       // rejectUnauthorized: false prevents "self-signed certificate in certificate chain" errors

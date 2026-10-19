@@ -1,36 +1,18 @@
 ---
 trigger: model_decision
-description: Defines strict completion gates for the AI Software Engineering Harness — NO FRESH EVIDENCE = NO PASS
+description: Fresh evidence and independent review completion contracts
 ---
-The completion gate rules:
-
-A run may enter PASSED only when ALL of:
-- Every required acceptance criterion has a verification mapping (type + tests[])
-- Every mandatory check ran during the current run
-- Every mandatory check returned success (exit code 0)
-- Playwright E2E passed when requiresBrowserVerification is true
-- typecheck/build passed
-- Security checks passed (if Strict+ quality level)
-- Code review checks passed (if Strict+ quality level)
-- All required evidence artifacts exist in .orchestra/runs/<run-id>/
-- No blocking findings remain
-
-The Executor may propose completion. The harness decides completion.
-
-Every acceptance criterion must support:
-```json
-{
-  "id": "AC-001",
-  "description": "...",
-  "verification": {
-    "type": "playwright" | "command" | "manual",
-    "tests": ["tests/e2e/..."],
-    "assertions": ["..."]
-  }
-}
-```
-
-QA must trace: Acceptance Criterion → Test → Actual Result → Evidence
-
-Tests must verify user behavior, not implementation details.
-Preferred selector order: getByRole > getByLabel > getByText > getByPlaceholder > getByTestId > CSS/XPath
+# Required gates
+Contracts are enforced in scripts/harness/gates.ts and contracts.ts, not by checklist declarations.
+Every stage has one owner and one active lease; required predecessor artifact hashes must match.
+Every criterion traces requirement → task → named behavioral test → executed result → QA evidence.
+No orphan requirements/tasks, removed criteria, skipped tests, empty suites or reused attempts.
+Runner records run/attempt/stage, exact argv, HEAD/index/worktree fingerprint, environment digest,
+timestamps, exit/signal/error, output hash and individual-test report. Test generation is not execution.
+Changes invalidate validation/reviews. A repair reruns the entire approved command set and reviews.
+QA reviews criteria and fresh executions; security reviews all server boundaries independently;
+code review inspects the exact diff and resolves accepted architecture findings.
+Only release aggregation may produce RELEASE_READY. COMPLETE requires separate deployment and
+post-deploy gates. Expired/mismatched approvals or unresolved HIGH/CRITICAL findings block release.
+harness:check proves static sensors only. harness:verify defaults to a completed release gate;
+--allow-partial is diagnostic and never completion evidence. No run is a failure.

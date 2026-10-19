@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student Logic Gate Execution Route
  * Route: /[institute]/activities/logic-gate/[templateId]/[seed]
@@ -15,6 +16,8 @@ export default async function LogicGateActivityPage({
 }: {
   params: Promise<{ institute: string; templateId: string; seed: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/logic-gate/[templateId]/[seed]/page.tsx", await params);
+
   const { templateId, seed } = await params;
   const session = await getSession();
 

@@ -1,0 +1,128 @@
+[
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\e2e\\controlled\\fixture.ts",
+    "expected": "07ca56d76f370d82cbeca62e82611d4f5ff22c700c7da7d4ec0810b3a36f2155",
+    "current": "07ca56d76f370d82cbeca62e82611d4f5ff22c700c7da7d4ec0810b3a36f2155",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\e2e\\controlled\\seed-fixture.cjs",
+    "expected": "8dd4a47a2fdf99bbacbe500fc86082d5f03ad5e45392ca8805249a837873eff8",
+    "current": "8dd4a47a2fdf99bbacbe500fc86082d5f03ad5e45392ca8805249a837873eff8",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\e2e\\controlled\\superuser-oversight.spec.ts",
+    "expected": "683a330a1fab4023348381226e4a41e5c9e3a906b23d9497c7c7843823849a3d",
+    "current": "683a330a1fab4023348381226e4a41e5c9e3a906b23d9497c7c7843823849a3d",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\e2e\\controlled\\CONTRACT.md",
+    "expected": "d4e0e501912f440b9afe5840907e0f7824940adad00c7796cdbb4c59ee7bdbb5",
+    "current": "d4e0e501912f440b9afe5840907e0f7824940adad00c7796cdbb4c59ee7bdbb5",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\e2e\\fixtures\\test-accounts.ts",
+    "expected": "238390c87d27b047c5453a1f523663bc0895397b1d3ecf1c0549f76251d76b81",
+    "current": "238390c87d27b047c5453a1f523663bc0895397b1d3ecf1c0549f76251d76b81",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\server\\controlled\\bootstrap.mjs",
+    "expected": "aba346b2686656110b6af03ca01d681a8664e188d718ff52d2afb3a052974852",
+    "current": "aba346b2686656110b6af03ca01d681a8664e188d718ff52d2afb3a052974852",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\runs\\controlled-superuser-20261004\\task\\tests\\server\\controlled\\superuser-actions.test.mjs",
+    "expected": "a182ac934937b0a73ebe8856b962224ec6b8cb2aee55629b42165466ac2f04fe",
+    "current": "a182ac934937b0a73ebe8856b962224ec6b8cb2aee55629b42165466ac2f04fe",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-batch-checkpoints-candidate.json",
+    "expected": "05e7b86dc514ca79c424a2ace84647960213261c72882310c802e43daf14f70d",
+    "current": "05e7b86dc514ca79c424a2ace84647960213261c72882310c802e43daf14f70d",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-child-fixture-projection-map-candidate.json",
+    "expected": "1981c3b7ca11cc98abacf1ab684339bf20826d364f08c0a01aa6ef94be47cd36",
+    "current": "1981c3b7ca11cc98abacf1ab684339bf20826d364f08c0a01aa6ef94be47cd36",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-complete-public-projection-spec-candidate.json",
+    "expected": "4aa0998dca9c8b168f325425216e95c3c27f9303eea5b8409ba2bf8dc4e099f5",
+    "current": "4aa0998dca9c8b168f325425216e95c3c27f9303eea5b8409ba2bf8dc4e099f5",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-driver-scenario-step-dag-candidate.json",
+    "expected": "e913d7a859e7199d8742f549a0749e61966271570bf5cea362a15ad9677df746",
+    "current": "e913d7a859e7199d8742f549a0749e61966271570bf5cea362a15ad9677df746",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-exact-scopes-candidate.json",
+    "expected": "6164c29473efe7cfe5e9563e9f9fa9f0c5b8b847b26e13f243943ecdf165f3c3",
+    "current": "6164c29473efe7cfe5e9563e9f9fa9f0c5b8b847b26e13f243943ecdf165f3c3",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-mechanism-regression-spec-candidate.json",
+    "expected": "241c4752bda53e08d4a7dc9ef76b56211fb342fd0dfd5d0318183df376402ce5",
+    "current": "241c4752bda53e08d4a7dc9ef76b56211fb342fd0dfd5d0318183df376402ce5",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-operation-coverage-matrix-candidate.json",
+    "expected": "b200ede815e781ef44df4e89c5234c6fad885487f2b4d3e18465c4e4a542bca8",
+    "current": "b200ede815e781ef44df4e89c5234c6fad885487f2b4d3e18465c4e4a542bca8",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-principal-driver-contract-candidate.md",
+    "expected": "03b9daaf4fbd7610062c7b617cfbd00beb4dd1c800527f5526e76f8229edc1d8",
+    "current": "03b9daaf4fbd7610062c7b617cfbd00beb4dd1c800527f5526e76f8229edc1d8",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-principal-rehearsal-mechanism-candidate.md",
+    "expected": "b490ae8a95c93e54068c1003ec54e262dafd8b9e5dd3db58109d6d524dee9ce8",
+    "current": "b490ae8a95c93e54068c1003ec54e262dafd8b9e5dd3db58109d6d524dee9ce8",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-test-command-mapping-candidate.json",
+    "expected": "169a5d867e5b27962bf8e75dde1c2a3e4cdcaa5d2670e82594a00eb470e9958e",
+    "current": "169a5d867e5b27962bf8e75dde1c2a3e4cdcaa5d2670e82594a00eb470e9958e",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\review-candidate-v2\\028-verification-scenarios-candidate.json",
+    "expected": "76dda9cb8bcbf13dd398819a9fffc1862c448a47c92ac15ae25ffee38d28bebf",
+    "current": "76dda9cb8bcbf13dd398819a9fffc1862c448a47c92ac15ae25ffee38d28bebf",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\028-owner-decisions-v1.json",
+    "expected": "7d2ce42edab2279cca655a5e3a7fb8322872099ee00f6ad3a0eacf9a28acc402",
+    "current": "7d2ce42edab2279cca655a5e3a7fb8322872099ee00f6ad3a0eacf9a28acc402",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\028-callable-comparator-recommendations.json",
+    "expected": "29dc6547c4a69092071822cfc003830c44f29b0c75a4af1de693f868f7ba52b6",
+    "current": "29dc6547c4a69092071822cfc003830c44f29b0c75a4af1de693f868f7ba52b6",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\kirby\\Desktop\\lms-monorepo-skeleton\\.orchestra\\local-worktrees\\trusted-local-harness\\.orchestra\\runs\\run_trusted_local_profile_20261009\\checkpoint\\super-user-v1-master-resolution\\v1\\028-input-verification-v1.json",
+    "expected": "8f55995c664bf62a17b601b77149782f4045df1999c716995260a8185ffa8ef2",
+    "current": "8f55995c664bf62a17b601b77149782f4045df1999c716995260a8185ffa8ef2",
+    "unchanged": true
+  }
+]

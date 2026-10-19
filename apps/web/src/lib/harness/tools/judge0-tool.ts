@@ -9,6 +9,7 @@
 import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { AgentContext, ToolDefinition } from "../core/types";
 import { toolRegistry } from "./registry";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 export interface ExecuteCodeArgs {
   sourceCode: string;
@@ -20,6 +21,8 @@ export const executeSandboxedCodeTool: ToolDefinition<ExecuteCodeArgs> = {
   name: "executeSandboxedCode",
   description: "Executes source code in a secure sandboxed Judge0 container and returns stdout, stderr, and compilation errors.",
   execute: async ({ sourceCode, languageId, stdin }, context: AgentContext) => {
+    const actor = await requireLegacyActor('executeSandboxedCode');
+    if (context.userId !== actor.id) throw new Error('Forbidden actor.');
     // Basic length guardrail
     if (sourceCode.length > 64 * 1024) {
       return {
