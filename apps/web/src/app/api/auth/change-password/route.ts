@@ -1,9 +1,13 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { compare, hash } from "bcryptjs";
 
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST auth/change-password/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session?.user?.id) {
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
       select: { password: true },
     });
 
-    if (!user) {
+    if (!user?.password) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 

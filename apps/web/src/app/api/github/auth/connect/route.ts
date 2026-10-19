@@ -1,8 +1,12 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import crypto from 'crypto';
 
 export async function GET(req: NextRequest) {
+  const ceilingDenial = await denyLegacyApi(req, "GET github/auth/connect/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSessionFromRequest(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

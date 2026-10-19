@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { db } from '@/lib/db';
@@ -5,6 +6,9 @@ import { db } from '@/lib/db';
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST auth/refresh/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

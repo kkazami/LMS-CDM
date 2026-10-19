@@ -7,14 +7,14 @@ import type { CodeLabProblemSummary } from "../../problems/types";
 import type { InstructorSubmissionRecord } from "../CodeLabInstructorClient";
 
 const LANGUAGES = [
-  { key: "python", label: "Python", emoji: "🐍" },
-  { key: "cpp", label: "C++", emoji: "⚙️" },
-  { key: "csharp", label: "C#", emoji: "🔷" },
-  { key: "java", label: "Java", emoji: "☕" },
-  { key: "javascript", label: "JS", emoji: "🟡" },
-  { key: "sql", label: "SQL", emoji: "🗄️" },
-  { key: "html", label: "HTML", emoji: "🌐" },
-  { key: "css", label: "CSS", emoji: "🎨" },
+  { key: "python", label: "Python" },
+  { key: "cpp", label: "C++" },
+  { key: "csharp", label: "C#" },
+  { key: "java", label: "Java" },
+  { key: "javascript", label: "JavaScript" },
+  { key: "sql", label: "SQL" },
+  { key: "html", label: "HTML" },
+  { key: "css", label: "CSS" },
 ] as const;
 
 interface MasteryHeatmapProps {
@@ -55,10 +55,10 @@ export default function MasteryHeatmap({ problems, submissions }: MasteryHeatmap
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-              Class Mastery Heatmap
+              Average score at each level
             </h2>
             <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-              30 levels per language — select a track to inspect
+              Choose a language to see average scores across its 30 levels.
             </p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function MasteryHeatmap({ problems, submissions }: MasteryHeatmap
             <span className="w-3 h-3 rounded-md bg-rose-500/20 border border-rose-500/40" /> &lt;50%
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" /> Untested
+            <span className="w-3 h-3 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10" /> No submissions
           </span>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function MasteryHeatmap({ problems, submissions }: MasteryHeatmap
                 : "bg-white dark:bg-[#1E2132] text-slate-600 dark:text-[#8B92A5] border-[#E4E6EF] dark:border-white/10 hover:border-[#F97316]/50 hover:text-[#F97316]"
             }`}
           >
-            {lang.emoji} {lang.label}
+            {lang.label}
           </button>
         ))}
       </div>
@@ -100,10 +100,10 @@ export default function MasteryHeatmap({ problems, submissions }: MasteryHeatmap
       {/* Heatmap Grid — 30 cells for the selected language */}
       {trackProblems.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-[#555C72] text-sm">
-          No problems found for this language track yet.
+          No levels are available for this language yet.
         </div>
       ) : (
-        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-2.5 pt-1">
+        <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 gap-2.5 pt-1">
           {trackProblems.map((p) => {
             const m = problemMetrics.get(p.id);
             const count = m?.count ?? 0;
@@ -123,18 +123,18 @@ export default function MasteryHeatmap({ problems, submissions }: MasteryHeatmap
             return (
               <div
                 key={p.id}
-                title={`${p.title} (Level ${p.level}): ${count} attempts, ${
-                  avg !== null ? `${avg}% class average` : "No attempts yet"
+                title={`${p.title} (Level ${p.level}): ${count} submissions, ${
+                  avg !== null ? `${avg}% class average` : "No submissions yet"
                 }`}
-                className={`p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all duration-150 hover:scale-105 cursor-pointer shadow-xs ${cellClass}`}
+                className={`p-2 sm:p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all duration-150 hover:scale-105 cursor-pointer shadow-xs ${cellClass}`}
               >
-                <span className="text-[10px] font-bold uppercase opacity-75">L{p.level}</span>
+                <span className="text-[10px] font-bold uppercase opacity-75">Level {p.level}</span>
                 {avg !== null ? (
                   <CountUpNumber value={avg} suffix="%" className="text-sm font-black mt-0.5 block" />
                 ) : (
                   <span className="text-sm font-black mt-0.5">—</span>
                 )}
-                <span className="text-[10px] opacity-60 font-mono mt-0.5">{count} att</span>
+                <span className="text-[10px] opacity-60 mt-0.5">{count}<span className="block">submitted</span></span>
               </div>
             );
           })}

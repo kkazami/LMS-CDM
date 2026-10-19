@@ -1,0 +1,2 @@
+import { redirect } from 'next/navigation';
+export default async function AcademicOperations({ params }: { params: Promise<{ institute: string }> }) { const { institute } = await params; redirect(`/${institute}/academic-operations/courses`); }

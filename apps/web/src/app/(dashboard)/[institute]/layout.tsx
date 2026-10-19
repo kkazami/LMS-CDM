@@ -8,6 +8,9 @@ import { db } from "@/lib/db";
 import { getPHTMidnight, processLoginReward } from "@/lib/gamification/login-rewards";
 import { getInstituteByCode, getStudentEnrollments } from "@/lib/dashboard-data";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import SuperUserShell from '@/components/super-user-v1/SuperUserShell';
+import { canonicalRole, supportedInstitute } from '@/lib/super-user-v1/capabilities';
+import { notFound } from 'next/navigation';
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +28,23 @@ export default async function InstituteLayout({
     redirect(`/login?institute=${institute}`);
   }
 
+  const dedicatedRole = canonicalRole(session.user.role);
+  if (dedicatedRole === 'SUPER_USER') {
+    if (!supportedInstitute(institute)) notFound();
+    return <SuperUserShell key={institute.toLowerCase()} institute={institute.toLowerCase()} userName={session.user.name}>{children}</SuperUserShell>;
+  }
+  if (dedicatedRole === 'UNKNOWN') notFound();
+
   // Enforce institute scoping: students and teachers are strictly locked to their registered institute.
   // Admins are system administrators who can view, switch, and manage any institute campus.
-  const userRole = ((session.user as Record<string, unknown>).role as string || "").toUpperCase();
+  const user = session.user as typeof session.user & {
+    institute?: { id: string; code: string; name: string };
+  };
+  const userRole = (user.role || "").toUpperCase();
   const isAdmin = userRole === "ADMIN";
 
-  // The session already carries the user's institute, so no extra query is needed.
-  const userInstituteCode = session.user.institute?.code?.toLowerCase() ?? "ics";
+  // Use pre-loaded institute code from session without extra database query
+  const userInstituteCode = (user.institute?.code || "ics").toLowerCase();
 
   if (!isAdmin && userInstituteCode !== institute.toLowerCase()) {
     redirect(`/${userInstituteCode}`);
@@ -40,8 +53,8 @@ export default async function InstituteLayout({
   const theme = getInstituteTheme(institute);
 
   // Eligibility is a pure function of the user's institute code (same rule as the guards).
-  const activityEligible = isEligibleInstituteCode(userInstituteCode);
-  const kxEligible = institute.toLowerCase() === "ics" && isEligibleKxInstituteCode(userInstituteCode);
+  const activityEligible = isEligibleInstituteCode(userInstituteCode) || isAdmin;
+  const kxEligible = institute.toLowerCase() === "ics" && (isEligibleKxInstituteCode(userInstituteCode) || isAdmin);
 
   const isStudent = userRole === "STUDENT";
   const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";

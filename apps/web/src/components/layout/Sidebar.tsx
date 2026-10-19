@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Network,
   BookOpen,
   ClipboardCheck,
   Megaphone,
@@ -36,6 +37,7 @@ import {
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
+import { getNavigationPath } from "@/lib/navigation-path";
 
 
 import type { ComponentType } from "react";
@@ -88,6 +90,7 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
+  ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },
@@ -97,7 +100,7 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Dashboard", href: `/${code}/admin`, icon: LayoutDashboard },
   { label: "Course Management", href: `/${code}/admin/courses`, icon: Library },
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
-  { label: "Permissions", href: `/${code}/accounts/permissions`, icon: ShieldCheck },
+  ...(code === "ics" ? [{ label: "Faculty & Program Heads", href: `/${code}/admin/faculty`, icon: Network }] : []),
   { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
   { label: "Backup & Recovery", href: `/${code}/backup`, icon: HardDrive },
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
@@ -125,7 +128,7 @@ export default function Sidebar({
   isEligibleForPracticum,
   enrolledCourses,
 }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMyCoursesOpen, setIsMyCoursesOpen] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
@@ -387,6 +390,7 @@ export default function Sidebar({
               key={item.href}
               href={item.href}
               onClick={handleLinkClick}
+              aria-current={active ? "page" : undefined}
               title={isCollapsed ? item.label : undefined}
               className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                 active

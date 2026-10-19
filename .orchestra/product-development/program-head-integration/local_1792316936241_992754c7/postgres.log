@@ -1,0 +1,44 @@
+2026-10-18 17:49:00.554 +08 [23320] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-18 17:49:00.556 +08 [23320] LOG:  listening on IPv4 address "127.0.0.1", port 55716
+2026-10-18 17:49:00.625 +08 [36096] LOG:  database system was shut down at 2026-10-18 17:48:58 +08
+2026-10-18 17:49:00.653 +08 [23320] LOG:  database system is ready to accept connections
+2026-10-18 17:49:02.745 +08 [32140] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 17:49:02.939 +08 [35544] ERROR:  permission denied for table AuditLog
+2026-10-18 17:49:03.100 +08 [35196] ERROR:  academic assignments require migration-owner authority
+2026-10-18 17:49:03.100 +08 [35196] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-18 17:49:03.103 +08 [35196] ERROR:  course program mapping requires migration-owner authority
+2026-10-18 17:49:03.103 +08 [35196] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-18 17:49:03.118 +08 [35544] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 17:49:03.201 +08 [3584] WARNING:  there is already a transaction in progress
+2026-10-18 17:49:03.310 +08 [13376] ERROR:  permission denied for schema public at character 14
+2026-10-18 17:49:03.310 +08 [13376] ERROR:  permission denied for table writer_bindings
+2026-10-18 17:49:03.314 +08 [13376] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-18 17:49:03.314 +08 [13376] CONTEXT:  PL/pgSQL function guard_user() line 19 at RAISE
+2026-10-18 17:49:03.693 +08 [30444] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-18 17:49:03.693 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-18 17:49:03.694 +08 [30444] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-18 17:49:03.694 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-18 17:49:03.694 +08 [30444] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-18 17:49:03.694 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 21 at RAISE
+2026-10-18 17:49:03.695 +08 [30444] ERROR:  RETIRED_ROLE_DENIED
+2026-10-18 17:49:03.695 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 4 at RAISE
+2026-10-18 17:49:03.695 +08 [30444] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-18 17:49:03.695 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 19 at RAISE
+2026-10-18 17:49:03.700 +08 [30444] ERROR:  PRIVILEGED_WRITER_DENIED
+2026-10-18 17:49:03.700 +08 [30444] CONTEXT:  PL/pgSQL function guard_user() line 16 at RAISE
+2026-10-18 17:49:04.105 +08 [28732] ERROR:  SYNTHETIC_AUDIT_FAILURE
+2026-10-18 17:49:04.105 +08 [28732] CONTEXT:  PL/pgSQL function reject_faculty_audit() line 1 at RAISE
+	SQL statement "INSERT INTO public."AuditLog"(id,"adminId","targetId",action,metadata,"createdAt") VALUES(gen_random_uuid()::text,actor_id,target_user,'ICS_FACULTY_DESIGNATION_SET',jsonb_build_object('programId',selected_program,'instituteId',institute_id,'beforeHead',coalesce(previous_head,false),'designation',designation,'version',current_version+1,'correlationId',gen_random_uuid()::text,'result','SUCCESS')::text,clock_timestamp())"
+	PL/pgSQL function super_user_security.set_ics_faculty(text,text,text,text,text,integer) line 34 at SQL statement
+2026-10-18 17:49:17.086 +08 [36540] ERROR:  permission denied for table AuditLog
+2026-10-18 17:49:17.975 +08 [36540] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 17:49:17.976 +08 [32316] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-10-18 17:49:18.062 +08 [23320] LOG:  received fast shutdown request
+2026-10-18 17:49:18.065 +08 [23320] LOG:  aborting any active transactions
+2026-10-18 17:49:18.070 +08 [23320] LOG:  background worker "logical replication launcher" (PID 11832) exited with exit code 1
+2026-10-18 17:49:18.071 +08 [2064] LOG:  shutting down
+2026-10-18 17:49:18.073 +08 [2064] LOG:  checkpoint starting: shutdown immediate
+2026-10-18 17:49:18.736 +08 [2064] LOG:  checkpoint complete: wrote 1261 buffers (7.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.041 s, sync=0.612 s, total=0.666 s; sync files=775, longest=0.008 s, average=0.001 s; distance=7305 kB, estimate=7305 kB; lsn=0/1C97438, redo lsn=0/1C97438
+2026-10-18 17:49:18.803 +08 [23320] LOG:  database system is shut down

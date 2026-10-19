@@ -1750,7 +1750,7 @@ export default function HomePage() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                   >
-                    <span>Register Student Account</span>
+                    <span>Need an account?</span>
                   </Link>
                 </div>
               </motion.div>
@@ -3342,7 +3342,7 @@ export default function HomePage() {
                       href="/register"
                       className="text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded inline-block"
                     >
-                      Student Account Registration
+                      Need an account?
                     </Link>
                   </li>
                   <li>

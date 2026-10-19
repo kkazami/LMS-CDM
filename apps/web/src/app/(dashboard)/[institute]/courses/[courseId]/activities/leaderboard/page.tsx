@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -11,6 +12,8 @@ export default async function LeaderboardPage({
 }: {
   params: Promise<{ institute: string; courseId: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/leaderboard/page.tsx", await params);
+
   const { institute, courseId } = await params;
   const session = await getSession();
 
@@ -51,8 +54,8 @@ export default async function LeaderboardPage({
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Gamification Dashboard</h1>
-        <p className="text-gray-500 mt-1">Track your progress, earn badges, and compete with your classmates.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Activity Stats</h1>
+        <p className="text-gray-500 mt-1">Your progress, badges, and class rankings.</p>
       </div>
 
       {challenge && (

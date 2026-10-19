@@ -1,0 +1,1578 @@
+{
+  "kind": "revised-independent-architecture-review-partition-manifest",
+  "runId": "run_superuser_20261004",
+  "risk": "HIGH",
+  "state": "DRAFT",
+  "head": "aac054bfc42171b7de90c049a319f0d34ecf64b5",
+  "sourceDigest": "9c4cc7834a8615bfad1b11fe243287a49af292a866103dfe7e0de50b3922a1af",
+  "sourceFilesChecked": 1337,
+  "preparationSha256": "54958ce3b8807730b2f5cbc90db0eb9bf76f2b51036c6fbea2427d8be7104485",
+  "stateSha256": "84cdd3d81d77a35fc6553d6794cf4839dcaf3f36a88c028150eb803263bbea4c",
+  "journalSha256": "840daff481602965173a75d374b587327defa3fb2b0359fd471581f336ba3aa8",
+  "packageHashes": {
+    "008-revised-super-user-architecture.md": "e4bb9f6eb901866d0116942c9da91b2b7cbd5e1d5bbadc035541659eb169634f",
+    "008-revised-boundary-matrix.json": "e63176a8b78b8f10b44719d38f28c454a332785403001e44d59fed11116059d7",
+    "008-revised-file-allowlist.json": "d04edf3f8d38641a59ddac203c1533755d421f2ea0698c979d84c892efb8e240",
+    "008-finding-by-finding-adjudication.json": "cf9142645a68c6d078dcc9ba034fbd94f89a271073f7e46c2e73e356439371b0",
+    "008-transaction-source-evidence.json": "ba11f4a7020e9945c266e2755b94a6da693b69ef755431b8a5dfe587863ec74a"
+  },
+  "U01": "Human resolved: AC-007 applies only to authenticated SUPER_USER academic-oversight responses; anonymous public leaderboard behavior and DTO/privacy semantics are outside feature scope and must remain unchanged.",
+  "requests": [
+    {
+      "id": "SU-R2-HTTP-01",
+      "file": "su-r2-http-01.request.json",
+      "sha256": "42d8e2aa001ecf58f54b29b840c48ac205f3989aeace5626585b5353ed2518df",
+      "assignedPaths": [
+        "apps/web/src/app/api/activities/codelab/invalidate/route.ts",
+        "apps/web/src/app/api/activities/submit/route.ts",
+        "apps/web/src/app/api/admin/audit-logs/route.ts",
+        "apps/web/src/app/api/admin/permissions/route.ts",
+        "apps/web/src/app/api/admin/users/[userId]/reset-password/route.ts",
+        "apps/web/src/app/api/admin/users/[userId]/role/route.ts",
+        "apps/web/src/app/api/admin/users/[userId]/route.ts",
+        "apps/web/src/app/api/admin/users/[userId]/status/route.ts",
+        "apps/web/src/app/api/admin/users/bulk/route.ts",
+        "apps/web/src/app/api/admin/users/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/activities/codelab/invalidate/route.ts",
+          "method": "POST",
+          "alias": "apps/web/src/app/api/codelab/instructor/reject/route.ts#POST"
+        },
+        {
+          "path": "apps/web/src/app/api/activities/submit/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/audit-logs/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/permissions/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/permissions/route.ts",
+          "method": "PUT",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/reset-password/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/role/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/[userId]/status/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/bulk/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/admin/users/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 215757,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-02",
+      "file": "su-r2-http-02.request.json",
+      "sha256": "d66f07a98d0ea5895d708326077fb757aaaa9c6a0b736a904a2381ffd1a9a2fd",
+      "assignedPaths": [
+        "apps/web/src/app/api/analytics/at-risk/route.ts",
+        "apps/web/src/app/api/announcements/route.ts",
+        "apps/web/src/app/api/assignments/route.ts",
+        "apps/web/src/app/api/auth/change-password/route.ts",
+        "apps/web/src/app/api/auth/forgot-password/route.ts",
+        "apps/web/src/app/api/auth/login/route.ts",
+        "apps/web/src/app/api/auth/logout/route.ts",
+        "apps/web/src/app/api/auth/me/route.ts",
+        "apps/web/src/app/api/auth/refresh/route.ts",
+        "apps/web/src/app/api/auth/register/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/analytics/at-risk/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/announcements/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/assignments/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/change-password/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/forgot-password/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/login/route.ts",
+          "method": "OPTIONS",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/login/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/logout/route.ts",
+          "method": "OPTIONS",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/logout/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/me/route.ts",
+          "method": "OPTIONS",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/me/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/refresh/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/register/route.ts",
+          "method": "OPTIONS",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/register/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 203433,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-03",
+      "file": "su-r2-http-03.request.json",
+      "sha256": "805ee8449440cb4c84543cd96c9ff38b14ddc4262956ed0c8cc12be8796716f0",
+      "assignedPaths": [
+        "apps/web/src/app/api/auth/reset-password/route.ts",
+        "apps/web/src/app/api/auth/sessions/route.ts",
+        "apps/web/src/app/api/codelab/courses/route.ts",
+        "apps/web/src/app/api/codelab/evaluate/route.ts",
+        "apps/web/src/app/api/codelab/instructor/alert/route.ts",
+        "apps/web/src/app/api/codelab/instructor/reject/route.ts",
+        "apps/web/src/app/api/codelab/progress/route.ts",
+        "apps/web/src/app/api/codelab/run-tests/route.ts",
+        "apps/web/src/app/api/codelab/run/route.ts",
+        "apps/web/src/app/api/codelab/share/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/auth/reset-password/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/auth/sessions/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/courses/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/evaluate/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/instructor/alert/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/instructor/reject/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/progress/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/run-tests/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/run/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/codelab/share/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 205798,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-04",
+      "file": "su-r2-http-04.request.json",
+      "sha256": "a8b601ef26ce6f733a84b3c4c5fc53f729429ddd25dc7afefca360332017e4ad",
+      "assignedPaths": [
+        "apps/web/src/app/api/codelab/tutor/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/broadcast/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/classwork/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/enrollments/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/grades/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/people/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/stream/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/codelab/tutor/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/broadcast/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/classwork/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/classwork/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/enrollments/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/enrollments/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/gradebook/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/grades/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/people/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/stream/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/stream/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 209399,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-05",
+      "file": "su-r2-http-05.request.json",
+      "sha256": "b050fd18e9e346484fb87647c56217dc9b44d176a7da705c9792fa4dad9d92ca",
+      "assignedPaths": [
+        "apps/web/src/app/api/courses/[courseId]/submissions/grade/route.ts",
+        "apps/web/src/app/api/courses/[courseId]/submissions/route.ts",
+        "apps/web/src/app/api/courses/route.ts",
+        "apps/web/src/app/api/flashcards/auto-generate/route.ts",
+        "apps/web/src/app/api/flashcards/cards/route.ts",
+        "apps/web/src/app/api/flashcards/complete-session/route.ts",
+        "apps/web/src/app/api/flashcards/decks/route.ts",
+        "apps/web/src/app/api/flashcards/file-info/route.ts",
+        "apps/web/src/app/api/flashcards/progress/route.ts",
+        "apps/web/src/app/api/flashcards/study/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/submissions/grade/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/submissions/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/[courseId]/submissions/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/courses/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/auto-generate/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/cards/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/cards/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/cards/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/cards/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/complete-session/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/decks/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/decks/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/decks/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/decks/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/file-info/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/progress/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/flashcards/study/route.ts",
+          "method": "GET",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 300431,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-06",
+      "file": "su-r2-http-06.request.json",
+      "sha256": "9cca545a6a98c2c4f8d31df67c8a0592b4701b5e78feb9011b0ea2e94648adf7",
+      "assignedPaths": [
+        "apps/web/src/app/api/gamification/badges/route.ts",
+        "apps/web/src/app/api/gamification/commend/route.ts",
+        "apps/web/src/app/api/gamification/heartbeat/route.ts",
+        "apps/web/src/app/api/gamification/incentives/route.ts",
+        "apps/web/src/app/api/gamification/new-badges/route.ts",
+        "apps/web/src/app/api/gamification/privacy/route.ts",
+        "apps/web/src/app/api/github/auth/callback/route.ts",
+        "apps/web/src/app/api/github/auth/connect/route.ts",
+        "apps/web/src/app/api/github/auth/disconnect/route.ts",
+        "apps/web/src/app/api/github/auth/status/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/gamification/badges/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/commend/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/heartbeat/route.ts",
+          "method": "OPTIONS",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/heartbeat/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/heartbeat/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/incentives/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/incentives/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/incentives/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/incentives/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/new-badges/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/new-badges/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/gamification/privacy/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/auth/callback/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/auth/connect/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/auth/disconnect/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/auth/status/route.ts",
+          "method": "GET",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 193904,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-07",
+      "file": "su-r2-http-07.request.json",
+      "sha256": "3d02761d3ee0974af15dedc54dd6101707481f5fc173d5c2b5096061a78040a0",
+      "assignedPaths": [
+        "apps/web/src/app/api/github/comments/[id]/resolve/route.ts",
+        "apps/web/src/app/api/github/comments/route.ts",
+        "apps/web/src/app/api/github/repos/[owner]/[repo]/actions/runs/route.ts",
+        "apps/web/src/app/api/github/repos/[owner]/[repo]/commits/route.ts",
+        "apps/web/src/app/api/github/repos/[owner]/[repo]/contents/[...path]/route.ts",
+        "apps/web/src/app/api/github/repos/[owner]/[repo]/route.ts",
+        "apps/web/src/app/api/github/repos/[owner]/[repo]/tree/[sha]/route.ts",
+        "apps/web/src/app/api/github/repos/link/[id]/route.ts",
+        "apps/web/src/app/api/github/repos/link/route.ts",
+        "apps/web/src/app/api/github/submissions/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/github/comments/[id]/resolve/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/comments/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/comments/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/actions/runs/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/commits/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/contents/[...path]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/tree/[sha]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/link/[id]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/link/[id]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/link/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/repos/link/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/submissions/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/github/submissions/route.ts",
+          "method": "GET",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 194454,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-08",
+      "file": "su-r2-http-08.request.json",
+      "sha256": "1cfb79a3b5fa4dcd50734217b05d328224bf900cbb83c14c3f63141b7c571b7f",
+      "assignedPaths": [
+        "apps/web/src/app/api/github/webhooks/route.ts",
+        "apps/web/src/app/api/grades/route.ts",
+        "apps/web/src/app/api/health/route.ts",
+        "apps/web/src/app/api/institutes/route.ts",
+        "apps/web/src/app/api/integrity/events/route.ts",
+        "apps/web/src/app/api/judge0/submit/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/admin/deanonymize/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/admin/posts/[postId]/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/admin/posts/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/ai/draft-answer/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/github/webhooks/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/grades/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/health/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/institutes/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/integrity/events/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/integrity/events/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/judge0/submit/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/admin/deanonymize/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/admin/posts/[postId]/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/admin/posts/[postId]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/admin/posts/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/ai/draft-answer/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 190840,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-09",
+      "file": "su-r2-http-09.request.json",
+      "sha256": "fbdd6ab66154cc012e4c49b19f2597f5ebab5d3d54fbb7b5bc1cd6fd3be50e82",
+      "assignedPaths": [
+        "apps/web/src/app/api/knowledge-exchange/ai/improve-question/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/ai/suggest-duplicates/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/ai/summarize/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/analytics/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/accept/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/verify/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/bookmark/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/comments/[commentId]/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/comments/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/ai/improve-question/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/ai/suggest-duplicates/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/ai/summarize/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/analytics/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/accept/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/verify/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/bookmark/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/bookmark/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/comments/[commentId]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/comments/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 187518,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-10",
+      "file": "su-r2-http-10.request.json",
+      "sha256": "6aa9cb0f61fdec93b16b2469a05484dcb77d8750ac7712f386a4b4e2a9c07b1a",
+      "assignedPaths": [
+        "apps/web/src/app/api/knowledge-exchange/digest/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/flag/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/follow/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/moderation/action/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/moderation/queue/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/notifications/read/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/notifications/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/posts/[postId]/answers/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/posts/[postId]/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/posts/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/digest/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/flag/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/follow/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/follow/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/moderation/action/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/moderation/queue/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/notifications/read/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/notifications/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/answers/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/posts/route.ts",
+          "method": "POST",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 214230,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-11",
+      "file": "su-r2-http-11.request.json",
+      "sha256": "088babff0568c4958a944231b860525c35b4105a0ec872208abbef1d5cb131eb",
+      "assignedPaths": [
+        "apps/web/src/app/api/knowledge-exchange/search/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/tags/route.ts",
+        "apps/web/src/app/api/knowledge-exchange/vote/route.ts",
+        "apps/web/src/app/api/leaderboard/route.ts",
+        "apps/web/src/app/api/materials/annotations/route.ts",
+        "apps/web/src/app/api/materials/complete/route.ts",
+        "apps/web/src/app/api/notifications/push-token/route.ts",
+        "apps/web/src/app/api/notifications/route.ts",
+        "apps/web/src/app/api/notifications/subscribe/route.ts",
+        "apps/web/src/app/api/profile/avatar/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/search/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/tags/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/tags/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/knowledge-exchange/vote/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/leaderboard/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/materials/annotations/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/materials/annotations/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/materials/annotations/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/materials/complete/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/notifications/push-token/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/notifications/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/notifications/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/notifications/subscribe/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/notifications/subscribe/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/profile/avatar/route.ts",
+          "method": "PUT",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 197320,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-HTTP-12",
+      "file": "su-r2-http-12.request.json",
+      "sha256": "a1903f956be28e0c1ab9698f12abf365164d8ed0cc44bebf868a65cf6e390a41",
+      "assignedPaths": [
+        "apps/web/src/app/api/profile/route.ts",
+        "apps/web/src/app/api/public/leaderboard/route.ts",
+        "apps/web/src/app/api/settings/route.ts",
+        "apps/web/src/app/api/study-sessions/route.ts",
+        "apps/web/src/app/api/todo/route.ts",
+        "apps/web/src/app/api/upload/route.ts",
+        "apps/web/src/app/api/users/[userId]/public/route.ts",
+        "apps/web/src/app/api/workspace/events/route.ts",
+        "apps/web/src/app/api/workspace/notes/route.ts",
+        "apps/web/src/app/api/workspace/tasks/route.ts"
+      ],
+      "assignedMethods": [
+        {
+          "path": "apps/web/src/app/api/profile/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/profile/route.ts",
+          "method": "PUT",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/public/leaderboard/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/settings/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/study-sessions/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/study-sessions/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/todo/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/upload/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/users/[userId]/public/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/events/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/events/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/events/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/events/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/notes/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/notes/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/notes/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/notes/route.ts",
+          "method": "DELETE",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/tasks/route.ts",
+          "method": "GET",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/tasks/route.ts",
+          "method": "POST",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/tasks/route.ts",
+          "method": "PATCH",
+          "alias": null
+        },
+        {
+          "path": "apps/web/src/app/api/workspace/tasks/route.ts",
+          "method": "DELETE",
+          "alias": null
+        }
+      ],
+      "assignedExports": [],
+      "kind": "HTTP",
+      "bytes": 218537,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-ACTIONS-01",
+      "file": "su-r2-actions-01.request.json",
+      "sha256": "9afd85d688dc621ffb1c780f17f6751bfb584ddf129c956116babcb9b3116c5e",
+      "assignedPaths": [
+        "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/arduino/new/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/codelab/new/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/logic-gate/new/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/pc-build/new/page.tsx"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+          "export": "adminCreateCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+          "export": "adminUpdateCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+          "export": "adminDeleteCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+          "export": "getInstructors",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/arduino/new/page.tsx",
+          "export": "createTemplate",
+          "kind": "inline-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/codelab/new/page.tsx",
+          "export": "createTemplate",
+          "kind": "inline-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx",
+          "export": "saveTemplate",
+          "kind": "inline-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/logic-gate/new/page.tsx",
+          "export": "createTemplate",
+          "kind": "inline-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/pc-build/new/page.tsx",
+          "export": "createTemplate",
+          "kind": "inline-action"
+        }
+      ],
+      "kind": "ACTIONS",
+      "bytes": 202554,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-ACTIONS-02",
+      "file": "su-r2-actions-02.request.json",
+      "sha256": "713ea2635f16b17c4d4305a934c3300e8a411da1c3d73782b9c1d856562f1dff",
+      "assignedPaths": [
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/server-rack/new/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/server-rack/new/page.tsx",
+          "export": "createTemplate",
+          "kind": "inline-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/actions.ts",
+          "export": "sendBroadcast",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "getOrCreateSubmission",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "submitWork",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "unsubmitWork",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "addSubmissionLink",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "removeSubmissionAttachment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "addSubmissionFile",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "returnGrade",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+          "export": "updateGrade",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+          "export": "createSyllabusItem",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+          "export": "updateSyllabusItem",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+          "export": "deleteSyllabusItem",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "getGradebookData",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "updateGrade",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "upsertGrade",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "clearGrade",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "saveGradingPolicy",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+          "export": "exportGradebook",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "approveEnrollment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "declineEnrollment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "approveAllPending",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "sendPrivateComment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "getPrivateComments",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "createStudentGroup",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "updateStudentGroup",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+          "export": "deleteStudentGroup",
+          "kind": "server-action"
+        }
+      ],
+      "kind": "ACTIONS",
+      "bytes": 243527,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-ACTIONS-03",
+      "file": "su-r2-actions-03.request.json",
+      "sha256": "2b9a3df2ff8e33a4aa07e4f903667cb4c1bf8158db672ccf6fb803be61c15489",
+      "assignedPaths": [
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+        "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+        "apps/web/src/lib/skills/bulk-assign-instructor.ts",
+        "apps/web/src/lib/skills/bulk-user-ingestion.ts",
+        "apps/web/src/lib/skills/enrollment-manager.ts",
+        "apps/web/src/lib/skills/generate-course-code.ts"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+          "export": "createAnnouncement",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+          "export": "updateAnnouncement",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+          "export": "deleteAnnouncement",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "instructorCreateCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "instructorUpdateCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "createCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "updateCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "deleteCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "requestEnrollment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "joinWithCode",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "getDiscoverableCourses",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "unenrollFromCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "archiveCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "unarchiveCourse",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "reorderCourseCards",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+          "export": "updateCourseCoverImage",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/bulk-assign-instructor.ts",
+          "export": "bulkAssignInstructor",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/bulk-user-ingestion.ts",
+          "export": "bulkUserIngestion",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/enrollment-manager.ts",
+          "export": "enrollmentManager",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/generate-course-code.ts",
+          "export": "generateCourseCode",
+          "kind": "server-action"
+        }
+      ],
+      "kind": "ACTIONS",
+      "bytes": 219456,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-ACTIONS-04",
+      "file": "su-r2-actions-04.request.json",
+      "sha256": "980caa2bd23e5affbfc76ba26f9a616907c2b3194eb8d1f9b78ca1aadc6a054a",
+      "assignedPaths": [
+        "apps/web/src/lib/skills/group-permission-resolver.ts",
+        "apps/web/src/lib/skills/sentiment-flagger.ts",
+        "apps/web/src/lib/skills/gradebook-exporter.ts",
+        "apps/web/src/lib/skills/index.ts"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [
+        {
+          "path": "apps/web/src/lib/skills/group-permission-resolver.ts",
+          "export": "resolveGroupPermissions",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/sentiment-flagger.ts",
+          "export": "flagSentiment",
+          "kind": "server-action"
+        },
+        {
+          "path": "apps/web/src/lib/skills/gradebook-exporter.ts",
+          "export": "exportGradebookSkill",
+          "kind": "service"
+        }
+      ],
+      "kind": "ACTIONS",
+      "bytes": 151686,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-SHELL",
+      "file": "su-r2-shell.request.json",
+      "sha256": "9e9fc6307de2d95de565673735ac148d8505c42c93d9601b8e21060dd5e0aaa5",
+      "assignedPaths": [
+        "apps/web/src/middleware.ts",
+        "apps/web/src/app/(dashboard)/[institute]/layout.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/page.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/layout.tsx",
+        "apps/web/src/app/(dashboard)/[institute]/activities/sandbox/page.tsx",
+        "apps/web/src/components/layout/DashboardLayout.tsx",
+        "apps/web/src/components/layout/Topbar.tsx",
+        "apps/web/src/components/layout/Sidebar.tsx",
+        "apps/web/src/components/layout/MobileBottomNav.tsx",
+        "apps/web/src/components/layout/MobileMoreSheet.tsx"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [],
+      "kind": "SHELL",
+      "bytes": 273233,
+      "status": "NOT_DISPATCHED"
+    },
+    {
+      "id": "SU-R2-METADATA-AUDIT",
+      "file": "su-r2-metadata-audit.request.json",
+      "sha256": "bd4070b5a26cd6430cc915c6cb6b95302e06eee9214816007753fc51a9cecbb9",
+      "assignedPaths": [
+        "apps/web/src/lib/db.ts",
+        "apps/web/src/lib/rbac.ts",
+        "prisma/schema.prisma",
+        "tests/e2e/controlled/fixture.ts",
+        "apps/web/src/lib/skills/bulk-assign-instructor.ts"
+      ],
+      "assignedMethods": [],
+      "assignedExports": [
+        {
+          "path": "apps/web/src/lib/skills/bulk-assign-instructor.ts",
+          "export": "bulkAssignInstructor",
+          "kind": "server-action"
+        }
+      ],
+      "kind": "METADATA_AUDIT",
+      "bytes": 168133,
+      "status": "NOT_DISPATCHED"
+    }
+  ],
+  "dispatchStatus": "READY_FOR_APPROVED_ISOLATED_PROVIDER",
+  "independentReviewPassed": false,
+  "supplementaryTestsAuthorizedToStart": false,
+  "formalStagesAccepted": false,
+  "implementationApproval": false,
+  "parentRequestManifestSha256": "4fe45e7656a877bd67729bb328777c7fbb935e6f738181ed765fa30cbe1418a6",
+  "routeUnion": 120,
+  "httpMethodUnion": 171,
+  "actionFileUnion": 20,
+  "architectureReviewPassed": false,
+  "reviewStage": "PREPARATION_ONLY"
+}

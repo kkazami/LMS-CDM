@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Role Change API — Re-authenticated role escalation
  *
@@ -6,6 +7,7 @@
  * Requires admin re-authentication (password) to prevent unauthorized role escalation.
  */
 
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
@@ -27,9 +29,12 @@ type RouteContext = {
   params: Promise<{ userId: string }>;
 };
 
-const VALID_ROLES: UserRole[] = ['ADMIN', 'INSTRUCTOR', 'STUDENT'];
+const VALID_ROLES: UserRole[] = ['INSTRUCTOR', 'STUDENT'];
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH admin/users/[userId]/role/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const { userId } = await context.params;
@@ -48,9 +53,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const normalizedNewRole = normalizeRole(newRole);
-    if (!VALID_ROLES.includes(normalizedNewRole)) {
+    if (!VALID_ROLES.includes(normalizedNewRole) || !['INSTRUCTOR','STUDENT'].includes(canonicalRole(newRole))) {
       return NextResponse.json(
-        { message: `Invalid role: ${newRole}. Must be ADMIN, INSTRUCTOR, or STUDENT.` },
+        { message: `Invalid role: ${newRole}. Must be INSTRUCTOR or STUDENT.` },
         { status: 400 }
       );
     }
@@ -69,11 +74,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Check target user exists
     const targetUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, role: true, name: true, email: true },
+      select: { id: true, role: true, name: true, email: true, activationStatus: true },
     });
     if (!targetUser) {
       return NextResponse.json({ message: 'User not found.' }, { status: 404 });
     }
+    if (targetUser.activationStatus !== 'ACTIVE') return NextResponse.json({ message: 'Activate the student account before changing its role.' }, { status: 409 });
 
     const oldRole = normalizeRole(targetUser.role);
     if (oldRole === normalizedNewRole) {

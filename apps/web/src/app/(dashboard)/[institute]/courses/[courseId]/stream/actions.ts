@@ -1,10 +1,13 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
 import { createNotificationsForCourseStudents } from "@/lib/notifications";
+import { googleMeetLinks } from "@/lib/academic-structure/meeting-links";
 
 const announcementSchema = z.object({
   content: z.string().min(1, "Announcement cannot be empty."),
@@ -16,6 +19,8 @@ export async function createAnnouncement(
   prevState: { message: string },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#createAnnouncement", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const session = await getSession();
   if (!session) return { message: "Unauthorized" };
 
@@ -62,10 +67,13 @@ export async function createAnnouncement(
 
     // ── Notify all enrolled students about the new announcement ──
     const previewText = content.length > 60 ? content.slice(0, 57) + "…" : content;
+    // Keep complete meeting destinations even when the text preview cuts them off.
+    const previewLinks = new Set(googleMeetLinks(previewText));
+    const message = [previewText, ...googleMeetLinks(content).filter(link => !previewLinks.has(link))].join("\n");
     await createNotificationsForCourseStudents(courseId, {
       type: "ANNOUNCEMENT",
       title: "New Announcement",
-      message: `New announcement in ${course.code}: ${previewText}`,
+      message: `New announcement in ${course.code}: ${message}`,
       link: `/${instituteCode}/announcements`,
     });
 
@@ -86,6 +94,8 @@ export async function updateAnnouncement(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#updateAnnouncement", () => ({ institute: instituteCode, courseId, announcementId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -138,6 +148,8 @@ export async function deleteAnnouncement(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts#deleteAnnouncement", () => ({ institute: instituteCode, courseId, announcementId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 

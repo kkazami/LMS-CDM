@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { executeSkill } from "./index";
@@ -40,7 +42,10 @@ interface EnrollmentOutput {
 export async function enrollmentManager(
   input: EnrollmentInput
 ): Promise<SkillResult<EnrollmentOutput>> {
+  const actualActor = await requireLegacyActor("apps/web/src/lib/skills/enrollment-manager.ts#enrollmentManager");
+
   return executeSkill("enrollmentManager", async () => {
+    if (input.actorId !== actualActor.id) throw new Error("Forbidden actor.");
     const results: EnrollmentOutput["results"] = [];
 
     // Validate the actor has permission over this course
@@ -63,7 +68,8 @@ export async function enrollmentManager(
       throw new Error("Actor not found");
     }
 
-    const isInstructor = course.instructorId === input.actorId;
+    if (course.instituteId !== actualActor.instituteId) throw new Error("Forbidden institute.");
+    const isInstructor = ["PROFESSOR","TEACHER","INSTRUCTOR"].includes(actualActor.role.toUpperCase()) && course.instructorId === actualActor.id;
     const isAdmin = actor.role === "ADMIN";
 
     if (!isInstructor && !isAdmin) {

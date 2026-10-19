@@ -1,0 +1,1 @@
+{"type":"object","properties":{"requestId":{"type":"string","enum":["SU-V1-RETRY-STARTUP"]},"acknowledged":{"type":"boolean","enum":[true]}},"required":["requestId","acknowledged"],"additionalProperties":false}

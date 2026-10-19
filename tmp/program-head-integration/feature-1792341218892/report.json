@@ -1,0 +1,122 @@
+{
+  "startedAt": "2026-10-18T16:33:38.894Z",
+  "sharedDatabase": false,
+  "OSIsolation": false,
+  "checks": [
+    {
+      "name": "operator setup requires a real ICS Admin and preserves unrelated Calendar data",
+      "result": "PASS"
+    },
+    {
+      "name": "chart uses persisted memberships and ICS-only scope",
+      "result": "PASS"
+    },
+    {
+      "name": "real chart handler authenticates and rejects unknown/admin/student roles",
+      "result": "PASS"
+    },
+    {
+      "name": "head-only chart edit, stale version, origin and protected root",
+      "result": "PASS"
+    },
+    {
+      "name": "class list and Stream/Meet are read-only and program-scoped",
+      "result": "PASS"
+    },
+    {
+      "name": "audit failure rolls back chart and version atomically",
+      "result": "PASS"
+    },
+    {
+      "name": "current designation and account status are revalidated",
+      "result": "PASS"
+    },
+    {
+      "name": "database rejects application-minted program authority",
+      "result": "PASS"
+    },
+    {
+      "name": "existing Calendar data and timestamp semantics remain intact",
+      "result": "PASS"
+    },
+    {
+      "name": "restricted local writer qualifies only with actual guards and bindings",
+      "result": "PASS"
+    },
+    {
+      "name": "Administrator class program mapping preserves instructor, section and enrollments",
+      "result": "PASS"
+    },
+    {
+      "name": "single Administrator preserves existing login and rejects the retired role and public reset",
+      "result": "PASS"
+    },
+    {
+      "name": "database prevents Administrator promotion, credential forgery and institute transfer",
+      "result": "PASS"
+    },
+    {
+      "name": "existing ICS Administrator assigns and revokes Program Head without changing instructor role",
+      "result": "PASS"
+    },
+    {
+      "name": "Administrator faculty mutation and newly-created instructor roll back on audit failure",
+      "result": "PASS"
+    },
+    {
+      "name": "Administrator direct APIs and RSC scope deny foreign institutes, protected targets and global permissions",
+      "result": "PASS"
+    },
+    {
+      "name": "callable administration binds real actor and institute before writes",
+      "result": "PASS"
+    },
+    {
+      "name": "pictured instructor create/edit forms persist optional programs and enforce ownership",
+      "result": "FAIL",
+      "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    code: 'PROGRAM-FORM',\n    courseCode: 'Z6QNF9',\n    coverImage: '',\n    createdAt: 2026-10-18T16:33:51.475Z,\n...\n    title: 'Program form fixture',\n+   updatedAt: 2026-10-18T16:33:51.515Z\n-   updatedAt: 2026-10-18T16:33:51.490Z\n  }\n"
+    }
+  ],
+  "schemaCommand": {
+    "command": "pnpm exec prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    "code": 0,
+    "signal": null,
+    "stderr": "Loaded Prisma config from prisma.config.ts.\n\n"
+  },
+  "target": {
+    "database": "harness_superuser_1792341226449",
+    "port": 61752,
+    "host": "127.0.0.1",
+    "provenance": ".orchestra\\product-development\\program-head-integration\\local_1792341220740_b6d2ae53"
+  },
+  "boundaryInstallation": {
+    "commitAcknowledged": true,
+    "runtimePrincipal": "lms_local_runtime",
+    "operatorPrincipal": "lms_local_operator",
+    "files": [
+      {
+        "path": "prisma/super-user-v1/current-target-security.sql",
+        "sha256": "2b6975b8a08345971e2f35e8819d1946e5aefddff079a8ba44964abafa6972d3"
+      },
+      {
+        "path": "prisma/super-user-v1/guard-validation.sql",
+        "sha256": "c2ed136ba091470ca9f08d1bc8e0a88fd73b6534a20d88a30f6c7b2282dff95d"
+      },
+      {
+        "path": "prisma/super-user-v1/ics-faculty-designation.sql",
+        "sha256": "22408a30e5d831c872087492a7ef79760fa54a9b3af38dea952b8faab0113800"
+      },
+      {
+        "path": "prisma/super-user-v1/course-program-assignment.sql",
+        "sha256": "477b50b7a39d865fef63ce245630a0da6b864c5a4eed14668dda896e76341e74"
+      }
+    ]
+  },
+  "administratorSuccessorSHA256": "c7e525b50b45625eb6957264151d19249837dc10034130db9dd2f07cd3f34b9f",
+  "error": {
+    "name": "AssertionError",
+    "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    code: 'PROGRAM-FORM',\n    courseCode: 'Z6QNF9',\n    coverImage: '',\n    createdAt: 2026-10-18T16:33:51.475Z,\n...\n    title: 'Program form fixture',\n+   updatedAt: 2026-10-18T16:33:51.515Z\n-   updatedAt: 2026-10-18T16:33:51.490Z\n  }\n"
+  },
+  "clusterStopped": true,
+  "finishedAt": "2026-10-18T16:33:53.110Z"
+}

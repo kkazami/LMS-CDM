@@ -1,0 +1,106 @@
+name: Engineering harness safety
+on:
+  pull_request:
+    paths:
+      - '.orchestra/**'
+      - '.agents/**'
+      - 'scripts/harness*'
+      - 'scripts/harness/**'
+      - 'tests/harness/**'
+      - 'tests/harness-integration/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/harness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controller-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: harness
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: harness_admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U harness -d harness_admin"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://harness:harness@127.0.0.1:5432/harness_ci
+      pnpm_config_verify_deps_before_run: error
+      pnpm_config_pm_on_fail: error
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: mkdir -p .orchestra/runs/ci-logs
+      - run: |
+          set -o pipefail
+          pnpm --version | tee .orchestra/runs/ci-logs/pnpm-version.log
+          pnpm harness:typecheck 2>&1 | tee .orchestra/runs/ci-logs/typecheck.log
+      - run: |
+          set -o pipefail
+          pnpm harness:test 2>&1 | tee .orchestra/runs/ci-logs/tests.log
+      - run: |
+          set -o pipefail
+          pnpm harness:check 2>&1 | tee .orchestra/runs/ci-logs/static.log
+      - name: Actual disposable PostgreSQL migration and recovery
+        env:
+          HARNESS_TEST_DATABASE_URL: postgresql://harness:disposable-ci-only@127.0.0.1:5432/harness_admin
+          HARNESS_ENVIRONMENT_ID: disposable-postgres17-ci-fixture
+          HARNESS_RESULT_PATH: .orchestra/runs/ci-logs/database-result.json
+        run: |
+          set -o pipefail
+          pnpm exec tsx scripts/harness/database-rehearsal.ts --spec .orchestra/harness/fixtures/database/rehearsal.json 2>&1 | tee .orchestra/runs/ci-logs/database.log
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import path from 'node:path';
+          const result=JSON.parse(fs.readFileSync(process.env.HARNESS_RESULT_PATH,'utf8'));
+          const output='.orchestra/runs/ci-logs/database-evidence'; fs.mkdirSync(output);
+          for(const file of fs.readdirSync(result.evidenceDir)) if(/^prisma-\d+\.log$|^cleanup\.json$/.test(file)) fs.copyFileSync(path.join(result.evidenceDir,file),path.join(output,file));
+          NODE
+      - name: Actual protected signer negative cases (no feature approval)
+        env:
+          HARNESS_DOCKER_CLI: /usr/bin/docker
+          HARNESS_SIGNER_SERVICE: .orchestra/runs/ci-logs/signer-service.json
+          HARNESS_RESULT_PATH: .orchestra/runs/ci-logs/signer-result.json
+          HARNESS_ENVIRONMENT_ID: disposable-signer-ci-regression
+        run: |
+          set -o pipefail
+          docker pull node:22-bookworm-slim
+          export HARNESS_SIGNER_PASSPHRASE="$(openssl rand -hex 32)"
+          echo "::add-mask::$HARNESS_SIGNER_PASSPHRASE"
+          pnpm exec tsx scripts/harness-signer.ts provision --service "$HARNESS_SIGNER_SERVICE" 2>&1 | tee .orchestra/runs/ci-logs/signer-provision.log
+          node --import tsx --test --test-reporter ./scripts/harness/test-reporter.cjs tests/harness-integration/signer.test.ts 2>&1 | tee .orchestra/runs/ci-logs/signer.log
+      - name: Remove exact owned disposable signer volume
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const file='.orchestra/runs/ci-logs/signer-service.json';
+          if(fs.existsSync(file)) {
+            const service=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(!/^harness-signer-[a-f0-9-]+$/.test(service.volume)) throw Error('Unsafe signer volume');
+            const owner=execFileSync('docker',['volume','inspect',service.volume,'--format','{{index .Labels "harness.owner"}}'],{encoding:'utf8'}).trim();
+            if(owner!==service.owner) throw Error('Signer volume owner changed');
+            execFileSync('docker',['volume','rm',service.volume],{stdio:'inherit'});
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: harness-verification-logs
+          path: .orchestra/runs/ci-logs/
+          retention-days: 7
+      # This job validates harness controls only. It does not create a product release gate.

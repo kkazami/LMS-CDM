@@ -1,0 +1,16 @@
+{
+  "attempt": "local_1792312917638_6e12f7ed",
+  "database": "harness_superuser_1792312922378",
+  "port": 57983,
+  "host": "127.0.0.1",
+  "principals": [
+    "bqual_bootstrap_admin",
+    "bqual_test_migrator",
+    "bqual_test_app",
+    "bqual_test_operator"
+  ],
+  "emptyOwnedDatabase": true,
+  "OSIsolation": false,
+  "realAccounts": false,
+  "sharedTarget": false
+}

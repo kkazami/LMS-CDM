@@ -1,0 +1,36 @@
+{
+  "sqlPath": "prisma/super-user-v1/program-head-instructors.sql",
+  "sqlSHA256": "9f5ccbd08e3c70bf574c776f4e4d81c9cf591e02ae64177f5a3aa079b3f4ee87",
+  "startedAt": "2026-10-18T17:51:02.912Z",
+  "status": "VERIFIED",
+  "targetFingerprint": "4a6da0604ae3ae37",
+  "ownerPrincipal": "neondb_owner",
+  "runtimePrincipal": "lms_web_runtime_v1",
+  "before": {
+    "courses": 7,
+    "coursedigest": "ca38eb4780d9867cfc5816b9cb747949",
+    "enrollments": 32,
+    "enrollmentdigest": "eada972300a0654f871a68acab3a9fb0",
+    "membershipdigest": "3697202e5f7c75289d20533460b07c22",
+    "headdigest": "9af2f570c3b6e76e410be1f3a2db3f15"
+  },
+  "after": {
+    "courses": 7,
+    "coursedigest": "ca38eb4780d9867cfc5816b9cb747949",
+    "enrollments": 32,
+    "enrollmentdigest": "eada972300a0654f871a68acab3a9fb0",
+    "membershipdigest": "3697202e5f7c75289d20533460b07c22",
+    "headdigest": "9af2f570c3b6e76e410be1f3a2db3f15"
+  },
+  "grants": {
+    "runtime_can_execute": true,
+    "permits_private": true
+  },
+  "runtimeVerification": {
+    "installed": true,
+    "executable": true,
+    "qualified": true
+  },
+  "unauthenticatedCallDenied": true,
+  "finishedAt": "2026-10-18T17:51:04.026Z"
+}

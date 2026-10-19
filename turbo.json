@@ -60,7 +60,11 @@
         "RATE_LIMIT_API_WINDOW_MS",
         "RATE_LIMIT_API_MAX",
         "RATE_LIMIT_UPLOAD_WINDOW_MS",
-        "RATE_LIMIT_UPLOAD_MAX"
+        "RATE_LIMIT_UPLOAD_MAX",
+        "APP_BASE_URL",
+        "CRON_SECRET",
+        "EMAIL_INVITATIONS_ENABLED",
+        "EMAIL_DAILY_LIMIT"
       ],
       "outputs": [
         "dist/**",

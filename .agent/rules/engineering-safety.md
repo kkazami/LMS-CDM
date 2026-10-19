@@ -1,14 +1,19 @@
 ---
 trigger: model_decision
-description: Engineering safety policies for the AI Software Engineering Harness
+description: Mandatory engineering safety floor for every harness profile
 ---
-- Test Agent designs/writes tests. Test Runner executes them. These are SEPARATE roles.
-- The Test Runner is deterministic infrastructure. It does NOT use an LLM to decide pass/fail. Exit code 0 = pass.
-- Tests must be derived from requirements and expected user behavior, not from implementation details.
-- After any repair, ALL mandatory verification re-runs.
-- Repair loop bounded to 5 iterations. After 5: HUMAN_REVIEW_REQUIRED.
-- High-risk changes (database migrations, auth/RBAC changes, production deployment) require human approval.
-- Never commit credentials in test source. Use environment variables for E2E test credentials.
-- Keep .auth/ state gitignored. Never use production credentials.
-- Parallel test execution requires isolated test accounts/data.
-- Browser error capture must include: console errors, page errors/uncaught exceptions, failed network requests, relevant request/response failures. Use allowlist for known noise.
+- Use the v2 controller; never create PASS by editing state or declaring success.
+- Requirements, recon/proposal, architecture attack and adjudication precede authoritative planning.
+- Distinct creator, test author, QA, security, architecture and release sessions are mandatory.
+- The host binds actor IDs to real sessions and enforces file/tool access. Prompts are not a sandbox.
+- HIGH/CRITICAL plans (auth/RBAC, database, migrations, privacy, API boundaries, harness controls) require an externally signed human approval after planning. Production, secrets, destructive and bulk-data operations are CRITICAL.
+- Approval is bound to exact reviewed artifacts; a new plan requires new approval.
+- Never lower risk or remove criteria to pass. Profiles and skills cannot waive safety gates.
+- Test author writes tests. Runner executes commands and captures evidence. QA inspects results.
+- After repair, rerun ALL mandatory checks and all independent reviews. Maximum five repairs; three repeated identical failures escalate earlier.
+- Direct server/API negative tests cover unauthenticated, wrong role/owner/institute/program, ID tampering, privilege escalation and data exposure. UI visibility is insufficient.
+- Schema validation/build/generate do not prove migration safety. Rehearse fresh replay and existing upgrade on disposable local PostgreSQL, then check compatibility, preservation and recovery.
+- Never use production test credentials. Only local harness_* disposable databases are permitted by the runner.
+- Secrets, auth state and raw sensitive payloads do not enter agent context. Reports/logs are sanitized; human review must still check for unrecognized sensitive output.
+- Deployment is separate, requires fresh release evidence and a new human approval, and never retries automatically after uncertain outcomes.
+- User authorization takes precedence over workflow defaults. Record explicit authorization through the trusted host approval channel; do not fabricate it.

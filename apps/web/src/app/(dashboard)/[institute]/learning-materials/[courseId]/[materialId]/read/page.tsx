@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { getSession } from "@/lib/auth-session";
@@ -25,6 +26,8 @@ interface Props {
 }
 
 export default async function ReadingScreenPage({ params, searchParams }: Props) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/learning-materials/[courseId]/[materialId]/read/page.tsx", await params);
+
   const { institute, courseId, materialId } = await params;
   const { attachmentId } = await searchParams;
   const session = await getSession();

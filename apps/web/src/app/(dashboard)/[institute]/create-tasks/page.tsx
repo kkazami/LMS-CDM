@@ -1,4 +1,7 @@
-export default function CreateTasksPage() {
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+export default async function CreateTasksPage() {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/create-tasks/page.tsx");
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">Create Tasks</h2>

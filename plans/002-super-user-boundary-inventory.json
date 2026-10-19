@@ -1,0 +1,1301 @@
+{
+  "version": 1,
+  "kind": "read-only-server-boundary-inventory",
+  "runId": "run_superuser_20261004",
+  "sourceDigest": "9c4cc7834a8615bfad1b11fe243287a49af292a866103dfe7e0de50b3922a1af",
+  "routeFiles": 120,
+  "actionFiles": 20,
+  "routeNotes": "Handler declarations parsed from source; aliased POST on activities/codelab/invalidate resolves to codelab/instructor/reject. Include public/support/service distinctions in review; inventory is not runtime coverage.",
+  "routes": [
+    {
+      "path": "apps/web/src/app/api/activities/codelab/invalidate/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/activities/submit/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/audit-logs/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/permissions/route.ts",
+      "handlers": [
+        "GET",
+        "PUT"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/[userId]/reset-password/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/[userId]/role/route.ts",
+      "handlers": [
+        "PATCH"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/[userId]/route.ts",
+      "handlers": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/[userId]/status/route.ts",
+      "handlers": [
+        "PATCH"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/bulk/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/admin/users/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "requireAdmin"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/analytics/at-risk/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/announcements/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/assignments/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/auth/change-password/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/auth/forgot-password/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/auth/login/route.ts",
+      "handlers": [
+        "OPTIONS",
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/auth/logout/route.ts",
+      "handlers": [
+        "OPTIONS",
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/auth/me/route.ts",
+      "handlers": [
+        "OPTIONS",
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/auth/refresh/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/auth/register/route.ts",
+      "handlers": [
+        "OPTIONS",
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/auth/reset-password/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/auth/sessions/route.ts",
+      "handlers": [
+        "DELETE"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/courses/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/evaluate/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility",
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/instructor/alert/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/instructor/reject/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/progress/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkActivityEligibility",
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/run-tests/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/run/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/share/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/codelab/tutor/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility",
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/broadcast/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/classwork/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/enrollments/route.ts",
+      "handlers": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/gradebook/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/grades/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/people/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/stream/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/submissions/grade/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[courseId]/submissions/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/courses/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/auto-generate/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/cards/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/complete-session/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/decks/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/file-info/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/progress/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/flashcards/study/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/badges/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/commend/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/heartbeat/route.ts",
+      "handlers": [
+        "OPTIONS",
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/incentives/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/new-badges/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/gamification/privacy/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/auth/callback/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/auth/connect/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/auth/disconnect/route.ts",
+      "handlers": [
+        "DELETE"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/auth/status/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/comments/[id]/resolve/route.ts",
+      "handlers": [
+        "PATCH"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/comments/route.ts",
+      "handlers": [
+        "POST",
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/actions/runs/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/commits/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/contents/[...path]/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/[owner]/[repo]/tree/[sha]/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/link/[id]/route.ts",
+      "handlers": [
+        "GET",
+        "DELETE"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/repos/link/route.ts",
+      "handlers": [
+        "POST",
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/submissions/route.ts",
+      "handlers": [
+        "POST",
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/github/webhooks/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/grades/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/health/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/institutes/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/integrity/events/route.ts",
+      "handlers": [
+        "POST",
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/judge0/submit/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkActivityEligibility",
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/admin/deanonymize/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/admin/posts/[postId]/route.ts",
+      "handlers": [
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/admin/posts/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/ai/draft-answer/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/ai/improve-question/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/ai/suggest-duplicates/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/ai/summarize/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/analytics/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/accept/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/route.ts",
+      "handlers": [
+        "DELETE"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/answers/[answerId]/verify/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/bookmark/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/comments/[commentId]/route.ts",
+      "handlers": [
+        "DELETE"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/comments/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/digest/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/flag/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/follow/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/moderation/action/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/moderation/queue/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/notifications/read/route.ts",
+      "handlers": [
+        "PATCH"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/notifications/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/answers/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/posts/[postId]/route.ts",
+      "handlers": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/posts/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/search/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/tags/route.ts",
+      "handlers": [
+        "GET",
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/knowledge-exchange/vote/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "checkKxEligibility"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/leaderboard/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/materials/annotations/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/materials/complete/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/notifications/push-token/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/notifications/route.ts",
+      "handlers": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/notifications/subscribe/route.ts",
+      "handlers": [
+        "POST",
+        "DELETE"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/profile/avatar/route.ts",
+      "handlers": [
+        "PUT"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/profile/route.ts",
+      "handlers": [
+        "GET",
+        "PUT"
+      ],
+      "auth": [
+        "getSessionFromRequest"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/public/leaderboard/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": []
+    },
+    {
+      "path": "apps/web/src/app/api/settings/route.ts",
+      "handlers": [
+        "PATCH"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/study-sessions/route.ts",
+      "handlers": [
+        "POST",
+        "GET"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/todo/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/upload/route.ts",
+      "handlers": [
+        "POST"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/users/[userId]/public/route.ts",
+      "handlers": [
+        "GET"
+      ],
+      "auth": [
+        "getSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/workspace/events/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/workspace/notes/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/api/workspace/tasks/route.ts",
+      "handlers": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": [
+        "requireWorkspaceSession"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/admin/courses/actions.ts",
+      "inline": false,
+      "exports": [
+        "adminCreateCourse",
+        "adminUpdateCourse",
+        "adminDeleteCourse",
+        "getInstructors"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/arduino/new/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/codelab/new/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/instructor/templates/[templateId]/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/logic-gate/new/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/pc-build/new/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/activities/server-rack/new/page.tsx",
+      "inline": true,
+      "exports": []
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/actions.ts",
+      "inline": false,
+      "exports": [
+        "sendBroadcast"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts",
+      "inline": false,
+      "exports": [
+        "getOrCreateSubmission",
+        "submitWork",
+        "unsubmitWork",
+        "addSubmissionLink",
+        "removeSubmissionAttachment",
+        "addSubmissionFile",
+        "returnGrade",
+        "updateGrade"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts",
+      "inline": false,
+      "exports": [
+        "createSyllabusItem",
+        "updateSyllabusItem",
+        "deleteSyllabusItem"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts",
+      "inline": false,
+      "exports": [
+        "getGradebookData",
+        "updateGrade",
+        "upsertGrade",
+        "clearGrade",
+        "saveGradingPolicy",
+        "exportGradebook"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts",
+      "inline": false,
+      "exports": [
+        "approveEnrollment",
+        "declineEnrollment",
+        "approveAllPending",
+        "sendPrivateComment",
+        "getPrivateComments",
+        "createStudentGroup",
+        "updateStudentGroup",
+        "deleteStudentGroup"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts",
+      "inline": false,
+      "exports": [
+        "createAnnouncement",
+        "updateAnnouncement",
+        "deleteAnnouncement"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/courses/actions.ts",
+      "inline": false,
+      "exports": [
+        "instructorCreateCourse",
+        "instructorUpdateCourse",
+        "createCourse",
+        "updateCourse",
+        "deleteCourse",
+        "requestEnrollment",
+        "joinWithCode",
+        "getDiscoverableCourses",
+        "unenrollFromCourse",
+        "archiveCourse",
+        "unarchiveCourse",
+        "reorderCourseCards",
+        "updateCourseCoverImage"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/bulk-assign-instructor.ts",
+      "inline": false,
+      "exports": [
+        "bulkAssignInstructor"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/bulk-user-ingestion.ts",
+      "inline": false,
+      "exports": [
+        "bulkUserIngestion"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/enrollment-manager.ts",
+      "inline": false,
+      "exports": [
+        "enrollmentManager"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/generate-course-code.ts",
+      "inline": false,
+      "exports": [
+        "generateCourseCode"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/group-permission-resolver.ts",
+      "inline": false,
+      "exports": [
+        "resolveGroupPermissions"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/skills/sentiment-flagger.ts",
+      "inline": false,
+      "exports": [
+        "flagSentiment"
+      ]
+    }
+  ],
+  "additionalService": {
+    "path": "apps/web/src/lib/skills/gradebook-exporter.ts",
+    "exports": [
+      "exportGradebookSkill"
+    ],
+    "reason": "Non-action grade export service has direct sensitive DB reads; guard at authenticated callers and service boundary."
+  }
+}

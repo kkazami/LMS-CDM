@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "desktop",
+  "agents": [
+    "requirement",
+    "recon",
+    "architecture-red-team",
+    "architecture-adjudicator",
+    "planner",
+    "executor",
+    "test",
+    "runner",
+    "qa",
+    "security",
+    "code-review",
+    "release"
+  ],
+  "skillsOptional": [],
+  "safetyFloor": "Compiled from actual planned targets, not the selected profile",
+  "requiresBrowserVerification": false,
+  "validation": [
+    "desktop-typecheck",
+    "desktop-build",
+    "desktop-behavior",
+    "runtime-regression"
+  ],
+  "approval": "Derived from paths/operations; always separate human approval for deployment"
+}

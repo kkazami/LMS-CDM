@@ -1,18 +1,32 @@
 {
-  "name": "Frontend",
-  "intent": ["feature", "refactor", "bug_fix"],
-  "domain": ["frontend", "ui"],
+  "version": 2,
+  "name": "frontend",
+  "agents": [
+    "requirement",
+    "recon",
+    "architecture-red-team",
+    "architecture-adjudicator",
+    "planner",
+    "executor",
+    "test",
+    "runner",
+    "qa",
+    "security",
+    "code-review",
+    "release"
+  ],
+  "skillsOptional": [
+    "impeccable",
+    "vercel-react-best-practices"
+  ],
+  "safetyFloor": "Compiled in scripts/harness/gates.ts; no profile/quality waiver",
   "requiresBrowserVerification": true,
-  "agents": {
-    "standard": ["requirement", "planner", "executor", "test", "qa"],
-    "strict": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"],
-    "maximum": ["requirement", "planner", "executor", "test", "qa", "security", "code-review"]
-  },
-  "checks": {
-    "standard": ["typecheck", "build", "playwright-e2e"],
-    "strict": ["typecheck", "build", "playwright-e2e", "security-scan", "code-review"],
-    "maximum": ["typecheck", "build", "playwright-e2e", "security-scan", "code-review", "accessibility", "visual-regression"]
-  },
-  "skills": ["impeccable", "vercel-react-best-practices", "design-taste-frontend", "web-design-guidelines", "full-output-enforcement"],
-  "knowledge": ["PRODUCT.md", "DESIGN.md", "CONVENTIONS.md"]
+  "validation": [
+    "web-typecheck",
+    "web-build",
+    "runtime-regression"
+  ],
+  "database": "All nine database domains when applicable",
+  "security": "Independent reviewer always; direct boundary tests for sensitive product changes",
+  "approval": "Derived from actual paths and operations, never profile preference"
 }

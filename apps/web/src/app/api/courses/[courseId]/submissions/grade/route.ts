@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -16,6 +17,9 @@ interface RouteContext {
  * Evaluates and returns a student submission with score, feedback, EXP incentives, and notification.
  */
 export async function POST(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "POST courses/[courseId]/submissions/grade/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

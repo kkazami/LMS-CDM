@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
  * Returns real enrollment-gated grades and summaries for the authenticated student.
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET grades/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

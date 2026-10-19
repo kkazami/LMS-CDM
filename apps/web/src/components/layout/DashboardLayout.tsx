@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import dynamic from "next/dynamic";
 import Sidebar from "@/components/layout/Sidebar";
 import type { EnrolledCourseSummary } from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
@@ -9,12 +10,13 @@ import Toaster from "@/components/common/Toast";
 import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { ChatbotProvider } from "@/lib/chatbot-context";
-import ChatbotWidget from "@/components/common/ChatbotWidget";
-import BadgeToastProvider from "@/components/common/BadgeToast";
-import LoginRewardModal from "@/components/common/LoginRewardModal";
-import FloatingStudyTimer from "@/components/common/FloatingStudyTimer";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import type { InstituteTheme } from "@/lib/theme";
+
+const ChatbotWidget = dynamic(() => import("@/components/common/ChatbotWidget"));
+const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"));
+const LoginRewardModal = dynamic(() => import("@/components/common/LoginRewardModal"));
+const FloatingStudyTimer = dynamic(() => import("@/components/common/FloatingStudyTimer"));
 
 interface DashboardLayoutProps {
   instituteCode: string;
@@ -60,8 +62,8 @@ export default function DashboardLayout({
   userId,
   children,
 }: DashboardLayoutProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
 
@@ -123,7 +125,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+        <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
         }`}>
           <Topbar
@@ -155,14 +157,14 @@ export default function DashboardLayout({
         userRole={userRole}
         userName={userName}
         avatarUrl={avatarUrl ?? null}
+        isEligibleForActivities={isEligibleForActivities}
+        isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
       />
-
-      {/* Gamification Badge Toasts */}
-      <BadgeToastProvider />
 
       {/* Student Gamification Widgets */}
       {isStudent && (
         <>
+          <BadgeToastProvider />
           {loginRewardExp > 0 && (
             <LoginRewardModal
               userId={userId}

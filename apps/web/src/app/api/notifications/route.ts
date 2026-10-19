@@ -1,5 +1,7 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth-session";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { parseNotificationLimit } from "@/lib/notifications-limit";
 
@@ -11,8 +13,11 @@ export const dynamic = "force-dynamic";
  * Returns { notifications: [...], unreadCount: number }
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET notifications/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
-    const session = await getSessionFromRequest(request);
+    const session = (await getSession()) || (await getSessionFromRequest(request));
     if (!session) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
@@ -52,33 +57,48 @@ export async function GET(request: Request) {
 
 /**
  * PATCH /api/notifications
- * Body: { action: "markAllRead" } or { action: "markRead", id: "..." }
+ * Body: { action: "markAllRead" } or { action: "markRead", id: "..." } or { id: "..." } or { ids: [...] }
  */
 export async function PATCH(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH notifications/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
-    const session = await getSessionFromRequest(request);
+    const session = (await getSession()) || (await getSessionFromRequest(request));
     if (!session) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
     const userId = session.user.id;
-    const body = (await request.json()) as { action?: string; id?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      action?: string;
+      id?: string;
+      ids?: string[];
+    };
 
     if (body.action === "markAllRead") {
-      await db.notification.updateMany({
+      const res = await db.notification.updateMany({
         where: { userId, isRead: false },
         data: { isRead: true },
       });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, count: res.count });
     }
 
-    if (body.id || (body.action === "markRead" && body.id)) {
-      const notifId = body.id!;
-      await db.notification.updateMany({
+    if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
+      const res = await db.notification.updateMany({
+        where: { id: { in: body.ids }, userId },
+        data: { isRead: true },
+      });
+      return NextResponse.json({ success: true, count: res.count });
+    }
+
+    const notifId = body.id || (body.action === "markRead" ? body.id : undefined);
+    if (notifId) {
+      const res = await db.notification.updateMany({
         where: { id: notifId, userId },
         data: { isRead: true },
       });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, count: res.count });
     }
 
     return NextResponse.json({ message: "Invalid action." }, { status: 400 });

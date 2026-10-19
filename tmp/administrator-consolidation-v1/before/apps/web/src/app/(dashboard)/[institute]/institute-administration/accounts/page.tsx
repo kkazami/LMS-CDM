@@ -1,0 +1,2 @@
+import LowerTierAccountManagement from '@/components/super-user-v1/LowerTierAccountManagement';
+export default async function Accounts({ params }: { params: Promise<{ institute: string }> }) { const { institute } = await params; return <LowerTierAccountManagement institute={institute} />; }

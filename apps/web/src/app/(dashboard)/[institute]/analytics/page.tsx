@@ -1,5 +1,5 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import AnalyticsClient from "./client";
@@ -17,27 +17,21 @@ export default async function AnalyticsPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
-  const { institute } = await params;
-  const session = await getSession();
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/analytics/page.tsx", await params);
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
+  const { institute } = await params;
 
   const theme = getInstituteTheme(institute);
-  const role = (session.user.role as string).toUpperCase();
+  const role = (user.role as string).toUpperCase();
 
   // Instructor/Admin only
   if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
     redirect(`/${institute}`);
   }
 
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true },
-  });
+  const instituteRecord = user.institute;
 
-  if (!instituteRecord) {
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 
@@ -46,7 +40,7 @@ export default async function AnalyticsPage({
     where:
       role === "ADMIN"
         ? { instituteId: instituteRecord.id, isArchived: false }
-        : { instructorId: session.user.id, instituteId: instituteRecord.id, isArchived: false },
+        : { instructorId: user.id, instituteId: instituteRecord.id, isArchived: false },
     select: { id: true, title: true, code: true },
     orderBy: { code: "asc" },
   });

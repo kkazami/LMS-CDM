@@ -123,19 +123,12 @@ export default function SearchModal({
       {
         id: "admin-accounts",
         title: "Account Management",
-        subtitle: "Manage students, instructors, and administrator accounts",
+        subtitle: "Manage students and instructors in your institute",
         category: "Administration",
         href: `/${instituteCode}/accounts`,
         icon: Users,
       },
-      {
-        id: "admin-permissions",
-        title: "Permissions Matrix",
-        subtitle: "Role-based access control and privilege assignments",
-        category: "Administration",
-        href: `/${instituteCode}/accounts/permissions`,
-        icon: ShieldCheck,
-      },
+      ...(instituteCode === 'ics' ? [{ id: 'admin-faculty', title: 'Faculty & Program Heads', subtitle: 'Assign BSIT and BSCpE faculty', category: 'Administration' as const, href: '/ics/admin/faculty', icon: Users }] : []),
       {
         id: "admin-logs",
         title: "Audit Logs",
@@ -238,7 +231,7 @@ export default function SearchModal({
       {
         id: "prof-codelab",
         title: "CodeLab Analytics",
-        subtitle: "Student code submission telemetry and execution metrics",
+        subtitle: "Student progress, coding errors, and submissions",
         category: "Activities",
         href: `/${instituteCode}/activities/codelab/instructor`,
         icon: Terminal,

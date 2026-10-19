@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1600" viewBox="0 0 1120 1600">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#52616b"/></marker></defs>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif" fill="#172027">
+<text x="560.0" y="33" text-anchor="middle" font-size="25" font-weight="bold">STUDENT VIEW - COURSE ENROLLMENT</text>
+<text x="560.0" y="59" text-anchor="middle" font-size="16" fill="#52616b">A valid join code creates a pending request, not immediate course access.</text>
+<polyline points="540,140 540,185" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,250 540,300" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="370,372.5 300,372.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="175,300 175,217.5 390,217.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,445 540,500" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="710,572.5 790,572.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="930,600 1090,600 1090,1522.5 690,1522.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,645 540,705" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,780 540,830" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="690,867.5 735,867.5 735,1470 540,1470 540,1490" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,905 540,990" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="7 5"/>
+<polyline points="540,1065 540,1120" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="370,1185 190,1185 190,1310" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="710,1185 920,1185 920,1310" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1250 540,1310" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="190,1390 190,1522.5 390,1522.5" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="920,1390 920,1450 590,1450 590,1490" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<polyline points="540,1390 540,1490" fill="none" stroke="#52616b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<ellipse cx="540.0" cy="110.0" rx="150.0" ry="30.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="116.0" text-anchor="middle" font-size="18">Student Selects Join Course</text>
+<polygon points="408,185 690,185 672,250 390,250" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="223.5" text-anchor="middle" font-size="18">Enter Course Join Code</text>
+<polygon points="540.0,300 710,372.5 540.0,445 370,372.5" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="366.5" text-anchor="middle" font-size="18">Code Valid and Course</text><text x="540.0" y="390.5" text-anchor="middle" font-size="18">in Authorized Institute?</text>
+<rect x="50" y="300" width="250" height="90" fill="white" stroke="#263238" stroke-width="1.8"/><text x="175.0" y="339.0" text-anchor="middle" font-size="18">Show Invalid Code /</text><text x="175.0" y="363.0" text-anchor="middle" font-size="18">Institute Error</text>
+<polygon points="540.0,500 710,572.5 540.0,645 370,572.5" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="566.5" text-anchor="middle" font-size="18">Existing Approved or</text><text x="540.0" y="590.5" text-anchor="middle" font-size="18">Pending Enrollment?</text>
+<rect x="790" y="510" width="280" height="90" fill="white" stroke="#263238" stroke-width="1.8"/><text x="930.0" y="549.0" text-anchor="middle" font-size="18">Show Existing Status;</text><text x="930.0" y="573.0" text-anchor="middle" font-size="18">Do Not Create Duplicate</text>
+<rect x="390" y="705" width="300" height="75" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="736.5" text-anchor="middle" font-size="18">Save Pending</text><text x="540.0" y="760.5" text-anchor="middle" font-size="18">Enrollment Request</text>
+<rect x="390" y="830" width="300" height="75" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="861.5" text-anchor="middle" font-size="18">Show Pending Status;</text><text x="540.0" y="885.5" text-anchor="middle" font-size="18">Course Access Not Granted</text>
+<rect x="390" y="990" width="300" height="75" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="1021.5" text-anchor="middle" font-size="18">Assigned Instructor</text><text x="540.0" y="1045.5" text-anchor="middle" font-size="18">Reviews Request</text>
+<polygon points="540.0,1120 710,1185.0 540.0,1250 370,1185.0" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="1191.0" text-anchor="middle" font-size="18">Recorded Request Status?</text>
+<rect x="50" y="1310" width="280" height="80" fill="white" stroke="#263238" stroke-width="1.8"/><text x="190.0" y="1344.0" text-anchor="middle" font-size="18">APPROVED</text><text x="190.0" y="1368.0" text-anchor="middle" font-size="18">Course Access Granted</text>
+<rect x="780" y="1310" width="280" height="80" fill="white" stroke="#263238" stroke-width="1.8"/><text x="920.0" y="1344.0" text-anchor="middle" font-size="18">REJECTED</text><text x="920.0" y="1368.0" text-anchor="middle" font-size="18">Course Access Not Granted</text>
+<rect x="390" y="1310" width="300" height="80" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="1344.0" text-anchor="middle" font-size="18">PENDING</text><text x="540.0" y="1368.0" text-anchor="middle" font-size="18">Await Instructor Decision</text>
+<ellipse cx="540.0" cy="1522.5" rx="150.0" ry="32.5" fill="white" stroke="#263238" stroke-width="1.8"/><text x="540.0" y="1528.5" text-anchor="middle" font-size="18">Return to Student Dashboard</text>
+<rect x="319.0" y="338" width="28" height="21" fill="white"/><text x="333" y="354" text-anchor="middle" font-size="16">No</text>
+<rect x="240.0" y="185" width="52" height="21" fill="white"/><text x="266" y="201" text-anchor="middle" font-size="16">Retry</text>
+<rect x="550.0" y="457" width="36" height="21" fill="white"/><text x="568" y="473" text-anchor="middle" font-size="16">Yes</text>
+<rect x="732.0" y="539" width="36" height="21" fill="white"/><text x="750" y="555" text-anchor="middle" font-size="16">Yes</text>
+<rect x="553.0" y="660" width="28" height="21" fill="white"/><text x="567" y="676" text-anchor="middle" font-size="16">No</text>
+<rect x="800.0" y="898" width="156" height="21" fill="white"/><text x="878" y="914" text-anchor="middle" font-size="16">Continue Using LMS</text>
+<rect x="547.0" y="934" width="52" height="21" fill="white"/><text x="573" y="950" text-anchor="middle" font-size="16">Later</text>
+<rect x="206.0" y="1151" width="76" height="21" fill="white"/><text x="244" y="1167" text-anchor="middle" font-size="16">Approved</text>
+<rect x="773.0" y="1151" width="76" height="21" fill="white"/><text x="811" y="1167" text-anchor="middle" font-size="16">Rejected</text>
+<rect x="557.0" y="1266" width="68" height="21" fill="white"/><text x="591" y="1282" text-anchor="middle" font-size="16">Pending</text>
+</g></svg>

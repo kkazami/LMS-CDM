@@ -16,38 +16,12 @@ export const passwordSchema = z
   .min(8, "Password must be at least 8 characters.")
   .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
   .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
-  .regex(/[0-9]/, "Password must contain at least one number.");
-
-export const registerSchema = z
-  .object({
-    name: z.string().min(2, "Full name must be at least 2 characters.").max(100, "Full name too long."),
-    email: z.string().email("Enter a valid email address.").max(254, "Email address too long."),
-    studentNumber: z.string().optional(),
-    uniqueId: z.string().optional(),
-    // Public self-registration only permits STUDENT (or optional INSTRUCTOR). ADMIN is strictly disallowed.
-    role: z.enum(["STUDENT", "INSTRUCTOR"]).optional().default("STUDENT"),
-    password: passwordSchema,
-    confirmPassword: z.string().min(8, "Confirm your password."),
-    instituteCode: instituteCodeSchema,
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  })
-  .refine(
-    (data) => {
-      if (data.role === "INSTRUCTOR") return true;
-      if (!data.studentNumber) return false;
-      return /^\d{2}-\d{5}$/.test(data.studentNumber);
-    },
-    {
-      message: "Student number must be in the format XX-XXXXX (e.g. 23-00875).",
-      path: ["studentNumber"],
-    }
-  );
+  .regex(/[0-9]/, "Password must contain at least one number.")
+  .refine(value => new TextEncoder().encode(value).length <= 72, 'Password must not exceed 72 UTF-8 bytes.');
 
 export const loginSchema = z.object({
-  email: z.string().email("Enter a valid email address."),
+  email: z.string().trim().email("Enter a valid email address.").max(254).optional(),
+  identifier: z.string().trim().min(1).max(254).optional(),
   password: z.string().min(1, "Password is required."),
   instituteCode: instituteCodeSchema,
-});
+}).refine(data => Boolean(data.email) !== Boolean(data.identifier), 'Provide either email or student ID.');

@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { serializeAuthor, slugify } from "@/features/knowledge-exchange/utils";
@@ -12,6 +13,8 @@ interface PageProps {
 }
 
 export default async function KnowledgeExchangePostDetailPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/knowledge-exchange/post/[postId]/page.tsx", await params);
+
   const { institute, postId } = await params;
   const session = await getSession();
 

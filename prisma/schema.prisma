@@ -1,6 +1,7 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+  binaryTargets   = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,10 +9,10 @@ datasource db {
 }
 
 model Institute {
-  id             String          @id @default(cuid())
-  code           String          @unique
+  id             String            @id @default(cuid())
+  code           String            @unique
   name           String
-  createdAt      DateTime        @default(now())
+  createdAt      DateTime          @default(now())
   calendarEvents CalendarEvent[]
   courses        Course[]
   flashcardDecks FlashcardDeck[]
@@ -19,20 +20,28 @@ model Institute {
   taskItems      TaskItem[]
   users          User[]
   kxPosts        KxPost[]
+  programs       AcademicProgram[]
+  terms          AcademicTerm[]
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  password      String
-  uniqueId      String   @default("") // Employee ID or general identifier
-  studentNumber String? // Regex pattern: /^\d{2}-\d{3}$/ (e.g., "24-101")
-  role          String   @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
-  isActive      Boolean  @default(true)
-  permissions   String   @default("[]") // JSON array of permission strings
-  instituteId   String
-  createdAt     DateTime @default(now())
+  id                String                  @id @default(cuid())
+  name              String
+  email             String                  @unique
+  password          String?
+  firstName         String?
+  lastName          String?
+  section           String                  @default("")
+  activationStatus  AccountActivationStatus @default(ACTIVE)
+  activatedAt       DateTime?
+  invitationVersion Int                     @default(0)
+  uniqueId          String                  @default("") // Employee ID or general identifier
+  studentNumber     String?                 @unique
+  role              String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  isActive          Boolean                 @default(true)
+  permissions       String                  @default("[]") // JSON array of permission strings
+  instituteId       String
+  createdAt         DateTime                @default(now())
 
   // â”€â”€ Profile fields â”€â”€
   avatarUrl   String? // URL to uploaded avatar image (null = initials fallback)
@@ -43,36 +52,37 @@ model User {
   coverColor  String  @default("#1E88E5") // Profile page banner accent color (hex)
   preferences String  @default("{}") // JSON object storing notification/theme settings
 
-  institute              Institute               @relation(fields: [instituteId], references: [id])
+  institute              Institute                @relation(fields: [instituteId], references: [id])
   sessions               Session[]
   notes                  Note[]
   taskItems              TaskItem[]
   calendarEvents         CalendarEvent[]
-  taughtCourses          Course[]                @relation("CourseInstructor")
+  taughtCourses          Course[]                 @relation("CourseInstructor")
   enrollments            Enrollment[]
   groupMemberships       StudentGroupMember[]
   announcements          Announcement[]
-  sentComments           PrivateComment[]        @relation("CommentSender")
-  receivedComments       PrivateComment[]        @relation("CommentRecipient")
+  sentComments           PrivateComment[]         @relation("CommentSender")
+  receivedComments       PrivateComment[]         @relation("CommentRecipient")
   submissions            StudentSubmission[]
   dashboardLayouts       DashboardLayout[]
-  auditLogsAsAdmin       AuditLog[]              @relation("AuditAdmin")
-  auditLogsAsTarget      AuditLog[]              @relation("AuditTarget")
+  auditLogsAsAdmin       AuditLog[]               @relation("AuditAdmin")
+  auditLogsAsTarget      AuditLog[]               @relation("AuditTarget")
   passwordResetOtps      PasswordResetOtp[]
+  activationTokens       AccountActivationToken[]
   // â”€â”€â”€ Interactive Activities relations (Sprint 0) â”€â”€â”€
-  activityTemplates      ActivityTemplate[]      @relation("ActivityTemplateCreator")
-  activitySubmissions    ActivitySubmission[]    @relation("ActivitySubmissions")
-  activitySessions       ActivitySession[]       @relation("ActivitySessions")
+  activityTemplates      ActivityTemplate[]       @relation("ActivityTemplateCreator")
+  activitySubmissions    ActivitySubmission[]     @relation("ActivitySubmissions")
+  activitySessions       ActivitySession[]        @relation("ActivitySessions")
   gamificationProfile    GamificationProfile?
-  flashcardDecks         FlashcardDeck[]         @relation("FlashcardDeckCreator")
-  flashcardProgresses    FlashcardProgress[]     @relation("FlashcardProgressUser")
+  flashcardDecks         FlashcardDeck[]          @relation("FlashcardDeckCreator")
+  flashcardProgresses    FlashcardProgress[]      @relation("FlashcardProgressUser")
   studySessionLogs       StudySessionLog[]
   materialAnnotations    MaterialAnnotation[]
   notifications          Notification[]
-  sentBroadcasts         NotificationBroadcast[] @relation("BroadcastSender")
+  sentBroadcasts         NotificationBroadcast[]  @relation("BroadcastSender")
   expTransactions        ExpTransaction[]
-  createdGradeIncentives GradeIncentiveRule[]    @relation("GradeIncentiveCreator")
-  integrityEvents        IntegrityEvent[]        @relation("StudentIntegrityEvents")
+  createdGradeIncentives GradeIncentiveRule[]     @relation("GradeIncentiveCreator")
+  integrityEvents        IntegrityEvent[]         @relation("StudentIntegrityEvents")
 
   // ─── Knowledge Exchange relations ───
   kxPosts             KxPost[]             @relation("KxPostAuthor")
@@ -94,6 +104,15 @@ model User {
   githubSubmissions GithubSubmission[]    @relation("UserGithubSubmissions")
   githubComments    GithubInlineComment[] @relation("UserGithubInlineComments")
 
+  // ─── Forms Module relations ───
+  createdForms                Form[]                       @relation("FormCreator")
+  formAttempts                FormAttempt[]                @relation("FormAttempts")
+  questionBankItems           QuestionBankItem[]           @relation("QuestionBankCreator")
+  credentialProvisioningState CredentialProvisioningState?
+  programMemberships          ProgramMembership[]
+  programHeadAssignments      ProgramHeadAssignment[]
+  uploadedAssets              PrivateAsset[]
+
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventUser")
   riskAssessments RiskAssessment[] @relation("RiskAssessmentStudent")
@@ -102,6 +121,8 @@ model User {
   practicumPlacements PracticumPlacement[] @relation("PracticumStudent")
   practicumSupervised PracticumPlacement[] @relation("PracticumSupervisor")
   practicumFeedback   PracticumFeedback[]  @relation("PracticumFeedbackAuthor")
+
+  @@unique([id, instituteId])
 }
 
 model Session {
@@ -126,6 +147,11 @@ model Course {
   section             String                     @default("")
   subject             String                     @default("")
   room                String                     @default("")
+  scheduleDays        Int[]                      @default([])
+  scheduleStart       String                     @default("")
+  scheduleEnd         String                     @default("")
+  scheduleStartDate   DateTime?                  @db.Date
+  scheduleEndDate     DateTime?                  @db.Date
   description         String                     @default("")
   coverImage          String                     @default("")
   instructorId        String?
@@ -133,6 +159,8 @@ model Course {
   isArchived          Boolean                    @default(false)
   createdAt           DateTime                   @default(now())
   updatedAt           DateTime                   @default(now()) @updatedAt
+  termId              String?
+  term                AcademicTerm?              @relation(fields: [termId, instituteId], references: [id, instituteId], onDelete: Restrict)
   leaderboardCaches   ActivityLeaderboardCache[]
   activityTemplates   ActivityTemplate[]
   announcements       Announcement[]
@@ -152,11 +180,16 @@ model Course {
   broadcasts          NotificationBroadcast[]
   gradeIncentiveRules GradeIncentiveRule[]
   kxPosts             KxPost[]
+  forms               Form[]
+  questionBankItems   QuestionBankItem[]
 
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventCourse")
   riskAssessments RiskAssessment[] @relation("RiskAssessmentCourse")
+  programId       String?
+  program         AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
 
+  @@unique([instituteId, termId, code, section])
   @@index([instituteId])
   @@index([instructorId])
 }
@@ -185,6 +218,7 @@ model SyllabusItem {
   dueDate                   DateTime?
   maxPoints                 Int?
   orderIndex                Int                   @default(0)
+  leaderboardEnabled        Boolean               @default(false)
   createdAt                 DateTime              @default(now())
   updatedAt                 DateTime              @default(now()) @updatedAt
   attachments               Attachment[]
@@ -197,6 +231,8 @@ model SyllabusItem {
   targetGroups              SyllabusTargetGroup[]
   kxPosts                   KxPost[]
   githubSubmissions         GithubSubmission[]
+  leaderboardRewards        LeaderboardReward[]
+  form                      Form?
 
   @@index([courseId, type])
   @@index([courseId, orderIndex])
@@ -404,6 +440,7 @@ model CalendarEvent {
   professorName String    @default("")
   maxPoints     Int?
   eventDate     DateTime
+  endDate       DateTime?
   eventType     String    @default("assignment")
   deepLink      String    @default("#")
   courseId      String?
@@ -608,19 +645,32 @@ model ExpTransaction {
 }
 
 model GradeIncentiveRule {
-  id        String   @id @default(cuid())
-  courseId  String
-  createdBy String // Instructor userId
-  label     String // e.g. "Perfect Score Bonus", "Passing Grade Reward"
-  gradeMin  Float // Minimum grade to qualify (0–100)
-  bonusExp  Int // EXP awarded when threshold is met
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  creator   User     @relation("GradeIncentiveCreator", fields: [createdBy], references: [id])
+  id                String   @id @default(cuid())
+  courseId          String
+  createdBy         String // Instructor userId
+  label             String // e.g. "Perfect Score Bonus", "Passing Grade Reward"
+  gradeMin          Float // Minimum grade to qualify (0–100)
+  bonusExp          Int // EXP awarded when threshold is met
+  rewardDescription String   @default("") // Custom freeform reward text (e.g. "Certificate of Excellence", "+5 on final grade")
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  course            Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  creator           User     @relation("GradeIncentiveCreator", fields: [createdBy], references: [id])
 
   @@index([courseId])
+}
+
+model LeaderboardReward {
+  id             String       @id @default(cuid())
+  syllabusItemId String
+  placement      Int // e.g. 1, 3, 5, 10 — "Top N"
+  rewardLabel    String // e.g. "+5 bonus points on final grade", "Certificate of Excellence"
+  bonusExp       Int          @default(0) // Optional EXP alongside custom reward
+  createdAt      DateTime     @default(now())
+  syllabusItem   SyllabusItem @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+
+  @@index([syllabusItemId])
 }
 
 model ActivityLeaderboardCache {
@@ -1142,21 +1192,224 @@ model SubmissionSimilarity {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ─── ITE Participation Tracker Models (ITE Exclusive) ────────
+// ─── LMS Forms & Google Forms Assessment Suite ───────────────
 // ─────────────────────────────────────────────────────────────
+
+model Form {
+  id             String @id @default(cuid())
+  courseId       String
+  syllabusItemId String @unique
+  createdBy      String
+  title          String
+  description    String @default("")
+  formType       String // "QUIZ" | "MIDTERM_EXAM" | "FINAL_EXAM" | "ACTIVITY"
+  status         String @default("DRAFT") // "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED"
+
+  // Availability & Timing
+  opensAt       DateTime?
+  closesAt      DateTime?
+  timeLimitMins Int?
+
+  // Attempt Rules
+  maxAttempts Int    @default(1)
+  scoreToKeep String @default("HIGHEST") // "HIGHEST" | "LATEST" | "AVERAGE"
+
+  // Presentation & Order
+  shuffleQuestions Boolean @default(false)
+  shuffleOptions   Boolean @default(false)
+
+  // Feedback & Visibility
+  showScoreAfter    Boolean @default(true)
+  showAnswersAfter  Boolean @default(false)
+  showFeedbackAfter Boolean @default(false)
+
+  // Exam Security & Proctoring
+  isProctored      Boolean @default(false)
+  passwordHash     String?
+  disableCopyPaste Boolean @default(false)
+  detectTabSwitch  Boolean @default(false)
+  lockBrowser      Boolean @default(false)
+
+  // Grading Metrics
+  totalPoints  Float?
+  passingScore Float?
+
+  // Customization & Confirmation
+  confirmationMessage String?
+  themeColor          String?
+  headerImageUrl      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  syllabusItem SyllabusItem   @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
+  creator      User           @relation("FormCreator", fields: [createdBy], references: [id])
+  sections     FormSection[]
+  questions    FormQuestion[]
+  attempts     FormAttempt[]
+
+  @@index([courseId, status])
+  @@index([createdBy])
+}
+
+model FormSection {
+  id          String  @id @default(cuid())
+  formId      String
+  title       String?
+  description String?
+  position    Int     @default(0)
+  pageNumber  Int     @default(1)
+
+  form      Form           @relation(fields: [formId], references: [id], onDelete: Cascade)
+  questions FormQuestion[]
+
+  @@index([formId, position])
+}
+
+model FormQuestion {
+  id            String  @id @default(cuid())
+  formId        String
+  sectionId     String?
+  bankItemId    String?
+  questionType  String // "MULTIPLE_CHOICE" | "CHECKBOXES" | "SHORT_ANSWER" | "PARAGRAPH" | "DROPDOWN" | "LINEAR_SCALE" | "STAR_RATING" | "DATE" | "FILE_UPLOAD" | "MATRIX" | "RANKING" | "IMAGE_CHOICE" | "CODE_ANSWER" | "SECTION_HEADER"
+  prompt        String
+  description   String?
+  mediaUrl      String?
+  mediaType     String? // "IMAGE" | "VIDEO" | "AUDIO"
+  position      Int     @default(0)
+  isRequired    Boolean @default(true)
+  points        Float   @default(1)
+  partialCredit Boolean @default(false)
+
+  // Type-specific options and validation stored as JSON string
+  config String @default("{}")
+
+  // Branching / Conditional logic
+  showIfQuestionId String?
+  showIfAnswer     String?
+
+  // Text length boundaries
+  minLength Int?
+  maxLength Int?
+
+  createdAt DateTime @default(now())
+
+  form     Form                @relation(fields: [formId], references: [id], onDelete: Cascade)
+  section  FormSection?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  bankItem QuestionBankItem?   @relation(fields: [bankItemId], references: [id], onDelete: SetNull)
+  answers  FormAttemptAnswer[]
+
+  dependentQuestions FormQuestion[] @relation("QuestionBranching")
+  parentQuestion     FormQuestion?  @relation("QuestionBranching", fields: [showIfQuestionId], references: [id], onDelete: SetNull)
+
+  @@index([formId, position])
+  @@index([sectionId])
+}
+
+model QuestionBankItem {
+  id           String   @id @default(cuid())
+  courseId     String?
+  createdBy    String
+  questionType String
+  prompt       String
+  config       String   @default("{}")
+  points       Float    @default(1)
+  tags         String   @default("[]") // JSON string array of tags
+  timesUsed    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  course    Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  creator   User           @relation("QuestionBankCreator", fields: [createdBy], references: [id])
+  questions FormQuestion[]
+
+  @@index([courseId])
+  @@index([createdBy])
+  @@index([questionType])
+}
+
+model FormAttempt {
+  id            String @id @default(cuid())
+  formId        String
+  userId        String
+  attemptNumber Int    @default(1)
+  status        String @default("IN_PROGRESS") // "IN_PROGRESS" | "SUBMITTED" | "TIMED_OUT" | "ABANDONED"
+
+  startedAt     DateTime  @default(now())
+  submittedAt   DateTime?
+  timeSpentSecs Int?
+  deadlineAt    DateTime?
+
+  // Auto-computed scores
+  rawScore    Float?
+  totalPoints Float?
+  percentage  Float?
+  passed      Boolean?
+
+  // Gradebook synchronization status
+  syncedToGradebook Boolean   @default(false)
+  syncedAt          DateTime?
+
+  // Exam integrity metrics
+  tabSwitchCount Int     @default(0)
+  copyPasteCount Int     @default(0)
+  ipAddress      String?
+  userAgent      String?
+
+  form    Form                @relation(fields: [formId], references: [id], onDelete: Cascade)
+  user    User                @relation("FormAttempts", fields: [userId], references: [id], onDelete: Cascade)
+  answers FormAttemptAnswer[]
+
+  @@unique([formId, userId, attemptNumber])
+  @@index([formId, status])
+  @@index([userId])
+}
+
+model FormAttemptAnswer {
+  id         String @id @default(cuid())
+  attemptId  String
+  questionId String
+
+  // Storage per answer type
+  answerText    String?
+  answerOptions String? // JSON array of selected string IDs
+  answerNumber  Float?
+  answerDate    DateTime?
+  answerRanking String? // JSON array of ordered string IDs
+  answerMatrix  String? // JSON object of key-value row/column map
+  fileUrl       String?
+  fileName      String?
+  fileSizeBytes Int?
+
+  // Evaluation & Grading
+  isCorrect        Boolean?
+  pointsAwarded    Float?
+  autoGraded       Boolean  @default(false)
+  instructorGraded Boolean  @default(false)
+  feedback         String?
+
+  answeredAt DateTime @default(now())
+
+  attempt  FormAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
 
 /// Granular activity event log used by the ITE Participation Tracker.
 /// Records every real LMS action taken by an ITE student so engagement
 /// scores can be computed from authentic data rather than heuristics.
 /// Non-ITE users are never written here (enforced in logActivity helper).
 model ActivityEvent {
-  id       String            @id @default(cuid())
-  userId   String
-  courseId String?
-  type     ActivityEventType
+  id        String            @id @default(cuid())
+  userId    String
+  courseId  String?
+  type      ActivityEventType
   /// Optional reference to the triggering entity (syllabusItemId, deckId, etc.)
-  refId    String?
-  createdAt DateTime         @default(now())
+  refId     String?
+  createdAt DateTime          @default(now())
 
   user   User    @relation("ActivityEventUser", fields: [userId], references: [id], onDelete: Cascade)
   course Course? @relation("ActivityEventCourse", fields: [courseId], references: [id], onDelete: Cascade)
@@ -1181,15 +1434,15 @@ enum ActivityEventType {
 /// Recomputed by the nightly cron scan and the on-demand "Recalculate now" button.
 /// Unique on [studentId, courseId] — one row per pair, upserted on each scan.
 model RiskAssessment {
-  id               String    @id @default(cuid())
+  id               String     @id @default(cuid())
   studentId        String
   courseId         String
   level            RiskLevel
-  riskScore        Int       // 0–100; higher = more at-risk
-  engagementScore  Int       // 0–100; higher = more engaged
+  riskScore        Int // 0–100; higher = more at-risk
+  engagementScore  Int // 0–100; higher = more engaged
   /// JSON array of { code: string, label: string, detail: string }
   reasons          Json
-  computedAt       DateTime  @default(now())
+  computedAt       DateTime   @default(now())
   lastAlertedAt    DateTime?
   lastAlertedLevel RiskLevel?
 
@@ -1294,4 +1547,236 @@ model PracticumFeedback {
 
   @@index([submissionId, createdAt])
   @@index([authorId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ─── Super User, Org Chart, Program Head, Email Jobs, Terms ──
+// ─────────────────────────────────────────────────────────────
+
+enum CredentialProvisioningState {
+  PENDING_HANDOFF
+  COMPLETE
+}
+
+model AcademicProgram {
+  id           String              @id @default(cuid())
+  instituteId  String
+  code         String
+  name         String
+  isActive     Boolean             @default(true)
+  chartVersion Int                 @default(1)
+  createdAt    DateTime            @default(now())
+  institute    Institute           @relation(fields: [instituteId], references: [id], onDelete: Restrict)
+  memberships  ProgramMembership[]
+  courses      Course[]
+
+  chartNodes ProgramChartNode[]
+
+  @@unique([instituteId, code])
+  @@unique([id, instituteId])
+}
+
+model ProgramMembership {
+  programId      String
+  userId         String
+  instituteId    String
+  kind           String
+  isActive       Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+  program        AcademicProgram        @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  user           User                   @relation(fields: [userId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  headAssignment ProgramHeadAssignment?
+  chartPlacement ProgramChartNode[]
+
+  @@id([programId, userId])
+  @@index([userId, isActive])
+}
+
+model ProgramHeadAssignment {
+  programId  String
+  userId     String
+  isActive   Boolean           @default(true)
+  assignedAt DateTime          @default(now())
+  revokedAt  DateTime?
+  membership ProgramMembership @relation(fields: [programId, userId], references: [programId, userId], onDelete: Restrict)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([programId, userId])
+}
+
+model ProgramChartNode {
+  id           String             @id @default(cuid())
+  programId    String
+  parentId     String?
+  memberUserId String?
+  kind         String
+  label        String
+  position     Int                @default(0)
+  program      AcademicProgram    @relation(fields: [programId], references: [id], onDelete: Restrict)
+  member       ProgramMembership? @relation(fields: [programId, memberUserId], references: [programId, userId], onDelete: Restrict)
+  parent       ProgramChartNode?  @relation("ChartChildren", fields: [parentId, programId], references: [id, programId], onDelete: Restrict, onUpdate: NoAction)
+  children     ProgramChartNode[] @relation("ChartChildren")
+
+  @@unique([id, programId])
+  @@unique([programId, memberUserId])
+  @@index([programId, parentId, position])
+}
+
+model PrivateAsset {
+  id          String   @id @default(cuid())
+  ownerId     String
+  instituteId String
+  fileName    String
+  mimeType    String
+  size        Int
+  content     Bytes
+  createdAt   DateTime @default(now())
+  owner       User     @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
+  @@index([instituteId, ownerId])
+}
+
+model LegacyAssetBinding {
+  kind        String
+  sourceId    String
+  url         String
+  instituteId String
+  ownerId     String
+  courseId    String?
+
+  @@id([kind, sourceId])
+  @@index([url, instituteId])
+}
+
+enum AccountActivationStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+}
+
+model AcademicTerm {
+  id          String    @id @default(cuid())
+  instituteId String
+  code        String
+  name        String
+  isActive    Boolean   @default(true)
+  isCurrent   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Restrict)
+  courses     Course[]
+
+  @@unique([id, instituteId])
+  @@unique([instituteId, code])
+}
+
+model AccountActivationToken {
+  id                String           @id @default(cuid())
+  userId            String
+  tokenHash         String           @unique
+  invitationVersion Int
+  email             String
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  revokedAt         DateTime?
+  attemptId         String           @unique
+  createdAt         DateTime         @default(now())
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempt           EmailSendAttempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+
+  @@index([userId, invitationVersion])
+}
+
+model ImportBatch {
+  id          String      @id @default(cuid())
+  type        String
+  instituteId String
+  termId      String?
+  creatorId   String
+  matchOnly   Boolean     @default(false)
+  policy      String      @default("SKIP")
+  status      String      @default("PREVIEW")
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+  completedAt DateTime?
+  rows        ImportRow[]
+
+  @@index([instituteId, creatorId, createdAt])
+}
+
+model ImportRow {
+  id               String      @id @default(cuid())
+  batchId          String
+  rowNumber        Int
+  values           Json
+  originalValues   Json
+  previousValues   Json?
+  issues           Json
+  proposedAction   String
+  targetId         String?
+  targetHash       String?
+  selected         Boolean     @default(false)
+  overrideRejected Boolean     @default(false)
+  outcome          String?
+  error            String?
+  batch            ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, rowNumber])
+  @@index([batchId, outcome])
+}
+
+model EmailJob {
+  id                String             @id @default(cuid())
+  userId            String
+  instituteId       String
+  invitationVersion Int
+  purpose           String             @default("INVITATION")
+  requestedById     String?
+  parentJobId       String?
+  dedupeKey         String             @unique
+  status            String             @default("QUEUED")
+  scheduledAt       DateTime           @default(now())
+  attemptCount      Int                @default(0)
+  leaseUntil        DateTime?
+  leaseOwner        String?
+  createdAt         DateTime           @default(now())
+  sentAt            DateTime?
+  attempts          EmailSendAttempt[]
+
+  @@index([status, scheduledAt])
+  @@index([userId, invitationVersion, createdAt])
+}
+
+model EmailSendAttempt {
+  id                String                  @id @default(cuid())
+  jobId             String
+  email             String
+  invitationVersion Int
+  startedAt         DateTime                @default(now())
+  completedAt       DateTime?
+  outcome           String                  @default("STARTED")
+  messageId         String?
+  errorCode         String?
+  job               EmailJob                @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  activationToken   AccountActivationToken?
+
+  @@index([startedAt])
+}
+
+model EmailSenderState {
+  id              String    @id
+  leaseUntil      DateTime?
+  leaseOwner      String?
+  nextSendAt      DateTime?
+  pausedUntil     DateTime?
+  pauseReason     String?
+  lastHeartbeatAt DateTime?
+  lastProcessedAt DateTime?
+  smtpVerifiedAt  DateTime?
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }

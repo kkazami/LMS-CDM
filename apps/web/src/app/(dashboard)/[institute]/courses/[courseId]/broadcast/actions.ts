@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -45,6 +47,8 @@ export async function sendBroadcast(
   prevState: { message: string },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/broadcast/actions.ts#sendBroadcast", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const session = await getSession();
   if (!session) return { message: "Unauthorized" };
 

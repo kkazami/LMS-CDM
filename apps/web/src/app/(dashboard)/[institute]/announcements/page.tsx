@@ -1,5 +1,5 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import AnnouncementsClient from "./client";
@@ -29,30 +29,23 @@ export default async function AnnouncementsPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
-  const { institute } = await params;
-  const session = await getSession();
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/announcements/page.tsx", await params);
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
+  const { institute } = await params;
 
   const theme = getInstituteTheme(institute);
-  const role = (session.user.role as string).toUpperCase();
+  const role = (user.role as string).toUpperCase();
 
   // Only students see this view — professors/admins redirect to dashboard
   if (role !== "STUDENT") {
     redirect(`/${institute}`);
   }
 
-  const studentId = session.user.id;
+  const studentId = user.id;
 
-  // Resolve institute record
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true },
-  });
+  const instituteRecord = user.institute;
 
-  if (!instituteRecord) {
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 

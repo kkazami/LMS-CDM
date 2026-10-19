@@ -163,11 +163,11 @@ export default function LoginScreen() {
             )}
 
             <Input
-              label="Email Address"
+              label="Email or Student ID"
               placeholder="e.g. user@cdm.edu.ph"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
+              keyboardType="default"
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="email"
@@ -198,7 +198,7 @@ export default function LoginScreen() {
           {/* Quick Registration Link */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: currentTheme.colors.textSecondary }]}>
-              New student at CdM LMS?
+              Need an account?
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/register')}
@@ -206,7 +206,7 @@ export default function LoginScreen() {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={[styles.registerLinkText, { color: currentTheme.colors.primary }]}>
-                Create an Account
+                Contact the Registrar
               </Text>
             </TouchableOpacity>
           </View>

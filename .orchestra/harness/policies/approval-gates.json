@@ -1,24 +1,30 @@
 {
-  "auto": [
-    "create-component",
-    "modify-css",
-    "create-tests",
-    "add-route",
-    "add-api-endpoint",
-    "modify-ui",
-    "create-page"
-  ],
-  "review": [
-    "database-migration",
-    "modify-authorization",
-    "change-rbac",
-    "modify-middleware",
-    "modify-session-handling"
-  ],
-  "human_approval": [
-    "production-deployment",
-    "delete-production-data",
-    "major-auth-change",
-    "modify-env-secrets"
+  "version": 2,
+  "authority": "External human Ed25519 signature; trusted host supplies pinned public key",
+  "implementation": {
+    "requiredRisk": [
+      "HIGH",
+      "CRITICAL"
+    ],
+    "subject": "input + requirements/recon/red-team/adjudication/plan artifact hashes",
+    "timing": "After independent architecture attack, adjudication and plan"
+  },
+  "architecture": {
+    "requiredFor": [
+      "humanDecision findings",
+      "rejection of HIGH/CRITICAL findings"
+    ],
+    "subject": "red-team hash + full adjudication data"
+  },
+  "deployment": {
+    "alwaysRequired": true,
+    "timing": "After RELEASE_READY",
+    "subject": "release artifact hash + input"
+  },
+  "prohibited": [
+    "agent boolean approvals",
+    "risk downgrade",
+    "legacy rubric signoff",
+    "automatic uncertain deployment retries"
   ]
 }

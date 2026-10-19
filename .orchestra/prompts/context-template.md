@@ -1,61 +1,7 @@
-# Agent Context Assembly Template
+# Minimal stage context
 
-When assembling context for a specialist agent, use this structure:
+Supply the original request, run ID, stage, attempt, host-issued role/session identity, active lease, current source fingerprint, immutable predecessor artifact hashes and complete contractual criteria. Add only relevant repository files and selected optional skills. Recon must verify knowledge documents against actual source.
 
-## 1. System Rules
-[Agent-specific role and constraints from .agents/agents/<name>/agent.md]
+Implementation receives adjudicated architecture and the approved plan. Reviewers receive captured current diff and sanitized executed results, not executor success claims. Repairs receive the complete preserved failure history. No environment files, production credentials, auth storage, unrelated user data or private approval keys belong in agent context. Host tools must enforce these boundaries.
 
-## 2. Project Knowledge
-[Relevant files from .orchestra/knowledge/ based on harness profile]
-- PRODUCT.md — product overview, target users, core problems
-- ARCHITECTURE.md — tech stack, app structure, key patterns, invariants
-- DOMAIN.md — entities, relationships, business rules
-- CONVENTIONS.md — naming, imports, component patterns, auth, theming
-- DESIGN.md — visual design system, colors, typography
-
-## 3. Task Context
-- Current user request (from raw-task-request)
-- Classified task metadata (intent, domain, risk, profile)
-- Acceptance criteria with verification metadata
-- Implementation plan (if post-planning)
-- Changed files (if post-execution)
-- Previous failure evidence (if in repair loop)
-
-## 4. Selected Skills
-[Loaded from .agents/skills/ based on manifests in .orchestra/manifests/]
-Only load skills relevant to the current task domain and type.
-
-## 5. Repository Context
-[Relevant source files identified by the planner]
-Do NOT send the entire repository. Send only:
-- Files being created/modified
-- Adjacent files for context
-- Relevant configuration files
-
-## 6. Acceptance Criteria
-[Full list with verification metadata]
-
-## 7. Available Tools
-[Per tool-permissions.json for this agent role]
-
-## 8. Output Contract
-[Expected output format for this agent role]
-
----
-
-## Context Budget Guidelines
-
-For a frontend task, typical context includes:
-- PRODUCT.md, DESIGN.md, CONVENTIONS.md
-- Relevant src/components/, src/app/ files
-- package.json
-- Selected frontend skills
-
-For an API task, typical context includes:
-- PRODUCT.md, ARCHITECTURE.md, DOMAIN.md, CONVENTIONS.md
-- Relevant src/app/api/ files
-- prisma/schema.prisma (relevant models)
-- Selected backend skills
-
-A frontend agent should NOT need the entire database schema for a purely visual task.
-A backend agent should NOT need design skills for a purely API task.
+Output: the stage-specific JSON in contracts.ts/gates.ts, submitted through the controller. Agents may not write the journal, state projection or execution records.

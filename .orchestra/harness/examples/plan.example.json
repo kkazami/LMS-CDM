@@ -1,0 +1,58 @@
+{
+  "files": [
+    "docs/harness-task.md",
+    "tests/harness/task.test.ts"
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "description": "Document and test the adjudication dependency.",
+      "criteria": [
+        "AC-001"
+      ],
+      "dependsOn": [],
+      "findings": []
+    }
+  ],
+  "operations": [
+    "security-control-change"
+  ],
+  "browser": false,
+  "recovery": "Revert the reviewed harness change after preserving failed-run history; no database or deployment action.",
+  "commands": [
+    {
+      "id": "harness-types",
+      "program": "pnpm",
+      "args": [
+        "harness:typecheck"
+      ],
+      "domain": "static",
+      "criteria": [],
+      "coverage": [
+        "harness-typecheck"
+      ],
+      "tests": [],
+      "timeoutMs": 180000
+    },
+    {
+      "id": "harness-controls",
+      "program": "pnpm",
+      "args": [
+        "harness:test"
+      ],
+      "domain": "runtime",
+      "criteria": [
+        "AC-001"
+      ],
+      "coverage": [
+        "harness-tests",
+        "runtime-regression",
+        "harness-controls"
+      ],
+      "tests": [
+        "planner cannot proceed without architecture adjudication"
+      ],
+      "timeoutMs": 300000
+    }
+  ]
+}

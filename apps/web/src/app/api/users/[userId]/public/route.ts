@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -7,6 +8,9 @@ export const dynamic = "force-dynamic";
 type RouteParams = { params: Promise<{ userId: string }> };
 
 export async function GET(_req: Request, { params }: RouteParams) {
+  const ceilingDenial = await denyLegacyApi(_req, "GET users/[userId]/public/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

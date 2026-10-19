@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student PC Build Execution Route
  * Route: /[institute]/activities/pc-build/[templateId]/[seed]
@@ -16,6 +17,8 @@ export default async function PCBuildActivityPage({
 }: {
   params: Promise<{ institute: string; templateId: string; seed: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/pc-build/[templateId]/[seed]/page.tsx", await params);
+
   const { templateId, seed } = await params;
   const session = await getSession();
 

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -20,6 +21,9 @@ const DEFAULT_SEVERITIES: Record<ValidEventType, "LOW" | "MEDIUM" | "HIGH"> = {
  * Supports standard JSON and navigator.sendBeacon requests.
  */
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST integrity/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session?.user) {
@@ -140,6 +144,9 @@ export async function POST(request: Request) {
  * Fetch logged integrity events for instructor review.
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET integrity/events/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session?.user) {

@@ -151,6 +151,7 @@ export function CodeLabInstructorClient({
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [onlyFlagged, setOnlyFlagged] = useState<boolean>(false);
   const [onlyRejected, setOnlyRejected] = useState<boolean>(false);
+  const [submissionPage, setSubmissionPage] = useState(1);
 
   useEffect(() => {
     setMounted(true);
@@ -159,7 +160,7 @@ export function CodeLabInstructorClient({
   // Invalidation / Rejection Modal State
   const [selectedSub, setSelectedSub] = useState<InstructorSubmissionRecord | null>(null);
   const [rejectReasonPreset, setRejectReasonPreset] = useState<string>(
-    "Suspicious copy-paste velocity detected"
+    "Pasted code needs review"
   );
   const [rejectCustomNote, setRejectCustomNote] = useState<string>("");
   const [rejectAction, setRejectAction] = useState<"reject" | "delete" | "restore">("reject");
@@ -188,6 +189,11 @@ export function CodeLabInstructorClient({
       return true;
     });
   }, [records, selectedLanguage, onlyFlagged, onlyRejected, searchQuery]);
+
+  const submissionPageCount = Math.max(1, Math.ceil(filteredSubmissions.length / 10));
+  const currentSubmissionPage = Math.min(submissionPage, submissionPageCount);
+  const submissionPageStart = (currentSubmissionPage - 1) * 10;
+  const paginatedSubmissions = filteredSubmissions.slice(submissionPageStart, submissionPageStart + 10);
 
   // Aggregate Overview Metrics
   const totalAttempts = records.length;
@@ -241,12 +247,12 @@ export function CodeLabInstructorClient({
     });
 
     return [
-      { label: "Syntax Error", value: counts.syntax, color: "#ef4444" },
-      { label: "Type Error", value: counts.type_error, color: "#f97316" },
-      { label: "Runtime / Null", value: counts.runtime, color: "#eab308" },
-      { label: "Infinite Loop / TLE", value: counts.tle, color: "#8b5cf6" },
-      { label: "Wrong Answer", value: counts.assertion, color: "#3b82f6" },
-      { label: "Compile Error", value: counts.compile, color: "#ec4899" },
+      { label: "Code syntax", value: counts.syntax, color: "#ef4444" },
+      { label: "Data types", value: counts.type_error, color: "#f97316" },
+      { label: "Errors while running", value: counts.runtime, color: "#eab308" },
+      { label: "Time limit reached", value: counts.tle, color: "#8b5cf6" },
+      { label: "Wrong results", value: counts.assertion, color: "#3b82f6" },
+      { label: "Code won’t compile", value: counts.compile, color: "#ec4899" },
     ].filter((seg) => seg.value > 0);
   }, [records, selectedMasteryLang]);
 
@@ -254,11 +260,11 @@ export function CodeLabInstructorClient({
   const skillPillars = useMemo(() => {
     const pillars = [
       { label: "Variables & Output", range: "1–5", minLevel: 1, maxLevel: 5 },
-      { label: "Control Flow & Logic", range: "6–10", minLevel: 6, maxLevel: 10 },
+      { label: "Conditions and logic", range: "6–10", minLevel: 6, maxLevel: 10 },
       { label: "Collections & Loops", range: "11–15", minLevel: 11, maxLevel: 15 },
-      { label: "Functions & Scope", range: "16–20", minLevel: 16, maxLevel: 20 },
-      { label: "OOP & Structure", range: "21–25", minLevel: 21, maxLevel: 25 },
-      { label: "Algorithms & Efficiency", range: "26–30", minLevel: 26, maxLevel: 30 },
+      { label: "Functions and variables", range: "16–20", minLevel: 16, maxLevel: 20 },
+      { label: "Classes and objects", range: "21–25", minLevel: 21, maxLevel: 25 },
+      { label: "Algorithms and efficiency", range: "26–30", minLevel: 26, maxLevel: 30 },
     ];
 
     const targetSubs =
@@ -312,10 +318,10 @@ export function CodeLabInstructorClient({
   // Tab 2: Time to First Run Distribution
   const timeToFirstRunBuckets = useMemo(() => {
     const buckets = [
-      { label: "< 30s (Quick Starter)", count: 0, color: "bg-emerald-500" },
-      { label: "30s – 2min (Normal)", count: 0, color: "bg-blue-500" },
-      { label: "2min – 5min (Cautious)", count: 0, color: "bg-amber-500" },
-      { label: "> 5min (Hesitant / Blocked)", count: 0, color: "bg-rose-500" },
+      { label: "Under 30 seconds", count: 0, color: "bg-emerald-500" },
+      { label: "30 seconds to 2 minutes", count: 0, color: "bg-blue-500" },
+      { label: "2 to 5 minutes", count: 0, color: "bg-amber-500" },
+      { label: "Over 5 minutes", count: 0, color: "bg-rose-500" },
     ];
 
     records.forEach((s) => {
@@ -430,7 +436,7 @@ export function CodeLabInstructorClient({
         setStatusMsg(data.message);
         toast.success(
           rejectAction === "reject"
-            ? "Submission Invalidated"
+            ? "Submission Rejected"
             : rejectAction === "restore"
             ? "Submission Restored"
             : "Attempt Deleted",
@@ -477,11 +483,11 @@ export function CodeLabInstructorClient({
         }, 1200);
       } else {
         const data = await res.json().catch(() => ({}));
-        toast.error("Action Failed", data.error || "Could not process submission change.");
+        toast.error("Change not saved", data.error || "The submission could not be updated. Please try again.");
       }
     } catch (err) {
       console.error("Action failed:", err);
-      toast.error("Network Error", "Could not communicate with the server.");
+      toast.error("Connection problem", "Check your connection and try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -509,17 +515,17 @@ export function CodeLabInstructorClient({
 
       if (res.ok) {
         setAlertSentStudentId(st.studentId);
-        toast.success("Alert Sent Successfully", `Delivered academic alert to ${st.studentName}'s Notification Bell.`);
+        toast.success("Reminder sent", `${st.studentName} will see it in their notifications.`);
         setTimeout(() => {
           setAlertSentStudentId(null);
         }, 3000);
       } else {
         const data = await res.json().catch(() => ({}));
-        toast.error("Failed to Send Alert", data.error || "Please try again.");
+        toast.error("Reminder not sent", data.error || "Please try again.");
       }
     } catch (err) {
       console.error("Alert failed:", err);
-      toast.error("Network Error", "Could not dispatch alert notification.");
+      toast.error("Connection problem", "The reminder could not be sent. Check your connection and try again.");
     } finally {
       setIsSendingAlert(null);
     }
@@ -539,7 +545,7 @@ export function CodeLabInstructorClient({
                     <AlertOctagon className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">Manage Submission Attempt</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">Review submission</h3>
                     <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
                       {selectedSub.studentName} &bull; {selectedSub.problemTitle}
                     </p>
@@ -548,6 +554,7 @@ export function CodeLabInstructorClient({
                 <button
                   type="button"
                   onClick={() => setSelectedSub(null)}
+                  aria-label="Close submission review"
                   className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
@@ -564,7 +571,7 @@ export function CodeLabInstructorClient({
 
               {/* Forensic Details Box */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E2132]/60 border border-slate-200/80 dark:border-white/5 space-y-2 text-xs">
-                <div className="font-bold text-slate-700 dark:text-[#F0F2F8]">Detected Telemetry Flags:</div>
+                <div className="font-bold text-slate-700 dark:text-[#F0F2F8]">Recorded activity:</div>
                 {selectedSub.flagReasons.length > 0 ? (
                   <ul className="space-y-1 text-rose-600 dark:text-rose-400 font-semibold list-disc pl-4">
                     {selectedSub.flagReasons.map((reason, i) => (
@@ -572,18 +579,18 @@ export function CodeLabInstructorClient({
                     ))}
                   </ul>
                 ) : (
-                  <div className="text-slate-500 dark:text-[#8B92A5]">No automated flags triggered.</div>
+                  <div className="text-slate-500 dark:text-[#8B92A5]">No pasted code or unusually fast typing was recorded.</div>
                 )}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-white/5 text-[11px] text-slate-500 dark:text-[#8B92A5]">
-                  <span>Paste events: {selectedSub.pasteCount}</span>
-                  <span>Typing velocity: {selectedSub.typingVelocityCpm} cpm</span>
+                  <span>Times code was pasted: {selectedSub.pasteCount}</span>
+                  <span>Typing speed: {selectedSub.typingVelocityCpm} characters per minute</span>
                   <span>Score: {selectedSub.score}%</span>
                 </div>
               </div>
 
               {/* Actions Selector */}
               <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-700 dark:text-[#F0F2F8]">Choose Action:</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-[#F0F2F8]">Choose an action:</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -595,7 +602,7 @@ export function CodeLabInstructorClient({
                     }`}
                   >
                     <Ban className="w-4 h-4" />
-                    <span>Invalidate</span>
+                    <span>Reject submission</span>
                   </button>
 
                   <button
@@ -608,7 +615,7 @@ export function CodeLabInstructorClient({
                     }`}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>Restore Pass</span>
+                    <span>Restore score</span>
                   </button>
 
                   <button
@@ -621,7 +628,7 @@ export function CodeLabInstructorClient({
                     }`}
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span>Purge Record</span>
+                    <span>Delete submission</span>
                   </button>
                 </div>
               </div>
@@ -629,35 +636,41 @@ export function CodeLabInstructorClient({
               {/* Reason Presets */}
               {rejectAction === "reject" && (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-[#F0F2F8]">Rejection Reason:</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-[#F0F2F8]">Reason for rejecting:</label>
                   <select
                     value={rejectReasonPreset}
                     onChange={(e) => setRejectReasonPreset(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-[#1E2132] border border-slate-200/80 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                   >
-                    <option value="Suspicious copy-paste velocity detected">
-                      Suspicious copy-paste velocity detected
+                    <option value="Pasted code needs review">
+                      Pasted code needs review
                     </option>
-                    <option value="Uncharacteristically high typing speed (>800 cpm)">
-                      Uncharacteristically high typing speed (&gt;800 cpm)
+                    <option value="Typing speed above 800 characters per minute">
+                      Typing speed above 800 characters per minute
                     </option>
-                    <option value="Plagiarism or external code ingestion detected">
-                      Plagiarism or external code ingestion detected
+                    <option value="Code copied from another source">
+                      Code copied from another source
                     </option>
-                    <option value="Academic Integrity Violation — Retake Required">
-                      Academic Integrity Violation — Retake Required
+                    <option value="Work does not meet the requirements">
+                      Work does not meet the requirements
                     </option>
                   </select>
 
                   <input
                     type="text"
-                    placeholder="Optional instructor note to student..."
+                    placeholder="Add a note for the student (optional)"
                     value={rejectCustomNote}
                     onChange={(e) => setRejectCustomNote(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-[#1E2132] border border-slate-200/80 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-[#F0F2F8] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
               )}
+
+              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+                {rejectAction === "reject" ? "Rejecting sets this submission’s score to 0. The student will be notified."
+                  : rejectAction === "restore" ? "Restoring brings back the recorded score. The student will be notified."
+                  : "Deleting removes this submission record. This cannot be undone."}
+              </p>
 
               {/* Submit Action */}
               <div className="flex items-center justify-end gap-2.5 pt-2">
@@ -684,10 +697,10 @@ export function CodeLabInstructorClient({
                   {isProcessing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>
                     {rejectAction === "reject"
-                      ? "Confirm Invalidation"
+                      ? "Reject submission"
                       : rejectAction === "restore"
-                      ? "Confirm Restore"
-                      : "Confirm Delete"}
+                      ? "Restore score"
+                      : "Delete submission"}
                   </span>
                 </button>
               </div>
@@ -705,14 +718,14 @@ export function CodeLabInstructorClient({
               className="hover:text-[#F97316] transition-colors flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to CodeLab Tracks</span>
+              <span>Back to tracks</span>
             </Link>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F0F2F8] tracking-tight">
-            CodeLab Instructor Dashboard
+            CodeLab Analytics
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] mt-0.5">
-            Cohort health telemetry, language mastery analytics, at-risk student triage, and submission logs.
+            See student progress, common coding errors, and submissions that may need review.
           </p>
         </div>
 
@@ -722,7 +735,7 @@ export function CodeLabInstructorClient({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs transition-all cursor-pointer"
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Launch CodeLab</span>
+            <span>Open CodeLab</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -731,9 +744,9 @@ export function CodeLabInstructorClient({
       {/* ──── Analytics Navigation Tabs Bar ──── */}
       <div className="flex gap-1.5 p-1.5 bg-slate-100 dark:bg-[#141721] rounded-2xl w-fit border border-slate-200/60 dark:border-white/5">
         {[
-          { key: "cohort", label: "Cohort Health & Chokepoints", icon: TrendingUp },
-          { key: "mastery", label: "Language Mastery & Errors", icon: Code2 },
-          { key: "triage", label: "Student Triage", icon: ShieldAlert },
+          { key: "cohort", label: "Class progress", icon: TrendingUp },
+          { key: "mastery", label: "Scores and errors", icon: Code2 },
+          { key: "triage", label: "Student review", icon: ShieldAlert },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -763,7 +776,7 @@ export function CodeLabInstructorClient({
                 <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
                   <Users className="w-3.5 h-3.5" />
                 </div>
-                <span>Attempts</span>
+                <span>Submissions</span>
               </div>
               <CountUpNumber
                 value={totalAttempts}
@@ -776,7 +789,7 @@ export function CodeLabInstructorClient({
                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
                   <Award className="w-3.5 h-3.5" />
                 </div>
-                <span>Average</span>
+                <span>Average score</span>
               </div>
               <CountUpNumber
                 value={avgScore}
@@ -804,7 +817,7 @@ export function CodeLabInstructorClient({
                 <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
                   <ShieldAlert className="w-3.5 h-3.5" />
                 </div>
-                <span>Flags</span>
+                <span>Needs review</span>
               </div>
               <CountUpNumber
                 value={flaggedCount}
@@ -817,7 +830,7 @@ export function CodeLabInstructorClient({
                 <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500">
                   <Ban className="w-3.5 h-3.5" />
                 </div>
-                <span>Invalidated</span>
+                <span>Rejected</span>
               </div>
               <CountUpNumber
                 value={rejectedCount}
@@ -834,20 +847,20 @@ export function CodeLabInstructorClient({
             <div className="p-6 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-3xl space-y-4 shadow-xs flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-                  ⏱️ Median Completion Time by Stage
+                  Average time by level group
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                  Cohort pacing across 6 pedagogical skill milestones
+                  Average time spent on each group of five levels. Times are estimates for groups with no submissions.
                 </p>
               </div>
 
               <div className="space-y-3 pt-2">
                 {[
                   { stage: "Basics (Levels 1–5)", min: 1, max: 5, expectedSec: 45 },
-                  { stage: "Control Flow (Levels 6–10)", min: 6, max: 10, expectedSec: 90 },
+                  { stage: "Conditions and logic (Levels 6–10)", min: 6, max: 10, expectedSec: 90 },
                   { stage: "Collections (Levels 11–15)", min: 11, max: 15, expectedSec: 150 },
                   { stage: "Functions (Levels 16–20)", min: 16, max: 20, expectedSec: 210 },
-                  { stage: "Structures & OOP (Levels 21–25)", min: 21, max: 25, expectedSec: 300 },
+                  { stage: "Classes and objects (Levels 21–25)", min: 21, max: 25, expectedSec: 300 },
                   { stage: "Algorithms (Levels 26–30)", min: 26, max: 30, expectedSec: 420 },
                 ].map(({ stage, min, max, expectedSec }) => {
                   const subs = records.filter(
@@ -866,7 +879,7 @@ export function CodeLabInstructorClient({
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-700 dark:text-[#F0F2F8]">{stage}</span>
                         <span className="font-mono text-slate-500 dark:text-[#8B92A5] font-bold">
-                          {Math.floor(median / 60)}m {median % 60}s avg
+                          {Math.floor(median / 60)}m {median % 60}s average
                         </span>
                       </div>
                       <AnimatedBar
@@ -880,9 +893,9 @@ export function CodeLabInstructorClient({
               </div>
 
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 text-[11px] text-slate-500 dark:text-[#8B92A5] flex items-center justify-between">
-                <span>Class Median Baseline:</span>
+                <span>Typical class time (middle value):</span>
                 <span className="font-mono font-bold text-slate-800 dark:text-[#F0F2F8]">
-                  {Math.floor(classMedianTimeSec / 60)}m {classMedianTimeSec % 60}s per challenge
+                  {Math.floor(classMedianTimeSec / 60)}m {classMedianTimeSec % 60}s per level
                 </span>
               </div>
             </div>
@@ -902,10 +915,10 @@ export function CodeLabInstructorClient({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight">
-                Language Diagnostic &amp; Cognitive Errors
+                Coding errors and scores
               </h2>
               <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-                Identify recurring conceptual bottlenecks and syntax misconceptions across tracks
+                See which errors students encounter and which level groups have lower scores.
               </p>
             </div>
             <select
@@ -913,7 +926,7 @@ export function CodeLabInstructorClient({
               onChange={(e) => setSelectedMasteryLang(e.target.value)}
               className="bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] cursor-pointer focus:outline-none shadow-xs"
             >
-              <option value="all">All Languages</option>
+              <option value="all">All languages</option>
               <option value="python">Python</option>
               <option value="cpp">C++</option>
               <option value="csharp">C#</option>
@@ -931,10 +944,10 @@ export function CodeLabInstructorClient({
             <div className="lg:col-span-5 p-6 sm:p-8 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-3xl space-y-5 shadow-xs flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-                  🍩 Error Archetype Distribution
+                  Types of coding errors
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                  Breakdown of runtime and syntax error root causes
+                  Recorded errors, grouped by type. Some types are estimated from scores when no error was recorded.
                 </p>
               </div>
 
@@ -949,7 +962,7 @@ export function CodeLabInstructorClient({
               </div>
 
               <div className="text-[11px] text-slate-500 dark:text-[#8B92A5] p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5">
-                💡 Tip: High Wrong Answer rates indicate algorithmic edge-case gaps rather than syntax barriers.
+                Wrong results mean the output did not match the expected answer. Review the student’s code to see what went wrong.
               </div>
             </div>
 
@@ -958,10 +971,10 @@ export function CodeLabInstructorClient({
               <div className="flex items-center justify-between border-b border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-                    📊 Skill Pillar Mastery Radar
+                    Scores by level group
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                    Class competency benchmarked across core curriculum pillars
+                    Average submission scores for each group of five levels.
                   </p>
                 </div>
                 <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500">
@@ -975,7 +988,7 @@ export function CodeLabInstructorClient({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">{label}</span>
                       <span className="font-bold text-slate-500 dark:text-[#8B92A5]">
-                        Levels {range} &bull; <CountUpNumber value={avgScore} suffix="%" /> ({attempts} att)
+                        Levels {range} &bull; <CountUpNumber value={avgScore} suffix="%" /> ({attempts} submissions)
                       </span>
                     </div>
                     <AnimatedBar
@@ -998,53 +1011,53 @@ export function CodeLabInstructorClient({
               <div className="p-5 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-2xl space-y-1.5 shadow-xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">
                   <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Hint Usage Rate</span>
+                  <span>Hints used</span>
                 </div>
                 <CountUpNumber
                   value={behavioralStats.hintRate}
                   suffix="%"
                   className="text-2xl font-black text-amber-500 block"
                 />
-                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Unlocked pedagogical guidance</p>
+                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Submissions where a hint was shown</p>
               </div>
 
               <div className="p-5 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-2xl space-y-1.5 shadow-xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">
                   <Activity className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Avg Attempt Churn</span>
+                  <span>Runs per submission</span>
                 </div>
                 <CountUpNumber
                   value={behavioralStats.avgChurn}
                   decimals={1}
                   className="text-2xl font-black text-blue-500 block"
                 />
-                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Runs before solving level</p>
+                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Average recorded runs for each submission</p>
               </div>
 
               <div className="p-5 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-2xl space-y-1.5 shadow-xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Avg Time to 1st Run</span>
+                  <span>Time before first run</span>
                 </div>
                 <CountUpNumber
                   value={behavioralStats.avgFirstRunSec}
                   suffix="s"
                   className="text-2xl font-black text-emerald-500 block"
                 />
-                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Planning vs trial delay</p>
+                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Average delay before running code; estimated when not recorded</p>
               </div>
 
               <div className="p-5 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-2xl space-y-1.5 shadow-xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider">
                   <Zap className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Paste Incidence</span>
+                  <span>Pasted code</span>
                 </div>
                 <CountUpNumber
                   value={behavioralStats.pasteRate}
                   suffix="%"
                   className="text-2xl font-black text-rose-500 block"
                 />
-                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Submissions with copy-paste</p>
+                <p className="text-[10px] text-slate-400 dark:text-[#555C72]">Share of submissions with at least one paste</p>
               </div>
             </div>
 
@@ -1052,10 +1065,10 @@ export function CodeLabInstructorClient({
             <div className="lg:col-span-6 p-6 bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-3xl space-y-4 shadow-xs">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-                  ⏳ Time-to-First-Run Distribution
+                  Time before running code
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                  How long students spend reading the prompt and drafting before pressing "Run"
+                  Time from opening a level to the first code run. Estimated when not recorded.
                 </p>
               </div>
 
@@ -1090,42 +1103,42 @@ export function CodeLabInstructorClient({
             <div className="p-5 bg-white dark:bg-[#1A1D27] border border-amber-500/20 rounded-2xl space-y-1.5 shadow-xs">
               <div className="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-wider">
                 <ShieldAlert className="w-4 h-4" />
-                <span>Paste Flagged Students</span>
+                <span>Students who pasted code</span>
               </div>
               <CountUpNumber
                 value={integrityCounts.pasteUsers}
                 className="text-3xl font-black text-slate-900 dark:text-[#F0F2F8] block"
               />
               <p className="text-[10px] text-slate-400 dark:text-[#555C72]">
-                External clipboard ingestion detected during session
+                At least one paste was recorded
               </p>
             </div>
 
             <div className="p-5 bg-white dark:bg-[#1A1D27] border border-rose-500/20 rounded-2xl space-y-1.5 shadow-xs">
               <div className="flex items-center gap-2 text-xs font-bold text-rose-500 uppercase tracking-wider">
                 <Zap className="w-4 h-4" />
-                <span>High Velocity (&gt;800 CPM)</span>
+                <span>Fast typing</span>
               </div>
               <CountUpNumber
                 value={integrityCounts.velocityUsers}
                 className="text-3xl font-black text-slate-900 dark:text-[#F0F2F8] block"
               />
               <p className="text-[10px] text-slate-400 dark:text-[#555C72]">
-                Typing velocity indicative of automated injection
+                More than 800 characters per minute was recorded
               </p>
             </div>
 
             <div className="p-5 bg-white dark:bg-[#1A1D27] border border-red-500/30 rounded-2xl space-y-1.5 shadow-xs bg-red-500/5">
               <div className="flex items-center gap-2 text-xs font-bold text-red-500 uppercase tracking-wider">
                 <AlertOctagon className="w-4 h-4" />
-                <span>Highest Risk (Dual Flag)</span>
+                <span>Pasting and fast typing</span>
               </div>
               <CountUpNumber
                 value={integrityCounts.multiFlagUsers}
                 className="text-3xl font-black text-red-500 block"
               />
               <p className="text-[10px] text-slate-400 dark:text-[#555C72]">
-                Triggered both paste and velocity anomalies
+                Both pasting and typing above 800 characters per minute were recorded. These signals do not prove copied work.
               </p>
             </div>
           </div>
@@ -1135,30 +1148,30 @@ export function CodeLabInstructorClient({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-                  ⚠️ At-Risk Student Triage Matrix
+                  Students to follow up with
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                  Identifies students with prolonged struggle (&gt;3&times; median time) or critical score deficits
+                  Students with low scores or longer completion times appear first. Review their work before sending a reminder.
                 </p>
               </div>
               <div className="text-xs text-slate-500 dark:text-[#8B92A5] font-semibold">
-                Class Median: {Math.floor(classMedianTimeSec / 60)}m {classMedianTimeSec % 60}s
+                Typical class time (middle value): {Math.floor(classMedianTimeSec / 60)}m {classMedianTimeSec % 60}s
               </div>
             </div>
 
             {atRiskStudents.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs">No student submission records yet.</div>
+              <div className="text-center py-8 text-slate-400 text-xs">No student submissions yet.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-[#E4E6EF] dark:border-white/5 text-[11px] font-bold text-slate-400 dark:text-[#555C72] uppercase tracking-wider">
                       <th className="py-2.5 px-3">Student</th>
-                      <th className="py-2.5 px-3">Avg Score</th>
-                      <th className="py-2.5 px-3">Avg Time</th>
-                      <th className="py-2.5 px-3">Attempts</th>
-                      <th className="py-2.5 px-3">Risk Level</th>
-                      <th className="py-2.5 px-3 text-right">Intervention</th>
+                      <th className="py-2.5 px-3">Average score</th>
+                      <th className="py-2.5 px-3">Average time</th>
+                      <th className="py-2.5 px-3">Submissions</th>
+                      <th className="py-2.5 px-3">Follow-up</th>
+                      <th className="py-2.5 px-3 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -1197,7 +1210,7 @@ export function CodeLabInstructorClient({
                                 : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                             }`}
                           >
-                            {st.riskLevel === "high" ? "🔴 High" : st.riskLevel === "medium" ? "🟡 Medium" : "🟢 Low"}
+                            {st.riskLevel === "high" ? "Needs help" : st.riskLevel === "medium" ? "Check progress" : "On track"}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
@@ -1215,12 +1228,12 @@ export function CodeLabInstructorClient({
                             ) : alertSentStudentId === st.studentId ? (
                               <>
                                 <Check className="w-3 h-3 text-emerald-500" />
-                                <span className="text-emerald-600 dark:text-emerald-400">Alert Sent!</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">Reminder sent</span>
                               </>
                             ) : (
                               <>
                                 <Send className="w-3 h-3" />
-                                <span>Send Alert</span>
+                                <span>Send reminder</span>
                               </>
                             )}
                           </button>
@@ -1245,10 +1258,10 @@ export function CodeLabInstructorClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight">
-              Student Submissions Log
+              Student submissions
             </h2>
             <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-              Review forensic keystroke velocity, integrity telemetry, and manage attempts.
+              Review scores, completion times, and recorded typing activity. Select a submission to manage it.
             </p>
           </div>
 
@@ -1259,9 +1272,9 @@ export function CodeLabInstructorClient({
               <Search className="w-4 h-4 text-slate-400 dark:text-[#8B92A5] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search student or problem..."
+                placeholder="Search students or problems"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setSubmissionPage(1); }}
                 className="w-full bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-xl pl-10 pr-3.5 py-2 text-xs text-slate-900 dark:text-[#F0F2F8] placeholder-slate-400 dark:placeholder:text-[#555C72] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] shadow-xs"
               />
             </div>
@@ -1269,10 +1282,10 @@ export function CodeLabInstructorClient({
             {/* Language Selector */}
             <select
               value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
+              onChange={(e) => { setSelectedLanguage(e.target.value); setSubmissionPage(1); }}
               className="bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] shadow-xs cursor-pointer"
             >
-              <option value="all">All Languages</option>
+              <option value="all">All languages</option>
               <option value="python">Python</option>
               <option value="cpp">C++</option>
               <option value="csharp">C#</option>
@@ -1286,7 +1299,7 @@ export function CodeLabInstructorClient({
             {/* Flagged Toggle */}
             <button
               type="button"
-              onClick={() => setOnlyFlagged((prev) => !prev)}
+              onClick={() => { setOnlyFlagged((prev) => !prev); setSubmissionPage(1); }}
               className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
                 onlyFlagged
                   ? "bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-400 shadow-xs"
@@ -1294,13 +1307,13 @@ export function CodeLabInstructorClient({
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Flagged Only</span>
+              <span>Needs review</span>
             </button>
 
             {/* Rejected Toggle */}
             <button
               type="button"
-              onClick={() => setOnlyRejected((prev) => !prev)}
+              onClick={() => { setOnlyRejected((prev) => !prev); setSubmissionPage(1); }}
               className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
                 onlyRejected
                   ? "bg-red-500/10 border-red-500 text-red-600 dark:text-red-400 shadow-xs"
@@ -1308,7 +1321,7 @@ export function CodeLabInstructorClient({
               }`}
             >
               <Ban className="w-3.5 h-3.5" />
-              <span>Invalidated Only</span>
+              <span>Rejected submissions</span>
             </button>
           </div>
         </div>
@@ -1317,7 +1330,7 @@ export function CodeLabInstructorClient({
         <div className="bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-3xl overflow-hidden shadow-xs">
           {filteredSubmissions.length === 0 ? (
             <div className="p-12 text-center text-slate-400 dark:text-[#555C72] text-xs font-medium">
-              No submissions match your active filters.
+              No submissions match these filters. Try another search or clear the filters.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -1329,13 +1342,13 @@ export function CodeLabInstructorClient({
                     <th className="py-3 px-4">Language</th>
                     <th className="py-3 px-4">Score</th>
                     <th className="py-3 px-4">Time</th>
-                    <th className="py-3 px-4">Forensic Telemetry</th>
+                    <th className="py-3 px-4">Typing activity</th>
                     <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {filteredSubmissions.map((sub) => {
+                  {paginatedSubmissions.map((sub) => {
                     const langBadge =
                       LANGUAGE_BADGES[sub.language.toLowerCase()] || LANGUAGE_BADGES.python;
                     const mins = Math.floor(sub.completionTimeSeconds / 60);
@@ -1377,7 +1390,7 @@ export function CodeLabInstructorClient({
                           {sub.isRejected ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">
                               <Ban className="w-3 h-3" />
-                              Invalidated
+                              Rejected
                             </span>
                           ) : (
                             <span
@@ -1416,7 +1429,7 @@ export function CodeLabInstructorClient({
                           ) : (
                             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                               <CheckCircle2 className="w-3 h-3" />
-                              Clean
+                              None recorded
                             </span>
                           )}
                         </td>
@@ -1445,6 +1458,32 @@ export function CodeLabInstructorClient({
             </div>
           )}
         </div>
+        {filteredSubmissions.length > 0 && (
+          <nav aria-label="Student submission pages" className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-[#8B92A5]">
+            <p role="status">
+              Showing {submissionPageStart + 1}–{Math.min(submissionPageStart + 10, filteredSubmissions.length)} of {filteredSubmissions.length} submissions
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={currentSubmissionPage === 1}
+                onClick={() => setSubmissionPage(currentSubmissionPage - 1)}
+                className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#1A1D27]"
+              >
+                Previous
+              </button>
+              <span>Page {currentSubmissionPage} of {submissionPageCount}</span>
+              <button
+                type="button"
+                disabled={currentSubmissionPage === submissionPageCount}
+                onClick={() => setSubmissionPage(currentSubmissionPage + 1)}
+                className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-[#1A1D27]"
+              >
+                Next
+              </button>
+            </div>
+          </nav>
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkKxEligibility } from "@/lib/kx-eligibility";
@@ -10,6 +11,9 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ postId: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(request, "GET knowledge-exchange/posts/[postId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -220,6 +224,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ postId: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH knowledge-exchange/posts/[postId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -296,6 +303,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ postId: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE knowledge-exchange/posts/[postId]/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

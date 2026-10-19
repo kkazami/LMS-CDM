@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../../workspace/_shared";
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
  * TXT / DOCX / CSV return { fileType: "unsupported" } so the UI skips the selector.
  */
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET flashcards/file-info/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
   if (response) return response;
 

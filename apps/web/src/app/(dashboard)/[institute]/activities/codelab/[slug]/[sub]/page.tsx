@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Unified CodeLab Problem / Level Execution Page
  * Route: /[institute]/activities/codelab/[slug]/[sub]
@@ -43,6 +44,8 @@ const VALID_LANGUAGES = new Set<ProblemLanguage>([
 ]);
 
 export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDynamicPageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/[slug]/[sub]/page.tsx", await params);
+
   const { institute, slug, sub } = await params;
   const session = await getSession();
 
@@ -137,8 +140,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
     return (
       <div
-        className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-        style={{ height: "calc(100dvh - 73px)" }}
+        data-codelab-workspace
+        className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
       >
         <CodeLabScene
           key={`codelab-${problem.id}-${levelNumber}`}
@@ -222,8 +225,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
     return (
       <div
-        className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-        style={{ height: "calc(100vh - 73px)" }}
+        data-codelab-workspace
+        className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
       >
         <CodeLabScene
           assignmentId={staticProblem.id}
@@ -274,8 +277,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
 
   return (
     <div
-      className="-m-4 lg:-m-8 flex flex-col w-full bg-slate-950 relative overflow-hidden"
-      style={{ height: "calc(100vh - 73px)" }}
+      data-codelab-workspace
+      className="flex h-full min-h-0 w-full flex-col bg-slate-950 relative overflow-hidden"
     >
       <CodeLabScene
         key={`codelab-template-${template.id}-${seed}`}

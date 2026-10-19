@@ -11,6 +11,7 @@ import {
   BarChart2,
   Archive,
   PlusSquare,
+  Network,
   ShieldCheck,
   Users,
   FileText,
@@ -21,10 +22,17 @@ import {
   LogOut,
   Sparkles,
   NotebookPen,
+  HardDrive,
+  HelpCircle,
+  Terminal,
+  ChevronRight,
+  Code2,
+  MessageSquareQuote,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
+import { getNavigationPath } from "@/lib/navigation-path";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -34,6 +42,8 @@ interface MobileMoreSheetProps {
   userRole: string;
   userName?: string;
   avatarUrl?: string | null;
+  isEligibleForActivities?: boolean;
+  isEligibleForKnowledgeExchange?: boolean;
 }
 
 interface NavItem {
@@ -51,8 +61,10 @@ export default function MobileMoreSheet({
   userRole,
   userName = "User",
   avatarUrl = null,
+  isEligibleForActivities,
+  isEligibleForKnowledgeExchange,
 }: MobileMoreSheetProps) {
-  const pathname = usePathname();
+  const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -72,15 +84,22 @@ export default function MobileMoreSheet({
     };
   }, [isOpen]);
 
-  // Handle escape key
   useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    sheetRef.current?.querySelector<HTMLElement>('button, a[href]')?.focus();
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
+      if (e.key === "Escape") onClose();
+      if (e.key === "Tab") {
+        const controls = sheetRef.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)');
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => { window.removeEventListener("keydown", handleKeyDown); previousFocus?.focus(); };
   }, [isOpen, onClose]);
 
   const studentItems: NavItem[] = [
@@ -92,17 +111,21 @@ export default function MobileMoreSheet({
   ];
 
   const teacherItems: NavItem[] = [
-    { label: "Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Student telemetry" },
-    { label: "Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage rankings" },
+    { label: "Archived Classes", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Review previous classes" },
+    ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
+    { label: "Student Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Class progress and performance" },
+    { label: "Manage Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage institute rankings" },
     { label: "Create Tasks", href: `/${instituteCode}/create-tasks`, icon: PlusSquare, description: "Assign activities" },
-    { label: "Archived", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Previous courses" },
   ];
 
   const adminItems: NavItem[] = [
     { label: "Courses", href: `/${instituteCode}/admin/courses`, icon: Library, description: "All classes" },
     { label: "Accounts", href: `/${instituteCode}/accounts`, icon: Users, description: "Users & students" },
-    { label: "Permissions", href: `/${instituteCode}/accounts/permissions`, icon: ShieldCheck, description: "Role matrix" },
+    ...(instituteCode === "ics" ? [{ label: "Faculty & Program Heads", href: `/${instituteCode}/admin/faculty`, icon: Users, description: "BSIT and BSCpE faculty" }] : []),
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
+    { label: "Backup & Recovery", href: `/${instituteCode}/backup`, icon: HardDrive, description: "Protect and restore data" },
+    { label: "Security Tools", href: `/${instituteCode}/security`, icon: ShieldCheck, description: "Review account security" },
+    { label: "Help", href: `/${instituteCode}/help`, icon: HelpCircle, description: "Support and guidance" },
   ];
 
   const handleLogout = async () => {
@@ -124,11 +147,19 @@ export default function MobileMoreSheet({
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
       : [];
 
-  const items = isStudent
-    ? [...studentItems, ...practicumItems]
-    : isProfessor
-      ? [...teacherItems, ...practicumItems]
-      : adminItems;
+  const items: NavItem[] = [
+    ...(isEligibleForActivities && (isStudent || isProfessor)
+      ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2, description: "Coding practice" }] : []),
+    ...(isEligibleForActivities && isProfessor
+      ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
+    ...(isEligibleForKnowledgeExchange
+      ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
+    ...(isStudent
+      ? [...studentItems, ...practicumItems]
+      : isProfessor
+        ? [...teacherItems, ...practicumItems]
+        : adminItems),
+  ];
 
   if (!isOpen) return null;
 
@@ -153,14 +184,14 @@ export default function MobileMoreSheet({
         role="dialog"
         aria-modal="true"
         aria-label="More navigation options"
-        className="fixed inset-x-0 bottom-0 z-10 max-h-[85vh] flex flex-col rounded-t-[28px] border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl overflow-hidden transition-transform duration-300 ease-out"
+        className="mobile-more-sheet fixed inset-x-0 bottom-0 z-10 max-h-[90dvh] flex flex-col rounded-t-3xl border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] shadow-2xl overflow-hidden"
       >
         {/* Handle bar + Header */}
         <div className="px-5 pt-3 pb-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-1 rounded-full bg-slate-300 dark:bg-white/20 mx-auto absolute top-2.5 left-1/2 -translate-x-1/2" />
             <h2 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] mt-1">
-              Explore CdM LMS
+              {isStudent ? "Explore CdM LMS" : isProfessor ? "Instructor tools" : "Administration"}
             </h2>
             <span
               className="mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-white shrink-0"
@@ -230,24 +261,25 @@ export default function MobileMoreSheet({
         </div>
 
         {/* Scrollable Navigation Grid */}
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          <div className="grid grid-cols-2 gap-2.5">
+        <nav aria-label="Additional navigation" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2">
+          <div className={isStudent ? "grid grid-cols-2 gap-2.5" : "divide-y divide-slate-100 dark:divide-white/5"}>
             {items.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = pathname === item.href || (pathname.startsWith(item.href + "/") && !items.some(other => other.href !== item.href && other.href.startsWith(item.href + "/") && pathname.startsWith(other.href)));
 
               return (
                 <Link
                   key={item.label}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   onClick={() => {
                     triggerNativeHaptic("light");
                     onClose();
                   }}
-                  className={`flex flex-col p-3 rounded-2xl border transition-all cursor-pointer min-h-[72px] active:scale-[0.98] touch-manipulation ${
+                  className={`${isStudent ? "flex flex-col p-3 rounded-2xl border min-h-[72px]" : "flex items-center gap-3 px-3 py-3 rounded-xl min-h-16"} transition-colors duration-150 cursor-pointer touch-manipulation ${
                     isActive
                       ? "border-transparent bg-slate-100/90 dark:bg-white/10"
-                      : "border-slate-200/70 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27] hover:bg-slate-100/70 dark:hover:bg-white/[0.07]"
+                      : `${isStudent ? "border-slate-200/70 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27]" : ""} hover:bg-slate-100/70 dark:hover:bg-white/[0.07]`
                   }`}
                   style={
                     isActive
@@ -258,9 +290,9 @@ export default function MobileMoreSheet({
                       : undefined
                   }
                 >
-                  <div className="flex items-center gap-2.5 mb-1 min-w-0">
+                  <div className={`flex gap-2 min-w-0 flex-1 ${isStudent ? "items-center mb-1" : "items-start"}`}>
                     <div
-                      className="p-1.5 rounded-xl shrink-0"
+                      className="p-0.5 rounded-xl shrink-0"
                       style={{
                         backgroundColor: isActive ? `${primaryColor}25` : undefined,
                       }}
@@ -270,20 +302,22 @@ export default function MobileMoreSheet({
                         style={{ color: isActive ? primaryColor : undefined }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">
-                      {item.label}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className={`${isStudent ? "text-xs" : "text-sm"} font-semibold text-slate-900 dark:text-[#F0F2F8] leading-snug break-words`}>{item.label}</span>
+                      {!isStudent && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{item.description}</p>}
+                    </div>
                   </div>
-                  {item.description && (
+                  {isStudent && item.description && (
                     <span className="text-[10px] text-slate-500 dark:text-[#8B92A5] truncate">
                       {item.description}
                     </span>
                   )}
+                  {!isStudent && <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />}
                 </Link>
               );
             })}
           </div>
-        </div>
+        </nav>
 
         {/* Bottom Sign Out / Switch Account */}
         <div className="p-4 pt-2 pb-[calc(24px+env(safe-area-inset-bottom,0px))] border-t border-slate-100 dark:border-white/5 shrink-0">

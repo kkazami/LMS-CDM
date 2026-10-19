@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/run-tests
  *
@@ -17,11 +18,8 @@ import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
 import { substituteTemplate, evaluateVariables, CodeLabVariable } from "@/features/interactive-activities/codelab/utils/problem-engine";
 
-import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
-import { grantExp } from "@/lib/gamification/grant-exp";
-import { EXP_VALUES } from "@/lib/gamification/exp-engine";
-import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +55,9 @@ async function executeOnJudge0(
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST codelab/run-tests/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     // 1. Auth + eligibility
     const eligibility = await checkActivityEligibility();
@@ -161,6 +162,7 @@ export async function POST(request: Request) {
 
         results.push(result);
       } catch (err: unknown) {
+        if (err instanceof CodeRunnerUnavailableError) throw err;
         const errorMessage = err instanceof Error ? err.message : "Execution failed";
         const result: TestRunResult = {
           index: i,
@@ -180,58 +182,17 @@ export async function POST(request: Request) {
     const totalCount = allTestCases.length;
     const score = totalCount > 0 ? Math.round((passCount / totalCount) * 100) : 0;
 
-    let grantedExp = 0;
-    let leveledUp = false;
-    let newLevel = 1;
-
-    if (score >= 60) {
-      try {
-        const studentId = eligibility.session.user.id;
-        if (score === 100) {
-          const expRes = await grantExp({
-            userId: studentId,
-            amount: EXP_VALUES.codelab_level_perfect,
-            reason: `CodeLab: ${template.title || templateId} — Perfect Score (100%)`,
-            source: "codelab",
-            idempotencyKey: `codelab_perfect_${templateId}`,
-          });
-          grantedExp = expRes.grantedAmount;
-          leveledUp = expRes.leveledUp;
-          newLevel = expRes.newLevel;
-
-          await awardBadgeIfEarned(studentId, "codelab-first");
-          await awardBadgeIfEarned(studentId, "codelab-perfect-level");
-          await awardBadgeIfEarned(studentId, "perfect-score");
-        } else {
-          const expRes = await grantExp({
-            userId: studentId,
-            amount: EXP_VALUES.codelab_level_complete,
-            reason: `CodeLab: ${template.title || templateId} — Passed`,
-            source: "codelab",
-            idempotencyKey: `codelab_pass_${templateId}`,
-          });
-          grantedExp = expRes.grantedAmount;
-          leveledUp = expRes.leveledUp;
-          newLevel = expRes.newLevel;
-
-          await awardBadgeIfEarned(studentId, "codelab-first");
-        }
-      } catch (gamiErr) {
-        console.error("GAMIFICATION_RUN_TESTS_ERROR", gamiErr);
-      }
-    }
-
     return NextResponse.json({
       results,
       passCount,
       totalCount,
       score,
       allPassed: passCount === totalCount,
-      grantedExp,
-      leveledUp,
-      newLevel,
+      grantedExp: 0,
+      leveledUp: false,
     });
   } catch (error: unknown) {
+    if (error instanceof CodeRunnerUnavailableError) return NextResponse.json({ error: error.message, code: "RUNNER_UNAVAILABLE" }, { status: 503 });
     console.error("CODELAB_RUN_TESTS_ERROR", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

@@ -1,0 +1,11 @@
+name = "cdm-lms-invitation-scheduler"
+main = "worker.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = false
+preview_urls = false
+
+[triggers]
+crons = ["* * * * *"]
+
+# Set LMS_EMAIL_ENDPOINT and CRON_SECRET as Worker secrets before deployment.
+# This Worker has no database or SMTP credentials.

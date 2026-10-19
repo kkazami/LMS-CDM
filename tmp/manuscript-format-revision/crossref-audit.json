@@ -1,0 +1,2476 @@
+[
+  {
+    "key": "Abid",
+    "doi": "10.1371/journal.pone.0311111",
+    "title": [
+      "An evaluation framework and comparative analysis of the widely used learning management systems"
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0009-0008-8715-7866",
+        "authenticated-orcid": true,
+        "given": "Adnan",
+        "family": "Abid",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Abdullah Hassan",
+        "family": "Tufail",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Osama Mohamed",
+        "family": "Ahmed Salem",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Naeem",
+        "family": "A. Nawaz",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Uzma",
+        "family": "Farooq",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Irfan",
+        "family": "Abid",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Kashif",
+        "family": "Ishaq",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "PLOS ONE"
+    ],
+    "volume": "19",
+    "issue": "12",
+    "page": "e0311111",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          19
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          19
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Acala",
+    "doi": "10.9734/ajess/2023/v47i31024",
+    "title": [
+      "Perceptions on the Utilization of Learning Management System and its Effects on the Communication Skills of Private Senior High School Students in Manila"
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0009-0005-8103-0029",
+        "authenticated-orcid": false,
+        "given": "Jefferson J.",
+        "family": "Acala",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Ainah Corina B.",
+        "family": "Dimasacat",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Asian Journal of Education and Social Studies"
+    ],
+    "volume": "47",
+    "issue": "3",
+    "page": "12-27",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          7,
+          21
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          7,
+          21
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Ahmed",
+    "doi": "10.1186/s41239-025-00541-1",
+    "title": [
+      "Effect of Gamified, Mobile, Cloud-Based Learning Management System (GMCLMS) on student engagement and achievement"
+    ],
+    "authors": [
+      {
+        "given": "Hosnia M. M.",
+        "family": "Ahmed",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5463-5982",
+        "authenticated-orcid": false,
+        "given": "Hassan A.",
+        "family": "El-Sabagh",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Doaa M.",
+        "family": "Elbourhamy",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal of Educational Technology in Higher Education"
+    ],
+    "volume": "22",
+    "issue": "1",
+    "page": null,
+    "article": "49",
+    "published": {
+      "date-parts": [
+        [
+          2025,
+          8,
+          15
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2025,
+          8,
+          15
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Alfalah",
+    "doi": "10.1016/j.jjimei.2022.100143",
+    "title": [
+      "Factors influencing students’ adoption and use of mobile learning management systems (m-LMSs): A quantitative study of Saudi Arabia"
+    ],
+    "authors": [
+      {
+        "given": "Adel Abdulmohsen",
+        "family": "Alfalah",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal of Information Management Data Insights"
+    ],
+    "volume": "3",
+    "issue": "1",
+    "page": "100143",
+    "article": "100143",
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          4
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2023,
+          4
+        ]
+      ]
+    },
+    "published-online": null
+  },
+  {
+    "key": "Almodiel",
+    "doi": "10.32664/ijitgeb.v4i1.93",
+    "title": [
+      "Analyzing Online Learners’ Knowledge Construction in Asynchronous Discussion Forums Using Interaction Analysis Model"
+    ],
+    "author": [
+      {
+        "given": "Myra Collado",
+        "family": "Almodiel",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "International Journal in Information Technology in Governance, Education and Business"
+    ],
+    "volume": "4",
+    "issue": "1",
+    "page": "1-11",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2022,
+          12,
+          4
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2022,
+          12,
+          4
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Alsaqqa",
+    "doi": "10.3991/ijim.v14i11.13269",
+    "title": [
+      "Agile Software Development: Methodologies and Trends"
+    ],
+    "authors": [
+      {
+        "given": "Samar",
+        "family": "Alsaqqa",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Samer",
+        "family": "Sawalha",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Heba",
+        "family": "Abdel-Nabi",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal of Interactive Mobile Technologies (iJIM)"
+    ],
+    "volume": "14",
+    "issue": "11",
+    "page": "246",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2020,
+          7,
+          10
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2020,
+          7,
+          10
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Arada",
+    "doi": "10.32664/ijitgeb.v7i1.175",
+    "title": [
+      "Arduino Programming Education Using Tinkercad: A Mixed-Method Study on Usability and Student Engagement During the COVID-19 Pandemic"
+    ],
+    "authors": [
+      {
+        "given": "Blancaflor Piores",
+        "family": "Arada",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal in Information Technology in Governance, Education and Business"
+    ],
+    "volume": "7",
+    "issue": "1",
+    "page": "135-150",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2025,
+          6,
+          29
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2025,
+          6,
+          29
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Asuncion",
+    "status": "no DOI"
+  },
+  {
+    "key": "Bach",
+    "doi": "10.3389/feduc.2024.1356271",
+    "title": [
+      "Collaborative online learning in higher education—quality of digital interaction and associations with individual and group-related factors"
+    ],
+    "authors": [
+      {
+        "given": "Anabel",
+        "family": "Bach",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Felicitas",
+        "family": "Thiel",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Frontiers in Education"
+    ],
+    "volume": "9",
+    "issue": null,
+    "page": null,
+    "article": "1356271",
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          11,
+          20
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          11,
+          20
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Benben",
+    "doi": "10.12691/education-10-6-2",
+    "title": [
+      "Physics Students’ Academic Achievement and Motivation in a Gamified Formative Assessment"
+    ],
+    "authors": [
+      {
+        "given": "Vanie",
+        "family": "Y. Benben",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Mary",
+        "family": "Allein Antoenette C. Bug-os",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "American Journal of Educational Research"
+    ],
+    "volume": "10",
+    "issue": "6",
+    "page": "385-390",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2022,
+          6,
+          7
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2022,
+          6,
+          7
+        ]
+      ]
+    },
+    "published-online": null
+  },
+  {
+    "key": "Çakiroğlu",
+    "doi": "10.1007/s12528-024-09397-2",
+    "title": [
+      "Online learners’ self-regulated learning skills regarding LMS interactions: a profiling study"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-8030-3869",
+        "authenticated-orcid": false,
+        "given": "Ünal",
+        "family": "Çakiroğlu",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Mehmet",
+        "family": "Kokoç",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Melek",
+        "family": "Atabay",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Journal of Computing in Higher Education"
+    ],
+    "volume": "36",
+    "issue": "1",
+    "page": "220-241",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          16
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          4
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          16
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Dela Rosa",
+    "doi": "10.25147/ijcsr.2017.001.1.161",
+    "title": [
+      "Exploring Students' Adoption of Canvas Learning Management System in Programming at a State University in the Philippines: A Technology Acceptance Perspective"
+    ],
+    "authors": [
+      {
+        "name": "College of Information and Communications Technology, Bulacan State University, Philippines",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1662-083X",
+        "authenticated-orcid": false,
+        "given": "Aaron Paul",
+        "family": "Dela Rosa",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal of Computing Sciences Research"
+    ],
+    "volume": "7",
+    "issue": null,
+    "page": "2287-2295",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          1,
+          1
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2023,
+          1,
+          1
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Du",
+    "doi": "10.3390/bs15081041",
+    "title": [
+      "Empowering Students in Online Learning Environments Through a Self-Regulated Learning–Enhanced Learning Management System"
+    ],
+    "authors": [
+      {
+        "given": "Jiahui",
+        "family": "Du",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "School of Humanities and Social Sciences, Beihang University, Beijing 100191, China"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Lejia",
+        "family": "Liu",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Faculty of Education, The University of Hong Kong, Pok Fu Lam, Hong Kong SAR, China"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Shikui",
+        "family": "Zhao",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "School of Humanities and Social Sciences, Beihang University, Beijing 100191, China"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Behavioral Sciences"
+    ],
+    "volume": "15",
+    "issue": "8",
+    "page": "1041",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2025,
+          7,
+          31
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2025,
+          7,
+          31
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Fernandez-Gauna",
+    "doi": "10.1186/s41239-023-00386-6",
+    "title": [
+      "Automatic feedback and assessment of team-coding assignments in a DevOps context"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-9233-2333",
+        "authenticated-orcid": false,
+        "given": "Borja",
+        "family": "Fernandez-Gauna",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Naiara",
+        "family": "Rojo",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Manuel",
+        "family": "Graña",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "International Journal of Educational Technology in Higher Education"
+    ],
+    "volume": "20",
+    "issue": "1",
+    "page": null,
+    "article": "17",
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          3,
+          24
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          3,
+          24
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Fojas",
+    "status": "no DOI"
+  },
+  {
+    "key": "Funa",
+    "doi": "10.1016/j.ssaho.2023.100470",
+    "title": [
+      "Exploring Filipino preservice teachers' online self-regulated learning skills and strategies amid the COVID-19 pandemic"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-6648-8825",
+        "authenticated-orcid": false,
+        "given": "Aaron A.",
+        "family": "Funa",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Renz Alvin E.",
+        "family": "Gabay",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Evan Carlo B.",
+        "family": "Deblois",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Lizel D.",
+        "family": "Lerios",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Frances Grace J.",
+        "family": "Jetomo",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Social Sciences &amp; Humanities Open"
+    ],
+    "volume": "7",
+    "issue": "1",
+    "page": "100470",
+    "article": "100470",
+    "published": {
+      "date-parts": [
+        [
+          2023
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2023
+        ]
+      ]
+    },
+    "published-online": null
+  },
+  {
+    "key": "Guico",
+    "doi": "10.18488/73.v14i1.4668",
+    "title": [
+      "An analytical study on the utilization of learning management systems in higher education institutions: Perspectives from the Philippines"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-8155-1829",
+        "authenticated-orcid": false,
+        "given": "Guico Mellie",
+        "family": "Delen",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Humanities and Social Sciences Letters"
+    ],
+    "volume": "14",
+    "issue": "1",
+    "page": "126-140",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2026,
+          1,
+          6
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2026,
+          1,
+          6
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Heikkinen",
+    "doi": "10.1007/s10639-022-11281-4",
+    "title": [
+      "Supporting self-regulated learning with learning analytics interventions – a systematic literature review"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-2283-1345",
+        "authenticated-orcid": false,
+        "given": "Sami",
+        "family": "Heikkinen",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5881-3109",
+        "authenticated-orcid": false,
+        "given": "Mohammed",
+        "family": "Saqr",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-8890-4068",
+        "authenticated-orcid": false,
+        "given": "Jonna",
+        "family": "Malmberg",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1037-3313",
+        "authenticated-orcid": false,
+        "given": "Matti",
+        "family": "Tedre",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Education and Information Technologies"
+    ],
+    "volume": "28",
+    "issue": "3",
+    "page": "3059-3088",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2022,
+          9,
+          8
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2023,
+          3
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2022,
+          9,
+          8
+        ]
+      ]
+    }
+  },
+  {
+    "key": "ISO",
+    "status": "no DOI"
+  },
+  {
+    "key": "Jack",
+    "status": "no DOI"
+  },
+  {
+    "key": "Jaramillo-Mediavilla",
+    "doi": "10.3390/educsci14060639",
+    "title": [
+      "Impact of Gamification on Motivation and Academic Performance: A Systematic Review"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-6366-6702",
+        "authenticated-orcid": false,
+        "given": "Lorena",
+        "family": "Jaramillo-Mediavilla",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Grupo de Investigación, Educación, Ciencia y Tecnología (GIECYT), Universidad Técnica del Norte, Ibarra 100105, Ecuador"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1045-2126",
+        "authenticated-orcid": false,
+        "given": "Andrea",
+        "family": "Basantes-Andrade",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Science Research Group Network e-CIER, Universidad Técnica del Norte, Ibarra 100105, Ecuador"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-3743-5839",
+        "authenticated-orcid": false,
+        "given": "Marcos",
+        "family": "Cabezas-González",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Faculty of Education, Universidad de Salamanca, 37008 Salamanca, Spain"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5304-534X",
+        "authenticated-orcid": false,
+        "given": "Sonia",
+        "family": "Casillas-Martín",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Faculty of Education, Universidad de Salamanca, 37008 Salamanca, Spain"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Education Sciences"
+    ],
+    "volume": "14",
+    "issue": "6",
+    "page": "639",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          6,
+          13
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          6,
+          13
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Kumi",
+    "doi": "10.1111/dsji.12299",
+    "title": [
+      "Discussion forums and student engagement: A social network analysis perspective"
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-3131-5008",
+        "authenticated-orcid": false,
+        "given": "Richard",
+        "family": "Kumi",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "College of Business, Health, and Human Services University of Arkansas at Little Rock  Little Rock Arkansas"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Decision Sciences Journal of Innovative Education"
+    ],
+    "volume": "21",
+    "issue": "4",
+    "page": "197-207",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          9,
+          19
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2023,
+          10
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          9,
+          19
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Laspiñas",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "key": "Llamas",
+    "doi": "10.11591/edulearn.v19i3.22350",
+    "title": [
+      "Needs and challenges of academics and students in using a learning management system: a user experience approach"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0009-0007-2579-4723",
+        "authenticated-orcid": false,
+        "given": "Maria Camilla Ann R.",
+        "family": "Llamas",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5137-0835",
+        "authenticated-orcid": false,
+        "given": "Cenie M.",
+        "family": "Vilela-Malabanan",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-9955-8156",
+        "authenticated-orcid": false,
+        "given": "Dante D.",
+        "family": "Dinawanao",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Journal of Education and Learning (EduLearn)"
+    ],
+    "volume": "19",
+    "issue": "3",
+    "page": "1662-1669",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2025,
+          8,
+          1
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2025,
+          8,
+          1
+        ]
+      ]
+    }
+  },
+  {
+    "key": "McCombes",
+    "status": "no DOI"
+  },
+  {
+    "key": "Memon",
+    "doi": "10.47263/JASEM.9(1)01",
+    "title": [
+      "PURPOSIVE SAMPLING: A REVIEW AND GUIDELINES FOR QUANTITATIVE RESEARCH"
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-4623-9693",
+        "authenticated-orcid": false,
+        "given": "Mumtaz Ali",
+        "family": "Memon",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-7580-7058",
+        "authenticated-orcid": false,
+        "given": "Ramayah",
+        "family": "Thurasamy",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-1389-976X",
+        "authenticated-orcid": false,
+        "given": "Hiram",
+        "family": "Ting",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8440-9564",
+        "authenticated-orcid": false,
+        "given": "Jun-Hwa",
+        "family": "Cheah",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Journal of Applied Structural Equation Modeling"
+    ],
+    "volume": "9",
+    "issue": "1",
+    "page": "1-23",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          31
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          31
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          31
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Mennuti",
+    "status": "no DOI"
+  },
+  {
+    "key": "Messer",
+    "doi": "10.1145/3636515",
+    "title": [
+      "Automated Grading and Feedback Tools for Programming Education: A Systematic Review"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-5915-9153",
+        "authenticated-orcid": false,
+        "given": "Marcus",
+        "family": "Messer",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "King’s College London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6086-2479",
+        "authenticated-orcid": false,
+        "given": "Neil C. C.",
+        "family": "Brown",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "King’s College London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-0544-2003",
+        "authenticated-orcid": false,
+        "given": "Michael",
+        "family": "Kölling",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "King’s College London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-4933-0073",
+        "authenticated-orcid": false,
+        "given": "Miaojing",
+        "family": "Shi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Tongji University, China"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "ACM Transactions on Computing Education"
+    ],
+    "volume": "24",
+    "issue": "1",
+    "page": "1-43",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          19
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          3,
+          31
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          19
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Moodle",
+    "status": "no DOI"
+  },
+  {
+    "key": "Mudau",
+    "doi": "10.3390/educsci13090963",
+    "title": [
+      "Guidelines for Supporting a Community of Inquiry through Graded Online Discussion Forums in Higher Education"
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-5389-6942",
+        "authenticated-orcid": false,
+        "given": "Patience Kelebogile",
+        "family": "Mudau",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Department of Curriculum and Instructional Studies, University of South Africa, Pretoria 3000, South Africa"
+          }
+        ],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Geesje",
+        "family": "Van den Berg",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Curriculum and Instructional Studies, University of South Africa, Pretoria 3000, South Africa"
+          }
+        ],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Education Sciences"
+    ],
+    "volume": "13",
+    "issue": "9",
+    "page": "963",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          9,
+          20
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          9,
+          20
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Novak",
+    "doi": "10.3390/educsci14010054",
+    "title": [
+      "Assessment Automation of Complex Student Programming Assignments"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-9501-7299",
+        "authenticated-orcid": false,
+        "given": "Matija",
+        "family": "Novak",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Faculty of Organization and Informatics, University of Zagreb, Pavlinska 2, 42000 Varaždin, Croatia"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Dragutin",
+        "family": "Kermek",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Faculty of Organization and Informatics, University of Zagreb, Pavlinska 2, 42000 Varaždin, Croatia"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Education Sciences"
+    ],
+    "volume": "14",
+    "issue": "1",
+    "page": "54",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          1,
+          1
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Orvalho",
+    "doi": "10.1145/3649165.3690106",
+    "title": [
+      "GitSEED: A Git-backed Automated Assessment Tool for Software Engineering and Programming Education"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-7407-5967",
+        "authenticated-orcid": false,
+        "given": "Pedro",
+        "family": "Orvalho",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "INESC-ID, IST, U. Lisboa, Lisbon, Portugal"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-3487-784X",
+        "authenticated-orcid": false,
+        "given": "Mikolás",
+        "family": "Janota",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Czech Technical University in Prague, Prague, Czech Republic"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-4205-2189",
+        "authenticated-orcid": false,
+        "given": "Vasco",
+        "family": "Manquinho",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "INESC-ID, IST, U. Lisboa, Lisbon, Portugal"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Proceedings of the 2024 on ACM Virtual Global Computing Education Conference V. 1"
+    ],
+    "volume": null,
+    "issue": null,
+    "page": "165-171",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          5
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          5
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          12,
+          5
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Oyarzun",
+    "doi": "10.24059/olj.v27i1.3407",
+    "title": [
+      "A Systematic Review of Research on Online Learner Collaboration from 2012–21:  Collaboration Technologies, Design, Facilitation, and Outcomes"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-7886-8190",
+        "authenticated-orcid": false,
+        "given": "Beth",
+        "family": "Oyarzun",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6055-5636",
+        "authenticated-orcid": false,
+        "given": "Florence",
+        "family": "Martin",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Online Learning"
+    ],
+    "volume": "27",
+    "issue": "1",
+    "page": null,
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          3,
+          1
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          3,
+          1
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Pan",
+    "doi": "10.1037/mac0000083",
+    "title": [
+      "User-generated digital flashcards yield better learning than premade flashcards."
+    ],
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-9080-5651",
+        "authenticated-orcid": false,
+        "given": "Steven C.",
+        "family": "Pan",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-0947-2309",
+        "authenticated-orcid": false,
+        "given": "Inez",
+        "family": "Zung",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4599-4777",
+        "authenticated-orcid": false,
+        "given": "Megan N.",
+        "family": "Imundo",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Xuxin",
+        "family": "Zhang",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6099-4612",
+        "authenticated-orcid": false,
+        "given": "Yunning",
+        "family": "Qiu",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Journal of Applied Research in Memory and Cognition"
+    ],
+    "volume": "12",
+    "issue": "4",
+    "page": "574-588",
+    "article-number": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          12
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          12
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Patani",
+    "doi": "10.1002/cae.22775",
+    "title": [
+      "The impact of GitHub on students' learning and engagement in a software engineering course"
+    ],
+    "author": [
+      {
+        "given": "Prutha",
+        "family": "Patani",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Software Engineering Research Lab DA‐IICT Gandhinagar Gujarat India"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Saurabh",
+        "family": "Tiwari",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Software Engineering Research Lab DA‐IICT Gandhinagar Gujarat India"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2087-1666",
+        "authenticated-orcid": false,
+        "given": "Santosh Singh",
+        "family": "Rathore",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Computer Science and Engineering ABV‐IIITM Gwalior Gwalior Madhya Pradesh India"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": [
+      "Computer Applications in Engineering Education"
+    ],
+    "volume": "32",
+    "issue": "5",
+    "page": null,
+    "article-number": "e22775",
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          6,
+          18
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          9
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          6,
+          18
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Peralta",
+    "doi": "10.56738/issn29603986.geo2024.5.46",
+    "title": [
+      "Development and Evaluation of Course Management System with Short Messaging Service Notification"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0009-0005-9822-2721",
+        "authenticated-orcid": false,
+        "given": "Raymond",
+        "family": "Peralta",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "GEO Academic Journal"
+    ],
+    "volume": "5",
+    "issue": "1",
+    "page": null,
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          7,
+          21
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          7,
+          21
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Purwanto",
+    "status": "no DOI"
+  },
+  {
+    "key": "Quimod",
+    "doi": "10.47577/teh.v5i.8890",
+    "title": [
+      "e-Modyul: Technical-vocational-livelihood support learning management system"
+    ],
+    "authors": [
+      {
+        "given": "Marco T",
+        "family": "Quimod",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Wayne Custer G",
+        "family": "Alegata",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Dennis V",
+        "family": "Madrigal",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Technium Education and Humanities"
+    ],
+    "volume": "5",
+    "issue": null,
+    "page": "9-26",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2023,
+          5,
+          10
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          5,
+          10
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Ramos",
+    "doi": "10.1007/s42979-024-02621-x",
+    "title": [
+      "Development of a Filipinized Learning Management System"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-2275-2943",
+        "authenticated-orcid": false,
+        "given": "Rita C.",
+        "family": "Ramos",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Primo",
+        "family": "Garcia",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Queenie",
+        "family": "Roxas-Ridulme",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Ria Valerie",
+        "family": "Cabanes",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Hanna May",
+        "family": "Rosario",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Marie Karen",
+        "family": "Enrile",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Ronaldo",
+        "family": "De Jesus",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Cariza",
+        "family": "Dolliente",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "given": "Adrian",
+        "family": "Sandoval",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "SN Computer Science"
+    ],
+    "volume": "5",
+    "issue": "3",
+    "page": null,
+    "article": "275",
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          21
+        ]
+      ]
+    },
+    "published-print": null,
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          2,
+          21
+        ]
+      ]
+    }
+  },
+  {
+    "key": "Schauer",
+    "doi": "10.1145/3639474.3640056",
+    "title": [
+      "Integrating Canvas and GitLab to Enrich Learning Processes"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0009-0008-5307-3672",
+        "authenticated-orcid": false,
+        "given": "Laura",
+        "family": "Schauer",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Heriot-Watt University, Edinburgh, United Kingdom"
+          }
+        ],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-0365-693X",
+        "authenticated-orcid": false,
+        "given": "Robert",
+        "family": "Stewart",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Heriot-Watt University, Edinburgh, United Kingdom"
+          }
+        ],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6233-6341",
+        "authenticated-orcid": false,
+        "given": "Manuel",
+        "family": "Maarek",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Heriot-Watt University, Edinburgh, United Kingdom"
+          }
+        ],
+        "role": [
+          {
+            "role": "author",
+            "vocabulary": "crossref"
+          }
+        ]
+      }
+    ],
+    "venue": [
+      "Proceedings of the 46th International Conference on Software Engineering: Software Engineering Education and Training"
+    ],
+    "volume": null,
+    "issue": null,
+    "page": "180-190",
+    "article": null,
+    "published": {
+      "date-parts": [
+        [
+          2024,
+          4,
+          14
+        ]
+      ]
+    },
+    "published-print": {
+      "date-parts": [
+        [
+          2024,
+          4,
+          14
+        ]
+      ]
+    },
+    "published-online": {
+      "date-parts": [
+        [
+          2024,
+          5,
+          24
+        ]
+      ]
+    }
+  }
+]

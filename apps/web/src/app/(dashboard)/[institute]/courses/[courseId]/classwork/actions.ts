@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -47,6 +49,8 @@ export async function createSyllabusItem(
   prevState: { message: string; errors?: Record<string, string[]> },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts#createSyllabusItem", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const parse = syllabusItemSchema.safeParse({
     courseId: formData.get("courseId"),
     type: formData.get("type"),
@@ -60,6 +64,10 @@ export async function createSyllabusItem(
     attachments: formData.get("attachments") || "[]",
     instituteCode: formData.get("instituteCode"),
   });
+
+  const leaderboardEnabled = formData.get("leaderboardEnabled") === "true";
+  const rewardTiersRaw = formData.get("rewardTiers") as string || "[]";
+  const rewardTiers = JSON.parse(rewardTiersRaw) as { placement: number; rewardLabel: string; bonusExp: number }[];
 
   if (!parse.success) {
     return {
@@ -98,8 +106,20 @@ export async function createSyllabusItem(
         enableIntegrityMonitoring: data.enableIntegrityMonitoring,
         requireFullscreen: data.requireFullscreen,
         orderIndex: (lastItem?.orderIndex ?? -1) + 1,
+        leaderboardEnabled,
       },
     });
+
+    if (rewardTiers.length > 0) {
+      await db.leaderboardReward.createMany({
+        data: rewardTiers.map((tier) => ({
+          syllabusItemId: syllabusItem.id,
+          placement: tier.placement,
+          rewardLabel: tier.rewardLabel,
+          bonusExp: tier.bonusExp || 0,
+        })),
+      });
+    }
 
     // Handle target groups
     if (data.targetGroupIds) {
@@ -170,6 +190,8 @@ export async function updateSyllabusItem(
   prevState: { message: string; errors?: Record<string, string[]> },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts#updateSyllabusItem", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? ''), syllabusItemId: String(formData.get('id') ?? '') }));
+
   const parse = syllabusItemSchema.safeParse({
     id: formData.get("id"),
     courseId: formData.get("courseId"),
@@ -184,6 +206,10 @@ export async function updateSyllabusItem(
     attachments: formData.get("attachments") || "[]",
     instituteCode: formData.get("instituteCode"),
   });
+
+  const leaderboardEnabled = formData.get("leaderboardEnabled") === "true";
+  const rewardTiersRaw = formData.get("rewardTiers") as string || "[]";
+  const rewardTiers = JSON.parse(rewardTiersRaw) as { placement: number; rewardLabel: string; bonusExp: number }[];
 
   if (!parse.success) {
     return {
@@ -210,8 +236,21 @@ export async function updateSyllabusItem(
         maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
         enableIntegrityMonitoring: data.enableIntegrityMonitoring,
         requireFullscreen: data.requireFullscreen,
+        leaderboardEnabled,
       },
     });
+
+    await db.leaderboardReward.deleteMany({ where: { syllabusItemId: itemId } });
+    if (rewardTiers.length > 0) {
+      await db.leaderboardReward.createMany({
+        data: rewardTiers.map((tier) => ({
+          syllabusItemId: itemId,
+          placement: tier.placement,
+          rewardLabel: tier.rewardLabel,
+          bonusExp: tier.bonusExp || 0,
+        })),
+      });
+    }
 
     // Replace target groups
     await db.syllabusTargetGroup.deleteMany({
@@ -271,6 +310,8 @@ export async function deleteSyllabusItem(
   courseId: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions.ts#deleteSyllabusItem", () => ({ institute: instituteCode, courseId, itemId }));
+
   try {
     await ensureCourseInstructor(courseId);
 

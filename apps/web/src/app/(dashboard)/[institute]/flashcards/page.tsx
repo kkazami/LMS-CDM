@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -11,6 +12,8 @@ type PageProps = {
 };
 
 export default async function FlashcardsPage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/flashcards/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 

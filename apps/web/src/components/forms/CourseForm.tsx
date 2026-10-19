@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
+import CourseTermField from '@/components/courses/CourseTermField';
 import type { Course } from "@prisma/client";
 import type { InstituteTheme } from "@/lib/theme";
 import { createCourse, updateCourse } from "@/app/(dashboard)/[institute]/courses/actions";
@@ -53,6 +54,7 @@ export function CourseForm({
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="instituteCode" value={instituteCode} />
+      {!course && <><CourseTermField instituteCode={instituteCode} /><Input name="subject" label="Subject" required theme={theme} /><Input name="section" label="Section" required theme={theme} /></>}
       {course && <input type="hidden" name="id" value={course.id} />}
       
       <div>

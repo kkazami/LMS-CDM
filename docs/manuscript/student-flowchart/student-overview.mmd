@@ -1,0 +1,32 @@
+flowchart TD
+    START([Start]) --> OPEN[Open Student Web Portal]
+    OPEN --> AUTH[[Authenticate Student - see Account Access flow]]
+    AUTH --> DASH[Student Dashboard]
+    DASH --> SELECT[Select One Authorized Module]
+    SELECT --> COURSES[My Courses / Coursework]
+    COURSES --> COURSE_ACTION[Approved courses, materials, announcements, activities, and permitted submissions]
+    SELECT --> JOIN[Join Course]
+    JOIN --> REQUEST[[Submit enrollment request - see Enrollment flow]]
+    SELECT --> GRADES[Personal Grades]
+    GRADES --> GRADE_ACTION[View own grades and descriptive progress summaries]
+    SELECT --> WORKSPACE[Personal Workspace]
+    WORKSPACE --> WORK_ACTION[Owned notes and tasks, authorized events and deadlines, private note-event snapshots]
+    SELECT --> STUDY[Flashcards / Study Tools]
+    STUDY --> STUDY_ACTION[Create and review cards, enabled focus timers and study-session tracking]
+    SELECT --> REWARDS[Gamification]
+    REWARDS --> REWARD_ACTION[EXP, levels, achievements, badges, streaks, and rankings]
+    SELECT --> KX[Knowledge Exchange]
+    KX --> KX_ACTION[Questions, answers, resources, faculty-verified answers, and forum reputation]
+    SELECT --> CODE[Programming Coursework]
+    CODE --> CODE_ACTION[Authorized CodeLab activities or Git submissions through separate workflows]
+    COURSE_ACTION --> MORE{Another Action?}
+    REQUEST --> MORE
+    GRADE_ACTION --> MORE
+    WORK_ACTION --> MORE
+    STUDY_ACTION --> MORE
+    REWARD_ACTION --> MORE
+    KX_ACTION --> MORE
+    CODE_ACTION --> MORE
+    MORE -->|Yes| DASH
+    MORE -->|No| LOGOUT[Log Out / End Session]
+    LOGOUT --> END([End])

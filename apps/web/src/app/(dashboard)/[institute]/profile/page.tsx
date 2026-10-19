@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -11,6 +12,8 @@ type PageProps = {
 };
 
 export default async function ProfilePage({ params }: PageProps) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/profile/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 

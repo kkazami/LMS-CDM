@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -18,6 +19,9 @@ interface RouteContext {
  * Students get their own submission; Instructors get all student submissions.
  */
 export async function GET(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "GET courses/[courseId]/submissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {
@@ -86,6 +90,9 @@ export async function GET(request: Request, context: RouteContext) {
  * Supports multiple file attachments and unsubmit (status: 'DRAFT').
  */
 export async function POST(request: Request, context: RouteContext) {
+  const ceilingDenial = await denyLegacyApi(request, "POST courses/[courseId]/submissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSessionFromRequest(request);
     if (!session) {

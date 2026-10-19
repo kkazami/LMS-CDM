@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Permissions Matrix API
  *
@@ -29,7 +30,10 @@ let currentPermissionMatrix: Record<UserRole, SystemPermission[]> = {
   ...DEFAULT_ROLE_PERMISSIONS,
 };
 
-export async function GET() {
+export async function GET(ceilingRequest: Request) {
+  const ceilingDenial = await denyLegacyApi(ceilingRequest, "GET admin/permissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     await requireAdmin();
 
@@ -47,6 +51,9 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "PUT admin/permissions/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const body = await request.json();

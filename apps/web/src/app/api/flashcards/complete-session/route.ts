@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../../workspace/_shared";
@@ -16,6 +17,9 @@ const sessionSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST flashcards/complete-session/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const { session, response } = await requireWorkspaceSession();
     if (response) return response;

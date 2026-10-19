@@ -1,0 +1,26 @@
+{
+  "stoppedAt": "2026-10-18T09:51:47.5208976Z",
+  "processes": [
+    {
+      "ProcessId": 18756,
+      "ParentProcessId": 26024,
+      "Name": "node.exe"
+    },
+    {
+      "ProcessId": 32476,
+      "ParentProcessId": 18756,
+      "Name": "node.exe"
+    },
+    {
+      "ProcessId": 2792,
+      "ParentProcessId": 32476,
+      "Name": "node.exe"
+    },
+    {
+      "ProcessId": 29840,
+      "ParentProcessId": 32476,
+      "Name": "node.exe"
+    }
+  ],
+  "scope": "verified primary Next Node processes only; console host left to close with its parent"
+}

@@ -1,9 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { Pool, type PoolConfig } from "pg";
+import { createHash } from "node:crypto";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  prismaSchemaVersion?: string;
   pgPool?: Pool;
 };
 
@@ -21,6 +23,13 @@ const createPrismaClient = () => {
   }
 
   if (!globalForPrisma.pgPool) {
+    const target = new URL(connectionString);
+    const sslMode = target.searchParams.get("sslmode");
+    // Preserve pg's current certificate and hostname verification across driver upgrades.
+    if (target.searchParams.get("uselibpqcompat") !== "true" &&
+        (sslMode === "prefer" || sslMode === "require" || sslMode === "verify-ca")) {
+      target.searchParams.set("sslmode", "verify-full");
+    }
     const isProduction = process.env.NODE_ENV === "production";
     const isLocalhost =
       connectionString.includes("localhost") ||
@@ -28,11 +37,12 @@ const createPrismaClient = () => {
       connectionString.includes("::1");
 
     const poolConfig: PoolConfig = {
-      connectionString,
-      // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion
-      max: isProduction ? 2 : 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 15000,
+      connectionString: target.toString(),
+      // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
+      // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
+      max: isProduction ? 2 : 15,
+      idleTimeoutMillis: isProduction ? 30000 : 120000,
+      connectionTimeoutMillis: 10000,
       keepAlive: true,
       // Cloud databases (Supabase, Neon, AWS RDS, Railway, Render) require SSL.
       // rejectUnauthorized: false prevents "self-signed certificate in certificate chain" errors
@@ -50,12 +60,22 @@ const createPrismaClient = () => {
   const adapter = new PrismaPg(globalForPrisma.pgPool);
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    // ORM errors can include credential-bearing query arguments; callers report sanitized errors.
+    log: process.env.NODE_ENV === "development" ? ["warn"] : [],
   });
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+// Next.js retains globals across hot reloads, including clients generated for an older schema.
+const schemaVersion = createHash("sha256")
+  .update(JSON.stringify(Prisma.dmmf.datamodel))
+  .digest("hex");
+const previous = globalForPrisma.prisma;
+export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion
+  ? previous
+  : createPrismaClient();
 
 // Always cache client on globalThis in all environments so warm serverless lambdas reuse the instance
 globalForPrisma.prisma = db;
+globalForPrisma.prismaSchemaVersion = schemaVersion;
+if (previous && previous !== db) void previous.$disconnect().catch(() => {});
 

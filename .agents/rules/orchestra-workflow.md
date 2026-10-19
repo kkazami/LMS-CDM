@@ -1,10 +1,8 @@
 ---
 trigger: model_decision
-description: DEPRECATED — See orchestra-activation.md, orchestra-protocol.md, verification-gates.md, engineering-safety.md
+description: Compatibility pointer to the v2 engineering controller
 ---
-# Orchestra Workflow (Deprecated)
-This rule has been superseded by modular harness rules. See:
-- `.agents/rules/orchestra-activation.md`
-- `.agents/rules/orchestra-protocol.md`
-- `.agents/rules/verification-gates.md`
-- `.agents/rules/engineering-safety.md`
+# Orchestra workflow
+Use orchestra-protocol.md, engineering-safety.md and verification-gates.md.
+The generator/evaluator score loop is retired as release authority.
+See .orchestra/harness/README.md for executable operations and migration from legacy runs.

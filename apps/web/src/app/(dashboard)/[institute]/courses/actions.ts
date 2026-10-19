@@ -1,12 +1,21 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { z } from "zod";
+import { AccessError } from "@/lib/super-user-v1/actor";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
+import { validateCourseProgram, setCourseProgram } from "@/lib/course-program";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
+import { classScheduleSchema } from "@/lib/calendar-validation";
+import { normalizeRole } from "@/lib/rbac";
 import { generateCourseCode, bulkAssignInstructor } from "@/lib/skills";
+import { courseOffering, joinCode } from '@/lib/roster/terms';
 
 const instructorCreateCourseSchema = z.object({
+  termId: z.string().optional(),
   id: z.string().optional(),
   code: z.string().min(2, "Code must be at least 2 characters."),
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -15,15 +24,19 @@ const instructorCreateCourseSchema = z.object({
   room: z.string().optional().default(""),
   description: z.string().optional().default(""),
   instituteCode: z.string(),
-});
+  programId: z.string().max(200).optional(),
+}).and(classScheduleSchema);
 
 export async function instructorCreateCourse(
   prevState: { message: string; errors?: Record<string, string[]> },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#instructorCreateCourse", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const user = await ensureRole(["PROFESSOR", "ADMIN"]);
 
   const parse = instructorCreateCourseSchema.safeParse({
+    termId: formData.get('termId') || undefined,
     code: formData.get("code"),
     title: formData.get("title"),
     section: formData.get("section") || "",
@@ -31,6 +44,12 @@ export async function instructorCreateCourse(
     room: formData.get("room") || "",
     description: formData.get("description") || "",
     instituteCode: formData.get("instituteCode"),
+    programId: formData.has("programId") ? formData.get("programId") : undefined,
+    scheduleDays: formData.getAll("scheduleDays").map(Number),
+    scheduleStart: formData.get("scheduleStart"),
+    scheduleEnd: formData.get("scheduleEnd"),
+    scheduleStartDate: formData.get("scheduleStartDate"),
+    scheduleEndDate: formData.get("scheduleEndDate"),
   });
 
   if (!parse.success) {
@@ -46,25 +65,35 @@ export async function instructorCreateCourse(
     const institute = await db.institute.findUnique({
       where: { code: data.instituteCode },
     });
-    if (!institute) return { message: "Institute not found." };
+    if (!institute || institute.id !== user.instituteId) return { message: "Institute not found." };
 
     const codeResult = await generateCourseCode();
     if (!codeResult.success || !codeResult.data) {
       return { message: "Failed to generate course code." };
     }
 
-    const course = await db.course.create({
-      data: {
-        code: data.code,
-        courseCode: codeResult.data,
-        title: data.title,
-        section: data.section,
-        subject: data.subject,
-        room: data.room,
-        description: data.description,
-        instructorId: user.id, // Automatically assign to the creator
-        instituteId: institute.id,
-      },
+    const course = await db.$transaction(async tx => {
+      const offering = await courseOffering(tx, { instituteId: institute.id, termId: data.termId, code: data.code, section: data.section });
+      await validateCourseProgram(tx, institute.id, data.programId || null);
+      const created = await tx.course.create({
+        data: {
+          ...offering,
+          courseCode: codeResult.data,
+          title: data.title,
+          subject: data.subject,
+          room: data.room,
+          scheduleDays: [...new Set(data.scheduleDays)],
+          scheduleStart: data.scheduleStart,
+          scheduleEnd: data.scheduleEnd,
+          scheduleStartDate: new Date(`${data.scheduleStartDate}T00:00:00Z`),
+          scheduleEndDate: new Date(`${data.scheduleEndDate}T00:00:00Z`),
+          description: data.description,
+          instructorId: user.id, // Automatically assign to the creator
+          instituteId: institute.id,
+        },
+      });
+      if (data.programId) await setCourseProgram(tx, created.id, data.programId);
+      return created;
     });
 
     // Auto-assign the instructor using the skill logic as well to keep relations clean
@@ -73,11 +102,15 @@ export async function instructorCreateCourse(
       instituteId: institute.id,
     });
 
-    revalidatePath(`/(dashboard)/${data.instituteCode}/courses`);
+    revalidatePath(`/${data.instituteCode}/courses`);
+    revalidatePath(`/${data.instituteCode}/students`);
+    revalidatePath(`/${data.instituteCode}/teachers`);
+    revalidatePath(`/${data.instituteCode}/admin/courses`);
+    revalidatePath(`/${data.instituteCode}/organization`, "layout");
     return { message: "success" };
   } catch (error) {
     console.error("instructorCreateCourse error:", error);
-    return { message: "Failed to create course." };
+    return { message: error instanceof AccessError ? error.message : "Failed to create course." };
   }
 }
 
@@ -85,6 +118,8 @@ export async function instructorUpdateCourse(
   prevState: { message: string; errors?: Record<string, string[]> },
   formData: FormData
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#instructorUpdateCourse", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('id') ?? '') }));
+
   const user = await ensureRole(["PROFESSOR", "ADMIN"]);
 
   const parse = instructorCreateCourseSchema.safeParse({
@@ -96,6 +131,12 @@ export async function instructorUpdateCourse(
     room: formData.get("room") || "",
     description: formData.get("description") || "",
     instituteCode: formData.get("instituteCode"),
+    programId: formData.has("programId") ? formData.get("programId") : undefined,
+    scheduleDays: formData.getAll("scheduleDays").map(Number),
+    scheduleStart: formData.get("scheduleStart"),
+    scheduleEnd: formData.get("scheduleEnd"),
+    scheduleStartDate: formData.get("scheduleStartDate"),
+    scheduleEndDate: formData.get("scheduleEndDate"),
   });
 
   if (!parse.success || !parse.data.id) {
@@ -111,7 +152,7 @@ export async function instructorUpdateCourse(
     const institute = await db.institute.findUnique({
       where: { code: data.instituteCode },
     });
-    if (!institute) return { message: "Institute not found." };
+    if (!institute || institute.id !== user.instituteId) return { message: "Institute not found." };
 
     // Verify ownership or admin
     const existingCourse = await db.course.findUnique({
@@ -126,36 +167,67 @@ export async function instructorUpdateCourse(
       return { message: "Unauthorized to edit this course." };
     }
 
-    await db.course.update({
-      where: { id: data.id },
-      data: {
-        code: data.code,
-        title: data.title,
-        section: data.section,
-        subject: data.subject,
-        room: data.room,
-        description: data.description,
-      },
+    await db.$transaction(async tx => {
+      if (data.programId !== undefined && (data.programId || null) !== existingCourse.programId) {
+        await validateCourseProgram(tx, institute.id, data.programId || null);
+        await setCourseProgram(tx, data.id!, data.programId || null);
+      }
+      await tx.course.update({
+        where: { id: data.id },
+        data: {
+          code: data.code,
+          title: data.title,
+          section: data.section,
+          subject: data.subject,
+          room: data.room,
+          scheduleDays: [...new Set(data.scheduleDays)],
+          scheduleStart: data.scheduleStart,
+          scheduleEnd: data.scheduleEnd,
+          scheduleStartDate: new Date(`${data.scheduleStartDate}T00:00:00Z`),
+          scheduleEndDate: new Date(`${data.scheduleEndDate}T00:00:00Z`),
+          description: data.description,
+        },
+      });
     });
 
-    revalidatePath(`/(dashboard)/${data.instituteCode}/courses`);
-    revalidatePath(`/(dashboard)/${data.instituteCode}/teachers`);
+    revalidatePath(`/${data.instituteCode}/courses`);
+    revalidatePath(`/${data.instituteCode}/students`);
+    revalidatePath(`/${data.instituteCode}/teachers`);
+    revalidatePath(`/${data.instituteCode}/admin/courses`);
+    revalidatePath(`/${data.instituteCode}/organization`, "layout");
     return { message: "success" };
   } catch (error) {
     console.error("instructorUpdateCourse error:", error);
-    return { message: "Failed to update course." };
+    return { message: error instanceof AccessError ? error.message : "Failed to update course." };
   }
+}
+
+export async function getClassPrograms(instituteCode: string, courseId?: string) {
+  const actor = await requireLegacyActor("getClassPrograms", { institute: instituteCode, courseId });
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(actor.role))) throw new AccessError(403, "Instructors and administrators only.");
+  const institute = await db.institute.findFirst({ where: { id: actor.instituteId, code: instituteCode } });
+  if (!institute) throw new AccessError(403, "Forbidden institute.");
+  const course = courseId ? await db.course.findFirst({
+    where: { id: courseId, instituteId: institute.id, ...(canonicalRole(actor.role) === 'ADMIN' ? {} : { instructorId: actor.id }) },
+    select: { programId: true, program: { select: { id: true, code: true, name: true } } },
+  }) : null;
+  if (courseId && !course) throw new AccessError(404, "Class not found.");
+  const programs = await db.academicProgram.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } });
+  return { programs, currentProgram: course?.program ?? null };
 }
 
 async function ensureRole(allowedRoles: string[]) {
   const session = await getSession();
-  if (!session || !session.user || !allowedRoles.includes(session.user.role)) {
+  if (!session || !session.user || !allowedRoles.map(normalizeRole).includes(normalizeRole(session.user.role))) {
     throw new Error("Unauthorized");
   }
   return session.user;
 }
 
 const courseSchema = z.object({
+  termId: z.string().optional(),
+  subject: z.string().optional(),
+  section: z.string().optional(),
   id: z.string().optional(),
   code: z.string().min(2, "Code must be at least 2 characters."),
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -163,9 +235,14 @@ const courseSchema = z.object({
 });
 
 export async function createCourse(prevState: { message: string; errors?: Record<string, string[]> }, formData: FormData) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#createCourse", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('courseId') ?? '') }));
+
   const user = await ensureRole(["ADMIN", "PROFESSOR"]);
 
   const parse = courseSchema.safeParse({
+    termId: formData.get('termId') || undefined,
+    subject: formData.get('subject') || '',
+    section: formData.get('section') || '',
     code: formData.get("code"),
     title: formData.get("title"),
     instituteCode: formData.get("instituteCode"),
@@ -179,14 +256,11 @@ export async function createCourse(prevState: { message: string; errors?: Record
 
   try {
     const institute = await db.institute.findUnique({ where: { code: instituteCode } });
-    if (!institute) return { message: "Institute not found." };
-
-    await db.course.create({
-      data: {
-        code,
-        title,
-        instituteId: institute.id,
-      },
+    if (!institute || institute.id !== user.instituteId) return { message: "Institute not found." };
+    if (!parse.data.subject?.trim()) return { message: 'Subject is required.' };
+    await db.$transaction(async tx => {
+      const offering = await courseOffering(tx, { instituteId: institute.id, termId: parse.data.termId, code, section: parse.data.section });
+      await tx.course.create({ data: { ...offering, title, subject: parse.data.subject!.trim(), instituteId: institute.id, courseCode: await joinCode(tx), instructorId: canonicalRole(user.role) === 'INSTRUCTOR' ? user.id : null } });
     });
 
     revalidatePath(`/${instituteCode}/courses`);
@@ -197,6 +271,8 @@ export async function createCourse(prevState: { message: string; errors?: Record
 }
 
 export async function updateCourse(prevState: { message: string; errors?: Record<string, string[]> }, formData: FormData) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#updateCourse", () => ({ institute: String(formData.get('instituteCode') ?? ''), courseId: String(formData.get('id') ?? '') }));
+
   const user = await ensureRole(["ADMIN", "PROFESSOR"]);
 
   const parse = courseSchema.safeParse({
@@ -235,6 +311,8 @@ export async function updateCourse(prevState: { message: string; errors?: Record
 }
 
 export async function deleteCourse(courseId: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#deleteCourse", () => ({ institute: instituteCode, courseId }));
+
   const user = await ensureRole(["ADMIN", "PROFESSOR"]);
 
   try {
@@ -258,6 +336,8 @@ export async function deleteCourse(courseId: string, instituteCode: string) {
 // ─── Student Enrollment Actions ───
 
 export async function requestEnrollment(courseId: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#requestEnrollment", () => ({ institute: instituteCode, courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -311,6 +391,8 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
 }
 
 export async function joinWithCode(courseCode: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#joinWithCode", () => ({ institute: instituteCode }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -383,6 +465,8 @@ export async function joinWithCode(courseCode: string, instituteCode: string) {
 }
 
 export async function getDiscoverableCourses(instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#getDiscoverableCourses", () => ({ institute: instituteCode }));
+
   const session = await getSession();
   if (!session) return [];
 
@@ -418,6 +502,8 @@ export async function getDiscoverableCourses(instituteCode: string) {
 // ─── Phase 7: Dashboard Lifecycle Actions ───
 
 export async function unenrollFromCourse(courseId: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#unenrollFromCourse", () => ({ institute: instituteCode, courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -446,6 +532,8 @@ export async function unenrollFromCourse(courseId: string, instituteCode: string
 }
 
 export async function archiveCourse(courseId: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#archiveCourse", () => ({ institute: instituteCode, courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -466,6 +554,8 @@ export async function archiveCourse(courseId: string, instituteCode: string) {
 }
 
 export async function unarchiveCourse(courseId: string, instituteCode: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#unarchiveCourse", () => ({ institute: instituteCode, courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -489,6 +579,8 @@ export async function reorderCourseCards(
   instituteCode: string,
   isStudent: boolean
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#reorderCourseCards", () => ({ institute: instituteCode, courseIds: orderedIds }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -530,6 +622,8 @@ export async function updateCourseCoverImage(
   coverImage: string,
   instituteCode: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#updateCourseCoverImage", () => ({ institute: instituteCode, courseId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -554,3 +648,11 @@ export async function updateCourseCoverImage(
   }
 }
 
+
+export async function getCourseTerms(instituteCode: string) {
+  const actor = await requireLegacyActor('getCourseTerms', { institute: instituteCode });
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Instructors and administrators only.');
+  const institute = await db.institute.findFirst({ where: { id: actor.instituteId, code: instituteCode } });
+  if (!institute) throw new AccessError(403, 'Forbidden institute.');
+  return db.academicTerm.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, name: true, isCurrent: true }, orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }] });
+}

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkKxEligibility } from "@/lib/kx-eligibility";
@@ -11,6 +12,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ postId: string }> }
 ) {
+  const ceilingDenial = await denyLegacyApi(request, "POST knowledge-exchange/posts/[postId]/answers/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,9 +1,11 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import type { InstituteTheme } from "@/lib/theme";
+import { getDashboardCalendar } from "@/lib/student-calendar-data";
+import { schoolDateKey } from "@/lib/student-calendar";
 import TeacherDashboardClient from "./client";
 
 export const dynamic = "force-dynamic";
@@ -15,14 +17,11 @@ interface TeacherDashboardProps {
 }
 
 export default async function TeacherDashboardPage({ params }: TeacherDashboardProps) {
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/teachers/page.tsx", await params);
+
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
-
-  const role = session.user.role.toUpperCase();
+  const role = user.role.toUpperCase();
   // Admins have no classes of their own: send them to the admin dashboard.
   if (role === "ADMIN") {
     redirect(`/${institute}/admin`);
@@ -32,17 +31,14 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   }
 
   const theme: InstituteTheme = getInstituteTheme(institute);
-  const teacherId = session.user.id;
+  const teacherId = user.id;
 
-  // Resolve institute record
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true, name: true },
-  });
-
-  if (!instituteRecord) {
+  const instituteRecord = user.institute;
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
+
+  const calendarPromise = getDashboardCalendar({ ...user, instituteId: instituteRecord.id }, institute);
 
   // 1. Fetch non-archived courses taught by this instructor
   const taughtCourses = await db.course.findMany({
@@ -58,6 +54,11 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       section: true,
       subject: true,
       room: true,
+      scheduleDays: true,
+      scheduleStart: true,
+      scheduleEnd: true,
+      scheduleStartDate: true,
+      scheduleEndDate: true,
       description: true,
       coverImage: true,
       createdAt: true,
@@ -72,11 +73,56 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
 
   const courseIds = taughtCourses.map((c) => c.id);
 
-  // 1b. Fetch DashboardLayout for explicit order
-  const layouts = await db.dashboardLayout.findMany({
-    where: { userId: teacherId, courseId: { in: courseIds } },
-  });
-
+  const [layouts, pendingEnrollments, pendingWorkSubmissions] = await Promise.all([
+    db.dashboardLayout.findMany({
+      where: { userId: teacherId, courseId: { in: courseIds } },
+    }),
+    db.enrollment.findMany({
+      where: {
+        courseId: { in: courseIds },
+        status: "PENDING",
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            studentNumber: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.studentSubmission.findMany({
+      where: {
+        syllabusItem: {
+          courseId: { in: courseIds },
+        },
+        status: "SUBMITTED",
+        OR: [{ grade: null }, { isReturned: false }],
+      },
+      select: {
+        id: true,
+        syllabusItemId: true,
+        submittedAt: true,
+        syllabusItem: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            courseId: true,
+          },
+        },
+      },
+    }),
+  ]);
   const layoutMap = new Map<string, number>();
   for (const layout of layouts) {
     layoutMap.set(layout.courseId, layout.displayOrderIndex);
@@ -94,31 +140,6 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     if (orderB !== undefined) return 1;
 
     return b.createdAt.getTime() - a.createdAt.getTime();
-  });
-
-  // 2. Fetch pending enrollment requests across all taught courses
-  const pendingEnrollments = await db.enrollment.findMany({
-    where: {
-      courseId: { in: courseIds },
-      status: "PENDING",
-    },
-    include: {
-      student: {
-        select: {
-          id: true,
-          name: true,
-          studentNumber: true,
-        },
-      },
-      course: {
-        select: {
-          id: true,
-          title: true,
-          code: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
   });
 
   // Count pending per course
@@ -147,7 +168,6 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       })
     : [];
   const courseOfItem = new Map(pendingItemCourses.map((i) => [i.id, i.courseId]));
-
   const pendingWorkCountMap = new Map<string, number>();
   let totalPendingWork = 0;
   for (const group of pendingByItem) {
@@ -175,6 +195,11 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     section: c.section,
     subject: c.subject,
     room: c.room,
+    scheduleDays: c.scheduleDays,
+    scheduleStart: c.scheduleStart,
+    scheduleEnd: c.scheduleEnd,
+    scheduleStartDate: c.scheduleStartDate?.toISOString().slice(0, 10) ?? null,
+    scheduleEndDate: c.scheduleEndDate?.toISOString().slice(0, 10) ?? null,
     description: c.description,
     coverImage: c.coverImage ?? "",
     enrolledCount: c._count.enrollments,
@@ -194,18 +219,22 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   }));
 
   const typingSessionKey = `cdm_typed_${teacherId.slice(0, 8)}`;
+  const calendar = await calendarPromise;
 
   return (
     <TeacherDashboardClient
-      userName={session.user.name as string}
+      userName={user.name as string}
       instituteName={instituteRecord.name}
       instituteCode={institute}
       theme={theme}
       initialCourses={courses}
+      calendar={calendar}
+      userId={teacherId}
+      today={schoolDateKey(new Date())}
       initialPendingRequests={pendingRequests}
       initialPendingWorkClasses={pendingWorkClasses}
       totalPendingWorkCount={totalPendingWork}
-      showCodeLab={isEligibleInstituteCode(session.user.institute?.code ?? "")}
+      showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
     />
   );

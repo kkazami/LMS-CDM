@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -17,6 +18,9 @@ const taskSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET workspace/tasks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
@@ -51,6 +55,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST workspace/tasks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
@@ -85,6 +92,9 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "PATCH workspace/tasks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
@@ -131,6 +141,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE workspace/tasks/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;

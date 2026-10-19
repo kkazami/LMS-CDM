@@ -2,4 +2,4 @@
 trigger: always_on
 ---
 
-"Always use TypeScript interfaces for Prisma models. Do not use any. Reference packages/database for shared types."
+Use strict TypeScript and runtime validation at external boundaries; avoid any. Reuse generated Prisma types where appropriate and @lms/types for shared contracts. There is no packages/database in this repository; Prisma schema/client configuration lives at the root and apps/web uses the db singleton.

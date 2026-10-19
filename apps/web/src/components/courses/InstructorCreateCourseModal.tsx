@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { InstituteTheme } from "@/lib/theme";
 import Modal from "@/components/common/Modal";
+import ClassScheduleFields from "./ClassScheduleFields";
+import CourseProgramField from "./CourseProgramField";
+import CourseTermField from './CourseTermField';
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { toast } from "@/components/common/Toast";
@@ -22,10 +25,10 @@ const initialState = {
   errors: undefined as Record<string, string[]> | undefined,
 };
 
-function SubmitButton({ theme }: { theme: InstituteTheme }) {
+function SubmitButton({ theme, ready }: { theme: InstituteTheme; ready: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button theme={theme} type="submit" loading={pending} className="w-full">
+    <Button theme={theme} type="submit" loading={pending} disabled={!ready} className="w-full">
       Create Class
     </Button>
   );
@@ -37,6 +40,7 @@ export default function InstructorCreateCourseModal({
   instituteCode,
   theme,
 }: InstructorCreateCourseModalProps) {
+  const [programReady, setProgramReady] = useState(false);
   const [state, formAction] = useActionState(instructorCreateCourse, initialState);
 
   useEffect(() => {
@@ -50,8 +54,9 @@ export default function InstructorCreateCourseModal({
 
   return (
     <Modal open={open} title="Create a New Class" onClose={onClose}>
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} onSubmit={event => { if (!programReady) event.preventDefault(); }} className="space-y-4">
         <input type="hidden" name="instituteCode" value={instituteCode} />
+        <CourseTermField instituteCode={instituteCode} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
@@ -121,8 +126,12 @@ export default function InstructorCreateCourseModal({
           />
         </div>
 
+        {open && <CourseProgramField instituteCode={instituteCode} onReady={setProgramReady} errors={state.errors?.programId} />}
+
+        <ClassScheduleFields errors={state.errors} />
+
         <div className="pt-2">
-          <SubmitButton theme={theme} />
+          <SubmitButton theme={theme} ready={programReady} />
         </div>
       </form>
     </Modal>

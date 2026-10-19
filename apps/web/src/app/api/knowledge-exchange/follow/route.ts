@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkKxEligibility } from "@/lib/kx-eligibility";
@@ -11,6 +12,9 @@ const followSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET knowledge-exchange/follow/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,6 +53,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST knowledge-exchange/follow/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -5,6 +6,9 @@ import { getSession } from "@/lib/auth-session";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET materials/annotations/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {
@@ -40,6 +44,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST materials/annotations/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {
@@ -78,6 +85,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "DELETE materials/annotations/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await getSession();
     if (!session) {

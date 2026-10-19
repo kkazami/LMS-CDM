@@ -1,0 +1,9 @@
+datasource db {
+  provider = "postgresql"
+}
+
+model HarnessRehearsalRecord {
+  id    Int     @id
+  value String
+  label String?
+}

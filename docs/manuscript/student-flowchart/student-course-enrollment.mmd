@@ -1,0 +1,19 @@
+flowchart TD
+    START([Student Selects Join Course]) --> CODE[/Enter Course Join Code/]
+    CODE --> VALID{Code Valid and Course in Authorized Institute?}
+    VALID -->|No| ERROR[Show Invalid Code / Institute Error]
+    ERROR -->|Retry| CODE
+    VALID -->|Yes| EXISTS{Existing Approved or Pending Enrollment?}
+    EXISTS -->|Yes| STATUS[Show Existing Status; Do Not Create Duplicate]
+    STATUS --> RETURN([Return to Student Dashboard])
+    EXISTS -->|No| SAVE[Save Pending Enrollment Request]
+    SAVE --> PENDING[Show Pending Status; Course Access Not Granted]
+    PENDING -->|Continue Using LMS| RETURN
+    PENDING -.->|Later| REVIEW[Assigned Instructor Reviews Request]
+    REVIEW --> DECISION{Recorded Request Status?}
+    DECISION -->|Approved| APPROVED[Course Access Granted]
+    DECISION -->|Rejected| REJECTED[Course Access Not Granted]
+    DECISION -->|Pending| WAIT[Await Instructor Decision]
+    APPROVED --> RETURN
+    REJECTED --> RETURN
+    WAIT --> RETURN

@@ -2,7 +2,8 @@ import { NextResponse, after } from "next/server";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
-import { createSession } from "@/lib/auth-session";
+import { createSession, SessionAdmissionError } from "@/lib/auth-session";
+import { canonicalRole, mayAdmitAccount, supportedInstitute } from '@/lib/super-user-v1/capabilities';
 import { processLoginReward } from "@/lib/gamification/login-rewards";
 import {
   getClientIp,
@@ -12,6 +13,8 @@ import {
 } from "@/lib/rate-limit";
 import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
 import { logActivity } from "@/lib/ite/activity-logger";
+import { persistentLimit } from '@/lib/roster/rate-limit';
+import { AccessError } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +25,10 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   const corsHeaders = getCorsHeaders(request);
   const clientIp = getClientIp(request);
+  let stage = "rate-limit";
 
   try {
+    await persistentLimit('login-ip:' + clientIp, RATE_LIMIT_CONFIG.loginIp.maxRequests, RATE_LIMIT_CONFIG.loginIp.windowMs);
     const body = await request.json();
 
     // 1. Dual Rate Limiting (IP-based and Account-based)
@@ -54,17 +59,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, instituteCode: requestedInstituteCode } = parsed.data;
+    const { password, instituteCode: requestedInstituteCode } = parsed.data;
+    const identifier = (parsed.data.identifier ?? parsed.data.email!).trim();
 
     // 3. User lookup
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+    stage = "account-lookup";
+    const matches = await db.user.findMany({
+      where: identifier.includes('@') ? { email: { equals: identifier.toLowerCase(), mode: 'insensitive' } } : { studentNumber: identifier.toUpperCase(), role: { equals: 'STUDENT', mode: 'insensitive' } },
       include: {
         institute: true,
       },
+      take: 2,
     });
+    // Legacy rosters may contain duplicate IDs until reconciliation is complete.
+    const user = matches.length === 1 ? matches[0] : null;
 
-    if (!user || !user.password) {
+    await persistentLimit('login-account:' + (user?.id ?? identifier.toLowerCase()), RATE_LIMIT_CONFIG.loginAccount.maxRequests, RATE_LIMIT_CONFIG.loginAccount.windowMs);
+    if (user && user.activationStatus === undefined) {
+      console.warn('LOGIN_DATABASE_CLIENT_SCHEMA_STALE');
+      return NextResponse.json(
+        { message: 'Sign-in is temporarily unavailable. The server must reload its updated database client.' },
+        { status: 503, headers: corsHeaders }
+      );
+    }
+    if (!user || !user.password || user.activationStatus !== 'ACTIVE') {
       return NextResponse.json(
         { message: "Invalid email, password, or institute." },
         { status: 401, headers: corsHeaders }
@@ -72,6 +90,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Verify password hash
+    stage = "password-check";
     const passwordMatches = await compare(password, user.password);
     if (!passwordMatches) {
       return NextResponse.json(
@@ -81,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Account status check
-    if (user.isActive === false) {
+    if (!mayAdmitAccount(user)) {
       return NextResponse.json(
         { message: "Your account has been deactivated. Please contact administration." },
         { status: 403, headers: corsHeaders }
@@ -91,11 +110,15 @@ export async function POST(request: Request) {
     // 6. Enforce dynamic institute scoping
     const userRole = (user.role || "").toUpperCase();
     const isAdmin = userRole === "ADMIN";
+    const isSuperUser = canonicalRole(userRole) === 'SUPER_USER';
     const userInstituteCode = user.institute?.code?.toLowerCase();
     const targetInstituteCode = requestedInstituteCode.toLowerCase();
 
     // Students and teachers are locked to their appointed portal. Admins can log in from any portal.
-    if (!isAdmin && userInstituteCode !== targetInstituteCode) {
+    if (isSuperUser && !supportedInstitute(targetInstituteCode)) {
+      return NextResponse.json({ message: 'Unsupported institute.' }, { status: 400, headers: corsHeaders });
+    }
+    if (!isAdmin && !isSuperUser && userInstituteCode !== targetInstituteCode) {
       const userInstituteName = user.institute?.name || userInstituteCode?.toUpperCase();
       return NextResponse.json(
         {
@@ -106,11 +129,14 @@ export async function POST(request: Request) {
     }
 
     // 7. Create database session with 256-bit CSPRNG token (SHA-256 hashed in DB)
+    const initialSuperInstitute = isSuperUser ? await db.institute.findUnique({ where: { code: 'ics' }, select: { code: true, name: true } }) : null;
+    if (isSuperUser && !initialSuperInstitute) return NextResponse.json({ message: 'Institute not found.' }, { status: 404, headers: corsHeaders });
     const userAgent = request.headers.get("user-agent") || undefined;
+    stage = "session-creation";
     const { token, expiresAt } = await createSession(user.id, {
       userAgent,
       ipAddress: clientIp,
-    });
+    }, user.password, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState });
 
     // 8. Daily login rewards (for students)
     let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
@@ -135,8 +161,8 @@ export async function POST(request: Request) {
       }
     });
 
-    const instituteCode = user.institute?.code || targetInstituteCode;
-    const instituteName = user.institute?.name || `${instituteCode.toUpperCase()} Institute`;
+    const instituteCode = isSuperUser ? 'ics' : user.institute?.code || targetInstituteCode;
+    const instituteName = initialSuperInstitute?.name || user.institute?.name || `${instituteCode.toUpperCase()} Institute`;
 
     // 9. Return opaque token (NOT internal session.id)
     return NextResponse.json(
@@ -166,8 +192,10 @@ export async function POST(request: Request) {
       { status: 200, headers: corsHeaders }
     );
   } catch (error: unknown) {
-    const err = error as { message?: string; stack?: string };
-    console.error("LOGIN_ERROR:", err?.message || error, err?.stack);
+    if (error instanceof AccessError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
+    if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
+    const code = error && typeof error === "object" && "code" in error ? String(error.code) : error instanceof Error ? error.name : "UNKNOWN";
+    console.error('LOGIN_OPERATION_UNAVAILABLE', { stage, code: /^[A-Za-z0-9_]{1,40}$/.test(code) ? code : "UNKNOWN" });
 
     return NextResponse.json(
       {

@@ -1,0 +1,29 @@
+{
+  "attempt": "program_heads_1792312671037",
+  "createdAt": "2026-10-18T08:37:53.497Z",
+  "commitAcknowledged": true,
+  "accounts": [
+    {
+      "email": "programhead@bsit.edu.ph",
+      "id": "64a340a6-a1f2-40d9-911e-7f04dc1f77ea",
+      "programId": "17b64543-276b-4c19-b5c7-e93fafd805ce",
+      "programCode": "BSIT",
+      "role": "PROFESSOR",
+      "designation": "PROGRAM_HEAD"
+    },
+    {
+      "email": "programhead@bscpe.edu.ph",
+      "id": "95c60ce4-19bd-43ba-ab38-ef8040792914",
+      "programId": "cf649635-038a-4253-879f-39c5fcd3a183",
+      "programCode": "BSCPE",
+      "role": "PROFESSOR",
+      "designation": "PROGRAM_HEAD"
+    }
+  ],
+  "administratorEmail": "admin@ics.edu.ph",
+  "handoffFile": "C:\\Users\\kirby\\AppData\\Local\\LuminaLMS\\account-handoffs\\program_heads_1792312671037\\program-head-logins.txt",
+  "ACLValidated": true,
+  "encrypted": false,
+  "CalendarChanges": false,
+  "SuperUserCreated": false
+}

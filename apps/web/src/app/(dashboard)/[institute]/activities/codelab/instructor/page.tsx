@@ -1,3 +1,4 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * CodeLab Instructor Analytics & Monitoring Page
  * Route: /[institute]/activities/codelab/instructor
@@ -21,6 +22,8 @@ export default async function CodeLabInstructorPage({
 }: {
   params: Promise<{ institute: string }>;
 }) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/instructor/page.tsx", await params);
+
   const { institute } = await params;
   const session = await getSession();
 
@@ -100,10 +103,10 @@ export default async function CodeLabInstructorPage({
 
     const flagReasons: string[] = [];
     if (pasteCount > 0) {
-      flagReasons.push(`Paste detected (${pasteCount}x)`);
+      flagReasons.push(`Code pasted ${pasteCount} times`);
     }
     if (typingVelocityCpm > 800) {
-      flagReasons.push(`High typing velocity (${typingVelocityCpm} cpm)`);
+      flagReasons.push(`Typing speed: ${typingVelocityCpm} characters per minute`);
     }
 
     const problem = getProblemById(sub.templateId);

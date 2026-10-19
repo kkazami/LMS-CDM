@@ -1,4 +1,6 @@
 "use server";
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -26,6 +28,8 @@ async function ensureBeforeDeadline(syllabusItemId: string) {
 // ─── Submission Actions ───
 
 export async function getOrCreateSubmission(syllabusItemId: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#getOrCreateSubmission", () => ({ syllabusItemId }));
+
   const user = await getStudentSession();
 
   let submission = await db.studentSubmission.findUnique({
@@ -49,6 +53,8 @@ import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
 import { logActivity } from "@/lib/ite/activity-logger";
 
 export async function submitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#submitWork", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+
   const user = await getStudentSession();
 
   const submission = await db.studentSubmission.findUnique({
@@ -102,6 +108,8 @@ export async function submitWork(submissionId: string, instituteCode: string, co
 }
 
 export async function unsubmitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#unsubmitWork", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+
   const user = await getStudentSession();
 
   const submission = await db.studentSubmission.findUnique({
@@ -132,6 +140,8 @@ export async function addSubmissionLink(
   courseId: string,
   itemId: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#addSubmissionLink", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+
   const user = await getStudentSession();
 
   const submission = await db.studentSubmission.findUnique({
@@ -167,6 +177,8 @@ export async function removeSubmissionAttachment(
   courseId: string,
   itemId: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#removeSubmissionAttachment", () => ({ institute: instituteCode, courseId, submissionId, attachmentId, itemId }));
+
   const user = await getStudentSession();
 
   const submission = await db.studentSubmission.findUnique({
@@ -194,6 +206,8 @@ export async function addSubmissionFile(
   courseId: string,
   itemId: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#addSubmissionFile", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+
   const user = await getStudentSession();
 
   const submission = await db.studentSubmission.findUnique({
@@ -233,6 +247,8 @@ export async function returnGrade(
   courseId: string,
   itemId: string
 ) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#returnGrade", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -270,6 +286,8 @@ export async function returnGrade(
 }
 
 export async function updateGrade(submissionId: string, grade: number) {
+  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#updateGrade", () => ({ submissionId }));
+
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
 

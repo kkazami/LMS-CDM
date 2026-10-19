@@ -21,3 +21,9 @@ test-results/
 
 # Orchestra run artifacts
 .orchestra/runs/*/
+
+# Local pnpm caches (not source or harness evidence)
+.pnpm-store/
+
+# Private database repair backups and Account Management QA artifacts
+/tmp/roster-repair/

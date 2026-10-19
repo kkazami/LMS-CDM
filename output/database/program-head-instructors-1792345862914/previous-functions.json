@@ -1,0 +1,8 @@
+[
+  {
+    "signature": "academic_course_mapping_guard()",
+    "definition": "CREATE OR REPLACE FUNCTION public.academic_course_mapping_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\r\nDECLARE permitted boolean := false;\r\nBEGIN\r\n IF (TG_OP='INSERT' AND NEW.\"programId\" IS NULL) OR (TG_OP='UPDATE' AND NEW.\"programId\" IS NOT DISTINCT FROM OLD.\"programId\") THEN RETURN NEW; END IF;\r\n DELETE FROM super_user_security.academic_assignment_permits\r\n WHERE backend=pg_backend_pid() AND transaction_id=txid_current() AND table_name='Course'\r\n AND operation=TG_OP AND program_id=coalesce(NEW.\"programId\",'') AND user_id=NEW.id\r\n RETURNING true INTO permitted;\r\n IF coalesce(permitted,false) THEN RETURN NEW; END IF;\r\n IF NOT pg_has_role(session_user,current_user,'MEMBER') THEN RAISE EXCEPTION 'course program mapping requires administrator authority' USING ERRCODE='42501'; END IF;\r\n IF nullif(current_setting('lms.assignment_actor_id',true),'') IS NULL THEN RAISE EXCEPTION 'mapping audit anchor required'; END IF;\r\n INSERT INTO public.\"AuditLog\" (id,\"adminId\",action,\"targetId\",metadata,\"createdAt\") VALUES (gen_random_uuid()::text,current_setting('lms.assignment_actor_id'),'ACADEMIC_COURSE_MAPPING',current_setting('lms.assignment_actor_id'),jsonb_build_object('courseId',NEW.id,'programId',NEW.\"programId\",'databasePrincipal',session_user)::text,CURRENT_TIMESTAMP);\r\n RETURN NEW;\r\nEND $function$\n",
+    "owner": "neondb_owner",
+    "acl": "{neondb_owner=X/neondb_owner}"
+  }
+]

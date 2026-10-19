@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Users API — List & Create
  *
@@ -5,8 +6,14 @@
  * POST /api/admin/users  — Create a new user account
  */
 
+import { randomBytes } from 'node:crypto';
+import { administratorInstitute } from '@/lib/administrator-scope';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
+import { previewImport, commitImport } from '@/lib/roster/imports';
+import { rosterActor, rosterError } from '@/lib/roster/policy';
+import { HEADERS } from '@/lib/roster/csv';
 import { db } from '@/lib/db';
 import {
   requireAdmin,
@@ -25,8 +32,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "GET admin/users/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
@@ -37,7 +47,7 @@ export async function GET(request: Request) {
     const instituteCode = searchParams.get('instituteCode') ?? '';
 
     // Build where clause
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { instituteId: session.user.instituteId, role: { in: ['STUDENT','student','PROFESSOR','professor','INSTRUCTOR','instructor','TEACHER','teacher'] } };
 
     // Search across name, email, uniqueId
     if (search) {
@@ -50,19 +60,21 @@ export async function GET(request: Request) {
 
     // Role filter — normalize and match both upper/lowercase variants
     if (roleFilter) {
-      const normalized = normalizeRole(roleFilter);
+      const normalized = canonicalRole(roleFilter);
+      if (!['INSTRUCTOR','STUDENT'].includes(normalized)) return NextResponse.json({ message: 'Only students and instructors may be listed.' }, { status: 403 });
       if (normalized === 'INSTRUCTOR') {
         where.role = { in: ['PROFESSOR', 'professor', 'TEACHER', 'teacher', 'INSTRUCTOR', 'instructor'] };
       } else if (normalized === 'STUDENT') {
         where.role = { in: ['STUDENT', 'student'] };
-      } else if (normalized === 'ADMIN') {
-        where.role = { in: ['ADMIN', 'admin'] };
       }
     }
 
     // Status filter
     if (statusFilter === 'active') {
       where.isActive = true;
+      where.activationStatus = 'ACTIVE';
+    } else if (statusFilter === 'pending') {
+      where.activationStatus = 'PENDING_ACTIVATION';
     } else if (statusFilter === 'suspended') {
       where.isActive = false;
     }
@@ -81,6 +93,13 @@ export async function GET(request: Request) {
           name: true,
           email: true,
           uniqueId: true,
+          studentNumber: true,
+          firstName: true,
+          lastName: true,
+          section: true,
+          activationStatus: true,
+          invitationVersion: true,
+          programMemberships: { where: { kind: 'STUDENT', isActive: true }, select: { program: { select: { code: true } } } },
           role: true,
           isActive: true,
           permissions: true,
@@ -98,6 +117,13 @@ export async function GET(request: Request) {
       name: u.name,
       email: u.email,
       uniqueId: u.uniqueId,
+      studentNumber: u.studentNumber,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      section: u.section,
+      activationStatus: u.activationStatus,
+      invitationVersion: u.invitationVersion,
+      program: u.programMemberships[0]?.program.code ?? '',
       role: normalizeRole(u.role),
       isActive: u.isActive,
       permissions: parsePermissions(u.permissions),
@@ -124,9 +150,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ceilingDenial = await denyLegacyApi(request, "POST admin/users/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   try {
     const session = await requireAdmin();
     const body = await request.json();
+    if (!body.role || canonicalRole(body.role) === 'STUDENT') {
+      const actor = await rosterActor(request);
+      const values = [body.studentNumber ?? body.student_Id ?? '', body.last_name ?? '', body.first_name ?? '', body.email ?? '', body.program ?? '', body.section ?? ''];
+      const csv = HEADERS.STUDENTS.join(',') + '\r\n' + values.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+      const batch = await previewImport(actor, { type: 'STUDENTS', csv });
+      if (batch.rows[0].proposedAction !== 'NEW') return NextResponse.json({ message: (batch.rows[0].issues as string[]).join(' ') || 'Student already exists.' }, { status: 400 });
+      const result = await commitImport(actor, batch.id, {});
+      if (result.rows[0].outcome !== 'CREATED') return NextResponse.json({ message: result.rows[0].error ?? 'Student creation failed.' }, { status: 409 });
+      return NextResponse.json({ message: 'Student created pending activation. Send an invitation from Account Invitations.' }, { status: 201 });
+    }
 
     const { name, email, uniqueId, role, instituteCode, password } = body as {
       name?: string;
@@ -176,13 +215,15 @@ export async function POST(request: Request) {
     }
 
     // Normalize role and get default permissions
+    if (role && !['INSTRUCTOR','STUDENT'].includes(canonicalRole(role))) return NextResponse.json({ message: 'Only Super User may create Administrators.' }, { status: 403 });
+    await administratorInstitute(session.user, instituteCode);
     const normalizedRole = role ? normalizeRole(role) : 'STUDENT';
     // Store as DB-compatible role string
     const dbRole = normalizedRole === 'INSTRUCTOR' ? 'PROFESSOR' : normalizedRole;
     const defaultPerms = DEFAULT_ROLE_PERMISSIONS[normalizedRole];
 
     // Generate or use provided password
-    const rawPassword = password ?? Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    const rawPassword = password ?? randomBytes(18).toString('base64url');
     const hashedPassword = await hash(rawPassword, 10);
 
     const user = await db.user.create({
@@ -232,7 +273,7 @@ export async function POST(request: Request) {
     );
   } catch (err) {
     const error = err as { status?: number; message?: string };
-    console.error('ADMIN_CREATE_USER_ERROR', err);
+    if (err instanceof Error && err.name === 'AccessError') return rosterError(err);
     return NextResponse.json(
       { message: error.message ?? 'Internal server error.' },
       { status: error.status ?? 500 }

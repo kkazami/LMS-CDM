@@ -1,10 +1,12 @@
+import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { getInstituteByCode, getStudentEnrollments, getStudentRank } from "@/lib/dashboard-data";
 import type { InstituteTheme } from "@/lib/theme";
+import { getDashboardCalendar } from "@/lib/student-calendar-data";
+import { schoolDateKey } from "@/lib/student-calendar";
 import StudentDashboardClient from "./client";
 
 export const dynamic = "force-dynamic";
@@ -16,20 +18,18 @@ interface StudentDashboardProps {
 }
 
 export default async function StudentDashboardPage({ params }: StudentDashboardProps) {
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/students/page.tsx", await params);
+
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
+  if (user.role !== "STUDENT") redirect(`/${institute}`);
 
+  const calendarPromise = getDashboardCalendar(user, institute);
   const theme: InstituteTheme = getInstituteTheme(institute);
-  const studentId = session.user.id;
+  const studentId = user.id;
 
-  // Resolve institute record (shared with the layout through React cache)
-  const instituteRecord = await getInstituteByCode(institute);
-
-  if (!instituteRecord) {
+  const instituteRecord = user.institute;
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 
@@ -39,7 +39,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     getStudentEnrollments(studentId, instituteRecord.id),
     db.gamificationProfile.findUnique({
       where: { studentId },
-      select: { exp: true, loginStreakCurrent: true },
+      select: { exp: true, loginStreakCurrent: true, level: true },
     }),
     db.enrollment.count({
       where: {
@@ -65,11 +65,11 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   const exp = gamification?.exp ?? 0;
 
   // 2. Classwork due within 7 days or already overdue (never submitted), the student's
-  //    submissions, and the real rank all run in parallel.
+  //    submissions, calendar, and the real rank all run in parallel.
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const [submissions, rawDueSoon, rank] = await Promise.all([
+  const [submissions, rawDueSoon, rank, calendar] = await Promise.all([
     db.studentSubmission.findMany({
       where: {
         studentId,
@@ -105,6 +105,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       orderBy: { dueDate: "asc" },
     }),
     getStudentRank(studentId, instituteRecord.id, exp),
+    calendarPromise,
   ]);
 
   const submittedIds = new Set(
@@ -130,18 +131,21 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
 
   return (
     <StudentDashboardClient
-      userName={session.user.name as string}
+      userName={user.name as string}
       instituteName={instituteRecord.name}
       instituteCode={institute}
       theme={theme}
       initialCourses={enrolledCourses}
+      calendar={calendar}
+      userId={studentId}
+      today={schoolDateKey(now)}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
       exp={exp}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}
       rank={rank}
       pendingJoinCount={pendingJoinCount}
-      showCodeLab={isEligibleInstituteCode(session.user.institute?.code ?? "")}
+      showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
     />
   );

@@ -1,0 +1,23 @@
+2026-10-18 17:34:12.253 +08 [33868] LOG:  starting PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-18 17:34:12.255 +08 [33868] LOG:  listening on IPv4 address "127.0.0.1", port 61882
+2026-10-18 17:34:12.443 +08 [29820] LOG:  database system was shut down at 2026-10-18 17:34:10 +08
+2026-10-18 17:34:12.477 +08 [33868] LOG:  database system is ready to accept connections
+2026-10-18 17:34:15.055 +08 [34636] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 17:34:15.390 +08 [31876] ERROR:  permission denied for table AuditLog
+2026-10-18 17:34:15.464 +08 [23260] ERROR:  academic assignments require migration-owner authority
+2026-10-18 17:34:15.464 +08 [23260] CONTEXT:  PL/pgSQL function academic_assignment_guard() line 8 at RAISE
+2026-10-18 17:34:15.466 +08 [23260] ERROR:  course program mapping requires migration-owner authority
+2026-10-18 17:34:15.466 +08 [23260] CONTEXT:  PL/pgSQL function academic_course_mapping_guard() line 4 at RAISE
+2026-10-18 17:34:15.483 +08 [31876] ERROR:  schema "super_user_security" does not exist at character 8
+2026-10-18 17:34:15.568 +08 [11820] WARNING:  there is already a transaction in progress
+2026-10-18 17:34:15.678 +08 [33432] ERROR:  permission denied for schema public at character 14
+2026-10-18 17:34:15.679 +08 [33432] ERROR:  permission denied for table writer_bindings
+2026-10-18 17:34:15.682 +08 [33432] ERROR:  PROVISIONING_WRITER_DENIED
+2026-10-18 17:34:15.682 +08 [33432] CONTEXT:  PL/pgSQL function guard_user() line 19 at RAISE
+2026-10-18 17:34:16.122 +08 [33868] LOG:  received fast shutdown request
+2026-10-18 17:34:16.124 +08 [33868] LOG:  aborting any active transactions
+2026-10-18 17:34:16.132 +08 [33868] LOG:  background worker "logical replication launcher" (PID 32196) exited with exit code 1
+2026-10-18 17:34:16.133 +08 [22860] LOG:  shutting down
+2026-10-18 17:34:16.134 +08 [22860] LOG:  checkpoint starting: shutdown immediate
+2026-10-18 17:34:16.967 +08 [22860] LOG:  checkpoint complete: wrote 1256 buffers (7.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.049 s, sync=0.774 s, total=0.835 s; sync files=774, longest=0.009 s, average=0.001 s; distance=7265 kB, estimate=7265 kB; lsn=0/1C8D470, redo lsn=0/1C8D470
+2026-10-18 17:34:17.071 +08 [33868] LOG:  database system is shut down

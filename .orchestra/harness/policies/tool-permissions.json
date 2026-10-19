@@ -1,50 +1,37 @@
 {
-  "requirement": {
-    "filesystem": ["read"],
-    "terminal": [],
-    "browser": false,
-    "git": ["log", "diff"]
+  "version": 2,
+  "enforcement": "These are host adapter requirements, not an implemented process sandbox",
+  "readOnlyRoles": [
+    "requirement",
+    "recon",
+    "architecture-red-team",
+    "architecture-adjudicator",
+    "planner",
+    "qa",
+    "security",
+    "code-review",
+    "repair",
+    "release"
+  ],
+  "writers": {
+    "executor": "Exact approved plan paths",
+    "test": "Approved test-only paths"
   },
-  "planner": {
-    "filesystem": ["read"],
-    "terminal": [],
-    "browser": false,
-    "git": ["log", "diff", "status"]
+  "runner": {
+    "shell": false,
+    "programs": [
+      "node",
+      "pnpm"
+    ],
+    "execution": "Approved argv only, exclusive stage lease, captured results",
+    "environment": "Sanitized allowlist; local disposable PostgreSQL for product behavioral/build checks"
   },
-  "executor": {
-    "filesystem": ["read", "write"],
-    "terminal": ["pnpm", "npx", "prisma"],
-    "browser": false,
-    "git": ["diff", "status"]
+  "deployer": {
+    "execution": "Reviewed command adapter, separate human approval, stable idempotency key"
   },
-  "test": {
-    "filesystem": ["read", "write"],
-    "terminal": [],
-    "browser": false,
-    "git": ["diff"]
-  },
-  "qa": {
-    "filesystem": ["read"],
-    "terminal": ["pnpm test:e2e", "pnpm harness:check", "pnpm build:web"],
-    "browser": true,
-    "git": ["diff"]
-  },
-  "security": {
-    "filesystem": ["read"],
-    "terminal": [],
-    "browser": false,
-    "git": ["diff"]
-  },
-  "code-review": {
-    "filesystem": ["read"],
-    "terminal": [],
-    "browser": false,
-    "git": ["diff"]
-  },
-  "repair": {
-    "filesystem": ["read", "write"],
-    "terminal": ["pnpm", "npx"],
-    "browser": false,
-    "git": ["diff", "status"]
-  }
+  "forbidden": [
+    "production credentials in agent context",
+    "agent writes to evidence/journal/approvals",
+    "inline command evaluation"
+  ]
 }

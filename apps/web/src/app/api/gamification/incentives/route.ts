@@ -1,3 +1,4 @@
+import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -6,6 +7,9 @@ export const dynamic = "force-dynamic";
 
 // GET — List incentive rules for courses taught by the instructor / admin
 export async function GET(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "GET gamification/incentives/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,6 +34,9 @@ export async function GET(req: Request) {
 
 // POST — Create a new grade incentive rule
 export async function POST(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "POST gamification/incentives/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,11 +48,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { courseId, label, gradeMin, bonusExp } = (await req.json()) as {
+    const { courseId, label, gradeMin, bonusExp, rewardDescription } = (await req.json()) as {
       courseId: string;
       label: string;
       gradeMin: number;
       bonusExp: number;
+      rewardDescription?: string;
     };
 
     if (!courseId || !label || isNaN(gradeMin) || isNaN(bonusExp)) {
@@ -59,6 +67,7 @@ export async function POST(req: Request) {
         label: label.trim(),
         gradeMin: Number(gradeMin),
         bonusExp: Math.max(1, Number(bonusExp)),
+        rewardDescription: rewardDescription?.trim() || "",
         isActive: true,
       },
       include: {
@@ -75,6 +84,9 @@ export async function POST(req: Request) {
 
 // PATCH — Toggle active state
 export async function PATCH(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "PATCH gamification/incentives/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -110,6 +122,9 @@ export async function PATCH(req: Request) {
 
 // DELETE — Remove rule
 export async function DELETE(req: Request) {
+  const ceilingDenial = await denyLegacyApi(req, "DELETE gamification/incentives/route.ts");
+  if (ceilingDenial) return ceilingDenial;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -24,7 +24,6 @@ import {
 } from "../problems/types";
 import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
-import SubmitBar from "../../shared/components/SubmitBar";
 import { toast } from "@/components/common/Toast";
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import {
@@ -39,12 +38,11 @@ import {
   Code2,
   FileText,
   Lightbulb,
-  Sparkles,
   Loader2,
   Send,
   AlertOctagon,
   ArrowRight,
-  Trophy,
+  Lock,
 } from "lucide-react";
 
 export interface RejectionWarningInfo {
@@ -138,14 +136,17 @@ export default function CodeLabScene({
     elapsedSeconds,
     startTimer,
     resetActivity,
-    score: currentScore,
   } = useActivityStore();
 
+  const [completed, setCompleted] = useState(false);
+  const [completionLoading, setCompletionLoading] = useState(true);
+  const [completionError, setCompletionError] = useState("");
+  const [savedScore, setSavedScore] = useState<number | null>(null);
   const [mounted, setMounted] = useState<boolean>(false);
   const [mobilePanel, setMobilePanel] = useState<"tutorial" | "editor" | "results">("tutorial");
   const [expandedTests, setExpandedTests] = useState<Set<number>>(new Set());
   const [showHint, setShowHint] = useState<boolean>(false);
-  const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [completionReward, setCompletionReward] = useState("");
   const [hiddenResults, setHiddenResults] = useState<Array<{ passed: boolean; error?: string }>>([]);
   const [showRejectionWarning] = useState<boolean>(
     Boolean(rejectionWarning?.isRejected)
@@ -178,6 +179,37 @@ export default function CodeLabScene({
     startTimer();
   }, [assignmentId, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    setCompletionLoading(true);
+    setCompleted(false);
+    setSavedScore(null);
+    setCompletionReward("");
+    setCompletionError("");
+    void (async () => {
+      try {
+        const response = await fetch(`/api/codelab/progress?templateId=${encodeURIComponent(assignmentId)}`, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error("Unable to load saved progress. Reload this page before submitting.");
+        const data = await response.json();
+        if (controller.signal.aborted) return;
+        if (data.completed) {
+          setCompleted(true);
+          markComplete(true);
+        }
+        if (data.submission) {
+          setSavedScore(data.submission.score);
+          setScore(data.submission.score);
+          if (typeof data.submission.stateCheck?.sourceCode === "string") updateCode(data.submission.stateCheck.sourceCode);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) setCompletionError(error instanceof Error ? error.message : "Unable to load progress. Reload this page.");
+      } finally {
+        if (!controller.signal.aborted) setCompletionLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [assignmentId, fixedLanguage, updateCode, setScore, markComplete]);
+
   // Format timer as MM:SS
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -201,7 +233,7 @@ export default function CodeLabScene({
   };
 
   /** Client-side evaluation for HTML/CSS preview tracks */
-  const handleHTMLCSSEvaluation = useCallback(async () => {
+  const handleHTMLCSSEvaluation = useCallback(async (saveCompletion = false) => {
     if (isExecuting) return;
     setExecuting(true);
     setActiveTab("tests");
@@ -253,49 +285,47 @@ export default function CodeLabScene({
     updateStateCheck("typingVelocityCharsPerMin", cpm);
     updateStateCheck("pasteCount", pasteCount);
 
-    if (computedScore >= 60) {
-      markComplete(true);
-
-      const earned = computedScore === 100 ? 80 : 30;
-      toast.success(`Level Passed! +${earned} EXP Earned! ✨`);
-
-      // Auto-sync submission to activity records
-      fetch("/api/activities/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId,
-          assignmentId,
-          activityType: "codelab",
-          variantSeed,
-          startedAt,
-          completionTimeSeconds: elapsedSeconds,
-          attempts: 1,
-          stateCheck: {
-            level,
-            language: fixedLanguage,
-            testPassCount: passedCount,
-            totalTestCases: totalCount,
-          },
-          score: computedScore,
-          maxScore: 100,
-          passed: true,
-        }),
-      }).catch(() => {
-        // silent background sync
-      });
-
-      if (computedScore === 100) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 2500);
+    if (computedScore >= 60 && !completed && saveCompletion) {
+      try {
+        const response = await fetch("/api/activities/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId, assignmentId, activityType: "codelab", variantSeed, startedAt,
+            completionTimeSeconds: elapsedSeconds,
+            attempts: Math.max(1, submissionCount + 1),
+            stateCheck: { level, language: fixedLanguage, sourceCode: code, testPassCount: passedCount, totalTestCases: totalCount },
+            score: computedScore, maxScore: 100, passed: true,
+          }),
+        });
+        const result = await response.json();
+        if (response.status === 409 && (result.completed || result.alreadyCompleted)) {
+          setCompleted(true);
+          toast.success("Level already completed", "You can keep running code for practice. No additional EXP is awarded.");
+        } else {
+          if (!response.ok) throw new Error(result.message || "Unable to save this level. Please try again.");
+          setCompleted(true);
+          setSavedScore(result.submission.score);
+          markComplete(true);
+          setCompletionReward(result.grantedExp > 0 ? `+${result.grantedExp} EXP` : "");
+          void import("@/lib/confetti").then(({ fireLevelUpConfetti }) => fireLevelUpConfetti()).catch(() => {});
+        }
+      } catch (error) {
+        toast.error("Completion was not saved", error instanceof Error ? error.message : "Please try again.");
       }
-    } else {
+    } else if (computedScore < 60) {
       // Auto-reveal hint after first wrong attempt
       setShowHint(true);
     }
 
     setExecuting(false);
   }, [
+    completed,
+    submissionCount,
+    studentId,
+    assignmentId,
+    variantSeed,
+    startedAt,
     isExecuting,
     fixedLanguage,
     codeByLanguage,
@@ -317,7 +347,7 @@ export default function CodeLabScene({
 
   /** Run single test (Freeform execution with stdout/stderr via Judge0) */
   const handleRun = useCallback(async () => {
-    if (isExecuting) return;
+    if (isExecuting || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
       await handleHTMLCSSEvaluation();
@@ -364,6 +394,8 @@ export default function CodeLabScene({
       setExecuting(false);
     }
   }, [
+    completionLoading,
+    completionError,
     isExecuting,
     executionMethod,
     handleHTMLCSSEvaluation,
@@ -378,10 +410,10 @@ export default function CodeLabScene({
 
   /** Full Evaluation (Runs against public + hidden test cases via /api/codelab/evaluate) */
   const handleSubmitAndEvaluate = useCallback(async () => {
-    if (isExecuting) return;
+    if (isExecuting || completed || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
-      await handleHTMLCSSEvaluation();
+      await handleHTMLCSSEvaluation(true);
       return;
     }
 
@@ -402,11 +434,19 @@ export default function CodeLabScene({
           seed: variantSeed,
           sourceCode: code,
           languageId: langId,
+          startedAt,
+          completionTimeSeconds: elapsedSeconds,
+          attempts: Math.max(1, submissionCount + 1),
         }),
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        if (res.status === 409 && errData.completed) {
+          setCompleted(true);
+          toast.success("Level already completed", "Use Run Tests for practice. No additional EXP is awarded.");
+          return;
+        }
         throw new Error((errData as Record<string, string>).error || `HTTP ${res.status}`);
       }
 
@@ -458,51 +498,13 @@ export default function CodeLabScene({
         triggerNativeHaptic("success");
         markComplete(true);
 
-        const earned = data.grantedExp || (data.score === 100 ? 80 : 30);
-        if (earned > 0) {
-          toast.success(
-            `Level Passed! +${earned} EXP Earned! ✨`,
-            data.leveledUp ? `🎉 Level Up! You reached Level ${data.newLevel}!` : undefined
-          );
-        }
-
-        // Auto-sync submission to activity records
-        fetch("/api/activities/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId,
-            assignmentId,
-            activityType: "codelab",
-            variantSeed,
-            startedAt,
-            completedAt: new Date().toISOString(),
-            timeSpentSeconds: elapsedSeconds,
-            stateChecks: {
-              language: fixedLanguage,
-              level,
-              pasteCount,
-              typingVelocityCharsPerMin: cpm,
-              testPassCount: data.totalPassed,
-              totalTestCases: data.totalCases,
-              hintUsed: hintWasShown || showHint,
-              errorTypes: collectedErrorTypes.join(","),
-              attemptChurnCount: failedRunCount,
-              firstRunMs: Math.max(firstRunDelta, 0),
-              totalEditingMs: elapsedSeconds * 1000,
-            },
-            score: data.score,
-            maxScore: 100,
-            passed: true,
-          }),
-        }).catch(() => {
-          // silent background sync
-        });
-
-        if (data.score === 100) {
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 2500);
-        }
+        setCompleted(true);
+        setSavedScore(data.score);
+        setCompletionReward([
+          data.grantedExp ? `+${data.grantedExp} EXP` : "",
+          data.leveledUp ? `Reached level ${data.newLevel}` : "",
+        ].filter(Boolean).join(" · "));
+        void import("@/lib/confetti").then(({ fireLevelUpConfetti }) => fireLevelUpConfetti()).catch(() => {});
       } else {
         triggerNativeHaptic("error");
         incrementFailedRun();
@@ -511,21 +513,21 @@ export default function CodeLabScene({
         setShowHint(true);
       }
     } catch (err: unknown) {
-      triggerNativeHaptic("error");
-      incrementFailedRun();
-      addErrorType("runtime");
       const message = err instanceof Error ? err.message : "Evaluation failed";
-      setTestResults([
-        {
-          passed: false,
-          actualOutput: null,
-          error: message,
-        },
-      ]);
+      setActiveTab("console");
+      setTestResults([]);
+      setHiddenResults([]);
+      setConsoleOutput({ stdout: null, stderr: message, compile_output: null, time: "0", memory: 0,
+        status: { id: 13, description: "Code runner unavailable" } });
     } finally {
       setExecuting(false);
     }
   }, [
+    completed,
+    completionLoading,
+    completionError,
+    startedAt,
+    submissionCount,
     isExecuting,
     executionMethod,
     handleHTMLCSSEvaluation,
@@ -552,6 +554,7 @@ export default function CodeLabScene({
     setActiveTab,
     incrementSubmission,
     setTestResults,
+    setConsoleOutput,
     setScore,
     updateStateCheck,
     markComplete,
@@ -562,12 +565,11 @@ export default function CodeLabScene({
   const totalPassedCount = publicPassedCount + hiddenPassedCount;
   const totalTestsCount = testResults.length + hiddenResults.length;
 
-  const isPassed = currentScore >= 60 && testResults.length > 0;
   const nextLevel = level < 30 ? level + 1 : null;
   const langLabel = LANGUAGE_LABELS[fixedLanguage] || fixedLanguage;
 
   return (
-    <div className="flex h-full w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+    <div className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
       {/* ──── Academic Integrity / Rejection Warning Modal ──── */}
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -594,140 +596,96 @@ export default function CodeLabScene({
         document.body
       )}
 
-      {/* ──── Confetti Burst Overlay (CSS-only) ──── */}
-      {showConfetti && (
-        <div
-          role="status"
-          aria-live="assertive"
-          className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs"
-        >
-          <div className="text-center p-8 bg-slate-900/90 border border-emerald-500/40 rounded-2xl shadow-2xl shadow-emerald-950/50 animate-in fade-in zoom-in-95 duration-200">
-            <div className="text-5xl mb-2">🎉</div>
-            <h2 className="text-2xl font-black text-white">Perfect Score!</h2>
-            <p className="text-sm text-emerald-400 font-semibold mt-1">
-              All test cases passed with 100%!
-            </p>
-          </div>
-
-          {Array.from({ length: 50 }).map((_, i) => {
-            const left = `${Math.random() * 100}%`;
-            const animDuration = `${1.2 + Math.random() * 1.5}s`;
-            const animDelay = `${Math.random() * 0.5}s`;
-            const colors = ["#10b981", "#6366f1", "#f59e0b", "#ec4899", "#3b82f6", "#14b8a6"];
-            const bg = colors[i % colors.length];
-            const size = `${6 + Math.random() * 8}px`;
-
-            return (
-              <div
-                key={i}
-                className="absolute top-0 rounded-xs"
-                style={{
-                  left,
-                  width: size,
-                  height: size,
-                  backgroundColor: bg,
-                  animation: `confettiFall ${animDuration} linear ${animDelay} forwards`,
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
-
       {/* ──── Topbar Navigation ──── */}
-      <header className="flex-none flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/10 transition-colors">
-        <div className="flex items-center gap-3">
+      <header className="flex-none flex min-w-0 flex-col gap-3 px-3 py-3 xl:flex-row xl:items-center xl:justify-between xl:px-4 xl:py-2.5 bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-white/10 transition-colors">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3 xl:flex-1">
           {/* Breadcrumb Navigation */}
           <Link
             href={`/${institute}/activities/codelab/${fixedLanguage}`}
-            className="group flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer active:scale-95"
+            className="group flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] px-2 py-1.5 sm:px-3 rounded-xl border border-slate-200/80 dark:border-white/10 transition-all cursor-pointer active:scale-95"
           >
             <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <span>{langLabel} Track</span>
           </Link>
 
-          <div className="h-4 w-px bg-slate-200 dark:border-white/10" />
+          <div className="hidden h-4 w-px shrink-0 bg-slate-200 dark:border-white/10 sm:block" />
 
           {/* Problem title + level */}
-          <div className="flex items-center gap-2">
-            <Code2 className="w-4 h-4 text-[#F97316]" />
-            <h1 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate max-w-[280px] sm:max-w-md">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+            <Code2 className="hidden w-4 h-4 shrink-0 text-[#F97316] sm:block" />
+            <h1 className="min-w-0 flex-1 basis-full text-sm font-bold leading-snug text-slate-900 dark:text-[#F0F2F8] break-words [overflow-wrap:anywhere] sm:basis-0">
               Level {level}: {templateTitle}
             </h1>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400">
+            <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400">
               {stageName}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:gap-3 xl:w-auto xl:shrink-0">
           {/* Timer */}
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold ${
+            className={`flex min-h-11 shrink-0 items-center justify-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-xl text-xs font-mono font-bold ${
               isTimeLong
                 ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/20"
                 : "bg-slate-100 text-slate-700 border border-slate-200/80 dark:bg-[#1E2132] dark:text-[#F0F2F8] dark:border-white/10"
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>{formatTime(elapsedSeconds)}</span>
+            <Clock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+            <span className="whitespace-nowrap">{formatTime(elapsedSeconds)}</span>
           </div>
 
           {/* Run button */}
           <button
             onClick={handleRun}
-            disabled={isExecuting}
+            disabled={isExecuting || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs"
+            className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 py-2 sm:flex-1 sm:px-3.5 xl:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs [&>svg]:shrink-0"
           >
             {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-[#F97316]" />}
-            <span>Run Tests</span>
+            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">Run Tests</span>
           </button>
 
           {/* Submit button */}
           <button
             onClick={handleSubmitAndEvaluate}
-            disabled={isExecuting}
+            disabled={isExecuting || completed || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#F97316] hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-40 active:scale-95 cursor-pointer"
+            className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 py-2 sm:flex-1 sm:px-4 xl:flex-none bg-[#F97316] hover:bg-orange-600 text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-white/5 dark:disabled:text-slate-400 active:scale-95 cursor-pointer [&>svg]:shrink-0"
           >
-            {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Submit Solution</span>
+            {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : completed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">{completed ? "Completed" : completionLoading ? "Loading progress…" : "Submit Solution"}</span>
           </button>
         </div>
       </header>
 
-      {/* ──── Celebratory Level Pass Banner ──── */}
-      {isPassed && (
-        <div className="flex-none bg-emerald-600 text-white px-4 py-2.5 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-            <Trophy className="w-4 h-4 text-yellow-300 animate-bounce" />
-            <span>
-              🎉 Level {level} Passed! Score: {currentScore}% (≥ 60% Passing Threshold)
-            </span>
+      <div className={`flex-none border-b px-3 py-2 sm:px-4 ${completed ? "codelab-completion border-emerald-200/70 bg-emerald-50/60 dark:border-emerald-500/20 dark:bg-emerald-500/[0.06]" : "border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#141721]"}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div role="status" aria-live="polite" className="min-w-0 text-xs leading-relaxed">
+            {completionError ? <span className="text-rose-700 dark:text-rose-300">{completionError}</span> : completed ? (
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />
+                <div>
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-200">Level completed</p>
+                  <p className="text-emerald-800 dark:text-emerald-300">{savedScore !== null ? `Saved · ${savedScore}/100` : "Completion saved"}{completionReward ? ` · ${completionReward}` : " · Practice anytime"}</p>
+                </div>
+              </div>
+            ) : completionLoading ? "Loading saved progress…" : "Run tests to check your code. Submit to save your result."}
           </div>
-
-          {nextLevel ? (
-            <Link
-              href={`/${institute}/activities/codelab/${fixedLanguage}/${nextLevel}`}
-              className="flex items-center gap-1.5 bg-white text-emerald-800 hover:bg-emerald-50 px-3.5 py-1 rounded-xl text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer"
-            >
-              <span>Go to Level {nextLevel}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+          {completed && (nextLevel ? (
+            <Link href={`/${institute}/activities/codelab/${fixedLanguage}/${nextLevel}`} className="flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-500/10 transition-colors">
+              <span>Level {nextLevel}</span><ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
-          ) : (
-            <span className="text-xs font-bold bg-emerald-700/80 px-3 py-1 rounded-xl">
-              Track Completed! 🏆
-            </span>
-          )}
+          ) : <span className="shrink-0 text-xs font-semibold text-emerald-800 dark:text-emerald-200">Track completed</span>)}
         </div>
-      )}
+      </div>
 
       {/* ──── Mobile Viewport Panel Switcher (< md) ──── */}
       <div className="flex md:hidden border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] shrink-0 z-20">
         <button
           type="button"
           onClick={() => setMobilePanel("tutorial")}
+          aria-pressed={mobilePanel === "tutorial"}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             mobilePanel === "tutorial"
               ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
@@ -740,6 +698,7 @@ export default function CodeLabScene({
         <button
           type="button"
           onClick={() => setMobilePanel("editor")}
+          aria-pressed={mobilePanel === "editor"}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             mobilePanel === "editor"
               ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
@@ -752,6 +711,7 @@ export default function CodeLabScene({
         <button
           type="button"
           onClick={() => setMobilePanel("results")}
+          aria-pressed={mobilePanel === "results"}
           className={`flex-1 py-3 text-xs font-bold text-center border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
             mobilePanel === "results"
               ? "border-[#F97316] text-[#F97316] bg-orange-500/5"
@@ -764,12 +724,12 @@ export default function CodeLabScene({
       </div>
 
       {/* ──── Main Layout ──── */}
-      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Panel: W3Schools Educational Problem Statement */}
         <aside
-          className={`w-full md:w-[32%] min-w-[280px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 ${
+          className={`w-full md:w-[32%] min-w-0 md:min-w-[240px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 ${
             mobilePanel === "tutorial" ? "flex" : "hidden md:flex"
-          } flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
+          } min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
           style={{ resize: "horizontal" }}
         >
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
@@ -808,7 +768,7 @@ export default function CodeLabScene({
                 {failedRunCount < 3 && (
                   <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] p-4 text-xs text-slate-600 dark:text-[#8B92A5] space-y-2">
                     <p className="leading-relaxed font-medium">
-                      💡 <strong>Try exploring first!</strong> If you run into errors or get stuck, progressive hints will automatically unlock to guide you:
+                      <strong>Try exploring first.</strong> If you run into errors or get stuck, progressive hints will automatically unlock to guide you:
                     </p>
                     <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
                       <span>Hint 1 (Concept Direction):</span>
@@ -849,7 +809,7 @@ export default function CodeLabScene({
                         className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#555C72] flex items-center justify-between text-xs"
                       >
                         <span className="flex items-center gap-1.5 font-semibold">
-                          <span>🔒</span>
+                          <Lock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                           <span>{tierNames[tierIdx] || `Tier ${tierIdx + 1} Hint`}</span>
                         </span>
                         <span className="font-mono text-[10px]">Unlocks at {requiredFails} attempts</span>
@@ -872,7 +832,7 @@ export default function CodeLabScene({
                         className="w-full flex items-center justify-between text-xs font-bold text-slate-800 dark:text-[#F0F2F8] hover:text-[#F97316] transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
-                          <span>{tierIdx === 0 ? "💡" : tierIdx === 1 ? "🧱" : "🛠️"}</span>
+                          <Lightbulb aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                           <span>{tierNames[tierIdx] || `Tier ${tierIdx + 1} Hint`}</span>
                           <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
                             Unlocked
@@ -896,7 +856,7 @@ export default function CodeLabScene({
 
         {/* Center / Preview Panel */}
         {executionMethod === "html-preview" || executionMethod === "css-preview" ? (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
             <HTMLPreviewEditor
               initialCode={codeByLanguage[fixedLanguage as CodeLabLanguage] || ""}
               language={fixedLanguage as "html" | "css"}
@@ -905,16 +865,16 @@ export default function CodeLabScene({
             />
           </main>
         ) : (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
             <CodeEditor />
           </main>
         )}
 
         {/* Right Panel: Test Suite & Results */}
         <aside
-          className={`w-full md:w-[30%] min-w-[260px] ${
+          className={`w-full md:w-[30%] min-w-0 md:min-w-[220px] ${
             mobilePanel === "results" ? "flex" : "hidden md:flex"
-          } flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]`}
+          } min-h-0 flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]`}
           style={{ resize: "horizontal" }}
         >
           {/* Tab Navigation */}
@@ -979,13 +939,13 @@ export default function CodeLabScene({
                         <pre className="whitespace-pre-wrap font-mono text-xs text-emerald-300 dark:text-emerald-300 leading-relaxed">{consoleOutput.stdout}</pre>
                       </div>
                     )}
-                    {consoleOutput.stderr && (
+                    {(consoleOutput.stderr || consoleOutput.compile_output) && (
                       <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-100 rounded-2xl shadow-xs">
                         <div className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
-                          <span>Standard Error</span>
+                          <span>{consoleOutput.status.id === 13 ? "Code runner unavailable" : consoleOutput.compile_output ? "Compilation Error" : "Standard Error"}</span>
                         </div>
-                        <pre className="whitespace-pre-wrap font-mono text-xs text-rose-800 dark:text-rose-200 leading-relaxed font-semibold">{consoleOutput.stderr}</pre>
+                        <pre className="whitespace-pre-wrap font-mono text-xs text-rose-800 dark:text-rose-200 leading-relaxed font-semibold">{consoleOutput.compile_output || consoleOutput.stderr}</pre>
                       </div>
                     )}
                   </div>
@@ -1008,9 +968,11 @@ export default function CodeLabScene({
                         : "bg-rose-50/50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-500/30"
                     }`}
                   >
-                    <div
+                    <button
+                      type="button"
+                      aria-expanded={expandedTests.has(idx)}
                       onClick={() => toggleTest(idx)}
-                      className="flex items-center justify-between cursor-pointer"
+                      className="flex min-h-11 w-full items-center justify-between gap-2 text-left cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         {result.passed ? (
@@ -1029,7 +991,8 @@ export default function CodeLabScene({
                           <span className="text-rose-600 dark:text-rose-400">Failed</span>
                         )}
                       </span>
-                    </div>
+                      <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-150 ${expandedTests.has(idx) ? "rotate-180" : ""}`} />
+                    </button>
 
                     {expandedTests.has(idx) && (
                       <div className="mt-2.5 pt-2.5 border-t border-slate-200 dark:border-slate-800 text-[11px] space-y-1.5 font-mono">
@@ -1055,17 +1018,7 @@ export default function CodeLabScene({
         </aside>
       </div>
 
-      {/* ──── Bottom Activity Submit Bar ──── */}
-      <footer className="flex-none">
-        <SubmitBar
-          activityType="codelab"
-          assignmentId={assignmentId}
-          studentId={studentId}
-          variantSeed={variantSeed}
-          startedAt={startedAt}
-          maxScore={100}
-        />
-      </footer>
+
     </div>
   );
 }

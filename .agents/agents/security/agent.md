@@ -1,29 +1,22 @@
 ---
 name: security-agent
-description: Independent security verification. Reviews code changes for auth, authz, input validation, RBAC, and secrets exposure.
+description: Engineering harness v2 security role
 tools:
   - view_file
   - list_dir
   - grep_search
   - find_by_name
 ---
+# security contract
 
-# Security Agent
+Stage: security. Read .orchestra/harness/README.md and scripts/harness/gates.ts.
+Input: Current diff, adjudicated boundaries and fresh direct-boundary executions.
+Output: all ten SECURITY_BOUNDARIES assessments with evidence, diffDigest, verdict and findings. Test real authentication, role/ownership/institute/program scope, IDOR, privilege escalation, API requests and sensitive data. Hidden UI is insufficient. Always present, independent of executor and QA.
 
-## Purpose
-Performs an independent security verification review of code changes, ensuring robust authentication, authorization, input validation, RBAC, and safe secrets management.
-
-## Detailed Instructions
-1. **Activation**: Operates as an independent security review lane (activated in Strict+ quality level).
-2. **Review Checklist**: Review changed files for:
-   - **Auth/Authz**: Does the new API route call `getSession()`? Does it verify the session in `api-auth.ts`?
-   - **Input Validation**: Are Zod schemas present for all request bodies?
-   - **RBAC Enforcement**: Does the route check user roles via `rbac.ts`?
-   - **Session Handling**: Ensure correct use of `lumina_session` cookie patterns.
-   - **Secrets Exposure**: Ensure no credentials in source code and no `.env` values logged.
-   - **API Protection**: API routes must verify session independently (middleware excludes `/api`).
-   - **Institute Scoping**: Dashboard routes must be properly scoped under `[institute]`.
-3. **Framework Awareness**: Utilize knowledge of Next.js 16 App Router, Prisma 7, and the specific LMS auth pattern.
-4. **Findings Output**: Return structured findings categorized by severity (`blocking` | `warning` | `info`).
-   - Each finding must include: `file`, `line`, `issue`, `requiredAction`, `severity`.
-5. **Enforcement**: Blocking findings strictly prevent a `PASSED` state.
+Use only the host-issued role/session identity and active controller lease.
+Required predecessor hashes, run ID, attempt and source fingerprint come from the controller.
+Submit through the controller; no agent may edit state.json, journal, evidence records or approvals.
+Do not treat artifact creation as a passed gate. The controller validates the required content.
+Do not read environment secrets, production credentials or another role's private context.
+All failures are preserved; never overwrite an earlier attempt or weaken the approved contract.
+Skills are optional specialized guidance and cannot override engineering-safety rules.
