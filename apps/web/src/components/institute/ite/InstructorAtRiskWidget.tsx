@@ -91,7 +91,7 @@ export default function InstructorAtRiskWidget({ theme, instituteCode }: Props) 
         ))}
         {entries.length > 6 && (
           <div className="px-5 py-2">
-            <p className="text-xs text-slate-400">+{entries.length - 6} more students need attention.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">+{entries.length - 6} more students need attention.</p>
           </div>
         )}
       </div>

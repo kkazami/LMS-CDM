@@ -3,7 +3,6 @@
 import { useState, useRef, useTransition, useEffect } from "react";
 import Link from "next/link";
 import {
-  BookOpen,
   Clock,
   ClipboardList,
   BookOpenCheck,
@@ -18,7 +17,6 @@ import {
   Compass,
   Flame,
   Zap,
-  Award,
   CheckSquare,
   Code2,
   Trophy,
@@ -27,6 +25,8 @@ import type { InstituteTheme } from "@/lib/theme";
 import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
 import Button from "@/components/common/Button";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import CourseReorderButtons from "@/components/dashboard/CourseReorderButtons";
 import { unenrollFromCourse, reorderCourseCards } from "../courses/actions";
 import { TypingBanner } from "@/components/motion/TypingBanner";
 import { FadeIn } from "@/components/motion/FadeIn";
@@ -35,6 +35,8 @@ import { ExpRing } from "@/components/dashboard/ExpRing";
 import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import StudentParticipationCard from "@/components/institute/ite/StudentParticipationCard";
+import { computeLevelInfo } from "@/lib/gamification/exp-engine";
+import { classifyDueDate, splitOverdue, type DueStatus } from "@/lib/dashboard/due-dates";
 
 interface EnrolledCourse {
   id: string;
@@ -68,56 +70,24 @@ interface StudentDashboardClientProps {
   serverNow: string;
   exp?: number;
   streakCurrent?: number;
-  level?: number;
+  /** Real leaderboard rank within the institute; null = unranked (no EXP yet). */
+  rank: number | null;
+  /** The student's join requests still waiting for instructor approval. */
+  pendingJoinCount: number;
+  /** Whether the CodeLab / interactive activities suite is available to this user. */
+  showCodeLab: boolean;
   typingSessionKey?: string;
 }
 
-function formatRelativeDueDate(
-  dueDateIso: string,
-  serverNowIso: string
-): { label: string; status: "overdue" | "today" | "soon" | "upcoming" } {
-  const dueDate = new Date(dueDateIso);
-  const now = new Date(serverNowIso);
+/** Max overdue rows listed on the dashboard; the rest are reachable from the To-do page. */
+const MAX_OVERDUE_SHOWN = 5;
 
-  const dueTime = dueDate.getTime();
-  const nowTime = now.getTime();
-  const diffHours = (dueTime - nowTime) / (1000 * 60 * 60);
-
-  if (dueTime < nowTime) {
-    return { label: "Overdue", status: "overdue" };
-  }
-
-  const isToday =
-    dueDate.getUTCDate() === now.getUTCDate() &&
-    dueDate.getUTCMonth() === now.getUTCMonth() &&
-    dueDate.getUTCFullYear() === now.getUTCFullYear();
-
-  if (isToday) {
-    return { label: "Due Today", status: "today" };
-  }
-
-  const tomorrow = new Date(now);
-  tomorrow.setUTCDate(now.getUTCDate() + 1);
-  const isTomorrow =
-    dueDate.getUTCDate() === tomorrow.getUTCDate() &&
-    dueDate.getUTCMonth() === tomorrow.getUTCMonth() &&
-    dueDate.getUTCFullYear() === tomorrow.getUTCFullYear();
-
-  if (isTomorrow) {
-    return { label: "Due Tomorrow", status: "soon" };
-  }
-
-  if (diffHours <= 7 * 24) {
-    const dayName = dueDate.toLocaleDateString("en-US", { weekday: "short" });
-    const monthDay = dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    return { label: `Due ${dayName}, ${monthDay}`, status: "upcoming" };
-  }
-
-  return {
-    label: `Due ${dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-    status: "upcoming",
-  };
-}
+const BADGE_CLASS: Record<DueStatus, string> = {
+  overdue: "bg-[#EF4444] text-white font-bold",
+  today: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30",
+  tomorrow: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20",
+  upcoming: "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#94A3B8]",
+};
 
 export default function StudentDashboardClient({
   userName,
@@ -128,8 +98,10 @@ export default function StudentDashboardClient({
   dueSoonItems,
   serverNow,
   exp = 0,
-  streakCurrent = 1,
-  level = 1,
+  streakCurrent = 0,
+  rank,
+  pendingJoinCount,
+  showCodeLab,
   typingSessionKey,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
@@ -141,9 +113,24 @@ export default function StudentDashboardClient({
     setCourses(initialCourses);
   }, [initialCourses]);
 
-  // ─── Drag and Drop Reordering ───
+  const levelInfo = computeLevelInfo(exp);
+  const { overdue: overdueItems, upcoming: upcomingItems } = splitOverdue(dueSoonItems, serverNow);
+  const pendingDeadlineCount = dueSoonItems.length;
+
+  // ─── Course ordering (drag and drop, or the move up/down buttons) ───
   const dragItemRef = useRef<number | null>(null);
   const dragOverRef = useRef<number | null>(null);
+
+  function persistOrder(reordered: EnrolledCourse[]) {
+    setCourses(reordered);
+    startTransition(async () => {
+      await reorderCourseCards(
+        reordered.map((c) => c.id),
+        instituteCode,
+        true
+      );
+    });
+  }
 
   function handleDragStart(index: number) {
     dragItemRef.current = index;
@@ -162,18 +149,17 @@ export default function StudentDashboardClient({
     const [dragged] = reordered.splice(dragItemRef.current, 1);
     reordered.splice(dragOverRef.current, 0, dragged);
 
-    setCourses(reordered);
     dragItemRef.current = null;
     dragOverRef.current = null;
+    persistOrder(reordered);
+  }
 
-    // Persist new order to server
-    startTransition(async () => {
-      await reorderCourseCards(
-        reordered.map((c) => c.id),
-        instituteCode,
-        true
-      );
-    });
+  function moveCourse(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= courses.length) return;
+    const reordered = [...courses];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    persistOrder(reordered);
   }
 
   const handleUnenroll = (courseId: string) => {
@@ -186,41 +172,51 @@ export default function StudentDashboardClient({
     });
   };
 
-  // Quick action items for mobile and desktop quick navigation bar
-  const quickActions = [
-    {
-      label: "Join Class",
-      icon: Plus,
-      onClick: () => setJoinModalOpen(true),
-      highlight: true,
-    },
-    {
-      label: "To-do",
-      icon: ClipboardList,
-      href: `/${instituteCode}/assignments`,
-      badge: dueSoonItems.length > 0 ? `${dueSoonItems.length}` : undefined,
-    },
-    {
-      label: "Flashcards",
-      icon: Flame,
-      href: `/${instituteCode}/flashcards`,
-    },
-    {
-      label: "Tasks",
-      icon: CheckSquare,
-      href: `/${instituteCode}/tasks`,
-    },
-    {
-      label: "CodeLab",
-      icon: Code2,
-      href: `/${instituteCode}/activities/codelab`,
-    },
-    {
-      label: "Leaderboard",
-      icon: Trophy,
-      href: `/${instituteCode}/leaderboards`,
-    },
-  ];
+  function renderDueItem(item: DueSoonItem, idx: number) {
+    const isAssignment = item.type === "ASSIGNMENT";
+    const Icon = isAssignment ? ClipboardList : BookOpenCheck;
+    const relative = classifyDueDate(item.dueDate, serverNow);
+
+    return (
+      <Link
+        key={item.id}
+        href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
+        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-[48px]"
+        style={{
+          animation: `staggerFadeIn 0.2s ease-out both`,
+          animationDelay: `${Math.min(idx, 10) * 40}ms`,
+        }}
+      >
+        <div
+          className="p-2 rounded-lg shrink-0 mt-0.5"
+          style={{
+            backgroundColor: `${theme.colors.primary}1A`,
+            color: theme.colors.primary,
+          }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
+            <span className="text-[11px] font-mono font-semibold text-slate-600 dark:text-[#94A3B8] uppercase tracking-wider truncate min-w-0 flex-1">
+              {item.courseCode} {item.courseSection ? `• ${item.courseSection}` : ""}
+            </span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${BADGE_CLASS[relative.status]}`}
+            >
+              {relative.label}
+            </span>
+          </div>
+          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] transition-colors line-clamp-1">
+            {item.title}
+          </h4>
+        </div>
+      </Link>
+    );
+  }
+
+  const unenrollTarget = confirmUnenroll ? courses.find((c) => c.id === confirmUnenroll) : null;
 
   return (
     <>
@@ -255,18 +251,19 @@ export default function StudentDashboardClient({
                   />
                 </h1>
 
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] font-medium leading-relaxed">
-                  You have <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{courses.length}</span> active courses and{" "}
-                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{dueSoonItems.length}</span> pending academic deadlines.
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-[#94A3B8] font-medium leading-relaxed">
+                  You have <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{courses.length}</span> active {courses.length === 1 ? "course" : "courses"},{" "}
+                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{overdueItems.length}</span> overdue and{" "}
+                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{upcomingItems.length}</span> due in the next 7 days.
                 </p>
               </div>
 
-              {/* EXP Ring */}
+              {/* EXP Ring: progress within the current level */}
               <div className="self-center md:self-auto shrink-0">
                 <ExpRing
-                  level={level}
-                  currentExp={exp}
-                  nextLevelExp={level * 100}
+                  level={levelInfo.level}
+                  currentExp={levelInfo.currentLevelProgress}
+                  nextLevelExp={levelInfo.expToNextLevel}
                   color={theme.colors.primary}
                   size={96}
                 />
@@ -287,7 +284,7 @@ export default function StudentDashboardClient({
               />
               <StatPill
                 icon={Trophy}
-                label={`Rank #${Math.max(1, 10 - level)}`}
+                label={rank === null ? "Unranked" : `Rank #${rank}`}
                 color={theme.colors.primary}
               />
             </div>
@@ -295,7 +292,9 @@ export default function StudentDashboardClient({
         </FadeIn>
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StaggerGroup
+          className={`grid grid-cols-2 sm:grid-cols-3 ${showCodeLab ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}
+        >
           <StaggerItem>
             <QuickActionCard
               icon={Plus}
@@ -303,7 +302,7 @@ export default function StudentDashboardClient({
               onClick={() => setJoinModalOpen(true)}
               sublabel="Enter code"
               color={theme.colors.primary}
-              badge="New"
+              badge={pendingJoinCount > 0 ? `${pendingJoinCount} pending` : null}
               badgeVariant="info"
             />
           </StaggerItem>
@@ -312,10 +311,12 @@ export default function StudentDashboardClient({
               icon={ClipboardList}
               label="To-do"
               href={`/${instituteCode}/assignments`}
-              sublabel={dueSoonItems.length > 0 ? "Due soon" : "All clear"}
+              sublabel={
+                overdueItems.length > 0 ? "Overdue work" : upcomingItems.length > 0 ? "Due soon" : "All clear"
+              }
               color={theme.colors.primary}
-              badge={dueSoonItems.length > 0 ? `${dueSoonItems.length}` : null}
-              badgeVariant={dueSoonItems.length > 0 ? "warning" : "muted"}
+              badge={pendingDeadlineCount > 0 ? `${pendingDeadlineCount}` : null}
+              badgeVariant={overdueItems.length > 0 ? "error" : pendingDeadlineCount > 0 ? "warning" : "muted"}
             />
           </StaggerItem>
           <StaggerItem>
@@ -323,10 +324,8 @@ export default function StudentDashboardClient({
               icon={Flame}
               label="Flashcards"
               href={`/${instituteCode}/flashcards`}
-              sublabel="Spaced review"
+              sublabel="Study decks"
               color={theme.colors.primary}
-              badge="Daily"
-              badgeVariant="success"
             />
           </StaggerItem>
           <StaggerItem>
@@ -334,19 +333,21 @@ export default function StudentDashboardClient({
               icon={CheckSquare}
               label="Tasks"
               href={`/${instituteCode}/tasks`}
-              sublabel="Weekly goals"
+              sublabel="Your task list"
               color={theme.colors.primary}
             />
           </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={Code2}
-              label="CodeLab"
-              href={`/${instituteCode}/activities/codelab`}
-              sublabel="Interactive labs"
-              color={theme.colors.primary}
-            />
-          </StaggerItem>
+          {showCodeLab && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Code2}
+                label="CodeLab"
+                href={`/${instituteCode}/activities/codelab`}
+                sublabel="Interactive labs"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
           <StaggerItem>
             <QuickActionCard
               icon={Trophy}
@@ -377,7 +378,7 @@ export default function StudentDashboardClient({
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
                     My Enrolled Classes
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+                  <p className="text-xs text-slate-600 dark:text-[#94A3B8]">
                     Courses you are currently participating in
                   </p>
                 </div>
@@ -402,11 +403,16 @@ export default function StudentDashboardClient({
               </div>
             </div>
 
-            {/* Drag and drop hint */}
+            {/* Reorder hint: drag on pointer devices, buttons everywhere */}
             {courses.length > 1 && (
-              <p className="text-xs text-slate-400 dark:text-[#64748B]">
-                Drag cards to reorder • changes are saved automatically
-              </p>
+              <>
+                <p className="hidden [@media(hover:hover)]:block text-xs text-slate-500 dark:text-[#94A3B8]">
+                  Drag cards or use the arrow buttons to reorder • changes are saved automatically
+                </p>
+                <p className="[@media(hover:hover)]:hidden text-xs text-slate-500 dark:text-[#94A3B8]">
+                  Use the arrow buttons to reorder • changes are saved automatically
+                </p>
+              </>
             )}
 
             {courses.length === 0 ? (
@@ -425,7 +431,7 @@ export default function StudentDashboardClient({
                   <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                     Get Started with Your Courses
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+                  <p className="mt-1 text-xs text-slate-600 dark:text-[#94A3B8]">
                     You are not enrolled in any classes yet. Follow these simple steps to begin:
                   </p>
                 </div>
@@ -442,7 +448,7 @@ export default function StudentDashboardClient({
                       <h4 className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9]">
                         Get Course Code
                       </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                      <p className="text-[11px] text-slate-600 dark:text-[#94A3B8] mt-0.5">
                         Ask your professor for the 6-character class invite code.
                       </p>
                     </div>
@@ -459,7 +465,7 @@ export default function StudentDashboardClient({
                       <h4 className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9]">
                         Join Class
                       </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
+                      <p className="text-[11px] text-slate-600 dark:text-[#94A3B8] mt-0.5">
                         Click Join Class, enter the code, and await approval.
                       </p>
                     </div>
@@ -539,23 +545,23 @@ export default function StudentDashboardClient({
 
                       {/* Card Body & Footer */}
                       <div className="p-4 flex flex-col justify-between flex-1">
-                        <div className="space-y-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
+                        <div className="space-y-1.5 text-xs text-slate-600 dark:text-[#94A3B8]">
                           {course.instructorName && (
                             <div className="flex items-center gap-1.5">
-                              <User className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
+                              <User className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
                               <span className="truncate">{course.instructorName}</span>
                             </div>
                           )}
                           {course.room && (
                             <div className="flex items-center gap-1.5">
-                              <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
+                              <MapPin className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
                               <span className="truncate">{course.room}</span>
                             </div>
                           )}
                         </div>
 
                         {/* Actions Footer */}
-                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
                           <Link
                             href={`/${instituteCode}/courses/${course.id}/classwork`}
                             className="text-xs font-medium text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9] transition-colors"
@@ -563,6 +569,12 @@ export default function StudentDashboardClient({
                           >
                             Classwork
                           </Link>
+                          <CourseReorderButtons
+                            title={course.title}
+                            index={index}
+                            total={courses.length}
+                            onMove={(direction) => moveCourse(index, direction)}
+                          />
                           <Link
                             href={`/${instituteCode}/courses/${course.id}`}
                             className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
@@ -600,85 +612,61 @@ export default function StudentDashboardClient({
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
-                    Due Soon
+                    Deadlines
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
-                    Next 7 days deadline
+                  <p className="text-xs text-slate-600 dark:text-[#94A3B8]">
+                    Overdue work and the next 7 days
                   </p>
                 </div>
               </div>
-              {dueSoonItems.length > 0 && (
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  {dueSoonItems.length} Pending
+              {pendingDeadlineCount > 0 && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                  {pendingDeadlineCount} Pending
                 </span>
               )}
             </div>
 
             <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-4 shadow-xs space-y-3">
-              {dueSoonItems.length === 0 ? (
+              {pendingDeadlineCount === 0 ? (
                 <div className="py-8 text-center">
                   <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 mb-2" />
                   <p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">
                     All caught up!
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-[#64748B] mt-0.5">
-                    No classwork due in the next 7 days.
+                  <p className="text-xs text-slate-600 dark:text-[#94A3B8] mt-0.5">
+                    Nothing overdue and no classwork due in the next 7 days.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {dueSoonItems.map((item, idx) => {
-                    const isAssignment = item.type === "ASSIGNMENT";
-                    const Icon = isAssignment ? ClipboardList : BookOpenCheck;
-                    const relative = formatRelativeDueDate(item.dueDate, serverNow);
+                <div className="space-y-4">
+                  {overdueItems.length > 0 && (
+                    <section aria-label="Overdue">
+                      <h3 className="px-1 mb-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+                        <span>Overdue</span>
+                        <span className="font-mono tabular-nums">{overdueItems.length}</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {overdueItems.slice(0, MAX_OVERDUE_SHOWN).map((item, idx) => renderDueItem(item, idx))}
+                      </div>
+                      {overdueItems.length > MAX_OVERDUE_SHOWN && (
+                        <p className="px-1 mt-1 text-xs text-slate-600 dark:text-[#94A3B8]">
+                          +{overdueItems.length - MAX_OVERDUE_SHOWN} more overdue in your To-do list.
+                        </p>
+                      )}
+                    </section>
+                  )}
 
-                    let badgeClass = "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#94A3B8]";
-                    if (relative.status === "overdue") {
-                      badgeClass = "bg-[#EF4444] text-white font-bold animate-pulse";
-                    } else if (relative.status === "today") {
-                      badgeClass = "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30";
-                    } else if (relative.status === "soon") {
-                      badgeClass = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20";
-                    }
-
-                    return (
-                      <Link
-                        key={item.id}
-                        href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-[48px]"
-                        style={{
-                          animation: `staggerFadeIn 0.2s ease-out both`,
-                          animationDelay: `${Math.min(idx, 10) * 40}ms`,
-                        }}
-                      >
-                        <div
-                          className="p-2 rounded-lg shrink-0 mt-0.5"
-                          style={{
-                            backgroundColor: `${theme.colors.primary}1A`,
-                            color: theme.colors.primary,
-                          }}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1.5 mb-1 min-w-0">
-                            <span className="text-[11px] font-mono font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider truncate min-w-0 flex-1">
-                              {item.courseCode} {item.courseSection ? `• ${item.courseSection}` : ""}
-                            </span>
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${badgeClass}`}
-                            >
-                              {relative.label}
-                            </span>
-                          </div>
-                          <h4 className="text-xs font-semibold text-slate-900 dark:text-[#F1F5F9] transition-colors line-clamp-1">
-                            {item.title}
-                          </h4>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  {upcomingItems.length > 0 && (
+                    <section aria-label="Due in the next 7 days">
+                      <h3 className="px-1 mb-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-[#94A3B8]">
+                        <span>Next 7 days</span>
+                        <span className="font-mono tabular-nums">{upcomingItems.length}</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {upcomingItems.map((item, idx) => renderDueItem(item, idx))}
+                      </div>
+                    </section>
+                  )}
                 </div>
               )}
 
@@ -708,35 +696,31 @@ export default function StudentDashboardClient({
 
       {/* Unenroll confirmation modal dialog */}
       {confirmUnenroll && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            onClick={() => setConfirmUnenroll(null)}
-          />
-          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1C2030] rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-[#F1F5F9]">
-            <h3 className="text-lg font-bold mb-2">Unenroll from course?</h3>
-            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mb-6">
-              You will lose access to all course materials and your submission history. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmUnenroll(null)}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUnenroll(confirmUnenroll)}
-                disabled={isPending}
-                className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-[44px]"
-              >
-                {isPending ? "Unenrolling..." : "Unenroll"}
-              </button>
-            </div>
+        <ConfirmDialog
+          title="Unenroll from course?"
+          description={`You will lose access to all course materials and your submission history${
+            unenrollTarget ? ` for ${unenrollTarget.title}` : ""
+          }. This action cannot be undone.`}
+          onClose={() => setConfirmUnenroll(null)}
+        >
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmUnenroll(null)}
+              className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleUnenroll(confirmUnenroll)}
+              disabled={isPending}
+              className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-[44px]"
+            >
+              {isPending ? "Unenrolling..." : "Unenroll"}
+            </button>
           </div>
-        </div>
+        </ConfirmDialog>
       )}
     </>
   );

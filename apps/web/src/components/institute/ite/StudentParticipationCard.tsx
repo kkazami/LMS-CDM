@@ -153,7 +153,7 @@ export default function StudentParticipationCard({ theme, instituteCode }: Props
               </div>
 
               {!c.hasEnoughData ? (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
                   Keep going: we need a few more days of activity to show your progress.
                 </p>
               ) : (

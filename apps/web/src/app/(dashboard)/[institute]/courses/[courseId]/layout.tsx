@@ -86,7 +86,7 @@ export default async function CourseInteriorLayout({
           where: {
             syllabusItem: { courseId: course.id },
             status: "SUBMITTED",
-            OR: [{ grade: null }, { isReturned: false }],
+            grade: null,
           },
         })
       : 0;

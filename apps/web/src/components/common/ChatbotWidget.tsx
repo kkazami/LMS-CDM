@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 import { useChatbot } from "@/lib/chatbot-context";
 import type { InstituteTheme } from "@/lib/theme";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 
 interface ChatbotWidgetProps {
   theme: InstituteTheme;
@@ -15,6 +16,21 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
+
+  // Dialog behaviour: Esc closes, Tab stays inside the panel. The input is focused by the
+  // effect below, so the hook does not move focus itself.
+  useDialogA11y(isOpen, () => setIsOpen(false), panelRef, { autoFocus: false });
+
+  // The bubble unmounts while the panel is open, so return focus to it after closing.
+  useEffect(() => {
+    if (wasOpenRef.current && !isOpen) {
+      requestAnimationFrame(() => bubbleRef.current?.focus());
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -94,6 +110,7 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
       {!isOpen && (
         <button
           id="chatbot-bubble"
+          ref={bubbleRef}
           onClick={() => setIsOpen(true)}
           className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-[60] flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl cursor-pointer touch-manipulation active:scale-95"
           style={{ backgroundColor: theme.colors.primary }}
@@ -112,6 +129,10 @@ export default function ChatbotWidget({ theme }: ChatbotWidgetProps) {
       {isOpen && (
         <div
           id="chatbot-panel"
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="CdM Assistant chat"
           className="fixed inset-x-2 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] sm:inset-auto sm:bottom-6 sm:right-6 z-[70] flex flex-col sm:w-90 h-[65vh] max-h-[calc(100dvh-130px)] sm:h-125 rounded-2xl bg-white dark:bg-[#1A1D27] border border-slate-200 dark:border-white/10 shadow-2xl ring-1 ring-black/5 overflow-hidden"
           style={{
             animation: "chatbot-slide-up 0.3s ease-out",

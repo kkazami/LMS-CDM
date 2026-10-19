@@ -1,18 +1,19 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
-import { isEligibleForActivities } from "@/lib/activity-eligibility";
-import { isEligibleForKnowledgeExchange } from "@/lib/kx-eligibility";
+import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
+import { isEligibleKxInstituteCode } from "@/lib/kx-eligibility";
 import { db } from "@/lib/db";
-import { processLoginReward } from "@/lib/gamification/login-rewards";
+import { getPHTMidnight, processLoginReward } from "@/lib/gamification/login-rewards";
+import { getInstituteByCode, getStudentEnrollments } from "@/lib/dashboard-data";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export const dynamic = "force-dynamic";
 
-export default async function InstituteLayout({ 
-  children, 
-  params 
-}: { 
+export default async function InstituteLayout({
+  children,
+  params
+}: {
   children: React.ReactNode,
   params: Promise<{ institute: string }>
 }) {
@@ -28,16 +29,8 @@ export default async function InstituteLayout({
   const userRole = ((session.user as Record<string, unknown>).role as string || "").toUpperCase();
   const isAdmin = userRole === "ADMIN";
 
-  let userInstituteCode = "ics";
-  if (session.user.instituteId) {
-    const userInstitute = await db.institute.findUnique({
-      where: { id: session.user.instituteId },
-      select: { code: true },
-    });
-    if (userInstitute?.code) {
-      userInstituteCode = userInstitute.code.toLowerCase();
-    }
-  }
+  // The session already carries the user's institute, so no extra query is needed.
+  const userInstituteCode = session.user.institute?.code?.toLowerCase() ?? "ics";
 
   if (!isAdmin && userInstituteCode !== institute.toLowerCase()) {
     redirect(`/${userInstituteCode}`);
@@ -45,92 +38,63 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
-  // Compute activity eligibility for the sidebar
-  const activityEligible = await isEligibleForActivities({
-    user: {
-      id: session.user.id,
-      role: session.user.role as string,
-      instituteId: session.user.instituteId as string,
-    },
-  });
+  // Eligibility is a pure function of the user's institute code (same rule as the guards).
+  const activityEligible = isEligibleInstituteCode(userInstituteCode);
+  const kxEligible = institute.toLowerCase() === "ics" && isEligibleKxInstituteCode(userInstituteCode);
 
-  // Compute Knowledge Exchange eligibility for the sidebar
-  const isKxSessionEligible = await isEligibleForKnowledgeExchange({
-    user: {
-      id: session.user.id,
-      role: session.user.role as string,
-      instituteId: session.user.instituteId as string,
-    },
-  });
-  const kxEligible = institute.toLowerCase() === "ics" && isKxSessionEligible;
+  const isStudent = userRole === "STUDENT";
+  const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
 
-  const role = (session.user.role as string).toUpperCase();
-  const isStudent = role === "STUDENT";
-  const isProfessor = role === "PROFESSOR" || role === "TEACHER";
-  let enrolledCourses: { id: string; title: string; code: string }[] = [];
+  // The institute lookup and the daily reward are independent: run them together.
+  const [instituteRecord] = await Promise.all([
+    getInstituteByCode(institute),
+    isStudent
+      ? processLoginReward(session.user.id).catch((err: unknown) => {
+          console.error("Failed to process login reward on layout load:", err);
+        })
+      : Promise.resolve(),
+  ]);
 
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute.toLowerCase() },
-    select: { id: true },
-  });
-
-  if (instituteRecord) {
+  const loadSidebarCourses = async (): Promise<{ id: string; title: string; code: string }[]> => {
+    if (!instituteRecord) return [];
     if (isStudent) {
-      const enrollments = await db.enrollment.findMany({
-        where: {
-          studentId: session.user.id,
-          status: "APPROVED",
-          course: {
-            instituteId: instituteRecord.id,
-            isArchived: false,
-          },
-        },
-        select: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              code: true,
-            },
-          },
-        },
-        orderBy: { displayOrderIndex: "asc" },
-      });
-
-      enrolledCourses = enrollments.map((e) => e.course);
-    } else if (isProfessor) {
-      const taught = await db.course.findMany({
+      // Shared with the student dashboard page via React cache (one query per request).
+      const enrollments = await getStudentEnrollments(session.user.id, instituteRecord.id);
+      return enrollments.map((e) => ({ id: e.course.id, title: e.course.title, code: e.course.code }));
+    }
+    if (isProfessor) {
+      return db.course.findMany({
         where: {
           instructorId: session.user.id,
           instituteId: instituteRecord.id,
           isArchived: false,
         },
-        select: {
-          id: true,
-          title: true,
-          code: true,
-        },
+        select: { id: true, title: true, code: true },
         orderBy: { code: "asc" },
       });
-
-      enrolledCourses = taught;
     }
-  }
+    return [];
+  };
 
-  // Process daily login reward for student (increments streak & awards EXP on new day)
-  if (session.user.role === "STUDENT") {
-    try {
-      await processLoginReward(session.user.id);
-    } catch (err) {
-      console.error("Failed to process login reward on layout load:", err);
-    }
-  }
-
-  // Fetch gamification profile for user (level badge in topbar & streak modal)
-  let gamification = await db.gamificationProfile.findUnique({
-    where: { studentId: session.user.id },
-    select: { exp: true, loginStreakCurrent: true },
-  });
+  // After the reward is processed: sidebar courses, gamification profile and today's
+  // real daily-login EXP (so the modal shows what was actually granted).
+  const [enrolledCourses, gamification, loginExpToday] = await Promise.all([
+    loadSidebarCourses(),
+    db.gamificationProfile.findUnique({
+      where: { studentId: session.user.id },
+      select: { exp: true, loginStreakCurrent: true },
+    }),
+    isStudent
+      ? db.expTransaction.aggregate({
+          where: {
+            userId: session.user.id,
+            source: "daily_login",
+            createdAt: { gte: getPHTMidnight() },
+          },
+          _sum: { amount: true },
+        })
+      : Promise.resolve(null),
+  ]);
 
   return (
     <DashboardLayout
@@ -144,8 +108,9 @@ export default async function InstituteLayout({
       isEligibleForActivities={activityEligible}
       isEligibleForKnowledgeExchange={kxEligible}
       enrolledCourses={enrolledCourses}
-      exp={gamification?.exp || 0}
-      streakCurrent={gamification?.loginStreakCurrent || 1}
+      exp={gamification?.exp ?? 0}
+      streakCurrent={gamification?.loginStreakCurrent ?? 0}
+      loginRewardExp={loginExpToday?._sum.amount ?? 0}
       userId={session.user.id}
     >
       {children}

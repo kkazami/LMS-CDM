@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
   Users,
@@ -27,6 +28,8 @@ import CustomizeCourseModal from "@/components/courses/CustomizeCourseModal";
 import InstructorCreateCourseModal from "@/components/courses/InstructorCreateCourseModal";
 import InstructorEditCourseModal from "@/components/courses/InstructorEditCourseModal";
 import Button from "@/components/common/Button";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import CourseReorderButtons from "@/components/dashboard/CourseReorderButtons";
 import { archiveCourse, reorderCourseCards } from "../courses/actions";
 import { approveEnrollment, declineEnrollment, approveAllPending } from "../courses/[courseId]/people/actions";
 import { TypingBanner } from "@/components/motion/TypingBanner";
@@ -77,6 +80,8 @@ interface TeacherDashboardClientProps {
   initialPendingRequests: PendingRequest[];
   initialPendingWorkClasses?: PendingClassWork[];
   totalPendingWorkCount?: number;
+  /** Whether the CodeLab / interactive activities suite is available to this user. */
+  showCodeLab: boolean;
   typingSessionKey?: string;
 }
 
@@ -89,8 +94,11 @@ export default function TeacherDashboardClient({
   initialPendingRequests,
   initialPendingWorkClasses = [],
   totalPendingWorkCount,
+  showCodeLab,
   typingSessionKey,
 }: TeacherDashboardClientProps) {
+  const router = useRouter();
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [courses, setCourses] = useState<TaughtCourse[]>(initialCourses);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<TaughtCourse | null>(null);
@@ -133,10 +141,13 @@ export default function TeacherDashboardClient({
     const [dragged] = reordered.splice(dragItemRef.current, 1);
     reordered.splice(dragOverRef.current, 0, dragged);
 
-    setCourses(reordered);
     dragItemRef.current = null;
     dragOverRef.current = null;
+    persistOrder(reordered);
+  }
 
+  function persistOrder(reordered: TaughtCourse[]) {
+    setCourses(reordered);
     // Persist new order to server
     startTransition(async () => {
       await reorderCourseCards(
@@ -145,6 +156,14 @@ export default function TeacherDashboardClient({
         false // isStudent = false for teachers
       );
     });
+  }
+
+  function moveCourse(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= courses.length) return;
+    const reordered = [...courses];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    persistOrder(reordered);
   }
 
   const handleArchive = (courseId: string) => {
@@ -191,28 +210,54 @@ export default function TeacherDashboardClient({
 
   const handleApproveAllBatch = () => {
     if (pendingRequests.length === 0) return;
+    setApproveError(null);
     startTransition(async () => {
       // Get unique course IDs from pending requests
       const uniqueCourseIds = Array.from(new Set(pendingRequests.map((r) => r.courseId)));
+
+      // Check every course's result; only courses that really succeeded are updated locally.
+      const succeeded = new Set<string>();
+      const failed: string[] = [];
       for (const cId of uniqueCourseIds) {
-        await approveAllPending(cId, instituteCode);
+        try {
+          const result = await approveAllPending(cId, instituteCode);
+          if (result.success) {
+            succeeded.add(cId);
+          } else {
+            failed.push(cId);
+          }
+        } catch {
+          failed.push(cId);
+        }
       }
 
-      // Optimistically clear pending requests
-      const approvedCountByCourse = new Map<string, number>();
-      for (const req of pendingRequests) {
-        approvedCountByCourse.set(req.courseId, (approvedCountByCourse.get(req.courseId) ?? 0) + 1);
+      if (succeeded.size > 0) {
+        const approvedCountByCourse = new Map<string, number>();
+        for (const req of pendingRequests) {
+          if (!succeeded.has(req.courseId)) continue;
+          approvedCountByCourse.set(req.courseId, (approvedCountByCourse.get(req.courseId) ?? 0) + 1);
+        }
+
+        setCourses((prev) =>
+          prev.map((c) => {
+            const approvedDelta = approvedCountByCourse.get(c.id) ?? 0;
+            return approvedDelta > 0
+              ? { ...c, enrolledCount: c.enrolledCount + approvedDelta, pendingCount: 0 }
+              : c;
+          })
+        );
+        setPendingRequests((prev) => prev.filter((r) => !succeeded.has(r.courseId)));
       }
 
-      setCourses((prev) =>
-        prev.map((c) => {
-          const approvedDelta = approvedCountByCourse.get(c.id) ?? 0;
-          return approvedDelta > 0
-            ? { ...c, enrolledCount: c.enrolledCount + approvedDelta, pendingCount: 0 }
-            : c;
-        })
-      );
-      setPendingRequests([]);
+      if (failed.length > 0) {
+        const names = failed
+          .map((id) => initialCourses.find((c) => c.id === id)?.code ?? id)
+          .join(", ");
+        setApproveError(`Could not approve requests for: ${names}. Please try again.`);
+      }
+
+      // Refetch so the lists always reflect what the server actually holds.
+      router.refresh();
     });
   };
 
@@ -254,7 +299,7 @@ export default function TeacherDashboardClient({
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                 <TypingBanner
-                  text={`Welcome back, Professor ${userName}!`}
+                  text={`Welcome back, ${userName}!`}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
                 />
               </h1>
@@ -296,7 +341,9 @@ export default function TeacherDashboardClient({
               Instruction Controls
             </h2>
           </div>
-          <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StaggerGroup
+            className={`grid grid-cols-2 sm:grid-cols-3 ${showCodeLab ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}
+          >
             <StaggerItem>
               <QuickActionCard
                 icon={Plus}
@@ -309,8 +356,8 @@ export default function TeacherDashboardClient({
             <StaggerItem>
               <QuickActionCard
                 icon={GraduationCap}
-                label="Gradebook"
-                sublabel="Grading matrix"
+                label="To Grade"
+                sublabel="Pending submissions"
                 href="#pending-work"
                 badge={totalPendingWork > 0 ? `${totalPendingWork} Due` : null}
                 badgeVariant={totalPendingWork > 0 ? "warning" : "muted"}
@@ -321,7 +368,7 @@ export default function TeacherDashboardClient({
               <QuickActionCard
                 icon={UserCheck}
                 label="Requests"
-                sublabel="Enrollment queue"
+                sublabel="Jump to enrollment queue"
                 href="#pending-requests"
                 badge={pendingRequests.length > 0 ? `${pendingRequests.length} New` : null}
                 badgeVariant={pendingRequests.length > 0 ? "warning" : "muted"}
@@ -346,15 +393,17 @@ export default function TeacherDashboardClient({
                 color="#EC4899"
               />
             </StaggerItem>
-            <StaggerItem>
-              <QuickActionCard
-                icon={Compass}
-                label="CodeLab Hub"
-                sublabel="Lab workspace"
-                href={`/${instituteCode}/activities/codelab`}
-                color="#06B6D4"
-              />
-            </StaggerItem>
+            {showCodeLab && (
+              <StaggerItem>
+                <QuickActionCard
+                  icon={Compass}
+                  label="CodeLab Hub"
+                  sublabel="Lab workspace"
+                  href={`/${instituteCode}/activities/codelab`}
+                  color="#06B6D4"
+                />
+              </StaggerItem>
+            )}
           </StaggerGroup>
         </div>
 
@@ -393,9 +442,14 @@ export default function TeacherDashboardClient({
 
             {/* Drag and drop hint */}
             {courses.length > 1 && (
-              <p className="text-xs text-slate-400 dark:text-[#64748B]">
-                Drag cards to reorder • changes are saved automatically
-              </p>
+              <>
+                <p className="hidden [@media(hover:hover)]:block text-xs text-slate-500 dark:text-[#94A3B8]">
+                  Drag cards or use the arrow buttons to reorder • changes are saved automatically
+                </p>
+                <p className="[@media(hover:hover)]:hidden text-xs text-slate-500 dark:text-[#94A3B8]">
+                  Use the arrow buttons to reorder • changes are saved automatically
+                </p>
+              </>
             )}
 
             {courses.length === 0 ? (
@@ -552,12 +606,12 @@ export default function TeacherDashboardClient({
                       <div className="p-4 flex flex-col justify-between flex-1">
                         <div className="space-y-1 text-xs text-slate-500 dark:text-[#94A3B8]">
                           <div className="flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
+                            <Users className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
                             <span>{course.enrolledCount} enrolled student{course.enrolledCount === 1 ? "" : "s"}</span>
                           </div>
                           {course.room && (
                             <div className="flex items-center gap-1.5">
-                              <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
+                              <MapPin className="h-3.5 w-3.5 text-slate-500 dark:text-[#94A3B8] shrink-0" />
                               <span className="truncate">{course.room}</span>
                             </div>
                           )}
@@ -586,6 +640,12 @@ export default function TeacherDashboardClient({
                               )}
                             </Link>
                           </div>
+                          <CourseReorderButtons
+                            title={course.title}
+                            index={index}
+                            total={courses.length}
+                            onMove={(direction) => moveCourse(index, direction)}
+                          />
                           <Link
                             href={`/${instituteCode}/courses/${course.id}`}
                             className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
@@ -645,7 +705,7 @@ export default function TeacherDashboardClient({
                   <div className="py-8 text-center">
                     <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 mb-2" />
                     <p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">All caught up!</p>
-                    <p className="text-xs text-slate-400 dark:text-[#64748B] mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       No student submissions currently pending grading.
                     </p>
                   </div>
@@ -731,11 +791,19 @@ export default function TeacherDashboardClient({
             </div>
 
             <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-4 shadow-xs space-y-3">
+              {approveError && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-700 dark:text-red-300"
+                >
+                  {approveError}
+                </p>
+              )}
               {pendingRequests.length === 0 ? (
                 <div className="py-8 text-center">
                   <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500 mb-2" />
                   <p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">All requests handled!</p>
-                  <p className="text-xs text-slate-400 dark:text-[#64748B] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     No student requests currently pending approval.
                   </p>
                 </div>
@@ -820,35 +888,29 @@ export default function TeacherDashboardClient({
 
       {/* Archive Confirmation Modal */}
       {confirmArchive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            onClick={() => setConfirmArchive(null)}
-          />
-          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1C2030] rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-[#F1F5F9]">
-            <h3 className="text-lg font-bold mb-2">Archive course?</h3>
-            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mb-6">
-              Archiving removes this course from your active dashboard. You can restore it later from Archived Classes.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmArchive(null)}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleArchive(confirmArchive)}
-                disabled={isPending}
-                className="flex-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 text-xs font-semibold hover:bg-black dark:hover:bg-slate-200 disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                {isPending ? "Archiving..." : "Archive"}
-              </button>
-            </div>
+        <ConfirmDialog
+          title="Archive course?"
+          description="Archiving removes this course from your active dashboard. You can restore it later from Archived Classes."
+          onClose={() => setConfirmArchive(null)}
+        >
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmArchive(null)}
+              className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleArchive(confirmArchive)}
+              disabled={isPending}
+              className="flex-1 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 text-xs font-semibold hover:bg-black dark:hover:bg-slate-200 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {isPending ? "Archiving..." : "Archive"}
+            </button>
           </div>
-        </div>
+        </ConfirmDialog>
       )}
     </>
   );

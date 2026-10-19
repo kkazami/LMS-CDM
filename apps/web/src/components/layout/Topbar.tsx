@@ -47,8 +47,15 @@ export default function Topbar({
   const [isInstituteSwitcherOpen, setIsInstituteSwitcherOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
   const instituteSwitcherRef = useRef<HTMLDivElement>(null);
   const { themeMode, toggleTheme } = useTheme();
+  // Shortcut hint: "Ctrl K" by default, "⌘K" on Apple platforms (set after mount to avoid hydration mismatch).
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
+  }, []);
 
   const isAdmin = userRole.toUpperCase() === "ADMIN";
 
@@ -67,9 +74,17 @@ export default function Topbar({
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchModalOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setIsInstituteSwitcherOpen(false);
+        // Esc closes the user menu and hands focus back to its trigger.
+        setIsDropdownOpen((open) => {
+          if (open) profileButtonRef.current?.focus();
+          return false;
+        });
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -338,12 +353,12 @@ export default function Topbar({
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5] shrink-0" />
-              <span className="text-sm text-slate-400 dark:text-[#555C72] truncate">
+              <span className="text-sm text-slate-500 dark:text-[#94A3B8] truncate">
                 Search courses, notes, or peers...
               </span>
             </div>
             <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
-              ⌘K
+              {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
           </button>
           
@@ -387,6 +402,7 @@ export default function Topbar({
           {/* User Profile Avatar with Left Separator */}
           <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-white/10" ref={dropdownRef}>
             <button
+              ref={profileButtonRef}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-1 sm:gap-2.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-0.5 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-8 sm:h-10 shrink-0 touch-manipulation active:scale-95"
               aria-expanded={isDropdownOpen}
@@ -426,6 +442,8 @@ export default function Topbar({
             </button>
 
             <div
+              inert={!isDropdownOpen}
+              aria-hidden={!isDropdownOpen}
               className={`absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-[rgba(255,255,255,0.1)] py-1.5 shadow-xl transition-all duration-200 origin-top-right ${
                 isDropdownOpen
                   ? "opacity-100 scale-100 pointer-events-auto"

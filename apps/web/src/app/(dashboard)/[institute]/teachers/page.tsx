@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
+import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import type { InstituteTheme } from "@/lib/theme";
 import TeacherDashboardClient from "./client";
 
@@ -22,7 +23,11 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   }
 
   const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+  // Admins have no classes of their own: send them to the admin dashboard.
+  if (role === "ADMIN") {
+    redirect(`/${institute}/admin`);
+  }
+  if (role !== "PROFESSOR" && role !== "TEACHER") {
     redirect(`/${institute}`);
   }
 
@@ -122,35 +127,34 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     pendingCountMap.set(p.courseId, (pendingCountMap.get(p.courseId) ?? 0) + 1);
   }
 
-  // 3. Fetch pending student submissions (Pending Work to Grade) across all taught courses
-  const pendingWorkSubmissions = await db.studentSubmission.findMany({
+  // 3. Count submissions that still need a grade (submitted, no grade yet) per course.
+  //    Grouped in the database by item; only the item -> course mapping is loaded, never
+  //    the submission rows themselves.
+  const pendingByItem = await db.studentSubmission.groupBy({
+    by: ["syllabusItemId"],
     where: {
-      syllabusItem: {
-        courseId: { in: courseIds },
-      },
+      syllabusItem: { courseId: { in: courseIds } },
       status: "SUBMITTED",
-      OR: [{ grade: null }, { isReturned: false }],
+      grade: null,
     },
-    select: {
-      id: true,
-      syllabusItemId: true,
-      submittedAt: true,
-      syllabusItem: {
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          courseId: true,
-        },
-      },
-    },
+    _count: { _all: true },
   });
 
-  // Count pending work per course
+  const pendingItemCourses = pendingByItem.length
+    ? await db.syllabusItem.findMany({
+        where: { id: { in: pendingByItem.map((g) => g.syllabusItemId) } },
+        select: { id: true, courseId: true },
+      })
+    : [];
+  const courseOfItem = new Map(pendingItemCourses.map((i) => [i.id, i.courseId]));
+
   const pendingWorkCountMap = new Map<string, number>();
-  for (const s of pendingWorkSubmissions) {
-    const cId = s.syllabusItem.courseId;
-    pendingWorkCountMap.set(cId, (pendingWorkCountMap.get(cId) ?? 0) + 1);
+  let totalPendingWork = 0;
+  for (const group of pendingByItem) {
+    const cId = courseOfItem.get(group.syllabusItemId);
+    if (!cId) continue;
+    pendingWorkCountMap.set(cId, (pendingWorkCountMap.get(cId) ?? 0) + group._count._all);
+    totalPendingWork += group._count._all;
   }
 
   // Build list of classes that have pending work
@@ -200,7 +204,8 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       initialCourses={courses}
       initialPendingRequests={pendingRequests}
       initialPendingWorkClasses={pendingWorkClasses}
-      totalPendingWorkCount={pendingWorkSubmissions.length}
+      totalPendingWorkCount={totalPendingWork}
+      showCodeLab={isEligibleInstituteCode(session.user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
     />
   );

@@ -34,6 +34,8 @@ interface DashboardLayoutProps {
   exp?: number;
   /** Current login streak */
   streakCurrent?: number;
+  /** EXP actually granted by today's daily login reward (0 = nothing granted, modal hidden). */
+  loginRewardExp?: number;
   userId?: string;
   children: React.ReactNode;
 }
@@ -51,6 +53,7 @@ export default function DashboardLayout({
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
+  loginRewardExp = 0,
   userId,
   children,
 }: DashboardLayoutProps) {
@@ -155,12 +158,14 @@ export default function DashboardLayout({
       {/* Student Gamification Widgets */}
       {isStudent && (
         <>
-          <LoginRewardModal
-            userId={userId}
-            streakCurrent={streakCurrent}
-            expEarned={10}
-            totalExp={exp}
-          />
+          {loginRewardExp > 0 && (
+            <LoginRewardModal
+              userId={userId}
+              streakCurrent={streakCurrent}
+              expEarned={loginRewardExp}
+              totalExp={exp}
+            />
+          )}
           <FloatingStudyTimer />
         </>
       )}

@@ -32,7 +32,7 @@ export default async function LeaderboardsPage({
       exp: true,
       level: true,
       levelTier: true,
-      currentStreak: true,
+      loginStreakCurrent: true,
       isLeaderboardAnonymized: true,
       student: {
         select: {
@@ -47,7 +47,8 @@ export default async function LeaderboardsPage({
         select: { badgeRuleId: true },
       },
     },
-    orderBy: { exp: "desc" },
+    // studentId breaks EXP ties deterministically (same order as the dashboard rank).
+    orderBy: [{ exp: "desc" }, { studentId: "asc" }],
     take: 50,
   });
 
@@ -78,11 +79,11 @@ export default async function LeaderboardsPage({
       studentId: p.studentId,
       name: displayName,
       avatarUrl: isAnon ? null : p.student.avatarUrl,
-      department: p.student.department || "ICS",
+      department: p.student.department || institute.toUpperCase(),
       exp: p.exp,
       level: p.level,
       levelTier: p.levelTier,
-      streak: p.currentStreak,
+      streak: p.loginStreakCurrent,
       badgeCount: p.badges.length,
       isSelf,
       isAnonymized: p.isLeaderboardAnonymized,
