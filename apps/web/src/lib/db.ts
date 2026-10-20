@@ -24,29 +24,28 @@ const createPrismaClient = () => {
 
   if (!globalForPrisma.pgPool) {
     const target = new URL(connectionString);
-    const sslMode = target.searchParams.get("sslmode");
-    // Preserve pg's current certificate and hostname verification across driver upgrades.
-    if (target.searchParams.get("uselibpqcompat") !== "true" &&
-        (sslMode === "prefer" || sslMode === "require" || sslMode === "verify-ca")) {
+    const isLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname);
+    // Remote database connections must verify the certificate and hostname, including URLs without sslmode.
+    if (!isLocalhost) {
+      target.searchParams.delete("uselibpqcompat");
       target.searchParams.set("sslmode", "verify-full");
     }
     const isProduction = process.env.NODE_ENV === "production";
-    const isLocalhost =
-      connectionString.includes("localhost") ||
-      connectionString.includes("127.0.0.1") ||
-      connectionString.includes("::1");
+    const configuredMax = process.env.DATABASE_POOL_MAX;
+    if (configuredMax !== undefined && !/^(?:[1-9]|1[0-9]|20)$/.test(configuredMax)) {
+      throw new Error("DATABASE_POOL_MAX must be an integer from 1 to 20; size it against the provider connection budget.");
+    }
 
     const poolConfig: PoolConfig = {
       connectionString: target.toString(),
       // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
       // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
-      max: isProduction ? 2 : 15,
+      max: configuredMax === undefined ? (isProduction ? 2 : 15) : Number(configuredMax),
       idleTimeoutMillis: isProduction ? 30000 : 120000,
       connectionTimeoutMillis: 10000,
       keepAlive: true,
-      // Cloud databases (Supabase, Neon, AWS RDS, Railway, Render) require SSL.
-      // rejectUnauthorized: false prevents "self-signed certificate in certificate chain" errors
-      ssl: !isLocalhost ? { rejectUnauthorized: false } : undefined,
+      // pg parses sslrootcert from the URL when a private certificate authority is required.
+      ssl: !isLocalhost ? { rejectUnauthorized: true } : undefined,
     };
 
     globalForPrisma.pgPool = new Pool(poolConfig);

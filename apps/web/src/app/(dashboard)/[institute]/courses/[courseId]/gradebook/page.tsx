@@ -5,12 +5,14 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { getGradebookData } from "./actions";
 import GradebookClient from "./client";
+import { AccessError } from '@/lib/super-user-v1/actor';
 
 interface Props {
   params: Promise<{ institute: string; courseId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function GradebookPage({ params }: Props) {
+export default async function GradebookPage({ params, searchParams }: Props) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/page.tsx", await params);
 
   const { institute, courseId } = await params;
@@ -19,7 +21,7 @@ export default async function GradebookPage({ params }: Props) {
   if (!session) redirect(`/login?institute=${institute}`);
 
   const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") {
+  if (!['PROFESSOR', 'TEACHER', 'INSTRUCTOR', 'ADMIN'].includes(role)) {
     redirect(`/${institute}/courses/${courseId}`);
   }
 
@@ -30,11 +32,21 @@ export default async function GradebookPage({ params }: Props) {
 
   if (!course) redirect(`/${institute}/courses`);
 
-  const data = await getGradebookData(courseId);
+  let data;
+  try { data = await getGradebookData(courseId, Number((await searchParams).page || 1)); }
+  catch (error) {
+    if (!(error instanceof AccessError) || ![400, 422].includes(error.status)) throw error;
+    return <section role="alert" className="mx-auto max-w-2xl space-y-4 p-6">
+      <h1 className="text-xl font-semibold">Gradebook</h1><p>{error.message}</p>
+      <a className="mr-5 underline" href={`/${institute}/courses/${courseId}/gradebook`}>First page</a>
+      <a className="underline" href={`/api/courses/${courseId}/gradebook/export`}>Export complete CSV</a>
+    </section>;
+  }
   const theme = getInstituteTheme(institute);
 
   return (
     <GradebookClient
+      key={data.pagination.page}
       data={data}
       courseId={courseId}
       courseTitle={course.title}

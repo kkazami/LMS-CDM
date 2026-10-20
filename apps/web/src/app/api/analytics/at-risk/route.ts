@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { calculateRiskLevel, type StudentActivityData } from "@/lib/risk-scoring";
+import { AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
 export const dynamic = "force-dynamic";
@@ -39,65 +40,16 @@ export async function GET(request: Request) {
       ...(courseId && courseId !== "all" ? { id: courseId } : {}),
     };
 
-    // Fetch independent metrics together, with the same course access filter.
-    const [enrollments, syllabusItems, submissions] = await Promise.all([
-      db.enrollment.findMany({
-        where: {
-          status: "APPROVED",
-          course: courseScope,
-        },
-        include: {
-          student: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatarUrl: true,
-            },
-          },
-          course: {
-            select: {
-              id: true,
-              title: true,
-              code: true,
-            },
-          },
-        },
-        orderBy: { student: { name: "asc" } },
-      }),
-
-      db.syllabusItem.findMany({
-        where: {
-          course: courseScope,
-        },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          dueDate: true,
-          maxPoints: true,
-          courseId: true,
-        },
-      }),
-
-      db.studentSubmission.findMany({
-        where: {
-          syllabusItem: {
-            course: courseScope,
-          },
-        },
-        select: {
-          id: true,
-          syllabusItemId: true,
-          studentId: true,
-          status: true,
-          grade: true,
-          submittedAt: true,
-          updatedAt: true,
-        },
-      }),
+    const page = Number(searchParams.get('page') || 1);
+    if (!Number.isSafeInteger(page) || page < 1 || page > 100000) throw new AccessError(400, 'Invalid page.');
+    const where = { status: 'APPROVED', course: courseScope };
+    const [enrollments, total] = await Promise.all([
+      db.enrollment.findMany({ where, select: { student: { select: { id: true, name: true, email: true, avatarUrl: true } }, course: { select: { id: true, title: true, code: true } } }, orderBy: [{ student: { name: 'asc' } }, { id: 'asc' }], skip: (page - 1) * 50, take: 50 }),
+      db.enrollment.count({ where }),
     ]);
-
+    const syllabusItems = await db.syllabusItem.findMany({ where: { courseId: { in: [...new Set(enrollments.map(e => e.course.id))] }, course: courseScope }, select: { id: true, title: true, type: true, dueDate: true, maxPoints: true, courseId: true }, take: 2001 });
+    if (syllabusItems.length > 2000) throw new AccessError(422, 'This view exceeds 2,000 activities. Select a course to narrow the analysis.');
+    const submissions = await db.studentSubmission.findMany({ where: { studentId: { in: enrollments.map(e => e.student.id) }, syllabusItemId: { in: syllabusItems.map(i => i.id) } }, select: { id: true, syllabusItemId: true, studentId: true, status: true, grade: true, submittedAt: true, updatedAt: true } });
     // Submission lookup map: [studentId][syllabusItemId] -> submission
     const submissionMap = new Map<string, Map<string, typeof submissions[0]>>();
     for (const sub of submissions) {
@@ -214,9 +166,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       atRiskStudents: studentRiskResults,
+      pagination: { page, total, totalPages: Math.max(1, Math.ceil(total / 50)), pageSize: 50 },
     });
   } catch (error) {
     console.error("AT_RISK_STUDENTS_API_ERROR", error);
-    return NextResponse.json({ message: "Something went wrong." }, { status: 500 });
+    return NextResponse.json({ message: error instanceof AccessError ? error.message : "Something went wrong." }, { status: error instanceof AccessError ? error.status : 500 });
   }
 }

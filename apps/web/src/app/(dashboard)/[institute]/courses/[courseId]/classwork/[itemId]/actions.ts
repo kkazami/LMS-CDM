@@ -1,288 +1,97 @@
 "use server";
+import { requireOwnedUpload } from '@/lib/private-upload';
+import { db } from '@/lib/db';
+import { getSession } from '@/lib/auth-session';
+import { revalidatePath } from 'next/cache';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { requireCourseAccess, type CourseActor } from '@/lib/course-access';
+import { saveSubmission, gradeSubmission, lockAcademicRecord, submissionInput } from '@/lib/academic-records';
+import { awardBadgeIfEarned } from '@/lib/gamification/badge-checker';
+import type { Prisma } from '@prisma/client';
 
-
-import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth-session";
-
-// ─── Shared helpers ───
-
-async function getStudentSession() {
+async function student() {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session || canonicalRole(session.user.role) !== 'STUDENT') throw new Error('Student authentication required.');
   return session.user;
 }
-
-async function ensureBeforeDeadline(syllabusItemId: string) {
-  const item = await db.syllabusItem.findUnique({
-    where: { id: syllabusItemId },
-    select: { dueDate: true },
+async function mutable<T>(actor: CourseActor, submissionId: string, courseId: string, itemId: string, write: (tx: Prisma.TransactionClient) => Promise<T>) {
+  return db.$transaction(async tx => {
+    await lockAcademicRecord(tx, actor.id, itemId);
+    await requireCourseAccess(actor, courseId, false, tx);
+    const submission = await tx.studentSubmission.findFirst({ where: { id: submissionId, studentId: actor.id, syllabusItemId: itemId, syllabusItem: { courseId } }, include: { syllabusItem: true } });
+    if (!submission) throw new Error('Submission not found.');
+    if (submission.isReturned || submission.grade !== null) throw new Error('Submission has already been graded.');
+    if (submission.syllabusItem.dueDate && submission.syllabusItem.dueDate < new Date()) throw new Error('The deadline has passed.');
+    return write(tx);
   });
-  if (item?.dueDate && new Date() > item.dueDate) {
-    throw new Error("The deadline has passed. You can no longer modify your submission.");
-  }
 }
-
-// ─── Submission Actions ───
-
 export async function getOrCreateSubmission(syllabusItemId: string) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#getOrCreateSubmission", () => ({ syllabusItemId }));
-
-  const user = await getStudentSession();
-
-  let submission = await db.studentSubmission.findUnique({
-    where: { syllabusItemId_studentId: { syllabusItemId, studentId: user.id } },
-    include: { attachments: true },
+  await requireLegacyActor('classwork/actions.ts#getOrCreateSubmission', () => ({ syllabusItemId }));
+  const actor = await student();
+  return db.$transaction(async tx => {
+    await lockAcademicRecord(tx, actor.id, syllabusItemId);
+    const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId } });
+    if (!item) throw new Error('Assignment not found.');
+    await requireCourseAccess(actor, item.courseId, false, tx);
+    return tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId, studentId: actor.id } }, create: { syllabusItemId, studentId: actor.id }, update: {}, include: { attachments: true } });
   });
-
-  if (!submission) {
-    submission = await db.studentSubmission.create({
-      data: { syllabusItemId, studentId: user.id, status: "DRAFT" },
-      include: { attachments: true },
-    });
-  }
-
-  return submission;
 }
-
-import { grantExp } from "@/lib/gamification/grant-exp";
-import { EXP_VALUES } from "@/lib/gamification/exp-engine";
-import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
-
 export async function submitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#submitWork", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
-
-  const user = await getStudentSession();
-
-  const submission = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { studentId: true, syllabusItemId: true, status: true },
-  });
-
-  if (!submission || submission.studentId !== user.id) {
-    return { success: false, error: "Submission not found or unauthorized." };
-  }
-
-  await ensureBeforeDeadline(submission.syllabusItemId);
-
-  await db.studentSubmission.update({
-    where: { id: submissionId },
-    data: { status: "SUBMITTED", submittedAt: new Date() },
-  });
-
-  // Grant EXP for assignment submission (idempotent per syllabusItemId)
-  try {
-    await grantExp({
-      userId: user.id,
-      amount: EXP_VALUES.assignment_submitted,
-      reason: `Submitted Assignment: ${itemId}`,
-      source: "assignment",
-      courseId,
-      idempotencyKey: `assignment_sub_${submission.syllabusItemId}`,
-    });
-    await awardBadgeIfEarned(user.id, "assignment-first");
-  } catch (gamiErr) {
-    console.error("GAMIFICATION_ASSIGNMENT_SUBMIT_ERROR", gamiErr);
-  }
-
+  await requireLegacyActor('classwork/actions.ts#submitWork', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+  const actor = await student();
+  const submission = await db.studentSubmission.findFirst({ where: { id: submissionId, studentId: actor.id, syllabusItemId: itemId, syllabusItem: { courseId } } });
+  if (!submission) throw new Error('Submission not found.');
+  await saveSubmission(actor, courseId, { syllabusItemId: itemId });
+  try { await awardBadgeIfEarned(actor.id, 'assignment-first'); } catch { console.warn('SUBMISSION_BADGE_UNAVAILABLE'); }
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
-  return { success: true };
+  return { success: true, error: undefined as string | undefined };
 }
-
 export async function unsubmitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#unsubmitWork", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
-
-  const user = await getStudentSession();
-
-  const submission = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { studentId: true, syllabusItemId: true },
-  });
-
-  if (!submission || submission.studentId !== user.id) {
-    return { success: false, error: "Submission not found or unauthorized." };
-  }
-
-  await ensureBeforeDeadline(submission.syllabusItemId);
-
-  await db.studentSubmission.update({
-    where: { id: submissionId },
-    data: { status: "DRAFT", submittedAt: null },
-  });
-
+  await requireLegacyActor('classwork/actions.ts#unsubmitWork', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+  const actor = await student();
+  await mutable(actor, submissionId, courseId, itemId, tx => tx.studentSubmission.update({ where: { id: submissionId }, data: { status: 'DRAFT', submittedAt: null } }));
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
-  return { success: true };
+  return { success: true, error: undefined as string | undefined };
 }
-
-export async function addSubmissionLink(
-  submissionId: string,
-  url: string,
-  fileName: string,
-  instituteCode: string,
-  courseId: string,
-  itemId: string
-) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#addSubmissionLink", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
-
-  const user = await getStudentSession();
-
-  const submission = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { studentId: true, syllabusItemId: true, status: true },
+async function addAttachment(submissionId: string, url: string, fileName: string, instituteCode: string, courseId: string, itemId: string, type: 'FILE' | 'LINK') {
+  const actor = await student();
+  const parsed = submissionInput.safeParse({ syllabusItemId: itemId, attachments: [{ url, fileName, type }] });
+  if (!parsed.success) throw new Error('Invalid attachment.');
+  const attachment = await mutable(actor, submissionId, courseId, itemId, async tx => {
+    await requireOwnedUpload(tx, actor, url);
+    const data = { submissionId, url, fileName, type };
+    await tx.studentSubmission.update({ where: { id: submissionId }, data: { status: 'DRAFT' } });
+    return await tx.submissionAttachment.findFirst({ where: data }) ?? tx.submissionAttachment.create({ data });
   });
-
-  if (!submission || submission.studentId !== user.id) {
-    return { success: false, error: "Submission not found or unauthorized." };
-  }
-
-  await ensureBeforeDeadline(submission.syllabusItemId);
-
-  if (submission.status === "SUBMITTED") {
-    await db.studentSubmission.update({
-      where: { id: submissionId },
-      data: { status: "DRAFT" },
-    });
-  }
-
-  await db.submissionAttachment.create({
-    data: { submissionId, type: "LINK", url, fileName },
-  });
-
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
-  return { success: true };
+  return { success: true, attachmentId: attachment.id, error: undefined as string | undefined };
 }
-
-export async function removeSubmissionAttachment(
-  attachmentId: string,
-  submissionId: string,
-  instituteCode: string,
-  courseId: string,
-  itemId: string
-) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#removeSubmissionAttachment", () => ({ institute: instituteCode, courseId, submissionId, attachmentId, itemId }));
-
-  const user = await getStudentSession();
-
-  const submission = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { studentId: true, syllabusItemId: true },
-  });
-
-  if (!submission || submission.studentId !== user.id) {
-    return { success: false, error: "Unauthorized." };
-  }
-
-  await ensureBeforeDeadline(submission.syllabusItemId);
-
-  await db.submissionAttachment.delete({ where: { id: attachmentId } });
-
+export async function addSubmissionLink(submissionId: string, url: string, fileName: string, instituteCode: string, courseId: string, itemId: string) {
+  await requireLegacyActor('classwork/actions.ts#addSubmissionLink', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+  return addAttachment(submissionId, url, fileName, instituteCode, courseId, itemId, 'LINK');
+}
+export async function addSubmissionFile(submissionId: string, url: string, fileName: string, instituteCode: string, courseId: string, itemId: string) {
+  await requireLegacyActor('classwork/actions.ts#addSubmissionFile', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+  return addAttachment(submissionId, url, fileName, instituteCode, courseId, itemId, 'FILE');
+}
+export async function removeSubmissionAttachment(attachmentId: string, submissionId: string, instituteCode: string, courseId: string, itemId: string) {
+  await requireLegacyActor('classwork/actions.ts#removeSubmissionAttachment', () => ({ institute: instituteCode, courseId, submissionId, attachmentId, itemId }));
+  await mutable(await student(), submissionId, courseId, itemId, tx => tx.submissionAttachment.deleteMany({ where: { id: attachmentId, submissionId } }));
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
-  return { success: true };
+  return { success: true, error: undefined as string | undefined };
 }
-
-export async function addSubmissionFile(
-  submissionId: string,
-  url: string,
-  fileName: string,
-  instituteCode: string,
-  courseId: string,
-  itemId: string
-) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#addSubmissionFile", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
-
-  const user = await getStudentSession();
-
-  const submission = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { studentId: true, syllabusItemId: true, status: true },
-  });
-
-  if (!submission || submission.studentId !== user.id) {
-    return { success: false, error: "Submission not found or unauthorized." };
-  }
-
-  await ensureBeforeDeadline(submission.syllabusItemId);
-
-  // Revert to DRAFT when new attachment is added
-  if (submission.status === "SUBMITTED") {
-    await db.studentSubmission.update({
-      where: { id: submissionId },
-      data: { status: "DRAFT" },
-    });
-  }
-
-  const attachment = await db.submissionAttachment.create({
-    data: { submissionId, type: "FILE", url, fileName },
-  });
-
-  revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
-  return { success: true, attachmentId: attachment.id };
-}
-
-// ─── Instructor Grading Actions ───
-
-export async function returnGrade(
-  submissionId: string,
-  grade: number,
-  privateComment: string | undefined,
-  instituteCode: string,
-  courseId: string,
-  itemId: string
-) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#returnGrade", () => ({ institute: instituteCode, courseId, submissionId, itemId }));
-
-  const session = await getSession();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") {
-    return { success: false, error: "Only instructors can grade submissions." };
-  }
-
-  const updatedSub = await db.studentSubmission.update({
-    where: { id: submissionId },
-    data: { grade, status: "RETURNED", isReturned: true },
-    select: { studentId: true },
-  });
-
-  // Grant EXP for 100% perfect score on assignment (idempotent)
-  if (grade === 100 && updatedSub.studentId) {
-    try {
-      await grantExp({
-        userId: updatedSub.studentId,
-        amount: EXP_VALUES.assignment_perfect,
-        reason: `100% Perfect Score on Assignment: ${itemId}`,
-        source: "assignment_grade",
-        courseId,
-        idempotencyKey: `assignment_perfect_${submissionId}`,
-      });
-      await awardBadgeIfEarned(updatedSub.studentId, "perfect-score");
-    } catch (gamiErr) {
-      console.error("GAMIFICATION_PERFECT_GRADE_ERROR", gamiErr);
-    }
-  }
-
+export async function returnGrade(submissionId: string, grade: number, privateComment: string | undefined, instituteCode: string, courseId: string, itemId: string) {
+  const actor = await requireLegacyActor('classwork/actions.ts#returnGrade', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+  const submission = await db.studentSubmission.findFirst({ where: { id: submissionId, syllabusItemId: itemId, syllabusItem: { courseId } } });
+  if (!submission) throw new Error('Submission not found.');
+  await gradeSubmission(actor, submissionId, grade, privateComment, courseId);
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}/submissions`);
   revalidatePath(`/${instituteCode}/courses/${courseId}/gradebook`);
-  return { success: true };
+  return { success: true, error: undefined as string | undefined };
 }
-
 export async function updateGrade(submissionId: string, grade: number) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions.ts#updateGrade", () => ({ submissionId }));
-
-  const session = await getSession();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") {
-    return { success: false, error: "Only instructors can update grades." };
-  }
-
-  await db.studentSubmission.update({
-    where: { id: submissionId },
-    data: { grade },
-  });
-
-  return { success: true };
+  const actor = await requireLegacyActor('classwork/actions.ts#updateGrade', () => ({ submissionId }));
+  await gradeSubmission(actor, submissionId, grade);
+  return { success: true, error: undefined as string | undefined };
 }

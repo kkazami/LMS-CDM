@@ -1,7 +1,8 @@
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
-import { db } from '@/lib/db';
+import { sessionDeadline } from '@/lib/session-policy';
+import { assertMutationOrigin } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +16,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid or expired session.' }, { status: 401 });
     }
 
-    const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    await db.session.update({
-      where: { id: session.id },
-      data: { expiresAt: newExpiresAt },
-    });
+    assertMutationOrigin(request);
+    const newExpiresAt = sessionDeadline(session);
 
     const user = session.user as Record<string, unknown>;
     const institute = user.institute as Record<string, unknown>;
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('AUTH_REFRESH_ERROR', error);
+    console.warn('AUTH_REFRESH_UNAVAILABLE');
     return NextResponse.json({ message: 'Failed to refresh session.' }, { status: 500 });
   }
 }

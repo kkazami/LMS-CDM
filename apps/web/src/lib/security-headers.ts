@@ -2,14 +2,15 @@
  * Centralized definition of security headers for Next.js middleware and next.config.ts
  */
 
-export function getSecurityHeaders(): Record<string, string> {
+export function getSecurityHeaders(nonce?: string): Record<string, string> {
   const isProd = process.env.NODE_ENV === 'production';
 
   // Content-Security-Policy accommodating Next.js App Router, Tailwind, Monaco Editor, KaTeX, and Three.js
   const cspDirectives = [
     "default-src 'self'",
     // Script sources: Next.js dev requires eval/inline; Monaco loads web workers from blob: and CDN
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://unpkg.com",
+    `script-src 'self' ${nonce ? `'nonce-${nonce}' 'strict-dynamic'` : isProd ? "'none'" : "'unsafe-inline'"}${isProd ? '' : " 'unsafe-eval'"} blob: https://cdn.jsdelivr.net https://unpkg.com`,
+    "object-src 'none'",
     // Style sources: Tailwind CSS, inline styles, Google Fonts, and Monaco Editor CSS
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
     // Image sources: data URIs for canvas/avatars, blob URIs for media

@@ -32,10 +32,7 @@ export interface GrantExpResult {
 }
 
 function getPHTMidnight(d: Date = new Date()): Date {
-  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
-  const pht = new Date(utc + 8 * 3600000);
-  pht.setHours(0, 0, 0, 0);
-  return pht;
+  return new Date(Math.floor((d.getTime() + 8 * 3600000) / 86400000) * 86400000 - 8 * 3600000);
 }
 
 export async function grantExp({
@@ -63,6 +60,8 @@ export async function grantExp({
   }
 
   const award = async (tx: Prisma.TransactionClient) => {
+    // Serialize duplicate checks, daily caps and profile updates across all callers.
+    await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['exp', userId])}, 0))`;
     // 1. Check Idempotency Key if provided (e.g. specific assignment, level, material)
     const formattedReason = idempotencyKey
       ? `[KEY:${idempotencyKey}] ${reason}`
@@ -72,7 +71,10 @@ export async function grantExp({
       const existing = await tx.expTransaction.findFirst({
         where: {
           userId,
-          reason: { contains: `[KEY:${idempotencyKey}]` },
+          OR: [
+            { idempotencyKey },
+            { idempotencyKey: null, reason: { startsWith: `[KEY:${idempotencyKey}] ` } },
+          ],
         },
         select: { id: true },
       });
@@ -175,6 +177,7 @@ export async function grantExp({
         reason: formattedReason,
         source,
         courseId: courseId ?? null,
+        idempotencyKey: idempotencyKey ?? null,
       },
     });
 

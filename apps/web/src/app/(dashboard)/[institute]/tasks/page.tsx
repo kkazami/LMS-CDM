@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import WorkspaceDashboard from "@/components/workspace/WorkspaceDashboard";
 import { serializeNote, serializeTask } from "@/lib/workspace";
+import { safeRichText } from '@/lib/safe-rich-text';
 
 type PageProps = {
   params: Promise<{
@@ -44,7 +45,7 @@ export default async function TasksPage({ params }: PageProps) {
   return (
     <WorkspaceDashboard
       instituteCode={institute}
-      notes={notes.map(serializeNote)}
+      notes={notes.map(note => serializeNote({ ...note, content: safeRichText(note.content) }))}
       tasks={tasks.map(serializeTask)}
       courseOptions={courses}
       theme={theme}

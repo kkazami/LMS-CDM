@@ -1,0 +1,59 @@
+name: Web product quality
+on:
+  pull_request:
+    paths: ['apps/web/**', 'packages/**', 'prisma/**', 'tests/web-quality/**', 'tests/security/**', 'tests/database/**', 'tests/codelab/**', 'tests/calendar/**', 'tests/auth/**', 'tests/roster/**', 'tests/program-head/**', 'tests/navigation/**', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.github/workflows/web-quality.yml', 'docker/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://synthetic:unused@127.0.0.1:1/quality_offline
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node tests/web-quality/test.mjs
+      - run: pnpm --filter web exec tsc --noEmit --incremental false
+      - run: pnpm build:web
+      - name: Web and Prisma production advisory gate
+        if: always()
+        run: |
+          mkdir -p tmp/web-quality
+          pnpm audit --prod --json > tmp/web-quality/dependencies.json || test -s tmp/web-quality/dependencies.json
+          node tests/web-quality/dependency-audit.mjs --input tmp/web-quality/dependencies.json --output tmp/web-quality/dependency-assessment.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-product-quality
+          path: |
+            tmp/web-quality/product-tests.xml
+            tmp/web-quality/dependencies.json
+            tmp/web-quality/dependency-assessment.json
+          retention-days: 14
+  judge0-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['judge0/judge0:1.13.1', 'postgres:16-alpine', 'redis:7-alpine']
+    steps:
+      - name: Scan configured development container image (never starts privileged workloads)
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: false
+    # These are the current development-compose tags. Deployed image digests and Judge0 security configuration need a separate review.

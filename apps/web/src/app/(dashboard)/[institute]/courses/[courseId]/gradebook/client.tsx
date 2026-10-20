@@ -341,6 +341,13 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
         </div>
       )}
 
+      <nav aria-label="Gradebook pages" className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+        <span>{data.pagination.total === 0 ? 'No enrolled students' : `Students ${(data.pagination.page - 1) * data.pagination.pageSize + 1}–${Math.min(data.pagination.page * data.pagination.pageSize, data.pagination.total)} of ${data.pagination.total}`}</span>
+        <div className="flex gap-4">
+          {data.pagination.page > 1 && <Link href={`?page=${data.pagination.page - 1}`} className="underline">Previous students</Link>}
+          {data.pagination.page < data.pagination.totalPages && <Link href={`?page=${data.pagination.page + 1}`} className="underline">Next students</Link>}
+        </div>
+      </nav>
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>

@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession, getQueryId } from "../_shared";
+import { safeRichText } from '@/lib/safe-rich-text';
 
 export const dynamic = "force-dynamic";
 
 const noteSchema = z.object({
-  title: z.string().default(""),
-  content: z.string().default(""),
-  category: z.string().default("General"),
-  color: z.string().default("#ffffff"),
+  title: z.string().max(200).default(""),
+  content: z.string().max(100000).transform(safeRichText).default(""),
+  category: z.string().max(100).default("General"),
+  color: z.string().regex(/^#[0-9a-f]{6}$/i).default("#ffffff"),
   pinned: z.boolean().default(false),
   archived: z.boolean().default(false),
   orderIndex: z.number().int().default(0),
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
     });
 
     return note
-      ? NextResponse.json(note)
+      ? NextResponse.json({ ...note, content: safeRichText(note.content) })
       : NextResponse.json({ message: "Note not found." }, { status: 404 });
   }
 
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
     orderBy: [{ pinned: "desc" }, { orderIndex: "asc" }, { updatedAt: "desc" }],
   });
 
-  return NextResponse.json(notes);
+  return NextResponse.json(notes.map(note => ({ ...note, content: safeRichText(note.content) })));
 }
 
 export async function POST(request: Request) {

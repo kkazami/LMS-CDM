@@ -8,9 +8,11 @@ export async function POST(req: NextRequest) {
   const ceilingDenial = await denyLegacyApi(req, "POST github/webhooks/route.ts");
   if (ceilingDenial) return ceilingDenial;
 
-  const secret = process.env.GITHUB_WEBHOOK_SECRET || 'dev_test_webhook_secret';
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
+  if (!secret) return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 });
 
 
+  try {
   const rawBody = await req.text();
   const signature = req.headers.get('x-hub-signature-256');
 
@@ -95,8 +97,9 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (error) {
-    console.error('Error handling webhook event processing:', error);
+    console.warn('GITHUB_WEBHOOK_PROCESSING_UNAVAILABLE');
   }
 
   return NextResponse.json({ success: true, deliveryId });
+  } catch { return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 }); }
 }

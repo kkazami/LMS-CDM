@@ -1,6 +1,8 @@
+import { requireMaterialAttachment } from '@/lib/material-access';
+import { readAttachment } from '@/lib/attachment-content';
+import { accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { requireWorkspaceSession } from "../../workspace/_shared";
 import AdmZip from "adm-zip";
 
@@ -27,42 +29,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: "Missing attachmentId" }, { status: 400 });
   }
 
-  // Fetch attachment record
-  const attachment = await db.attachment.findUnique({
-    where: { id: attachmentId },
-    include: { syllabusItem: { include: { course: true } } },
-  });
-
-  if (!attachment || attachment.type !== "FILE") {
-    return NextResponse.json({ message: "Attachment not found" }, { status: 404 });
-  }
-
-  // Verify student is enrolled in the course
-  const courseId = attachment.syllabusItem?.courseId;
-  if (courseId) {
-    const enrollment = await db.enrollment.findUnique({
-      where: { courseId_studentId: { courseId, studentId: session.user.id } },
-    });
-    if (!enrollment || enrollment.status !== "APPROVED") {
-      return NextResponse.json({ message: "Not enrolled" }, { status: 403 });
-    }
-  }
-
-  const fileNameLower = attachment.fileName.toLowerCase();
-
-  // Resolve absolute URL for the file
-  let fileUrl = attachment.url;
-  if (fileUrl.startsWith("/")) {
-    const origin = new URL(request.url).origin;
-    fileUrl = `${origin}${fileUrl}`;
-  }
-
   try {
+    const attachment = await requireMaterialAttachment(session.user, attachmentId);
+    const fileNameLower = attachment.fileName.toLowerCase();
     if (fileNameLower.endsWith(".pptx")) {
       // ── PPTX: count slides + extract first-title from each ──
-      const res = await fetch(fileUrl);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const buffer = Buffer.from(await res.arrayBuffer());
+      const buffer = await readAttachment(attachment.url);
       const zip = new AdmZip(buffer);
 
       interface SlideEntry { entryName: string; getData: () => Buffer }
@@ -101,9 +73,7 @@ export async function GET(request: Request) {
 
     if (fileNameLower.endsWith(".pdf")) {
       // ── PDF: get total page count from metadata ──
-      const res = await fetch(fileUrl);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const buffer = Buffer.from(await res.arrayBuffer());
+      const buffer = await readAttachment(attachment.url);
       const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 
       // Only parse metadata (no text render) to get page count quickly
@@ -132,11 +102,5 @@ export async function GET(request: Request) {
       totalPages: null,
       slideTitles: null,
     });
-  } catch (err) {
-    console.error("file-info error:", err);
-    return NextResponse.json(
-      { message: "Failed to inspect file" },
-      { status: 500 }
-    );
-  }
+  } catch (error) { return accountErrorResponse(error); }
 }

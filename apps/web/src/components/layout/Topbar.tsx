@@ -179,7 +179,7 @@ export default function Topbar({
           {/* Search bar Desktop (Wide only on xl+) */}
           <button
             type="button"
-            onClick={() => setSearchModalOpen(true)}
+            onClick={event => { event.currentTarget.focus(); setSearchModalOpen(true); }}
             className="hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer"
             style={{
               borderColor: undefined,
@@ -199,7 +199,7 @@ export default function Topbar({
           {/* Mobile & Tablet Compact Search Button - only on sm+ to keep mobile header clean */}
           <button
             type="button"
-            onClick={() => setSearchModalOpen(true)}
+            onClick={event => { event.currentTarget.focus(); setSearchModalOpen(true); }}
             className="hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0"
             aria-label="Search"
           >

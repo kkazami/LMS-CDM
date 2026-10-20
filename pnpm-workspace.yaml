@@ -1,6 +1,14 @@
 packages:
   - "apps/*"
   - "packages/*"
+# Security patches scoped to the web parser/storage and Prisma toolchain parents.
+overrides:
+  'officeparser>pdfjs-dist': 6.2.108
+  'officeparser>@xmldom/xmldom': 0.9.12
+  '@vercel/blob>undici': 6.28.1
+  '@prisma/config>deepmerge-ts': 8.0.2
+  'prisma>mysql2': 3.24.6
+  'ajv@8.20.0>fast-uri': 3.1.8
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true

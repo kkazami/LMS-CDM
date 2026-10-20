@@ -2,6 +2,9 @@
 export const DEFAULT_PUBLIC_JUDGE0_URL = "https://ce.judge0.com";
 const RAPID_API_HOST = "judge0-ce.p.rapidapi.com";
 const EXECUTION_TIMEOUT_MS = 30_000;
+// Bound work across requests within a warm web process. Multi-instance quotas belong at the worker service.
+let pendingExecutions = 0;
+const MAX_PENDING_EXECUTIONS = 4;
 
 export function getJudge0BaseUrl(): string {
   return (process.env.JUDGE0_URL?.trim() ||
@@ -37,6 +40,8 @@ export interface Judge0ExecutionResponse {
 }
 
 export async function executeJudge0Submission(sourceCode: string, languageId: number, stdin = ""): Promise<Judge0ExecutionResponse> {
+  if (pendingExecutions >= MAX_PENDING_EXECUTIONS) throw new CodeRunnerUnavailableError();
+  pendingExecutions++;
   const deadline = Date.now() + EXECUTION_TIMEOUT_MS;
   try {
     const base = getJudge0BaseUrl();
@@ -74,5 +79,7 @@ export async function executeJudge0Submission(sourceCode: string, languageId: nu
   } catch {
     // Never turn an outage into a failed student test or execute code on the web host.
     throw new CodeRunnerUnavailableError();
+  } finally {
+    pendingExecutions--;
   }
 }
