@@ -103,10 +103,10 @@ export default async function CodeLabInstructorPage({
 
     const flagReasons: string[] = [];
     if (pasteCount > 0) {
-      flagReasons.push(`Paste detected (${pasteCount}x)`);
+      flagReasons.push(`Code pasted ${pasteCount} times`);
     }
     if (typingVelocityCpm > 800) {
-      flagReasons.push(`High typing velocity (${typingVelocityCpm} cpm)`);
+      flagReasons.push(`Typing speed: ${typingVelocityCpm} characters per minute`);
     }
 
     const problem = getProblemById(sub.templateId);

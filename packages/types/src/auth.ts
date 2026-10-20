@@ -1,10 +1,9 @@
 export type Role = 'ADMIN' | 'PROFESSOR' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
-export interface LoginRequest {
-  email: string;
+export type LoginRequest = ({ email: string; identifier?: never } | { identifier: string; email?: never }) & {
   password: string;
   instituteCode?: string;
-}
+};
 
 export interface LoginResponse {
   message: string;
@@ -25,15 +24,6 @@ export interface LoginResponse {
       name: string;
     };
   };
-}
-
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  studentNumber: string;
-  password: string;
-  confirmPassword: string;
-  instituteCode: string;
 }
 
 export interface AuthUser {

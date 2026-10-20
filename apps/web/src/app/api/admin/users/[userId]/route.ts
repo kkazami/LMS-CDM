@@ -10,6 +10,10 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { administratorInstitute } from '@/lib/administrator-scope';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { rosterActor, adminTransaction, rosterError, audit, setStudentProgram } from '@/lib/roster/policy';
+import { STUDENT_SCHEMA, normalizeCode } from '@/lib/roster/csv';
+import { AccessError } from '@/lib/super-user-v1/actor';
+import { lockAccounts } from '@/lib/super-user-v1/account-lock';
 import {
   requireAdmin,
   createAuditLog,
@@ -93,10 +97,31 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Check user exists
     const existingUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, uniqueId: true },
+      select: { id: true, name: true, email: true, uniqueId: true, studentNumber: true, activationStatus: true, role: true },
     });
     if (!existingUser) {
       return NextResponse.json({ message: 'User not found.' }, { status: 404 });
+    }
+    if (existingUser.role.toUpperCase() === 'STUDENT') {
+      const actor = await rosterActor(request);
+      const input = body as Record<string, unknown>;
+      if ((input.studentNumber !== undefined && input.studentNumber !== existingUser.studentNumber) || (uniqueId !== undefined && uniqueId !== existingUser.uniqueId)) throw new AccessError(400, 'Student ID cannot be changed through profile editing.');
+      const parsed = STUDENT_SCHEMA.safeParse({ student_Id: existingUser.studentNumber ?? existingUser.uniqueId, first_name: input.first_name, last_name: input.last_name, email: email ?? existingUser.email, program: input.program, section: input.section });
+      if (!parsed.success) throw new AccessError(400, 'Provide first name, last name, program, section, and a valid email.');
+      await adminTransaction(actor, async tx => {
+        await lockAccounts(tx, [userId]);
+        const current = await tx.user.findFirst({ where: { id: userId, instituteId: actor.instituteId, role: { equals: 'STUDENT', mode: 'insensitive' } } });
+        if (!current) throw new AccessError(404, 'Student not found.');
+        if (parsed.data.email !== current.email && current.activationStatus === 'PENDING_ACTIVATION') throw new AccessError(409, 'Use Correct Email in Account Invitations to revoke existing links safely.');
+        const programs = await tx.academicProgram.findMany({ where: { instituteId: actor.instituteId, isActive: true, code: { equals: parsed.data.program, mode: 'insensitive' } } });
+        if (programs.length !== 1) throw new AccessError(400, 'Choose an active program in your institute.');
+        await tx.user.update({ where: { id: userId }, data: { firstName: parsed.data.first_name, lastName: parsed.data.last_name, name: parsed.data.first_name + ' ' + parsed.data.last_name, section: normalizeCode(parsed.data.section), email: parsed.data.email } });
+        const membership = await tx.programMembership.findUnique({ where: { programId_userId: { programId: programs[0].id, userId } } });
+        if (!membership?.isActive) await setStudentProgram(tx, actor, userId, programs[0].id);
+        if (parsed.data.email !== current.email) await tx.session.deleteMany({ where: { userId } });
+        await audit(tx, actor.id, userId, 'STUDENT_PROFILE_UPDATED', { programId: programs[0].id, section: parsed.data.section });
+      });
+      return NextResponse.json({ message: 'Student updated.' });
     }
 
     // If email is changing, check for duplicates
@@ -163,6 +188,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       },
     });
   } catch (err) {
+    if (err instanceof AccessError) return rosterError(err);
     const error = err as { status?: number; message?: string };
     console.error('ADMIN_UPDATE_USER_ERROR', err);
     return NextResponse.json(

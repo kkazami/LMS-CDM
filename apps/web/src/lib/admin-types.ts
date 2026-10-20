@@ -28,6 +28,12 @@ export interface LMSUser {
   name: string;
   uniqueId: string;
   studentNumber?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  section?: string;
+  program?: string;
+  activationStatus?: 'ACTIVE' | 'PENDING_ACTIVATION';
+  invitationVersion?: number;
   role: UserRole;
   isActive: boolean;
   permissions: string[];

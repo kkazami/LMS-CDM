@@ -1,6 +1,5 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import AccountsManagementClient from "@/components/admin/AccountsManagementClient";
 
@@ -11,16 +10,11 @@ type PageProps = {
 };
 
 export default async function AccountManagementPage({ params }: PageProps) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/accounts/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/accounts/page.tsx", await params);
 
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
-
-  if (session.user.role.toUpperCase() !== "ADMIN") {
+  if (user.role.toUpperCase() !== "ADMIN") {
     redirect(`/${institute}`);
   }
 

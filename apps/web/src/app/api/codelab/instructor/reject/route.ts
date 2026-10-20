@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         userId: submission.studentId,
         type: "REMINDER",
         title: "CodeLab Attempt Reset",
-        message: "Your instructor reset a CodeLab submission attempt. You may now retake the challenge.",
+        message: "Your instructor deleted your CodeLab submission record.",
         link: `/${instituteCode || "ics"}/activities/codelab`,
       });
 
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         action: "delete",
-        message: "Attempt deleted. Student may retake the challenge.",
+        message: "Submission deleted.",
       });
     }
 
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
     }
 
     stateObj.isRejected = true;
-    stateObj.rejectionReason = reason || "Attempt invalidated by instructor.";
+    stateObj.rejectionReason = reason || "Submission rejected by instructor.";
     stateObj.originalScore = submission.score;
     stateObj.rejectedAt = new Date().toISOString();
     stateObj.rejectedBy = session.user.id;
@@ -182,8 +182,8 @@ export async function POST(request: Request) {
     await createNotification({
       userId: submission.studentId,
       type: "ALERT",
-      title: "CodeLab Submission Invalidated",
-      message: `Your CodeLab attempt was invalidated by your instructor: ${reason || "Academic integrity or requirement check failed."}`,
+      title: "CodeLab submission rejected",
+      message: `Your instructor rejected your CodeLab submission. Reason: ${reason || "The work does not meet the requirements."}`,
       link: `/${instituteCode || "ics"}/activities/codelab`,
     });
 
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       action: "reject",
-      message: "Attempt invalidated and score set to 0%.",
+      message: "Submission rejected. Its score is now 0%.",
     });
   } catch (error) {
     console.error("REJECT_SUBMISSION_ERROR", error);

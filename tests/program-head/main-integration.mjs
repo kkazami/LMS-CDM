@@ -9,7 +9,6 @@ import { pathToFileURL } from 'node:url';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import net from 'node:net';
 import { chromium } from 'playwright';
-import os from 'node:os';
 import { createDisposablePostgres } from './postgres-fixture.mjs';
 import { provisionProgramHeads } from '../../scripts/provision-program-heads.mjs';
 import { hash } from 'bcryptjs';
@@ -19,6 +18,10 @@ import { classProgramChecks, classProgramBrowserChecks } from './class-program-c
 import { administratorChecks, administratorBrowserChecks } from './administrator-checks.mjs';
 import { installSuperUserBoundary } from '../../scripts/install-super-user-boundary.mjs';
 import { performanceChecks, performanceBrowserChecks } from './performance-checks.mjs';
+import { announcementMeetBrowserChecks } from './announcement-meet-checks.mjs';
+import { mobileNavigationBrowserChecks } from './mobile-navigation-checks.mjs';
+import { liveSuperUserDataChecks } from '../super-user/live-data-checks.mjs';
+import { administratorEditChecks } from '../super-user/administrator-edit-checks.mjs';
 
 const output = path.resolve('tmp/program-head-integration', `feature-${Date.now()}`);
 fs.mkdirSync(output, { recursive: true });
@@ -28,7 +31,7 @@ const safeEnvironment = Object.fromEntries(Object.entries(process.env).filter(([
 const disconnected = 'postgresql://unused@127.0.0.1:1/harness_main_integration_unconnected';
 const pnpm = path.join(process.env.APPDATA, 'npm/node_modules/pnpm/bin/pnpm.cjs');
 const requireWeb = createRequire(path.resolve('apps/web/package.json'));
-let cluster, db, browser, server, serverClose, metadataFile;
+let cluster, db, browser, server, serverClose;
 let serverLog = '';
 async function check(name, work) {
   try { await work(); report.checks.push({ name, result: 'PASS' }); console.log('PASS ' + name); }
@@ -193,22 +196,17 @@ try {
   await administratorChecks({cluster,db,accounts,check});
   await classProgramChecks({cluster,db,accounts,check});
   await instructorMembershipChecks({cluster,db,accounts,check});
-  const {metadataDigest}=await import('../../apps/web/src/lib/super-user-v1/metadata-policy.ts');
-  const {displayCourseCode}=await import('../../apps/web/src/lib/super-user-v1/dto.ts');
   await cluster.owner.query('UPDATE public."Course" SET code="courseCode" WHERE id=\'unrelated-class\'');
-  const institute=await db.institute.findUnique({where:{id:'ics'},select:{id:true,code:true,name:true}});
-  const selectedCourses=await db.course.findMany({where:{instituteId:'ics',isArchived:false},select:{id:true,code:true,courseCode:true,title:true,section:true,subject:true,room:true,instructor:{select:{id:true,name:true,role:true,instituteId:true}}},orderBy:{id:'asc'}});
-  const courses=selectedCourses.map(({courseCode,...course})=>({...course,code:displayCourseCode({...course,courseCode})}));
-  const dataset={institute,courses,schedule:[],materials:[],announcements:[]};
-  const metadataBytes=Buffer.from(JSON.stringify({version:1,instituteId:'ics',datasetSHA256:metadataDigest(dataset),approverBinding:'SYNTHETIC_TEST_NOT_A_PERSON',maintainerBinding:'SYNTHETIC_TEST_NOT_A_PERSON',approvalReference:'SYNTHETIC_ONLY_NOT_APPROVAL',expiresAt:new Date(Date.now()+3600000).toISOString(),revoked:false}));
-  metadataFile=path.join(os.tmpdir(),'lms-main-integration-'+randomBytes(12).toString('hex')+'.json');fs.writeFileSync(metadataFile,metadataBytes,{flag:'wx'});
+  await liveSuperUserDataChecks({ cluster, db, accounts, check });
+  await administratorEditChecks({ cluster, db, accounts, check });
+  report.administratorCredentialsSHA256=createHash('sha256').update(fs.readFileSync('prisma/super-user-v1/administrator-credentials.sql')).digest('hex');
   if (process.argv.includes('--no-browser')) {
     report.browser = 'NOT_EXECUTED';
   } else {
   const port = await new Promise(resolve => { const listener = net.createServer(); listener.listen(0,'127.0.0.1',()=>{ const selected = listener.address().port; listener.close(()=>resolve(selected)); }); });
   const base = `http://127.0.0.1:${port}`;
   const argv = [requireWeb.resolve('next/dist/bin/next'),'start','--hostname','127.0.0.1','--port',String(port)];
-  server = spawn(process.execPath,argv,{cwd:path.resolve('apps/web'),env:{...safeEnvironment,NODE_ENV:'production',DATABASE_URL:cluster.url,POSTGRES_URL:cluster.url,POSTGRES_PRISMA_URL:cluster.url,NEXT_TELEMETRY_DISABLED:'1',SUPER_USER_METADATA_POLICY_PATH:metadataFile,SUPER_USER_METADATA_POLICY_SHA256:createHash('sha256').update(metadataBytes).digest('hex')},windowsHide:true,stdio:['ignore','pipe','pipe']});
+  server = spawn(process.execPath,argv,{cwd:path.resolve('apps/web'),env:{...safeEnvironment,NODE_ENV:'production',DATABASE_URL:cluster.url,POSTGRES_URL:cluster.url,POSTGRES_PRISMA_URL:cluster.url,NEXT_TELEMETRY_DISABLED:'1'},windowsHide:true,stdio:['ignore','pipe','pipe']});
   let closed = false;
   serverClose = new Promise((resolve,reject)=>{server.on('error',reject);server.on('close',(code,signal)=>{closed=true;resolve({code,signal});});});
   server.stdout.on('data',b=>serverLog+=b); server.stderr.on('data',b=>serverLog+=b);
@@ -229,6 +227,8 @@ try {
     page.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=500)errors.push('HTTP '+r.status()+' '+new URL(r.url()).pathname);});
     return page;
   }
+  await mobileNavigationBrowserChecks({pageFor,base,check,output});
+  await announcementMeetBrowserChecks({pageFor,base,db,accounts,check,output});
   await performanceBrowserChecks({pageFor,base,db,check});
   await classProgramBrowserChecks({pageFor,base,db,check,output});
   await instructorMembershipBrowserChecks({pageFor,base,db,cluster,check,output});
@@ -277,8 +277,7 @@ try {
     const headers={Authorization:'Bearer '+body.token};
     const response=await context.request.get(base+'/api/academic-oversight/ics/courses',{headers});report.superOversightStatus=response.status();assert.equal(response.status(),200,'authenticated Bearer oversight after login');const result=await response.json();assert.equal(result.courses.length,2);assert.ok(!JSON.stringify(result).includes('SECRET-'));
     assert.equal(await page.getByRole('link',{name:'Gradebook',exact:true}).count(),0);
-    await page.getByRole('link',{name:'IBE',exact:true}).click();
-    await page.waitForFunction(()=>Array.from(document.querySelectorAll('p')).filter(p=>p.textContent==='Super User · IBE').length===1);
+    await page.getByRole('combobox',{name:'Switch institute'}).selectOption('ibe');
     await page.getByText('Super User · IBE',{exact:true}).waitFor();
     assert.equal((await cluster.owner.query('SELECT "instituteId" FROM public."User" WHERE id=$1',[accounts.super.id])).rows[0].instituteId,'ics');
     const oldApi=await context.request.get(base+'/api/courses',{headers});assert.equal(oldApi.status(),403,'existing GET course API denies Super User');
@@ -344,7 +343,6 @@ try {
   if (server) { server.kill(); report.serverClose = await Promise.race([serverClose,new Promise(resolve=>setTimeout(()=>resolve({inconclusive:true}),10000))]); if(report.serverClose.inconclusive)process.exitCode=1; fs.writeFileSync(path.join(output,'server.log'),serverLog); }
   if (db) { await db.$disconnect(); await globalThis.pgPool?.end(); }
   if (cluster) { await cluster.stop(); report.clusterStopped = true; }
-  if (metadataFile) fs.unlinkSync(metadataFile);
   report.finishedAt = new Date().toISOString();
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));
   console.log('Evidence: ' + path.relative(process.cwd(),output));

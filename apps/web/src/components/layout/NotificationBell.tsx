@@ -15,6 +15,8 @@ import {
   Radio,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import GoogleMeetLinks from "@/components/courses/GoogleMeetLinks";
+import { googleMeetLinks } from "@/lib/academic-structure/meeting-links";
 
 interface NotificationItem {
   id: string;
@@ -195,8 +197,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
     }
   };
 
-  // Click a notification: mark read + navigate
-  const handleClickNotification = async (notification: NotificationItem) => {
+  const markNotificationRead = (notification: NotificationItem) => {
     if (!notification.isRead) {
       // Mark as read optimistically
       setNotifications((prev) =>
@@ -216,7 +217,11 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         // silent
       }
     }
+  };
 
+  // Click a notification: mark read + navigate
+  const handleClickNotification = (notification: NotificationItem) => {
+    markNotificationRead(notification);
     setIsOpen(false);
 
     // Navigate if link is provided
@@ -318,6 +323,12 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
                     {n.message}
                   </p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-mono">{timeAgo(n.createdAt)}</p>
+                  <div onClick={(event) => {
+                    event.stopPropagation();
+                    markNotificationRead(n);
+                  }}>
+                    <GoogleMeetLinks links={googleMeetLinks(`${n.title}\n${n.message}\n${n.link}`)} />
+                  </div>
                 </div>
 
                 {/* Unread indicator & Mark As Read Action */}

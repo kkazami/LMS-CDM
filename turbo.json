@@ -25,7 +25,11 @@
         "SMTP_SECURE",
         "SMTP_USER",
         "SMTP_PASS",
-        "SMTP_FROM"
+        "SMTP_FROM",
+        "APP_BASE_URL",
+        "CRON_SECRET",
+        "EMAIL_INVITATIONS_ENABLED",
+        "EMAIL_DAILY_LIMIT"
       ],
       "outputs": [
         "dist/**",

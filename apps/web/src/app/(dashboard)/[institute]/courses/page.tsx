@@ -3,38 +3,33 @@ import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import CoursesClient from "./client";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 
 export default async function CoursesPage({
   params,
 }: {
   params: Promise<{ institute: string }>;
 }) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/page.tsx", await params);
 
   const { institute } = await params;
   const theme = getInstituteTheme(institute);
-  const session = await getSession();
 
-  if (!session) redirect(`/login?institute=${institute}`);
-
-  const role = session.user.role.toUpperCase();
+  const role = user.role.toUpperCase();
   const isStudent = role === "STUDENT";
   const isProfessor = role === "PROFESSOR" || role === "TEACHER";
 
-  const instituteRecord = await db.institute.findUnique({
-    where: { code: institute },
-  });
+  const instituteRecord = user.institute;
 
-  if (!instituteRecord) {
+  if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/${institute}`);
   }
 
   if (isStudent) {
     // Students: show their enrolled courses (approved, non-archived), ordered by displayOrderIndex
-    const enrolledCourses = await db.enrollment.findMany({
+    const [enrolledCourses, pendingCount] = await Promise.all([
+      db.enrollment.findMany({
       where: {
-        studentId: session.user.id,
+        studentId: user.id,
         status: "APPROVED",
         course: { instituteId: instituteRecord.id, isArchived: false },
       },
@@ -46,16 +41,15 @@ export default async function CoursesPage({
         },
       },
       orderBy: { displayOrderIndex: "asc" },
-    });
-
-    // Also get pending enrollment count
-    const pendingCount = await db.enrollment.count({
+      }),
+      db.enrollment.count({
       where: {
-        studentId: session.user.id,
+        studentId: user.id,
         status: "PENDING",
         course: { instituteId: instituteRecord.id },
       },
-    });
+      }),
+    ]);
 
     const courses = enrolledCourses.map((e) => ({
       id: e.course.id,
@@ -89,7 +83,7 @@ export default async function CoursesPage({
     const [taughtCourses, layouts] = await Promise.all([
       db.course.findMany({
         where: {
-          instructorId: session.user.id,
+          instructorId: user.id,
           instituteId: instituteRecord.id,
           isArchived: false,
         },
@@ -101,7 +95,7 @@ export default async function CoursesPage({
         },
       }),
       db.dashboardLayout.findMany({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
       }),
     ]);
 

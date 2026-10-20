@@ -1,7 +1,6 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import {
@@ -29,22 +28,17 @@ type PageProps = {
 };
 
 export default async function AdminDashboardPage({ params }: PageProps) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/admin/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/admin/page.tsx", await params);
 
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
-
-  if (session.user.role.toUpperCase() !== "ADMIN") {
+  if (user.role.toUpperCase() !== "ADMIN") {
     redirect(`/${institute}`);
   }
 
   const theme = getInstituteTheme(institute);
 
-  const instituteRecord = session.user.institute;
+  const instituteRecord = user.institute;
   if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
@@ -133,7 +127,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
     },
   ];
 
-  const typingSessionKey = `cdm_typed_${session.user.id.slice(0, 8)}`;
+  const typingSessionKey = `cdm_typed_${user.id.slice(0, 8)}`;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto page-enter">
@@ -159,7 +153,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
               <TypingBanner
-                text={`Welcome back, Administrator ${session.user.name}!`}
+                text={`Welcome back, Administrator ${user.name}!`}
                 sessionKey={typingSessionKey}
               />
             </h1>

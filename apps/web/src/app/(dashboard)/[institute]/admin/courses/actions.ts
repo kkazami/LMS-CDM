@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
 import { generateCourseCode, bulkAssignInstructor } from "@/lib/skills";
+import { courseOffering } from '@/lib/roster/terms';
 
 async function ensureAdmin() {
   const session = await getSession();
@@ -21,6 +22,7 @@ async function ensureAdmin() {
 
 const adminCourseSchema = z.object({
   id: z.string().optional(),
+  termId: z.string().optional(),
   code: z.string().min(2, "Course code must be at least 2 characters."),
   title: z.string().min(3, "Title must be at least 3 characters."),
   section: z.string().optional().default(""),
@@ -41,6 +43,7 @@ export async function adminCreateCourse(
   const actor = await ensureAdmin();
 
   const parse = adminCourseSchema.safeParse({
+    termId: formData.get('termId') || undefined,
     code: formData.get("code"),
     title: formData.get("title"),
     section: formData.get("section") || "",
@@ -76,13 +79,13 @@ export async function adminCreateCourse(
     }
 
     const course = await db.$transaction(async tx => {
+      const offering = await courseOffering(tx, { instituteId: institute.id, termId: data.termId, code: data.code, section: data.section });
       await validateCourseProgram(tx, institute.id, data.programId || null);
       const created = await tx.course.create({
         data: {
-          code: data.code,
+          ...offering,
           courseCode: codeResult.data,
           title: data.title,
-          section: data.section,
           subject: data.subject,
           room: data.room,
           description: data.description,

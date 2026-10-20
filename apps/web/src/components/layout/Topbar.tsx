@@ -129,8 +129,10 @@ export default function Topbar({
     "create-tasks": "Create Tasks",
     "manage-leaderboard": "Manage Leaderboard",
     // Admin
-    admin: "Admin Dashboard",
+    admin: "Administrator Dashboard",
+    faculty: "Faculty & Program Heads",
     accounts: "Account Management",
+    onboarding: "Students and Classes",
     permissions: "Permission Matrix",
     logs: "Audit Logs",
     backup: "Backup & Recovery",
@@ -395,7 +397,7 @@ export default function Topbar({
               {/* Tablet Compact User Info (1024px - 1279px) */}
               <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-25">
                 <p className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] truncate">{userRole}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] truncate">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
               </div>
 
               {/* Desktop Full User Info (1280px+) */}
@@ -406,7 +408,7 @@ export default function Topbar({
                 </div>
                 <div className="flex items-center gap-1.5 justify-end">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] shrink-0">
-                    {userRole}
+                    {userRole === "ADMIN" ? "Administrator" : userRole}
                   </p>
                   {userRole === "STUDENT" && studentNumber && (
                     <>
@@ -516,7 +518,7 @@ export default function Topbar({
         onClose={() => setSearchModalOpen(false)}
         instituteCode={instituteCode}
         theme={theme}
-        userRole={userRole}
+        userRole={userRole === "ADMIN" ? "Administrator" : userRole}
       />
     </header>
   );

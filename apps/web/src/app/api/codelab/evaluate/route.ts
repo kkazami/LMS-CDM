@@ -18,7 +18,7 @@ import { checkActivityEligibility } from "@/lib/activity-eligibility";
 import { getProblemById } from "@/features/interactive-activities/codelab/problems";
 import { evaluateVariables, substituteTemplate } from "@/features/interactive-activities/codelab/utils/problem-engine";
 import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activities/codelab/utils/code-wrappers";
-import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { db } from "@/lib/db";
 
 import { CodeLabCompletionError, getCodeLabCompletion, getCodeLabReward, saveCodeLabCompletion } from "@/lib/codelab-completion";
@@ -241,6 +241,7 @@ export async function POST(request: Request) {
             });
           }
         } else {
+          if (res.reason instanceof CodeRunnerUnavailableError) throw res.reason;
           // Execution failed
           if (tc.isHidden) {
             hiddenResults.push({
@@ -291,6 +292,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responsePayload);
   } catch (error: unknown) {
+    if (error instanceof CodeRunnerUnavailableError) return NextResponse.json({ error: error.message, code: "RUNNER_UNAVAILABLE" }, { status: 503 });
     if (error instanceof CodeLabCompletionError) return NextResponse.json({ error: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("CODELAB_EVALUATE_ERROR", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

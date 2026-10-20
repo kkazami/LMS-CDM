@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       select: { password: true, securityPin: true },
     });
 
-    if (!user) {
+    if (!user?.password) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 

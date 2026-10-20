@@ -11,6 +11,7 @@ async function load(db, session, hooks = {}) {
       export {POST as evaluate} from './apps/web/src/app/api/codelab/evaluate/route';
       export {POST as submit} from './apps/web/src/app/api/activities/submit/route';
       export {GET as progress} from './apps/web/src/app/api/codelab/progress/route';
+      export {POST as runTests} from './apps/web/src/app/api/codelab/run-tests/route';
       export {getProblemById} from './apps/web/src/features/interactive-activities/codelab/problems';
       export {evaluateVariables} from './apps/web/src/features/interactive-activities/codelab/utils/problem-engine';`, resolveDir: process.cwd() },
     bundle: true, write: false, platform: "node", format: "cjs", tsconfig: "apps/web/tsconfig.json",
@@ -23,7 +24,7 @@ async function load(db, session, hooks = {}) {
         name.endsWith("activity-eligibility") ? "export async function checkActivityEligibility(){const t=globalThis.__codeLabTest;return t.session ? {eligible:t.eligible,session:t.session} : null;}" :
         name.endsWith("legacy-entry-guard") ? "export async function denyLegacyApi(){return null;}" :
         name.endsWith("badge-checker") ? "export async function awardBadgeIfEarned(){}" :
-        name.endsWith("judge0-config") ? `export async function executeJudge0Submission(){const h=globalThis.__codeLabTest.hooks;h.judgeCalls=(h.judgeCalls||0)+1;return {stdout:h.stdout||'0',status:{id:3},time:'0'};}` :
+        name.endsWith("judge0-config") ? `export class CodeRunnerUnavailableError extends Error {constructor(){super('Code runner temporarily unavailable')}}; export async function executeJudge0Submission(){const h=globalThis.__codeLabTest.hooks;h.judgeCalls=(h.judgeCalls||0)+1;if(h.unavailable)throw new CodeRunnerUnavailableError();return {stdout:h.stdout||'0',status:{id:3},time:'0'};}` :
         "export async function processGamificationEvent(){globalThis.__codeLabTest.hooks.events=(globalThis.__codeLabTest.hooks.events||0)+1;}" }));
     } }],
   });
@@ -122,4 +123,20 @@ test("submission endpoints retain authentication, eligibility and student owners
   assert.equal((await api.submit(request({ ...payload, studentId: "someone-else" }))).status, 403);
   assert.equal((await api.submit(request(payload))).status, 400); // Cannot forge a Judge0 score.
   assert.equal(f.state().submissions.length, 0);
+});
+
+test("runner outages never save a failed attempt or issue rewards", async () => {
+  const f = fixture(), api = await load(f.db, f.session, { unavailable: true });
+  const response = await api.evaluate(request({ templateId: payload.assignmentId, seed: "seed", sourceCode: "print('Hello')", languageId: 71 }));
+  assert.equal(response.status, 503); assert.equal((await response.json()).code, "RUNNER_UNAVAILABLE");
+  assert.equal(f.state().submissions.length, 0); assert.equal(f.state().rewards.length, 0);
+});
+
+test("the legacy Run Tests endpoint is practice-only and cannot award completion EXP", async () => {
+  const f = fixture(), api = await load(f.db, f.session, { stdout: "Hello" });
+  f.db.activityTemplate.findUnique = async () => ({ activityType: "codelab", variables: JSON.stringify({ publicTestCases: [{ input: "", expectedOutput: "Hello" }] }), hiddenTestCases: "[]" });
+  const response = await api.runTests(request({ templateId: "custom", variantSeed: "seed", sourceCode: "print('Hello')", languageId: 71 }));
+  const result = await response.json();
+  assert.equal(response.status, 200); assert.equal(result.score, 100); assert.equal(result.grantedExp, 0);
+  assert.equal(f.state().submissions.length, 0); assert.equal(f.state().rewards.length, 0);
 });

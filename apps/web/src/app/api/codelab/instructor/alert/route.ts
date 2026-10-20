@@ -57,11 +57,11 @@ export async function POST(request: Request) {
     let messageText = customMessage?.trim();
     if (!messageText) {
       if (riskLevel === "high" || (typeof avgScore === "number" && avgScore < 50)) {
-        messageText = `Your instructor flagged that you may need assistance on CodeLab tracks (Avg Score: ${avgScore ?? 0}%). Please review the practice levels or consult with your professor for guidance.`;
+        messageText = `Your average CodeLab score is ${avgScore ?? 0}%. Your instructor recommends reviewing the levels you found difficult. Ask your instructor if you need help.`;
       } else if (riskLevel === "medium") {
-        messageText = `Your instructor sent a gentle reminder to keep practicing your CodeLab tracks regularly to stay on pace.`;
+        messageText = `Your instructor recommends more CodeLab practice. Try a level again or ask for help if you are stuck.`;
       } else {
-        messageText = `Your instructor sent an academic support alert regarding your CodeLab progress. Please review your practice modules.`;
+        messageText = `Your instructor has asked you to review your CodeLab progress. Open CodeLab to continue practicing.`;
       }
     }
 
@@ -69,14 +69,14 @@ export async function POST(request: Request) {
     await createNotification({
       userId: studentId,
       type: "ALERT",
-      title: "Instructor Academic Alert: CodeLab Support",
+      title: "CodeLab practice reminder",
       message: messageText,
       link: `/${institute}/activities/codelab`,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Alert notification successfully sent to ${resolvedName}.`,
+      message: `Reminder sent to ${resolvedName}.`,
     });
   } catch (error) {
     console.error("TRIAGE_ALERT_ERROR", error);

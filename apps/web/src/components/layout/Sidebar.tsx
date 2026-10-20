@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
+import { getNavigationPath } from "@/lib/navigation-path";
 
 
 import type { ComponentType } from "react";
@@ -125,7 +126,7 @@ export default function Sidebar({
   isEligibleForKnowledgeExchange,
   enrolledCourses,
 }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMyCoursesOpen, setIsMyCoursesOpen] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
@@ -383,6 +384,7 @@ export default function Sidebar({
               key={item.href}
               href={item.href}
               onClick={handleLinkClick}
+              aria-current={active ? "page" : undefined}
               title={isCollapsed ? item.label : undefined}
               className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                 active

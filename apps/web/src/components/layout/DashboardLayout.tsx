@@ -56,7 +56,6 @@ export default function DashboardLayout({
   userId,
   children,
 }: DashboardLayoutProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
@@ -117,8 +116,8 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div className={`min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
+        <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+          isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
         }`}>
           <Topbar
             theme={theme}
@@ -129,7 +128,6 @@ export default function DashboardLayout({
             avatarUrl={avatarUrl ?? null}
             instituteCode={instituteCode}
             exp={exp}
-            onOpenMobileMenu={() => setMobileOpen(true)}
           />
 
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
@@ -150,6 +148,8 @@ export default function DashboardLayout({
         userRole={userRole}
         userName={userName}
         avatarUrl={avatarUrl ?? null}
+        isEligibleForActivities={isEligibleForActivities}
+        isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
       />
 
       {/* Student Gamification Widgets */}

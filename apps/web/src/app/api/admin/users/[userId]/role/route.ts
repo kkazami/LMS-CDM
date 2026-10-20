@@ -74,11 +74,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     // Check target user exists
     const targetUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, role: true, name: true, email: true },
+      select: { id: true, role: true, name: true, email: true, activationStatus: true },
     });
     if (!targetUser) {
       return NextResponse.json({ message: 'User not found.' }, { status: 404 });
     }
+    if (targetUser.activationStatus !== 'ACTIVE') return NextResponse.json({ message: 'Activate the student account before changing its role.' }, { status: 409 });
 
     const oldRole = normalizeRole(targetUser.role);
     if (oldRole === normalizedNewRole) {

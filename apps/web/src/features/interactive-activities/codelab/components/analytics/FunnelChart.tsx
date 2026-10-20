@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import AnimatedBar from "./AnimatedBar";
+import { LANGUAGE_LABELS } from "../../problems/types";
 import type { InstructorSubmissionRecord } from "../CodeLabInstructorClient";
 
 const LANGUAGES = [
@@ -67,10 +68,10 @@ export default function FunnelChart({ submissions }: FunnelChartProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-            📉 Level Progression Funnel
+            Students at each level
           </h3>
           <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-            Unique students reaching each level. ⚠️ = chokepoint (&gt;30% drop-off).
+            Students who submitted work at each level. “Lower count” means over 30% fewer students than the level before.
           </p>
         </div>
         <select
@@ -80,7 +81,7 @@ export default function FunnelChart({ submissions }: FunnelChartProps) {
         >
           {LANGUAGES.map((l) => (
             <option key={l} value={l}>
-              {l.toUpperCase()}
+              {LANGUAGE_LABELS[l]}
             </option>
           ))}
         </select>
@@ -96,11 +97,11 @@ export default function FunnelChart({ submissions }: FunnelChartProps) {
           return (
             <div key={level} className="flex items-center gap-3 text-xs">
               <span
-                className={`w-8 text-right font-bold shrink-0 ${
+                className={`w-14 text-right font-bold shrink-0 ${
                   isChokepoint ? "text-rose-500 font-black" : "text-slate-500 dark:text-[#8B92A5]"
                 }`}
               >
-                L{level}
+                Level {level}
               </span>
               <div className="flex-1">
                 <AnimatedBar
@@ -121,8 +122,8 @@ export default function FunnelChart({ submissions }: FunnelChartProps) {
                 {uniqueStudents}
               </span>
               {isChokepoint && (
-                <span className="text-rose-500 font-bold shrink-0" title="Chokepoint: >30% drop-off">
-                  ⚠️
+                <span className="text-rose-500 font-bold shrink-0" title="Over 30% fewer students than the level before">
+                  Lower count
                 </span>
               )}
             </div>

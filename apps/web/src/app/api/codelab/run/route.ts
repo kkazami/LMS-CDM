@@ -14,7 +14,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 
 import { NextResponse } from "next/server";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
-import { executeJudge0Submission } from "@/features/interactive-activities/codelab/utils/judge0-config";
+import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/interactive-activities/codelab/utils/judge0-config";
 import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     const result = await executeJudge0Submission(executableCode, languageId, stdin || "");
     return NextResponse.json(result);
   } catch (error: unknown) {
+    if (error instanceof CodeRunnerUnavailableError) return NextResponse.json({ error: error.message, code: "RUNNER_UNAVAILABLE" }, { status: 503 });
     console.error("CODELAB_RUN_ERROR", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

@@ -17,8 +17,12 @@ import {
 } from "./actions";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import Link from 'next/link';
+import CourseTermField from '@/components/courses/CourseTermField';
 
 interface CourseWithInstructor {
+  termId: string | null;
+  term?: { name: string } | null;
   id: string;
   code: string;
   courseCode: string;
@@ -128,6 +132,7 @@ export default function AdminCoursesClient({
   theme: InstituteTheme;
 }) {
   const [instructorFilter, setInstructorFilter] = useState(initialInstructorId);
+  const [termFilter, setTermFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseWithInstructor | null>(null);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -222,6 +227,8 @@ export default function AdminCoursesClient({
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <Link className="min-h-11 rounded-xl border border-slate-300 px-4 py-2.5 text-sm dark:border-white/20" href={'/' + instituteCode + '/admin/onboarding?tab=courses'}>Bulk Import Courses / Manage Terms</Link>
+        <label className="grid gap-2 text-sm font-semibold">Term<select className={selectClass} value={termFilter} onChange={e => setTermFilter(e.target.value)}><option value="">All terms</option><option value="legacy">Legacy / term not assigned</option>{[...new Map(courses.filter(c => c.termId).map(c => [c.termId!, c.term?.name ?? c.termId!])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
         <label className="grid gap-2 text-sm font-semibold">Instructor
           <select aria-label="Instructor" value={instructorFilter} onChange={event => setInstructorFilter(event.target.value)} className={selectClass}>
             <option value="">All instructors</option>
@@ -237,7 +244,7 @@ export default function AdminCoursesClient({
       <Table
         theme={theme}
         columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
-        rows={courses.filter(course => !instructorFilter || (instructorFilter === "unassigned" ? !course.instructorId : course.instructorId === instructorFilter)) as unknown as Record<string, unknown>[]}
+        rows={courses.filter(course => (!termFilter || (termFilter === 'legacy' ? !course.termId : course.termId === termFilter)) && (!instructorFilter || (instructorFilter === "unassigned" ? !course.instructorId : course.instructorId === instructorFilter))) as unknown as Record<string, unknown>[]}
         emptyMessage="No classes found for this instructor."
       />
 
@@ -250,6 +257,7 @@ export default function AdminCoursesClient({
         }}
       >
         <form key={editingCourse?.id ?? "new"} action={formAction} className="space-y-4">
+          {!editingCourse && <CourseTermField instituteCode={instituteCode} />}
           <input type="hidden" name="instituteCode" value={instituteCode} />
           {editingCourse && (
             <input type="hidden" name="id" value={editingCourse.id} />

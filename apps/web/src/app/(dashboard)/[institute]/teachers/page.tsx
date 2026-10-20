@@ -1,6 +1,5 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import type { InstituteTheme } from "@/lib/theme";
@@ -17,29 +16,24 @@ interface TeacherDashboardProps {
 }
 
 export default async function TeacherDashboardPage({ params }: TeacherDashboardProps) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/teachers/page.tsx", await params);
+  const user = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/teachers/page.tsx", await params);
 
   const { institute } = await params;
-  const session = await getSession();
 
-  if (!session) {
-    redirect(`/login?institute=${institute}`);
-  }
-
-  const role = session.user.role.toUpperCase();
+  const role = user.role.toUpperCase();
   if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
     redirect(`/${institute}`);
   }
 
   const theme: InstituteTheme = getInstituteTheme(institute);
-  const teacherId = session.user.id;
+  const teacherId = user.id;
 
-  const instituteRecord = session.user.institute;
+  const instituteRecord = user.institute;
   if (instituteRecord.code.toLowerCase() !== institute.toLowerCase()) {
     redirect(`/login?institute=${institute}`);
   }
 
-  const calendarPromise = getDashboardCalendar({ ...session.user, instituteId: instituteRecord.id }, institute);
+  const calendarPromise = getDashboardCalendar({ ...user, instituteId: instituteRecord.id }, institute);
 
   // 1. Fetch non-archived courses taught by this instructor
   const taughtCourses = await db.course.findMany({
@@ -202,7 +196,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
 
   return (
     <TeacherDashboardClient
-      userName={session.user.name as string}
+      userName={user.name as string}
       instituteName={instituteRecord.name}
       instituteCode={institute}
       theme={theme}

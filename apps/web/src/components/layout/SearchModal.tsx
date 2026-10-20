@@ -233,7 +233,7 @@ export default function SearchModal({
             {
               id: "prof-codelab",
               title: "CodeLab Analytics",
-              subtitle: "Student code submission telemetry and execution metrics",
+              subtitle: "Student progress, coding errors, and submissions",
               category: "Activities" as const,
               href: `/${instituteCode}/activities/codelab/instructor`,
               icon: Terminal,

@@ -37,14 +37,14 @@ export default function CalendarHeatmap({ submissions }: CalendarHeatmapProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] pb-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] uppercase tracking-wider">
-            📅 Learning Cadence Heatmap
+            When students submit work
           </h3>
           <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-            Submission density across days of the week &amp; time of day ({totalCount} total events)
+            Submissions by day and hour ({totalCount} submissions)
           </p>
         </div>
         <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-[#8B92A5] font-semibold">
-          <span>Less</span>
+          <span>Fewer</span>
           <span className="w-2.5 h-2.5 rounded-xs bg-slate-100 dark:bg-white/[0.04]" />
           <span className="w-2.5 h-2.5 rounded-xs bg-emerald-200 dark:bg-emerald-900/50" />
           <span className="w-2.5 h-2.5 rounded-xs bg-emerald-400 dark:bg-emerald-700/70" />

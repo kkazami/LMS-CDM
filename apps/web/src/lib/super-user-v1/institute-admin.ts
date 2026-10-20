@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto';
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { AccessError, revalidateActor, type Actor } from './actor';
 import { lockAccounts } from './account-lock';
 import { audit } from './audit';
+import { passwordSchema } from '@/lib/auth-schema';
 
 const identitySelect = { id: true, name: true, email: true, role: true, isActive: true, createdAt: true } as const;
 type Institute = { id: string; code: string };
@@ -34,6 +35,44 @@ export async function detailInstituteAdmin(actor: Actor, institute: Institute, u
 }
 
 const createInput = z.object({ name: z.string().trim().min(2).max(100), email: z.string().email().max(254) }).strict();
+const updateInput = createInput.extend({
+  currentPassword: z.string().min(1).max(256),
+  newPassword: passwordSchema.refine(value => Buffer.byteLength(value, 'utf8') <= 72, 'Password must be at most 72 bytes.').optional(),
+}).strict();
+
+export async function updateInstituteAdmin(actor: Actor, institute: Institute, targetId: string, input: unknown) {
+  const parsed = updateInput.safeParse(input);
+  if (!parsed.success) throw new AccessError(400, parsed.error.issues[0]?.message ?? 'Check the account details.');
+  const replacement = parsed.data.newPassword ? await hash(parsed.data.newPassword, 12) : null;
+  try {
+    return await db.$transaction(async tx => {
+      await lockAccounts(tx, [actor.id, targetId]);
+      const operator = await revalidateActor(tx, actor, ['SUPER_USER']);
+      if (!operator.password || !await compare(parsed.data.currentPassword, operator.password)) throw new AccessError(403, 'REAUTH_FAILED');
+      const target = await tx.user.findUnique({ where: { id: targetId } });
+      if (!target) throw new AccessError(404, 'Account not found.');
+      if (target.id === actor.id || target.role !== 'ADMIN' || target.instituteId !== institute.id) throw new AccessError(403, 'Forbidden target.');
+      if (replacement && target.credentialProvisioningState != null && target.credentialProvisioningState !== 'COMPLETE') throw new AccessError(409, 'HANDOFF_INCOMPLETE');
+      if (replacement) {
+        const setup = await tx.$queryRaw<Array<{ available: boolean }>>`SELECT to_regprocedure('super_user_security.reset_administrator_password(text,text,text,text,text)') IS NOT NULL AS available`;
+        if (!setup[0]?.available) throw new AccessError(503, 'CREDENTIAL_SETUP_REQUIRED');
+      }
+      const email = parsed.data.email.toLowerCase();
+      const updated = await tx.user.update({ where: { id: targetId }, data: { name: parsed.data.name, email }, select: identitySelect });
+      if (replacement) {
+        await tx.$queryRaw`SELECT super_user_security.reset_administrator_password(${actor.sessionId}, ${actor.tokenHash}, ${targetId}, ${institute.id}, ${replacement})::text`;
+      } else if (email !== target.email) {
+        await tx.session.deleteMany({ where: { userId: targetId } });
+        await tx.passwordResetOtp.updateMany({ where: { userId: targetId, isUsed: false }, data: { isUsed: true } });
+      }
+      await audit(tx, { actorId: actor.id, actorSessionId: actor.sessionId, targetId, action: 'ADMIN_UPDATE_PROFILE', instituteId: institute.id });
+      return { institute, instituteAdmin: iaIdentity(updated, institute.code), credentialsChanged: Boolean(replacement), sessionsEnded: Boolean(replacement) || email !== target.email };
+    }, { timeout: 15000 });
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') throw new AccessError(409, 'Account already exists.');
+    throw error;
+  }
+}
 export async function createInstituteAdmin(actor: Actor, institute: Institute, input: unknown) {
   const parsed = createInput.safeParse(input);
   if (!parsed.success) throw new AccessError(400, 'Only name and email are accepted.');

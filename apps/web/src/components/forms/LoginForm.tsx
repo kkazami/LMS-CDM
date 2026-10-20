@@ -10,7 +10,7 @@ import { triggerNativeHaptic, syncSessionToNative } from "@/lib/mobile-bridge";
 import type { InstituteTheme } from "@/lib/theme";
 
 type LoginFormValues = {
-  email: string;
+  identifier: string;
   password: string;
 };
 
@@ -42,11 +42,13 @@ export default function LoginForm({
   }, [isDesktopAdmin, isDesktopMode]);
 
   const [values, setValues] = useState<LoginFormValues>({
-    email: "",
+    identifier: "",
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [activated, setActivated] = useState(false);
+  useEffect(() => { setActivated(new URLSearchParams(window.location.search).get('activated') === '1'); }, []);
 
   function updateField<K extends keyof LoginFormValues>(
     key: K,
@@ -99,7 +101,7 @@ export default function LoginForm({
       let targetPath = `/${data.user.institute.code}`;
 
       if (role === 'SUPER_USER') {
-        targetPath += '/academic-operations/courses';
+        targetPath += '/academic-operations';
       } else if (isDesktopMode || role === "ADMIN") {
         targetPath += "/admin";
       } else if (role === "STUDENT") {
@@ -125,14 +127,15 @@ export default function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4">
+      {activated && <p role="status" className="text-sm">Account activated. You can now sign in.</p>}
       <Input
-        id="email"
-        name="email"
-        label="Email"
-        type="email"
+        id="identifier"
+        name="identifier"
+        label={isDesktopMode ? "Email" : "Email or student ID"}
+        type="text"
         placeholder={isDesktopMode ? "admin@school.edu" : "student@school.edu"}
-        value={values.email}
-        onChange={(event) => updateField("email", event.target.value)}
+        value={values.identifier}
+        onChange={(event) => updateField("identifier", event.target.value)}
         theme={theme}
         required
       />
@@ -167,15 +170,16 @@ export default function LoginForm({
       <Button type="submit" theme={theme} disabled={isSubmitting}>
         {isSubmitting ? "Signing In..." : "Sign In"}
       </Button>
+      <Link href="/activate" className="text-sm underline underline-offset-4">Request a New Activation Link</Link>
 
       <div className="flex items-center justify-between gap-3 text-sm text-gray-600">
-        <span>{isDesktopMode ? "New Administrator?" : "New to CdM LMS?"}</span>
+        <span>Need an account?</span>
         <Link
           href={registerLink}
           className="font-medium hover:underline"
           style={{ color: theme.colors.primary }}
         >
-          {isDesktopMode ? "Register Administrator" : "Create an account"}
+          Contact the Registrar
         </Link>
       </div>
     </form>

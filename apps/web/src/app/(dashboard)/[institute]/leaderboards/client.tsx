@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Trophy,
@@ -44,6 +44,8 @@ interface LeaderboardsClientProps {
   instituteCode: string;
   theme: InstituteTheme;
   initialSelfAnonymized: boolean;
+  initialCourseId?: string;
+  initialActivityId?: string;
 }
 
 type TabType = "global" | "course";
@@ -55,43 +57,57 @@ export default function LeaderboardsClient({
   currentUserId,
   theme,
   initialSelfAnonymized,
+  initialCourseId,
+  initialActivityId,
 }: LeaderboardsClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>("global");
+  const [activeTab, setActiveTab] = useState<TabType>(initialCourseId || leaderboardActivities.length ? "course" : "global");
   const [selectedCourseId, setSelectedCourseId] = useState<string>(
-    enrolledCourses[0]?.id || ""
+    initialCourseId || leaderboardActivities[0]?.courseId || enrolledCourses[0]?.id || ""
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnonymized, setIsAnonymized] = useState(initialSelfAnonymized);
   const [togglingPrivacy, setTogglingPrivacy] = useState(false);
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(initialActivityId ?? null);
   const [activityRankings, setActivityRankings] = useState<{rank:number;studentId:string;name:string;avatarUrl:string|null;department:string;score:number|null;maxPoints:number|null;exp:number;level:number;levelTier:string;streak:number;badgeCount:number;isSelf:boolean;isAnonymized:boolean}[]>([]);
-  const [activityMeta, setActivityMeta] = useState<{ title: string; maxPoints: number | null } | null>(null);
+  const [activityMeta, setActivityMeta] = useState<{ title: string; maxPoints: number | null; course: { code: string; title: string } } | null>(null);
   const [activityRewards, setActivityRewards] = useState<{ placement: number; rewardLabel: string; bonusExp: number }[]>([]);
-  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [loadingActivity, setLoadingActivity] = useState(Boolean(initialActivityId));
+  const [activityError, setActivityError] = useState<string | null>(null);
   const [profileModal, setProfileModal] = useState<{open:boolean;studentId:string;name:string;avatarUrl:string|null;department:string;exp:number;level:number;levelTier:string;streak:number;badgeCount:number;isSelf:boolean;isAnonymized:boolean}|null>(null);
 
   const filteredActivities = useMemo(() => {
     return leaderboardActivities.filter(a => a.courseId === selectedCourseId);
   }, [leaderboardActivities, selectedCourseId]);
 
-  async function fetchActivityLeaderboard(syllabusItemId: string) {
-    try {
-      setLoadingActivity(true);
-      setSelectedActivityId(syllabusItemId);
-      const res = await fetch(`/api/leaderboard/activity?syllabusItemId=${syllabusItemId}`);
-      if (res.ok) {
+  const displayedActivityRankings = activityRankings.filter(student => student.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setActivityRankings([]);
+    setActivityMeta(null);
+    setActivityRewards([]);
+    setActivityError(null);
+    setLoadingActivity(Boolean(selectedActivityId));
+    if (!selectedActivityId) return;
+    async function load() {
+      try {
+        const res = await fetch(`/api/leaderboard/activity?syllabusItemId=${encodeURIComponent(selectedActivityId!)}`, { signal: controller.signal, cache: "no-store" });
         const data = await res.json();
+        if (controller.signal.aborted) return;
+        if (!res.ok) throw new Error(data.message || "Could not load this leaderboard.");
         setActivityRankings(data.rankings);
         setActivityMeta(data.item);
         setActivityRewards(data.rewards || []);
+      } catch (error) {
+        if (!controller.signal.aborted) setActivityError(error instanceof Error ? error.message : "Could not load this leaderboard.");
+      } finally {
+        if (!controller.signal.aborted) setLoadingActivity(false);
       }
-    } catch {
-      console.error('Failed to fetch activity leaderboard');
-    } finally {
-      setLoadingActivity(false);
     }
-  }
+    void load();
+    return () => controller.abort();
+  }, [selectedActivityId]);
 
   function openProfile(student: { studentId: string; name: string; avatarUrl: string | null; department: string; exp: number; level: number; levelTier: string; streak: number; badgeCount: number; isSelf: boolean; isAnonymized: boolean }) {
     if (student.isAnonymized && !student.isSelf) return;
@@ -228,7 +244,8 @@ export default function LeaderboardsClient({
         {activeTab === "course" && enrolledCourses.length > 0 && (
           <select
             value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
+            onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedActivityId(null); setSearchQuery(""); }}
+            aria-label="Class"
             className="w-full sm:w-56 px-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs font-bold text-slate-900 dark:text-[#F0F2F8] outline-none"
           >
             {enrolledCourses.map((c) => (
@@ -240,7 +257,7 @@ export default function LeaderboardsClient({
         )}
 
         {/* Search */}
-        <div className="relative w-full sm:w-60">
+        {(activeTab === "global" || selectedActivityId) && <div className="relative w-full sm:w-60">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -249,11 +266,11 @@ export default function LeaderboardsClient({
             placeholder="Search students..."
             className="w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 outline-none focus:border-[#F97316] transition-colors"
           />
-        </div>
+        </div>}
       </div>
 
       {/* Your Rank Floating Snapshot Card (if logged in user has rank) */}
-      {selfRecord && (
+      {activeTab === "global" && selfRecord && (
         <div className="p-4 rounded-3xl border border-orange-500/30 bg-orange-500/5 dark:bg-orange-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#F97316] text-white font-black text-sm">
@@ -390,7 +407,7 @@ export default function LeaderboardsClient({
                 filteredActivities.map(activity => (
                   <button
                     key={activity.id}
-                    onClick={() => fetchActivityLeaderboard(activity.id)}
+                    onClick={() => { setLoadingActivity(true); setSelectedActivityId(activity.id); }}
                     className="text-left p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] hover:border-[#F97316]/50 transition-colors shadow-xs"
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -431,6 +448,7 @@ export default function LeaderboardsClient({
                   setActivityRankings([]);
                   setActivityMeta(null);
                   setActivityRewards([]);
+                  setSearchQuery("");
                 }}
                 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] flex items-center gap-1.5 cursor-pointer"
               >
@@ -439,6 +457,8 @@ export default function LeaderboardsClient({
               
               {loadingActivity ? (
                 <div className="p-12 text-center text-xs text-slate-500">Loading rankings...</div>
+              ) : activityError ? (
+                <p role="alert" className="p-6 text-sm text-red-600">{activityError}</p>
               ) : (
                 <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] overflow-hidden shadow-xs">
                   <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -447,7 +467,7 @@ export default function LeaderboardsClient({
                         {activityMeta?.title}
                       </h2>
                       <p className="text-[10px] text-slate-500 dark:text-[#8B92A5]">
-                        {activityRankings.length} participants {activityMeta?.maxPoints ? `• Max Points: ${activityMeta.maxPoints}` : ''}
+                        {activityMeta?.course.code} • {activityRankings.length} ranked students {activityMeta?.maxPoints != null ? `• Out of ${activityMeta.maxPoints} points` : ''}
                       </p>
                     </div>
                     {activityRewards.length > 0 && (
@@ -465,9 +485,11 @@ export default function LeaderboardsClient({
 
                   <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {activityRankings.length === 0 ? (
-                      <div className="p-12 text-center text-xs text-slate-500">No rankings available yet.</div>
+                      <div className="p-12 text-center text-xs text-slate-500">No released scores yet. Scores appear here after the instructor grades and returns the work or releases the quiz results.</div>
                     ) : (
-                      activityRankings.map(student => (
+                      displayedActivityRankings.length === 0 ? (
+                        <p className="p-6 text-center text-xs text-slate-500">No students match your search.</p>
+                      ) : displayedActivityRankings.map(student => (
                         <div
                           key={student.studentId}
                           onClick={() => openProfile(student)}
@@ -486,7 +508,6 @@ export default function LeaderboardsClient({
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{student.name}</span>
                                 {student.isSelf && <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-orange-500/15 text-orange-600 font-bold">You</span>}
-                                <LevelBadge exp={student.exp} size="sm" />
                                 {(() => {
                                   const matchingReward = activityRewards
                                     .filter(r => student.rank <= r.placement)
@@ -504,7 +525,7 @@ export default function LeaderboardsClient({
                           <div className="flex items-center gap-4 text-right">
                             {student.score !== null && (
                               <div className="text-xs font-bold text-slate-600 dark:text-[#8B92A5]">
-                                {student.score} {activityMeta?.maxPoints ? `/ ${activityMeta.maxPoints}` : 'pts'}
+                                {student.score} {activityMeta?.maxPoints != null ? `/ ${activityMeta.maxPoints}` : 'pts'}
                               </div>
                             )}
                           </div>

@@ -27,10 +27,10 @@ export function privilegedRole(role: unknown): boolean {
 }
 
 export function mayAdmitAccount(account: {
-  role: unknown; isActive: boolean; credentialProvisioningState?: string | null;
+  role: unknown; isActive: boolean; credentialProvisioningState?: string | null; activationStatus?: string;
 }): boolean {
   const role = canonicalRole(account.role);
-  if (role === 'UNKNOWN' || !account.isActive) return false;
+  if (role === 'UNKNOWN' || !account.isActive || account.activationStatus === 'PENDING_ACTIVATION') return false;
   // Existing Administrators keep their credential lifecycle. The database guard
   // forbids creating another ADMIN with null provisioning state.
   if (role === 'ADMIN' && account.credentialProvisioningState == null) return true;
@@ -39,7 +39,7 @@ export function mayAdmitAccount(account: {
 }
 
 export function mayUsePublicReset(account: {
-  role: unknown; isActive: boolean; credentialProvisioningState?: string | null;
+  role: unknown; isActive: boolean; credentialProvisioningState?: string | null; activationStatus?: string;
 }): boolean {
   const role = canonicalRole(account.role);
   return (role === 'INSTRUCTOR' || role === 'STUDENT') && mayAdmitAccount(account);

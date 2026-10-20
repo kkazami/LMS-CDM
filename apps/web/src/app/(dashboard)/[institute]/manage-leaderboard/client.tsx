@@ -670,7 +670,7 @@ export default function ManageLeaderboardClient({
                           </button>
 
                           <Link
-                            href={`/${instituteCode}/leaderboards`}
+                            href={`/${instituteCode}/leaderboards?courseId=${encodeURIComponent(activity.courseId)}&syllabusItemId=${encodeURIComponent(activity.id)}`}
                             className="inline-flex items-center gap-1 text-[11px] font-bold text-orange-600 dark:text-orange-400 hover:underline"
                           >
                             <span>View Leaderboard</span>
@@ -1100,7 +1100,7 @@ export default function ManageLeaderboardClient({
                   Enable Leaderboard for this Activity
                 </span>
                 <p className="text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                  When enabled, student scores will appear on the Course leaderboard tab with the rewards configured below.
+                  Students in this class can see this quiz or activity under Course in Leaderboard. Only graded activities and released quiz scores are ranked.
                 </p>
               </div>
             </label>
