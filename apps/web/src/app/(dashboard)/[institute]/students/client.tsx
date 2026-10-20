@@ -39,6 +39,7 @@ import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import StudentParticipationCard from "@/components/institute/ite/StudentParticipationCard";
 import StudentFocusCard from "@/components/focus/StudentFocusCard";
+import StudentSuggestionsCard from "@/components/guidance/StudentSuggestionsCard";
 import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 import { classifyDueDate, splitOverdue, type DueStatus } from "@/lib/dashboard/due-dates";
 
@@ -611,6 +612,7 @@ export default function StudentDashboardClient({
           <div className="space-y-6">
             {instituteCode.toLowerCase() === "ite" && (
               <>
+                <StudentSuggestionsCard theme={theme} instituteCode={instituteCode} />
                 <StudentFocusCard theme={theme} instituteCode={instituteCode} />
                 <StudentParticipationCard theme={theme} instituteCode={instituteCode} />
               </>

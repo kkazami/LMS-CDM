@@ -11,6 +11,7 @@ import PomodoroTimer from "@/components/learning-materials/PomodoroTimer";
 import FocusSidebar from "@/components/learning-materials/FocusSidebar";
 import ConvertFlashcardsButton from "@/components/courses/ConvertFlashcardsButton";
 import FocusButton from "@/components/focus/FocusButton";
+import StudyHelpPanel from "@/components/guidance/StudyHelpPanel";
 import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
@@ -119,6 +120,12 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
         </div>
 
         <div className="flex items-center gap-3">
+          {institute.toLowerCase() === "ite" && (session.user.role as string)?.toUpperCase() === "STUDENT" && (
+            <StudyHelpPanel
+              materialId={materialId}
+              materialTitle={material.title}
+            />
+          )}
           <FocusButton
             contextType="MATERIAL"
             courseId={courseId}

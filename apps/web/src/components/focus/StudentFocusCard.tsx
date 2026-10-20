@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import type { FocusSummaryResponse } from "@/lib/ite/focus/types";
+import { pluralize } from "@/lib/ite/guidance/suggestions";
 import { useFocusMode } from "./FocusModeContext";
 
 interface StudentFocusCardProps {
@@ -159,7 +160,7 @@ export default function StudentFocusCard({ theme, instituteCode }: StudentFocusC
                 {summary?.focusedMinutesThisWeek ?? 0}
               </span>
               <span className="ml-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                mins this week
+                {pluralize(summary?.focusedMinutesThisWeek ?? 0, "min", "mins", false)} this week
               </span>
             </div>
 

@@ -125,6 +125,9 @@ model User {
   // ─── ITE Focus Mode relations ───
   focusSessions FocusSession[]
 
+  // ─── ITE AI Guidance relations ───
+  aiGuidanceRequests AiGuidanceRequest[]
+
   @@unique([id, instituteId])
 }
 
@@ -192,8 +195,11 @@ model Course {
 
   // ─── ITE Focus Mode relations ───
   focusSessions FocusSession[]
-  programId     String?
-  program       AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
+  // ─── ITE AI Guidance relations ───
+  aiGuidanceRequests AiGuidanceRequest[]
+  programId          String?
+  program            AcademicProgram?    @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
 
   @@unique([instituteId, termId, code, section])
   @@index([instituteId])
@@ -1589,6 +1595,27 @@ model FocusSession {
 
   @@index([userId, startedAt])
   @@index([userId, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ─── ITE AI Guidance ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+
+model AiGuidanceRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String?
+  materialId String?
+  kind       String   @default("MATERIAL_HELP")
+  status     String
+  provider   String?
+  createdAt  DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([courseId, createdAt])
 }
 
 // ─────────────────────────────────────────────────────────────
