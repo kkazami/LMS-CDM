@@ -40,7 +40,7 @@ const CATEGORY_COLORS = {
   OVERDUE: "text-red-500 bg-red-500/10 border-red-500/20",
   DUE_SOON: "text-amber-500 bg-amber-500/10 border-amber-500/20",
   ENGAGEMENT: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
-  FOCUS: "text-orange-500 bg-orange-500/10 border-orange-500/20",
+  FOCUS: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20",
   ON_TRACK: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
 };
 
@@ -75,7 +75,7 @@ export default function StudentSuggestionsCard({
     };
   }, []);
 
-  const primaryColor = theme.colors.primary || "#F97316";
+  const primaryColor = theme.colors.primary || "#2563EB";
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs space-y-4">
@@ -137,7 +137,7 @@ export default function StudentSuggestionsCard({
                     <Icon className="h-3.5 w-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-orange-500 transition-colors truncate">
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                       {item.title}
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-[#8B92A5] line-clamp-2 leading-relaxed mt-0.5">
@@ -146,7 +146,7 @@ export default function StudentSuggestionsCard({
                   </div>
                 </div>
 
-                <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
               </Link>
             );
           })}

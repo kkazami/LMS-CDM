@@ -86,7 +86,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:from-orange-600 hover:to-amber-600 transition-all cursor-pointer active:scale-95"
+        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-all cursor-pointer active:scale-95"
         aria-label="Open AI Study Help for this lesson"
       >
         <Sparkles className="h-4 w-4" />
@@ -109,7 +109,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
             {/* ── Header ── */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#151824]/60">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-orange-500/10 text-[#F97316] flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
@@ -157,10 +157,10 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
                   aria-live="polite"
                 >
                   <div className="relative">
-                    <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-[#F97316]">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                       <Sparkles className="h-7 w-7 animate-pulse" />
                     </div>
-                    <Loader2 className="h-5 w-5 animate-spin text-[#F97316] absolute -top-1 -right-1" />
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400 absolute -top-1 -right-1" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-[#F0F2F8]">
@@ -214,7 +214,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
                 <div className="space-y-5 animate-in fade-in duration-200">
                   {/* Summary Card */}
                   <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#171A27] p-4 sm:p-5 shadow-xs">
-                    <div className="flex items-center gap-2 mb-2.5 text-[#F97316]">
+                    <div className="flex items-center gap-2 mb-2.5 text-blue-600 dark:text-blue-400">
                       <BookOpen className="h-4 w-4" />
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Summary
@@ -227,7 +227,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
 
                   {/* Key Takeaways */}
                   <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#171A27] p-4 sm:p-5 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3 text-amber-500">
+                    <div className="flex items-center gap-2 mb-3 text-blue-600 dark:text-blue-400">
                       <CheckCircle2 className="h-4 w-4" />
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Key Points
@@ -236,7 +236,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
                     <ul className="space-y-2.5">
                       {data.keyPoints.map((point, idx) => (
                         <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-[#D1D5DB] leading-relaxed">
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-2" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0 mt-2" />
                           <span>{point}</span>
                         </li>
                       ))}
@@ -260,7 +260,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
                     <button
                       type="button"
                       onClick={() => setShowAnswer(!showAnswer)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F97316] hover:underline cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
                       {showAnswer ? (
                         <>
@@ -276,7 +276,7 @@ export default function StudyHelpPanel({ materialId, materialTitle }: StudyHelpP
                     </button>
 
                     {showAnswer && (
-                      <div className="mt-3 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-500/20 animate-in fade-in duration-150">
+                      <div className="mt-3 p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-500/20 animate-in fade-in duration-150">
                         <p className="text-xs text-slate-700 dark:text-[#CBD5E1] leading-relaxed">
                           {data.practiceQuestion.answer}
                         </p>

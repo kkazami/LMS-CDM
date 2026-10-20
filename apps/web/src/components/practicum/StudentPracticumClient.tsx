@@ -177,10 +177,10 @@ export default function StudentPracticumClient({
                   id="placement-switch"
                   value={placement.id}
                   onChange={(e) => router.push(`?placement=${encodeURIComponent(e.target.value)}`)}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 dark:border-white/15 dark:bg-[#1E2132] dark:text-[#F0F2F8]"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 dark:border-white/15 dark:bg-[#1E2132] dark:text-[#F0F2F8] [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {placements.map((p) => (
-                    <option key={p.id} value={p.id}>
+                    <option key={p.id} value={p.id} className="bg-white dark:bg-[#1E2132] text-slate-900 dark:text-[#F0F2F8]">
                       {p.schoolYear} · {p.schoolName}
                     </option>
                   ))}

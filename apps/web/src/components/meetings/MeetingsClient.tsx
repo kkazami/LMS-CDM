@@ -298,11 +298,13 @@ export default function MeetingsClient({
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="ALL">All Courses</option>
+              <option value="ALL" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                All Courses
+              </option>
               {courses.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
                   {c.code}
                 </option>
               ))}
@@ -315,13 +317,23 @@ export default function MeetingsClient({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="LIVE">Live Now</option>
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="ENDED">Ended</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="ALL" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                All Statuses
+              </option>
+              <option value="LIVE" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                Live Now
+              </option>
+              <option value="SCHEDULED" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                Scheduled
+              </option>
+              <option value="ENDED" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                Ended
+              </option>
+              <option value="CANCELLED" className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
+                Cancelled
+              </option>
             </select>
           </div>
         </div>

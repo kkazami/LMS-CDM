@@ -174,11 +174,11 @@ export default function NewMeetingModal({
               id="meeting-course"
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-xs"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
               required
             >
               {courses.map((c) => (
-                <option key={c.id} value={c.id} className="dark:bg-[#161922]">
+                <option key={c.id} value={c.id} className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
                   {c.code} — {c.title}
                 </option>
               ))}
