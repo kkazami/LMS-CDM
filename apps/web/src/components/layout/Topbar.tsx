@@ -10,6 +10,8 @@ import NotificationBell from "@/components/layout/NotificationBell";
 import LevelBadge from "@/components/common/LevelBadge";
 import SearchModal from "@/components/layout/SearchModal";
 import TopbarFocusButton from "@/components/focus/TopbarFocusButton";
+import TopbarOfflineIndicator from "@/components/offline/TopbarOfflineIndicator";
+import { clearAllOfflineData } from "@/lib/ite/offline/idb";
 import { useTheme } from "@/lib/theme-context";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 
@@ -91,6 +93,7 @@ export default function Topbar({
     try {
       triggerNativeHaptic("light");
       logoutFromNative();
+      await clearAllOfflineData().catch(() => {});
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = `/login?institute=${instituteCode}&force=true`;
     } catch (error) {
@@ -238,6 +241,9 @@ export default function Topbar({
 
           {/* Focus Mode trigger button (ITE students only) */}
           <TopbarFocusButton pathname={pathname} />
+
+          {/* Offline indicator (ITE students only) */}
+          <TopbarOfflineIndicator instituteCode={instituteCode} userRole={userRole} />
 
           {/* Light / Dark Mode Toggle Button */}
           <button

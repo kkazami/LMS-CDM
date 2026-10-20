@@ -154,6 +154,7 @@ export default async function InstituteLayout({
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}
+      isEligibleForOffline={focusModeEligible}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}

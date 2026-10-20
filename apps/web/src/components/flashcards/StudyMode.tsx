@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { FlashcardCard, FlashcardStudyStats } from "@/lib/lms-types";
 import FocusButton from "@/components/focus/FocusButton";
+import { useOfflineStatus } from "@/components/offline/useOfflineStatus";
+import { saveCachedDeck, getCachedDeck, savePendingFlashcardReview } from "@/lib/ite/offline/idb";
+import { generateIdempotencyKey } from "@/lib/ite/offline/pure-logic";
 import {
   ArrowLeft,
   Lightbulb,
@@ -121,6 +124,7 @@ export default function StudyMode({
   // ── Remote data ──
   const [allCards, setAllCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const { online, userId } = useOfflineStatus();
   const [stats, setStats] = useState<FlashcardStudyStats | null>(null);
   const [expEarned, setExpEarned] = useState<number | null>(null);
   const sessionStartTimeRef = useRef<number>(Date.now());
@@ -150,7 +154,7 @@ export default function StudyMode({
   const [tfAnswer, setTfAnswer] = useState<boolean | null>(null);
   const [tfAnswered, setTfAnswered] = useState(false);
 
-  // ── Fetch cards from API ──
+  // ── Fetch cards from API (or IndexedDB cache when offline) ──
   useEffect(() => {
     (async () => {
       try {
@@ -159,16 +163,53 @@ export default function StudyMode({
         const data = await res.json();
         setAllCards(data.cards);
         setStats(data.stats);
+        if (userId) {
+          saveCachedDeck(userId, {
+            deckId,
+            userId,
+            cards: data.cards,
+            stats: data.stats,
+            cachedAt: Date.now(),
+          }).catch(() => {});
+        }
+      } catch (err) {
+        if (userId) {
+          try {
+            const cached = await getCachedDeck(userId, deckId);
+            if (cached && Array.isArray(cached.cards) && cached.cards.length > 0) {
+              setAllCards(cached.cards as FlashcardCard[]);
+              if (cached.stats) setStats(cached.stats as FlashcardStudyStats);
+              return;
+            }
+          } catch {}
+        }
+        console.warn("Failed to load cards", err);
       } finally {
         setLoading(false);
       }
     })();
-  }, [deckId]);
+  }, [deckId, userId]);
 
   // Trigger session completion EXP grant when study finishes
   useEffect(() => {
     if (phase === "summary" && sessionResults.length >= 3) {
       const elapsedSeconds = Math.max(5, Math.round((Date.now() - sessionStartTimeRef.current) / 1000));
+      const idempotencyKey = generateIdempotencyKey();
+
+      if (!navigator.onLine && userId) {
+        savePendingFlashcardReview(userId, {
+          id: `rev_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          idempotencyKey,
+          deckId,
+          cardsReviewed: sessionResults.length,
+          durationSeconds: elapsedSeconds,
+          timestamp: Date.now(),
+          retryCount: 0,
+          status: "PENDING",
+        }).catch(() => {});
+        return;
+      }
+
       fetch("/api/flashcards/complete-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,6 +217,7 @@ export default function StudyMode({
           deckId,
           cardsReviewed: sessionResults.length,
           durationSeconds: elapsedSeconds,
+          idempotencyKey,
         }),
       })
         .then((r) => r.json())
@@ -184,9 +226,22 @@ export default function StudyMode({
             setExpEarned(data.grantedExp);
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          if (userId) {
+            savePendingFlashcardReview(userId, {
+              id: `rev_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              idempotencyKey,
+              deckId,
+              cardsReviewed: sessionResults.length,
+              durationSeconds: elapsedSeconds,
+              timestamp: Date.now(),
+              retryCount: 0,
+              status: "PENDING",
+            }).catch(() => {});
+          }
+        });
     }
-  }, [phase, deckId, sessionResults.length]);
+  }, [phase, deckId, sessionResults.length, userId]);
 
   const currentCard = sessionCards[currentIndex] ?? null;
 
@@ -571,6 +626,12 @@ export default function StudyMode({
               <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-xs font-black animate-in zoom-in-95">
                 <span>✨</span>
                 <span>+{expEarned} EXP Earned!</span>
+              </div>
+            )}
+
+            {!online && (
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-semibold animate-in zoom-in-95">
+                <span>You're offline. Your review will sync when you reconnect.</span>
               </div>
             )}
           </div>

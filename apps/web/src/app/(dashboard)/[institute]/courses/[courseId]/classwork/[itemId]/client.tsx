@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
+import OfflineDraftCard from "@/components/offline/OfflineDraftCard";
 import type { InstituteTheme } from "@/lib/theme";
 import FocusButton from "@/components/focus/FocusButton";
 
@@ -370,15 +371,26 @@ export default function AssignmentDetailClient({
                 </div>
               ) : (
                 submission && (
-                  <YourWorkPanel
-                    submission={submission}
-                    isPastDeadline={isPastDeadline}
-                    maxPoints={item.maxPoints}
-                    instituteCode={instituteCode}
-                    courseId={courseId}
-                    itemId={item.id}
-                    theme={theme}
-                  />
+                  <>
+                    {isStudent && instituteCode.toLowerCase() === "ite" && (
+                      <OfflineDraftCard
+                        itemId={item.id}
+                        courseId={courseId}
+                        itemTitle={item.title}
+                        isPastDeadline={isPastDeadline}
+                        isSubmitted={submission.status === "SUBMITTED"}
+                      />
+                    )}
+                    <YourWorkPanel
+                      submission={submission}
+                      isPastDeadline={isPastDeadline}
+                      maxPoints={item.maxPoints}
+                      instituteCode={instituteCode}
+                      courseId={courseId}
+                      itemId={item.id}
+                      theme={theme}
+                    />
+                  </>
                 )
               )}
             </div>
