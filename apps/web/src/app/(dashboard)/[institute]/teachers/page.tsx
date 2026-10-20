@@ -73,7 +73,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
 
   const courseIds = taughtCourses.map((c) => c.id);
 
-  const [layouts, pendingEnrollments, pendingWorkSubmissions] = await Promise.all([
+  const [layouts, pendingEnrollments] = await Promise.all([
     db.dashboardLayout.findMany({
       where: { userId: teacherId, courseId: { in: courseIds } },
     }),
@@ -99,28 +99,6 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
         },
       },
       orderBy: { createdAt: "desc" },
-    }),
-    db.studentSubmission.findMany({
-      where: {
-        syllabusItem: {
-          courseId: { in: courseIds },
-        },
-        status: "SUBMITTED",
-        OR: [{ grade: null }, { isReturned: false }],
-      },
-      select: {
-        id: true,
-        syllabusItemId: true,
-        submittedAt: true,
-        syllabusItem: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            courseId: true,
-          },
-        },
-      },
     }),
   ]);
   const layoutMap = new Map<string, number>();

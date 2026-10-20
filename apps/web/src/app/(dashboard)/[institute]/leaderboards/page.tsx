@@ -35,7 +35,6 @@ export default async function LeaderboardsPage({
         exp: true,
         level: true,
         levelTier: true,
-        currentStreak: true,
         loginStreakCurrent: true,
         isLeaderboardAnonymized: true,
         student: {

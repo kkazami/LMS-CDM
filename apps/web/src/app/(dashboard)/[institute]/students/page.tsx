@@ -39,7 +39,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     getStudentEnrollments(studentId, instituteRecord.id),
     db.gamificationProfile.findUnique({
       where: { studentId },
-      select: { exp: true, loginStreakCurrent: true, level: true },
+      select: { exp: true, loginStreakCurrent: true },
     }),
     db.enrollment.count({
       where: {

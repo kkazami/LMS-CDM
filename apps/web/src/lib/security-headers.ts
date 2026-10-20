@@ -18,13 +18,13 @@ export function getSecurityHeaders(): Record<string, string> {
     "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
     // Connect sources: LMS API, OpenAI API if configured, Judge0 service
     "connect-src 'self' https: http://localhost:* ws: wss:",
-    // Practicum: uploaded demo videos (Vercel Blob) and privacy-friendly YouTube embeds
+    // Practicum: uploaded demo videos (Vercel Blob)
     "media-src 'self' blob: https:",
-    "frame-src https://www.youtube-nocookie.com",
     // Worker sources for Monaco Editor and PDF.js
     "worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com",
-    // Frame sources for document viewer (YouTube, Office Online embeds)
-    "frame-src 'self' https://www.youtube.com https://view.officeapps.live.com blob:",
+    // Frame sources: document viewer (YouTube, Office Online embeds) and Practicum's
+    // privacy-friendly YouTube embeds. A CSP directive may appear only once (browsers ignore repeats).
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://view.officeapps.live.com blob:",
     // Prevent clickjacking: no framing allowed
     "frame-ancestors 'none'",
     "base-uri 'self'",
