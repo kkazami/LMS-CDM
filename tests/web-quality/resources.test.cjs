@@ -116,11 +116,13 @@ test('shared API client preserves a complete roster by fetching bounded pages in
 });
 
 test('CodeLab bounds provider work across concurrent requests and releases slots after completion', async () => {
+  const providerEnv = { JUDGE0_URL: process.env.JUDGE0_URL, JUDGE0_AUTH_TOKEN: process.env.JUDGE0_AUTH_TOKEN };
+  process.env.JUDGE0_URL = 'https://runner.example.invalid'; process.env.JUDGE0_AUTH_TOKEN = 'synthetic-token';
   const api = await compile(`export * from './apps/web/src/features/interactive-activities/codelab/utils/judge0-config';`);
   const previous = global.fetch; let release; const gate = new Promise(resolve => release = resolve); let requests = 0;
   global.fetch = async () => { requests++; await gate; return Response.json({ stdout: Buffer.from('safe').toString('base64'), status: { id: 3, description: 'Accepted' } }); };
   try { const pending = Array.from({ length: 4 }, () => api.executeJudge0Submission('synthetic', 54)); await assert.rejects(api.executeJudge0Submission('fifth', 54), error => error instanceof api.CodeRunnerUnavailableError); assert.equal(requests, 4); release(); await Promise.all(pending); await api.executeJudge0Submission('next', 54); assert.equal(requests, 5); }
-  finally { release(); global.fetch = previous; }
+  finally { release(); global.fetch = previous; for (const [key, value] of Object.entries(providerEnv)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } }
 });
 
 test('authorized historical data-URL files remain downloadable even when recorded as LINK', async () => {

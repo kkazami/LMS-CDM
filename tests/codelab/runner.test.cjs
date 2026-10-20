@@ -7,7 +7,7 @@ const { transformSync } = require(require.resolve("esbuild", { paths: [path.dirn
 
 const code = transformSync(fs.readFileSync("apps/web/src/features/interactive-activities/codelab/utils/judge0-config.ts", "utf8"), { loader: "ts", format: "cjs" }).code;
 const encoded = text => Buffer.from(text).toString("base64");
-function runner(replies, env = {}, clock) {
+function runner(replies, env = { JUDGE0_RAPIDAPI_KEY: 'synthetic-key' }, clock) {
   const module = { exports: {} }, calls = [];
   vm.runInNewContext(code, { module, exports: module.exports, Buffer, URL, process: { env }, AbortSignal,
     Date: clock || Date, setTimeout: resolve => { resolve(); },
@@ -53,7 +53,7 @@ test("provider errors, malformed replies and internal sandbox failures are servi
 
 test("queue polling has an overall deadline", async () => {
   let time = 0;
-  const r = runner(Array.from({ length: 10 }, () => ({ body: { token: "job-123", status: { id: 2 } } })), {}, class extends Date { static now() { time += 10_001; return time; } });
+  const r = runner(Array.from({ length: 10 }, () => ({ body: { token: "job-123", status: { id: 2 } } })), { JUDGE0_RAPIDAPI_KEY: 'synthetic-key' }, class extends Date { static now() { time += 10_001; return time; } });
   await assert.rejects(r.api.executeJudge0Submission("code", 54), error => error instanceof r.api.CodeRunnerUnavailableError);
   assert.ok(r.calls.length < 10);
 });
@@ -66,4 +66,22 @@ test("configured provider failures do not resend code or credentials to another 
   assert.equal(r.calls[0].options.headers["X-RapidAPI-Key"], undefined);
   const rapid = runner([], { JUDGE0_RAPIDAPI_KEY: "synthetic-key" });
   assert.equal(rapid.api.getJudge0BaseUrl(), "https://judge0-ce.p.rapidapi.com");
+});
+
+test('missing credentials and unsafe or public-demo destinations fail before sending source code', async () => {
+  for (const env of [{}, { JUDGE0_URL: 'https://runner.example.test' },
+    ...['http://localhost:2358', 'http://runner.example.test', 'https://ce.judge0.com', 'https://user:pass@runner.example.test', 'https://runner.example.test/path', 'https://runner.example.test?key=secret', 'https://runner.example.test#fragment', 'not a URL'].map(JUDGE0_URL => ({ JUDGE0_URL, JUDGE0_AUTH_TOKEN: 'synthetic-token' }))]) {
+    const r = runner([], env);
+    await assert.rejects(r.api.executeJudge0Submission('private student code', 71), error => error instanceof r.api.CodeRunnerUnavailableError);
+    assert.equal(r.calls.length, 0);
+  }
+});
+
+test('managed RapidAPI sends only its own credentials and never follows redirects', async () => {
+  const r = runner([{ body: { status: { id: 3 }, stdout: encoded('ok') } }], { JUDGE0_RAPIDAPI_KEY: 'synthetic-key', JUDGE0_AUTH_TOKEN: 'other-provider-token' });
+  await r.api.executeJudge0Submission('synthetic', 71);
+  assert.equal(r.calls[0].options.headers['X-RapidAPI-Key'], 'synthetic-key');
+  assert.equal(r.calls[0].options.headers['X-RapidAPI-Host'], 'judge0-ce.p.rapidapi.com');
+  assert.equal(r.calls[0].options.headers['X-Auth-Token'], undefined);
+  assert.equal(r.calls[0].options.redirect, 'error');
 });

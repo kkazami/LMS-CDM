@@ -1,5 +1,4 @@
 /** Shared, sandboxed execution for every CodeLab language. */
-export const DEFAULT_PUBLIC_JUDGE0_URL = "https://ce.judge0.com";
 const RAPID_API_HOST = "judge0-ce.p.rapidapi.com";
 const EXECUTION_TIMEOUT_MS = 30_000;
 // Bound work across requests within a warm web process. Multi-instance quotas belong at the worker service.
@@ -7,16 +6,25 @@ let pendingExecutions = 0;
 const MAX_PENDING_EXECUTIONS = 4;
 
 export function getJudge0BaseUrl(): string {
-  return (process.env.JUDGE0_URL?.trim() ||
-    ((process.env.RAPIDAPI_KEY || process.env.JUDGE0_RAPIDAPI_KEY) ? `https://${RAPID_API_HOST}` : DEFAULT_PUBLIC_JUDGE0_URL)).replace(/\/+$/, "");
+  const key = process.env.RAPIDAPI_KEY?.trim() || process.env.JUDGE0_RAPIDAPI_KEY?.trim();
+  const configured = process.env.JUDGE0_URL?.trim();
+  if (!configured && !key) throw new CodeRunnerUnavailableError();
+  const base = (configured || `https://${RAPID_API_HOST}`).replace(/\/+$/, "");
+  let url: URL;
+  try { url = new URL(base); } catch { throw new CodeRunnerUnavailableError(); }
+  // Server-only, authenticated HTTPS origin; no public-demo or localhost fallback.
+  if (url.protocol !== 'https:' || url.origin !== base || url.username || url.password || url.hostname === 'ce.judge0.com') throw new CodeRunnerUnavailableError();
+  if (url.hostname === RAPID_API_HOST ? !key : !process.env.JUDGE0_AUTH_TOKEN?.trim()) throw new CodeRunnerUnavailableError();
+  return base;
 }
 
 export function getJudge0Headers(): Record<string, string> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const host = new URL(getJudge0BaseUrl()).hostname;
   const token = process.env.JUDGE0_AUTH_TOKEN?.trim();
-  if (token) headers["X-Auth-Token"] = token;
+  if (token && host !== RAPID_API_HOST) headers["X-Auth-Token"] = token;
   const key = process.env.RAPIDAPI_KEY?.trim() || process.env.JUDGE0_RAPIDAPI_KEY?.trim();
-  if (key && new URL(getJudge0BaseUrl()).hostname === RAPID_API_HOST) {
+  if (key && host === RAPID_API_HOST) {
     headers["X-RapidAPI-Key"] = key;
     headers["X-RapidAPI-Host"] = RAPID_API_HOST;
   }

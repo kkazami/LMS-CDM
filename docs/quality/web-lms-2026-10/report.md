@@ -4,6 +4,8 @@ Prepared 21 October 2026 (Asia/Singapore). Scope: web, its Next.js backend and P
 
 ## Decision
 
+Follow-up: PR #51 exposed malformed tracked local worktrees and genuine findings in the old CodeLab container images. The owner selected a managed compatible API. See the [managed-execution migration and CI repair](../managed-code-execution.md). That follow-up changes the candidate; the measurements and fingerprint below remain historical and do not verify the new provider or deployment.
+
 The local fixes and regression evidence support further staging evaluation. **Deployment readiness and sustained 1,000-user capacity remain NOT VERIFIED.** The user identified `https://lms-cdm.vercel.app/` as the main LMS and authorized only non-destructive functional checks there. No production load, import, submission, grading, upload, invitation, backup restore or deployment was performed.
 
 No final quality grade out of 100 is assigned. A defensible study grade needs an adopted scoring rubric, representative task/user results and operating-environment evidence. A passing-test percentage is not a software-quality grade. The earlier provisional source-review estimate must not be presented as a measured ISO result.

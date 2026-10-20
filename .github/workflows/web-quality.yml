@@ -40,20 +40,8 @@ jobs:
             tmp/web-quality/dependencies.json
             tmp/web-quality/dependency-assessment.json
           retention-days: 14
-  judge0-images:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ['judge0/judge0:1.13.1', 'postgres:16-alpine', 'redis:7-alpine']
-    steps:
-      - name: Scan configured development container image (never starts privileged workloads)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: ${{ matrix.image }}
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: '1'
-          ignore-unfixed: false
-    # These are the current development-compose tags. Deployed image digests and Judge0 security configuration need a separate review.
+  # The vulnerable self-hosted Judge0/Redis/PostgreSQL stack was retired in favor
+  # of a configured managed API. Product tests exercise its authentication,
+  # async/base64 contract, outage handling and no-fallback policy without secrets.
+  # Provider patching/security and live language compatibility remain deployment gates;
+  # there are no CodeLab container images in this repository to claim as clean.

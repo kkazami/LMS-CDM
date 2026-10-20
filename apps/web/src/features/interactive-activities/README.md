@@ -121,26 +121,17 @@ Activity modules must provide a 2D diagram fallback path for devices that can't
 run WebGL. Check `typeof window !== 'undefined' && !!document.createElement('canvas').getContext('webgl2')`
 before mounting the Canvas. Implementation details in Sprint 9.
 
-## Judge0 (Code Execution Sandbox)
+## Managed code execution
 
-For the CodeLab module. Local dev setup:
+CodeLab uses the server-side Judge0-compatible adapter. Configure `JUDGE0_RAPIDAPI_KEY`
+for official managed Judge0 CE through RapidAPI, or an explicitly reviewed HTTPS
+`JUDGE0_URL` with `JUDGE0_AUTH_TOKEN`. Keep credentials out of browser/public variables.
+Missing configuration returns a temporary service error without changing progress.
 
-```bash
-docker compose -f docker/docker-compose.judge0.yml up -d
-```
-
-Test it:
-```bash
-# Submit code
-curl -X POST http://localhost:2358/submissions \
-  -H "Content-Type: application/json" \
-  -d '{"source_code":"print(\"hello\")", "language_id": 71}'
-
-# Get result (replace TOKEN)
-curl http://localhost:2358/submissions/<TOKEN>?fields=stdout,stderr,status
-```
-
-Auth is disabled for local dev. Production deployment needs proper auth tokens.
+The vulnerable self-hosted compose stack and unused host-execution fallback were
+removed. There is no automatic public-demo fallback. See the
+[provider setup and migration guide](../../../../../docs/quality/managed-code-execution.md)
+for live compatibility checks, language IDs, quotas and old-container retirement.
 
 ## Database Tables (Sprint 0)
 
