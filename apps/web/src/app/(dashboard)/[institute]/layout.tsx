@@ -59,9 +59,10 @@ export default async function InstituteLayout({
   const isStudent = userRole === "STUDENT";
   const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
 
-  // Practicum is ITE-only (students and their instructor-supervisors); hidden everywhere else.
+  // Practicum and Meetings are ITE-only (students and their instructors); hidden everywhere else.
   const practicumEligible =
     (isStudent || isProfessor) && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
+  const meetingsEligible = practicumEligible;
 
   // Focus Mode is ITE-students-only; hidden everywhere else.
   const focusModeEligible = isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
@@ -151,6 +152,7 @@ export default async function InstituteLayout({
       isEligibleForActivities={activityEligible}
       isEligibleForKnowledgeExchange={kxEligible}
       isEligibleForPracticum={practicumEligible}
+      isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}

@@ -134,7 +134,7 @@ describe("resolveFocusContextFromPath: pure route to focus context resolution", 
 });
 
 describe("getIteStudentNavLinks: shared student navigation list", () => {
-  it("includes all 9 standard ITE student destinations", () => {
+  it("includes all 10 standard ITE student destinations", () => {
     const links = getIteStudentNavLinks("ite");
     const labels = links.map((l) => l.label);
 
@@ -147,18 +147,20 @@ describe("getIteStudentNavLinks: shared student navigation list", () => {
       "Tasks",
       "Flashcards",
       "Leaderboards",
+      "Meetings",
       "Practicum",
     ]);
 
     assert.equal(links[0].href, "/ite/students");
     assert.equal(links[1].href, "/ite/courses");
-    assert.equal(links[8].href, "/ite/practicum");
+    assert.equal(links[8].href, "/ite/meetings");
+    assert.equal(links[9].href, "/ite/practicum");
   });
 
   it("respects practicum exclusion option", () => {
     const links = getIteStudentNavLinks("ite", { isEligibleForPracticum: false });
     const labels = links.map((l) => l.label);
     assert.ok(!labels.includes("Practicum"));
-    assert.equal(links.length, 8);
+    assert.equal(links.length, 9);
   });
 });

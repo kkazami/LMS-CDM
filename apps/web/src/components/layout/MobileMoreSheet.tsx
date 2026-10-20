@@ -22,6 +22,7 @@ import {
   LogOut,
   Sparkles,
   NotebookPen,
+  Video,
   HardDrive,
   HelpCircle,
   Terminal,
@@ -141,7 +142,12 @@ export default function MobileMoreSheet({
     router.push(`/login?institute=${instituteCode}&force=true`);
   };
 
-  // Practicum is ITE-only; the server also enforces it on every page and API route.
+  // Meetings and Practicum are ITE-only; the server also enforces it on every page and API route.
+  const meetingsItems: NavItem[] =
+    instituteCode.toLowerCase() === "ite" && (isStudent || isProfessor)
+      ? [{ label: "Meetings", href: `/${instituteCode}/meetings`, icon: Video, description: "Course video meetings" }]
+      : [];
+
   const practicumItems: NavItem[] =
     instituteCode.toLowerCase() === "ite" && (isStudent || isProfessor)
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
@@ -155,9 +161,9 @@ export default function MobileMoreSheet({
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
     ...(isStudent
-      ? [...studentItems, ...practicumItems]
+      ? [...studentItems, ...meetingsItems, ...practicumItems]
       : isProfessor
-        ? [...teacherItems, ...practicumItems]
+        ? [...teacherItems, ...meetingsItems, ...practicumItems]
         : adminItems),
   ];
 

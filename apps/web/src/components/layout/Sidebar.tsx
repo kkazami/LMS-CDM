@@ -32,6 +32,7 @@ import {
   HelpCircle,
   MessageSquareQuote,
   NotebookPen,
+  Video,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -68,6 +69,8 @@ interface SidebarProps {
   isEligibleForKnowledgeExchange?: boolean;
   /** When true, renders the "Practicum" nav entry (ITE students and instructors only). */
   isEligibleForPracticum?: boolean;
+  /** When true, renders the "Meetings" nav entry (ITE students and instructors only). */
+  isEligibleForMeetings?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -89,13 +92,21 @@ export const getStudentLinks = (code: string): (NavLink & { key?: string })[] =>
 /**
  * Shared ITE student navigation destinations for Sidebar and FocusFloatingBar.
  */
-export function getIteStudentNavLinks(code: string, options?: { isEligibleForPracticum?: boolean }): NavLink[] {
+export function getIteStudentNavLinks(
+  code: string,
+  options?: { isEligibleForPracticum?: boolean; isEligibleForMeetings?: boolean }
+): NavLink[] {
   const base = getStudentLinks(code).map(({ key, ...item }) => item);
+  const includeMeetings = options?.isEligibleForMeetings ?? (code.toLowerCase() === "ite");
   const includePracticum = options?.isEligibleForPracticum ?? true;
-  if (includePracticum) {
-    return [...base, { label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen }];
+  const list = [...base];
+  if (includeMeetings) {
+    list.push({ label: "Meetings", href: `/${code}/meetings`, icon: Video });
   }
-  return base;
+  if (includePracticum) {
+    list.push({ label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen });
+  }
+  return list;
 }
 
 const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
@@ -138,6 +149,7 @@ export default function Sidebar({
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
+  isEligibleForMeetings,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -162,6 +174,12 @@ export default function Sidebar({
         { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
       ];
     }
+  }
+
+  const meetingsEligible =
+    (isEligibleForMeetings ?? (instituteCode.toLowerCase() === "ite")) && (isStudent || isProfessor);
+  if (meetingsEligible) {
+    links = [...links, { label: "Meetings", href: `/${instituteCode}/meetings`, icon: Video }];
   }
 
   if (isEligibleForPracticum && (isStudent || isProfessor)) {

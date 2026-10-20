@@ -33,6 +33,8 @@ interface DashboardLayoutProps {
   isEligibleForKnowledgeExchange?: boolean;
   /** Whether this user qualifies for the ITE Practicum module. Controls the sidebar entry. */
   isEligibleForPracticum?: boolean;
+  /** Whether this user qualifies for the ITE Meetings module. Controls the sidebar entry. */
+  isEligibleForMeetings?: boolean;
   /** Whether this user qualifies for ITE Focus Mode (ITE students only). */
   isEligibleForFocusMode?: boolean;
   /** Enrolled courses for student sidebar accordion. */
@@ -58,6 +60,7 @@ export default function DashboardLayout({
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
+  isEligibleForMeetings,
   isEligibleForFocusMode,
   enrolledCourses,
   exp = 0,
@@ -93,6 +96,7 @@ export default function DashboardLayout({
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
           isEligibleForPracticum={isEligibleForPracticum}
+          isEligibleForMeetings={isEligibleForMeetings}
           enrolledCourses={enrolledCourses}
         />
 
@@ -124,6 +128,7 @@ export default function DashboardLayout({
               isEligibleForActivities={isEligibleForActivities}
               isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
               isEligibleForPracticum={isEligibleForPracticum}
+              isEligibleForMeetings={isEligibleForMeetings}
               enrolledCourses={enrolledCourses}
             />
           </div>
