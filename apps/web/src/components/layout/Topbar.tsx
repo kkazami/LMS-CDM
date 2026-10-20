@@ -26,6 +26,10 @@ type TopbarProps = {
   avatarUrl?: string | null;
   exp?: number;
   onOpenMobileMenu?: () => void;
+  isEligibleForActivities?: boolean;
+  isEligibleForPracticum?: boolean;
+  isEligibleForMeetings?: boolean;
+  enrolledCourses?: { id: string; title: string; code: string }[];
 };
 
 export default function Topbar({
@@ -38,6 +42,10 @@ export default function Topbar({
   avatarUrl,
   exp = 0,
   onOpenMobileMenu,
+  isEligibleForActivities,
+  isEligibleForPracticum,
+  isEligibleForMeetings,
+  enrolledCourses,
 }: TopbarProps) {
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -47,6 +55,8 @@ export default function Topbar({
   const { themeMode, toggleTheme } = useTheme();
   // Shortcut hint: "Ctrl K" by default, "⌘K" on Apple platforms (set after mount to avoid hydration mismatch).
   const [isMac, setIsMac] = useState(false);
+  const isIte = (instituteCode || "").toLowerCase() === "ite";
+  const resolvedInstituteName = isIte ? "Institute of Teacher Education" : instituteName;
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
@@ -194,7 +204,7 @@ export default function Topbar({
                     Campus
                   </span>
                   <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
-                    {instituteName}
+                    {resolvedInstituteName}
                   </span>
                 </div>
               </div>
@@ -213,7 +223,11 @@ export default function Topbar({
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
-            className="topbar-search-trigger hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer"
+            className={`topbar-search-trigger hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer ${
+              isIte
+                ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                : ""
+            }`}
             style={{
               borderColor: undefined,
             }}
@@ -233,7 +247,11 @@ export default function Topbar({
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
-            className="topbar-search-trigger hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0"
+            className={`topbar-search-trigger hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0 ${
+              isIte
+                ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                : ""
+            }`}
             aria-label="Search"
           >
             <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
@@ -377,6 +395,10 @@ export default function Topbar({
         instituteCode={instituteCode}
         theme={theme}
         userRole={userRole === "ADMIN" ? "Administrator" : userRole}
+        enrolledCourses={enrolledCourses}
+        isEligibleForActivities={isEligibleForActivities}
+        isEligibleForMeetings={isEligibleForMeetings}
+        isEligibleForPracticum={isEligibleForPracticum}
       />
     </header>
   );

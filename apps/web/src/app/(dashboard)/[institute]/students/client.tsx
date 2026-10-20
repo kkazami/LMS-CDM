@@ -251,7 +251,11 @@ export default function StudentDashboardClient({
                     }}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span>{instituteName} · Portal</span>
+                    <span>
+                      {instituteCode.toLowerCase() === "ite"
+                        ? "Institute of Teacher Education · Portal"
+                        : `${instituteName} · Portal`}
+                    </span>
                   </span>
                 </div>
 
@@ -259,6 +263,7 @@ export default function StudentDashboardClient({
                   <TypingBanner
                     text={`Welcome back, ${userName}!`}
                     sessionKey={typingSessionKey ?? "cdm_typed_greeting"}
+                    cursorColor={instituteCode.toLowerCase() === "ite" ? theme.colors.primary : undefined}
                   />
                 </h1>
 

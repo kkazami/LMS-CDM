@@ -309,12 +309,17 @@ export default function TeacherDashboardClient({
                 }}
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>{instituteName} • Faculty Portal</span>
+                <span>
+                  {instituteCode.toLowerCase() === "ite"
+                    ? "Institute of Teacher Education • Faculty Portal"
+                    : `${instituteName} • Faculty Portal`}
+                </span>
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                 <TypingBanner
                   text={`Welcome back, ${userName}!`}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
+                  cursorColor={instituteCode.toLowerCase() === "ite" ? theme.colors.primary : undefined}
                 />
               </h1>
               <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">

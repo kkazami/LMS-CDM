@@ -151,6 +151,10 @@ export default function DashboardLayout({
             instituteCode={instituteCode}
             exp={exp}
             onOpenMobileMenu={() => setMobileOpen(true)}
+            isEligibleForActivities={isEligibleForActivities}
+            isEligibleForPracticum={isEligibleForPracticum}
+            isEligibleForMeetings={isEligibleForMeetings}
+            enrolledCourses={enrolledCourses}
           />
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
