@@ -75,7 +75,7 @@ interface SidebarProps {
 /** Sidebar link ID for "My Courses" — used to detect the accordion item. */
 const MY_COURSES_KEY = "my-courses";
 
-const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
+export const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
@@ -85,6 +85,18 @@ const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Flashcards", href: `/${code}/flashcards`, icon: FlashcardIcon },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
+
+/**
+ * Shared ITE student navigation destinations for Sidebar and FocusFloatingBar.
+ */
+export function getIteStudentNavLinks(code: string, options?: { isEligibleForPracticum?: boolean }): NavLink[] {
+  const base = getStudentLinks(code).map(({ key, ...item }) => item);
+  const includePracticum = options?.isEligibleForPracticum ?? true;
+  if (includePracticum) {
+    return [...base, { label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen }];
+  }
+  return base;
+}
 
 const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
@@ -194,7 +206,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`${
+      className={`dashboard-sidebar ${
         isMobileDrawer
           ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
           : `hidden h-screen border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${

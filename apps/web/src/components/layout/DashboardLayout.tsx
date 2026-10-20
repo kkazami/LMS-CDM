@@ -17,6 +17,7 @@ const ChatbotWidget = dynamic(() => import("@/components/common/ChatbotWidget"))
 const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"));
 const LoginRewardModal = dynamic(() => import("@/components/common/LoginRewardModal"));
 const FloatingStudyTimer = dynamic(() => import("@/components/common/FloatingStudyTimer"));
+import FocusModeProvider from "@/components/focus/FocusModeProvider";
 
 interface DashboardLayoutProps {
   instituteCode: string;
@@ -32,6 +33,8 @@ interface DashboardLayoutProps {
   isEligibleForKnowledgeExchange?: boolean;
   /** Whether this user qualifies for the ITE Practicum module. Controls the sidebar entry. */
   isEligibleForPracticum?: boolean;
+  /** Whether this user qualifies for ITE Focus Mode (ITE students only). */
+  isEligibleForFocusMode?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -55,6 +58,7 @@ export default function DashboardLayout({
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
+  isEligibleForFocusMode,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -182,10 +186,16 @@ export default function DashboardLayout({
     </div>
   );
 
+  const wrappedContent = isEligibleForFocusMode ? (
+    <FocusModeProvider>{layoutContent}</FocusModeProvider>
+  ) : (
+    layoutContent
+  );
+
   return (
     <ThemeProvider>
       <ChatbotProvider userName={userName} userRole={userRole}>
-        {layoutContent}
+        {wrappedContent}
       </ChatbotProvider>
     </ThemeProvider>
   );

@@ -10,6 +10,7 @@ import DocumentViewerDynamic from "@/components/learning-materials/DocumentViewe
 import PomodoroTimer from "@/components/learning-materials/PomodoroTimer";
 import FocusSidebar from "@/components/learning-materials/FocusSidebar";
 import ConvertFlashcardsButton from "@/components/courses/ConvertFlashcardsButton";
+import FocusButton from "@/components/focus/FocusButton";
 import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
@@ -117,14 +118,22 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {/* Convert to Flashcards button */}
-        <ConvertFlashcardsButton
-          attachmentId={activeAttachment.id}
-          attachmentName={activeAttachment.fileName || "Document"}
-          attachmentUrl={activeAttachment.url}
-          courseId={courseId}
-          instituteCode={institute}
-        />
+        <div className="flex items-center gap-3">
+          <FocusButton
+            contextType="MATERIAL"
+            courseId={courseId}
+            refId={materialId}
+            title={material.title}
+          />
+          {/* Convert to Flashcards button */}
+          <ConvertFlashcardsButton
+            attachmentId={activeAttachment.id}
+            attachmentName={activeAttachment.fileName || "Document"}
+            attachmentUrl={activeAttachment.url}
+            courseId={courseId}
+            instituteCode={institute}
+          />
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0">

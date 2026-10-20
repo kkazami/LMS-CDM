@@ -11,6 +11,7 @@ import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
 import Link from "next/link";
+import FocusButton from "@/components/focus/FocusButton";
 import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles } from "lucide-react";
 import {
   createSyllabusItem,
@@ -182,23 +183,32 @@ export default function ClassworkClient({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {canEdit && (
-        <div className="flex items-center justify-end gap-3">
-          <Link
-            href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: theme.colors.primary }}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Create Form Assessment</span>
-          </Link>
-
-          <Button theme={theme} variant="secondary" onClick={handleCreate}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Material / Task
-          </Button>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <FocusButton
+            contextType="STUDY"
+            courseId={courseId}
+            title="Classwork Study"
+          />
         </div>
-      )}
+        {canEdit && (
+          <div className="flex items-center justify-end gap-3">
+            <Link
+              href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Create Form Assessment</span>
+            </Link>
+
+            <Button theme={theme} variant="secondary" onClick={handleCreate}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add Material / Task
+            </Button>
+          </div>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">

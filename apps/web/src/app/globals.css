@@ -759,3 +759,19 @@ button:active:not(:disabled),
     font-size: 16px !important;
   }
 }
+
+/* ─── ITE Focus Mode (distraction-free learning) ─── */
+[data-focus-mode="on"] aside[aria-label="Main Navigation"],
+[data-focus-mode="on"] .dashboard-sidebar,
+[data-focus-mode="on"] .mobile-bottom-nav,
+[data-focus-mode="on"] .chatbot-widget-container,
+[data-focus-mode="on"] .floating-study-timer,
+[data-focus-mode="on"] .topbar-search-trigger,
+[data-focus-mode="on"] .notification-bell-badge {
+  display: none !important;
+}
+
+[data-focus-mode="on"] .dashboard-workspace-shell {
+  padding-left: 0 !important;
+}
+

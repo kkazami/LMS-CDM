@@ -63,6 +63,9 @@ export default async function InstituteLayout({
   const practicumEligible =
     (isStudent || isProfessor) && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
 
+  // Focus Mode is ITE-students-only; hidden everywhere else.
+  const focusModeEligible = isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
+
   // Use the institute id already loaded with the session when this is the user's own institute
   // (no extra query); only look it up when it is a different one.
   const sessionInstituteId =
@@ -148,6 +151,7 @@ export default async function InstituteLayout({
       isEligibleForActivities={activityEligible}
       isEligibleForKnowledgeExchange={kxEligible}
       isEligibleForPracticum={practicumEligible}
+      isEligibleForFocusMode={focusModeEligible}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}

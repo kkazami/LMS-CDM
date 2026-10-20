@@ -122,6 +122,9 @@ model User {
   practicumSupervised PracticumPlacement[] @relation("PracticumSupervisor")
   practicumFeedback   PracticumFeedback[]  @relation("PracticumFeedbackAuthor")
 
+  // ─── ITE Focus Mode relations ───
+  focusSessions FocusSession[]
+
   @@unique([id, instituteId])
 }
 
@@ -186,8 +189,11 @@ model Course {
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventCourse")
   riskAssessments RiskAssessment[] @relation("RiskAssessmentCourse")
-  programId       String?
-  program         AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
+  // ─── ITE Focus Mode relations ───
+  focusSessions FocusSession[]
+  programId     String?
+  program       AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
 
   @@unique([instituteId, termId, code, section])
   @@index([instituteId])
@@ -1547,6 +1553,42 @@ model PracticumFeedback {
 
   @@index([submissionId, createdAt])
   @@index([authorId])
+}
+
+// ─── ITE Focus Mode (distraction-free learning) ───────────────
+
+enum FocusContextType {
+  STUDY
+  MATERIAL
+  FLASHCARDS
+  QUIZ
+}
+
+enum FocusSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+model FocusSession {
+  id              String             @id @default(cuid())
+  userId          String
+  courseId        String?
+  contextType     FocusContextType
+  refId           String?
+  plannedMinutes  Int?
+  startedAt       DateTime           @default(now())
+  lastHeartbeatAt DateTime           @default(now())
+  endedAt         DateTime?
+  focusedSeconds  Int                @default(0)
+  tabSwitchCount  Int                @default(0)
+  status          FocusSessionStatus @default(ACTIVE)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startedAt])
+  @@index([userId, status])
 }
 
 // ─────────────────────────────────────────────────────────────

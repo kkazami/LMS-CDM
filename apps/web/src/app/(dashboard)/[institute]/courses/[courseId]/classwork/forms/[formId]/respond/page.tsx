@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import FormRenderer from "@/components/forms/renderer/FormRenderer";
+import FocusButton from "@/components/focus/FocusButton";
 import { shuffleQuestionsAndOptions } from "@/lib/forms/shuffle";
 import type { FormData, FormQuestionData, FormAttemptData, FormAttemptAnswerData } from "@/types/forms";
 
@@ -190,15 +191,25 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
   };
 
   return (
-    <FormRenderer
-      form={parsedForm}
-      attempt={parsedAttempt}
-      courseId={courseId}
-      instituteCode={institute}
-      studentName={session.user.name || "Student"}
-      studentEmail={session.user.email}
-      theme={theme}
-      canRetake={canRetake}
-    />
+    <div>
+      <div className="max-w-4xl mx-auto mb-4 flex justify-end">
+        <FocusButton
+          contextType="QUIZ"
+          courseId={courseId}
+          refId={formId}
+          title={parsedForm.title}
+        />
+      </div>
+      <FormRenderer
+        form={parsedForm}
+        attempt={parsedAttempt}
+        courseId={courseId}
+        instituteCode={institute}
+        studentName={session.user.name || "Student"}
+        studentEmail={session.user.email}
+        theme={theme}
+        canRetake={canRetake}
+      />
+    </div>
   );
 }

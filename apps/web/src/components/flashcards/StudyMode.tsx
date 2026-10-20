@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { FlashcardCard, FlashcardStudyStats } from "@/lib/lms-types";
+import FocusButton from "@/components/focus/FocusButton";
 import {
   ArrowLeft,
   Lightbulb,
@@ -665,9 +666,16 @@ export default function StudyMode({
         <ArrowLeft className="h-4 w-4" />
         {modeLabelMap[studyMode]}
       </button>
-      <span className="text-sm font-bold text-slate-500 dark:text-[#8B92A5] bg-slate-100 dark:bg-[#1E2132] px-3.5 py-1 rounded-full border border-slate-200/60 dark:border-white/5">
-        {currentIndex + 1} / {sessionCards.length}
-      </span>
+      <div className="flex items-center gap-3">
+        <FocusButton
+          contextType="FLASHCARDS"
+          refId={deckId}
+          title={deckTitle}
+        />
+        <span className="text-sm font-bold text-slate-500 dark:text-[#8B92A5] bg-slate-100 dark:bg-[#1E2132] px-3.5 py-1 rounded-full border border-slate-200/60 dark:border-white/5">
+          {currentIndex + 1} / {sessionCards.length}
+        </span>
+      </div>
     </div>
   );
 

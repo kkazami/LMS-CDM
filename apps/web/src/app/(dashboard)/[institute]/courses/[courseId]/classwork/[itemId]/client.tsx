@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
 import type { InstituteTheme } from "@/lib/theme";
+import FocusButton from "@/components/focus/FocusButton";
 
 const ConvertFlashcardsModal = dynamic(
   () => import("@/components/courses/ConvertFlashcardsModal"),
@@ -209,10 +210,18 @@ export default function AssignmentDetailClient({
           <div className="space-y-6 min-w-0">
             {/* Header card */}
             <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
-              <div className="flex items-start gap-3 mb-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
                   {typeMeta.label}
                 </span>
+                {isStudent && (
+                  <FocusButton
+                    contextType={item.type === "QUIZ" ? "QUIZ" : item.type === "MATERIAL" ? "MATERIAL" : "STUDY"}
+                    courseId={courseId}
+                    refId={item.id}
+                    title={item.title}
+                  />
+                )}
               </div>
 
               <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>

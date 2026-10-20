@@ -14,6 +14,7 @@ import {
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 
 import type { InstituteTheme } from "@/lib/theme";
+import FocusButton from "@/components/focus/FocusButton";
 
 interface CourseOption {
   id: string;
@@ -230,6 +231,10 @@ export default function FlashcardDashboard({
           </div>
 
           <div className="shrink-0 flex items-center gap-3">
+            <FocusButton
+              contextType="FLASHCARDS"
+              title="Flashcard Practice"
+            />
             <button
               onClick={() => setCreateOpen(true)}
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-11"

@@ -287,7 +287,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         <Bell className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-1 -top-1 grid h-3.5 w-3.5 sm:h-5 sm:w-5 place-items-center rounded-full text-[8px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
+            className="notification-bell-badge absolute -right-1 -top-1 grid h-3.5 w-3.5 sm:h-5 sm:w-5 place-items-center rounded-full text-[8px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
             style={{ backgroundColor: theme.colors.primary }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}

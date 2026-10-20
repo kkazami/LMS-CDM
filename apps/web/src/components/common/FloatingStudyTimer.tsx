@@ -80,7 +80,7 @@ export default function FloatingStudyTimer() {
   const progressPercent = Math.min(Math.round((minutes / nextMilestoneMinutes) * 100), 100);
 
   return (
-    <div className="hidden lg:block fixed bottom-5 left-5 z-40">
+    <div className="floating-study-timer hidden lg:block fixed bottom-5 left-5 z-40">
       {/* Toast popup when reward unlocked */}
       {lastRewardMsg && (
         <div className="mb-2 p-3 bg-emerald-600 text-white text-xs font-bold rounded-2xl shadow-xl animate-in slide-in-from-bottom-2 duration-200 flex items-center gap-2">
