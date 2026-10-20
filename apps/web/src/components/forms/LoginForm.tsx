@@ -46,6 +46,8 @@ export default function LoginForm({
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setReady(true); }, []);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [activated, setActivated] = useState(false);
   useEffect(() => { setActivated(new URLSearchParams(window.location.search).get('activated') === '1'); }, []);
@@ -135,6 +137,7 @@ export default function LoginForm({
         type="text"
         placeholder={isDesktopMode ? "admin@school.edu" : "student@school.edu"}
         value={values.identifier}
+        disabled={!ready || isSubmitting}
         onChange={(event) => updateField("identifier", event.target.value)}
         theme={theme}
         required
@@ -148,6 +151,7 @@ export default function LoginForm({
           type="password"
           placeholder="Enter your password"
           value={values.password}
+          disabled={!ready || isSubmitting}
           onChange={(event) => updateField("password", event.target.value)}
           theme={theme}
           required
@@ -167,7 +171,7 @@ export default function LoginForm({
         <p className="text-sm font-medium text-red-600">{errorMessage}</p>
       ) : null}
 
-      <Button type="submit" theme={theme} disabled={isSubmitting}>
+      <Button type="submit" theme={theme} disabled={!ready || isSubmitting}>
         {isSubmitting ? "Signing In..." : "Sign In"}
       </Button>
       <Link href="/activate" className="text-sm underline underline-offset-4">Request a New Activation Link</Link>

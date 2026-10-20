@@ -72,7 +72,7 @@ export default function AnalyticsClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
-  const { students, isLoading, error, refetch } = useAtRiskStudents(selectedCourseId);
+  const { students, isLoading, error, refetch, pagination, setPage } = useAtRiskStudents(selectedCourseId);
 
   // Statistics counters
   const totalAnalyzed = students.length;
@@ -110,6 +110,13 @@ export default function AnalyticsClient({
 
   return (
     <div className="max-w-6xl mx-auto page-enter space-y-8">
+      <nav aria-label="Student analytics pages" className="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <span>Page {pagination.page} of {pagination.totalPages} · {pagination.total} enrollments. Counts, search and risk order apply to this page.</span>
+        <div className="flex gap-4">
+          <button disabled={isLoading || pagination.page <= 1} onClick={() => setPage(pagination.page - 1)} className="underline disabled:opacity-40">Previous students</button>
+          <button disabled={isLoading || pagination.page >= pagination.totalPages} onClick={() => setPage(pagination.page + 1)} className="underline disabled:opacity-40">Next students</button>
+        </div>
+      </nav>
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

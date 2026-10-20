@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import { headers } from 'next/headers';
 import { Inter } from "next/font/google";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
@@ -42,11 +43,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await headers(); // Nonces require a fresh server render for every document.
   return (
     <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
       <body className="antialiased font-[family-name:var(--font-inter)] selection:bg-orange-500 selection:text-white">

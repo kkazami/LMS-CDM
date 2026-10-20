@@ -27,3 +27,11 @@ test-results/
 
 # Private database repair backups and Account Management QA artifacts
 /tmp/roster-repair/
+
+# Disposable product quality evidence (may contain synthetic session fixtures)
+/tmp/web-quality/
+/tmp/roster-import/sprint2-*/
+/.orchestra/product-development/program-head-integration/local_*/
+
+# Local Git worktrees are separate checkouts, never product source/submodules.
+/.orchestra/local-worktrees/

@@ -290,9 +290,9 @@ export default function SubmissionsClient({
                     </td>
                     <td className="px-5 py-4 text-right">
                       {!row.id.startsWith("missing-") && (
-                        <span className="text-xs font-semibold text-[#F97316] hover:underline">
+                        <button type="button" onClick={event => { event.stopPropagation(); setGradingSubmission(row as SubmissionRow); }} className="min-h-11 px-2 text-xs font-semibold text-[#F97316] hover:underline">
                           {row.isReturned ? "Update grade" : "Grade"}
-                        </span>
+                        </button>
                       )}
                     </td>
                   </tr>

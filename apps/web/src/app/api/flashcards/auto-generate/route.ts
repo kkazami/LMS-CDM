@@ -1,3 +1,16 @@
+import { z } from 'zod';
+import { requireMaterialAttachment } from '@/lib/material-access';
+import { readAttachment } from '@/lib/attachment-content';
+import { AccessError, accountErrorResponse, assertMutationOrigin } from '@/lib/super-user-v1/actor';
+
+const generationInput = z.object({
+  attachmentId: z.string().min(1).max(200), courseId: z.string().min(1).max(200), save: z.boolean().optional(),
+  deckTitle: z.string().min(1).max(200).optional(), deckColor: z.string().max(32).optional(),
+  cards: z.array(z.object({ front: z.string().min(1).max(2000), back: z.string().min(1).max(5000), hint: z.string().max(2000).optional() }).strict()).min(1).max(500).optional(),
+  pageFrom: z.number().int().min(1).max(10000).optional(), pageTo: z.number().int().min(1).max(10000).optional(),
+  selectedPages: z.array(z.number().int().min(1).max(10000)).max(500).optional(), selectedSlides: z.array(z.number().int().min(1).max(10000)).max(500).optional(),
+}).strict();
+
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
@@ -1329,7 +1342,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    assertMutationOrigin(req);
+    const input = generationInput.safeParse(await req.json());
+    if (!input.success) throw new AccessError(400, 'Invalid flashcard request.');
+    const body = input.data;
     const {
       attachmentId,
       courseId,
@@ -1360,6 +1376,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const attachment = await requireMaterialAttachment(session.user, attachmentId, courseId);
 
     // ── Save mode: the frontend already has the cards, just persist them ──
     if (save && body.cards) {
@@ -1398,44 +1416,8 @@ export async function POST(req: Request) {
     }
 
     // ── Preview mode: parse the file and return the cards for editing ──
-    const enrollment = await db.enrollment.findUnique({
-      where: {
-        courseId_studentId: { courseId, studentId: session.user.id },
-      },
-    });
-
-    if (!enrollment || enrollment.status !== "APPROVED") {
-      return NextResponse.json(
-        { message: "Not enrolled in this course" },
-        { status: 403 }
-      );
-    }
-
-    const attachment = await db.attachment.findUnique({
-      where: { id: attachmentId },
-      include: { syllabusItem: true },
-    });
-
-    if (!attachment || attachment.type !== "FILE") {
-      return NextResponse.json(
-        { message: "Attachment not found or is not a file" },
-        { status: 404 }
-      );
-    }
-
-    // Fetch the file
-    let fileUrl = attachment.url;
-    if (fileUrl.startsWith("/")) {
-      const baseUrl = new URL(req.url).origin;
-      fileUrl = `${baseUrl}${fileUrl}`;
-    }
-
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch file from storage (Status: ${response.status})`
-      );
-    }
+    const bytes = await readAttachment(attachment.url);
+    const response = new Response(new Uint8Array(bytes));
 
     const fileNameLower = attachment.fileName.toLowerCase();
     let generatedCards: RawCard[] = [];
@@ -1532,12 +1514,7 @@ export async function POST(req: Request) {
         );
       }
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      console.error("Error parsing file:", e);
-      return NextResponse.json(
-        { message: `Failed to parse file content. Error: ${errorMessage}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: 'Failed to parse file content.' }, { status: 400 });
     }
 
     // Run the sanitizer / quality filter / auto-hint
@@ -1559,11 +1536,5 @@ export async function POST(req: Request) {
       fileName: attachment.fileName,
       cardCount: generatedCards.length,
     });
-  } catch (error) {
-    console.error("Auto-generate flashcards error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
+  } catch (error) { return accountErrorResponse(error); }
 }

@@ -1,4 +1,18 @@
+import { z } from 'zod';
+import { requireCourseAccess } from '@/lib/course-access';
+import { attachmentLocation } from '@/lib/academic-records';
+import { accountErrorResponse, AccessError, assertMutationOrigin } from '@/lib/super-user-v1/actor';
+const classworkInput = z.object({
+  title: z.string().trim().min(1).max(300), description: z.string().max(50000).default(''),
+  type: z.string().transform(value => value.toUpperCase()).pipe(z.enum(['ASSIGNMENT','QUIZ','MATERIAL','EXAM','PROJECT','ACTIVITY'])).default('ASSIGNMENT'),
+  maxPoints: z.number().finite().min(0).max(100000).nullable().optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional(),
+  attachmentUrl: attachmentLocation.optional(), attachmentName: z.string().max(255).optional(),
+  attachments: z.array(z.object({ url: attachmentLocation, fileName: z.string().max(255).optional(), type: z.enum(['FILE','LINK']).optional(), fileSize: z.number().int().min(0).max(25 * 1024 * 1024).nullable().optional() }).strict()).max(20).optional(),
+}).strict();
+
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
+import { requireOwnedUpload } from '@/lib/private-upload';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -24,6 +38,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId } = await context.params;
+    await requireCourseAccess(session.user, courseId);
 
     const [syllabusItems, studentSubmissions] = await Promise.all([
       db.syllabusItem.findMany({
@@ -104,13 +119,12 @@ export async function GET(request: Request, context: RouteContext) {
       },
       {
         headers: {
-          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=120',
+          'Cache-Control': 'private, no-store',
         },
       }
     );
   } catch (error) {
-    console.error('COURSE_CLASSWORK_GET_ERROR', error);
-    return NextResponse.json({ message: 'Failed to fetch course classwork.' }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }
 
@@ -128,26 +142,12 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Not authenticated.' }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== 'PROFESSOR' && role !== 'TEACHER' && role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Instructors only.' }, { status: 403 });
-    }
-
+    assertMutationOrigin(request);
     const { courseId } = await context.params;
-    const course = await db.course.findUnique({
-      where: { id: courseId },
-      select: { id: true, instructorId: true, title: true },
-    });
-
-    if (!course) {
-      return NextResponse.json({ message: 'Course not found.' }, { status: 404 });
-    }
-
-    if (role !== 'ADMIN' && course.instructorId !== session.user.id) {
-      return NextResponse.json({ message: 'You are not the instructor for this course.' }, { status: 403 });
-    }
-
-    const body = await request.json();
+    const course = await requireCourseAccess(session.user, courseId, true);
+    const parsed = classworkInput.safeParse(await request.json());
+    if (!parsed.success) throw new AccessError(400, 'Invalid classwork request.');
+    const body = parsed.data;
     const {
       title,
       description = '',
@@ -176,7 +176,9 @@ export async function POST(request: Request, context: RouteContext) {
 
     const parsedDueDate = dueDate ? new Date(dueDate) : null;
 
-    const syllabusItem = await db.syllabusItem.create({
+    const syllabusItem = await db.$transaction(async tx => {
+      for (const file of [...(attachments ?? []), ...(attachmentUrl ? [{ url: attachmentUrl }] : [])]) await requireOwnedUpload(tx, session.user, file.url);
+      const syllabusItem = await tx.syllabusItem.create({
       data: {
         courseId,
         type: type.toUpperCase(),
@@ -190,7 +192,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     // Handle attachments
     if (attachmentUrl) {
-      await db.attachment.create({
+      await tx.attachment.create({
         data: {
           syllabusItemId: syllabusItem.id,
           type: 'FILE',
@@ -201,8 +203,8 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (Array.isArray(attachments) && attachments.length > 0) {
-      await db.attachment.createMany({
-        data: attachments.map((att: { url: string; fileName?: string; type?: string; fileSize?: number }) => ({
+      await tx.attachment.createMany({
+        data: attachments.map((att) => ({
           syllabusItemId: syllabusItem.id,
           type: att.type || 'FILE',
           url: att.url,
@@ -211,6 +213,9 @@ export async function POST(request: Request, context: RouteContext) {
         })),
       });
     }
+
+      return syllabusItem;
+    });
 
     // Notify enrolled students
     try {
@@ -223,7 +228,7 @@ export async function POST(request: Request, context: RouteContext) {
         link: `/${courseId}/classwork`,
       });
     } catch (notifErr) {
-      console.error('NOTIFY_CLASSWORK_ERROR', notifErr);
+      console.warn('NOTIFY_CLASSWORK_UNAVAILABLE');
     }
 
     const createdWithAttachments = await db.syllabusItem.findUnique({
@@ -239,7 +244,6 @@ export async function POST(request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error('COURSE_CLASSWORK_POST_ERROR', error);
-    return NextResponse.json({ message: 'Failed to create classwork.' }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }

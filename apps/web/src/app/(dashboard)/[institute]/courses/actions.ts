@@ -1,4 +1,6 @@
 "use server";
+import { requireOwnedUpload } from '@/lib/private-upload';
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
@@ -633,6 +635,8 @@ export async function updateCourseCoverImage(
   }
 
   try {
+    await requireCourseAccess(session.user, courseId, true);
+    await requireOwnedUpload(db, session.user, coverImage);
     await db.course.update({
       where: { id: courseId },
       data: { coverImage },

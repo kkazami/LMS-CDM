@@ -1,3 +1,13 @@
+# Current web LMS quality roadmap
+
+Created 2026-10-20 for the requested web/backend quality work. Mobile implementation is excluded. This is a three-sprint roadmap; no implementation or deployment was performed when writing it.
+
+| Plan | Scope | Order | Status |
+|---|---|---|---|
+| [019-web-quality-sprints.md](019-web-quality-sprints.md) | Access/security and academic integrity; web workflows and efficiency; staging capacity/recovery and quality evidence | Sprint 1 → 2 → 3 | Local work complete ([Sprint 1](019-sprint-1-results.md), [Sprint 2](019-sprint-2-results.md), [Sprint 3](019-sprint-3-results.md)); release gate open for sustained staging/provider/human evaluation and deployment |
+
+The historical Super User preparation records below retain their original statuses and scope. Their old approval/readiness statements are not current verification results for this separate quality roadmap.
+
 # Preparation plans
 
 Created 2026-10-08 using the improve skill. These documents are advisory preparation, not accepted controlled-run artifacts or implementation permission.
