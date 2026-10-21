@@ -6,16 +6,16 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BookOpen, Search, Users, FileText, ChevronRight } from 'lucide-react-native';
+import { BookOpen, Search, Users, ChevronRight } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Card } from '../../../../src/components/common/Card';
+import { Screen, AppHeader, ErrorBanner } from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { Course } from '@lms/types';
@@ -30,9 +30,11 @@ export default function StudentCoursesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadCourses = async () => {
     try {
+      setErrorMessage(null);
       const cached = await getCachedData<Course[]>('student_courses');
       if (cached && cached.length > 0) {
         setCourses(cached);
@@ -45,8 +47,8 @@ export default function StudentCoursesScreen() {
         setCourses(response.courses);
         await setCachedData('student_courses', response.courses);
       }
-    } catch {
-      // Graceful fallback to cached state
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not refresh enrolled courses. Showing offline data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -72,15 +74,15 @@ export default function StudentCoursesScreen() {
   });
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Enrolled Courses</Text>
-        <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-          {courses.length} Active Courses &bull; {user?.institute?.name || theme.name}
-        </Text>
+    <Screen style={styles.screen}>
+      {/* AppHeader */}
+      <AppHeader
+        title="Enrolled Courses"
+        subtitle={`${courses.length} Active Courses • ${user?.institute?.name || theme.name}`}
+      />
 
-        {/* Search Bar */}
+      {/* Search Bar */}
+      <View style={[styles.searchContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
         <View style={[styles.searchBar, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}>
           <Search size={18} color={theme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput
@@ -94,6 +96,17 @@ export default function StudentCoursesScreen() {
           />
         </View>
       </View>
+
+      {errorMessage && (
+        <View style={styles.errorWrapper}>
+          <ErrorBanner
+            message={errorMessage}
+            onRetry={loadCourses}
+            onDismiss={() => setErrorMessage(null)}
+            retryAccessibilityLabel="Retry loading courses"
+          />
+        </View>
+      )}
 
       {/* Courses List */}
       {loading ? (
@@ -131,6 +144,9 @@ export default function StudentCoursesScreen() {
               style={[styles.courseCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
               onPress={() => router.push({ pathname: '/student/courses/[courseId]' as any, params: { courseId: item.id } })}
               activeOpacity={0.8}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Course: ${item.title}`}
             >
               <View style={styles.courseCardTop}>
                 <Badge label={item.code || 'COURSE'} variant="primary" size="sm" />
@@ -173,28 +189,18 @@ export default function StudentCoursesScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
   },
-  headerContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-    marginBottom: 12,
   },
   searchBar: {
     flexDirection: 'row',
@@ -212,6 +218,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     height: '100%',
   },
+  errorWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
   listContent: {
     padding: 16,
     paddingBottom: 32,
@@ -226,10 +236,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
     elevation: 2,
   },
   courseCardTop: {

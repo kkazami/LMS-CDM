@@ -6,7 +6,6 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
+import { Screen, ErrorBanner } from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import type { AppNotification } from '@lms/types';
 
@@ -26,15 +26,17 @@ export default function StudentAlertsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadNotifications = async () => {
+    setErrorMessage(null);
     try {
       const response = await api.notifications.list();
       if (response?.notifications) {
         setNotifications(response.notifications);
       }
-    } catch {
-      // Handled gracefully
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load notifications. Please check your connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,8 +58,8 @@ export default function StudentAlertsScreen() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-    } catch {
-      // Ignore failure
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to mark notification as read');
     }
   };
 
@@ -65,8 +67,8 @@ export default function StudentAlertsScreen() {
     try {
       await api.notifications.markAllRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch {
-      // Ignore
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to mark all notifications as read');
     }
   };
 
@@ -75,8 +77,9 @@ export default function StudentAlertsScreen() {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     try {
       await api.notifications.delete(id);
-    } catch {
+    } catch (err: any) {
       setNotifications(previous);
+      setErrorMessage(err?.message || 'Failed to delete notification');
     }
   };
 
@@ -94,8 +97,9 @@ export default function StudentAlertsScreen() {
             setNotifications([]);
             try {
               await api.notifications.clearAll();
-            } catch {
+            } catch (err: any) {
               setNotifications(previous);
+              setErrorMessage(err?.message || 'Failed to clear all notifications');
             }
           },
         },
@@ -126,7 +130,7 @@ export default function StudentAlertsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <Screen scrollable={false}>
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
         <View style={styles.headerTop}>
@@ -135,9 +139,10 @@ export default function StudentAlertsScreen() {
             {unreadCount > 0 && (
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="Mark all as read"
+                accessibilityLabel="Mark all notifications as read"
                 onPress={handleMarkAllRead}
                 style={styles.actionBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <CheckCheck size={14} color={theme.colors.primary} />
                 <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>
@@ -152,9 +157,10 @@ export default function StudentAlertsScreen() {
                 accessibilityLabel="Clear all notifications"
                 onPress={handleClearAll}
                 style={styles.actionBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Trash2 size={14} color="#EF4444" />
-                <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>
+                <Trash2 size={14} color={theme.colors.danger} />
+                <Text style={[styles.actionBtnText, { color: theme.colors.danger }]}>
                   Clear all
                 </Text>
               </TouchableOpacity>
@@ -179,7 +185,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'ALL' ? '#FFFFFF' : theme.colors.textSecondary },
+                { color: filter === 'ALL' ? theme.colors.card : theme.colors.textSecondary },
               ]}
             >
               All ({notifications.length})
@@ -201,7 +207,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'UNREAD' ? '#FFFFFF' : theme.colors.textSecondary },
+                { color: filter === 'UNREAD' ? theme.colors.card : theme.colors.textSecondary },
               ]}
             >
               Unread ({unreadCount})
@@ -227,6 +233,17 @@ export default function StudentAlertsScreen() {
               tintColor={theme.colors.primary}
               colors={[theme.colors.primary]}
             />
+          }
+          ListHeaderComponent={
+            errorMessage ? (
+              <View style={{ marginBottom: 12 }}>
+                <ErrorBanner
+                  message={errorMessage}
+                  onRetry={loadNotifications}
+                  onDismiss={() => setErrorMessage(null)}
+                />
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             <Card style={styles.emptyCard}>
@@ -295,7 +312,7 @@ export default function StudentAlertsScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -345,6 +362,8 @@ const styles = StyleSheet.create({
   deleteBtn: {
     padding: 6,
     marginLeft: 6,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -352,6 +371,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    minHeight: 44,
     paddingVertical: 4,
     paddingHorizontal: 6,
   },
@@ -368,7 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -392,10 +412,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
     elevation: 1,
   },
   iconCircle: {

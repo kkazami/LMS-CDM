@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,16 +16,14 @@ import {
   Award,
   ChevronRight,
   Bell,
-  Sparkles,
-  Calendar,
-  CheckCircle2,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { LoginRewardModal } from '../../../../src/components/gamification/LoginRewardModal';
 import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
-import { TOUCH_TARGET, typography } from '../../../../src/lib/typography';
+import { Screen, ErrorBanner, SectionTitle } from '../../../../src/components/ui';
+import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { Course, Announcement, TaskItem } from '@lms/types';
 
@@ -44,6 +40,7 @@ export default function StudentDashboardScreen() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streak, setStreak] = useState<number>(rewardReceipt?.streak ?? 1);
 
   // Daily reward modal visibility
@@ -57,6 +54,7 @@ export default function StudentDashboardScreen() {
 
   const loadData = async () => {
     try {
+      setErrorMessage(null);
       // Load offline cache first
       const [cachedCourses, cachedAnnouncements, cachedTasks] = await Promise.all([
         getCachedData<Course[]>('student_courses'),
@@ -77,18 +75,29 @@ export default function StudentDashboardScreen() {
         api.gamification.getHeartbeat(),
       ]);
 
+      let fetchFailed = false;
+
       if (coursesRes.status === 'fulfilled' && coursesRes.value?.courses) {
         setCourses(coursesRes.value.courses);
         await setCachedData('student_courses', coursesRes.value.courses);
+      } else if (coursesRes.status === 'rejected') {
+        fetchFailed = true;
       }
+
       if (announcementsRes.status === 'fulfilled' && announcementsRes.value?.announcements) {
         setAnnouncements(announcementsRes.value.announcements);
         await setCachedData('student_announcements', announcementsRes.value.announcements);
+      } else if (announcementsRes.status === 'rejected') {
+        fetchFailed = true;
       }
+
       if (tasksRes.status === 'fulfilled' && tasksRes.value?.tasks) {
         setTasks(tasksRes.value.tasks);
         await setCachedData('student_tasks', tasksRes.value.tasks);
+      } else if (tasksRes.status === 'rejected') {
+        fetchFailed = true;
       }
+
       if (heartbeatRes.status === 'fulfilled' && heartbeatRes.value) {
         const hbData = heartbeatRes.value as unknown as {
           profile?: { loginStreakCurrent?: number; currentStreak?: number; exp?: number };
@@ -100,8 +109,12 @@ export default function StudentDashboardScreen() {
           setShowRewardModal(true);
         }
       }
-    } catch {
-      // Handled gracefully with fallback data
+
+      if (fetchFailed && (!cachedCourses || cachedCourses.length === 0)) {
+        setErrorMessage('Could not synchronize latest campus updates. Showing cached data.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -125,7 +138,19 @@ export default function StudentDashboardScreen() {
   const pendingTasks = tasks.filter((t) => !t.completed);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <Screen
+      scroll
+      withTopInset
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.colors.primary}
+          colors={[theme.colors.primary]}
+        />
+      }
+    >
       {/* Daily Reward Modal */}
       <LoginRewardModal
         visible={showRewardModal}
@@ -134,18 +159,14 @@ export default function StudentDashboardScreen() {
         onClaim={handleClaimReward}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+      {errorMessage && (
+        <ErrorBanner
+          message={errorMessage}
+          onRetry={loadData}
+          onDismiss={() => setErrorMessage(null)}
+          retryAccessibilityLabel="Retry loading dashboard"
+        />
+      )}
         {/* Top Header Card */}
         <View style={[styles.topHeader, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
           <View style={styles.headerLeft}>
@@ -172,7 +193,7 @@ export default function StudentDashboardScreen() {
           {/* Quick Streak & EXP Pill */}
           <View style={[styles.statsPill, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}>
             <View style={styles.statItem}>
-              <Flame size={16} color="#F59E0B" />
+              <Flame size={16} color={theme.colors.warning} />
               <Text style={[styles.statValue, { color: theme.colors.text }]}>
                 {streak}d
               </Text>
@@ -246,19 +267,12 @@ export default function StudentDashboardScreen() {
 
         {/* Enrolled Courses Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Enrolled Courses
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/student/courses')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
-                See All ({courses.length})
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <SectionTitle
+            title="Enrolled Courses"
+            actionText={`See All (${courses.length})`}
+            onActionPress={() => router.push('/student/courses')}
+            actionAccessibilityLabel="See all enrolled courses"
+          />
 
           {loading ? (
             <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
@@ -301,19 +315,12 @@ export default function StudentDashboardScreen() {
 
         {/* Recent Announcements Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Campus Bulletins & Announcements
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/student/announcements' as any)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
-                View All
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <SectionTitle
+            title="Campus Bulletins & Announcements"
+            actionText="View All"
+            onActionPress={() => router.push('/student/announcements' as any)}
+            actionAccessibilityLabel="View all announcements"
+          />
 
           {announcements.length === 0 ? (
             <Card style={styles.emptyCard}>
@@ -354,15 +361,11 @@ export default function StudentDashboardScreen() {
             ))
           )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
@@ -375,10 +378,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     elevation: 2,
   },
   headerLeft: {

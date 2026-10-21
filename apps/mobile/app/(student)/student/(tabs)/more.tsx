@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Switch,
   Alert,
 } from 'react-native';
@@ -28,6 +27,7 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Button } from '../../../../src/components/common/Button';
 import { ProfileEditModal } from '../../../../src/components/profile/ProfileEditModal';
+import { Screen } from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 
 export default function StudentMoreScreen() {
@@ -65,7 +65,7 @@ export default function StudentMoreScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <Screen scrollable={false}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
         <TouchableOpacity
@@ -76,7 +76,7 @@ export default function StudentMoreScreen() {
           style={[styles.profileCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
         >
           <View style={[styles.avatarCircle, { backgroundColor: theme.colors.primary }]}>
-            <Text style={styles.avatarInitials}>{getInitials(user?.name)}</Text>
+            <Text style={[styles.avatarInitials, { color: theme.colors.surface }]}>{getInitials(user?.name)}</Text>
           </View>
           <View style={styles.profileText}>
             <Text style={[styles.profileName, { color: theme.colors.text }]}>
@@ -188,13 +188,13 @@ export default function StudentMoreScreen() {
                 value={isDark}
                 onValueChange={toggleTheme}
                 trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                thumbColor="#FFFFFF"
+                thumbColor={theme.colors.card}
               />
             </View>
 
             <View style={styles.menuItem}>
-              <View style={[styles.menuIconContainer, { backgroundColor: '#6B728015' }]}>
-                <Shield size={20} color="#6B7280" />
+              <View style={[styles.menuIconContainer, { backgroundColor: theme.colors.surfaceAlt }]}>
+                <Shield size={20} color={theme.colors.textSecondary} />
               </View>
               <View style={styles.menuItemText}>
                 <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Institute Code</Text>
@@ -222,7 +222,7 @@ export default function StudentMoreScreen() {
         visible={showProfileModal}
         onClose={() => setShowProfileModal(false)}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -241,10 +241,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 18,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     elevation: 2,
   },
   avatarCircle: {
@@ -256,7 +252,6 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatarInitials: {
-    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '800',
   },

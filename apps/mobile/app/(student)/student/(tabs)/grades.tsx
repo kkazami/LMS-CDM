@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
@@ -30,6 +29,7 @@ import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
+import { Screen, ErrorBanner } from '../../../../src/components/ui';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { Grade, GradeSummary } from '@lms/types';
 
@@ -94,8 +94,10 @@ export default function StudentGradesScreen() {
   const [enrolledCourses, setEnrolledCourses] = useState<Array<{ id: string; title: string; code: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadGrades = async () => {
+    setErrorMessage(null);
     try {
       // 1. Offline storage first for instant display
       const [cachedGrades, cachedSummaries, cachedCourses] = await Promise.all([
@@ -130,8 +132,8 @@ export default function StudentGradesScreen() {
         setEnrolledCourses(response.enrolledCourses);
         await setCachedData('student_enrolled_courses', response.enrolledCourses);
       }
-    } catch {
-      // Graceful fallback to cached state
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load grades. Displaying cached data if available.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -188,7 +190,7 @@ export default function StudentGradesScreen() {
   const screenWidth = Dimensions.get('window').width;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <Screen scrollable={false}>
       {/* ── Screen Header ── */}
       <View style={[styles.topHeader, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Grades</Text>
@@ -253,6 +255,15 @@ export default function StudentGradesScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {errorMessage && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+            <ErrorBanner
+              message={errorMessage}
+              onRetry={loadGrades}
+              onDismiss={() => setErrorMessage(null)}
+            />
+          </View>
+        )}
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -424,7 +435,7 @@ export default function StudentGradesScreen() {
                               {
                                 backgroundColor: isPassing
                                   ? `${theme.colors.primary}20`
-                                  : 'rgba(239, 68, 68, 0.15)',
+                                  : theme.colors.dangerBg,
                               },
                             ]}
                           >
@@ -432,7 +443,7 @@ export default function StudentGradesScreen() {
                               style={[
                                 styles.pctPillText,
                                 {
-                                  color: isPassing ? theme.colors.primary : '#EF4444',
+                                  color: isPassing ? theme.colors.primary : theme.colors.danger,
                                 },
                               ]}
                             >
@@ -513,14 +524,14 @@ export default function StudentGradesScreen() {
                                 y1="20"
                                 x2={chartWidth - 10}
                                 y2="20"
-                                stroke={theme.colors.border}
+                                stroke={theme.colors.chartGrid}
                                 strokeDasharray="3 3"
                                 strokeWidth="1"
                               />
                               <SvgText
                                 x="8"
                                 y="24"
-                                fill={theme.colors.textSecondary}
+                                fill={theme.colors.chartLabel}
                                 fontSize="9"
                                 fontWeight="600"
                               >
@@ -553,14 +564,14 @@ export default function StudentGradesScreen() {
                                 y1="85"
                                 x2={chartWidth - 10}
                                 y2="85"
-                                stroke={theme.colors.border}
+                                stroke={theme.colors.chartGrid}
                                 strokeDasharray="3 3"
                                 strokeWidth="1"
                               />
                               <SvgText
                                 x="12"
                                 y="89"
-                                fill={theme.colors.textSecondary}
+                                fill={theme.colors.chartLabel}
                                 fontSize="9"
                                 fontWeight="600"
                               >
@@ -573,7 +584,7 @@ export default function StudentGradesScreen() {
                                 y1="150"
                                 x2={chartWidth - 10}
                                 y2="150"
-                                stroke={theme.colors.border}
+                                stroke={theme.colors.chartAxis}
                                 strokeWidth="1.5"
                               />
 
@@ -595,7 +606,7 @@ export default function StudentGradesScreen() {
                                       fill={
                                         item.percentage >= 75
                                           ? theme.colors.primary
-                                          : '#EF4444'
+                                          : theme.colors.danger
                                       }
                                     />
                                     {/* Percentage text above bar */}
@@ -613,7 +624,7 @@ export default function StudentGradesScreen() {
                                     <SvgText
                                       x={x + barWidth / 2}
                                       y="166"
-                                      fill={theme.colors.textSecondary}
+                                      fill={theme.colors.chartLabel}
                                       fontSize="9"
                                       fontWeight="600"
                                       textAnchor="middle"
@@ -764,7 +775,7 @@ export default function StudentGradesScreen() {
                         ? theme.colors.border
                         : isPassing
                         ? theme.colors.primary
-                        : '#EF4444';
+                        : theme.colors.danger;
 
                       return (
                         <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -820,7 +831,7 @@ export default function StudentGradesScreen() {
                               ? `${theme.colors.textSecondary}18`
                               : overallAvgAll >= 75
                               ? `${theme.colors.primary}20`
-                              : 'rgba(239, 68, 68, 0.15)',
+                              : theme.colors.dangerBg,
                           },
                         ]}
                       >
@@ -832,7 +843,7 @@ export default function StudentGradesScreen() {
                                 ? theme.colors.textSecondary
                                 : overallAvgAll >= 75
                                 ? theme.colors.primary
-                                : '#EF4444',
+                                : theme.colors.danger,
                             },
                           ]}
                         >
@@ -906,7 +917,7 @@ export default function StudentGradesScreen() {
                                   ? `${theme.colors.textSecondary}20`
                                   : isPassing
                                   ? `${theme.colors.primary}18`
-                                  : 'rgba(239, 68, 68, 0.15)',
+                                  : theme.colors.dangerBg,
                               },
                             ]}
                           >
@@ -918,7 +929,7 @@ export default function StudentGradesScreen() {
                                     ? theme.colors.textSecondary
                                     : isPassing
                                     ? theme.colors.primary
-                                    : '#EF4444',
+                                    : theme.colors.danger,
                                 },
                               ]}
                             >
@@ -948,7 +959,7 @@ export default function StudentGradesScreen() {
                                     ? 'transparent'
                                     : isPassing
                                     ? theme.colors.primary
-                                    : '#EF4444',
+                                    : theme.colors.danger,
                                 },
                               ]}
                             />
@@ -1003,6 +1014,9 @@ export default function StudentGradesScreen() {
               <TouchableOpacity
                 onPress={() => setIsCoursePickerOpen(false)}
                 style={styles.modalCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close class scope picker"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <X size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
@@ -1094,7 +1108,7 @@ export default function StudentGradesScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -1475,6 +1489,10 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     padding: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalList: {
     paddingHorizontal: 12,

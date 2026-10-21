@@ -16,6 +16,8 @@ export interface ScreenProps {
   children: React.ReactNode;
   /** When true, renders a ScrollView; otherwise a static View. Defaults to false. */
   scroll?: boolean;
+  /** Alias for scroll. When true, renders a ScrollView. */
+  scrollable?: boolean;
   /** Optional RefreshControl element passed to the ScrollView. */
   refreshControl?: React.ReactElement<RefreshControlProps>;
   /** Style applied to the outer container. */
@@ -48,6 +50,7 @@ export interface ScreenProps {
 export function Screen({
   children,
   scroll = false,
+  scrollable,
   refreshControl,
   style,
   contentContainerStyle,
@@ -58,6 +61,7 @@ export function Screen({
 }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const isScroll = scrollable !== undefined ? scrollable : scroll;
   const { headerPaddingTop, bottomClearance, width } = useResponsive();
 
   const isWideScreen = maxWidth > 0 && width > maxWidth;
@@ -79,7 +83,7 @@ export function Screen({
     style,
   ];
 
-  if (scroll) {
+  if (isScroll) {
     return (
       <View style={rootStyle}>
         <ScrollView
