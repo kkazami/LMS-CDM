@@ -429,6 +429,9 @@ export function isEligibleOfflineNavigationLink(args: {
 /** Message displayed to students when offline reviews cannot sync due to expired session / auth pause */
 export const AUTH_EXPIRED_SYNC_MESSAGE = "Sign in again to finish syncing your offline reviews";
 
+/** Message displayed to students when offline review sync is paused due to transient timeout or rate limiting */
+export const SYNC_PAUSED_MESSAGE = "Sync paused. We'll retry automatically.";
+
 export type ReviewSyncActionType =
   | "SUCCESS"
   | "HOLD_AUTH"
@@ -444,9 +447,12 @@ export interface ReviewSyncAction {
 /**
  * Classifies HTTP response status when replaying a queued offline flashcard review.
  * - 2xx (e.g. 200, 201): review synced successfully; remove from IndexedDB queue.
- * - 401 (session expired), 408 (request timeout), 429 (rate limited):
+ * - 401 (session expired):
  *   keep item as PENDING, do NOT increment retryCount, stop flushing rest of queue for this run,
- *   and provide message telling student to sign in again.
+ *   and provide message telling student to sign in again ("Sign in again to finish syncing your offline reviews").
+ * - 408 (request timeout) and 429 (rate limited):
+ *   keep item as PENDING, do NOT increment retryCount, stop flushing rest of queue for this run,
+ *   and provide neutral retry message ("Sync paused. We'll retry automatically.") without showing a sign-in prompt.
  * - Other 4xx (403, 404, 422, etc.): client error; unusable item, remove from queue.
  * - 5xx / other: server error; increment retryCount, mark FAILED if retry ceiling reached.
  */
@@ -458,11 +464,19 @@ export function classifyReviewSyncResponse(status: number): ReviewSyncAction {
     };
   }
 
-  if (status === 401 || status === 408 || status === 429) {
+  if (status === 401) {
     return {
       type: "HOLD_AUTH",
       stopQueue: true,
       message: AUTH_EXPIRED_SYNC_MESSAGE,
+    };
+  }
+
+  if (status === 408 || status === 429) {
+    return {
+      type: "HOLD_AUTH",
+      stopQueue: true,
+      message: SYNC_PAUSED_MESSAGE,
     };
   }
 

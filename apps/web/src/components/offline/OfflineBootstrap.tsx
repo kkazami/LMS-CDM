@@ -15,6 +15,7 @@ import {
   classifyReviewSyncResponse,
   applyReviewSyncAction,
   AUTH_EXPIRED_SYNC_MESSAGE,
+  SYNC_PAUSED_MESSAGE,
 } from "@/lib/ite/offline/pure-logic";
 
 interface OfflineBootstrapProps {

@@ -31,6 +31,7 @@ import {
   classifyReviewSyncResponse,
   applyReviewSyncAction,
   AUTH_EXPIRED_SYNC_MESSAGE,
+  SYNC_PAUSED_MESSAGE,
 } from "../pure-logic";
 
 import { evaluateOfflineAccess } from "../guard";
@@ -555,7 +556,7 @@ describe("ITE Offline: Review Queue Replay & HTTP Status Handling", () => {
     status: "PENDING",
   };
 
-  it("handles 401 (session expired): keeps PENDING, does NOT increment retryCount, stops queue flush, and sets message", () => {
+  it("handles 401 (session expired): keeps PENDING, does NOT increment retryCount, stops queue flush, and prompts to sign in again", () => {
     const decision = classifyReviewSyncResponse(401);
     assert.equal(decision.type, "HOLD_AUTH");
     assert.equal(decision.stopQueue, true);
@@ -564,6 +565,7 @@ describe("ITE Offline: Review Queue Replay & HTTP Status Handling", () => {
       decision.message,
       "Sign in again to finish syncing your offline reviews"
     );
+    assert.match(decision.message, /Sign in again/);
 
     const updated = applyReviewSyncAction(mockReview, decision);
     assert.notEqual(updated, null);
@@ -571,11 +573,13 @@ describe("ITE Offline: Review Queue Replay & HTTP Status Handling", () => {
     assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 401");
   });
 
-  it("handles 429 (rate limited): keeps PENDING, does NOT increment retryCount, and stops queue flush", () => {
+  it("handles 429 (rate limited): keeps PENDING, does NOT increment retryCount, stops queue flush, and shows neutral pause message without sign-in prompt", () => {
     const decision = classifyReviewSyncResponse(429);
     assert.equal(decision.type, "HOLD_AUTH");
     assert.equal(decision.stopQueue, true);
-    assert.equal(decision.message, AUTH_EXPIRED_SYNC_MESSAGE);
+    assert.equal(decision.message, SYNC_PAUSED_MESSAGE);
+    assert.equal(decision.message, "Sync paused. We'll retry automatically.");
+    assert.doesNotMatch(decision.message, /Sign in/);
 
     const updated = applyReviewSyncAction(mockReview, decision);
     assert.notEqual(updated, null);
@@ -583,16 +587,32 @@ describe("ITE Offline: Review Queue Replay & HTTP Status Handling", () => {
     assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 429");
   });
 
-  it("handles 408 (request timeout): keeps PENDING, does NOT increment retryCount, and stops queue flush", () => {
+  it("handles 408 (request timeout): keeps PENDING, does NOT increment retryCount, stops queue flush, and shows neutral pause message without sign-in prompt", () => {
     const decision = classifyReviewSyncResponse(408);
     assert.equal(decision.type, "HOLD_AUTH");
     assert.equal(decision.stopQueue, true);
-    assert.equal(decision.message, AUTH_EXPIRED_SYNC_MESSAGE);
+    assert.equal(decision.message, SYNC_PAUSED_MESSAGE);
+    assert.equal(decision.message, "Sync paused. We'll retry automatically.");
+    assert.doesNotMatch(decision.message, /Sign in/);
 
     const updated = applyReviewSyncAction(mockReview, decision);
     assert.notEqual(updated, null);
     assert.equal(updated?.status, "PENDING");
     assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 408");
+  });
+
+  it("differentiates 401 auth expiration message from 408 and 429 neutral pause messages", () => {
+    const res401 = classifyReviewSyncResponse(401);
+    const res408 = classifyReviewSyncResponse(408);
+    const res429 = classifyReviewSyncResponse(429);
+
+    assert.equal(res401.message, "Sign in again to finish syncing your offline reviews");
+    assert.equal(res408.message, "Sync paused. We'll retry automatically.");
+    assert.equal(res429.message, "Sync paused. We'll retry automatically.");
+
+    assert.notEqual(res401.message, res429.message);
+    assert.notEqual(res401.message, res408.message);
+    assert.equal(res408.message, res429.message);
   });
 
   it("handles 403 (forbidden): marks for removal as unusable client error", () => {
