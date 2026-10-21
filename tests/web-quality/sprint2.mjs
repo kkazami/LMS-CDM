@@ -91,7 +91,7 @@ try {
     const usersBefore = (await cluster.owner.query('SELECT count(*)::int n FROM "User"')).rows[0].n;
     for (const folder of ['20261020140000_session_idle', '20261020150000_private_upload_scan']) await cluster.owner.query(fs.readFileSync(`prisma/migrations/${folder}/migration.sql`, 'utf8'));
     assert.equal((await cluster.owner.query('SELECT count(*)::int n FROM "User"')).rows[0].n, usersBefore);
-    const row = (await cluster.owner.query('SELECT "createdAt","lastSeenAt" FROM "Session" WHERE id=\'old-session\'')).rows[0]; assert.equal(row.createdAt.getTime(), row.lastSeenAt.getTime());
+    const row = (await cluster.owner.query('SELECT "createdAt","lastSeenAt" FROM "Session" WHERE id=\'old-session\'')).rows[0]; assert.equal(row.lastSeenAt.toISOString(), '1970-01-01T00:00:00.000Z');
   });
   if (process.env.WEB_QUALITY_LOCAL_LOAD === '1') await seedOwnedLoad(cluster);
   const assignmentSql = fs.readFileSync('prisma/program-head-chart/approved-existing-target-update.sql', 'utf8');
