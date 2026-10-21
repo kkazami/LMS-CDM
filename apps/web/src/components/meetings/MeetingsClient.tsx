@@ -24,7 +24,7 @@ import NewMeetingModal from "./NewMeetingModal";
 import EditMeetingModal from "./EditMeetingModal";
 import AttendanceModal from "./AttendanceModal";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
-import { groupMeetingsByManilaDay } from "@/lib/ite/meetings/pure-logic";
+import { groupMeetingsByManilaDay, formatMeetingAttendeesCount } from "@/lib/ite/meetings/pure-logic";
 import type { MeetingItemDto, MeetingStatus } from "@/lib/ite/meetings/types";
 
 interface CourseOption {
@@ -401,7 +401,7 @@ export default function MeetingsClient({
                         className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                       >
                         <Users className="w-3 h-3" />
-                        {m.joinCount ?? 0} joined
+                        {formatMeetingAttendeesCount(m.joinCount ?? 0, "joined")}
                       </button>
                     )}
                   </div>
@@ -638,7 +638,7 @@ export default function MeetingsClient({
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors"
                             >
                               <Users className="w-3.5 h-3.5" />
-                              <span>{m.joinCount ?? 0} students joined</span>
+                              <span>{formatMeetingAttendeesCount(m.joinCount ?? 0, "joined")}</span>
                             </button>
                           )}
 

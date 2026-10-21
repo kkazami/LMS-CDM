@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Users, Loader2, Clock } from "lucide-react";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import UserAvatar from "@/components/common/UserAvatar";
+import { formatMeetingAttendeesCount } from "@/lib/ite/meetings/pure-logic";
 import type { AttendanceResponse, MeetingItemDto } from "@/lib/ite/meetings/types";
 
 interface AttendanceModalProps {
@@ -122,7 +123,7 @@ export default function AttendanceModal({
           ) : (
             <div>
               <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 px-1 flex items-center justify-between">
-                <span>Total Joined: {data.totalAttendees}</span>
+                <span>Total Joined: {formatMeetingAttendeesCount(data.totalAttendees)}</span>
                 <span>Asia/Manila Time</span>
               </div>
               <ul className="space-y-2">

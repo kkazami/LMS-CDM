@@ -28,6 +28,7 @@ import {
   canJoinMeeting,
   canTransitionStatus,
   canEditMeeting,
+  formatMeetingAttendeesCount,
 } from "../pure-logic";
 
 describe("ITE Class Meetings: validateMeetingUrl", () => {
@@ -370,3 +371,22 @@ describe("ITE Class Meetings: Status Transitions & Edit Rules", () => {
     assert.equal(canEditMeeting("CANCELLED"), false);
   });
 });
+
+describe("ITE Class Meetings: formatMeetingAttendeesCount (Singular / Plural)", () => {
+  it("formats singular (1) count correctly with and without suffix", () => {
+    assert.equal(formatMeetingAttendeesCount(1, "joined"), "1 student joined");
+    assert.equal(formatMeetingAttendeesCount(1), "1 student");
+  });
+
+  it("formats zero (0) count correctly with plural noun", () => {
+    assert.equal(formatMeetingAttendeesCount(0, "joined"), "0 students joined");
+    assert.equal(formatMeetingAttendeesCount(0), "0 students");
+  });
+
+  it("formats multiple (2+) count correctly with plural noun", () => {
+    assert.equal(formatMeetingAttendeesCount(2, "joined"), "2 students joined");
+    assert.equal(formatMeetingAttendeesCount(15, "joined"), "15 students joined");
+    assert.equal(formatMeetingAttendeesCount(15), "15 students");
+  });
+});
+

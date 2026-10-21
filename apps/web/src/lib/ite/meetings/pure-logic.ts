@@ -370,3 +370,16 @@ export function canTransitionStatus(
 export function canEditMeeting(status: MeetingStatus): boolean {
   return status === "SCHEDULED" || status === "LIVE";
 }
+
+/**
+ * Formats attendee/student count with correct singular/plural phrasing.
+ * e.g., 0 -> "0 students", 1 -> "1 student", 2 -> "2 students"
+ * When action suffix is provided (e.g. "joined"), appends it:
+ * formatMeetingAttendeesCount(1, "joined") -> "1 student joined"
+ * formatMeetingAttendeesCount(2, "joined") -> "2 students joined"
+ */
+export function formatMeetingAttendeesCount(count: number, suffix?: string): string {
+  const noun = Math.abs(count) === 1 ? "student" : "students";
+  return suffix ? `${count} ${noun} ${suffix}` : `${count} ${noun}`;
+}
+
