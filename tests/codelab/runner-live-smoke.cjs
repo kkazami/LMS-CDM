@@ -5,10 +5,7 @@ const Module = require("node:module");
 const { build } = require(require.resolve("esbuild", { paths: [path.dirname(require.resolve("tsx"))] }));
 
 (async () => {
-  delete process.env.JUDGE0_AUTH_TOKEN;
-  delete process.env.RAPIDAPI_KEY;
-  delete process.env.JUDGE0_RAPIDAPI_KEY;
-  process.env.JUDGE0_URL = "https://ce.judge0.com";
+  if (process.env.CODELAB_LIVE_SMOKE_APPROVED !== 'synthetic-only') throw Error('Explicit CODELAB_LIVE_SMOKE_APPROVED=synthetic-only and configured provider credentials required. This check consumes provider quota.');
   const result = await build({ stdin: { contents: `export {executeJudge0Submission} from './apps/web/src/features/interactive-activities/codelab/utils/judge0-config'; export {wrapStudentCode} from './apps/web/src/features/interactive-activities/codelab/utils/code-wrappers';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: "node", format: "cjs" });
   const compiled = new Module(path.resolve("tmp/runner-smoke.cjs"), module); compiled.filename = path.resolve("tmp/runner-smoke.cjs"); compiled.paths = module.paths;
   compiled._compile(result.outputFiles[0].text, compiled.filename);

@@ -29,10 +29,11 @@ export default function ServiceWorkerRegister() {
       return;
     }
 
-    window.addEventListener("load", () => {
+    const register = () => {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
+          void registration.update();
           registration.onupdatefound = () => {
             const installingWorker = registration.installing;
             if (installingWorker) {
@@ -47,7 +48,10 @@ export default function ServiceWorkerRegister() {
         .catch((error) => {
           console.warn("[SW] Registration failed:", error);
         });
-    });
+    };
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
+    return () => window.removeEventListener('load', register);
   }, []);
 
   return null;

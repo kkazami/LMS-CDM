@@ -96,7 +96,7 @@ export default function GradeEvaluationModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-2xl mx-4 bg-white dark:bg-[#141721] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div role="dialog" aria-modal="true" aria-label="Grade Submission" className="relative z-10 w-full max-w-2xl mx-4 bg-white dark:bg-[#141721] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] shrink-0">
           <div>
@@ -104,6 +104,7 @@ export default function GradeEvaluationModal({
             <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">{submission.student.name}</p>
           </div>
           <button
+            aria-label="Close grading"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
           >
@@ -186,6 +187,7 @@ export default function GradeEvaluationModal({
                 <Star className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
                 <input
                   type="number"
+                  aria-label="Grade"
                   min={0}
                   max={maxPoints ?? undefined}
                   step={0.5}

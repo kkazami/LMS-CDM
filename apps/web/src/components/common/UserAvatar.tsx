@@ -55,7 +55,8 @@ export default function UserAvatar({
       width={px}
       height={px}
       className="h-full w-full rounded-full object-cover"
-      unoptimized={avatarUrl.startsWith("data:")}
+      // The optimizer does not forward the viewer's session cookie to private assets.
+      unoptimized={avatarUrl.startsWith("data:") || avatarUrl.startsWith('/api/assets/')}
     />
   ) : (
     <span className={cn("font-semibold text-white select-none", text)}>

@@ -48,9 +48,11 @@ export default function Input({
 
             // On mobile devices & WebViews, ensure focused input is smoothly centered above virtual keyboard
             const target = e.currentTarget;
-            setTimeout(() => {
-              target.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 300);
+            if (window.matchMedia('(max-width: 767px)').matches) {
+              setTimeout(() => {
+                target.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 300);
+            }
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = "";

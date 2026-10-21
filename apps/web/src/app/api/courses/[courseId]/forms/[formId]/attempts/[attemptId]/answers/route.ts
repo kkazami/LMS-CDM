@@ -1,4 +1,5 @@
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
+import { requireOwnedUpload } from '@/lib/private-upload';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
@@ -64,6 +65,7 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "questionId is required." }, { status: 400 });
     }
 
+    if (fileUrl) await requireOwnedUpload(db, session.user, String(fileUrl));
     // Prepare serializable storage values
     const stringifiedOptions = Array.isArray(answerOptions) ? JSON.stringify(answerOptions) : null;
     const stringifiedRanking = Array.isArray(answerRanking) ? JSON.stringify(answerRanking) : null;

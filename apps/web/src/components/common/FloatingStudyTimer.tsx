@@ -33,19 +33,30 @@ export default function FloatingStudyTimer() {
 
   // Heartbeat loop every 60 seconds
   useEffect(() => {
+    let pending = false;
+    let stopped = false;
+    let rewardTimer: ReturnType<typeof setTimeout> | undefined;
+    const controller = new AbortController();
+    const visible = () => { if (document.hidden) setIsActive(false); };
+    document.addEventListener('visibilitychange', visible);
     const sendHeartbeat = async () => {
+      if (pending || stopped || document.hidden || !navigator.onLine) return;
       // If no activity for > 3 minutes, set idle
       const idleTime = Date.now() - lastActivityRef.current;
       const userIsActive = idleTime < 180000;
       setIsActive(userIsActive);
+      if (!userIsActive) return;
+      pending = true;
 
       try {
         const res = await fetch("/api/gamification/heartbeat", {
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...(idleTime < 60000 ? { 'X-LMS-User-Active': '1' } : {}) },
           body: JSON.stringify({ isActive: userIsActive }),
         });
-        if (res.ok) {
+        if (res.status === 401) stopped = true;
+        if (res.ok && !controller.signal.aborted) {
           const data = (await res.json()) as {
             ok: boolean;
             totalSecondsToday: number;
@@ -57,19 +68,22 @@ export default function FloatingStudyTimer() {
           }
           if (data.expAwarded > 0) {
             setLastRewardMsg(`+${data.expAwarded} EXP: ${data.milestoneLabel}`);
-            setTimeout(() => setLastRewardMsg(null), 6000);
+            rewardTimer = setTimeout(() => setLastRewardMsg(null), 6000);
           }
         }
       } catch {
         // silent fail
-      }
+      } finally { pending = false; }
     };
 
     // Run initial tick after 5s then every 60s
-    const initialTimer = setTimeout(sendHeartbeat, 5000);
-    const interval = setInterval(sendHeartbeat, 60000);
+    const initialTimer = setTimeout(sendHeartbeat, 5000 + Math.random() * 5000);
+    const interval = setInterval(sendHeartbeat, 60000 + Math.random() * 5000);
 
     return () => {
+      controller.abort();
+      clearTimeout(rewardTimer);
+      document.removeEventListener('visibilitychange', visible);
       clearTimeout(initialTimer);
       clearInterval(interval);
     };

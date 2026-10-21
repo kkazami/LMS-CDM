@@ -1,0 +1,15 @@
+param([Parameter(Mandatory=$true)][string]$Directory)
+$resolved = [IO.Path]::GetFullPath($Directory)
+$boundary = [IO.Path]::GetFullPath((Join-Path (Get-Location) 'tmp/roster-import')) + [IO.Path]::DirectorySeparatorChar
+if (!$resolved.StartsWith($boundary) -or !(Test-Path -LiteralPath $resolved -PathType Container)) { throw 'Owned certificate output required.' }
+$rsa = [Security.Cryptography.RSA]::Create(2048)
+$request = [Security.Cryptography.X509Certificates.CertificateRequest]::new('CN=localhost', $rsa, [Security.Cryptography.HashAlgorithmName]::SHA256, [Security.Cryptography.RSASignaturePadding]::Pkcs1)
+$san = [Security.Cryptography.X509Certificates.SubjectAlternativeNameBuilder]::new()
+$san.AddDnsName('localhost')
+$san.AddIpAddress([Net.IPAddress]::Parse('127.0.0.1'))
+$request.CertificateExtensions.Add($san.Build())
+$cert = $request.CreateSelfSigned([DateTimeOffset]::UtcNow.AddMinutes(-5), [DateTimeOffset]::UtcNow.AddDays(1))
+[IO.File]::WriteAllText((Join-Path $resolved 'localhost-cert.pem'), $cert.ExportCertificatePem())
+[IO.File]::WriteAllText((Join-Path $resolved 'localhost-key.pem'), $rsa.ExportPkcs8PrivateKeyPem())
+$cert.Dispose()
+$rsa.Dispose()

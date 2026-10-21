@@ -35,7 +35,7 @@ LMS monorepo. pnpm@10.32.1 workspaces + Turbo. Read `.agents/rules/current-lms-a
 - Each API handler must verify the session itself (see src/lib/api-auth.ts). Current middleware may apply API headers and pass through; it does not authorize API resources.
 
 ## Gotchas
-- Interactive activities (`codelab`, `arduino`, `logic-gate`, `pc-build`, `server-rack`) use react-three-fiber + Monaco and depend on an external Judge0 service: `docker compose -f docker/docker-compose.judge0.yml up -d` (localhost:2358).
+- Interactive activities use react-three-fiber + Monaco. CodeLab runs student code only through an authenticated, managed Judge0-compatible HTTPS API. Configure server-only `JUDGE0_RAPIDAPI_KEY` for official CE through RapidAPI, or `JUDGE0_URL` plus `JUDGE0_AUTH_TOKEN` for a reviewed compatible provider. The vulnerable self-hosted compose stack and unused local runner were retired; there is no public-demo/local execution fallback. See `docs/quality/managed-code-execution.md`.
 - Root `.env` and `apps/web/.env.local` contain live credentials and are gitignored. Never print or commit them; use `.env.example` as the template.
 - Desktop builds from `electron/` into `dist/electron` (see `electron-builder.json`).
 - Repo rules live in `.agents/rules/*.md`; skills in `.agents/skills/`.

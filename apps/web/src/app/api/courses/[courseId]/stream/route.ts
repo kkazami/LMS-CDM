@@ -88,7 +88,7 @@ export async function GET(request: Request, context: RouteContext) {
       },
       {
         headers: {
-          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=120',
+          'Cache-Control': 'private, no-store',
         },
       }
     );

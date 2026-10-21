@@ -52,23 +52,24 @@ model User {
   coverColor  String  @default("#1E88E5") // Profile page banner accent color (hex)
   preferences String  @default("{}") // JSON object storing notification/theme settings
 
-  institute              Institute                @relation(fields: [instituteId], references: [id])
-  sessions               Session[]
-  notes                  Note[]
-  taskItems              TaskItem[]
-  calendarEvents         CalendarEvent[]
-  taughtCourses          Course[]                 @relation("CourseInstructor")
-  enrollments            Enrollment[]
-  groupMemberships       StudentGroupMember[]
-  announcements          Announcement[]
-  sentComments           PrivateComment[]         @relation("CommentSender")
-  receivedComments       PrivateComment[]         @relation("CommentRecipient")
-  submissions            StudentSubmission[]
-  dashboardLayouts       DashboardLayout[]
-  auditLogsAsAdmin       AuditLog[]               @relation("AuditAdmin")
-  auditLogsAsTarget      AuditLog[]               @relation("AuditTarget")
-  passwordResetOtps      PasswordResetOtp[]
-  activationTokens       AccountActivationToken[]
+  institute           Institute               @relation(fields: [instituteId], references: [id])
+  sessions            Session[]
+  notes               Note[]
+  taskItems           TaskItem[]
+  calendarEvents      CalendarEvent[]
+  taughtCourses       Course[]                @relation("CourseInstructor")
+  enrollments         Enrollment[]
+  groupMemberships    StudentGroupMember[]
+  announcements       Announcement[]
+  sentComments        PrivateComment[]        @relation("CommentSender")
+  receivedComments    PrivateComment[]        @relation("CommentRecipient")
+  submissions         StudentSubmission[]
+  submissionRequests  SubmissionRequest[]
+  dashboardLayouts    DashboardLayout[]
+  auditLogsAsAdmin    AuditLog[]              @relation("AuditAdmin")
+  auditLogsAsTarget   AuditLog[]              @relation("AuditTarget")
+  passwordResetOtps   PasswordResetOtp[]
+  activationTokens    AccountActivationToken[]
   // â”€â”€â”€ Interactive Activities relations (Sprint 0) â”€â”€â”€
   activityTemplates      ActivityTemplate[]       @relation("ActivityTemplateCreator")
   activitySubmissions    ActivitySubmission[]     @relation("ActivitySubmissions")
@@ -143,6 +144,7 @@ model Session {
   ipAddress String?
   expiresAt DateTime
   createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -382,6 +384,17 @@ model StudentSubmission {
   @@unique([syllabusItemId, studentId])
   @@index([syllabusItemId])
   @@index([studentId])
+}
+
+model SubmissionRequest {
+  id          String   @id
+  userId      String
+  requestHash String
+  response    Json
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model SubmissionAttachment {
@@ -650,17 +663,19 @@ model StudentBadge {
 }
 
 model ExpTransaction {
-  id        String   @id @default(cuid())
-  userId    String
-  amount    Int // Positive = gain, Negative = deduction
-  reason    String // Human-readable: "Completed CodeLab Level 5", "Daily Login Streak (Day 7)"
-  source    String // "codelab" | "assignment" | "attendance" | "login" | "grade_incentive" | "badge" | "study_timer"
-  courseId  String? // If tied to a course
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  idempotencyKey String?
+  amount         Int // Positive = gain, Negative = deduction
+  reason         String // Human-readable: "Completed CodeLab Level 5", "Daily Login Streak (Day 7)"
+  source         String // "codelab" | "assignment" | "attendance" | "login" | "grade_incentive" | "badge" | "study_timer"
+  courseId       String? // If tied to a course
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([source])
+  @@unique([userId, idempotencyKey])
 }
 
 model GradeIncentiveRule {
@@ -1702,13 +1717,14 @@ model PrivateAsset {
   id          String   @id @default(cuid())
   ownerId     String
   instituteId String
-  fileName    String
-  mimeType    String
-  size        Int
-  content     Bytes
-  createdAt   DateTime @default(now())
-  owner       User     @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
-
+  fileName   String
+  mimeType   String
+  size       Int
+  content    Bytes
+  scanStatus String   @default("LEGACY")
+  sha256     String?
+  createdAt  DateTime @default(now())
+  owner      User     @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
   @@index([instituteId, ownerId])
 }
 

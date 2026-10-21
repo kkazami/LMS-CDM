@@ -7,6 +7,13 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
 import { createNotificationsForCourseStudents } from "@/lib/notifications";
+import { requireOwnedUpload } from '@/lib/private-upload';
+import { attachmentLocation } from '@/lib/academic-records';
+
+async function validateUploads(actor: Awaited<ReturnType<typeof ensureCourseInstructor>>, raw: string) {
+  const files = z.array(z.object({ url: attachmentLocation })).max(20).parse(JSON.parse(raw));
+  for (const file of files) await requireOwnedUpload(db, actor, file.url);
+}
 
 async function ensureCourseInstructor(courseId: string) {
   const session = await getSession();
@@ -79,7 +86,7 @@ export async function createSyllabusItem(
   const data = parse.data;
 
   try {
-    await ensureCourseInstructor(data.courseId);
+    await validateUploads(await ensureCourseInstructor(data.courseId), data.attachments);
 
     // Get the next order index
     const lastItem = await db.syllabusItem.findFirst({
@@ -224,7 +231,7 @@ export async function updateSyllabusItem(
   if (!itemId) return { message: "Item ID is required." };
 
   try {
-    await ensureCourseInstructor(data.courseId);
+    await validateUploads(await ensureCourseInstructor(data.courseId), data.attachments);
 
     await db.syllabusItem.update({
       where: { id: itemId },

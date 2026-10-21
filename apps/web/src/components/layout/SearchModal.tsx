@@ -76,67 +76,63 @@ export default function SearchModal({
   const [mounted, setMounted] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLButtonElement | null>(null);
-  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      previousActiveElementRef.current = document.activeElement as HTMLElement | null;
-      document.body.style.overflow = "hidden";
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
-    } else {
-      document.body.style.overflow = "unset";
+    if (!isOpen) {
       setQuery("");
       setSelectedIndex(0);
-      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === "function") {
-        previousActiveElementRef.current.focus();
-      }
+      return;
     }
-    return () => {
-      document.body.style.overflow = "unset";
+    if (!mounted) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    const trap = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current();
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]'
+        ) || []
+      ).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
-  }, [isOpen]);
-
-  // Handle escape key and focus trap
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (!isOpen) return;
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key === "Tab") {
-        if (!modalRef.current) return;
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusableElements.length === 0) return;
-        const first = focusableElements[0];
-        const last = focusableElements[focusableElements.length - 1];
-        if (e.shiftKey) {
-          if (document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+    document.addEventListener("keydown", trap);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", trap);
+      document.body.style.overflow = overflow;
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [isOpen, mounted]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -499,11 +495,11 @@ export default function SearchModal({
 
       {/* Modal Container */}
       <div
-        ref={modalRef}
+        ref={dialogRef}
         className="relative flex flex-col w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-xl bg-white dark:bg-[#1A1D27] sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
         role="dialog"
         aria-modal="true"
-        aria-label="Search"
+        aria-label="Search CdM LMS"
       >
         {/* Search Header Bar */}
         <div
