@@ -9,7 +9,13 @@ import {
   savePendingFlashcardReview,
   clearAllOfflineData,
 } from "@/lib/ite/offline/idb";
-import { MAX_RETRY_ATTEMPTS, isEligibleOfflineNavigationLink } from "@/lib/ite/offline/pure-logic";
+import {
+  MAX_RETRY_ATTEMPTS,
+  isEligibleOfflineNavigationLink,
+  classifyReviewSyncResponse,
+  applyReviewSyncAction,
+  AUTH_EXPIRED_SYNC_MESSAGE,
+} from "@/lib/ite/offline/pure-logic";
 
 interface OfflineBootstrapProps {
   userId?: string;
@@ -27,6 +33,7 @@ export default function OfflineBootstrap({
   const [syncing, setSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [hasIndexedDb, setHasIndexedDb] = useState<boolean>(true);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
   const isSyncingRef = useRef(false);
   const consecutivePingFailuresRef = useRef(0);
@@ -61,8 +68,11 @@ export default function OfflineBootstrap({
       const reviews = await getPendingFlashcardReviews(userId);
       if (reviews.length === 0) {
         setPendingCount(0);
+        setSyncNotice(null);
         return;
       }
+
+      let hitAuthHold = false;
 
       for (const item of reviews) {
         if (item.retryCount >= MAX_RETRY_ATTEMPTS) {
@@ -82,21 +92,41 @@ export default function OfflineBootstrap({
             }),
           });
 
-          if (res.ok) {
+          const action = classifyReviewSyncResponse(res.status);
+
+          if (action.type === "SUCCESS") {
             await removePendingFlashcardReview(userId, item.id);
-          } else if (res.status >= 400 && res.status < 500) {
-            // Client error: remove corrupted review
+          } else if (action.type === "HOLD_AUTH") {
+            // 401 (and 408, 429): keep the item as PENDING, do NOT increment retryCount,
+            // stop flushing the rest of the queue for this run,
+            // and set a visible state telling the student "Sign in again to finish syncing your offline reviews".
+            hitAuthHold = true;
+            const updated = applyReviewSyncAction(item, action);
+            if (updated) {
+              await savePendingFlashcardReview(userId, updated);
+            }
+            setSyncNotice(action.message || AUTH_EXPIRED_SYNC_MESSAGE);
+            break;
+          } else if (action.type === "REMOVE_CLIENT_ERROR") {
+            // 403/404/422 and other 4xx: remove unusable review
             await removePendingFlashcardReview(userId, item.id);
           } else {
-            // Server error: record retry
-            item.retryCount += 1;
-            item.status = item.retryCount >= MAX_RETRY_ATTEMPTS ? "FAILED" : "PENDING";
-            await savePendingFlashcardReview(userId, item);
+            // 5xx and other server errors: record retry
+            const updated = applyReviewSyncAction(item, action);
+            if (updated) {
+              item.retryCount = updated.retryCount;
+              item.status = updated.status;
+              await savePendingFlashcardReview(userId, updated);
+            }
           }
-        } catch (networkErr) {
+        } catch {
           // Network failed mid-sync: halt loop until next reconnect
           break;
         }
+      }
+
+      if (!hitAuthHold) {
+        setSyncNotice(null);
       }
 
       const remaining = await getPendingFlashcardReviews(userId);
@@ -173,7 +203,11 @@ export default function OfflineBootstrap({
 
     // Initial status check & pending count
     checkConnectivity();
-    refreshPendingCount();
+    refreshPendingCount().then((count) => {
+      if (count > 0) {
+        syncNow();
+      }
+    });
 
     // Browser Online/Offline Events
     const handleOnline = () => {
@@ -256,8 +290,29 @@ export default function OfflineBootstrap({
         userId,
         syncNow,
         refreshPendingCount,
+        syncNotice,
       }}
     >
+      {syncNotice && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-amber-500 text-amber-950 dark:bg-amber-400 dark:text-amber-950 px-4 py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 shadow-md border-b border-amber-600/20 sticky top-0 z-50 animate-in fade-in"
+        >
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true">⚠️</span>
+            <span>{syncNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSyncNotice(null)}
+            className="text-xs px-2.5 py-1 rounded bg-black/10 hover:bg-black/20 font-medium shrink-0 transition-colors"
+            aria-label="Dismiss notice"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       {children}
     </OfflineContext.Provider>
   );

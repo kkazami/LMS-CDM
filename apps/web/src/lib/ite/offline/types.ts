@@ -46,6 +46,7 @@ export interface OfflineStatusState {
   lastSyncedAt: number | null;
   hasIndexedDb: boolean;
   isIteStudent: boolean;
+  syncNotice?: string | null;
 }
 
 export interface OfflineActor {

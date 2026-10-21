@@ -426,3 +426,87 @@ export function isEligibleOfflineNavigationLink(args: {
   }
 }
 
+/** Message displayed to students when offline reviews cannot sync due to expired session / auth pause */
+export const AUTH_EXPIRED_SYNC_MESSAGE = "Sign in again to finish syncing your offline reviews";
+
+export type ReviewSyncActionType =
+  | "SUCCESS"
+  | "HOLD_AUTH"
+  | "REMOVE_CLIENT_ERROR"
+  | "RETRY_SERVER_ERROR";
+
+export interface ReviewSyncAction {
+  type: ReviewSyncActionType;
+  stopQueue: boolean;
+  message?: string;
+}
+
+/**
+ * Classifies HTTP response status when replaying a queued offline flashcard review.
+ * - 2xx (e.g. 200, 201): review synced successfully; remove from IndexedDB queue.
+ * - 401 (session expired), 408 (request timeout), 429 (rate limited):
+ *   keep item as PENDING, do NOT increment retryCount, stop flushing rest of queue for this run,
+ *   and provide message telling student to sign in again.
+ * - Other 4xx (403, 404, 422, etc.): client error; unusable item, remove from queue.
+ * - 5xx / other: server error; increment retryCount, mark FAILED if retry ceiling reached.
+ */
+export function classifyReviewSyncResponse(status: number): ReviewSyncAction {
+  if (status >= 200 && status < 300) {
+    return {
+      type: "SUCCESS",
+      stopQueue: false,
+    };
+  }
+
+  if (status === 401 || status === 408 || status === 429) {
+    return {
+      type: "HOLD_AUTH",
+      stopQueue: true,
+      message: AUTH_EXPIRED_SYNC_MESSAGE,
+    };
+  }
+
+  if (status >= 400 && status < 500) {
+    return {
+      type: "REMOVE_CLIENT_ERROR",
+      stopQueue: false,
+    };
+  }
+
+  return {
+    type: "RETRY_SERVER_ERROR",
+    stopQueue: false,
+  };
+}
+
+/**
+ * Applies a sync action to a pending review item.
+ * - SUCCESS / REMOVE_CLIENT_ERROR: returns null (remove from queue).
+ * - HOLD_AUTH: preserves PENDING status without incrementing retryCount.
+ * - RETRY_SERVER_ERROR: increments retryCount, marks FAILED if >= maxRetries.
+ */
+export function applyReviewSyncAction(
+  item: PendingFlashcardReview,
+  action: ReviewSyncAction,
+  maxRetries: number = MAX_RETRY_ATTEMPTS
+): PendingFlashcardReview | null {
+  switch (action.type) {
+    case "SUCCESS":
+    case "REMOVE_CLIENT_ERROR":
+      return null;
+    case "HOLD_AUTH":
+      return {
+        ...item,
+        status: "PENDING",
+      };
+    case "RETRY_SERVER_ERROR": {
+      const nextRetryCount = item.retryCount + 1;
+      return {
+        ...item,
+        retryCount: nextRetryCount,
+        status: nextRetryCount >= maxRetries ? "FAILED" : "PENDING",
+      };
+    }
+  }
+}
+

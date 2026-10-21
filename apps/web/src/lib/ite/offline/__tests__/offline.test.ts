@@ -28,6 +28,9 @@ import {
   CACHE_VERSION,
   isRscOrPrefetchRequest,
   isEligibleOfflineNavigationLink,
+  classifyReviewSyncResponse,
+  applyReviewSyncAction,
+  AUTH_EXPIRED_SYNC_MESSAGE,
 } from "../pure-logic";
 
 import { evaluateOfflineAccess } from "../guard";
@@ -539,4 +542,115 @@ describe("ITE Offline: isEligibleOfflineNavigationLink", () => {
     );
   });
 });
+
+describe("ITE Offline: Review Queue Replay & HTTP Status Handling", () => {
+  const mockReview: PendingFlashcardReview = {
+    id: "rev_test_123",
+    idempotencyKey: "11111111-2222-3333-4444-555555555555",
+    deckId: "deck_test_abc",
+    cardsReviewed: 10,
+    durationSeconds: 120,
+    timestamp: 1700000000000,
+    retryCount: 0,
+    status: "PENDING",
+  };
+
+  it("handles 401 (session expired): keeps PENDING, does NOT increment retryCount, stops queue flush, and sets message", () => {
+    const decision = classifyReviewSyncResponse(401);
+    assert.equal(decision.type, "HOLD_AUTH");
+    assert.equal(decision.stopQueue, true);
+    assert.equal(decision.message, AUTH_EXPIRED_SYNC_MESSAGE);
+    assert.equal(
+      decision.message,
+      "Sign in again to finish syncing your offline reviews"
+    );
+
+    const updated = applyReviewSyncAction(mockReview, decision);
+    assert.notEqual(updated, null);
+    assert.equal(updated?.status, "PENDING");
+    assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 401");
+  });
+
+  it("handles 429 (rate limited): keeps PENDING, does NOT increment retryCount, and stops queue flush", () => {
+    const decision = classifyReviewSyncResponse(429);
+    assert.equal(decision.type, "HOLD_AUTH");
+    assert.equal(decision.stopQueue, true);
+    assert.equal(decision.message, AUTH_EXPIRED_SYNC_MESSAGE);
+
+    const updated = applyReviewSyncAction(mockReview, decision);
+    assert.notEqual(updated, null);
+    assert.equal(updated?.status, "PENDING");
+    assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 429");
+  });
+
+  it("handles 408 (request timeout): keeps PENDING, does NOT increment retryCount, and stops queue flush", () => {
+    const decision = classifyReviewSyncResponse(408);
+    assert.equal(decision.type, "HOLD_AUTH");
+    assert.equal(decision.stopQueue, true);
+    assert.equal(decision.message, AUTH_EXPIRED_SYNC_MESSAGE);
+
+    const updated = applyReviewSyncAction(mockReview, decision);
+    assert.notEqual(updated, null);
+    assert.equal(updated?.status, "PENDING");
+    assert.equal(updated?.retryCount, 0, "retryCount must not be incremented on 408");
+  });
+
+  it("handles 403 (forbidden): marks for removal as unusable client error", () => {
+    const decision = classifyReviewSyncResponse(403);
+    assert.equal(decision.type, "REMOVE_CLIENT_ERROR");
+    assert.equal(decision.stopQueue, false);
+
+    const updated = applyReviewSyncAction(mockReview, decision);
+    assert.equal(updated, null, "Item should be removed from IndexedDB on 403");
+  });
+
+  it("handles 404, 422, and other 4xx errors: marks for removal as unusable client errors", () => {
+    for (const code of [400, 404, 422]) {
+      const decision = classifyReviewSyncResponse(code);
+      assert.equal(decision.type, "REMOVE_CLIENT_ERROR");
+      assert.equal(decision.stopQueue, false);
+
+      const updated = applyReviewSyncAction(mockReview, decision);
+      assert.equal(updated, null, `Item should be removed from IndexedDB on ${code}`);
+    }
+  });
+
+  it("handles 5xx server errors: increments retryCount and keeps PENDING when below max retries", () => {
+    for (const code of [500, 502, 503, 504]) {
+      const decision = classifyReviewSyncResponse(code);
+      assert.equal(decision.type, "RETRY_SERVER_ERROR");
+      assert.equal(decision.stopQueue, false);
+
+      const updated = applyReviewSyncAction(mockReview, decision);
+      assert.notEqual(updated, null);
+      assert.equal(updated?.retryCount, 1, `retryCount should increment on ${code}`);
+      assert.equal(updated?.status, "PENDING");
+    }
+  });
+
+  it("handles 5xx server errors: transitions status to FAILED when retry ceiling is reached", () => {
+    const almostFailedItem: PendingFlashcardReview = {
+      ...mockReview,
+      retryCount: MAX_RETRY_ATTEMPTS - 1,
+    };
+
+    const decision = classifyReviewSyncResponse(500);
+    const updated = applyReviewSyncAction(almostFailedItem, decision);
+    assert.notEqual(updated, null);
+    assert.equal(updated?.retryCount, MAX_RETRY_ATTEMPTS);
+    assert.equal(updated?.status, "FAILED", "Item status must transition to FAILED when retry limit reached");
+  });
+
+  it("handles 200/201 success: marks item for removal from queue", () => {
+    for (const code of [200, 201]) {
+      const decision = classifyReviewSyncResponse(code);
+      assert.equal(decision.type, "SUCCESS");
+      assert.equal(decision.stopQueue, false);
+
+      const updated = applyReviewSyncAction(mockReview, decision);
+      assert.equal(updated, null, `Successful response ${code} should remove item`);
+    }
+  });
+});
+
 
