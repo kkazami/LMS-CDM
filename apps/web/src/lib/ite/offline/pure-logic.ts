@@ -349,3 +349,80 @@ export function formatManilaTime(dateOrTimestamp: Date | number): string {
     return d.toISOString();
   }
 }
+
+/**
+ * Detects whether a request is an RSC payload or router prefetch request.
+ * Next.js sends `RSC: 1` header, `Next-Router-Prefetch` / `Next-Router-State-Tree`,
+ * or a `_rsc` query parameter on client-side flight/navigation requests.
+ */
+export function isRscOrPrefetchRequest(input: {
+  headers?: Record<string, string | null | undefined> | Headers;
+  url?: string;
+}): boolean {
+  if (input.url) {
+    try {
+      const parsed = new URL(input.url, "http://localhost");
+      if (parsed.searchParams.has("_rsc")) {
+        return true;
+      }
+    } catch {
+      // ignore invalid URL
+    }
+  }
+
+  if (input.headers) {
+    if (typeof (input.headers as Headers).get === "function") {
+      const h = input.headers as Headers;
+      const rsc = h.get("RSC") || h.get("rsc");
+      if (rsc === "1" || rsc === "true") return true;
+      if (h.has("next-router-prefetch") || h.has("Next-Router-Prefetch") || h.has("next-router-state-tree")) {
+        return true;
+      }
+    } else {
+      const h = input.headers as Record<string, string | null | undefined>;
+      const lowerKeys = Object.keys(h).reduce<Record<string, string | null | undefined>>((acc, k) => {
+        acc[k.toLowerCase()] = h[k];
+        return acc;
+      }, {});
+      if (lowerKeys["rsc"] === "1" || lowerKeys["rsc"] === "true") return true;
+      if (lowerKeys["next-router-prefetch"] || lowerKeys["next-router-state-tree"]) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Checks whether an anchor link click is eligible for full browser navigation
+ * while offline in the ITE student dashboard.
+ */
+export function isEligibleOfflineNavigationLink(args: {
+  href: string;
+  origin: string;
+  target?: string | null;
+  hasModifierKey?: boolean;
+}): boolean {
+  if (args.hasModifierKey) return false;
+  if (args.target && args.target !== "_self") return false;
+  if (!args.href || args.href.startsWith("#") || args.href.startsWith("javascript:")) return false;
+  if (args.href.startsWith("mailto:") || args.href.startsWith("tel:")) return false;
+
+  try {
+    const parsed = new URL(args.href, args.origin);
+    // Must be strictly same origin
+    if (parsed.origin !== args.origin) return false;
+
+    // Must be under /ite/
+    const pathname = parsed.pathname;
+    if (!pathname.startsWith("/ite/") && pathname !== "/ite") return false;
+
+    // Exclude API, admin, and teacher routes
+    if (pathname.startsWith("/api/")) return false;
+    if (pathname.startsWith("/ite/teachers") || pathname.startsWith("/ite/admin")) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+

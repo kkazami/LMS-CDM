@@ -26,6 +26,8 @@ import {
   MAX_RETRY_ATTEMPTS,
   MAX_CACHED_MATERIALS,
   CACHE_VERSION,
+  isRscOrPrefetchRequest,
+  isEligibleOfflineNavigationLink,
 } from "../pure-logic";
 
 import { evaluateOfflineAccess } from "../guard";
@@ -394,3 +396,147 @@ describe("ITE Offline: Middleware Static Regex", () => {
     assert.equal(STATIC_EXTENSION_REGEX.test("/ite/learning-materials/c1/m1/read"), false);
   });
 });
+
+describe("ITE Offline: isRscOrPrefetchRequest", () => {
+  it("identifies RSC: 1 header", () => {
+    assert.equal(isRscOrPrefetchRequest({ headers: { RSC: "1" } }), true);
+    assert.equal(isRscOrPrefetchRequest({ headers: { rsc: "1" } }), true);
+  });
+
+  it("identifies router prefetch and state tree headers", () => {
+    assert.equal(isRscOrPrefetchRequest({ headers: { "next-router-prefetch": "1" } }), true);
+    assert.equal(isRscOrPrefetchRequest({ headers: { "next-router-state-tree": "xyz" } }), true);
+  });
+
+  it("identifies _rsc query parameter in URL", () => {
+    assert.equal(isRscOrPrefetchRequest({ url: "https://example.com/ite/learning-materials/1/2/read?_rsc=123" }), true);
+  });
+
+  it("returns false for regular navigation requests without RSC flags", () => {
+    assert.equal(isRscOrPrefetchRequest({ headers: { accept: "text/html" }, url: "https://example.com/ite/learning-materials/1/2/read" }), false);
+    assert.equal(isRscOrPrefetchRequest({}), false);
+  });
+});
+
+describe("ITE Offline: isEligibleOfflineNavigationLink", () => {
+  const origin = "https://lms.cdm.edu.ph";
+
+  it("accepts same-origin links within /ite/ student areas", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/learning-materials/c1/m1/read",
+        origin,
+      }),
+      true
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "https://lms.cdm.edu.ph/ite/flashcards",
+        origin,
+      }),
+      true
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/students",
+        origin,
+      }),
+      true
+    );
+  });
+
+  it("rejects modified clicks (Ctrl, Cmd, Shift, Alt)", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/flashcards",
+        origin,
+        hasModifierKey: true,
+      }),
+      false
+    );
+  });
+
+  it("rejects target=_blank links", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/flashcards",
+        origin,
+        target: "_blank",
+      }),
+      false
+    );
+  });
+
+  it("rejects external origins and non-ITE portals", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "https://google.com/ite/flashcards",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ics/activities",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ibe/classes",
+        origin,
+      }),
+      false
+    );
+  });
+
+  it("rejects teacher, admin, and API endpoints", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/teachers",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/ite/admin",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "/api/ite/offline/ping",
+        origin,
+      }),
+      false
+    );
+  });
+
+  it("rejects hash, javascript, and mailto links", () => {
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "#section",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "javascript:void(0)",
+        origin,
+      }),
+      false
+    );
+    assert.equal(
+      isEligibleOfflineNavigationLink({
+        href: "mailto:support@cdm.edu.ph",
+        origin,
+      }),
+      false
+    );
+  });
+});
+

@@ -123,17 +123,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Helper to detect RSC / flight prefetch requests
+  const isRsc =
+    request.headers.get("RSC") === "1" ||
+    request.headers.get("rsc") === "1" ||
+    request.headers.has("next-router-prefetch") ||
+    request.headers.has("next-router-state-tree") ||
+    url.searchParams.has("_rsc");
+
   // 4. ITE LEARNING MATERIALS (READ VIEW) -> Network-First with Timeout & Fallback
   const isMaterialRead = /^\/ite\/learning-materials\/[^/]+\/[^/]+\/read\/?$/.test(pathname);
   if (isMaterialRead) {
-    event.respondWith(handleMaterialPage(request));
+    event.respondWith(handleMaterialPage(request, isRsc));
     return;
   }
 
   // 5. ITE FLASHCARDS VIEW
   const isFlashcards = /^\/ite\/flashcards(\/.*)?$/.test(pathname);
   if (isFlashcards) {
-    event.respondWith(handleFlashcardsPage(request));
+    event.respondWith(handleFlashcardsPage(request, isRsc));
     return;
   }
 
@@ -141,6 +149,20 @@ self.addEventListener("fetch", (event) => {
   const isAttachment = pathname.startsWith("/uploads/");
   if (isAttachment) {
     event.respondWith(handleAttachment(request));
+    return;
+  }
+
+  // 7. REAL NAVIGATION REQUESTS FOR OTHER /ite/ PAGES
+  // When offline during browser navigation to any other uncached /ite/ page, serve standalone fallback
+  if (request.mode === "navigate" && (pathname.startsWith("/ite/") || pathname === "/ite")) {
+    event.respondWith(handleGenericNavigation(request));
+    return;
+  }
+
+  // 8. RSC/PREFETCH REQUESTS FOR /ite/ ROUTES
+  // Return Response.error() on network failure so Next falls back to full browser navigation
+  if (isRsc && (pathname.startsWith("/ite/") || pathname === "/ite")) {
+    event.respondWith(handleRscRequest(request));
     return;
   }
 
@@ -172,10 +194,11 @@ async function handleStaticAsset(request) {
 /**
  * Handles ITE learning material reading view.
  * Strategy: Network-first with 2500ms timeout.
- * If offline or timeout: serve cached version.
- * If not cached: return clean standalone offline fallback HTML.
+ * If offline or timeout:
+ *   - For RSC/prefetch: returns Response.error() so Next.js falls back to real browser navigation.
+ *   - For navigate/HTML: serves cached version (ignoring _rsc query), or offline.html fallback if uncached.
  */
-async function handleMaterialPage(request) {
+async function handleMaterialPage(request, isRsc) {
   const cacheName = getMaterialCacheName();
   const cache = await caches.open(cacheName);
 
@@ -188,16 +211,23 @@ async function handleMaterialPage(request) {
 
     const response = await Promise.race([networkPromise, timeoutPromise]);
 
-    // Validate response before caching
-    if (isResponseCacheable(response)) {
+    // Validate response before caching (cache HTML only, not RSC fragments)
+    if (isResponseCacheable(response) && !isRsc) {
       await cache.put(request, response.clone());
       trimCache(cache, MAX_CACHED_MATERIALS);
     }
 
     return response;
   } catch (networkErr) {
-    // Network failed or timed out — try cache
-    const cached = await cache.match(request);
+    // If RSC/prefetch failed, return Response.error() so Next.js triggers standard navigation
+    if (isRsc) {
+      return Response.error();
+    }
+
+    // Real navigation requests: search cache ignoring _rsc param
+    const cached =
+      (await cache.match(request, { ignoreSearch: true })) ||
+      (await cache.match(request));
     if (cached) {
       return cached;
     }
@@ -210,7 +240,7 @@ async function handleMaterialPage(request) {
 /**
  * Handles ITE flashcards page.
  */
-async function handleFlashcardsPage(request) {
+async function handleFlashcardsPage(request, isRsc) {
   const cacheName = `${CACHE_VERSION}-flashcards-${currentUserId}`;
   const cache = await caches.open(cacheName);
 
@@ -221,14 +251,47 @@ async function handleFlashcardsPage(request) {
     );
     const response = await Promise.race([networkPromise, timeoutPromise]);
 
-    if (isResponseCacheable(response)) {
+    if (isResponseCacheable(response) && !isRsc) {
       await cache.put(request, response.clone());
     }
     return response;
   } catch (err) {
-    const cached = await cache.match(request);
+    if (isRsc) {
+      return Response.error();
+    }
+
+    const cached =
+      (await cache.match(request, { ignoreSearch: true })) ||
+      (await cache.match(request));
     if (cached) return cached;
     return getOfflineFallbackResponse("Flashcard decks you have opened are available offline. Connect to view other decks.");
+  }
+}
+
+/**
+ * Handles real navigation to any other uncached /ite/ page while offline.
+ */
+async function handleGenericNavigation(request) {
+  try {
+    const networkPromise = fetch(request);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Network timeout")), 2500)
+    );
+    return await Promise.race([networkPromise, timeoutPromise]);
+  } catch (err) {
+    return getOfflineFallbackResponse();
+  }
+}
+
+/**
+ * Handles RSC/prefetch requests for /ite/ pages on network failure.
+ * Returns Response.error() so Next.js client router falls back to browser navigation.
+ */
+async function handleRscRequest(request) {
+  try {
+    return await fetch(request);
+  } catch (err) {
+    return Response.error();
   }
 }
 

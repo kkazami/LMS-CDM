@@ -9,7 +9,7 @@ import {
   savePendingFlashcardReview,
   clearAllOfflineData,
 } from "@/lib/ite/offline/idb";
-import { MAX_RETRY_ATTEMPTS } from "@/lib/ite/offline/pure-logic";
+import { MAX_RETRY_ATTEMPTS, isEligibleOfflineNavigationLink } from "@/lib/ite/offline/pure-logic";
 
 interface OfflineBootstrapProps {
   userId?: string;
@@ -210,6 +210,39 @@ export default function OfflineBootstrap({
       clearInterval(interval);
     };
   }, [isEligible, userId, checkConnectivity, refreshPendingCount, syncNow]);
+
+  // 6. Capture-phase link click interception when offline for ITE students
+  useEffect(() => {
+    if (!isEligible || online) {
+      return;
+    }
+
+    const handleClickCapture = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      const rawHref = anchor.getAttribute("href");
+      if (!rawHref) return;
+
+      const isEligibleLink = isEligibleOfflineNavigationLink({
+        href: rawHref,
+        origin: window.location.origin,
+        target: anchor.getAttribute("target"),
+        hasModifierKey: event.metaKey || event.ctrlKey || event.shiftKey || event.altKey,
+      });
+
+      if (isEligibleLink) {
+        event.preventDefault();
+        window.location.assign(anchor.href);
+      }
+    };
+
+    document.addEventListener("click", handleClickCapture, true);
+    return () => {
+      document.removeEventListener("click", handleClickCapture, true);
+    };
+  }, [isEligible, online]);
 
   return (
     <OfflineContext.Provider
