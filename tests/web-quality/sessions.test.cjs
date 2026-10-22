@@ -33,6 +33,13 @@ test('real validator uses token hashes, rejects internal IDs and inactive, expir
   assert.equal(await api.validateSessionToken(token), null);
 });
 
+test('existing sessions expose the current ICS name even when the roster contains an older name', async () => {
+  const state = fixture();
+  state.rows[0].user.institute = { code: 'ics', name: 'Legacy institute name' };
+  const api = await compile(authSource, state);
+  assert.equal((await api.validateSessionToken(token)).user.institute.name, 'Institute of Computing Studies');
+});
+
 test('deactivated accounts and an idle-touch revocation race cannot obtain a valid session', async () => {
   const state = fixture(), api = await compile(authSource, state); state.rows[0].user.isActive = false;
   assert.equal(await api.validateSessionToken(token), null); assert.equal(state.calls.deletes, 1);

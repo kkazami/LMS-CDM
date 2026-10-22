@@ -284,7 +284,7 @@ export async function POST(request: Request) {
 
   if (!institute) {
     return NextResponse.json(
-      { error: "Institute of Computer Studies not found." },
+      { error: "Institute of Computing Studies not found." },
       { status: 500 }
     );
   }

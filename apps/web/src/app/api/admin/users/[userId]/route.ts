@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Admin Single User API — Get, Update, Delete
@@ -66,7 +67,7 @@ export async function GET(request: Request, context: RouteContext) {
         permissions: parsePermissions(user.permissions),
         createdAt: user.createdAt.toISOString(),
         instituteCode: user.institute.code,
-        instituteName: user.institute.name,
+        instituteName: getInstituteName(user.institute.code, user.institute.name),
       },
     });
   } catch (err) {

@@ -36,8 +36,8 @@ export default async function AnnouncementsPage({
   const theme = getInstituteTheme(institute);
   const role = (user.role as string).toUpperCase();
 
-  // Only students see this view — professors/admins redirect to dashboard
-  if (role !== "STUDENT") {
+  const isInstructor = ["PROFESSOR", "TEACHER", "INSTRUCTOR"].includes(role);
+  if (role !== "STUDENT" && !isInstructor) {
     redirect(`/${institute}`);
   }
 
@@ -49,33 +49,36 @@ export default async function AnnouncementsPage({
     redirect(`/login?institute=${institute}`);
   }
 
-  // ── 1. Fetch student's APPROVED enrollments ──
-  // Same source as Grades page and sidebar accordion
-  const enrollments = await db.enrollment.findMany({
-    where: {
-      studentId,
-      status: "APPROVED",
-      course: {
-        instituteId: instituteRecord.id,
-        isArchived: false,
-      },
-    },
-    select: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          code: true,
+  // Faculty see only their assigned classes; students retain approved enrollments.
+  const enrolledCourses: EnrolledCourseOption[] = isInstructor
+    ? await db.course.findMany({
+        where: { instructorId: user.id, instituteId: instituteRecord.id, isArchived: false },
+        select: { id: true, title: true, code: true },
+        orderBy: { code: "asc" },
+      })
+    : (await db.enrollment.findMany({
+        where: {
+          studentId,
+          status: "APPROVED",
+          course: {
+            instituteId: instituteRecord.id,
+            isArchived: false,
+          },
         },
-      },
-    },
-    orderBy: { displayOrderIndex: "asc" },
-  });
-
-  const enrolledCourses: EnrolledCourseOption[] = enrollments.map((e) => e.course);
+        select: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              code: true,
+            },
+          },
+        },
+        orderBy: { displayOrderIndex: "asc" },
+      })).map(e => e.course);
   const courseIds = enrolledCourses.map((c) => c.id);
 
-  // ── 2. Fetch REAL announcements for enrolled courses ──
+  // ── 2. Fetch announcements for the authorized classes ──
   const announcements =
     courseIds.length === 0
       ? []
@@ -120,6 +123,7 @@ export default async function AnnouncementsPage({
       enrolledCourses={enrolledCourses}
       theme={theme}
       instituteCode={theme.code}
+      isInstructor={isInstructor}
     />
   );
 }

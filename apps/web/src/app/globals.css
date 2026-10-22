@@ -2,21 +2,33 @@
 
 @variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+}
+
 /* ─── UI UX Pro Max: CdM LMS Theme Tokens ─── */
 :root {
   color-scheme: light;
-  --bg-canvas: #F8FAFC;
+  --brand-navy: #0F1724;
+  --brand-gold: #F5C400;
+  --brand-gold-soft: #F5E8B5;
+  --course-banner: linear-gradient(135deg, #0F1724, #273951);
+  --bg-canvas: #F7F8FA;
   --bg-surface: #FFFFFF;
   --bg-elevated: #FFFFFF;
   --border-color: #E2E8F0;
   --border-subtle: #F1F5F9;
   --text-primary: #0F172A;
   --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-muted: #59677B;
+  --action-bg: #0F1724;
+  --action-hover: #26364B;
+  --action-ink: #FFFFFF;
   --accent-orange: #F97316;
   --accent-orange-hover: #EA580C;
   --accent-orange-subtle: rgba(249, 115, 22, 0.10);
-  --focus-ring: #F97316;
+  --focus-ring: #334A69;
 
   /* Motion & Easing Tokens */
   --motion-micro:    80ms;
@@ -46,12 +58,15 @@
   --border-color: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.04);
   --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --text-secondary: #B6C0D0;
+  --text-muted: #A6B2C5;
+  --action-bg: #F5C400;
+  --action-hover: #FFDA40;
+  --action-ink: #0F1724;
   --accent-orange: #F97316;
   --accent-orange-hover: #FB923C;
   --accent-orange-subtle: rgba(249, 115, 22, 0.12);
-  --focus-ring: #F97316;
+  --focus-ring: #F5C400;
 
   --skeleton-base:    #1E2132;
   --skeleton-shine:   #252A40;
@@ -116,7 +131,7 @@ body {
   max-width: 100vw;
   background-color: var(--bg-canvas);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-cdm-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   transition: background-color 150ms ease, color 150ms ease;
 }
 
@@ -149,6 +164,20 @@ html {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+::selection { background: var(--brand-gold-soft); color: var(--brand-navy); }
+
+/* Older feature views share the shell's readable type floor and secondary ink. */
+.lms-shell { --institute-ink: color-mix(in srgb,var(--institute-accent) 58%,var(--text-primary)); }
+.lms-shell :is(.text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[12px\]) {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.lms-shell :is(.text-slate-400, .text-slate-500, .text-gray-400, .text-gray-500) {
+  color: var(--text-secondary);
+}
+.lms-shell :is(input, textarea)::placeholder { color: var(--text-muted); opacity: 1; }
+.lms-shell :is(input, textarea) { caret-color: var(--text-primary); }
 
 /* ─── Design System Utility Classes ─── */
 .bg-canvas {

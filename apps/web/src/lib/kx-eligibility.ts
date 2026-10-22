@@ -4,7 +4,7 @@
  * Single source of truth for determining whether a user can access
  * the Knowledge Exchange (KX) Q&A module.
  *
- * RULE: Strictly gated to users belonging to the Institute of Computer Studies (ICS).
+ * RULE: Strictly gated to users belonging to the Institute of Computing Studies (ICS).
  * Non-ICS institutes (e.g. IBE, ITE) are barred from access.
  */
 

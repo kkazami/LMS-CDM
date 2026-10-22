@@ -323,7 +323,7 @@ try {
     const passwordHash = await hash(password, 12);
     await cluster.owner.query(`INSERT INTO "User"(id,name,email,password,role,"instituteId","studentNumber","uniqueId") VALUES('compat-a','Synthetic A','compat-a@example.invalid',$1,'STUDENT','ics','AMBIG-01','AMBIG-01'),('compat-b','Synthetic B','compat-b@example.invalid',$1,'STUDENT','ics','AMBIG-01','AMBIG-01')`, [passwordHash]);
     const login = await import('../../apps/web/src/app/api/auth/login/route.ts');
-    const attempt = (identifier) => asAccount({token:'not-authenticated'}, () => login.POST(req('/api/auth/login', {identifier,password,instituteCode:'ics'},false)));
+    const attempt = (identifier) => asAccount({token:'not-authenticated'}, () => login.POST(req('/api/auth/login', {identifier,password,instituteCode:'ics',acceptedPolicies:true},false)));
     assert.equal((await attempt('AMBIG-01')).status, 401);
     assert.equal((await attempt('compat-a@example.invalid')).status, 200);
     await cluster.owner.query(`DELETE FROM "Session" WHERE "userId" IN ('compat-a','compat-b'); DELETE FROM "GamificationProfile" WHERE "studentId" IN ('compat-a','compat-b'); DELETE FROM "User" WHERE id IN ('compat-a','compat-b')`);
@@ -714,6 +714,7 @@ try {
             identifier: student.studentNumber,
             password: "AnyPassword123",
             instituteCode: "ics",
+            acceptedPolicies: true,
           },
           false,
         ),
@@ -834,6 +835,7 @@ try {
                 ...identity,
                 password: "Synthetic-Student-12345",
                 instituteCode: "ics",
+                acceptedPolicies: true,
               },
               false,
             ),

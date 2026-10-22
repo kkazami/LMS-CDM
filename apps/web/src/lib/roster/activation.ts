@@ -25,7 +25,7 @@ export async function inspectActivation(raw: string) {
     include: { user: { include: { institute: true } } },
   });
   if (!grant || !grantMatches(grant, grant.user)) throw invalid();
-  return { name: grant.user.name, email: grant.user.email };
+  return { name: grant.user.name, email: grant.user.email, instituteCode: grant.user.institute.code };
 }
 const completeInput = z
   .object({

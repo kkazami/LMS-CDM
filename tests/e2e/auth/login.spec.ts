@@ -65,6 +65,7 @@ test.describe('Login Page', () => {
     // Fill form using accessible selectors (getByLabel preferred)
     await page.getByLabel(/email/i).fill(TEST_ACCOUNTS.student.email);
     await page.getByLabel('Password', { exact: true }).fill(TEST_ACCOUNTS.student.password);
+    await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
 
     // Submit
     await page.getByRole('button', { name: /sign in|log in|login/i }).click();
@@ -84,6 +85,7 @@ test.describe('Login Page', () => {
     // Fill with invalid credentials
     await page.getByLabel(/email/i).fill('nonexistent@test.com');
     await page.getByLabel('Password', { exact: true }).fill('wrongpassword');
+    await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
 
     // Submit
     await page.getByRole('button', { name: /sign in|log in|login/i }).click();

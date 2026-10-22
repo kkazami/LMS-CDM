@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { PolicyLink } from "@/components/legal/PolicyNavigation";
+import { LoaderCircle, LockKeyhole, LogIn, Mail } from "lucide-react";
 import Input from "@/components/common/Input";
-import Button from "@/components/common/Button";
 import { isDesktopAdmin as isDesktopAdminCheck } from "@/lib/electron-detect";
 import { triggerNativeHaptic, syncSessionToNative } from "@/lib/mobile-bridge";
 import type { InstituteTheme } from "@/lib/theme";
+import styles from "./login.module.css";
 
 type LoginFormValues = {
   identifier: string;
@@ -25,8 +26,6 @@ export default function LoginForm({
   instituteCode,
   isDesktopAdmin = false,
 }: LoginFormProps) {
-  const router = useRouter();
-
   const [isDesktopMode, setIsDesktopMode] = useState<boolean>(isDesktopAdmin);
 
   useEffect(() => {
@@ -46,6 +45,7 @@ export default function LoginForm({
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -65,6 +65,10 @@ export default function LoginForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage("");
+    if (!acceptedPolicies) {
+      setErrorMessage("Agree to the Terms and Conditions and acknowledge the Privacy Policy to sign in.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -76,13 +80,14 @@ export default function LoginForm({
         body: JSON.stringify({
           ...values,
           instituteCode,
+          acceptedPolicies,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Unable to sign in.");
+        throw new Error(data.errors?.acceptedPolicies?.[0] || data.message || "Unable to sign in.");
       }
 
       triggerNativeHaptic("success");
@@ -128,60 +133,85 @@ export default function LoginForm({
     : `/register?institute=${instituteCode}`;
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4">
-      {activated && <p role="status" className="text-sm">Account activated. You can now sign in.</p>}
-      <Input
-        id="identifier"
-        name="identifier"
-        label={isDesktopMode ? "Email" : "Email or student ID"}
-        type="text"
-        placeholder={isDesktopMode ? "admin@school.edu" : "student@school.edu"}
-        value={values.identifier}
-        disabled={!ready || isSubmitting}
-        onChange={(event) => updateField("identifier", event.target.value)}
-        theme={theme}
-        required
-      />
-
-      <div className="grid gap-1">
+    <form onSubmit={handleSubmit} className={styles.form} aria-busy={isSubmitting}>
+      {activated && <p role="status" className={styles.status}>Account activated. You can now sign in.</p>}
+      <div className={styles.field}>
+        <Mail className={styles.fieldIcon} aria-hidden="true" />
         <Input
-          id="password"
-          name="password"
-          label="Password"
-          type="password"
-          placeholder="Enter your password"
-          value={values.password}
+          id="identifier"
+          name="identifier"
+          label={isDesktopMode ? "Email" : "Email or student ID"}
+          type="text"
+          placeholder={isDesktopMode ? "Enter your email" : "Enter your email or student ID"}
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          value={values.identifier}
           disabled={!ready || isSubmitting}
-          onChange={(event) => updateField("password", event.target.value)}
+          onChange={(event) => updateField("identifier", event.target.value)}
           theme={theme}
           required
         />
-        <div className="flex justify-end mt-1">
+      </div>
+
+      <div>
+        <div className={styles.field}>
+          <LockKeyhole className={styles.fieldIcon} aria-hidden="true" />
+          <Input
+            id="password"
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            value={values.password}
+            disabled={!ready || isSubmitting}
+            onChange={(event) => updateField("password", event.target.value)}
+            theme={theme}
+            required
+          />
+        </div>
+        <div className={styles.forgot}>
           <Link
             href={`/forgot-password?institute=${instituteCode}`}
-            className="text-xs font-medium hover:underline"
-            style={{ color: theme.colors.primary }}
           >
             Forgot Password?
           </Link>
         </div>
       </div>
 
+      <div className={styles.consent}>
+        <input
+          id="accepted-policies"
+          name="acceptedPolicies"
+          type="checkbox"
+          required
+          checked={acceptedPolicies}
+          onChange={(event) => setAcceptedPolicies(event.target.checked)}
+          disabled={!ready || isSubmitting}
+          aria-labelledby="policy-consent-label"
+        />
+        <div>
+          <label id="policy-consent-label" htmlFor="accepted-policies">
+            I agree to the <PolicyLink href="/terms" target="_blank" rel="noopener noreferrer">Terms and Conditions<span className="sr-only"> (opens in a new tab)</span></PolicyLink> and acknowledge the <PolicyLink href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></PolicyLink>.
+          </label>
+        </div>
+      </div>
+
       {errorMessage ? (
-        <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+        <p role="alert" className={styles.error}>{errorMessage}</p>
       ) : null}
 
-      <Button type="submit" theme={theme} disabled={!ready || isSubmitting}>
+      <button type="submit" className={styles.submit} disabled={!ready || isSubmitting} onClick={() => triggerNativeHaptic("light")}>
+        {isSubmitting ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <LogIn aria-hidden="true" />}
         {isSubmitting ? "Signing In..." : "Sign In"}
-      </Button>
-      <Link href="/activate" className="text-sm underline underline-offset-4">Request a New Activation Link</Link>
+      </button>
+      <Link href="/activate" className={styles.activation}>Request a New Activation Link</Link>
 
-      <div className="flex items-center justify-between gap-3 text-sm text-gray-600">
+      <div className={styles.accountHelp}>
         <span>Need an account?</span>
         <Link
           href={registerLink}
-          className="font-medium hover:underline"
-          style={{ color: theme.colors.primary }}
         >
           Contact the Registrar
         </Link>

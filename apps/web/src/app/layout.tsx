@@ -1,16 +1,16 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { headers } from 'next/headers';
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
 import PageTransition from "@/components/common/PageTransition";
 import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-cdm-body",
 });
 
 export const viewport: Viewport = {
@@ -18,7 +18,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#FF7517",
+  themeColor: "#0F1724",
   interactiveWidget: "resizes-content",
 };
 
@@ -50,8 +50,8 @@ export default async function RootLayout({
 }) {
   await headers(); // Nonces require a fresh server render for every document.
   return (
-    <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
-      <body className="antialiased font-[family-name:var(--font-inter)] selection:bg-orange-500 selection:text-white">
+    <html lang="en" className={manrope.variable} data-scroll-behavior="smooth">
+      <body className="antialiased">
         <OfflineBanner />
         <InAppBrowserPrompt />
         <ServiceWorkerRegister />

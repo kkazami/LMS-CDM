@@ -162,7 +162,7 @@ test("Pending students cannot authenticate or bypass activation through public r
   assert.equal(mayAdmitAccount({ ...user, activationStatus: "ACTIVE" }), true);
 });
 test("Login accepts email or ID, rejects ambiguous identities; passwords enforce bcrypt byte limit", () => {
-  const base = { password: "StrongPassword12", instituteCode: "ics" };
+  const base = { password: "StrongPassword12", instituteCode: "ics", acceptedPolicies: true };
   assert.equal(
     loginSchema.safeParse({ ...base, email: "student@example.invalid" })
       .success,

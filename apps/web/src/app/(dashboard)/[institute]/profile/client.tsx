@@ -18,6 +18,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { PolicyLink } from "@/components/legal/PolicyNavigation";
+import { getInstituteName } from "@lms/types";
 import type { InstituteTheme } from "@/lib/theme";
 import { useAvatar } from "@/lib/avatar-context";
 import { toast } from "@/components/common/Toast";
@@ -182,7 +184,7 @@ export default function ProfileEditClient({
             {roleLabel}
           </span>
           <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
-          <span>{user.institute.name}</span>
+          <span>{getInstituteName(user.institute.code, user.institute.name)}</span>
         </div>
       </div>
 
@@ -496,6 +498,15 @@ export default function ProfileEditClient({
             </div>
           </div>
         </div>
+
+        <section id="lms-policies" className="scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-white/5 dark:bg-[#141721]">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">LMS policies</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Review how to use CdM LMS and how your information is handled.</p>
+          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+            <PolicyLink href="/terms" className="inline-block py-2 underline underline-offset-4">Terms and Conditions</PolicyLink>
+            <PolicyLink href="/privacy" className="inline-block py-2 underline underline-offset-4">Privacy Policy</PolicyLink>
+          </div>
+        </section>
 
         {/* Courses Section */}
         <div className="pb-8">

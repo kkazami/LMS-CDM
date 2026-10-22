@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -6,6 +7,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
 import TeacherDashboardClient from "./client";
+import { getDashboardGreeting } from "@/lib/dashboard-greeting";
 
 export const dynamic = "force-dynamic";
 
@@ -197,7 +199,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   return (
     <TeacherDashboardClient
       userName={user.name as string}
-      instituteName={instituteRecord.name}
+      instituteName={getInstituteName(institute, instituteRecord.name)}
       instituteCode={institute}
       theme={theme}
       initialCourses={courses}
@@ -208,6 +210,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       initialPendingWorkClasses={pendingWorkClasses}
       totalPendingWorkCount={pendingWorkSubmissions.length}
       typingSessionKey={typingSessionKey}
+      greeting={getDashboardGreeting(user.name, new Date(), teacherId)}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -7,5 +8,5 @@ export async function GET() {
     orderBy: { name: "asc" },
   });
 
-  return Response.json(institutes);
+  return Response.json(institutes.map(institute => ({ ...institute, name: getInstituteName(institute.code, institute.name) })));
 }

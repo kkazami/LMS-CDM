@@ -33,7 +33,7 @@ async function main() {
   console.log("Seeding default institutes...");
 
   const institutes = [
-    { code: "ics", name: "Institute of Computer Studies" },
+    { code: "ics", name: "Institute of Computing Studies" },
     { code: "ibe", name: "Institute of Business and Education" },
     { code: "ite", name: "Institute of Technology and Engineering" },
   ];
