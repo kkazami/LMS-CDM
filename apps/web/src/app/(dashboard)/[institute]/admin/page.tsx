@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { TypingBanner } from "@/components/motion/TypingBanner";
 import { StatPill } from "@/components/dashboard/StatPill";
+import { getDashboardGreeting } from "@/lib/dashboard-greeting";
 
 export const dynamic = "force-dynamic";
 
@@ -144,7 +145,10 @@ export default async function AdminDashboardPage({ params }: PageProps) {
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
               <TypingBanner
-                text={`Welcome back, Administrator ${user.name}!`}
+                text={getDashboardGreeting(user.name, new Date(), user.id)}
+                cursorColor={theme.colors.primary}
+                keepCursor={false}
+                speed={28}
                 sessionKey={typingSessionKey}
               />
             </h1>

@@ -88,6 +88,7 @@ interface TeacherDashboardClientProps {
   initialPendingWorkClasses?: PendingClassWork[];
   totalPendingWorkCount?: number;
   typingSessionKey?: string;
+  greeting: string;
 }
 
 export default function TeacherDashboardClient({
@@ -103,6 +104,7 @@ export default function TeacherDashboardClient({
   initialPendingWorkClasses = [],
   totalPendingWorkCount,
   typingSessionKey,
+  greeting,
 }: TeacherDashboardClientProps) {
   const [courses, setCourses] = useState<TaughtCourse[]>(initialCourses);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -267,7 +269,10 @@ export default function TeacherDashboardClient({
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
                 <TypingBanner
-                  text={`Welcome back, Professor ${userName}!`}
+                  text={greeting}
+                  cursorColor={theme.colors.primary}
+                  keepCursor={false}
+                  speed={28}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
                 />
               </h1>

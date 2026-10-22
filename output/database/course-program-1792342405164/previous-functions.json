@@ -1,8 +1,0 @@
-[
-  {
-    "signature": "academic_course_mapping_guard()",
-    "definition": "CREATE OR REPLACE FUNCTION public.academic_course_mapping_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF (TG_OP='INSERT' AND NEW.\"programId\" IS NULL) OR (TG_OP='UPDATE' AND NEW.\"programId\" IS NOT DISTINCT FROM OLD.\"programId\") THEN RETURN NEW; END IF;\n IF NOT pg_has_role(session_user,current_user,'MEMBER') THEN RAISE EXCEPTION 'course program mapping requires migration-owner authority' USING ERRCODE='42501'; END IF;\n IF nullif(current_setting('lms.assignment_actor_id',true),'') IS NULL THEN RAISE EXCEPTION 'mapping audit anchor required'; END IF;\n INSERT INTO public.\"AuditLog\" (id,\"adminId\",action,\"targetId\",metadata,\"createdAt\") VALUES (gen_random_uuid()::text,current_setting('lms.assignment_actor_id'),'ACADEMIC_COURSE_MAPPING',current_setting('lms.assignment_actor_id'),jsonb_build_object('courseId',NEW.id,'programId',NEW.\"programId\",'databasePrincipal',session_user)::text,CURRENT_TIMESTAMP);\n RETURN NEW;\nEND $function$\n",
-    "owner": "neondb_owner",
-    "acl": "{neondb_owner=X/neondb_owner}"
-  }
-]

@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { db } from "./db";
 import { cookies, headers } from "next/headers";
 import crypto from "crypto";
@@ -141,6 +142,7 @@ export async function validateSessionToken(rawToken: string, touch = true) {
     if (!session) {
       return null;
     }
+    if (session.user.institute) session.user.institute.name = getInstituteName(session.user.institute.code, session.user.institute.name);
 
     if (sessionExpired(session)) {
       // Session expired, purge from database

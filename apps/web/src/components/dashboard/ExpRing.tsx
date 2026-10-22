@@ -83,8 +83,8 @@ export function ExpRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <span
-          className="font-bold font-mono tabular-nums leading-none"
-          style={{ fontSize: size * 0.27, color }}
+          className="font-bold tabular-nums leading-none"
+          style={{ fontSize: size * 0.27, color: "var(--institute-ink, currentColor)" }}
         >
           {level}
         </span>

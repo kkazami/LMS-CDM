@@ -266,7 +266,7 @@ try {
     const context=await browser.newContext();
     await context.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
     const page=await context.newPage();page.setDefaultTimeout(15000);
-    const login=await context.request.post(base+'/api/auth/login',{data:{email:'synthetic-super@example.invalid',password:'Synthetic-Super-Only-12345',instituteCode:'ibe'}});
+    const login=await context.request.post(base+'/api/auth/login',{data:{email:'synthetic-super@example.invalid',password:'Synthetic-Super-Only-12345',instituteCode:'ibe', acceptedPolicies: true}});
     report.superLoginStatus=login.status();assert.equal(login.status(),200,'actual password login');const body=await login.json();assert.equal(body.user.role,'SUPER_USER');assert.equal(body.user.institute.code,'ics');
     accounts.super.token=body.token;
     await page.goto(base+'/ics/academic-operations/courses');await page.getByText('Super User · ICS',{exact:true}).waitFor();

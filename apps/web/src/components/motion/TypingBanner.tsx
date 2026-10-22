@@ -107,26 +107,29 @@ export function TypingBanner({
 
   const currentText = !mounted ? text : shouldSkipAnimation ? text : displayed;
   const currentCursor = !mounted ? false : shouldSkipAnimation ? false : (keepCursor || showCursor);
+  const lastSpace = currentText.lastIndexOf(" ");
 
   return (
-    <span className={className} aria-label={text} suppressHydrationWarning>
-      <span aria-hidden="true" suppressHydrationWarning>
-        {currentText}
+    <span className={`inline-grid max-w-full align-baseline ${className ?? ""}`} aria-label={text}>
+      <span aria-hidden="true" className="invisible col-start-1 row-start-1">{text}</span>
+      <span aria-hidden="true" className="col-start-1 row-start-1">
+        {currentText.slice(0, lastSpace + 1)}
+        <span className="whitespace-nowrap">
+          {currentText.slice(lastSpace + 1)}
+          {currentCursor && (
+            <span
+              className={`inline-block ml-0.5 rounded-[1px] animate-blink ${cursorClassName ?? ""}`}
+              style={{
+                height: cursorHeight,
+                width: cursorWidth,
+                backgroundColor: cursorColor,
+                verticalAlign: "-0.1em",
+              }}
+              aria-hidden="true"
+            />
+          )}
+        </span>
       </span>
-      {currentCursor && (
-        <span
-          className={`inline-block ml-1 sm:ml-1.5 rounded-[1px] animate-blink ${cursorClassName ?? ""}`}
-          style={{
-            height: cursorHeight,
-            width: cursorWidth,
-            minWidth: "3.5px",
-            backgroundColor: cursorColor,
-            boxShadow: `0 0 10px ${cursorColor}99`,
-            verticalAlign: "-0.1em",
-          }}
-          aria-hidden="true"
-        />
-      )}
     </span>
   );
 }

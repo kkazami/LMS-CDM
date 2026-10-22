@@ -276,6 +276,15 @@ export async function browserChecks({
           (message) => message.to === "browser@example.invalid",
         );
         assert.ok(email);
+        const emailPreview = await browser.newPage({ viewport: { width: 800, height: 1000 } });
+        await emailPreview.route('**/*', route => route.abort());
+        await emailPreview.setContent(email.html);
+        assert.equal(await emailPreview.getByRole('link', { name: 'Activate My Account', exact: true }).getAttribute('href'), email.text.match(/https:\/\/\S+/)[0]);
+        await emailPreview.screenshot({ path: path.join(output, 'activation-email-desktop.png'), fullPage: true });
+        await emailPreview.setViewportSize({ width: 390, height: 844 });
+        assert.equal(await emailPreview.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+        await emailPreview.screenshot({ path: path.join(output, 'activation-email-mobile.png'), fullPage: true });
+        await emailPreview.close();
         const fragment = new URL(email.text.match(/https:\/\/\S+/)[0]).hash;
         const guest = await browser.newContext({
           viewport: { width: 390, height: 844 },
@@ -299,9 +308,28 @@ export async function browserChecks({
         await student
           .getByLabel("New password", { exact: true })
           .fill("Synthetic-Browser-12345");
+        await student.getByRole('button', { name: 'Show new password', exact: true }).click();
+        assert.equal(await student.getByLabel('New password', { exact: true }).getAttribute('type'), 'text');
+        await student.getByRole('button', { name: 'Hide new password', exact: true }).click();
+        assert.equal(await student.getByLabel('New password', { exact: true }).inputValue(), 'Synthetic-Browser-12345');
+        await student
+          .getByLabel("Confirm password", { exact: true })
+          .fill("Does-not-match-123");
+        assert.equal(await student.getByRole('button', { name: 'Activate Account', exact: true }).isDisabled(), true);
         await student
           .getByLabel("Confirm password", { exact: true })
           .fill("Synthetic-Browser-12345");
+        await student.getByRole('button', { name: 'Show confirm password', exact: true }).focus();
+        await student.keyboard.press('Enter');
+        assert.equal(await student.getByLabel('Confirm password', { exact: true }).getAttribute('type'), 'text');
+        await student.getByRole('button', { name: 'Hide confirm password', exact: true }).click();
+        await student.setViewportSize({ width: 1366, height: 960 });
+        await student.screenshot({ path: path.join(output, 'activation-desktop.png'), fullPage: true });
+        await student.setViewportSize({ width: 390, height: 844 });
+        await student.evaluate(() => { document.documentElement.dataset.theme = 'dark'; document.documentElement.classList.add('dark'); });
+        await student.waitForFunction(() => getComputedStyle(document.querySelector('#activation-password')).backgroundColor === 'rgb(20, 23, 33)');
+        await student.screenshot({ path: path.join(output, 'activation-mobile-dark.png'), fullPage: true });
+        await student.evaluate(() => { document.documentElement.dataset.theme = 'light'; document.documentElement.classList.remove('dark'); });
         await student
           .getByRole("button", { name: "Activate Account", exact: true })
           .click();
@@ -324,6 +352,37 @@ export async function browserChecks({
           .getByRole("button", { name: "Sign In", exact: true })
           .click();
         assert.equal((await login).status(), 200);
+        await student.waitForURL(/\/ics\/students/);
+        const greeting = student.getByRole('main').getByRole('heading', { level: 1 }).first();
+        await greeting.waitFor();
+        assert.match(await greeting.getAttribute('aria-label') || await greeting.innerText(), /Welcome aboard|first chapter|fresh start/);
+        assert.doesNotMatch(await greeting.innerText(), /Welcome back/i);
+        await student.waitForFunction(() => {
+          const banner = document.querySelector('main h1 > span[aria-label]');
+          return banner && banner.lastElementChild.textContent === banner.getAttribute('aria-label') && !banner.querySelector('.animate-blink');
+        });
+        assert.equal(await student.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+        await student.screenshot({ path: path.join(output, 'first-login-mobile.png'), fullPage: true });
+        await student.setViewportSize({ width: 1366, height: 900 });
+        await student.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('.dashboard-workspace-shell')).paddingLeft) === 288);
+        await student.screenshot({ path: path.join(output, 'first-login-desktop.png'), fullPage: true });
+        await guest.clearCookies();
+        await student.goto(base + '/ics/login');
+        await student.getByLabel('Email or student ID', { exact: true }).fill('0024-00008');
+        await student.getByLabel('Password', { exact: true }).fill('Synthetic-Browser-12345');
+        await student.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
+        await student.getByRole('button', { name: 'Sign In', exact: true }).click();
+        await student.waitForURL(/\/ics\/students/);
+        await student.waitForFunction(() => {
+          const banner = document.querySelector('main h1 > span[aria-label]');
+          return banner && banner.lastElementChild.textContent === banner.getAttribute('aria-label') && !banner.querySelector('.animate-blink');
+        });
+        assert.match(await greeting.innerText(), /Browser/);
+        assert.doesNotMatch(await greeting.innerText(), /Welcome aboard|first chapter|fresh start|Welcome back/i);
+        await student.emulateMedia({ reducedMotion: 'reduce' });
+        await student.reload();
+        await greeting.waitFor();
+        assert.equal(await greeting.locator('.animate-blink').count(), 0);
         await guest.close();
       },
     );

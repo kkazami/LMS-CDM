@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -6,6 +7,8 @@ import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
 import StudentDashboardClient from "./client";
+import { getSession } from "@/lib/auth-session";
+import { getDashboardGreeting, isFirstLoginSession } from "@/lib/dashboard-greeting";
 
 export const dynamic = "force-dynamic";
 
@@ -33,11 +36,14 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
 
   const gamificationPromise = db.gamificationProfile.findUnique({
     where: { studentId },
-    select: { exp: true, loginStreakCurrent: true, level: true },
+    select: {
+      exp: true, loginStreakCurrent: true, level: true, totalLoginDays: true,
+      badges: { where: { badgeRuleId: "first-day" }, select: { earnedAt: true }, take: 1 },
+    },
   });
 
   // 1. Fetch student's approved enrolled courses
-  const [enrollments, gamification] = await Promise.all([
+  const [enrollments, gamification, session] = await Promise.all([
     db.enrollment.findMany({
       where: {
         studentId,
@@ -68,6 +74,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       orderBy: { displayOrderIndex: "asc" },
     }),
     gamificationPromise,
+    getSession(),
   ]);
 
   const enrolledCourses = enrollments.map((e) => ({
@@ -131,7 +138,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   return (
     <StudentDashboardClient
       userName={user.name as string}
-      instituteName={instituteRecord.name}
+      instituteName={getInstituteName(institute, instituteRecord.name)}
       instituteCode={institute}
       theme={theme}
       initialCourses={enrolledCourses}
@@ -140,6 +147,8 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       today={schoolDateKey(now)}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
+      greeting={getDashboardGreeting(user.name, now, session?.id ?? studentId,
+        !gamification || gamification.totalLoginDays === 0 || isFirstLoginSession(session?.createdAt, gamification.badges[0]?.earnedAt))}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 1}
       level={gamification?.level ?? 1}

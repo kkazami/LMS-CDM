@@ -26,7 +26,7 @@ export async function summarizeThread(
     )
     .join("\n\n---\n\n");
 
-  const prompt = `Summarize the following Q&A forum thread from the Institute of Computer Studies:
+  const prompt = `Summarize the following Q&A forum thread from the Institute of Computing Studies:
 
 Question Title: ${title}
 Question Body: ${body}

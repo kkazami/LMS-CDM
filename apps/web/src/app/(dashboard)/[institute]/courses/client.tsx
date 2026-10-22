@@ -37,21 +37,7 @@ interface CourseCard {
   coverImage?: string | null;
 }
 
-// Color palette for course cards (Google Classroom-inspired)
-const CARD_COLORS = [
-  { bg: "linear-gradient(135deg, #1E88E5, #1565C0)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #43A047, #2E7D32)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #E53935, #C62828)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #8E24AA, #6A1B9A)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #FB8C00, #EF6C00)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #00ACC1, #00838F)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #3949AB, #283593)", text: "#FFFFFF" },
-  { bg: "linear-gradient(135deg, #D81B60, #AD1457)", text: "#FFFFFF" },
-];
-
-function getCardColor(index: number) {
-  return CARD_COLORS[index % CARD_COLORS.length];
-}
+const COURSE_COLOR = { bg: "var(--course-banner)", text: "#FFFFFF" };
 
 export default function CoursesClient({
   courses: initialCourses,
@@ -217,7 +203,7 @@ export default function CoursesClient({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
           {courses.map((course, index) => {
-            const color = getCardColor(index);
+            const color = COURSE_COLOR;
             const hasCover = Boolean(course.coverImage);
             return (
               <div
@@ -343,7 +329,7 @@ export default function CoursesClient({
                     <Link
                       href={`/${instituteCode}/courses/${course.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
-                      style={{ color: theme.colors.primary }}
+                      style={{ color: "var(--institute-ink)" }}
                       draggable={false}
                     >
                       <span>View</span>

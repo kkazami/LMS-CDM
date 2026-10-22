@@ -1,5 +1,13 @@
 # Managed CodeLab execution and PR #51 CI repair
 
+## Local demo update — 22 October 2026
+
+The owner selected JDoodle's free API plan for localhost. Set `CODELAB_RUNNER=jdoodle`, `JDOODLE_CLIENT_ID` and `JDOODLE_CLIENT_SECRET` in `apps/web/.env.local`. Judge0 remains available when explicitly selected; an outage never switches providers or incurs a paid fallback.
+
+JDoodle's [published free API allowance](https://www.jdoodle.com/docs/api/credits) is 20 shared executions per day, not 20 submissions per student. Every test case consumes an execution. Quota exhaustion returns a service error without changing completion or XP. Credentials stay server-side. JDoodle combines compiler diagnostics and program output, so CodeLab retains the complete output for exact test comparisons.
+
+Six synthetic live executions passed locally: C++, Java, C#, Python, JavaScript and SQL. No student code or database records were used. This does not configure or deploy the production website. The historical Judge0 repair below predates this provider choice.
+
 Updated 21 October 2026. The user selected a managed compatible service instead of maintaining the legacy Judge0 image. This change prepares the adapter and retires the repository's self-hosted stack. It does not create a subscription, configure production secrets, migrate an existing deployment, stop any containers or certify a provider's security.
 
 ## Confirmed causes

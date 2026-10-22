@@ -28,13 +28,16 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
         type="button"
         onClick={() => onToggle(!isOn)}
         disabled={isDisabled}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-          isOn ? "bg-[#1E88E5]" : "bg-slate-200 dark:bg-slate-700"
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--focus-ring)] ${
+          isOn ? "" : "bg-slate-200 dark:bg-slate-700"
         }`}
+        style={{ backgroundColor: isOn ? "var(--action-bg)" : undefined }}
         role="switch"
+        aria-label={title}
         aria-checked={isOn}
       >
         <span
+          style={{ backgroundColor: isOn ? "var(--action-ink)" : undefined }}
           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
             isOn ? "translate-x-5" : "translate-x-0"
           }`}

@@ -35,3 +35,45 @@ test-results/
 
 # Local Git worktrees are separate checkouts, never product source/submodules.
 /.orchestra/local-worktrees/
+
+# Local AI tools and personal context. Shared CI rules/roles stay versioned.
+/.agent/
+/.agents/*
+!/.agents/agents/
+!/.agents/rules/
+/.codex/
+/.impeccable/
+/.orchestra/*
+!/.orchestra/harness/
+/mcp_config.json
+/skills-lock.json
+/PRODUCT.md
+/DESIGN.md
+/DEVELOPMENT_HISTORY.md
+/EXPO_MOBILE_APP_SPEC_FOR_GPT_ASTRA.md
+/UI_UX_AUDIT_REPORT.md
+
+# Disposable experiments, reports, database clusters and local application data.
+/tmp/
+/output/
+/plans/
+/scratch/
+/scratch-ssr.html
+/changed-files.json
+/storage/
+/playwright/
+/.idea/
+/.vscode/
+*.tsbuildinfo
+*.log
+
+# Keep configuration templates, never credentials or deployment sessions.
+.env*
+!.env.example
+.dev.vars*
+.vercel/
+.wrangler/
+*.pem
+*.key
+*.p12
+*.pfx

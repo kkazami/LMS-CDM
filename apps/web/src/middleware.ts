@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   if (!mutationOriginAllowed(request)) {
     response = NextResponse.json({ error: 'Forbidden request origin.' }, { status: 403 });
   } else {
-    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password'].includes(pathname);
+    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support'].includes(pathname);
     response = !api && !publicPage && !request.cookies.get('lumina_session')?.value
       ? NextResponse.redirect(new URL(`/login?institute=${encodeURIComponent(pathname.split('/').filter(Boolean)[0] || 'ics')}`, request.url))
       : NextResponse.next({ request: { headers: incoming } });

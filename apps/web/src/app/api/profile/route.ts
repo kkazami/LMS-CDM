@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
         instituteId: user.instituteId,
         institute: {
           code: user.institute.code,
-          name: user.institute.name,
+          name: getInstituteName(user.institute.code, user.institute.name),
         },
       },
     });
@@ -99,7 +100,7 @@ export async function PUT(request: Request) {
         instituteId: updated.instituteId,
         institute: {
           code: updated.institute.code,
-          name: updated.institute.name,
+          name: getInstituteName(updated.institute.code, updated.institute.name),
         },
       },
     });
