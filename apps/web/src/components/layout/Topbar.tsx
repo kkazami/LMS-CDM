@@ -430,10 +430,10 @@ export default function Topbar({
               }`}
               style={{ transformOrigin: "top right" }}
             >
-              <div className="border-b border-[var(--border-color)] px-4 py-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)] break-words">{userName}</p>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
-                {studentNumber && <p className="mt-1 text-xs text-[var(--text-secondary)]">Student ID: {studentNumber}</p>}
+              <div className="border-b border-(--border-color) px-4 py-3">
+                <p className="text-sm font-semibold text-(--text-primary) wrap-break-word">{userName}</p>
+                <p className="mt-1 text-xs text-(--text-secondary)">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
+                {studentNumber && <p className="mt-1 text-xs text-(--text-secondary)">Student ID: {studentNumber}</p>}
               </div>
               <Link
                 href={`/${instituteCode}/profile`}
