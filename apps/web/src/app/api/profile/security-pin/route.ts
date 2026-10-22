@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       select: { password: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!user || !user.password) {
+      return NextResponse.json({ error: "User not found or password not set" }, { status: 404 });
     }
 
     // Verify current password

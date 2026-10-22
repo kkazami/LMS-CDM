@@ -84,38 +84,6 @@ export default function DashboardLayout({
           enrolledCourses={enrolledCourses}
         />
 
-        {/* Mobile Sidebar Drawer (Slides in on burger menu click) */}
-        <div
-          className={`fixed inset-0 z-60 lg:hidden transition-all duration-300 ${
-            mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          aria-hidden={!mobileOpen}
-        >
-          {/* Backdrop scrim */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setMobileOpen(false)}
-          />
-          {/* Drawer container */}
-          <div
-            className={`relative z-10 h-full max-w-70 w-[80vw] transition-transform duration-300 ease-in-out ${
-              mobileOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-          >
-            <Sidebar
-              instituteCode={instituteCode}
-              theme={theme}
-              userRole={userRole}
-              isCollapsed={false}
-              isMobileDrawer={true}
-              onCloseMobileDrawer={() => setMobileOpen(false)}
-              isEligibleForActivities={isEligibleForActivities}
-              isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-              enrolledCourses={enrolledCourses}
-            />
-          </div>
-        </div>
-
         <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
         }`}>

@@ -21,6 +21,7 @@ import {
   CheckSquare,
   Code2,
   Trophy,
+  Sparkles,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
