@@ -293,6 +293,70 @@ export default function StudentDashboardClient({
           </div>
         </FadeIn>
 
+        {/* Dashboard shortcuts */}
+        <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StaggerItem>
+            <QuickActionCard
+              icon={Plus}
+              label="Join Class"
+              onClick={() => setJoinModalOpen(true)}
+              sublabel="Enter code"
+              color={theme.colors.primary}
+              badge="New"
+              badgeVariant="info"
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={ClipboardList}
+              label="Assignments"
+              href={`/${instituteCode}/assignments`}
+              sublabel={dueSoonItems.length > 0 ? "Due soon" : "All clear"}
+              color={theme.colors.primary}
+              badge={dueSoonItems.length > 0 ? `${dueSoonItems.length}` : null}
+              badgeVariant={dueSoonItems.length > 0 ? "warning" : "muted"}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Flame}
+              label="Flashcards"
+              href={`/${instituteCode}/flashcards`}
+              sublabel="Spaced review"
+              color={theme.colors.primary}
+              badge="Daily"
+              badgeVariant="success"
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={CheckSquare}
+              label="Study tasks"
+              href={`/${instituteCode}/tasks`}
+              sublabel="Weekly goals"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Code2}
+              label="CodeLab"
+              href={`/${instituteCode}/activities/codelab`}
+              sublabel="Interactive labs"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+          <StaggerItem>
+            <QuickActionCard
+              icon={Trophy}
+              label="Leaderboards"
+              href={`/${instituteCode}/leaderboards`}
+              sublabel="Top rankings"
+              color={theme.colors.primary}
+            />
+          </StaggerItem>
+        </StaggerGroup>
+
         <div id="calendar" className="min-w-0 scroll-mt-20">
           <StudentCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} />
         </div>
@@ -630,70 +694,6 @@ export default function StudentDashboardClient({
             </div>
           </div>
         </div>
-        {/* ─── 3. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StaggerItem>
-            <QuickActionCard
-              icon={Plus}
-              label="Join Class"
-              onClick={() => setJoinModalOpen(true)}
-              sublabel="Enter code"
-              color={theme.colors.primary}
-              badge="New"
-              badgeVariant="info"
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={ClipboardList}
-              label="Assignments"
-              href={`/${instituteCode}/assignments`}
-              sublabel={dueSoonItems.length > 0 ? "Due soon" : "All clear"}
-              color={theme.colors.primary}
-              badge={dueSoonItems.length > 0 ? `${dueSoonItems.length}` : null}
-              badgeVariant={dueSoonItems.length > 0 ? "warning" : "muted"}
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={Flame}
-              label="Flashcards"
-              href={`/${instituteCode}/flashcards`}
-              sublabel="Spaced review"
-              color={theme.colors.primary}
-              badge="Daily"
-              badgeVariant="success"
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={CheckSquare}
-              label="Study tasks"
-              href={`/${instituteCode}/tasks`}
-              sublabel="Weekly goals"
-              color={theme.colors.primary}
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={Code2}
-              label="CodeLab"
-              href={`/${instituteCode}/activities/codelab`}
-              sublabel="Interactive labs"
-              color={theme.colors.primary}
-            />
-          </StaggerItem>
-          <StaggerItem>
-            <QuickActionCard
-              icon={Trophy}
-              label="Leaderboards"
-              href={`/${instituteCode}/leaderboards`}
-              sublabel="Top rankings"
-              color={theme.colors.primary}
-            />
-          </StaggerItem>
-        </StaggerGroup>
-
       </div>
 
       {/* Join Course Modal */}
