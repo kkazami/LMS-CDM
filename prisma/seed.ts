@@ -46,6 +46,51 @@ async function main() {
     });
   }
 
+  console.log("Seeding academic terms and programs for all institutes...");
+  const institutePrograms: Record<string, Array<{ code: string; name: string }>> = {
+    ics: [
+      { code: "BSIT", name: "BS Information Technology" },
+      { code: "BSCPE", name: "BS Computer Engineering" },
+    ],
+    ibe: [
+      { code: "BSBA HRM", name: "BS Business Administration Major in Human Resource Management" },
+      { code: "BS ENTREP", name: "BS Entrepreneurship" },
+    ],
+    ite: [
+      { code: "BECEd", name: "Bachelor of Early Childhood Education" },
+      { code: "BSEd SCIENCE", name: "Bachelor of Secondary Education Major in Science" },
+      { code: "BEEd", name: "Bachelor of Elementary Education" },
+      { code: "BTLEd ICT", name: "Bachelor of Technology and Livelihood Education Major in ICT" },
+      { code: "GENERAL EDUCATION", name: "General Education across Institute" },
+    ],
+  };
+
+  const defaultTerms = [
+    { code: "2025-2026-1S", name: "A.Y. 2025-2026 - 1st Semester", isCurrent: true, isActive: true },
+    { code: "2025-2026-2S", name: "A.Y. 2025-2026 - 2nd Semester", isCurrent: false, isActive: true },
+  ];
+
+  for (const inst of await prisma.institute.findMany()) {
+    const code = inst.code.toLowerCase();
+
+    for (const term of defaultTerms) {
+      await prisma.academicTerm.upsert({
+        where: { instituteId_code: { instituteId: inst.id, code: term.code } },
+        update: { name: term.name, isCurrent: term.isCurrent, isActive: term.isActive },
+        create: { instituteId: inst.id, code: term.code, name: term.name, isCurrent: term.isCurrent, isActive: term.isActive },
+      });
+    }
+
+    const progs = institutePrograms[code] || [];
+    for (const prog of progs) {
+      await prisma.academicProgram.upsert({
+        where: { instituteId_code: { instituteId: inst.id, code: prog.code } },
+        update: { name: prog.name, isActive: true },
+        create: { instituteId: inst.id, code: prog.code, name: prog.name, isActive: true, chartVersion: 1 },
+      });
+    }
+  }
+
   console.log("Seeding default accounts (Admin, Instructor, Student) for all institutes...");
   const defaultPassword = await hash("password123", 10);
 
