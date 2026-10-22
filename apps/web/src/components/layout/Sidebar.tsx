@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -76,7 +77,7 @@ const MY_COURSES_KEY = "my-courses";
 const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
-  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
+  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: Library },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
@@ -208,14 +209,14 @@ export default function Sidebar({
             onClick={handleLinkClick}
             className="flex items-center gap-2 group"
           >
+            <Image src="/images/cdm-logo.png" alt="" width={30} height={30} className="shrink-0" />
             <span
               className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap transition-colors"
             >
               CdM LMS
             </span>
             <span
-              className="h-2 w-2 rounded-full shrink-0 animate-pulse"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="h-1.5 w-1.5 rounded-full shrink-0 bg-[var(--brand-gold)]"
             />
           </Link>
         </div>
@@ -279,7 +280,7 @@ export default function Sidebar({
                       ? {
                           borderColor: theme.colors.primary,
                           backgroundColor: `${theme.colors.primary}1A`,
-                          color: theme.colors.primary,
+                          color: "var(--institute-ink)",
                         }
                       : undefined
                   }
@@ -330,7 +331,7 @@ export default function Sidebar({
                             pathname.startsWith(`/${instituteCode}/assignments/`)
                               ? {
                                   backgroundColor: `${theme.colors.primary}1A`,
-                                  color: theme.colors.primary,
+                                  color: "var(--institute-ink)",
                                 }
                               : undefined
                           }
@@ -361,7 +362,7 @@ export default function Sidebar({
                               isCourseActive
                                 ? {
                                     backgroundColor: `${theme.colors.primary}1A`,
-                                    color: theme.colors.primary,
+                                    color: "var(--institute-ink)",
                                   }
                                 : undefined
                             }
@@ -396,7 +397,7 @@ export default function Sidebar({
                   ? {
                       borderColor: theme.colors.primary,
                       backgroundColor: `${theme.colors.primary}1A`,
-                      color: theme.colors.primary,
+                      color: "var(--institute-ink)",
                     }
                   : undefined
               }

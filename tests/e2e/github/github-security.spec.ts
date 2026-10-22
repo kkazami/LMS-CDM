@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { encryptGithubToken, decryptGithubToken } from '../../../apps/web/src/lib/github/token-vault';
 
 test.describe('GitHub Token Security Vault (AES-256-GCM)', () => {
+  const original = process.env.TOKEN_ENCRYPTION_KEY;
+  test.beforeAll(() => { process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString('hex'); });
+  test.afterAll(() => { if (original === undefined) delete process.env.TOKEN_ENCRYPTION_KEY; else process.env.TOKEN_ENCRYPTION_KEY = original; });
   test('encrypts and restores GitHub access tokens accurately', () => {
     const rawToken = 'gho_16C7e42F292c6912E7710c838347Ae178B4a';
     const encrypted = encryptGithubToken(rawToken);

@@ -43,7 +43,7 @@ function fixture() {
     activityTemplate: { findUnique: async () => ({ id: "python-level-1", title: "First level", activityType: "codelab", courseId: "course", syllabusItemId: null, course: { instituteId: "ics", isArchived: false, instructorId: "teacher" } }) },
     activitySession: { updateMany: async () => ({ count: 1 }) },
     enrollment: { findFirst: async () => ({ courseId: "course" }) },
-    expTransaction: { findFirst: async ({ where }) => state.rewards.find(r => r.userId === where.userId && (where.OR || [where]).some(condition => r.reason.includes(condition.reason.contains))) ?? null,
+    expTransaction: { findFirst: async ({ where }) => state.rewards.find(r => r.userId === where.userId && (where.OR || [where]).some(condition => condition.idempotencyKey ? r.idempotencyKey === condition.idempotencyKey : condition.reason?.startsWith ? r.reason.startsWith(condition.reason.startsWith) : r.reason.includes(condition.reason.contains))) ?? null,
       create: async ({ data }) => { if (db.failReward) throw Error("Synthetic reward failure"); const row = { ...data, id: `reward-${state.rewards.length}` }; state.rewards.push(row); return row; } },
     gamificationProfile: { findUnique: async () => state.profile, upsert: async () => state.profile,
       update: async ({ data }) => { state.profile = { ...state.profile, ...data, totalPoints: state.profile.totalPoints + data.totalPoints.increment }; return state.profile; } },

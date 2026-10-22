@@ -67,6 +67,7 @@ model User {
   sentComments        PrivateComment[]        @relation("CommentSender")
   receivedComments    PrivateComment[]        @relation("CommentRecipient")
   submissions         StudentSubmission[]
+  submissionRequests  SubmissionRequest[]
   dashboardLayouts    DashboardLayout[]
   auditLogsAsAdmin    AuditLog[]              @relation("AuditAdmin")
   auditLogsAsTarget   AuditLog[]              @relation("AuditTarget")
@@ -131,6 +132,7 @@ model Session {
   ipAddress String?
   expiresAt DateTime
   createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -358,6 +360,17 @@ model StudentSubmission {
   @@unique([syllabusItemId, studentId])
   @@index([syllabusItemId])
   @@index([studentId])
+}
+
+model SubmissionRequest {
+  id          String   @id
+  userId      String
+  requestHash String
+  response    Json
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model SubmissionAttachment {
@@ -628,6 +641,7 @@ model StudentBadge {
 model ExpTransaction {
   id          String   @id @default(cuid())
   userId      String
+  idempotencyKey String?
   amount      Int                       // Positive = gain, Negative = deduction
   reason      String                    // Human-readable: "Completed CodeLab Level 5", "Daily Login Streak (Day 7)"
   source      String                    // "codelab" | "assignment" | "attendance" | "login" | "grade_incentive" | "badge" | "study_timer"
@@ -637,6 +651,7 @@ model ExpTransaction {
 
   @@index([userId, createdAt])
   @@index([source])
+  @@unique([userId, idempotencyKey])
 }
 
 model GradeIncentiveRule {
@@ -1475,6 +1490,8 @@ model PrivateAsset {
   mimeType String
   size Int
   content Bytes
+  scanStatus String @default("LEGACY")
+  sha256 String?
   createdAt DateTime @default(now())
   owner User @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
   @@index([instituteId, ownerId])

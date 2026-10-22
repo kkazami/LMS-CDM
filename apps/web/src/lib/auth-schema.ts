@@ -24,4 +24,5 @@ export const loginSchema = z.object({
   identifier: z.string().trim().min(1).max(254).optional(),
   password: z.string().min(1, "Password is required."),
   instituteCode: instituteCodeSchema,
+  acceptedPolicies: z.literal(true, { error: "Agree to the Terms and Conditions and acknowledge the Privacy Policy to sign in." }),
 }).refine(data => Boolean(data.email) !== Boolean(data.identifier), 'Provide either email or student ID.');

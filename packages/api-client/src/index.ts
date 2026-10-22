@@ -36,6 +36,15 @@ export interface ApiClientConfig {
   getToken?: () => Promise<string | null>;
 }
 
+interface GradebookPayload {
+  course: { id: string; title: string; code: string };
+  students: Array<{ id: string; name: string; email: string; studentNumber?: string | null; avatarUrl?: string | null }>;
+  assignments: Array<{ id: string; title: string; maxPoints: number | null; type: string; dueDate?: string | null }>;
+  grades: Record<string, Record<string, { submissionId: string | null; grade: number | null; status: string | null; isReturned: boolean; submittedAt: string | null; attachments: any[] }>>;
+  gradingPolicy: any;
+  pagination?: { page: number; totalPages: number };
+}
+
 export function createApiClient(config: ApiClientConfig) {
   const { baseUrl, getToken } = config;
 
@@ -122,14 +131,19 @@ export function createApiClient(config: ApiClientConfig) {
       getGrades: (courseId: string) =>
         request<CourseGradesResponse>(`/api/courses/${courseId}/grades`),
 
-      getGradebook: (courseId: string) =>
-        request<{
-          course: { id: string; title: string; code: string };
-          students: Array<{ id: string; name: string; email: string; studentNumber?: string | null; avatarUrl?: string | null }>;
-          assignments: Array<{ id: string; title: string; maxPoints: number | null; type: string; dueDate?: string | null }>;
-          grades: Record<string, Record<string, { submissionId: string | null; grade: number | null; status: string | null; isReturned: boolean; submittedAt: string | null; attachments: any[] }>>;
-          gradingPolicy: any;
-        }>(`/api/courses/${courseId}/gradebook`),
+      // Preserve complete-roster consumers while each server query/response stays bounded.
+      getGradebook: async (courseId: string) => {
+        const first = await request<GradebookPayload>(`/api/courses/${courseId}/gradebook?page=1`);
+        const totalPages = first.pagination?.totalPages ?? 1;
+        if (!Number.isInteger(totalPages) || totalPages < 1 || totalPages > 200) throw new ApiClientError(422, 'This roster is too large for the complete gradebook view.');
+        const students = [...first.students], grades = { ...first.grades };
+        for (let page = 2; page <= totalPages; page++) {
+          const next = await request<GradebookPayload>(`/api/courses/${courseId}/gradebook?page=${page}`);
+          students.push(...next.students); Object.assign(grades, next.grades);
+        }
+        const { pagination, ...result } = first;
+        return { ...result, students, grades };
+      },
 
       submitAssignment: (
         courseId: string,

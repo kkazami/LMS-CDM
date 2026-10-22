@@ -12,12 +12,12 @@ import {
 } from "@/lib/mailer";
 import { adminTransaction, audit, type RosterActor, type Tx } from "./policy";
 import { tokenDigest } from "./activation";
+import { activationEmail } from "./activation-email";
 import {
   LINK_LIFETIME_MS,
   REMINDER_DELAY_MS,
   RETRY_DELAYS_MS,
   pendingStudent,
-  escapeHtml,
   estimateDelivery,
 } from "./invitation-rules";
 
@@ -419,7 +419,10 @@ export async function processInvitations(driver: MailDriver = smtpDriver) {
           where: { id: jobs[0].id },
         });
         await lockAccounts(tx, [job.userId]);
-        const user = await tx.user.findUnique({ where: { id: job.userId } });
+        const user = await tx.user.findUnique({
+          where: { id: job.userId },
+          include: { institute: { select: { code: true } } },
+        });
         if (
           !user ||
           !pendingStudent(user) ||
@@ -502,30 +505,14 @@ export async function processInvitations(driver: MailDriver = smtpDriver) {
       try {
         const info = await driver.send({
           to: user.email,
-          subject:
-            job.purpose === "REMINDER"
-              ? "Reminder: Activate your CdM LMS account"
-              : "Activate your CdM LMS account",
-          text:
-            "Hello " +
-            user.name +
-            ",\n\nYour CdM LMS account is ready.\nStudent ID: " +
-            user.studentNumber +
-            "\nProgram: " +
-            program +
-            "\n\nSet your password: " +
-            link.href +
-            "\nThis link expires in 72 hours. If you did not expect this invitation, contact the Office of the Registrar.",
-          html:
-            "<p>Hello " +
-            escapeHtml(user.name) +
-            ",</p><p>Your CdM LMS account is ready.</p><p>Student ID: " +
-            escapeHtml(user.studentNumber ?? "") +
-            "<br>Program: " +
-            escapeHtml(program) +
-            '</p><p><a href="' +
-            escapeHtml(link.href) +
-            '">Activate My Account</a></p><p>This link expires in 72 hours. If you did not expect this invitation, contact the Office of the Registrar.</p>',
+          ...activationEmail({
+            name: user.name,
+            studentNumber: user.studentNumber,
+            program,
+            instituteCode: user.institute.code,
+            link: link.href,
+            reminder: job.purpose === "REMINDER",
+          }),
         });
         if (!info.success || info.deliveredVia !== "smtp")
           throw new MailDeliveryError("SMTP_NOT_ACCEPTED");

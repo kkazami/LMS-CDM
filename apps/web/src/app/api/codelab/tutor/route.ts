@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const eligibility = await checkActivityEligibility();
     if (!eligibility || !eligibility.eligible) {
       return NextResponse.json(
-        { error: "Forbidden: CodeLab AI Assistant is exclusive to the Institute of Computer Studies (ICS)." },
+        { error: "Forbidden: CodeLab AI Assistant is exclusive to the Institute of Computing Studies (ICS)." },
         { status: 403 }
       );
     }

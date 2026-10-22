@@ -62,9 +62,9 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="min-h-dvh bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
+      className="lms-shell min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
-        "--focus-ring": theme.colors.primary,
+        "--institute-accent": theme.colors.primary,
       } as React.CSSProperties}
     >
       {/* Navigation Progress Bar */}

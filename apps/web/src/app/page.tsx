@@ -36,7 +36,8 @@ import {
   useSpring,
   useVelocity,
 } from "framer-motion";
-import HeroCrest from "./HeroCrest";
+import SiteFooter from "@/components/layout/SiteFooter";
+import { publicDisplay } from "@/lib/public-fonts";
 import GamificationSection from "./GamificationSection";
 import AlternatingTimelineSection from "./AlternatingTimelineSection";
 import MultiPlatformSection from "./MultiPlatformSection";
@@ -114,7 +115,7 @@ const programs: ProgramData[] = [
     description:
       "The Institute of Computing Studies prepares students for technology careers through rigorous programming laboratories, software engineering methodology, algorithmic problem-solving, and industry-aligned capstone projects.",
     logo: "/images/ics-logo.jpg",
-    alt: "ICS — Institute of Computer Studies emblem",
+    alt: "ICS — Institute of Computing Studies emblem",
     color: "#E06A26",
     colorLight: "rgba(224, 106, 38, 0.15)",
     colorBorder: "rgba(224, 106, 38, 0.35)",
@@ -450,7 +451,7 @@ const previewConfig: Record<
 > = {
   ics: {
     code: "ICS",
-    name: "Institute of Computer Studies",
+    name: "Institute of Computing Studies",
     sidebarTitle: "ICS Preview",
     degreeName: "BS Computer Science",
     facultyTitle: "ICS Faculty",
@@ -550,10 +551,6 @@ interface CoverflowPortalProps {
   onSelectIndex: (index: number) => void;
   onEnterProgram: (program: ProgramData) => void;
   reducedMotion: boolean;
-  deckRef?: React.RefObject<HTMLDivElement | null>;
-  isDeckInView?: boolean;
-  tabBarRef?: React.RefObject<HTMLDivElement | null>;
-  isTabBarInView?: boolean;
 }
 
 function CoverflowDepartmentPortal({
@@ -562,10 +559,6 @@ function CoverflowDepartmentPortal({
   onSelectIndex,
   onEnterProgram,
   reducedMotion,
-  deckRef,
-  isDeckInView = true,
-  tabBarRef,
-  isTabBarInView = true,
 }: CoverflowPortalProps) {
   // Cursor tracking for the active center card (pill position)
   const mouseX = useMotionValue(-200);
@@ -624,14 +617,10 @@ function CoverflowDepartmentPortal({
     <div className="w-full flex flex-col items-center">
       {/* ─── DESKTOP COVERFLOW 3D DECK (lg:flex) ─── */}
       <motion.div
-        ref={deckRef}
         className="w-full hidden lg:flex justify-center overflow-hidden"
-        initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
-        animate={
-          isDeckInView
-            ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: reducedMotion ? 0 : 20 }
-        }
+        initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.05 }}
         transition={{
           duration: reducedMotion ? 0 : 0.5,
           ease: "easeOut",
@@ -926,14 +915,10 @@ function CoverflowDepartmentPortal({
 
       {/* ─── INTERACTIVE DOTS / PILLS (Desktop Carousel Indicators) ─── */}
       <motion.div
-        ref={tabBarRef}
         className="hidden lg:flex items-center justify-center gap-2 mt-6"
-        initial={{ opacity: 0, y: reducedMotion ? 0 : 16 }}
-        animate={
-          isTabBarInView
-            ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: reducedMotion ? 0 : 16 }
-        }
+        initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.05 }}
         transition={{
           duration: reducedMotion ? 0 : 0.45,
           ease: "easeOut",
@@ -969,14 +954,10 @@ function CoverflowDepartmentPortal({
 
       {/* ─── MOBILE STACKED CARDS (lg:hidden) ─── */}
       <motion.div
-        ref={deckRef}
         className="lg:hidden w-full space-y-5 mt-4"
-        initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
-        animate={
-          isDeckInView
-            ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: reducedMotion ? 0 : 20 }
-        }
+        initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.05 }}
         transition={{
           duration: reducedMotion ? 0 : 0.5,
           ease: "easeOut",
@@ -1458,7 +1439,7 @@ export default function HomePage() {
 
   /* ─── Program Portal Section InView Hooks ─── */
   const portalHeadingRef = useRef<HTMLDivElement>(null);
-  const isHeadingInView = useInView(portalHeadingRef, { once: false, amount: 0.1 });
+  const isHeadingInView = useInView(portalHeadingRef, { once: true, amount: 0.1 });
 
   const portalCardRef = useRef<HTMLDivElement>(null);
   const isCardInView = useInView(portalCardRef, { once: false, amount: 0.1 });
@@ -1781,7 +1762,7 @@ export default function HomePage() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 50%, rgba(0,0,0,0.85) 100%)",
+                "linear-gradient(90deg, rgba(15,23,36,0.94) 0%, rgba(15,23,36,0.82) 32%, rgba(15,23,36,0.42) 70%, rgba(15,23,36,0.5) 100%)",
             }}
           />
           <div
@@ -1796,9 +1777,9 @@ export default function HomePage() {
         {/* Ambient constellation particles */}
         <ConstellationCanvas reducedMotion={reducedMotion} />
         {/* Hero Content Stack — unified calm parallax motion */}
-        <div className="relative z-10 flex flex-col items-center text-center -mt-6 sm:-mt-10">
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div
-            className="flex flex-col items-center text-center"
+            className="flex max-w-2xl flex-col items-start text-left"
             initial={false}
             style={
               mounted
@@ -1811,7 +1792,7 @@ export default function HomePage() {
           >
             {/* Scale/Pop-in CDM Seal — strictly in place at exact hero position directly above headline */}
             <motion.div
-              className="mb-6 sm:mb-8 origin-center"
+              className="mb-6 origin-center"
               initial={false}
               animate={
                 mounted
@@ -1823,54 +1804,36 @@ export default function HomePage() {
                 ease: [0.16, 1, 0.3, 1],
               }}
             >
-              <HeroCrest goldColor={brand.gold} />
+              <Image src="/images/cdm-logo.png" alt="Colegio de Montalban school seal" width={64} height={64} priority />
             </motion.div>
 
             {/* Independent Text Reveal: stationary position, pure opacity fade-in */}
             <div
-              className={`flex flex-col items-center text-center transition-opacity duration-700 ease-out ${
+              className={`flex flex-col items-start text-left transition-opacity duration-700 ease-out ${
                 textRevealed ? "opacity-100" : "opacity-0"
               }`}
             >
               {/* Headline */}
               <h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight drop-shadow-lg"
-                style={{
-                  backgroundImage: `linear-gradient(135deg, ${brand.gold} 0%, ${brand.goldLight} 40%, ${brand.white} 100%)`,
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  color: "transparent",
-                }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white"
               >
-                CdM LMS
+                Your campus.<br /><em className={`${publicDisplay.className} font-normal`} style={{ color: brand.gold }}>Connected.</em>
               </h1>
 
               {/* Subheadline */}
               <p
-                className="mt-4 text-base sm:text-lg lg:text-xl max-w-xl leading-relaxed drop-shadow-md"
-                style={{ color: "rgba(255,255,255,0.85)" }}
+                className="mt-5 text-base sm:text-lg max-w-lg leading-relaxed"
+                style={{ color: "rgba(255,255,255,0.94)" }}
               >
                 The official Learning Management System of{" "}
-                <span style={{ color: brand.gold, fontWeight: 600 }}>
+                <span className="inline-block" style={{ color: brand.gold, fontWeight: 600 }}>
                   Colegio de Montalban
                 </span>
               </p>
 
-              {/* Accent divider */}
-              <div className="mt-6 sm:mt-8 flex items-center gap-3">
-                <div
-                  className="w-12 h-px"
-                  style={{ backgroundColor: brand.gold, opacity: 0.5 }}
-                />
-                <GraduationCap
-                  className="w-5 h-5"
-                  style={{ color: brand.gold, opacity: 0.8 }}
-                />
-                <div
-                  className="w-12 h-px"
-                  style={{ backgroundColor: brand.gold, opacity: 0.5 }}
-                />
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link href="/login" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">Sign In<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+                <a href="#departments" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300">Explore institutes</a>
               </div>
             </div>
           </motion.div>
@@ -1889,7 +1852,7 @@ export default function HomePage() {
                 document.getElementById("dashboard-preview")?.scrollIntoView({ behavior: "smooth" }) ||
                   document.getElementById("departments")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="flex flex-col items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-lg p-2"
+              className="flex flex-col items-center gap-1.5 opacity-90 hover:opacity-100 transition-opacity cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-lg p-2"
               aria-label="Scroll to explore"
             >
               <span className="text-[11px] font-medium tracking-widest uppercase text-white/70 group-hover:text-amber-400 transition-colors">Scroll to explore</span>
@@ -2788,8 +2751,6 @@ export default function HomePage() {
               onSelectIndex={setActiveDepartmentIndex}
               onEnterProgram={handleProgramClick}
               reducedMotion={reducedMotion}
-              isDeckInView={isHeadingInView}
-              isTabBarInView={isHeadingInView}
             />
           </div>
         </section>
@@ -3219,171 +3180,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ─── FULL MULTI-COLUMN FOOTER ─── */}
-        <footer
-          className="border-t px-4 sm:px-6 lg:px-8 pt-16 pb-12"
-          style={{
-            borderColor: "rgba(255, 255, 255, 0.08)",
-            backgroundColor: "#06090F",
-          }}
-        >
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 mb-12">
-              {/* ── COLUMN 1 (~5/12): Identity & Campus Info ── */}
-              <div className="lg:col-span-5 flex flex-col items-start">
-                {/* Crest + Wordmark */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative w-10 h-10 aspect-square rounded-full overflow-hidden bg-white p-0.5 border border-amber-400/40 shadow-sm shrink-0">
-                    <Image
-                      src="/images/cdm-logo.png"
-                      alt="Colegio de Montalban Seal"
-                      fill
-                      sizes="40px"
-                      className="object-contain"
-                    />
-                  </div>
-                  <div>
-                    <span className="font-bold text-lg tracking-tight text-white block leading-tight">
-                      CdM LMS
-                    </span>
-                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-amber-400/90 block mt-0.5">
-                      Colegio de Montalban
-                    </span>
-                  </div>
-                </div>
-
-                {/* Condensed Description */}
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm mb-4">
-                  The official learning management system of Colegio de Montalban, unifying
-                  digitized course syllabi, interactive laboratories, assessments, and departmental
-                  communication in one secure academic environment.
-                </p>
-
-                {/* Campus Location */}
-                <p className="text-xs text-slate-500 leading-normal mb-3">
-                  Kasiglahan Village, San Jose, Rodriguez (Montalban), Rizal, Philippines 1860
-                </p>
-
-                {/* Helpdesk Contact Chip (Matching FAQ placeholder) */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/8 bg-white/2 text-xs text-slate-400">
-                  <span className="text-slate-500 font-medium">Campus Helpdesk:</span>
-                  <code className="font-mono text-amber-300 font-semibold text-[11px]">
-                    TODO_HELPDESK_EMAIL
-                  </code>
-                </div>
-              </div>
-
-              {/* ── COLUMN 2 (~3/12): Academic Institutes ── */}
-              <div className="lg:col-span-3">
-                <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-white/90 mb-4">
-                  Institutes
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <Link
-                      href="/login?institute=ics"
-                      className="group block text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
-                    >
-                      <span className="font-semibold text-slate-200 group-hover:text-amber-300 transition-colors block">
-                        Institute of Computing Studies
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        ICS · BS Computer Science &amp; IT
-                      </span>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/login?institute=ite"
-                      className="group block text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
-                    >
-                      <span className="font-semibold text-slate-200 group-hover:text-amber-300 transition-colors block">
-                        Institute of Teacher Education
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        ITE · Secondary &amp; Elementary Ed
-                      </span>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/login?institute=ibe"
-                      className="group block text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
-                    >
-                      <span className="font-semibold text-slate-200 group-hover:text-amber-300 transition-colors block">
-                        Institute of Business &amp; Entrep
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        IBE · Business Admin &amp; Entrep
-                      </span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              {/* ── COLUMN 3 (~4/12): Real Verified Access Portals ── */}
-              <div className="lg:col-span-4">
-                <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-white/90 mb-4">
-                  Portals
-                </h4>
-                <ul className="space-y-2.5">
-                  <li>
-                    <Link
-                      href="/login"
-                      className="text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded inline-block"
-                    >
-                      Student &amp; Faculty Sign In
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/register"
-                      className="text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded inline-block"
-                    >
-                      Need an account?
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded inline-block"
-                    >
-                      Account Password Recovery
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/login?desktop=admin"
-                      className="text-xs sm:text-sm text-slate-400 hover:text-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded inline-block"
-                    >
-                      Administrative Console Access
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* ── BOTTOM BAR: Divider, Copyright & Project Metadata ── */}
-            <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-              <div className="text-slate-500 text-center sm:text-left">
-                <p>
-                  &copy; {currentYear} Colegio de Montalban. All rights reserved.
-                </p>
-                <p className="mt-1 text-[11px] text-slate-400">
-                  A capstone project for Colegio de Montalban, Rodriguez, Rizal
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2.5 font-mono text-xs text-slate-400">
-                <span className="font-semibold text-amber-400/90">ICS</span>
-                <span className="text-slate-700">·</span>
-                <span className="font-semibold text-amber-400/90">ITE</span>
-                <span className="text-slate-700">·</span>
-                <span className="font-semibold text-amber-400/90">IBE</span>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter dark />
 
       </div>
     </motion.div>

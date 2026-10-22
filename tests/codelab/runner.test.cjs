@@ -7,7 +7,7 @@ const { transformSync } = require(require.resolve("esbuild", { paths: [path.dirn
 
 const code = transformSync(fs.readFileSync("apps/web/src/features/interactive-activities/codelab/utils/judge0-config.ts", "utf8"), { loader: "ts", format: "cjs" }).code;
 const encoded = text => Buffer.from(text).toString("base64");
-function runner(replies, env = {}, clock) {
+function runner(replies, env = { JUDGE0_RAPIDAPI_KEY: 'synthetic-key' }, clock) {
   const module = { exports: {} }, calls = [];
   vm.runInNewContext(code, { module, exports: module.exports, Buffer, URL, process: { env }, AbortSignal,
     Date: clock || Date, setTimeout: resolve => { resolve(); },
@@ -16,7 +16,7 @@ function runner(replies, env = {}, clock) {
       const next = replies.shift();
       if (next instanceof Error) throw next;
       assert.ok(next, "Unexpected extra provider request");
-      return { ok: (next.http || 200) < 400, json: async () => next.body };
+      return { ok: (next.http || 200) < 400, status: next.http || 200, json: async () => next.body };
     },
   });
   return { api: module.exports, calls };
@@ -53,7 +53,7 @@ test("provider errors, malformed replies and internal sandbox failures are servi
 
 test("queue polling has an overall deadline", async () => {
   let time = 0;
-  const r = runner(Array.from({ length: 10 }, () => ({ body: { token: "job-123", status: { id: 2 } } })), {}, class extends Date { static now() { time += 10_001; return time; } });
+  const r = runner(Array.from({ length: 10 }, () => ({ body: { token: "job-123", status: { id: 2 } } })), { JUDGE0_RAPIDAPI_KEY: 'synthetic-key' }, class extends Date { static now() { time += 10_001; return time; } });
   await assert.rejects(r.api.executeJudge0Submission("code", 54), error => error instanceof r.api.CodeRunnerUnavailableError);
   assert.ok(r.calls.length < 10);
 });
@@ -66,4 +66,65 @@ test("configured provider failures do not resend code or credentials to another 
   assert.equal(r.calls[0].options.headers["X-RapidAPI-Key"], undefined);
   const rapid = runner([], { JUDGE0_RAPIDAPI_KEY: "synthetic-key" });
   assert.equal(rapid.api.getJudge0BaseUrl(), "https://judge0-ce.p.rapidapi.com");
+});
+
+test('missing credentials and unsafe or public-demo destinations fail before sending source code', async () => {
+  for (const env of [{}, { JUDGE0_URL: 'https://runner.example.test' },
+    ...['http://localhost:2358', 'http://runner.example.test', 'https://ce.judge0.com', 'https://user:pass@runner.example.test', 'https://runner.example.test/path', 'https://runner.example.test?key=secret', 'https://runner.example.test#fragment', 'not a URL'].map(JUDGE0_URL => ({ JUDGE0_URL, JUDGE0_AUTH_TOKEN: 'synthetic-token' }))]) {
+    const r = runner([], env);
+    await assert.rejects(r.api.executeJudge0Submission('private student code', 71), error => error instanceof r.api.CodeRunnerUnavailableError);
+    assert.equal(r.calls.length, 0);
+  }
+});
+
+test('managed RapidAPI sends only its own credentials and never follows redirects', async () => {
+  const r = runner([{ body: { status: { id: 3 }, stdout: encoded('ok') } }], { JUDGE0_RAPIDAPI_KEY: 'synthetic-key', JUDGE0_AUTH_TOKEN: 'other-provider-token' });
+  await r.api.executeJudge0Submission('synthetic', 71);
+  assert.equal(r.calls[0].options.headers['X-RapidAPI-Key'], 'synthetic-key');
+  assert.equal(r.calls[0].options.headers['X-RapidAPI-Host'], 'judge0-ce.p.rapidapi.com');
+  assert.equal(r.calls[0].options.headers['X-Auth-Token'], undefined);
+  assert.equal(r.calls[0].options.redirect, 'error');
+});
+
+test('the dedicated CodeLab key takes precedence over the legacy RapidAPI alias', () => {
+  const r = runner([], {JUDGE0_RAPIDAPI_KEY:'codelab-key', RAPIDAPI_KEY:'legacy-key'});
+  assert.equal(r.api.getJudge0Headers()['X-RapidAPI-Key'],'codelab-key');
+});
+
+const jdoodleEnv = {CODELAB_RUNNER:'jdoodle',JDOODLE_CLIENT_ID:'synthetic-client',JDOODLE_CLIENT_SECRET:'synthetic-secret'};
+test('JDoodle uses authenticated server requests for every CodeLab language without sending Judge0 credentials',async()=>{
+  for(const [id,language,versionIndex] of [[54,'cpp17','1'],[62,'java','4'],[51,'csharp','4'],[71,'python3','5'],[93,'nodejs','5'],[82,'sql','5']]) {
+    const r=runner([{body:{statusCode:200,output:'Hello 世界\n',cpuTime:'0.01',memory:'1024'}}],{...jdoodleEnv,JUDGE0_RAPIDAPI_KEY:'unrelated-key'});
+    const result=await r.api.executeJudge0Submission('synthetic code',id,'input');
+    assert.equal(result.stdout,'Hello 世界\n');assert.equal(result.time,'0.01');assert.equal(result.memory,1024);
+    assert.equal(r.calls[0].url,'https://api.jdoodle.com/v1/execute');
+    assert.deepEqual(JSON.parse(r.calls[0].options.body),{clientId:'synthetic-client',clientSecret:'synthetic-secret',script:'synthetic code',stdin:'input',language,versionIndex});
+    assert.equal(r.calls[0].options.headers['X-RapidAPI-Key'],undefined);
+    assert.equal(r.calls[0].options.redirect,'error');assert.equal(r.calls.length,1);
+  }
+});
+test('JDoodle quota exhaustion is a service error with a daily-limit explanation',async()=>{
+  for(const reply of [{http:429},{body:{statusCode:429,error:'limit'}}]) {
+    const r=runner([reply],jdoodleEnv);
+    await assert.rejects(r.api.executeJudge0Submission('code',71),e=>e instanceof r.api.CodeRunnerUnavailableError && /daily code-running limit/.test(e.message));
+    assert.equal(r.calls.length,1);
+  }
+});
+test('JDoodle credential, network and malformed response failures never fall back to a paid provider',async()=>{
+  for(const reply of [{http:401},{http:503},new Error('network'),{body:null},{body:{statusCode:200,error:'service failure'}},{body:{statusCode:200}}]) {
+    const r=runner([reply],{...jdoodleEnv,JUDGE0_RAPIDAPI_KEY:'paid-provider-key'});
+    await assert.rejects(r.api.executeJudge0Submission('code',71),e=>e instanceof r.api.CodeRunnerUnavailableError);
+    assert.equal(r.calls.length,1);
+  }
+});
+test('JDoodle rejects missing credentials, unknown language IDs and unknown provider names before execution',async()=>{
+  for(const [env,id] of [[{CODELAB_RUNNER:'jdoodle'},71],[jdoodleEnv,999],[{...jdoodleEnv,CODELAB_RUNNER:'typo'},71]]) {
+    const r=runner([],env);await assert.rejects(r.api.executeJudge0Submission('code',id));assert.equal(r.calls.length,0);
+  }
+});
+test('JDoodle preserves complete compiler messages instead of treating HTTP success as a passed test',async()=>{
+  const r=runner([{body:{statusCode:200,output:'SyntaxError: invalid syntax\n',cpuTime:'0'}}],jdoodleEnv);
+  const result=await r.api.executeJudge0Submission('bad code',71);
+  assert.equal(result.stdout,'SyntaxError: invalid syntax\n');assert.equal(result.status.description,'Execution finished');
+  assert.notEqual(result.stdout.trim(),'Hello, Python!');
 });

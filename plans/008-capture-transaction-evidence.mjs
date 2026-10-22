@@ -1,8 +1,0 @@
-import fs from'node:fs';import path from'node:path';import{createHash}from'node:crypto';
-const root=process.cwd(),t=path.join(root,'.orchestra/runs/controlled-superuser-20261004/task'),base=path.join(t,'node_modules/.pnpm'),sha=x=>createHash('sha256').update(x).digest('hex');
-const adapter=path.join(base,'@prisma+adapter-pg@7.9.1/node_modules/@prisma/adapter-pg/dist/index.js');
-const clientDir=fs.readdirSync(base).find(x=>x.startsWith('@prisma+client@7.9.1_'));if(!clientDir)throw Error('Pinned client missing');
-const client=path.join(base,clientDir,'node_modules/@prisma/client/runtime/client.js');
-const capture=(file,needles)=>{const raw=fs.readFileSync(file,'utf8');return{path:path.relative(t,file).replaceAll('\\','/'),originalSha256:sha(fs.readFileSync(file)),packageVersion:'7.9.1',extracts:needles.map(n=>{const at=raw.indexOf(n);if(at<0)throw Error('Transaction evidence not found '+n);const start=Math.max(0,at-150),content=raw.slice(start,Math.min(raw.length,at+1500));return{needle:n,startOffset:start,lineStart:raw.slice(0,start).split('\n').length,content};})};};
-const data={kind:'installed-adapter-client-transaction-source-evidence-no-execution',databaseOperationsExecuted:false,dependencyEvidence:[capture(adapter,['async startTransaction(isolationLevel)','var PgTransaction = class']),capture(client,['sql:"COMMIT"','let i=sm()','async commitTransaction(t)','commitTransaction(i.id)'])]};
-fs.writeFileSync(path.join(root,'plans/008-transaction-source-evidence.json'),JSON.stringify(data,null,2));console.log(JSON.stringify({dependencies:data.dependencyEvidence.length,extracts:data.dependencyEvidence.map(x=>x.extracts.length),runtimeTested:false}));

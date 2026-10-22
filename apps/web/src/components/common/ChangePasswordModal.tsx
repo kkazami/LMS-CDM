@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { passwordSchema } from '@/lib/auth-schema';
 import { X, Lock, KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/common/Toast";
 
@@ -35,8 +36,9 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
       setError("New passwords do not match.");
       return;
     }
-    if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters.");
+    const parsed = passwordSchema.safeParse(newPassword);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0].message);
       return;
     }
 
@@ -65,8 +67,7 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
         
         // Auto-close after a few seconds
         setTimeout(() => {
-          onClose();
-          setSuccess(false);
+          window.location.assign('/login');
         }, 2000);
       }
     } catch (err) {
@@ -103,7 +104,7 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Password Updated</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Your account password has been successfully changed.
+                  Your password changed and your devices were signed out. Redirecting to sign in…
                 </p>
               </div>
             </div>

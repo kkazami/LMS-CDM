@@ -1,4 +1,4 @@
-# LMS Monorepo Skeleton
+# CdM LMS
 
 Stack:
 - Web: Next.js
@@ -10,3 +10,28 @@ Institutes:
 - ICS
 - IBE
 - ITE
+
+## Local setup
+
+Use Node.js 22 and pnpm 10.32.1. Install dependencies with `pnpm install`, copy
+`.env.example` to `apps/web/.env.local`, and fill in your own settings. The database
+must be PostgreSQL. Keep credentials and database backups outside Git.
+
+Run `pnpm dev:web` for the web app, `pnpm dev:mobile` for Expo, or
+`pnpm dev:desktop` for Electron. `pnpm build:web` builds the web app.
+
+CodeLab needs a configured managed execution provider. For the local JDoodle demo,
+set `CODELAB_RUNNER=jdoodle`, `JDOODLE_CLIENT_ID`, and `JDOODLE_CLIENT_SECRET` in the
+local environment file. Its free API allowance is shared across users; see
+[the runner setup](docs/quality/managed-code-execution.md).
+
+## Repository contents
+
+Application code, public assets, Prisma migrations, tests, and CI configuration
+belong here. Personal AI skills, memories, editor settings, temporary database
+clusters, uploads, and generated reports are ignored. Shared harness rules and role
+templates remain tracked because the verification tools require them.
+
+Run `node scripts/check-repository-files.mjs` before publishing. See
+[repository maintenance](docs/repository-maintenance.md) for the cleanup and laptop
+transfer rules.

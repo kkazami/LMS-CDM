@@ -1,0 +1,48 @@
+name: Web product quality
+on:
+  pull_request:
+    paths: ['apps/web/**', 'packages/**', 'prisma/**', 'tests/web-quality/**', 'tests/security/**', 'tests/database/**', 'tests/codelab/**', 'tests/calendar/**', 'tests/auth/**', 'tests/roster/**', 'tests/program-head/**', 'tests/navigation/**', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.gitignore', 'scripts/check-repository-files.mjs', '.github/workflows/web-quality.yml', 'docker/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://synthetic:unused@127.0.0.1:1/quality_offline
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: node scripts/check-repository-files.mjs
+      - run: pnpm install --frozen-lockfile
+      - run: node tests/web-quality/test.mjs
+      - run: pnpm --filter web exec tsc --noEmit --incremental false
+      - run: pnpm build:web
+      - name: Web and Prisma production advisory gate
+        if: always()
+        run: |
+          mkdir -p tmp/web-quality
+          pnpm audit --prod --json > tmp/web-quality/dependencies.json || test -s tmp/web-quality/dependencies.json
+          node tests/web-quality/dependency-audit.mjs --input tmp/web-quality/dependencies.json --output tmp/web-quality/dependency-assessment.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-product-quality
+          path: |
+            tmp/web-quality/product-tests.xml
+            tmp/web-quality/dependencies.json
+            tmp/web-quality/dependency-assessment.json
+          retention-days: 14
+  # The vulnerable self-hosted Judge0/Redis/PostgreSQL stack was retired in favor
+  # of a configured managed API. Product tests exercise its authentication,
+  # async/base64 contract, outage handling and no-fallback policy without secrets.
+  # Provider patching/security and live language compatibility remain deployment gates;
+  # there are no CodeLab container images in this repository to claim as clean.

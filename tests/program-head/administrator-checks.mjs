@@ -136,7 +136,7 @@ export async function administratorBrowserChecks({ browser, base, db, check, out
   page.setDefaultTimeout(15000);
   try {
     await check('actual Administrator login retains the main dashboard and ICS faculty navigation', async () => {
-      const login = await context.request.post(base + '/api/auth/login', { data: { email: 'admin@example.invalid', password: 'Synthetic-Admin-Only-12345', instituteCode: 'ics' } });
+      const login = await context.request.post(base + '/api/auth/login', { data: { email: 'admin@example.invalid', password: 'Synthetic-Admin-Only-12345', instituteCode: 'ics', acceptedPolicies: true } });
       assert.equal(login.status(), 200);
       assert.equal((await login.json()).user.role, 'ADMIN');
       await page.goto(base + '/ics/admin');

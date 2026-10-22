@@ -62,36 +62,39 @@ export default function SearchModal({
   const [query, setQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-    } else {
-      document.body.style.overflow = "unset";
+    if (!isOpen) {
       setQuery("");
+      return;
     }
-    return () => {
-      document.body.style.overflow = "unset";
+    if (!mounted) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    inputRef.current?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]') || []).filter(element => element.getClientRects().length > 0);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
     };
-  }, [isOpen]);
-
-  // Handle escape key
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+    document.addEventListener('keydown', trap);
+    return () => {
+      document.removeEventListener('keydown', trap);
+      document.body.style.overflow = overflow;
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [isOpen, mounted]);
 
   if (!mounted || !isOpen) return null;
 
@@ -413,6 +416,8 @@ export default function SearchModal({
       <div
         className="relative flex flex-col w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-xl bg-white dark:bg-[#1A1D27] sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150"
         role="dialog"
+        ref={dialogRef}
+        aria-label="Search CdM LMS"
         aria-modal="true"
       >
         {/* Search Header Bar */}
@@ -420,6 +425,7 @@ export default function SearchModal({
           <Search className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0" />
           <input
             ref={inputRef}
+            aria-label="Search courses and tools"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

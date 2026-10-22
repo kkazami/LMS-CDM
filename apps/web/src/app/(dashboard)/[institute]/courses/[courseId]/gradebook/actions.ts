@@ -2,18 +2,22 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
+import { exportGradebookSkill } from '@/lib/skills/gradebook-exporter';
+import { readGradebook } from '@/lib/gradebook-data';
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { executeSkill } from "@/lib/skills";
 import { createNotification } from "@/lib/notifications";
-import { grantExp } from "@/lib/gamification/grant-exp";
-import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { gradeSubmission, gradeStudent, lockAcademicRecord } from "@/lib/academic-records";
+import { requireCourseAccess } from "@/lib/course-access";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
 async function ensureInstructor(courseId: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
   const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") throw new Error("Instructors only");
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(role))) throw new Error("Instructors only");
+  await requireCourseAccess(session.user, courseId, true);
   return session.user;
 }
 
@@ -47,6 +51,7 @@ export interface GradebookCell {
 }
 
 export interface GradebookData {
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
   students: GradebookStudent[];
   assignments: GradebookAssignment[];
   grades: Record<string, Record<string, GradebookCell>>; // [studentId][assignmentId]
@@ -55,241 +60,18 @@ export interface GradebookData {
   } | null;
 }
 
-export async function getGradebookData(courseId: string): Promise<GradebookData> {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#getGradebookData", () => ({ courseId }));
-
-  await ensureInstructor(courseId);
-
-  const [enrollments, syllabusItems, submissions, gradingPolicy] = await Promise.all([
-    db.enrollment.findMany({
-      where: { courseId, status: "APPROVED" },
-      include: { student: { select: { id: true, name: true, email: true } } },
-      orderBy: { student: { name: "asc" } },
-    }),
-    db.syllabusItem.findMany({
-      where: { 
-        courseId, 
-        type: { not: "MATERIAL" },
-        maxPoints: { not: null } 
-      },
-      select: { id: true, title: true, maxPoints: true, type: true, orderIndex: true },
-      orderBy: { orderIndex: "asc" },
-    }),
-    db.studentSubmission.findMany({
-      where: { syllabusItem: { courseId } },
-      select: {
-        id: true,
-        syllabusItemId: true,
-        studentId: true,
-        grade: true,
-        status: true,
-        isReturned: true,
-        submittedAt: true,
-        attachments: {
-          select: {
-            id: true,
-            type: true,
-            url: true,
-            fileName: true,
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-    }),
-    db.gradingPolicy.findUnique({
-      where: { courseId },
-      include: { weights: true },
-    }),
-  ]);
-
-  const students = enrollments.map((e) => e.student);
-  const assignments = syllabusItems;
-
-  // Build grade matrix
-  const grades: GradebookData["grades"] = {};
-  for (const student of students) {
-    grades[student.id] = {};
-    for (const assignment of assignments) {
-      grades[student.id][assignment.id] = { submissionId: null, grade: null, status: null, attachments: [] };
-    }
-  }
-
-  for (const sub of submissions) {
-    if (grades[sub.studentId]?.[sub.syllabusItemId] !== undefined) {
-      grades[sub.studentId][sub.syllabusItemId] = {
-        submissionId: sub.id,
-        grade: sub.grade,
-        status: sub.status,
-        isReturned: sub.isReturned,
-        submittedAt: sub.submittedAt ? sub.submittedAt.toISOString() : null,
-        attachments: sub.attachments.map((a) => ({
-          id: a.id,
-          type: a.type,
-          url: a.url,
-          fileName: a.fileName,
-        })),
-      };
-    }
-  }
-
-  return { 
-    students, 
-    assignments, 
-    grades,
-    gradingPolicy: gradingPolicy ? {
-      weights: gradingPolicy.weights.map(w => ({
-        category: w.category,
-        weightPercentage: w.weightPercentage
-      }))
-    } : null
-  };
+export async function getGradebookData(courseId: string, page = 1): Promise<GradebookData> {
+  const actor = await requireLegacyActor('gradebook/actions.ts#getGradebookData', { courseId });
+  return readGradebook(actor, courseId, page);
 }
-
 export async function updateGrade(submissionId: string, rawGrade: number) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#updateGrade", () => ({ submissionId }));
-
-  const session = await getSession();
-  if (!session) return { success: false, error: "Unauthorized" };
-  const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
-
-  const existing = await db.studentSubmission.findUnique({
-    where: { id: submissionId },
-    select: { syllabusItem: { select: { maxPoints: true } } },
-  });
-
-  let grade = Math.max(0, rawGrade);
-  if (existing?.syllabusItem?.maxPoints !== null && existing?.syllabusItem?.maxPoints !== undefined) {
-    grade = Math.min(existing.syllabusItem.maxPoints, grade);
-  }
-
-  const submission = await db.studentSubmission.update({
-    where: { id: submissionId },
-    data: { grade, status: "RETURNED", isReturned: true },
-    select: {
-      studentId: true,
-      syllabusItem: {
-        select: { title: true, type: true, course: { select: { code: true, instituteId: true } } },
-      },
-    },
-  });
-
-  // ── Grade Incentive evaluation ──
-  try {
-    const rules = await db.gradeIncentiveRule.findMany({
-      where: { courseId: submission.syllabusItem.course.instituteId ? undefined : undefined, isActive: true },
-    });
-    // Find rules specifically for this course
-    const courseRules = await db.gradeIncentiveRule.findMany({
-      where: { isActive: true },
-    });
-    for (const rule of courseRules) {
-      if (grade >= rule.gradeMin) {
-        await grantExp({
-          userId: submission.studentId,
-          amount: rule.bonusExp,
-          reason: `Grade Incentive: ${rule.label} (${grade}% in ${submission.syllabusItem.course.code})`,
-          source: "grade_incentive",
-        });
-      }
-    }
-    if (grade >= 100) {
-      await awardBadgeIfEarned(submission.studentId, "perfect-score");
-    }
-  } catch (incErr) {
-    console.error("GRADE_INCENTIVE_TRIGGER_ERROR", incErr);
-  }
-
-  // ── Notify the student about the new grade ──
-  const itemLabel = submission.syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
-  const institute = await db.institute.findFirst({ where: { id: submission.syllabusItem.course.instituteId }, select: { code: true } });
-  const instCode = institute?.code || "ics";
-  await createNotification({
-    userId: submission.studentId,
-    type: "GRADE",
-    title: "Grade posted",
-    message: `New grade for ${itemLabel}: ${submission.syllabusItem.title} in ${submission.syllabusItem.course.code}`,
-    link: `/${instCode}/grades`,
-  });
-
+  const user = await requireLegacyActor("gradebook/actions.ts#updateGrade", () => ({ submissionId }));
+  await gradeSubmission(user, submissionId, rawGrade);
   return { success: true };
 }
-
 export async function upsertGrade(syllabusItemId: string, studentId: string, rawGrade: number) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#upsertGrade", () => ({ syllabusItemId, studentId }));
-
-  const session = await getSession();
-  if (!session) return { success: false, error: "Unauthorized" };
-  const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
-
-  const syllabusItem = await db.syllabusItem.findUnique({
-    where: { id: syllabusItemId },
-    select: { title: true, type: true, maxPoints: true, courseId: true, course: { select: { code: true, instituteId: true } } },
-  });
-
-  let grade = Math.max(0, rawGrade);
-  if (syllabusItem?.maxPoints !== null && syllabusItem?.maxPoints !== undefined) {
-    grade = Math.min(syllabusItem.maxPoints, grade);
-  }
-
-  await db.studentSubmission.upsert({
-    where: {
-      syllabusItemId_studentId: {
-        syllabusItemId,
-        studentId,
-      },
-    },
-    update: {
-      grade,
-      status: "RETURNED",
-      isReturned: true,
-    },
-    create: {
-      syllabusItemId,
-      studentId,
-      grade,
-      status: "RETURNED",
-      isReturned: true,
-    },
-  });
-
-  // ── Notify the student about the new grade & check incentives ──
-  if (syllabusItem) {
-    try {
-      const courseRules = await db.gradeIncentiveRule.findMany({
-        where: { courseId: syllabusItem.courseId, isActive: true },
-      });
-      for (const rule of courseRules) {
-        if (grade >= rule.gradeMin) {
-          await grantExp({
-            userId: studentId,
-            amount: rule.bonusExp,
-            reason: `Grade Incentive: ${rule.label} (${grade}% in ${syllabusItem.course.code})`,
-            source: "grade_incentive",
-            courseId: syllabusItem.courseId,
-          });
-        }
-      }
-      if (grade >= 100) {
-        await awardBadgeIfEarned(studentId, "perfect-score");
-      }
-    } catch (incErr) {
-      console.error("GRADE_INCENTIVE_TRIGGER_ERROR", incErr);
-    }
-
-    const itemLabel = syllabusItem.type === "QUIZ" ? "Quiz" : "Assignment";
-    const institute = await db.institute.findFirst({ where: { id: syllabusItem.course.instituteId }, select: { code: true } });
-    const instCode = institute?.code || "ics";
-    await createNotification({
-      userId: studentId,
-      type: "GRADE",
-      title: "Grade posted",
-      message: `New grade for ${itemLabel}: ${syllabusItem.title} in ${syllabusItem.course.code}`,
-      link: `/${instCode}/grades`,
-    });
-  }
-
+  const user = await requireLegacyActor("gradebook/actions.ts#upsertGrade", () => ({ syllabusItemId, studentId }));
+  await gradeStudent(user, syllabusItemId, studentId, rawGrade);
   return { success: true };
 }
 
@@ -299,39 +81,18 @@ export async function clearGrade(syllabusItemId: string, studentId: string) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(role))) return { success: false, error: "Instructors only" };
 
-  const existing = await db.studentSubmission.findUnique({
-    where: {
-      syllabusItemId_studentId: {
-        syllabusItemId,
-        studentId,
-      },
-    },
-    include: {
-      attachments: true,
-    },
+  await db.$transaction(async tx => {
+    await lockAcademicRecord(tx, studentId, syllabusItemId);
+    const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId } });
+    if (!item) throw new Error("Assignment not found");
+    await requireCourseAccess(session.user, item.courseId, true, tx);
+    const existing = await tx.studentSubmission.findUnique({ where: { syllabusItemId_studentId: { syllabusItemId, studentId } }, include: { attachments: true } });
+    if (!existing) return;
+    if (existing.attachments.length === 0 && !existing.submittedAt) await tx.studentSubmission.delete({ where: { id: existing.id } });
+    else await tx.studentSubmission.update({ where: { id: existing.id }, data: { grade: null, status: "SUBMITTED", isReturned: false } });
   });
-
-  if (!existing) return { success: true };
-
-  // If the student never actually submitted anything (no attachments and never submitted):
-  // Delete the placeholder submission created by the accidental grade!
-  if (existing.attachments.length === 0 && !existing.submittedAt) {
-    await db.studentSubmission.delete({
-      where: { id: existing.id },
-    });
-  } else {
-    // The student DID submit work: reset grade to null and status to SUBMITTED
-    await db.studentSubmission.update({
-      where: { id: existing.id },
-      data: {
-        grade: null,
-        status: "SUBMITTED",
-        isReturned: false,
-      },
-    });
-  }
 
   return { success: true };
 }
@@ -345,7 +106,9 @@ export async function saveGradingPolicy(
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   const role = session.user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "ADMIN") return { success: false, error: "Instructors only" };
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(role))) return { success: false, error: "Instructors only" };
+
+  await ensureInstructor(courseId);
 
   // Calculate total to ensure it's 100%
   const total = weights.reduce((acc, w) => acc + w.weightPercentage, 0);
@@ -382,33 +145,6 @@ export async function saveGradingPolicy(
 }
 
 export async function exportGradebook(courseId: string) {
-  await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions.ts#exportGradebook", () => ({ courseId }));
-
-  return executeSkill("gradebook-exporter", async () => {
-    await ensureInstructor(courseId);
-
-    const data = await getGradebookData(courseId);
-
-    // Build CSV
-    const assignmentHeaders = data.assignments.map((a) => `"${a.title.replace(/"/g, '""')} (${a.maxPoints ?? '∞'} pts)"`);
-    const header = ["Student Name", "Email", ...assignmentHeaders].join(",");
-
-    const rows = data.students.map((student) => {
-      const grades = data.assignments.map((a) => {
-        const cell = data.grades[student.id]?.[a.id];
-        return cell?.grade !== null && cell?.grade !== undefined ? cell.grade : "";
-      });
-      return [`"${student.name.replace(/"/g, '""')}"`, `"${student.email}"`, ...grades].join(",");
-    });
-
-    const csvContent = [header, ...rows].join("\n");
-    const courseInfo = await db.course.findUnique({
-      where: { id: courseId },
-      select: { title: true },
-    });
-
-    const fileName = `gradebook-${(courseInfo?.title ?? courseId).replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.csv`;
-
-    return { csvContent, fileName };
-  });
+  await requireLegacyActor('gradebook/actions.ts#exportGradebook', { courseId });
+  return executeSkill('gradebook-exporter', () => exportGradebookSkill(courseId));
 }

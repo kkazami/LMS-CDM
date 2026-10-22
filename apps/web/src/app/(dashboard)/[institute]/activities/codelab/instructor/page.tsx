@@ -1,3 +1,4 @@
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * CodeLab Instructor Analytics & Monitoring Page
@@ -31,6 +32,8 @@ export default async function CodeLabInstructorPage({
     redirect(`/login?institute=${institute}`);
   }
 
+  if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(session.user.role))) notFound();
+
   // 1. Enforce ICS-only feature guard
   const eligible = await isEligibleForActivities({
     user: {
@@ -48,6 +51,11 @@ export default async function CodeLabInstructorPage({
   const rawSubmissions = await db.activitySubmission.findMany({
     where: {
       activityType: "codelab",
+      student: {
+        instituteId: session.user.instituteId,
+        role: { equals: "STUDENT", mode: "insensitive" },
+        ...(canonicalRole(session.user.role) === "INSTRUCTOR" ? { enrollments: { some: { status: "APPROVED", course: { instituteId: session.user.instituteId, instructorId: session.user.id } } } } : {}),
+      },
     },
     include: {
       student: {

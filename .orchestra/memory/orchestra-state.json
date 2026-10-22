@@ -1,6 +1,0 @@
-{
-  "version": 2,
-  "status": "HISTORICAL_ONLY",
-  "authority": false,
-  "message": "Legacy rubric metrics are archived context, not verified gates. Active state is derived from a v2 run journal; initialize a new run rather than promoting legacy passes."
-}

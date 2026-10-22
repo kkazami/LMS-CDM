@@ -1,4 +1,5 @@
 "use client";
+import { pastePlainText } from '@/lib/plain-text-paste';
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
@@ -550,6 +551,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
               <div
                 ref={noteDraftEditorRef}
                 contentEditable
+                onPaste={pastePlainText}
+                onDrop={event => event.preventDefault()}
                 suppressContentEditableWarning
                 onInput={() => {
                   setNoteDraft((current) => ({ ...current, content: readNoteEditorContent() }));
@@ -758,6 +761,8 @@ export default function WorkspaceDashboard({ instituteCode, notes: initialNotes,
               <div
                 ref={expandedNoteEditorRef}
                 contentEditable
+                onPaste={pastePlainText}
+                onDrop={event => event.preventDefault()}
                 suppressContentEditableWarning
                 onInput={() => {
                   const nextContent = expandedNoteEditorRef.current?.innerHTML ?? "";

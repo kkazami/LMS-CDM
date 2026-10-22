@@ -1,66 +1,29 @@
-import crypto from 'crypto';
-
-const ALGORITHM = 'aes-256-gcm';
-const DEFAULT_DEV_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-
-function getEncryptionKey(): Buffer {
-  const hexKey = process.env.TOKEN_ENCRYPTION_KEY || DEFAULT_DEV_KEY;
-  if (hexKey.length !== 64) {
-    throw new Error('TOKEN_ENCRYPTION_KEY must be a 64-character (32-byte) hexadecimal string.');
-  }
-  return Buffer.from(hexKey, 'hex');
+import crypto from 'node:crypto';
+function encryptionKey(value = process.env.TOKEN_ENCRYPTION_KEY): Buffer {
+  if (!value || !/^[a-f0-9]{64}$/i.test(value)) throw new Error('GitHub token encryption is not configured.');
+  return Buffer.from(value, 'hex');
 }
-
-/**
- * Encrypts a plaintext GitHub personal access or OAuth token using AES-256-GCM.
- * Output format: `ivHex:authTagHex:ciphertextHex`
- */
 export function encryptGithubToken(token: string): string {
-  if (!token || typeof token !== 'string') {
-    throw new Error('A non-empty string token must be provided for encryption.');
-  }
-
-  const key = getEncryptionKey();
+  if (!token || typeof token !== 'string') throw new Error('Invalid token.');
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-
-  const encrypted = Buffer.concat([
-    cipher.update(token, 'utf8'),
-    cipher.final(),
-  ]);
-
-  const tag = cipher.getAuthTag();
-
-  return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
+  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+  return [iv.toString('hex'), cipher.getAuthTag().toString('hex'), ciphertext.toString('hex')].join(':');
 }
-
-/**
- * Decrypts a stored AES-256-GCM encrypted token.
- * Input format: `ivHex:authTagHex:ciphertextHex`
- */
-export function decryptGithubToken(storedPayload: string): string {
-  if (!storedPayload || typeof storedPayload !== 'string') {
-    throw new Error('Invalid encrypted token payload.');
+export function decryptGithubToken(payload: string): string {
+  if (typeof payload !== 'string' || !/^[a-f0-9]{32}:[a-f0-9]{32}:(?:[a-f0-9]{2})+$/i.test(payload)) throw new Error('Invalid encrypted token.');
+  const current = encryptionKey();
+  let previous: unknown = [];
+  try { previous = JSON.parse(process.env.TOKEN_ENCRYPTION_PREVIOUS_KEYS || '[]'); } catch { throw new Error('Invalid previous encryption keys.'); }
+  if (!Array.isArray(previous) || previous.length > 3 || previous.some(key => typeof key !== 'string')) throw new Error('Invalid previous encryption keys.');
+  const keys = [current, ...previous.map(key => encryptionKey(key))];
+  const [iv, tag, ciphertext] = payload.split(':').map(value => Buffer.from(value, 'hex'));
+  for (const key of keys) {
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(tag);
+      return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    } catch { /* Only explicitly configured keys are eligible for rotation. */ }
   }
-
-  const parts = storedPayload.split(':');
-  if (parts.length !== 3) {
-    throw new Error('Corrupted or malformed encrypted token format. Expected iv:tag:ciphertext.');
-  }
-
-  const [ivHex, tagHex, encryptedHex] = parts;
-  const key = getEncryptionKey();
-  const iv = Buffer.from(ivHex, 'hex');
-  const tag = Buffer.from(tagHex, 'hex');
-  const encrypted = Buffer.from(encryptedHex, 'hex');
-
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(tag);
-
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]);
-
-  return decrypted.toString('utf8');
+  throw new Error('Unable to decrypt GitHub token; reconnect or rotate its configured key.');
 }

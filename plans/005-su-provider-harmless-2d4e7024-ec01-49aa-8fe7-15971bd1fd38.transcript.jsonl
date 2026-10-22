@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a11b57-0691-7e91-aff4-ccdca29cc7e3"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"requestId\":\"SU-PROVIDER-HARMLESS\",\"acknowledged\":true}"}}
-{"type":"turn.completed","usage":{"input_tokens":8699,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":28,"reasoning_output_tokens":0}}

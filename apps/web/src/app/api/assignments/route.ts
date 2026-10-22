@@ -2,6 +2,9 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
+import { requireCourseAccess } from '@/lib/course-access';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +24,8 @@ export async function GET(request: Request) {
     const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '20', 10), 1), 50);
     const skip = (page - 1) * limit;
+    if (!Number.isSafeInteger(skip) || !Number.isSafeInteger(limit) || (courseId?.length ?? 0) > 200) throw new AccessError(400, 'Invalid query.');
+    if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(session.user.role))) throw new AccessError(403, 'Forbidden.');
 
     if (!instituteCode && !courseId) {
       return NextResponse.json({ message: 'Institute code or courseId is required.' }, { status: 400 });
@@ -28,6 +33,8 @@ export async function GET(request: Request) {
 
     // If courseId provided, get assignments for that specific course
     if (courseId) {
+      const course = await requireCourseAccess(session.user, courseId);
+      if (instituteCode && course.institute.code !== instituteCode.toLowerCase()) throw new AccessError(404, 'Course not found.');
       const whereCondition = { courseId };
       const [items, totalCount] = await Promise.all([
         db.syllabusItem.findMany({
@@ -73,7 +80,7 @@ export async function GET(request: Request) {
         },
         {
           headers: {
-            'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+            'Cache-Control': 'private, no-store',
           },
         }
       );
@@ -89,6 +96,7 @@ export async function GET(request: Request) {
     }
 
     const role = (session.user.role || 'STUDENT').toUpperCase();
+    if (institute.id !== session.user.instituteId) throw new AccessError(403, 'Forbidden institute.');
     let courseIds: string[] = [];
 
     if (role === 'STUDENT') {
@@ -150,12 +158,11 @@ export async function GET(request: Request) {
       },
       {
         headers: {
-          'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+          'Cache-Control': 'private, no-store',
         },
       }
     );
   } catch (error) {
-    console.error('ASSIGNMENTS_API_ERROR', error);
-    return NextResponse.json({ message: 'Something went wrong.' }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }

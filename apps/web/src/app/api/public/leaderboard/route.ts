@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -62,7 +63,7 @@ export async function GET() {
       const tier = rawTier.charAt(0).toUpperCase() + rawTier.slice(1);
       const program =
         p.student.department?.trim() ||
-        p.student.institute?.name ||
+        (p.student.institute ? getInstituteName(p.student.institute.code, p.student.institute.name) : '') ||
         "General";
 
       return {
@@ -71,7 +72,7 @@ export async function GET() {
         displayName: isAnon
           ? `Student #${p.student.id.slice(-4).toUpperCase()}`
           : p.student.name,
-        avatar: isAnon ? null : p.student.avatarUrl,
+        avatar: isAnon || p.student.avatarUrl?.startsWith('/api/assets/') ? null : p.student.avatarUrl,
         points,
         exp: points,
         tier,

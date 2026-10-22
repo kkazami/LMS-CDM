@@ -1,9 +1,11 @@
+import { getInstituteName } from "@lms/types";
 import { db } from "./db";
 import { cookies, headers } from "next/headers";
 import crypto from "crypto";
 import { lockAccounts } from './super-user-v1/account-lock';
 import { canonicalRole, mayAdmitAccount, privilegedRole } from './super-user-v1/capabilities';
 import { applicationWriterQualified } from './super-user-v1/provisioning';
+import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, SESSION_TOUCH_MS, sessionExpired, sessionActivity } from './session-policy';
 
 /**
  * Computes a SHA-256 digest of an opaque bearer token.
@@ -34,7 +36,7 @@ export async function createSession(
   expectedIdentity?: { role: string; instituteId: string; credentialProvisioningState: string | null }
 ): Promise<CreateSessionResult> {
   // 7-day session validity
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_ABSOLUTE_MS);
 
   // Generate 256 bits of cryptographic entropy
   const rawToken = crypto.randomBytes(32).toString("base64url");
@@ -95,7 +97,8 @@ export async function getSession(request?: Request) {
       try { cookieToken = (await cookies()).get('lumina_session')?.value; } catch { /* No Cookie context. */ }
       const select = async (token: string | null | undefined): Promise<CredentialSelection> => {
         if (!token) return null;
-        const session = await validateSessionToken(token);
+        const touch = request ? sessionActivity(new URL(request.url).pathname, request.method, request.headers.get('x-lms-user-active') === '1') : headerStore?.get('x-lms-session-touch') !== '0';
+        const session = await validateSessionToken(token, touch);
         firstSession = session;
         return session ? { token, userId: session.userId, sessionId: session.id, tokenHash: session.tokenHash, role: session.user.role, instituteId: session.user.instituteId } : null;
       };
@@ -108,7 +111,7 @@ export async function getSession(request?: Request) {
   if (!selected) return null;
   // Only the selecting caller uses its fresh read; later callers still revalidate.
   if (firstSession) return firstSession;
-  const current = await validateSessionToken(selected.token);
+  const current = await validateSessionToken(selected.token, false);
   if (!current || current.id !== selected.sessionId || current.userId !== selected.userId || current.tokenHash !== selected.tokenHash
     || current.user.role !== selected.role || current.user.instituteId !== selected.instituteId) return null;
   return current;
@@ -119,15 +122,15 @@ export function bearerToken(header: string | null): string | null {
   return match?.[1] ?? null;
 }
 
-export async function validateSessionToken(rawToken: string) {
+export async function validateSessionToken(rawToken: string, touch = true) {
   if (!/^[A-Za-z0-9_-]{16,512}$/.test(rawToken)) return null;
   try {
     const tokenHash = hashToken(rawToken);
 
-    // Look up session by tokenHash (or fallback to id for transition backwards-compatibility)
+    // Internal session IDs are never bearer credentials.
     const session = await db.session.findFirst({
       where: {
-        OR: [{ tokenHash }, { id: rawToken }],
+        tokenHash,
       },
       include: {
         user: {
@@ -139,8 +142,9 @@ export async function validateSessionToken(rawToken: string) {
     if (!session) {
       return null;
     }
+    if (session.user.institute) session.user.institute.name = getInstituteName(session.user.institute.code, session.user.institute.name);
 
-    if (session.expiresAt.getTime() <= Date.now()) {
+    if (sessionExpired(session)) {
       // Session expired, purge from database
       await db.session.delete({ where: { id: session.id } }).catch(() => {});
       return null;
@@ -156,6 +160,13 @@ export async function validateSessionToken(rawToken: string) {
       return null;
     }
     if (privilegedRole(session.user.role) && !await applicationWriterQualified(db)) return null;
+
+    if (touch && Date.now() - session.lastSeenAt.getTime() >= SESSION_TOUCH_MS) {
+      const now = new Date();
+      const updated = await db.session.updateMany({ where: { id: session.id, tokenHash, expiresAt: { gt: now }, createdAt: { gt: new Date(now.getTime() - SESSION_ABSOLUTE_MS) }, lastSeenAt: { gt: new Date(now.getTime() - SESSION_IDLE_MS) } }, data: { lastSeenAt: now } });
+      if (!updated.count) return null;
+      session.lastSeenAt = now;
+    }
 
     return session;
   } catch {

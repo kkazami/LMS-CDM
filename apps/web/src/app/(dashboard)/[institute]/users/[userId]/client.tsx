@@ -1,5 +1,7 @@
 "use client";
 
+import { getInstituteName } from "@lms/types";
+
 import Link from "next/link";
 import {
   Mail,
@@ -59,7 +61,7 @@ export default function PublicProfileClient({
   const courseLabel = isStudent ? "Enrolled Courses" : "Teaching";
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto w-full min-w-0 max-w-3xl">
       {/* Cover Banner */}
       <div
         className="relative h-36 rounded-t-2xl sm:h-44"
@@ -105,7 +107,7 @@ export default function PublicProfileClient({
             {roleLabel}
           </span>
           <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-          <span>{user.institute.name}</span>
+          <span>{getInstituteName(user.institute.code, user.institute.name)}</span>
           {user.department && (
             <>
               <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />
@@ -140,7 +142,7 @@ export default function PublicProfileClient({
           About
         </h2>
         <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 space-y-3 shadow-xs">
-          <p className="text-sm text-slate-700 dark:text-[#F0F2F8] leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-slate-700 dark:text-[#F0F2F8] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
             {user.bio || "No bio added yet."}
           </p>
 
@@ -149,7 +151,7 @@ export default function PublicProfileClient({
           <div className="grid gap-2">
             <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-[#8B92A5]">
               <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-              <span>{user.email}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{user.email}</span>
             </div>
             {user.phone && (
               <div className="flex items-center gap-2.5 text-sm text-slate-600 dark:text-[#8B92A5]">

@@ -7,9 +7,11 @@ import { db } from '@/lib/db';
 import { administratorInstitute, administratorCourse, administratorTarget } from '@/lib/administrator-scope';
 import { checkAdministratorScope, type AdministratorScope } from '@/lib/administrator-scope';
 import { notFound, redirect } from 'next/navigation';
+import { mutationOriginAllowed } from '@/lib/request-security';
 const legacy = (role: unknown) => ['ADMIN','INSTRUCTOR','STUDENT'].includes(canonicalRole(role));
 /** Dedicated roles never inherit legacy authority through permission strings. */
 export async function denyLegacyApi(request: Request, _operation: string): Promise<Response | null> {
+  if (!mutationOriginAllowed(request)) return Response.json({ error: 'Forbidden request origin.' }, { status: 403 });
   const session = await getSessionFromRequest(request);
   if (!session) return null;
   if (canonicalRole(session.user.role) === 'ADMIN') {

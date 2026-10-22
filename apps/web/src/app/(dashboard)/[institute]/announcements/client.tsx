@@ -13,6 +13,7 @@ interface AnnouncementsClientProps {
   enrolledCourses: EnrolledCourseOption[];
   theme: InstituteTheme;
   instituteCode: string;
+  isInstructor?: boolean;
 }
 
 // ── Helpers ──
@@ -67,13 +68,17 @@ export default function AnnouncementsClient({
   enrolledCourses,
   theme,
   instituteCode: _instituteCode,
+  isInstructor = false,
 }: AnnouncementsClientProps) {
   const { themeMode } = useTheme();
   const [selectedCourseId, setSelectedCourseId] = useState("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-  const isEnrolled = enrolledCourses.length > 0;
+  const hasCourses = enrolledCourses.length > 0;
+  const description = isInstructor
+    ? "Announcements from the classes you teach"
+    : "Stay updated with the latest news from your classes";
 
   const filteredAnnouncements =
     selectedCourseId === "all"
@@ -95,13 +100,13 @@ export default function AnnouncementsClient({
   };
 
   // ── Not enrolled empty state ──
-  if (!isEnrolled) {
+  if (!hasCourses) {
     return (
       <div className="max-w-4xl mx-auto page-enter">
         <div className="mb-7">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Announcements</h1>
           <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
-            Stay updated with the latest news from your classes
+            {description}
           </p>
         </div>
         <div
@@ -112,11 +117,13 @@ export default function AnnouncementsClient({
             className="flex items-center justify-center w-20 h-20 rounded-full mb-6"
             style={{ backgroundColor: `${theme.colors.primary}1A` }}
           >
-            <BookOpen className="w-10 h-10" style={{ color: theme.colors.primary }} />
+            <BookOpen className="w-10 h-10" style={{ color: "var(--institute-ink)" }} />
           </div>
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-[#F0F2F8] mb-2">Not enrolled in any classes</h2>
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-[#F0F2F8] mb-2">{isInstructor ? "No assigned classes" : "Not enrolled in any classes"}</h2>
           <p className="text-sm text-slate-400 dark:text-[#8B92A5] max-w-sm">
-            Join a class using a class code to see announcements from your instructors here.
+            {isInstructor
+              ? "Announcements will appear here when you have an assigned class."
+              : "Join a class using a class code to see announcements from your instructors here."}
           </p>
         </div>
       </div>
@@ -129,7 +136,7 @@ export default function AnnouncementsClient({
       <div className="mb-7">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">Announcements</h1>
         <p className="text-sm text-slate-500 dark:text-[#8B92A5] mt-1">
-          Stay updated with the latest news from your classes
+          {description}
         </p>
       </div>
 
@@ -173,7 +180,7 @@ export default function AnnouncementsClient({
           <h2 className="text-xl font-semibold text-slate-700 dark:text-[#F0F2F8] mb-2">No announcements yet</h2>
           <p className="text-sm text-slate-400 dark:text-[#8B92A5] max-w-sm">
             {selectedCourseId === "all"
-              ? "Your instructors haven't posted any announcements yet. Check back later!"
+              ? "No announcements have been posted for your classes yet."
               : "No announcements for this class yet. Check back later!"}
           </p>
         </div>
@@ -197,12 +204,6 @@ export default function AnnouncementsClient({
                       ? "rgba(255, 255, 255, 0.08)"
                       : "#E5E7EB"
                     : `${theme.colors.primary}40`,
-                  borderLeftWidth: "4px",
-                  borderLeftColor: isRead
-                    ? themeMode === "dark"
-                      ? "#3D4460"
-                      : "#D1D5DB"
-                    : theme.colors.primary,
                 }}
               >
                 <div className="p-5">
@@ -218,7 +219,7 @@ export default function AnnouncementsClient({
                     ) : (
                       <div
                         className="h-10 w-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold text-white shadow-xs"
-                        style={{ backgroundColor: theme.colors.primary }}
+                        style={{ backgroundColor: "var(--action-bg)", color: "var(--action-ink)" }}
                       >
                         {getInitials(ann.authorName)}
                       </div>
@@ -233,7 +234,7 @@ export default function AnnouncementsClient({
                         {!isRead && (
                           <span
                             className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
-                            style={{ backgroundColor: theme.colors.primary }}
+                            style={{ backgroundColor: "var(--action-bg)", color: "var(--action-ink)" }}
                           >
                             NEW
                           </span>
@@ -251,7 +252,7 @@ export default function AnnouncementsClient({
                               themeMode === "dark"
                                 ? `${theme.colors.primary}20`
                                 : `${theme.colors.primary}14`,
-                            color: theme.colors.primary,
+                            color: "var(--institute-ink)",
                             borderColor: `${theme.colors.primary}30`,
                           }}
                         >
@@ -276,7 +277,7 @@ export default function AnnouncementsClient({
                         <button
                           onClick={() => toggleExpand(ann.id)}
                           className="mt-2 flex items-center gap-1 text-xs font-semibold transition-colors hover:underline"
-                          style={{ color: theme.colors.primary }}
+                          style={{ color: "var(--institute-ink)" }}
                         >
                           {isExpanded ? (
                             <>

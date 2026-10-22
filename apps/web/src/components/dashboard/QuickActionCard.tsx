@@ -58,11 +58,11 @@ export function QuickActionCard({
             className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl shrink-0"
             style={{ backgroundColor: `${color}14` }}
           >
-            <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" style={{ color }} aria-hidden="true" />
+            <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" style={{ color: "var(--institute-ink, currentColor)" }} aria-hidden="true" />
           </div>
           {badge && (
             <span
-              className="rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold font-mono tabular-nums shrink-0 max-w-[85px] truncate"
+              className="rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold tabular-nums shrink-0 max-w-[85px] truncate"
               style={{ backgroundColor: bs.bg, color: bs.text }}
               title={badge}
             >

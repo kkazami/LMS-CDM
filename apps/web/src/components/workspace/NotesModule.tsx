@@ -1,4 +1,5 @@
 "use client";
+import { pastePlainText } from '@/lib/plain-text-paste';
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -557,6 +558,8 @@ export default function NotesModule({ initialNotes }: NotesModuleProps) {
                 <div
                   ref={editorRef}
                   contentEditable
+                onPaste={pastePlainText}
+                onDrop={event => event.preventDefault()}
                   suppressContentEditableWarning
                   onInput={(event) => setEditorHtml((event.currentTarget as HTMLDivElement).innerHTML)}
                   className="min-h-[320px] rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-4 text-sm leading-7 text-slate-700 dark:text-[#F0F2F8] outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
