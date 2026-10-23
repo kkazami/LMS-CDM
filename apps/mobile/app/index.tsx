@@ -39,6 +39,7 @@ export default function Index() {
   const role = (user.role || '').toUpperCase();
 
   if (role === 'STUDENT') {
+    if (user.requiresEnrollment) return <Redirect href="/join-class" />;
     return <Redirect href="/student/dashboard" />;
   }
 

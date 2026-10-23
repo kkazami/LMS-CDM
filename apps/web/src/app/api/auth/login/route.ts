@@ -16,6 +16,7 @@ import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
 import { logActivity } from "@/lib/ite/activity-logger";
 import { persistentLimit } from '@/lib/roster/rate-limit';
 import { AccessError } from '@/lib/super-user-v1/actor';
+import { needsClassEnrollment } from '@/lib/student-access';
 
 export const dynamic = "force-dynamic";
 
@@ -139,10 +140,11 @@ export async function POST(request: Request) {
       ipAddress: clientIp,
     }, user.password, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState });
 
-    // 8. Daily login rewards (for students)
+    const requiresEnrollment = await needsClassEnrollment(user);
+    // 8. Daily login rewards (for enrolled students)
     let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
     try {
-      if (user.role === "STUDENT") {
+      if (user.role === "STUDENT" && !requiresEnrollment) {
         loginRewardResult = await processLoginReward(user.id);
       }
     } catch (rewardErr) {
@@ -176,6 +178,7 @@ export async function POST(request: Request) {
           name: user.name,
           email: user.email,
           role: user.role,
+          requiresEnrollment,
           studentNumber: (user as Record<string, unknown>).studentNumber as string | undefined || null,
           institute: {
             code: instituteCode,

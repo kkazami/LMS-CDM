@@ -31,6 +31,7 @@ model User {
   name              String
   email             String                  @unique
   password          String?
+  googleSubject     String?                 @unique
   firstName         String?
   lastName          String?
   section           String                  @default("")

@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     if (!institute) {
       return NextResponse.json({ message: 'Institute not found.' }, { status: 404 });
     }
+    if (institute.id !== session.user.instituteId) return NextResponse.json({ message: 'Forbidden institute.' }, { status: 403 });
 
     // Check role-based scoping: students only see announcements for their approved courses
     const userRole = (session.user.role || '').toUpperCase();

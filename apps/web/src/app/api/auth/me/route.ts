@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { getCorsHeaders, handleCorsPreflight } from '@/lib/cors';
+import { needsClassEnrollment } from '@/lib/student-access';
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
   corsHeaders['Pragma'] = 'no-cache';
 
   try {
-    const session = await getSessionFromRequest(request);
+    const session = await getSessionFromRequest(request, { allowUnenrolled: true });
 
     if (!session) {
       return NextResponse.json(
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
           name: session.user.name,
           email: session.user.email,
           role: session.user.role,
+          requiresEnrollment: await needsClassEnrollment(session.user),
           studentNumber: (user.studentNumber as string) || null,
           instituteId: session.user.instituteId,
           institute: {

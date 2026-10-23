@@ -29,6 +29,7 @@
     "file-type": "22.0.1",
     "framer-motion": "^13.2.0",
     "groq-sdk": "^1.6.0",
+    "jose": "^6.2.13",
     "katex": "^0.18.7",
     "lucide-react": "^0.577.0",
     "marked": "^18.0.9",

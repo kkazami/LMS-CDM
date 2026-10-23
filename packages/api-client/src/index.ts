@@ -130,6 +130,8 @@ export function createApiClient(config: ApiClientConfig) {
 
   return {
     auth: {
+      register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>
+        request<LoginResponse>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
       login: (data: LoginRequest) =>
         request<LoginResponse>('/api/auth/login', {
           method: 'POST',
@@ -148,6 +150,7 @@ export function createApiClient(config: ApiClientConfig) {
     },
 
     courses: {
+      joinWithCode: (code: string) => request<{ courseId: string; redirectTo: string }>('/api/student/join-class', { method: 'POST', body: JSON.stringify({ code }) }),
       list: (instituteCode: string) =>
         request<{ courses: Course[] }>(`/api/courses?institute=${instituteCode}`),
 

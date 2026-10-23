@@ -165,6 +165,7 @@ try {
   await check(
     "Fresh baseline replay plus migration matches current Prisma columns",
     async () => {
+      await cluster.owner.query(fs.readFileSync('prisma/migrations/20261023090000_student_self_registration/migration.sql', 'utf8'));
       await cluster.owner.query(
         "CREATE SCHEMA roster_expected; SET search_path=roster_expected,pg_catalog",
       );
@@ -620,7 +621,7 @@ try {
     },
   );
   await check(
-    "Public registration rejects every role without creating accounts",
+      "Public registration rejects incomplete submissions and role-only payloads",
     async () => {
       const api = await import(
         "../../apps/web/src/app/api/auth/register/route.ts"
@@ -630,8 +631,8 @@ try {
         const response = await api.POST(
           req("/api/auth/register", { role }, false),
         );
-        assert.equal(response.status, 403);
-        assert.equal((await response.json()).code, "REGISTRATION_DISABLED");
+          assert.equal(response.status, 400);
+          assert.ok((await response.json()).errors);
       }
       assert.equal(await db.user.count(), before);
     },

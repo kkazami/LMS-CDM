@@ -25,7 +25,7 @@ export default function SiteFooter({ dark = false }: { dark?: boolean }) {
             <h2 className="mb-3 text-sm font-bold">Access &amp; support</h2>
             <ul className="space-y-1 text-sm">
               <li><Link href="/login" className={linkStyle}>Student &amp; faculty sign in</Link></li>
-              <li><Link href="/register" className={linkStyle}>Request an account</Link></li>
+              <li><Link href="/register" className={linkStyle}>Create student account</Link></li>
               <li><Link href="/forgot-password" className={linkStyle}>Reset your password</Link></li>
               <li><Link href="/activate" className={linkStyle}>Account activation</Link></li>
               <li><PolicyLink href="/support" className={linkStyle}>Contact &amp; support</PolicyLink></li>

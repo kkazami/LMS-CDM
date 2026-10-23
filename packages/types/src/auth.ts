@@ -20,6 +20,7 @@ export interface LoginResponse {
     name: string;
     email: string;
     role: string;
+    requiresEnrollment?: boolean;
     institute: {
       code: string;
       name: string;
@@ -28,6 +29,7 @@ export interface LoginResponse {
 }
 
 export interface AuthUser {
+  requiresEnrollment?: boolean;
   id: string;
   name: string;
   email: string;

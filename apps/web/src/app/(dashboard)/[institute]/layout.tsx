@@ -11,6 +11,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import SuperUserShell from '@/components/super-user-v1/SuperUserShell';
 import { canonicalRole, supportedInstitute } from '@/lib/super-user-v1/capabilities';
 import { notFound } from 'next/navigation';
+import { needsClassEnrollment } from '@/lib/student-access';
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,12 @@ export default async function InstituteLayout({
   params: Promise<{ institute: string }>
 }) {
   const { institute } = await params;
-  const session = await getSession();
+  const session = await getSession(undefined, { allowUnenrolled: true });
 
   if (!session) {
     redirect(`/login?institute=${institute}`);
   }
+  if (await needsClassEnrollment(session.user)) redirect('/join-class');
 
   const dedicatedRole = canonicalRole(session.user.role);
   if (dedicatedRole === 'SUPER_USER') {

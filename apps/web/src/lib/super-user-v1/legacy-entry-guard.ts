@@ -8,6 +8,7 @@ import { administratorInstitute, administratorCourse, administratorTarget } from
 import { checkAdministratorScope, type AdministratorScope } from '@/lib/administrator-scope';
 import { notFound, redirect } from 'next/navigation';
 import { mutationOriginAllowed } from '@/lib/request-security';
+import { needsClassEnrollment } from '@/lib/student-access';
 const legacy = (role: unknown) => ['ADMIN','INSTRUCTOR','STUDENT'].includes(canonicalRole(role));
 /** Dedicated roles never inherit legacy authority through permission strings. */
 export async function denyLegacyApi(request: Request, _operation: string): Promise<Response | null> {
@@ -77,8 +78,9 @@ export async function denyLegacyApi(request: Request, _operation: string): Promi
   return Response.json({error:{code:'FORBIDDEN',message:'Forbidden.'}},{status:403});
 }
 export async function requireLegacyActor(_operation: string, scope?: AdministratorScope | (() => AdministratorScope)) {
-  const session=await getSession();
   const page = _operation.endsWith('/page.tsx');
+  const session=await getSession(undefined, { allowUnenrolled: page });
+  if (page && session && await needsClassEnrollment(session.user)) redirect('/join-class');
   if (!session && page) redirect('/login');
   if(!session) throw new AccessError(401,'Authentication required.');
   if (!legacy(session.user.role) && page) notFound();

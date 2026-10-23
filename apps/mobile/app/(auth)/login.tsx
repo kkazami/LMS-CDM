@@ -114,7 +114,7 @@ export default function LoginScreen() {
 
       const role = (response.user.role || '').toUpperCase();
       if (role === 'STUDENT') {
-        router.replace('/student/dashboard');
+        router.replace(response.user.requiresEnrollment ? '/join-class' : '/student/dashboard');
       } else if (role === 'PROFESSOR' || role === 'TEACHER') {
         router.replace('/teacher/dashboard');
       } else if (role === 'ADMIN') {
@@ -330,7 +330,7 @@ export default function LoginScreen() {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={[styles.registerLinkText, { color: currentTheme.colors.primary }]}>
-                Contact the Registrar
+                Create student account
               </Text>
             </TouchableOpacity>
           </View>
