@@ -6,12 +6,12 @@ import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 import { createWebWorkspace } from '../roster/web-workspace.mjs';
 
-export async function browserChecks({ cluster, output, check }) {
+export async function browserChecks({ cluster, output, check, existingGoogleProfileCookie }) {
   const port = await new Promise(resolve => { const server = net.createServer(); server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); }); });
   const base = `http://127.0.0.1:${port}`;
   const workspace = createWebWorkspace(output);
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => /^(PATH|PATHEXT|SYSTEMROOT|WINDIR|COMSPEC|TEMP|TMP|LOCALAPPDATA|APPDATA|USERPROFILE|HOMEDRIVE|HOMEPATH)$/i.test(key)));
-  const server = spawn(process.execPath, ['tests/roster/browser-server.mjs'], { env: { ...env, NODE_ENV: 'development', DATABASE_URL: cluster.url, APP_BASE_URL: base, GOOGLE_CLIENT_ID: 'synthetic-client.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'SYNTHETIC_BROWSER_SECRET', NEXT_TELEMETRY_DISABLED: '1', ROSTER_TEST_APP_DIR: workspace.appDir, ROSTER_TEST_PORT: String(port) }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const server = spawn(process.execPath, ['tests/roster/browser-server.mjs'], { env: { ...env, NODE_ENV: 'development', DATABASE_URL: cluster.url, APP_BASE_URL: base, GOOGLE_CLIENT_ID: 'synthetic-client.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'SYNTHETIC_TEST_SECRET', NEXT_TELEMETRY_DISABLED: '1', ROSTER_TEST_APP_DIR: workspace.appDir, ROSTER_TEST_PORT: String(port) }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '', browser;
   server.stdout.on('data', value => { log += value; }); server.stderr.on('data', value => { log += value; });
   try {
@@ -27,6 +27,38 @@ export async function browserChecks({ cluster, output, check }) {
     await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort());
     const page = await context.newPage();
     page.setDefaultTimeout(45000);
+    await cluster.owner.query('DELETE FROM "RateLimitBucket"');
+    await check('existing Google email connects and signs into the original ICS account through the browser', async () => {
+      const existingContext = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
+      await existingContext.addCookies([{ name: 'lms_google_profile', value: existingGoogleProfileCookie, url: base, httpOnly: true, sameSite: 'Lax' }]);
+      const existing = await existingContext.newPage();
+      await existing.goto(base + '/register?google=1');
+      await existing.getByRole('heading', { name: 'Sign in and connect Google' }).waitFor();
+      await existing.getByText('An account already exists for this email in ICS.', { exact: true }).waitFor();
+      assert.equal(await existing.getByLabel('Full name', { exact: true }).getAttribute('readonly'), '');
+      assert.equal(await existing.getByLabel('Student ID', { exact: true }).inputValue(), 'LEGACY-ICS-7');
+      assert.equal(await existing.getByLabel('Student ID', { exact: true }).getAttribute('readonly'), '');
+      assert.equal(await existing.locator('input[name=confirmPassword]').count(), 0);
+      assert.equal(await existing.getByRole('button', { name: 'ITE', exact: true }).isDisabled(), true);
+      await existing.getByRole('link', { name: 'Forgot your LMS password?' }).waitFor();
+      await existing.getByLabel('Existing password', { exact: true }).fill('wrong');
+      await existing.locator('input[name=acceptedPolicies]').check();
+      await existing.getByRole('button', { name: 'Connect Google and sign in' }).click();
+      await existing.getByRole('alert').filter({ hasText: 'Your LMS password is incorrect' }).waitFor();
+      await existing.getByLabel('Existing password', { exact: true }).fill('BrowserExisting123!');
+      await existing.screenshot({ path: path.join(output, 'existing-google-desktop.png'), fullPage: true });
+      await existing.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await existing.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await existing.screenshot({ path: path.join(output, 'existing-google-mobile.png'), fullPage: true });
+      await existing.getByRole('button', { name: 'Connect Google and sign in' }).click();
+      await existing.waitForURL('**/join-class');
+      const result = await cluster.owner.query(`SELECT id, name, "studentNumber", "googleSubject" FROM "User" WHERE email = $1`, ['browser-existing@example.invalid']);
+      assert.equal(result.rowCount, 1); assert.equal(result.rows[0].googleSubject, 'browser-existing-google');
+      assert.equal(result.rows[0].name, 'Existing Browser Student'); assert.equal(result.rows[0].studentNumber, 'LEGACY-ICS-7');
+      const me = await (await existingContext.request.get(base + '/api/auth/me')).json();
+      assert.equal(me.user.id, result.rows[0].id); assert.equal(me.user.institute.code, 'ics');
+      await existingContext.close();
+    });
     await cluster.owner.query('DELETE FROM "RateLimitBucket"');
     await check('desktop and mobile registration forms fit, validate, and show Google sign-in', async () => {
       await page.goto(base + '/register?institute=ite');

@@ -132,7 +132,7 @@ try {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async url => {
     assert.equal(String(url), 'https://oauth2.googleapis.com/token');
-    const jwt = await new SignJWT({ email: 'google@example.invalid', email_verified: true, name: 'Google Student', nonce: tokenClaims.nonce, ...tokenClaims }).setProtectedHeader({ alg: 'RS256', kid: 'test-key' }).setSubject('google-stable-subject').setIssuer('https://accounts.google.com').setAudience(tokenClaims.aud || process.env.GOOGLE_CLIENT_ID).setIssuedAt().setExpirationTime('5m').sign(pair.privateKey);
+    const jwt = await new SignJWT({ email: 'google@example.invalid', email_verified: true, name: 'Google Student', nonce: tokenClaims.nonce, ...tokenClaims }).setProtectedHeader({ alg: 'RS256', kid: 'test-key' }).setSubject(tokenClaims.sub || 'google-stable-subject').setIssuer('https://accounts.google.com').setAudience(tokenClaims.aud || process.env.GOOGLE_CLIENT_ID).setIssuedAt().setExpirationTime('5m').sign(pair.privateKey);
     return Response.json({ id_token: jwt });
   };
   const googleJar = jar();
@@ -174,13 +174,51 @@ try {
     const linkingJar = jar();
     await inContext(linkingJar, () => driver.saveGoogleProfile({ sub: 'legacy-google-sub', email: legacy.email, name: legacy.name, instituteCode: 'ite' }));
     const body = { ...registration, google: true, email: legacy.email, name: legacy.name, studentNumber: legacy.studentNumber, password: 'wrong', confirmPassword: 'wrong' };
-    assert.equal((await call(driver.register, body, linkingJar)).status, 409);
-    assert.equal((await call(driver.register, { ...body, password: 'legacy123', confirmPassword: 'legacy123', instituteCode: 'ics' }, linkingJar)).status, 409);
-    const response = await call(driver.register, { ...body, password: 'legacy123', confirmPassword: 'legacy123', role: 'ADMIN' }, linkingJar);
+    const wrongPassword = await call(driver.register, body, linkingJar);
+    assert.equal(wrongPassword.status, 401);
+    assert.match((await wrongPassword.json()).message, /LMS password is incorrect/);
+    assert.equal(await driver.db.user.count({ where: { email: legacy.email } }), 1);
+    assert.equal((await driver.db.user.findUniqueOrThrow({ where: { id: legacy.id } })).googleSubject, null);
+    assert.equal((await call(driver.register, { ...body, password: 'legacy123', confirmPassword: 'legacy123', instituteCode: 'ics' }, linkingJar)).status, 403);
+    const response = await call(driver.register, { google: true, email: legacy.email.toUpperCase(), password: 'legacy123', instituteCode: 'ite', acceptedPolicies: true, role: 'ADMIN', name: 'Attempted replacement', studentNumber: registration.studentNumber }, linkingJar);
     assert.equal(response.status, 200, await response.clone().text());
     const actual = await driver.db.user.findUniqueOrThrow({ where: { id: legacy.id } });
     assert.equal(actual.googleSubject, 'legacy-google-sub'); assert.equal(actual.role, 'STUDENT'); assert.equal(actual.instituteId, 'ite');
-    assert.equal(actual.password, legacy.password); assert.equal(actual.studentNumber, legacy.studentNumber);
+    assert.equal(actual.password, legacy.password); assert.equal(actual.studentNumber, legacy.studentNumber); assert.equal(actual.name, legacy.name);
+    assert.equal((await response.json()).user.id, legacy.id);
+    assert.equal(await driver.db.user.count({ where: { email: legacy.email } }), 1);
+    assert.equal(await driver.db.session.count({ where: { userId: legacy.id } }), 1);
+    const returningCookies = jar();
+    const start = await inContext(returningCookies, () => driver.beginGoogle('ite'));
+    tokenClaims = { nonce: start.searchParams.get('nonce'), sub: 'legacy-google-sub', email: legacy.email };
+    const returning = await inContext(returningCookies, () => driver.callback(new Request('http://localhost:3000/api/auth/callback/google?state=' + start.searchParams.get('state') + '&code=synthetic-code')));
+    assert.ok(returning.headers.get('location').endsWith('/join-class'));
+    assert.equal((await inContext(returningCookies, () => driver.getSession(undefined, { allowUnenrolled: true }))).user.id, legacy.id);
+    assert.equal(await inContext(returningCookies, () => driver.readGoogleProfile()), null);
+  });
+  await check('Google linking preserves existing accounts without a student ID and rejects unsafe connections', async () => {
+    await driver.db.rateLimitBucket.deleteMany();
+    const account = await driver.db.user.create({ data: { name: 'Existing ICS Student', email: 'existing-ics@example.invalid', password: await hash('Existing123!', 4), instituteId: 'ics', role: 'STUDENT' } });
+    const cookies = jar();
+    const body = { google: true, email: account.email, password: 'Existing123!', instituteCode: 'ics', acceptedPolicies: true };
+    const save = (changes = {}) => inContext(cookies, () => driver.saveGoogleProfile({ sub: 'existing-ics-sub', email: account.email, name: account.name, instituteCode: 'ics', ...changes }));
+    await save({ instituteCode: 'ite' });
+    assert.equal((await call(driver.register, body, cookies)).status, 403);
+    await save();
+    assert.equal((await call(driver.register, { ...body, acceptedPolicies: false }, cookies)).status, 400);
+    assert.equal((await call(driver.register, { ...body, email: registration.email }, cookies)).status, 400);
+    await driver.db.user.update({ where: { id: account.id }, data: { isActive: false } });
+    const inactive = await call(driver.register, body, cookies);
+    assert.equal(inactive.status, 403); assert.match((await inactive.json()).message, /Instructor or Program Head/);
+    await driver.db.user.update({ where: { id: account.id }, data: { isActive: true, googleSubject: 'another-sub' } });
+    assert.equal((await call(driver.register, body, cookies)).status, 409);
+    await driver.db.user.update({ where: { id: account.id }, data: { googleSubject: null } });
+    await driver.db.enrollment.create({ data: { studentId: account.id, courseId: 'ics-class', status: 'APPROVED' } });
+    const response = await call(driver.register, body, cookies);
+    assert.equal(response.status, 200, await response.clone().text());
+    const data = await response.json(); assert.equal(data.user.id, account.id); assert.equal(data.redirectTo, '/ics/students');
+    assert.equal((await driver.db.user.findUniqueOrThrow({ where: { id: account.id } })).studentNumber, null);
+    assert.equal(await driver.db.user.count({ where: { email: account.email } }), 1);
   });
   await check('linked Google users still require their own institute and enrollment', async () => {
     let start = await googleStart(); tokenClaims = { nonce: start.searchParams.get('nonce') };
@@ -204,7 +242,10 @@ try {
   globalThis.fetch = originalFetch;
   if (process.argv.includes('--browser')) {
     const { browserChecks } = await import('./student-registration.browser.mjs');
-    await browserChecks({ cluster, output, check });
+    await driver.db.user.create({ data: { name: 'Existing Browser Student', email: 'browser-existing@example.invalid', studentNumber: 'LEGACY-ICS-7', password: await hash('BrowserExisting123!', 4), instituteId: 'ics', role: 'STUDENT' } });
+    const existingCookies = jar();
+    await inContext(existingCookies, () => driver.saveGoogleProfile({ sub: 'browser-existing-google', email: 'browser-existing@example.invalid', name: 'Existing Browser Student', instituteCode: 'ics' }));
+    await browserChecks({ cluster, output, check, existingGoogleProfileCookie: existingCookies.get('lms_google_profile').value });
   }
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
   console.log('Evidence: ' + output);
