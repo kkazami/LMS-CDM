@@ -10,7 +10,7 @@ test('login logs the failure stage and code without exposing credentials or data
     platform: 'node', format: 'cjs', tsconfig: 'apps/web/tsconfig.json',
     nodePaths: [path.resolve('apps/web/node_modules')],
     plugins: [{ name: 'service-boundaries', setup(b) {
-      b.onResolve({ filter: /^next\/server$|^bcryptjs$|^@\/lib\/(db|auth-session|gamification\/login-rewards|rate-limit|cors|roster\/rate-limit|super-user-v1\/actor|ite\/activity-logger)$/ }, ({ path }) => ({ path, namespace: 'mock' }));
+      b.onResolve({ filter: /^\.\/db$|^next\/server$|^bcryptjs$|^@\/lib\/(db|auth-session|gamification\/login-rewards|rate-limit|cors|roster\/rate-limit|super-user-v1\/actor|ite\/activity-logger)$/ }, ({ path }) => ({ path, namespace: 'mock' }));
       b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path: name }) => ({ contents:
         name === 'next/server' ? 'export const NextResponse=Response; export const after=(fn)=>{Promise.resolve().then(fn).catch(()=>{});};' :
         name === 'bcryptjs' ? 'export async function compare(){return true;}' :

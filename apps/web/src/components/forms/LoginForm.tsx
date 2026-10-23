@@ -51,6 +51,7 @@ export default function LoginForm({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [activated, setActivated] = useState(false);
   useEffect(() => { setActivated(new URLSearchParams(window.location.search).get('activated') === '1'); }, []);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('googleError') === '1') setErrorMessage('Google sign-in could not be completed. Check your selected institute and try again.'); }, []);
 
   function updateField<K extends keyof LoginFormValues>(
     key: K,
@@ -105,6 +106,7 @@ export default function LoginForm({
         return;
       }
 
+      if (data.user.requiresEnrollment) { window.location.href = '/join-class'; return; }
       let targetPath = `/${data.user.institute.code}`;
 
       if (role === 'SUPER_USER') {
@@ -213,7 +215,7 @@ export default function LoginForm({
         <Link
           href={registerLink}
         >
-          Contact the Registrar
+          Create student account
         </Link>
       </div>
     </form>

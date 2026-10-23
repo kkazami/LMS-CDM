@@ -1,4 +1,6 @@
 "use server";
+import { enrollWithClassCode } from '@/lib/student-enrollment';
+import { persistentLimit } from '@/lib/roster/rate-limit';
 import { requireOwnedUpload } from '@/lib/private-upload';
 import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -347,6 +349,10 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
     return { success: false, error: "Only students can request enrollment." };
   }
 
+  if (session.user.institute.code !== instituteCode.toLowerCase()) return { success: false, error: "Forbidden institute." };
+  const target = await db.course.findUnique({ where: { id: courseId }, select: { instituteId: true, isArchived: true } });
+  if (!target || target.isArchived || target.instituteId !== session.user.instituteId) return { success: false, error: "This class is not available at your institute." };
+
   try {
     // Check if already enrolled or requested
     const existing = await db.enrollment.findUnique({
@@ -394,75 +400,17 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
 
 export async function joinWithCode(courseCode: string, instituteCode: string) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/actions.ts#joinWithCode", () => ({ institute: instituteCode }));
-
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
-
-  if (session.user.role.toUpperCase() !== "STUDENT") {
-    return { success: false, error: "Only students can join courses." };
-  }
-
+  if (session.user.institute.code !== instituteCode.toLowerCase()) return { success: false, error: "This class is not available at your institute." };
   try {
-    const course = await db.course.findUnique({
-      where: { courseCode: courseCode.toUpperCase() },
-      select: { id: true, instituteId: true },
-    });
-
-    if (!course) {
-      return { success: false, error: "Invalid course code. Please check and try again." };
-    }
-
-    // Verify course belongs to the student's institute
-    const institute = await db.institute.findUnique({
-      where: { code: instituteCode },
-    });
-
-    if (!institute || course.instituteId !== institute.id) {
-      return { success: false, error: "This course is not available at your institute." };
-    }
-
-    // Check existing enrollment
-    const existing = await db.enrollment.findUnique({
-      where: {
-        courseId_studentId: {
-          courseId: course.id,
-          studentId: session.user.id,
-        },
-      },
-    });
-
-    if (existing) {
-      if (existing.status === "APPROVED") {
-        return { success: false, error: "You are already enrolled." };
-      }
-      if (existing.status === "PENDING") {
-        return { success: false, error: "Your request is already pending." };
-      }
-    }
-
-    await db.enrollment.upsert({
-      where: {
-        courseId_studentId: {
-          courseId: course.id,
-          studentId: session.user.id,
-        },
-      },
-      create: {
-        courseId: course.id,
-        studentId: session.user.id,
-        status: "PENDING",
-      },
-      update: {
-        status: "PENDING",
-      },
-    });
-
+    await persistentLimit('join-class:' + session.userId, 10, 15 * 60 * 1000);
+    await enrollWithClassCode(session, courseCode);
     revalidatePath(`/${instituteCode}/students`);
     revalidatePath(`/${instituteCode}/courses`);
     return { success: true };
   } catch (error) {
-    console.error("joinWithCode error:", error);
-    return { success: false, error: "Failed to join course." };
+    return { success: false, error: error instanceof AccessError ? error.message : "Unable to join this class." };
   }
 }
 
@@ -471,6 +419,7 @@ export async function getDiscoverableCourses(instituteCode: string) {
 
   const session = await getSession();
   if (!session) return [];
+  if (session.user.institute.code !== instituteCode.toLowerCase()) return [];
 
   const institute = await db.institute.findUnique({
     where: { code: instituteCode },

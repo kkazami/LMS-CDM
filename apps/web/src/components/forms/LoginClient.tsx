@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen, ChartNoAxesCombined, ClipboardList, Megaphone, ShieldCheck, UserCheck } from "lucide-react";
 import LoginForm from "@/components/forms/LoginForm";
+import GoogleSignIn from './GoogleSignIn';
 import { INSTITUTES } from "@/components/common/InstituteSelector";
 import UserAvatar from "@/components/common/UserAvatar";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
@@ -24,6 +25,7 @@ type ExistingUser = {
 } | null;
 
 type LoginClientProps = {
+  googleEnabled?: boolean;
   initialInstituteCode?: string;
   initialIsDesktopAdmin?: boolean;
   existingUser?: ExistingUser;
@@ -40,6 +42,7 @@ export default function LoginClient({
   initialInstituteCode = "ics",
   initialIsDesktopAdmin = false,
   existingUser = null,
+  googleEnabled = false,
 }: LoginClientProps) {
   const [instituteCode, setInstituteCode] = useState<InstituteCode>(getInstituteTheme(initialInstituteCode).code);
   const [isDesktopAdminMode, setIsDesktopAdminMode] = useState(initialIsDesktopAdmin);
@@ -156,6 +159,7 @@ export default function LoginClient({
                   <p className={styles.instituteName} id="login-institute-name" aria-live="polite">{theme.name}</p>
                 </div>
                 <LoginForm theme={theme} instituteCode={instituteCode} isDesktopAdmin={isDesktopAdminMode} />
+                {!isDesktopAdminMode && googleEnabled && <div className={styles.accountHelp}><GoogleSignIn instituteCode={instituteCode} /></div>}
               </>
             )}
           </section>

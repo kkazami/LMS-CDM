@@ -26,3 +26,21 @@ export const loginSchema = z.object({
   instituteCode: instituteCodeSchema,
   acceptedPolicies: z.literal(true, { error: "Agree to the Terms and Conditions and acknowledge the Privacy Policy to sign in." }),
 }).refine(data => Boolean(data.email) !== Boolean(data.identifier), 'Provide either email or student ID.');
+
+const studentRegistrationFields = z.object({
+  name: z.string().trim().min(2, 'Enter your full name.').max(150),
+  studentNumber: z.string().trim().regex(/^\d{2}-\d{5}$/, 'Student ID must use the format XX-XXXXX (for example, 26-12345).'),
+  email: z.string().trim().email('Enter a valid email address.').max(254).transform(value => value.toLowerCase()),
+  password: passwordSchema,
+  confirmPassword: z.string(),
+  instituteCode: z.enum(['ics', 'ite', 'ibe']),
+  acceptedPolicies: z.literal(true, { error: 'Agree to the Terms and Conditions and acknowledge the Privacy Policy.' }),
+});
+export const studentRegistrationSchema = studentRegistrationFields.refine(data => data.password === data.confirmPassword, {
+  message: 'Passwords do not match.', path: ['confirmPassword'],
+});
+// Existing roster accounts can retain their original ID and credential policy when linking.
+export const googleLinkSchema = studentRegistrationFields.extend({
+  studentNumber: z.string().trim().min(1).max(40),
+  password: z.string().min(1, 'Enter your existing password.').max(1024),
+}).refine(data => data.password === data.confirmPassword, { message: 'Passwords do not match.', path: ['confirmPassword'] });

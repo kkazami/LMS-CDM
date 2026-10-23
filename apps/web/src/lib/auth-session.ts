@@ -6,6 +6,7 @@ import { lockAccounts } from './super-user-v1/account-lock';
 import { canonicalRole, mayAdmitAccount, privilegedRole } from './super-user-v1/capabilities';
 import { applicationWriterQualified } from './super-user-v1/provisioning';
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, SESSION_TOUCH_MS, sessionExpired, sessionActivity } from './session-policy';
+import { needsClassEnrollment } from './student-access';
 
 /**
  * Computes a SHA-256 digest of an opaque bearer token.
@@ -33,7 +34,7 @@ export async function createSession(
   userId: string,
   metadata?: { userAgent?: string; ipAddress?: string },
   expectedPasswordHash?: string,
-  expectedIdentity?: { role: string; instituteId: string; credentialProvisioningState: string | null }
+  expectedIdentity?: { role: string; instituteId: string; credentialProvisioningState: string | null; googleSubject?: string | null }
 ): Promise<CreateSessionResult> {
   // 7-day session validity
   const expiresAt = new Date(Date.now() + SESSION_ABSOLUTE_MS);
@@ -47,6 +48,7 @@ export async function createSession(
     const user = await tx.user.findUnique({ where: { id: userId } });
     if (!user || (expectedPasswordHash !== undefined && user.password !== expectedPasswordHash)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
     if (expectedIdentity && (user.role !== expectedIdentity.role || user.instituteId !== expectedIdentity.instituteId || user.credentialProvisioningState !== expectedIdentity.credentialProvisioningState)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
+    if (expectedIdentity && 'googleSubject' in expectedIdentity && user.googleSubject !== expectedIdentity.googleSubject) throw new SessionAdmissionError(401, 'Google account connection changed. Sign in again.');
     if (!mayAdmitAccount(user)) throw new SessionAdmissionError(403, 'Your account has been deactivated. Please contact administration.');
     if (privilegedRole(user.role) && !await applicationWriterQualified(tx)) throw new SessionAdmissionError(503, 'Authentication unavailable.');
     return tx.session.create({ data: {
@@ -84,7 +86,7 @@ type CredentialSelection = { token: string; userId: string; sessionId: string; t
 // not client markers/PIDs/strings. Weak keys expire with the request. This pins
 // credential selection only; live account/session authorization is never cached.
 const requestCredentials = new WeakMap<object, Promise<CredentialSelection>>();
-export async function getSession(request?: Request) {
+export async function getSession(request?: Request, options: { allowUnenrolled?: boolean } = {}) {
   let headerStore: Headers | null = null;
   try { headerStore = await headers(); } catch { /* Explicit Request fallback. */ }
   const key = headerStore ?? request;
@@ -110,10 +112,10 @@ export async function getSession(request?: Request) {
   const selected = await selection;
   if (!selected) return null;
   // Only the selecting caller uses its fresh read; later callers still revalidate.
-  if (firstSession) return firstSession;
-  const current = await validateSessionToken(selected.token, false);
+  const current = firstSession ?? await validateSessionToken(selected.token, false);
   if (!current || current.id !== selected.sessionId || current.userId !== selected.userId || current.tokenHash !== selected.tokenHash
     || current.user.role !== selected.role || current.user.instituteId !== selected.instituteId) return null;
+  if (!options.allowUnenrolled && await needsClassEnrollment(current.user)) return null;
   return current;
 }
 
@@ -179,7 +181,7 @@ export async function validateSessionToken(rawToken: string, touch = true) {
  * Uses the request's chosen identity for Cookie and Bearer clients alike.
  */
 export async function deleteSession() {
-  const session = await getSession();
+  const session = await getSession(undefined, { allowUnenrolled: true });
   if (session) await db.$transaction(async tx => {
     await lockAccounts(tx, [session.userId]);
     await tx.session.deleteMany({ where: { id: session.id, userId: session.userId, tokenHash: session.tokenHash } });

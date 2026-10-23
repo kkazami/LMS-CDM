@@ -9,7 +9,7 @@ function fixture() {
   const now = Date.now();
   const rows = [{ id: 'internalSessionId12345', tokenHash: hash(token), userId: 'student', createdAt: new Date(now - 600000), lastSeenAt: new Date(now - 120000), expiresAt: new Date(now + 86400000), user: { id: 'student', role: 'STUDENT', instituteId: 'ics', isActive: true, activationStatus: 'ACTIVE' } }];
   const calls = { updates: 0, deletes: 0 };
-  const state = { realAuth: true, rows, calls, headers: new Headers(), cookies: { get: () => ({ value: token }), delete() {}, set() {} }, db: { session: {
+  const state = { realAuth: true, rows, calls, headers: new Headers(), cookies: { get: () => ({ value: token }), delete() {}, set() {} }, db: { enrollment: { findFirst: async () => ({ id: 'approved-own-institute-enrollment' }) }, session: {
     findFirst: async ({ where }) => rows.find(row => row.tokenHash === where.tokenHash) || null,
     delete: async ({ where }) => { calls.deletes++; const index = rows.findIndex(row => row.id === where.id); if (index >= 0) rows.splice(index, 1); },
     updateMany: async ({ where, data }) => { calls.updates++; const row = rows.find(r => r.id === where.id); if (!row) return { count: 0 }; row.lastSeenAt = data.lastSeenAt; return { count: 1 }; },

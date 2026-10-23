@@ -52,6 +52,7 @@ interface AuthState {
 
   initialize: () => Promise<void>;
   login: (email: string, password: string, instituteCode: string, acceptedPolicies: boolean) => Promise<LoginResponse>;
+  register: (data: Parameters<ApiClient['auth']['register']>[0]) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
   clearRewardReceipt: () => void;
@@ -117,6 +118,13 @@ export const useAuthStore = create<AuthState>((set, get) => {
       registerForPushNotificationsAsync(api).catch(() => {});
 
       return response;
+    },
+
+    register: async data => {
+      const response = await api.auth.register(data);
+      await SecureStore.setItemAsync(TOKEN_KEY, response.token);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+      set({ token: response.token, user: response.user as AuthUser, isAuthenticated: true, rewardReceipt: null });
     },
 
     logout: async () => {
