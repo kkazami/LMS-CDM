@@ -39,7 +39,7 @@ function Workspace({ institute, userName, children }: Props) {
   }
   const navigation = links.map(({ label, path, icon: Icon }) => <Link key={label} href={`${base}${path}`} className={styles.navLink} aria-current={section === path ? 'page' : undefined}><Icon size={18} aria-hidden="true" /><span>{label}</span></Link>);
 
-  return <div className={styles.workspace} style={{ '--su-accent': theme.colors.primary, '--su-on-accent': institute === 'ite' ? '#fff' : '#161616', '--focus-ring': theme.colors.primary } as CSSProperties}>
+  return <div data-institute={institute.toLowerCase()} className={styles.workspace} style={{ '--su-accent': theme.colors.primary, '--su-on-accent': institute === 'ite' ? '#fff' : '#161616', '--focus-ring': theme.colors.primary } as CSSProperties}>
     <a className={styles.skipLink} href="#super-user-content">Skip to content</a>
     <aside className={styles.sidebar}>
       <Link href={base} className={styles.brand}><GraduationCap size={30} aria-hidden="true" /><span>CdM LMS<small>Super User</small></span></Link>

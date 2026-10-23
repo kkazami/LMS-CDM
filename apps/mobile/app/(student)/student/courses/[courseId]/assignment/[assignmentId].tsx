@@ -6,13 +6,10 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   Award,
   Clock,
   Paperclip,
@@ -27,21 +24,32 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../../../src/hooks/useResponsive';
 import { Badge } from '../../../../../../src/components/common/Badge';
 import { Button } from '../../../../../../src/components/common/Button';
 import { Card } from '../../../../../../src/components/common/Card';
+import {
+  Screen,
+  AppHeader,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../../../src/lib/typography';
+import { radius, spacing } from '../../../../../../src/lib/theme';
 import type { ClassworkItem } from '@lms/types';
+import { ClassworkAttachments, ClassworkDescription } from '../../../../../../src/components/classwork/ClassworkAttachments';
 
 export default function StudentAssignmentDetailScreen() {
   const { courseId, assignmentId } = useLocalSearchParams<{ courseId: string; assignmentId: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [assignment, setAssignment] = useState<ClassworkItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [localAttachments, setLocalAttachments] = useState<Array<{ url: string; fileName: string; type: string }>>([]);
 
@@ -49,6 +57,7 @@ export default function StudentAssignmentDetailScreen() {
     if (!courseId || !assignmentId) return;
 
     try {
+      setErrorMessage(null);
       const classworkRes = await api.courses.getClasswork(courseId);
       const match = (classworkRes?.items || []).find((i) => i.id === assignmentId);
       if (match) {
@@ -62,9 +71,11 @@ export default function StudentAssignmentDetailScreen() {
             }))
           );
         }
+      } else {
+        setErrorMessage('Assignment not found in course classwork.');
       }
-    } catch {
-      // Graceful fallback
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not load assignment details. Please check your connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -96,17 +107,15 @@ export default function StudentAssignmentDetailScreen() {
             ...prev,
             { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
           ]);
-        } catch {
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: file.uri, fileName: file.name, type: 'FILE' },
-          ]);
+        } catch (uploadErr: any) {
+          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload file to the server.';
+          Alert.alert('Upload Failed', msg);
         } finally {
           setSubmitting(false);
         }
       }
-    } catch {
-      Alert.alert('File Error', 'Could not open file picker.');
+    } catch (err: any) {
+      Alert.alert('File Error', err?.message || 'Could not open file picker.');
     }
   };
 
@@ -128,22 +137,32 @@ export default function StudentAssignmentDetailScreen() {
             ...prev,
             { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
           ]);
-        } catch {
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: asset.uri, fileName, type: 'FILE' },
-          ]);
+        } catch (uploadErr: any) {
+          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload image to the server.';
+          Alert.alert('Upload Failed', msg);
         } finally {
           setSubmitting(false);
         }
       }
-    } catch {
-      Alert.alert('Image Error', 'Could not open photo gallery.');
+    } catch (err: any) {
+      Alert.alert('Image Error', err?.message || 'Could not open photo gallery.');
     }
   };
 
   const handleSubmitAssignment = async () => {
     if (!assignment || !courseId) return;
+
+    // Reject unuploaded local device URIs before sending to server
+    const invalidAttachment = localAttachments.find(
+      (att) => !att.url || att.url.startsWith('file:') || att.url.startsWith('content:')
+    );
+    if (invalidAttachment) {
+      Alert.alert(
+        'Upload Required',
+        `The file "${invalidAttachment.fileName}" has not been uploaded to the server yet. Please re-attach it or remove it before turning in.`
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -155,7 +174,7 @@ export default function StudentAssignmentDetailScreen() {
         primaryAtt?.url,
         primaryAtt?.fileName,
         undefined,
-        localAttachments
+        localAttachments.length > 0 ? localAttachments : undefined
       );
 
       try {
@@ -170,7 +189,8 @@ export default function StudentAssignmentDetailScreen() {
 
       loadAssignment();
     } catch (err: any) {
-      Alert.alert('Submission Error', err?.message || 'Could not submit assignment.');
+      const serverMessage = err?.message || err?.error?.message || err?.bodyData?.message || err?.bodyData?.error;
+      Alert.alert('Submission Error', serverMessage || 'Could not submit assignment.');
     } finally {
       setSubmitting(false);
     }
@@ -213,75 +233,180 @@ export default function StudentAssignmentDetailScreen() {
   const isSubmitted = submission?.status === 'SUBMITTED';
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Top Header */}
-      <View style={[styles.topBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: theme.colors.border }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <ArrowLeft size={20} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.topTitle, { color: theme.colors.text }]}>Assignment Details</Text>
-        <View style={{ width: 38 }} />
-      </View>
+    <Screen
+      scrollable
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.colors.primary}
+          colors={[theme.colors.primary]}
+        />
+      }
+      contentContainerStyle={styles.screenInner}
+    >
+      <AppHeader
+        showBack
+        title="Assignment Details"
+        subtitle={assignment?.title || 'Course Classwork Activity'}
+      />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
+      <View style={[styles.mainContent, { padding: s(spacing.lg) }]}>
+        {errorMessage && (
+          <ErrorBanner
+            message={errorMessage}
+            onRetry={loadAssignment}
+            onDismiss={() => setErrorMessage(null)}
+            retryAccessibilityLabel="Retry loading assignment details"
+            style={{ marginBottom: s(spacing.md) }}
           />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+        )}
+
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View
+              style={[
+                styles.detailCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  padding: s(spacing.lg),
+                  marginBottom: s(spacing.md),
+                },
+              ]}
+            >
+              <SkeletonBlock width={s(80)} height={s(20)} borderRadius={radius.sm} style={{ marginBottom: s(spacing.sm) }} />
+              <SkeletonBlock width="85%" height={s(22)} style={{ marginBottom: s(spacing.md) }} />
+              <SkeletonBlock width="45%" height={s(14)} />
+            </View>
+
+            <View
+              style={[
+                styles.detailCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  padding: s(spacing.lg),
+                  marginBottom: s(spacing.md),
+                },
+              ]}
+            >
+              <SkeletonBlock width="35%" height={s(14)} style={{ marginBottom: s(spacing.md) }} />
+              <SkeletonBlock width="100%" height={s(13)} style={{ marginBottom: s(spacing.xs) }} />
+              <SkeletonBlock width="95%" height={s(13)} style={{ marginBottom: s(spacing.xs) }} />
+              <SkeletonBlock width="70%" height={s(13)} />
+            </View>
+
+            <View
+              style={[
+                styles.detailCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  padding: s(spacing.lg),
+                },
+              ]}
+            >
+              <SkeletonBlock width="40%" height={s(14)} style={{ marginBottom: s(spacing.md) }} />
+              <SkeletonBlock width="100%" height={s(44)} borderRadius={radius.md} />
+            </View>
           </View>
         ) : !assignment ? (
-          <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Assignment Not Found</Text>
-            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+          <Card
+            style={[
+              styles.emptyCard,
+              {
+                padding: s(spacing.xxxl),
+                borderRadius: radius.lg,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.emptyTitle,
+                { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Assignment Not Found
+            </Text>
+            <Text
+              style={[
+                styles.emptySubtitle,
+                { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               The requested classwork item may have been removed or unpublished.
             </Text>
           </Card>
         ) : (
           <>
             {/* Title & Metadata Header Card */}
-            <View style={[styles.detailCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-              <View style={styles.badgeRow}>
+            <View
+              style={[
+                styles.detailCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  padding: s(spacing.lg),
+                  marginBottom: s(spacing.md),
+                },
+              ]}
+            >
+              <View style={[styles.badgeRow, { gap: s(spacing.xs), marginBottom: s(spacing.sm) }]}>
                 <Badge label={assignment.type} variant="primary" size="sm" />
                 {isGraded ? (
-                  <Badge label={`Score: ${submission?.grade}/${assignment.maxPoints ?? 100}`} variant="success" size="sm" />
+                  <Badge
+                    label={`Score: ${submission?.grade}/${assignment.maxPoints ?? 100}`}
+                    variant="success"
+                    size="sm"
+                  />
                 ) : isSubmitted ? (
                   <Badge label="Submitted" variant="info" size="sm" />
                 ) : assignment.dueDate ? (
-                  <Badge label={`Due ${new Date(assignment.dueDate).toLocaleDateString()}`} variant="default" size="sm" />
+                  <Badge
+                    label={`Due ${new Date(assignment.dueDate).toLocaleDateString()}`}
+                    variant="default"
+                    size="sm"
+                  />
                 ) : null}
               </View>
 
-              <Text style={[styles.assignmentTitle, { color: theme.colors.text }]}>
+              <Text
+                style={[
+                  styles.assignmentTitle,
+                  { color: theme.colors.text, fontSize: font(20), lineHeight: font(26) },
+                ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
                 {assignment.title}
               </Text>
 
-              <View style={styles.metaRow}>
+              <View style={[styles.metaRow, { gap: s(spacing.md), marginTop: s(spacing.xs) }]}>
                 {assignment.maxPoints && (
                   <View style={styles.metaItem}>
-                    <Award size={16} color={theme.colors.primary} />
-                    <Text style={[styles.metaText, { color: theme.colors.textSecondary }]}>
+                    <Award size={s(16)} color={theme.colors.primary} />
+                    <Text
+                      style={[styles.metaText, { color: theme.colors.textSecondary, fontSize: font(13) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {assignment.maxPoints} Points
                     </Text>
                   </View>
                 )}
                 {assignment.dueDate && (
                   <View style={styles.metaItem}>
-                    <Clock size={16} color={theme.colors.warning} />
-                    <Text style={[styles.metaText, { color: theme.colors.textSecondary }]}>
+                    <Clock size={s(16)} color={theme.colors.warning} />
+                    <Text
+                      style={[styles.metaText, { color: theme.colors.textSecondary, fontSize: font(13) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {new Date(assignment.dueDate).toLocaleString()}
                     </Text>
                   </View>
@@ -290,46 +415,91 @@ export default function StudentAssignmentDetailScreen() {
             </View>
 
             {/* Prompt Instructions */}
-            {assignment.description ? (
-              <View style={[styles.detailCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                <Text style={[styles.cardHeading, { color: theme.colors.textSecondary }]}>
+            {Boolean(assignment.description) && (
+              <View
+                style={[
+                  styles.detailCard,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.lg),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.cardHeading,
+                    { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.sm) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   INSTRUCTIONS & SPECIFICATIONS
                 </Text>
-                <Text style={[styles.promptText, { color: theme.colors.text }]}>
-                  {assignment.description}
-                </Text>
+                <ClassworkDescription
+                  content={assignment.description}
+                  textStyle={[
+                    styles.promptText,
+                    { color: theme.colors.text, fontSize: font(14), lineHeight: font(22) },
+                  ]}
+                />
               </View>
-            ) : null}
+            )}
 
             {/* Reference Attachments from Instructor */}
-            {assignment.attachments && assignment.attachments.length > 0 && (
-              <View style={[styles.detailCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                <Text style={[styles.cardHeading, { color: theme.colors.textSecondary }]}>
-                  REFERENCE MATERIALS ({assignment.attachments.length})
-                </Text>
-                {assignment.attachments.map((att) => (
-                  <View
-                    key={att.id}
-                    style={[styles.referenceFileRow, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-                  >
-                    <Paperclip size={16} color={theme.colors.primary} />
-                    <Text style={[styles.referenceFileName, { color: theme.colors.text }]} numberOfLines={1}>
-                      {att.fileName}
-                    </Text>
-                  </View>
-                ))}
+            {Boolean(assignment.attachments && assignment.attachments.length > 0) && (
+              <View
+                style={[
+                  styles.detailCard,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.lg),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <ClassworkAttachments
+                  attachments={assignment.attachments}
+                  title="REFERENCE MATERIALS"
+                />
               </View>
             )}
 
             {/* Graded Evaluation Notice */}
             {isGraded && (
-              <View style={[styles.gradeNoticeBox, { backgroundColor: `${theme.colors.success}15`, borderColor: theme.colors.success }]}>
-                <CheckCircle2 size={24} color={theme.colors.success} />
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={[styles.gradeNoticeTitle, { color: theme.colors.success }]}>
+              <View
+                style={[
+                  styles.gradeNoticeBox,
+                  {
+                    backgroundColor: theme.colors.successBg,
+                    borderColor: theme.colors.success,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.md),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <CheckCircle2 size={s(24)} color={theme.colors.success} />
+                <View style={{ flex: 1, marginLeft: s(spacing.md) }}>
+                  <Text
+                    style={[
+                      styles.gradeNoticeTitle,
+                      { color: theme.colors.success, fontSize: font(15) },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
                     Graded: {submission?.grade} / {assignment.maxPoints}
                   </Text>
-                  <Text style={[styles.gradeNoticeSub, { color: theme.colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.gradeNoticeSub,
+                      { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 2 },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
                     Your submission has been reviewed and recorded by your professor.
                   </Text>
                 </View>
@@ -338,15 +508,49 @@ export default function StudentAssignmentDetailScreen() {
 
             {/* Submission Section */}
             {assignment.type !== 'MATERIAL' && (
-              <View style={[styles.detailCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                <Text style={[styles.cardHeading, { color: theme.colors.textSecondary }]}>
+              <View
+                style={[
+                  styles.detailCard,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.lg),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.cardHeading,
+                    { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.sm) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   YOUR SUBMISSION FILES
                 </Text>
 
                 {localAttachments.length === 0 ? (
-                  <View style={[styles.dropZone, { borderColor: theme.colors.border, backgroundColor: theme.colors.cardSecondary }]}>
-                    <UploadCloud size={32} color={theme.colors.textSecondary} />
-                    <Text style={[styles.dropZoneText, { color: theme.colors.textSecondary }]}>
+                  <View
+                    style={[
+                      styles.dropZone,
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surfaceAlt,
+                        borderRadius: radius.md,
+                        paddingVertical: s(spacing.xl),
+                        marginBottom: s(spacing.md),
+                      },
+                    ]}
+                  >
+                    <UploadCloud size={s(32)} color={theme.colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.dropZoneText,
+                        { color: theme.colors.textSecondary, fontSize: font(13), marginTop: s(spacing.xs) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       Attach your solution documents or images
                     </Text>
                   </View>
@@ -354,18 +558,37 @@ export default function StudentAssignmentDetailScreen() {
                   localAttachments.map((file, idx) => (
                     <View
                       key={idx}
-                      style={[styles.uploadedFileRow, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.uploadedFileRow,
+                        {
+                          backgroundColor: theme.colors.surfaceAlt,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.md,
+                          paddingHorizontal: s(spacing.md),
+                          paddingVertical: s(spacing.sm),
+                          marginBottom: s(spacing.sm),
+                        },
+                      ]}
                     >
-                      <Paperclip size={16} color={theme.colors.primary} />
-                      <Text style={[styles.uploadedFileName, { color: theme.colors.text }]} numberOfLines={1}>
+                      <Paperclip size={s(16)} color={theme.colors.primary} />
+                      <Text
+                        style={[
+                          styles.uploadedFileName,
+                          { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.sm) },
+                        ]}
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {file.fileName}
                       </Text>
                       {!submission?.isReturned && (
                         <TouchableOpacity
                           onPress={() => setLocalAttachments((prev) => prev.filter((_, i) => i !== idx))}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove attached file ${file.fileName}`}
                         >
-                          <Trash2 size={16} color={theme.colors.danger} />
+                          <Trash2 size={s(16)} color={theme.colors.danger} />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -374,33 +597,63 @@ export default function StudentAssignmentDetailScreen() {
 
                 {/* Upload Buttons */}
                 {!submission?.isReturned && (
-                  <View style={styles.pickerRow}>
+                  <View style={[styles.pickerRow, { gap: s(spacing.md), marginTop: s(spacing.xs) }]}>
                     <TouchableOpacity
                       accessibilityRole="button"
                       accessibilityLabel="Attach Document"
-                      style={[styles.pickerBtn, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.pickerBtn,
+                        {
+                          backgroundColor: theme.colors.surfaceAlt,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.md,
+                        },
+                      ]}
                       onPress={handlePickDocument}
                       activeOpacity={0.8}
                     >
-                      <FileUp size={18} color={theme.colors.primary} />
-                      <Text style={[styles.pickerBtnText, { color: theme.colors.text }]}>Add Document</Text>
+                      <FileUp size={s(18)} color={theme.colors.primary} />
+                      <Text
+                        style={[
+                          styles.pickerBtnText,
+                          { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        Add Document
+                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       accessibilityRole="button"
                       accessibilityLabel="Attach Photo"
-                      style={[styles.pickerBtn, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.pickerBtn,
+                        {
+                          backgroundColor: theme.colors.surfaceAlt,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.md,
+                        },
+                      ]}
                       onPress={handlePickImage}
                       activeOpacity={0.8}
                     >
-                      <ImageIcon size={18} color={theme.colors.primary} />
-                      <Text style={[styles.pickerBtnText, { color: theme.colors.text }]}>Add Photo</Text>
+                      <ImageIcon size={s(18)} color={theme.colors.primary} />
+                      <Text
+                        style={[
+                          styles.pickerBtnText,
+                          { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        Add Photo
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}
 
                 {/* Submission Action */}
-                <View style={styles.actionSection}>
+                <View style={[styles.actionSection, { marginTop: s(spacing.lg) }]}>
                   {isSubmitted && !submission?.isReturned ? (
                     <Button
                       title="Unsubmit Assignment"
@@ -411,7 +664,13 @@ export default function StudentAssignmentDetailScreen() {
                     />
                   ) : submission?.isReturned ? (
                     <View style={styles.lockedNotice}>
-                      <Text style={[styles.lockedText, { color: theme.colors.success }]}>
+                      <Text
+                        style={[
+                          styles.lockedText,
+                          { color: theme.colors.success, fontSize: font(13) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         Submission Finalized & Graded
                       </Text>
                     </View>
@@ -421,7 +680,7 @@ export default function StudentAssignmentDetailScreen() {
                       onPress={handleSubmitAssignment}
                       loading={submitting}
                       icon={CheckCircle2}
-                      style={{ width: '100%', backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }}
+                      style={{ width: '100%' }}
                     />
                   )}
                 </View>
@@ -429,187 +688,110 @@ export default function StudentAssignmentDetailScreen() {
             )}
           </>
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: 16,
+  screenInner: {
     paddingBottom: 40,
   },
+  mainContent: {
+    flex: 1,
+  },
   loadingContainer: {
-    paddingVertical: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 12,
   },
   detailCard: {
-    borderRadius: 18,
     borderWidth: 1,
-    padding: 18,
-    marginBottom: 14,
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
   },
   assignmentTitle: {
-    fontSize: 20,
     fontWeight: '800',
-    marginBottom: 12,
-    lineHeight: 26,
   },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  metaText: {
-    fontSize: 13,
-  },
+  metaText: {},
   cardHeading: {
-    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 10,
   },
-  promptText: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
+  promptText: {},
   referenceFileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 8,
   },
   referenceFileName: {
-    fontSize: 13,
     flex: 1,
   },
   gradeNoticeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 14,
   },
   gradeNoticeTitle: {
-    fontSize: 15,
     fontWeight: '700',
   },
-  gradeNoticeSub: {
-    fontSize: 12,
-    marginTop: 2,
-  },
+  gradeNoticeSub: {},
   dropZone: {
-    borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  dropZoneText: {
-    fontSize: 13,
-    marginTop: 6,
-  },
+  dropZoneText: {},
   uploadedFileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    gap: 8,
   },
   uploadedFileName: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '500',
   },
   pickerRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
   },
   pickerBtn: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
     borderWidth: 1,
-    minHeight: TOUCH_TARGET,
+    minHeight: TOUCH_TARGET ?? 44,
   },
   pickerBtnText: {
-    fontSize: 13,
     fontWeight: '600',
   },
-  actionSection: {
-    marginTop: 18,
-  },
+  actionSection: {},
   lockedNotice: {
     paddingVertical: 10,
     alignItems: 'center',
   },
   lockedText: {
-    fontSize: 13,
     fontWeight: '700',
   },
   emptyCard: {
     alignItems: 'center',
-    paddingVertical: 40,
     marginTop: 20,
   },
   emptyTitle: {
-    fontSize: 16,
     fontWeight: '700',
     marginTop: 12,
   },
   emptySubtitle: {
-    fontSize: 13,
     textAlign: 'center',
     marginTop: 6,
     paddingHorizontal: 20,
-    lineHeight: 18,
   },
 });

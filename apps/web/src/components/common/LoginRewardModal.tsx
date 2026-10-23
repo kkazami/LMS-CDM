@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useParams } from "next/navigation";
 import { X, Sparkles, Flame, CheckCircle2, ArrowRight } from "lucide-react";
 import { useLoginRewardStore } from "@/stores/login-reward-store";
 import CountUpNumber from "@/features/interactive-activities/codelab/components/analytics/CountUpNumber";
@@ -15,6 +16,7 @@ interface LoginRewardModalProps {
   expEarned?: number;
   totalExp?: number;
   newBadges?: UnnotifiedBadge[];
+  instituteCode?: string;
 }
 
 function getPHTDateString(): string {
@@ -27,7 +29,12 @@ export default function LoginRewardModal({
   expEarned = 10,
   totalExp = 0,
   newBadges = [],
+  instituteCode,
 }: LoginRewardModalProps) {
+  const params = useParams();
+  const currentInstitute = (instituteCode || (params?.institute as string) || "").toLowerCase();
+  const isIte = currentInstitute === "ite";
+
   const { shown, markShown } = useLoginRewardStore();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -138,7 +145,7 @@ export default function LoginRewardModal({
     >
       <div className="relative w-full max-w-md max-h-[calc(100dvh-60px)] overflow-y-auto bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-5 sm:p-8 text-center transition-all duration-200">
         {/* Ambient Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-orange-500/20 blur-3xl rounded-full pointer-events-none" />
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 ${isIte ? "bg-blue-500/20" : "bg-orange-500/20"} blur-3xl rounded-full pointer-events-none`} />
 
         {/* Close Button */}
         <button
@@ -152,7 +159,11 @@ export default function LoginRewardModal({
 
         {/* Animated Bouncing Flame */}
         <div className="flex justify-center my-2">
-          <div className="relative inline-flex items-center justify-center p-4 rounded-3xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20">
+          <div className={`relative inline-flex items-center justify-center p-4 rounded-3xl ${
+            isIte
+              ? "bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20"
+              : "bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20"
+          }`}>
             <span className="text-6xl animate-flame-bounce select-none">🔥</span>
           </div>
         </div>
@@ -171,8 +182,12 @@ export default function LoginRewardModal({
 
         {/* EXP Reward & Level Tier Pill */}
         <div className="my-5 flex items-center justify-center gap-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 text-sm font-black font-mono">
-            <Sparkles className="w-4 h-4 text-orange-500" />
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${
+            isIte
+              ? "bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-blue-600 dark:text-blue-400"
+              : "bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/40 text-orange-600 dark:text-orange-400"
+          } text-sm font-black font-mono`}>
+            <Sparkles className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-orange-500"}`} />
             +<CountUpNumber value={expEarned} duration={900} /> EXP
           </div>
 
@@ -184,10 +199,12 @@ export default function LoginRewardModal({
 
         {/* 7-Day Streak Calendar */}
         <div className="mb-6 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-100 dark:border-white/5">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-[#555C72] mb-2 px-1">
+          <div className={`flex items-center justify-between text-[11px] font-bold ${
+            isIte ? "text-slate-600 dark:text-slate-300" : "text-slate-400 dark:text-[#555C72]"
+          } mb-2 px-1`}>
             <span>Weekly Progress (Resets 12:00 AM PHT)</span>
-            <span className="flex items-center gap-1 text-orange-500">
-              <Flame className="w-3.5 h-3.5 fill-orange-500" /> {displayStreak} Days
+            <span className={`flex items-center gap-1 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-orange-500"}`}>
+              <Flame className={`w-3.5 h-3.5 ${isIte ? "fill-blue-600 dark:fill-blue-400" : "fill-orange-500"}`} /> {displayStreak} Days
             </span>
           </div>
 
@@ -201,15 +218,21 @@ export default function LoginRewardModal({
                   key={day}
                   className={`flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all ${
                     isToday
-                      ? "bg-orange-500 text-white font-bold shadow-md shadow-orange-500/20"
+                      ? isIte
+                        ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                        : "bg-orange-500 text-white font-bold shadow-md shadow-orange-500/20"
                       : isPastOrToday
-                      ? "bg-orange-500/15 text-orange-600 dark:text-orange-400 font-semibold"
+                      ? isIte
+                        ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold"
+                        : "bg-orange-500/15 text-orange-600 dark:text-orange-400 font-semibold"
+                      : isIte
+                      ? "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-medium"
                       : "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600"
                   }`}
                 >
                   <span className="text-[10px] uppercase font-mono">{day}</span>
                   {isPastOrToday ? (
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${isToday ? "text-white" : "text-orange-500"}`} />
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${isToday ? "text-white" : isIte ? "text-blue-500" : "text-orange-500"}`} />
                   ) : (
                     <div className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-white/10" />
                   )}
@@ -240,7 +263,11 @@ export default function LoginRewardModal({
         <button
           type="button"
           onClick={handleClose}
-          className="w-full py-3 px-4 rounded-2xl bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] touch-manipulation min-h-[48px]"
+          className={`w-full py-3 px-4 rounded-2xl ${
+            isIte
+              ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/25"
+              : "bg-[#F97316] hover:bg-[#EA580C] shadow-orange-500/25"
+          } text-white font-bold text-sm shadow-lg transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] touch-manipulation min-h-[48px]`}
         >
           <span>Claim & Continue</span>
           <ArrowRight className="w-4 h-4" />

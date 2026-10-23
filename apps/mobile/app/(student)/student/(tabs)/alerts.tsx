@@ -6,34 +6,45 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { Bell, CheckCheck, BookOpen, Award, Info, AlertTriangle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Bell, CheckCheck, BookOpen, Award, Info, AlertTriangle, Trash2 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
+import { Screen, ErrorBanner } from '../../../../src/components/ui';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
+import { isIteUser } from '../../../../src/lib/ite-eligibility';
+import { getOnPrimaryColor } from '../../../../src/lib/design-system';
 import type { AppNotification } from '@lms/types';
 
 export default function StudentAlertsScreen() {
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const onPrimary = getOnPrimaryColor(theme);
+  const { headerPaddingTop } = useResponsive();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadNotifications = async () => {
+    setErrorMessage(null);
     try {
       const response = await api.notifications.list();
       if (response?.notifications) {
         setNotifications(response.notifications);
       }
-    } catch {
-      // Handled gracefully
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load notifications. Please check your connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -55,8 +66,8 @@ export default function StudentAlertsScreen() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-    } catch {
-      // Ignore failure
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to mark notification as read');
     }
   };
 
@@ -64,9 +75,44 @@ export default function StudentAlertsScreen() {
     try {
       await api.notifications.markAllRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch {
-      // Ignore
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to mark all notifications as read');
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    const previous = notifications;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await api.notifications.delete(id);
+    } catch (err: any) {
+      setNotifications(previous);
+      setErrorMessage(err?.message || 'Failed to delete notification');
+    }
+  };
+
+  const handleClearAll = () => {
+    Alert.alert(
+      'Clear All Notifications',
+      'Are you sure you want to delete all notifications? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            const previous = notifications;
+            setNotifications([]);
+            try {
+              await api.notifications.clearAll();
+            } catch (err: any) {
+              setNotifications(previous);
+              setErrorMessage(err?.message || 'Failed to clear all notifications');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const filteredNotifications = notifications.filter((n) => {
@@ -92,27 +138,40 @@ export default function StudentAlertsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <Screen scrollable={false}>
       {/* Header */}
-      <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+      <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border, paddingTop: headerPaddingTop }]}>
         <View style={styles.headerTop}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Notifications</Text>
           <View style={styles.headerRightGroup}>
             {unreadCount > 0 && (
-              <>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Mark all as read"
-                  onPress={handleMarkAllRead}
-                  style={styles.markAllBtn}
-                >
-                  <CheckCheck size={16} color={theme.colors.primary} />
-                  <Text style={[styles.markAllText, { color: theme.colors.primary }]}>
-                    Mark all read
-                  </Text>
-                </TouchableOpacity>
-                <Badge label={`${unreadCount} New`} variant="primary" size="sm" />
-              </>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Mark all notifications as read"
+                onPress={handleMarkAllRead}
+                style={styles.actionBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <CheckCheck size={14} color={theme.colors.primary} />
+                <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>
+                  Read all
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {notifications.length > 0 && (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Clear all notifications"
+                onPress={handleClearAll}
+                style={styles.actionBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Trash2 size={14} color={theme.colors.danger} />
+                <Text style={[styles.actionBtnText, { color: theme.colors.danger }]}>
+                  Clear all
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -134,7 +193,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'ALL' ? '#FFFFFF' : theme.colors.textSecondary },
+                { color: filter === 'ALL' ? onPrimary : theme.colors.textSecondary, fontWeight: filter === 'ALL' ? '700' : '500' },
               ]}
             >
               All ({notifications.length})
@@ -156,7 +215,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'UNREAD' ? '#FFFFFF' : theme.colors.textSecondary },
+                { color: filter === 'UNREAD' ? onPrimary : theme.colors.textSecondary, fontWeight: filter === 'UNREAD' ? '700' : '500' },
               ]}
             >
               Unread ({unreadCount})
@@ -183,6 +242,17 @@ export default function StudentAlertsScreen() {
               colors={[theme.colors.primary]}
             />
           }
+          ListHeaderComponent={
+            errorMessage ? (
+              <View style={{ marginBottom: 12 }}>
+                <ErrorBanner
+                  message={errorMessage}
+                  onRetry={loadNotifications}
+                  onDismiss={() => setErrorMessage(null)}
+                />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <Card style={styles.emptyCard}>
               <Bell size={44} color={theme.colors.textSecondary} />
@@ -195,7 +265,7 @@ export default function StudentAlertsScreen() {
             </Card>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <View
               style={[
                 styles.notificationCard,
                 {
@@ -204,38 +274,62 @@ export default function StudentAlertsScreen() {
                   borderLeftWidth: item.isRead ? 1 : 4,
                 },
               ]}
-              onPress={() => {
-                if (!item.isRead) handleMarkRead(item.id);
-              }}
-              activeOpacity={0.8}
             >
-              <View style={styles.iconCircle}>
-                {getNotificationIcon(item.type)}
-              </View>
-
-              <View style={styles.notificationBody}>
-                <View style={styles.cardTopLine}>
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-                    {item.title}
-                  </Text>
-                  {!item.isRead && (
-                    <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
-                  )}
+              <TouchableOpacity
+                style={styles.cardMainTouch}
+                onPress={() => {
+                  if (!item.isRead) handleMarkRead(item.id);
+                  const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
+                  const isMeetingAlert =
+                    (item.type && item.type.toLowerCase().includes('meeting')) ||
+                    text.includes('meeting is live') ||
+                    text.includes('class meeting') ||
+                    text.includes('meeting');
+                  if (isMeetingAlert && isIteUser(user)) {
+                    router.push('/student/meetings' as any);
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.iconCircle}>
+                  {getNotificationIcon(item.type)}
                 </View>
 
-                <Text style={[styles.cardMessage, { color: theme.colors.textSecondary }]}>
-                  {item.message}
-                </Text>
+                <View style={styles.notificationBody}>
+                  <View style={styles.cardTopLine}>
+                    <Text style={[styles.cardTitle, { color: theme.colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    {!item.isRead && (
+                      <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
+                    )}
+                  </View>
 
-                <Text style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
-                  {new Date(item.createdAt).toLocaleString()}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                  <Text style={[styles.cardMessage, { color: theme.colors.textSecondary }]}>
+                    {item.message}
+                  </Text>
+
+                  <Text style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
+                    {new Date(item.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => handleDelete(item.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Delete notification"
+                activeOpacity={0.6}
+              >
+                <Trash2 size={16} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
           )}
         />
       )}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -245,7 +339,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
@@ -264,10 +357,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardMainTouch: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  deleteBtn: {
+    padding: 6,
+    marginLeft: 6,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   markAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    minHeight: 44,
     paddingVertical: 4,
     paddingHorizontal: 6,
   },
@@ -284,7 +404,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -294,7 +414,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,
@@ -308,10 +428,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
     elevation: 1,
   },
   iconCircle: {

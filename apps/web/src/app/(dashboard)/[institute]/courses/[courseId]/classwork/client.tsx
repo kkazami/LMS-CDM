@@ -11,6 +11,7 @@ import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
 import Link from "next/link";
+import FocusButton from "@/components/focus/FocusButton";
 import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles } from "lucide-react";
 import {
   createSyllabusItem,
@@ -96,6 +97,7 @@ export default function ClassworkClient({
   const [rewardTiers, setRewardTiers] = useState<{placement: number; rewardLabel: string; bonusExp: number}[]>([]);
 
   const predefinedTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL", "ACTIVITY", "RECITATION", "MIDTERM_EXAM", "FINAL_EXAM"];
+  const isIte = instituteCode?.toLowerCase() === "ite";
 
   const [state, formAction] = useActionState(
     editingItem ? updateSyllabusItem : createSyllabusItem,
@@ -182,23 +184,32 @@ export default function ClassworkClient({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {canEdit && (
-        <div className="flex items-center justify-end gap-3">
-          <Link
-            href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: theme.colors.primary }}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Create Form Assessment</span>
-          </Link>
-
-          <Button theme={theme} variant="secondary" onClick={handleCreate}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Material / Task
-          </Button>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <FocusButton
+            contextType="STUDY"
+            courseId={courseId}
+            title="Classwork Study"
+          />
         </div>
-      )}
+        {canEdit && (
+          <div className="flex items-center justify-end gap-3">
+            <Link
+              href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Create Form Assessment</span>
+            </Link>
+
+            <Button theme={theme} variant="secondary" onClick={handleCreate}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add Material / Task
+            </Button>
+          </div>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
@@ -345,9 +356,13 @@ export default function ClassworkClient({
 
           {/* Proctoring & Integrity Monitoring Settings */}
           {(selectedType !== "MATERIAL") && (
-            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.04] p-4 space-y-3">
+            <div className={`rounded-2xl border p-4 space-y-3 ${
+              isIte
+                ? "border-blue-500/20 bg-blue-500/[0.04]"
+                : "border-orange-500/20 bg-orange-500/[0.04]"
+            }`}>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-orange-500" />
+                <Shield className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-orange-500"}`} />
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-[#F0F2F8]">
                   Anti-Cheating & Integrity Settings
                 </p>
@@ -362,7 +377,11 @@ export default function ClassworkClient({
                     setEnableIntegrity(e.target.checked);
                     if (!e.target.checked) setRequireFullscreen(false);
                   }}
-                  className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-orange-500 focus:ring-orange-500"
+                  className={`mt-0.5 rounded border-slate-300 dark:border-white/20 ${
+                    isIte
+                      ? "text-blue-600 focus:ring-blue-500"
+                      : "text-orange-500 focus:ring-orange-500"
+                  }`}
                 />
                 <div className="text-xs">
                   <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
@@ -375,13 +394,19 @@ export default function ClassworkClient({
               </label>
 
               {enableIntegrity && (
-                <label className="flex items-start gap-3 cursor-pointer select-none pl-6 border-t border-orange-500/10 pt-2.5">
+                <label className={`flex items-start gap-3 cursor-pointer select-none pl-6 border-t pt-2.5 ${
+                  isIte ? "border-blue-500/10" : "border-orange-500/10"
+                }`}>
                   <input
                     type="checkbox"
                     name="requireFullscreen"
                     checked={requireFullscreen}
                     onChange={(e) => setRequireFullscreen(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-orange-500 focus:ring-orange-500"
+                    className={`mt-0.5 rounded border-slate-300 dark:border-white/20 ${
+                      isIte
+                        ? "text-blue-600 focus:ring-blue-500"
+                        : "text-orange-500 focus:ring-orange-500"
+                    }`}
                   />
                   <div className="text-xs">
                     <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
@@ -407,9 +432,13 @@ export default function ClassworkClient({
 
           {/* Leaderboard Settings */}
           {selectedType !== "MATERIAL" && (
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 space-y-3">
+            <div className={`rounded-2xl border p-4 space-y-3 ${
+              isIte
+                ? "border-blue-500/20 bg-blue-500/[0.04]"
+                : "border-amber-500/20 bg-amber-500/[0.04]"
+            }`}>
               <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-amber-500" />
+                <Trophy className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-amber-500"}`} />
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-[#F0F2F8]">
                   Leaderboard
                 </p>
@@ -423,7 +452,11 @@ export default function ClassworkClient({
                     setLeaderboardEnabled(e.target.checked);
                     if (!e.target.checked) setRewardTiers([]);
                   }}
-                  className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-amber-500 focus:ring-amber-500"
+                  className={`mt-0.5 rounded border-slate-300 dark:border-white/20 ${
+                    isIte
+                      ? "text-blue-600 focus:ring-blue-500"
+                      : "text-amber-500 focus:ring-amber-500"
+                  }`}
                 />
                 <div className="text-xs">
                   <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">
@@ -436,7 +469,7 @@ export default function ClassworkClient({
               </label>
 
               {leaderboardEnabled && (
-                <div className="space-y-2 pt-2 border-t border-amber-500/10">
+                <div className={`space-y-2 pt-2 border-t ${isIte ? "border-blue-500/10" : "border-amber-500/10"}`}>
                   <p className="text-[11px] font-bold text-slate-600 dark:text-[#8B92A5]">
                     Rewards (optional)
                   </p>
@@ -479,7 +512,9 @@ export default function ClassworkClient({
                           setRewardTiers(updated);
                         }}
                         placeholder="EXP"
-                        className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-xs text-amber-600 font-mono outline-none placeholder:text-slate-400"
+                        className={`w-16 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] text-xs font-mono outline-none placeholder:text-slate-400 ${
+                          isIte ? "text-blue-600" : "text-amber-600"
+                        }`}
                       />
                       <button
                         type="button"
@@ -493,7 +528,9 @@ export default function ClassworkClient({
                   <button
                     type="button"
                     onClick={() => setRewardTiers([...rewardTiers, { placement: rewardTiers.length === 0 ? 1 : (rewardTiers[rewardTiers.length - 1].placement + 2), rewardLabel: "", bonusExp: 0 }])}
-                    className="text-xs text-amber-600 hover:text-amber-500 font-bold flex items-center gap-1 cursor-pointer"
+                    className={`text-xs font-bold flex items-center gap-1 cursor-pointer ${
+                      isIte ? "text-blue-600 hover:text-blue-500" : "text-amber-600 hover:text-amber-500"
+                    }`}
                   >
                     <Plus className="w-3 h-3" /> Add Reward
                   </button>
@@ -534,7 +571,11 @@ export default function ClassworkClient({
             <button
               type="button"
               onClick={() => setIsAttachModalOpen(true)}
-              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-white/15 py-2.5 text-xs font-semibold text-slate-600 dark:text-[#8B92A5] transition-colors hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5 cursor-pointer"
+              className={`flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-white/15 py-2.5 text-xs font-semibold text-slate-600 dark:text-[#8B92A5] transition-colors ${
+                isIte
+                  ? "hover:border-blue-600 hover:text-blue-600 hover:bg-blue-500/5"
+                  : "hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/5"
+              } cursor-pointer`}
             >
               <Paperclip className="h-4 w-4" />
               {attachments.length > 0
@@ -562,7 +603,9 @@ export default function ClassworkClient({
                       type="checkbox"
                       checked={selectedGroups.includes(group.id)}
                       onChange={() => toggleGroup(group.id)}
-                      className="rounded border-slate-300 dark:border-white/20 text-[#F97316]"
+                      className={`rounded border-slate-300 dark:border-white/20 ${
+                        isIte ? "text-blue-600" : "text-[#F97316]"
+                      }`}
                     />
                     {group.groupName}
                   </label>
@@ -570,6 +613,7 @@ export default function ClassworkClient({
               </div>
             </div>
           )}
+
 
           {state.message && state.message !== "success" && (
             <p className="text-sm text-red-600">{state.message}</p>

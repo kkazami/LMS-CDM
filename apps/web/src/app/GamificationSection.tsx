@@ -37,7 +37,7 @@ export default function GamificationSection({
 }: GamificationSectionProps) {
   // ─── Scroll Reveal Hook ───
   const sectionRef = useRef<HTMLDivElement>(null);
-  const isSectionInView = useInView(sectionRef, { once: false, amount: 0.1 });
+  const isSectionInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   // Synthetic resize-nudge on mount to ensure observers measure immediately on first paint
   useEffect(() => {

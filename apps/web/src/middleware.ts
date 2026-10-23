@@ -7,7 +7,7 @@ import { sessionActivity } from '@/lib/session-policy';
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const api = pathname.startsWith('/api/');
-  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
+  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || pathname === '/ite-sw.js' || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());
   const security = getSecurityHeaders(nonce);
   const incoming = new Headers(request.headers);
@@ -18,12 +18,17 @@ export async function middleware(request: NextRequest) {
   if (!mutationOriginAllowed(request)) {
     response = NextResponse.json({ error: 'Forbidden request origin.' }, { status: 403 });
   } else {
-    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support'].includes(pathname);
+    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support', '/offline.html'].includes(pathname);
     response = !api && !publicPage && !request.cookies.get('lumina_session')?.value
       ? NextResponse.redirect(new URL(`/login?institute=${encodeURIComponent(pathname.split('/').filter(Boolean)[0] || 'ics')}`, request.url))
       : NextResponse.next({ request: { headers: incoming } });
   }
   for (const [key, value] of Object.entries({ ...security, ...getCorsHeaders(request) })) response.headers.set(key, value);
+  if (pathname.startsWith('/api/assets/')) {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    const assetCsp = response.headers.get('Content-Security-Policy')?.replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+    if (assetCsp) response.headers.set('Content-Security-Policy', assetCsp);
+  }
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }

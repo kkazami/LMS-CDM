@@ -3,6 +3,7 @@ import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
+import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
@@ -23,7 +24,11 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   const { institute } = await params;
 
   const role = user.role.toUpperCase();
-  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+  // Admins have no classes of their own: send them to the admin dashboard.
+  if (role === "ADMIN") {
+    redirect(`/${institute}/admin`);
+  }
+  if (role !== "PROFESSOR" && role !== "TEACHER") {
     redirect(`/${institute}`);
   }
 
@@ -70,7 +75,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
 
   const courseIds = taughtCourses.map((c) => c.id);
 
-  const [layouts, pendingEnrollments, pendingWorkSubmissions] = await Promise.all([
+  const [layouts, pendingEnrollments] = await Promise.all([
     db.dashboardLayout.findMany({
       where: { userId: teacherId, courseId: { in: courseIds } },
     }),
@@ -96,28 +101,6 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
         },
       },
       orderBy: { createdAt: "desc" },
-    }),
-    db.studentSubmission.findMany({
-      where: {
-        syllabusItem: {
-          courseId: { in: courseIds },
-        },
-        status: "SUBMITTED",
-        OR: [{ grade: null }, { isReturned: false }],
-      },
-      select: {
-        id: true,
-        syllabusItemId: true,
-        submittedAt: true,
-        syllabusItem: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            courseId: true,
-          },
-        },
-      },
     }),
   ]);
   const layoutMap = new Map<string, number>();
@@ -145,11 +128,33 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
     pendingCountMap.set(p.courseId, (pendingCountMap.get(p.courseId) ?? 0) + 1);
   }
 
-  // Count pending work per course
+  // 3. Count submissions that still need a grade (submitted, no grade yet) per course.
+  //    Grouped in the database by item; only the item -> course mapping is loaded, never
+  //    the submission rows themselves.
+  const pendingByItem = await db.studentSubmission.groupBy({
+    by: ["syllabusItemId"],
+    where: {
+      syllabusItem: { courseId: { in: courseIds } },
+      status: "SUBMITTED",
+      grade: null,
+    },
+    _count: { _all: true },
+  });
+
+  const pendingItemCourses = pendingByItem.length
+    ? await db.syllabusItem.findMany({
+        where: { id: { in: pendingByItem.map((g) => g.syllabusItemId) } },
+        select: { id: true, courseId: true },
+      })
+    : [];
+  const courseOfItem = new Map(pendingItemCourses.map((i) => [i.id, i.courseId]));
   const pendingWorkCountMap = new Map<string, number>();
-  for (const s of pendingWorkSubmissions) {
-    const cId = s.syllabusItem.courseId;
-    pendingWorkCountMap.set(cId, (pendingWorkCountMap.get(cId) ?? 0) + 1);
+  let totalPendingWork = 0;
+  for (const group of pendingByItem) {
+    const cId = courseOfItem.get(group.syllabusItemId);
+    if (!cId) continue;
+    pendingWorkCountMap.set(cId, (pendingWorkCountMap.get(cId) ?? 0) + group._count._all);
+    totalPendingWork += group._count._all;
   }
 
   // Build list of classes that have pending work
@@ -199,7 +204,11 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   return (
     <TeacherDashboardClient
       userName={user.name as string}
-      instituteName={getInstituteName(institute, instituteRecord.name)}
+      instituteName={
+        institute.toLowerCase() === "ite"
+          ? "Institute of Teacher Education"
+          : getInstituteName(institute, instituteRecord.name)
+      }
       instituteCode={institute}
       theme={theme}
       initialCourses={courses}
@@ -208,7 +217,8 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       today={schoolDateKey(new Date())}
       initialPendingRequests={pendingRequests}
       initialPendingWorkClasses={pendingWorkClasses}
-      totalPendingWorkCount={pendingWorkSubmissions.length}
+      totalPendingWorkCount={totalPendingWork}
+      showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
       greeting={getDashboardGreeting(user.name, new Date(), teacherId)}
     />

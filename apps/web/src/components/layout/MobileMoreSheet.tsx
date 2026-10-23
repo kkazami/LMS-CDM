@@ -20,6 +20,9 @@ import {
   User,
   Settings,
   LogOut,
+  Sparkles,
+  NotebookPen,
+  Video,
   HardDrive,
   HelpCircle,
   Terminal,
@@ -30,6 +33,7 @@ import {
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
+import { clearAllOfflineData } from "@/lib/ite/offline/idb";
 import { getNavigationPath } from "@/lib/navigation-path";
 
 interface MobileMoreSheetProps {
@@ -131,6 +135,7 @@ export default function MobileMoreSheet({
     setLoggingOut(true);
     try {
       logoutFromNative();
+      await clearAllOfflineData().catch(() => {});
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore
@@ -139,6 +144,17 @@ export default function MobileMoreSheet({
     router.push(`/login?institute=${instituteCode}&force=true`);
   };
 
+  // Meetings and Practicum are ITE-only; the server also enforces it on every page and API route.
+  const meetingsItems: NavItem[] =
+    instituteCode.toLowerCase() === "ite" && (isStudent || isProfessor)
+      ? [{ label: "Meetings", href: `/${instituteCode}/meetings`, icon: Video, description: "Course video meetings" }]
+      : [];
+
+  const practicumItems: NavItem[] =
+    instituteCode.toLowerCase() === "ite" && (isStudent || isProfessor)
+      ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
+      : [];
+
   const items: NavItem[] = [
     ...(isEligibleForActivities && (isStudent || isProfessor)
       ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2, description: "Coding practice" }] : []),
@@ -146,7 +162,11 @@ export default function MobileMoreSheet({
       ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
-    ...(isStudent ? studentItems : isProfessor ? teacherItems : adminItems),
+    ...(isStudent
+      ? [...studentItems, ...meetingsItems, ...practicumItems]
+      : isProfessor
+        ? [...teacherItems, ...meetingsItems, ...practicumItems]
+        : adminItems),
   ];
 
   if (!isOpen) return null;

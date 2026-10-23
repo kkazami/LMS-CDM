@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
 import { Play, Pause, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
 
 interface PomodoroTimerProps {
@@ -9,6 +10,10 @@ interface PomodoroTimerProps {
 }
 
 export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTimerProps) {
+  const params = useParams();
+  const institute = (params?.institute as string) || "";
+  const isIte = institute.toLowerCase() === "ite";
+
   const [targetTimeMinutes, setTargetTimeMinutes] = useState(25);
   const [timeElapsed, setTimeElapsed] = useState(0); // counts up from 0
   const [isActive, setIsActive] = useState(false);
@@ -97,7 +102,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
   return (
     <div className="rounded-3xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs overflow-hidden flex flex-col transition-all duration-500 relative">
       {/* Dynamic Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 rounded-full transition-colors duration-1000 bg-[#F97316]" />
+      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 rounded-full transition-colors duration-1000 ${
+        isIte ? "bg-blue-600" : "bg-[#F97316]"
+      }`} />
 
       {/* Timer Display */}
       <div className="p-8 pb-4 flex flex-col items-center justify-center relative z-10">
@@ -114,7 +121,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
             />
             {/* Progress Track */}
             <circle
-              className="text-[#F97316] stroke-current transition-all duration-1000 ease-linear"
+              className={`stroke-current transition-all duration-1000 ease-linear ${
+                isIte ? "text-blue-600" : "text-[#F97316]"
+              }`}
               strokeWidth="4"
               strokeLinecap="round"
               cx="50"
@@ -128,14 +137,18 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           
           {/* Pulsing effect when active */}
           {isActive && (
-            <div className="absolute inset-4 rounded-full bg-[#F97316] opacity-5 animate-ping" />
+            <div className={`absolute inset-4 rounded-full opacity-5 animate-ping ${
+              isIte ? "bg-blue-600" : "bg-[#F97316]"
+            }`} />
           )}
 
           <div className="flex flex-col items-center z-10">
             <span className="text-5xl font-black tracking-tighter text-slate-900 dark:text-[#F0F2F8] tabular-nums">
               {formatTime(remainingSeconds)}
             </span>
-            <span className="text-[10px] font-bold mt-2 uppercase tracking-[0.2em] text-[#F97316] opacity-90">
+            <span className={`text-[10px] font-bold mt-2 uppercase tracking-[0.2em] opacity-90 ${
+              isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"
+            }`}>
               {isActive ? "Studying" : timeElapsed > 0 ? "Paused" : "Ready"}
             </span>
           </div>
@@ -155,7 +168,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
             step="5" 
             value={targetTimeMinutes}
             onChange={(e) => setTargetTimeMinutes(Number(e.target.value))}
-            className="w-full h-2 bg-slate-200 dark:bg-[#1E2132] rounded-lg appearance-none cursor-pointer accent-[#F97316]"
+            className={`w-full h-2 bg-slate-200 dark:bg-[#1E2132] rounded-lg appearance-none cursor-pointer ${
+              isIte ? "accent-blue-600" : "accent-[#F97316]"
+            }`}
           />
           <div className="flex justify-between w-full mt-2 text-xs text-slate-400 dark:text-[#8B92A5] font-semibold px-1">
             <span>5</span>
@@ -176,8 +191,8 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
             disabled={isLogging}
             className={`h-16 w-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
               isActive 
-                ? "bg-orange-500/10 text-[#F97316]" 
-                : "bg-[#F97316] text-white hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-500/20"
+                ? (isIte ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-[#F97316]") 
+                : (isIte ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/20" : "bg-[#F97316] text-white hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-500/20")
             }`}
           >
             {isLogging ? (
@@ -204,7 +219,9 @@ export default function PomodoroTimer({ courseId, syllabusItemId }: PomodoroTime
           <button
             onClick={finishSession}
             disabled={isLogging}
-            className="mt-2 flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition-all bg-[#F97316] hover:bg-orange-600 hover:scale-105 active:scale-95 cursor-pointer"
+            className={`mt-2 flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+              isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
+            }`}
           >
             {isLogging ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             Save Session

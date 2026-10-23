@@ -5,12 +5,21 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
+import OfflineDraftCard from "@/components/offline/OfflineDraftCard";
 import type { InstituteTheme } from "@/lib/theme";
+import FocusButton from "@/components/focus/FocusButton";
 
 const ConvertFlashcardsModal = dynamic(
   () => import("@/components/courses/ConvertFlashcardsModal"),
   { ssr: false }
 );
+
+import MaterialInlineViewer from "@/components/courses/MaterialInlineViewer";
+import {
+  classifyAttachmentMedia,
+  getFriendlyAttachmentTitle,
+  getSecondaryAttachmentLabel,
+} from "@/lib/ite/media-preview";
 
 interface Attachment {
   id: string;
@@ -95,13 +104,20 @@ function AttachmentChip({
   instituteCode, 
   isStudent,
   onConvertClick,
+  activePreviewId,
+  onTogglePreview,
+  onClosePreview,
 }: { 
   attachment: Attachment;
   item: SyllabusItem;
   instituteCode: string;
   isStudent: boolean;
   onConvertClick?: (attachmentId: string, attachmentName: string) => void;
+  activePreviewId?: string | null;
+  onTogglePreview?: (attachmentId: string) => void;
+  onClosePreview?: () => void;
 }) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const isLink = attachment.type === "LINK";
   const Icon = isLink ? Link2 : FileText;
 
@@ -113,43 +129,108 @@ function AttachmentChip({
   // Show the convert button only for MATERIAL items with supported file types
   const showConvertBtn = isStudent && item.type === "MATERIAL" && !isLink && isConvertibleFile(attachment.fileName);
 
+  // In ITE, determine whether this attachment opens an inline preview accordion
+  const media = isIte ? classifyAttachmentMedia(attachment) : null;
+  const isPreviewable = isIte && media !== null && media.kind !== "external_link";
+  const isExpanded = isPreviewable && activePreviewId === attachment.id;
+
+  // Friendly title & secondary label for ITE
+  const displayTitle = isIte
+    ? getFriendlyAttachmentTitle(attachment)
+    : (attachment.fileName || attachment.url);
+  const secondaryLabel = isIte
+    ? getSecondaryAttachmentLabel(attachment)
+    : (isLink ? "Link" : "File");
+
   // Use Link for internal navigation, otherwise use 'a'
   const Component = isMaterialFile ? Link : "a";
 
   return (
-    <div className="flex items-center gap-2">
-      <Component
-        href={href}
-        target={isMaterialFile ? undefined : "_blank"}
-        rel={isMaterialFile ? undefined : "noopener noreferrer"}
-        download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
-        className="flex-1 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:border-orange-500/30 hover:shadow-xs transition-all group"
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] transition-colors">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate">
-            {attachment.fileName || attachment.url}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-[#8B92A5]">{isLink ? "Link" : "File"}</p>
-        </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-[#F97316] transition-colors" />
-      </Component>
+    <div className="flex flex-col w-full min-w-0 max-w-full">
+      <div className="flex items-center gap-2 w-full min-w-0">
+        {isPreviewable ? (
+          <button
+            type="button"
+            onClick={() => onTogglePreview?.(attachment.id)}
+            aria-expanded={isExpanded}
+            aria-label={`Toggle inline preview for ${displayTitle}`}
+            className={`flex-1 min-w-0 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:shadow-xs transition-all group text-left cursor-pointer overflow-hidden ${
+              isExpanded
+                ? "border-blue-500/50 dark:border-blue-500/40 ring-1 ring-blue-500/20"
+                : "hover:border-blue-500/30"
+            }`}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <Icon className="h-4 w-4 shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p
+                className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate"
+                title={attachment.url}
+              >
+                {displayTitle}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5] truncate">
+                {secondaryLabel}
+              </p>
+            </div>
+            <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${
+              isExpanded ? "rotate-90 text-blue-600 dark:text-blue-400" : "text-slate-300 dark:text-slate-600 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+            }`} />
+          </button>
+        ) : (
+          <Component
+            href={href}
+            target={isMaterialFile ? undefined : "_blank"}
+            rel={isMaterialFile ? undefined : "noopener noreferrer"}
+            download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
+            className={`flex-1 min-w-0 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:shadow-xs transition-all group overflow-hidden ${
+              isIte ? "hover:border-blue-500/30" : "hover:border-orange-500/30"
+            }`}
+          >
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+              isIte ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316]"
+            }`}>
+              <Icon className="h-4 w-4 shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p
+                className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate"
+                title={attachment.url}
+              >
+                {displayTitle}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5] truncate">{secondaryLabel}</p>
+            </div>
+            <ChevronRight className={`h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 transition-colors ${
+              isIte ? "group-hover:text-blue-600 dark:group-hover:text-blue-400" : "group-hover:text-[#F97316]"
+            }`} />
+          </Component>
+        )}
 
-      {/* Convert to Flashcards button — only for MATERIAL file attachments */}
-      {showConvertBtn && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onConvertClick?.(attachment.id, attachment.fileName);
-          }}
-          title="Convert to Flashcards"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
-        >
-          <Sparkles className="h-4 w-4" />
-        </button>
+        {/* Convert to Flashcards button — only for MATERIAL file attachments */}
+        {showConvertBtn && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onConvertClick?.(attachment.id, attachment.fileName);
+            }}
+            title="Convert to Flashcards"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Accordion inline preview panel (ITE only, under item) */}
+      {isPreviewable && isExpanded && (
+        <MaterialInlineViewer
+          attachment={attachment}
+          onClose={onClosePreview || (() => onTogglePreview?.(attachment.id))}
+          instituteCode={instituteCode}
+        />
       )}
     </div>
   );
@@ -175,6 +256,7 @@ export default function AssignmentDetailClient({
   formScore = null,
 }: AssignmentDetailClientProps) {
   const isPastDeadline = item.dueDate ? new Date() > item.dueDate : false;
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const typeMeta = TYPE_META[item.type] ?? TYPE_META.MATERIAL;
 
   // ── Convert to Flashcards modal state ──
@@ -182,6 +264,9 @@ export default function AssignmentDetailClient({
     attachmentId: string;
     attachmentName: string;
   } | null>(null);
+
+  // ── Active inline preview attachment state (ITE only, one open at a time) ──
+  const [activePreviewAttachmentId, setActivePreviewAttachmentId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen">
@@ -209,10 +294,18 @@ export default function AssignmentDetailClient({
           <div className="space-y-6 min-w-0">
             {/* Header card */}
             <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
-              <div className="flex items-start gap-3 mb-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
                   {typeMeta.label}
                 </span>
+                {isStudent && (
+                  <FocusButton
+                    contextType={item.type === "QUIZ" ? "QUIZ" : item.type === "MATERIAL" ? "MATERIAL" : "STUDY"}
+                    courseId={courseId}
+                    refId={item.id}
+                    title={item.title}
+                  />
+                )}
               </div>
 
               <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>
@@ -250,11 +343,11 @@ export default function AssignmentDetailClient({
 
             {/* Instructor attachments */}
             {item.attachments.length > 0 && (
-              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
+              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6 min-w-0 overflow-hidden">
                 <h2 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">
                   Materials & Resources
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-2 w-full min-w-0">
                   {item.attachments.map((att) => (
                     <AttachmentChip 
                       key={att.id} 
@@ -263,6 +356,9 @@ export default function AssignmentDetailClient({
                       instituteCode={instituteCode}
                       isStudent={isStudent}
                       onConvertClick={(id, name) => setConvertModal({ attachmentId: id, attachmentName: name })}
+                      activePreviewId={activePreviewAttachmentId}
+                      onTogglePreview={(id) => setActivePreviewAttachmentId((prev) => (prev === id ? null : id))}
+                      onClosePreview={() => setActivePreviewAttachmentId(null)}
                     />
                   ))}
                 </div>
@@ -300,15 +396,24 @@ export default function AssignmentDetailClient({
             {isInstructor && !item.form && (
               <Link
                 href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}/submissions`}
-                className="flex items-center justify-between rounded-2xl bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 p-5 hover:bg-orange-500/20 transition-all group"
+                className={`flex items-center justify-between rounded-2xl p-5 transition-all group ${
+                  isIte
+                    ? "bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 hover:bg-blue-500/20"
+                    : "bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 hover:bg-orange-500/20"
+                }`}
               >
                 <div>
                   <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Student Submissions</p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-0.5">View and grade submitted work</p>
+                  <p className={`text-sm mt-0.5 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-orange-600 dark:text-orange-400"}`}>
+                    View and grade submitted work
+                  </p>
                 </div>
-                <ChevronRight className="h-5 w-5 text-orange-500 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className={`h-5 w-5 transition-transform group-hover:translate-x-0.5 ${
+                  isIte ? "text-blue-500" : "text-orange-500"
+                }`} />
               </Link>
             )}
+
           </div>
 
           {/* Right: Your Work panel / Form Start Panel (students only) */}
@@ -361,15 +466,26 @@ export default function AssignmentDetailClient({
                 </div>
               ) : (
                 submission && (
-                  <YourWorkPanel
-                    submission={submission}
-                    isPastDeadline={isPastDeadline}
-                    maxPoints={item.maxPoints}
-                    instituteCode={instituteCode}
-                    courseId={courseId}
-                    itemId={item.id}
-                    theme={theme}
-                  />
+                  <>
+                    {isStudent && instituteCode.toLowerCase() === "ite" && (
+                      <OfflineDraftCard
+                        itemId={item.id}
+                        courseId={courseId}
+                        itemTitle={item.title}
+                        isPastDeadline={isPastDeadline}
+                        isSubmitted={submission.status === "SUBMITTED"}
+                      />
+                    )}
+                    <YourWorkPanel
+                      submission={submission}
+                      isPastDeadline={isPastDeadline}
+                      maxPoints={item.maxPoints}
+                      instituteCode={instituteCode}
+                      courseId={courseId}
+                      itemId={item.id}
+                      theme={theme}
+                    />
+                  </>
                 )
               )}
             </div>

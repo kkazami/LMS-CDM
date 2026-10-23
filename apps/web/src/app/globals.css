@@ -73,6 +73,25 @@
   --rank1-glow: rgba(212, 160, 23, 0.10);
 }
 
+/* ─── ITE Text Selection Highlight (ITE Blue Tint) ─── */
+[data-institute="ite"] *::selection,
+[data-institute="ite"]::selection {
+  background-color: rgba(37, 99, 235, 0.32) !important;
+  color: inherit !important;
+}
+
+[data-theme="dark"] [data-institute="ite"] *::selection,
+[data-theme="dark"] [data-institute="ite"]::selection,
+.dark [data-institute="ite"] *::selection,
+.dark [data-institute="ite"]::selection,
+[data-institute="ite"][data-theme="dark"] *::selection,
+[data-institute="ite"][data-theme="dark"]::selection,
+.dark[data-institute="ite"] *::selection,
+.dark[data-institute="ite"]::selection {
+  background-color: rgba(59, 130, 246, 0.40) !important;
+  color: inherit !important;
+}
+
 /* ─── Scrollbar Theming (Adaptive Light & Dark) ─── */
 * {
   scrollbar-width: thin;
@@ -788,3 +807,19 @@ button:active:not(:disabled),
     font-size: 16px !important;
   }
 }
+
+/* ─── ITE Focus Mode (distraction-free learning) ─── */
+[data-focus-mode="on"] aside[aria-label="Main Navigation"],
+[data-focus-mode="on"] .dashboard-sidebar,
+[data-focus-mode="on"] .mobile-bottom-nav,
+[data-focus-mode="on"] .chatbot-widget-container,
+[data-focus-mode="on"] .floating-study-timer,
+[data-focus-mode="on"] .topbar-search-trigger,
+[data-focus-mode="on"] .notification-bell-badge {
+  display: none !important;
+}
+
+[data-focus-mode="on"] .dashboard-workspace-shell {
+  padding-left: 0 !important;
+}
+

@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
+import type { InstituteTheme } from '../../lib/theme';
+
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   ringColor?: string;
+  theme?: InstituteTheme;
 }
 
-export function Input({ label, error, ringColor, ...props }: InputProps) {
-  const theme = useTheme();
+export function Input({ label, error, ringColor, theme: propTheme, ...props }: InputProps) {
+  const hookTheme = useTheme();
+  const theme = propTheme || hookTheme;
   const [isFocused, setIsFocused] = useState(false);
 
   const activeBorder = ringColor || theme.colors.ring;
@@ -23,10 +27,10 @@ export function Input({ label, error, ringColor, ...props }: InputProps) {
           {
             borderColor: error ? '#EF4444' : isFocused ? activeBorder : theme.colors.border,
             color: theme.colors.text,
-            backgroundColor: theme.colors.card,
+            backgroundColor: theme.isDark ? theme.colors.surfaceAlt : theme.colors.surface,
           },
         ]}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={theme.colors.textMuted || '#9CA3AF'}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         {...props}

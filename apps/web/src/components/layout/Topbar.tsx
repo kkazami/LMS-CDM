@@ -3,12 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, FileText } from "lucide-react";
+import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu, FileText } from "lucide-react";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
 import SearchModal from "@/components/layout/SearchModal";
+import TopbarFocusButton from "@/components/focus/TopbarFocusButton";
+import TopbarOfflineIndicator from "@/components/offline/TopbarOfflineIndicator";
+import { clearAllOfflineData } from "@/lib/ite/offline/idb";
 import { useTheme } from "@/lib/theme-context";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 
@@ -22,6 +25,11 @@ type TopbarProps = {
   studentNumber?: string | null;
   avatarUrl?: string | null;
   exp?: number;
+  onOpenMobileMenu?: () => void;
+  isEligibleForActivities?: boolean;
+  isEligibleForPracticum?: boolean;
+  isEligibleForMeetings?: boolean;
+  enrolledCourses?: { id: string; title: string; code: string }[];
 };
 
 export default function Topbar({
@@ -33,18 +41,39 @@ export default function Topbar({
   studentNumber,
   avatarUrl,
   exp = 0,
+  onOpenMobileMenu,
+  isEligibleForActivities,
+  isEligibleForPracticum,
+  isEligibleForMeetings,
+  enrolledCourses,
 }: TopbarProps) {
   const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
   const { themeMode, toggleTheme } = useTheme();
+  // Shortcut hint: "Ctrl K" by default, "⌘K" on Apple platforms (set after mount to avoid hydration mismatch).
+  const [isMac, setIsMac] = useState(false);
+  const isIte = (instituteCode || "").toLowerCase() === "ite";
+  const resolvedInstituteName = isIte ? "Institute of Teacher Education" : instituteName;
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchModalOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        // Esc closes the user menu and hands focus back to its trigger.
+        setIsDropdownOpen((open) => {
+          if (open) profileButtonRef.current?.focus();
+          return false;
+        });
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -74,6 +103,7 @@ export default function Topbar({
     try {
       triggerNativeHaptic("light");
       logoutFromNative();
+      await clearAllOfflineData().catch(() => {});
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = `/login?institute=${instituteCode}&force=true`;
     } catch (error) {
@@ -92,6 +122,8 @@ export default function Topbar({
     announcements: "Announcements",
     assignments: "To-do",
     tasks: "Tasks",
+    practicum: "Practicum",
+    meetings: "Meetings",
     leaderboards: "Leaderboards",
     // Professor
     teachers: "Teacher Dashboard",
@@ -132,6 +164,17 @@ export default function Topbar({
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
         {/* Left Side: Menu + Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
+          {onOpenMobileMenu && (
+            <button
+              type="button"
+              onClick={onOpenMobileMenu}
+              className="rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
+              aria-label="Open menu"
+            >
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          )}
+
           {/* Mobile Institute Badge & Title */}
           <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
 
@@ -161,7 +204,7 @@ export default function Topbar({
                     Campus
                   </span>
                   <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
-                    {instituteName}
+                    {resolvedInstituteName}
                   </span>
                 </div>
               </div>
@@ -179,32 +222,52 @@ export default function Topbar({
           {/* Search bar Desktop (Wide only on xl+) */}
           <button
             type="button"
-            onClick={event => { event.currentTarget.focus(); setSearchModalOpen(true); }}
-            className="hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setSearchModalOpen(true);
+            }}
+            className={`topbar-search-trigger hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer ${
+              isIte
+                ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                : ""
+            }`}
             style={{
               borderColor: undefined,
             }}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <Search className="h-4 w-4 text-slate-400 dark:text-[#8B92A5] shrink-0" />
-              <span className="text-sm text-slate-400 dark:text-[#555C72] truncate">
+              <span className="text-sm text-slate-500 dark:text-[#94A3B8] truncate">
                 Search courses, notes, or peers...
               </span>
             </div>
             <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
-              ⌘K
+              {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
           </button>
 
           {/* Mobile & Tablet Compact Search Button - only on sm+ to keep mobile header clean */}
           <button
             type="button"
-            onClick={event => { event.currentTarget.focus(); setSearchModalOpen(true); }}
-            className="hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setSearchModalOpen(true);
+            }}
+            className={`topbar-search-trigger hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0 ${
+              isIte
+                ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                : ""
+            }`}
             aria-label="Search"
           >
             <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </button>
+
+          {/* Focus Mode trigger button (ITE students only) */}
+          <TopbarFocusButton pathname={pathname} />
+
+          {/* Offline indicator (ITE students only) */}
+          <TopbarOfflineIndicator instituteCode={instituteCode} userRole={userRole} />
 
           {/* Light / Dark Mode Toggle Button */}
           <button
@@ -236,6 +299,7 @@ export default function Topbar({
           {/* User Profile Avatar with Left Separator */}
           <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-white/10" ref={dropdownRef}>
             <button
+              ref={profileButtonRef}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-1 sm:gap-2.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-0.5 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-8 sm:h-10 shrink-0 touch-manipulation active:scale-95"
               aria-expanded={isDropdownOpen}
@@ -270,6 +334,7 @@ export default function Topbar({
 
             <div
               inert={!isDropdownOpen}
+              aria-hidden={!isDropdownOpen}
               className={`absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-[rgba(255,255,255,0.1)] py-1.5 shadow-xl transition-all duration-200 origin-top-right ${
                 isDropdownOpen
                   ? "opacity-100 scale-100 pointer-events-auto"
@@ -343,6 +408,10 @@ export default function Topbar({
         instituteCode={instituteCode}
         theme={theme}
         userRole={userRole === "ADMIN" ? "Administrator" : userRole}
+        enrolledCourses={enrolledCourses}
+        isEligibleForActivities={isEligibleForActivities}
+        isEligibleForMeetings={isEligibleForMeetings}
+        isEligibleForPracticum={isEligibleForPracticum}
       />
     </header>
   );

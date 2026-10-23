@@ -29,8 +29,15 @@ import {
   BarChart2,
   Archive,
   Terminal,
+  Video,
+  NotebookPen,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import {
+  filterSearchItems,
+  getSearchFocusRingColor,
+  getSearchFooterText,
+} from "@/lib/ite/search/search-filter";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -39,6 +46,9 @@ interface SearchModalProps {
   theme: InstituteTheme;
   userRole?: string;
   enrolledCourses?: { id: string; title: string; code: string }[];
+  isEligibleForActivities?: boolean;
+  isEligibleForMeetings?: boolean;
+  isEligibleForPracticum?: boolean;
 }
 
 interface SearchItem {
@@ -57,12 +67,17 @@ export default function SearchModal({
   theme,
   userRole,
   enrolledCourses = [],
+  isEligibleForActivities,
+  isEligibleForMeetings,
+  isEligibleForPracticum,
 }: SearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const selectedItemRef = useRef<HTMLButtonElement | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -73,28 +88,67 @@ export default function SearchModal({
   useEffect(() => {
     if (!isOpen) {
       setQuery("");
+      setSelectedIndex(0);
       return;
     }
     if (!mounted) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    inputRef.current?.focus();
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
     const trap = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
-      if (event.key !== 'Tab') return;
-      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]') || []).filter(element => element.getClientRects().length > 0);
-      const first = controls[0], last = controls[controls.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current();
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]'
+        ) || []
+      ).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
-    document.addEventListener('keydown', trap);
+    document.addEventListener("keydown", trap);
     return () => {
-      document.removeEventListener('keydown', trap);
+      clearTimeout(timer);
+      document.removeEventListener("keydown", trap);
       document.body.style.overflow = overflow;
       if (previous?.isConnected) previous.focus();
     };
   }, [isOpen, mounted]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  useEffect(() => {
+    if (selectedItemRef.current) {
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      selectedItemRef.current.scrollIntoView({
+        block: "nearest",
+        behavior: prefersReduced ? "auto" : "smooth",
+      });
+    }
+  }, [selectedIndex]);
 
   if (!mounted || !isOpen) return null;
 
@@ -298,7 +352,7 @@ export default function SearchModal({
       {
         id: "nav-grades",
         title: "Grades & Performance",
-        subtitle: "GPA tracker, assignment scores, and feedback",
+        subtitle: "GWA tracker, assignment scores, and feedback",
         category: "Navigation",
         href: `/${instituteCode}/grades`,
         icon: GraduationCap,
@@ -385,20 +439,55 @@ export default function SearchModal({
       }))
     : [];
 
-  const allItems = [...defaultItems, ...courseItems];
+  const rawItems = [...defaultItems, ...courseItems];
+  const eligibleItems = filterSearchItems({
+    items: rawItems,
+    instituteCode,
+    userRole,
+    isEligibleForActivities,
+    isEligibleForMeetings,
+    isEligibleForPracticum,
+    meetingsIcon: Video,
+    practicumIcon: NotebookPen,
+  });
 
   const filteredItems = query.trim()
-    ? allItems.filter(
+    ? eligibleItems.filter(
         (item) =>
           item.title.toLowerCase().includes(query.toLowerCase()) ||
           (item.subtitle && item.subtitle.toLowerCase().includes(query.toLowerCase())) ||
           item.category.toLowerCase().includes(query.toLowerCase())
       )
-    : allItems;
+    : eligibleItems;
+
+  const isIte = (instituteCode || "").toLowerCase() === "ite";
+  const focusRingColor = getSearchFocusRingColor(instituteCode, theme.colors.primary);
 
   function handleSelect(href: string) {
     onClose();
     router.push(href);
+  }
+
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown") {
+      if (filteredItems.length === 0) return;
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      if (filteredItems.length === 0) return;
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
+      return;
+    }
+    if (e.key === "Enter") {
+      if (filteredItems.length > 0 && selectedIndex >= 0 && selectedIndex < filteredItems.length) {
+        e.preventDefault();
+        handleSelect(filteredItems[selectedIndex].href);
+        return;
+      }
+    }
   }
 
   if (!mounted || !isOpen) return null;
@@ -414,21 +503,31 @@ export default function SearchModal({
 
       {/* Modal Container */}
       <div
-        className="relative flex flex-col w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-xl bg-white dark:bg-[#1A1D27] sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150"
-        role="dialog"
         ref={dialogRef}
-        aria-label="Search CdM LMS"
+        className="relative flex flex-col w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-xl bg-white dark:bg-[#1A1D27] sm:rounded-2xl border-0 sm:border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
+        role="dialog"
         aria-modal="true"
+        aria-label="Search CdM LMS"
       >
         {/* Search Header Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2">
+        {/* Search Header Bar */}
+        <div
+          className="relative flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] sm:rounded-t-2xl transition-all focus-within:ring-2 focus-within:ring-inset"
+          style={{
+            "--tw-ring-color": focusRingColor,
+          } as React.CSSProperties}
+        >
           <Search className="h-5 w-5 text-slate-400 dark:text-slate-500 shrink-0" />
           <input
             ref={inputRef}
-            aria-label="Search courses and tools"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+            aria-label="Search courses, assignments, tools"
+            aria-autocomplete="list"
+            aria-controls="search-results-list"
+            aria-activedescendant={filteredItems[selectedIndex]?.id}
             placeholder={
               isAdmin
                 ? "Search admin directories, tools, audit..."
@@ -436,7 +535,8 @@ export default function SearchModal({
                 ? "Search classes, grading, tools..."
                 : "Search courses, assignments, tools..."
             }
-            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none min-h-11"
+            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 min-h-11"
+            style={{ outline: "none", boxShadow: "none" }}
           />
           {query && (
             <button
@@ -458,7 +558,12 @@ export default function SearchModal({
         </div>
 
         {/* Results List */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div
+          id="search-results-list"
+          role="listbox"
+          aria-label="Search results"
+          className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        >
           {filteredItems.length === 0 ? (
             <div className="py-12 text-center">
               <Search className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
@@ -474,14 +579,23 @@ export default function SearchModal({
               </p>
             </div>
           ) : (
-            filteredItems.map((item) => {
+            filteredItems.map((item, index) => {
               const Icon = item.icon;
+              const isSelected = index === selectedIndex;
               return (
                 <button
                   key={item.id}
+                  ref={isSelected ? selectedItemRef : null}
                   type="button"
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={() => handleSelect(item.href)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all text-left group cursor-pointer min-h-12"
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group cursor-pointer min-h-12 ${
+                    isSelected
+                      ? "bg-slate-100 dark:bg-white/[0.08] border-slate-300 dark:border-white/20"
+                      : "hover:bg-slate-100 dark:hover:bg-white/5 border-transparent hover:border-slate-200 dark:hover:border-white/5"
+                  }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
@@ -494,7 +608,14 @@ export default function SearchModal({
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] group-hover:text-[#F97316] transition-colors truncate">
+                      <p
+                        className={`text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] transition-colors truncate ${
+                          isIte
+                            ? "group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                            : "group-hover:text-[#F97316]"
+                        }`}
+                        style={isSelected && isIte ? { color: theme.colors.primary } : {}}
+                      >
                         {item.title}
                       </p>
                       {item.subtitle && (
@@ -509,7 +630,11 @@ export default function SearchModal({
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hidden sm:inline-block">
                       {item.category}
                     </span>
-                    <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ArrowRight
+                      className={`h-4 w-4 text-slate-400 transition-opacity ${
+                        isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    />
                   </div>
                 </button>
               );
@@ -518,8 +643,8 @@ export default function SearchModal({
         </div>
 
         {/* Footer info on desktop */}
-        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 text-[11px] text-slate-400 dark:text-slate-500">
-          <span>Navigate with 1-tap</span>
+        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-[11px] text-slate-400 dark:text-slate-500">
+          <span>{getSearchFooterText(instituteCode)}</span>
           <span>Press ESC to exit</span>
         </div>
       </div>

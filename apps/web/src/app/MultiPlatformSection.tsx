@@ -53,7 +53,7 @@ export default function MultiPlatformSection({
   brand,
 }: MultiPlatformSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const isSectionInView = useInView(sectionRef, { once: false, amount: 0.1 });
+  const isSectionInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   // Synthetic resize-nudge on mount to ensure observers measure immediately on first paint
   useEffect(() => {
@@ -221,7 +221,7 @@ export default function MultiPlatformSection({
                   "Department portals for ICS, ITE, and IBE",
                   "Course syllabi, classwork, and interactive modules",
                   "Quiz submissions with automated integrity monitoring",
-                  "Midterm & final gradebook records with GPA tracking",
+                  "Midterm & final gradebook records with GWA tracking",
                   "Campus-wide official advisories and department notices",
                 ].map((cap, i) => (
                   <div key={i} className="flex items-start gap-2.5 text-xs text-slate-300">

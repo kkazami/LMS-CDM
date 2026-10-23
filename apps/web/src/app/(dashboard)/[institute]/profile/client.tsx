@@ -95,6 +95,7 @@ export default function ProfileEditClient({
 }: ProfileEditClientProps) {
   const router = useRouter();
   const { avatarUrl } = useAvatar();
+  const isIte = instituteCode?.toLowerCase() === "ite";
 
   // Form state
   const [name, setName] = useState(user.name);
@@ -219,7 +220,9 @@ export default function ProfileEditClient({
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
-              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
+              className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 ${
+                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+              }`}
               placeholder="Your full name"
             />
           </div>
@@ -238,7 +241,9 @@ export default function ProfileEditClient({
               onChange={(e) => setBio(e.target.value.slice(0, 300))}
               maxLength={300}
               rows={3}
-              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none resize-none transition placeholder:text-slate-400 focus:border-orange-500"
+              className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none resize-none transition placeholder:text-slate-400 ${
+                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+              }`}
               placeholder="Tell people a little about yourself..."
             />
           </div>
@@ -253,7 +258,9 @@ export default function ProfileEditClient({
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
+              className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 ${
+                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+              }`}
               placeholder="+XX-XXX-XXXX"
             />
           </div>
@@ -267,7 +274,9 @@ export default function ProfileEditClient({
               id="profile-department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+              className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition ${
+                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+              }`}
             >
               <option value="">Select program</option>
               {programOptions.map((opt) => (
@@ -288,7 +297,9 @@ export default function ProfileEditClient({
                 id="profile-yearLevel"
                 value={yearLevel}
                 onChange={(e) => setYearLevel(e.target.value)}
-                className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+                className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition ${
+                  isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+                }`}
               >
                 <option value="">Select year level</option>
                 {YEAR_OPTIONS.map((opt) => (
@@ -299,6 +310,7 @@ export default function ProfileEditClient({
               </select>
             </div>
           )}
+
 
           {/* Cover Color */}
           <div className="grid gap-2">
@@ -337,7 +349,9 @@ export default function ProfileEditClient({
                     }
                   }}
                   placeholder="#HEX"
-                  className="w-24 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
+                  className={`w-24 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 ${
+                    isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+                  }`}
                 />
               </div>
             </div>
@@ -357,12 +371,16 @@ export default function ProfileEditClient({
           <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                <Sparkles className="h-4 w-4 text-[#F97316]" />
+                <Sparkles className={`h-4 w-4 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
                 Progress & Achievements
               </h2>
               <Link
                 href={`/${instituteCode}/achievements`}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#F97316] hover:text-[#EA580C] transition-colors"
+                className={`inline-flex items-center gap-1 text-xs font-bold transition-colors ${
+                  isIte
+                    ? "text-blue-600 dark:text-blue-400 hover:text-blue-700"
+                    : "text-[#F97316] hover:text-[#EA580C]"
+                }`}
               >
                 <span>View All Achievements</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -393,7 +411,11 @@ export default function ProfileEditClient({
                         <span className={`text-base font-black ${tierConfig.color} ${tierConfig.darkColor}`}>
                           Level {levelInfo.level} · {tierConfig.label} Tier
                         </span>
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 font-mono font-bold">
+                        <span className={`text-xs px-2 py-0.5 rounded-md font-mono font-bold ${
+                          isIte
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                        }`}>
                           {exp} Total EXP
                         </span>
                       </div>
@@ -408,7 +430,9 @@ export default function ProfileEditClient({
                         </div>
                         <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-[#F97316] transition-all duration-700 ease-out"
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${
+                              isIte ? "bg-blue-600" : "bg-[#F97316]"
+                            }`}
                             style={{ width: `${levelInfo.progressPercent}%` }}
                           />
                         </div>
@@ -416,7 +440,9 @@ export default function ProfileEditClient({
 
                       {/* Streak & Total Days */}
                       <div className="flex items-center justify-center sm:justify-start gap-4 pt-1 text-xs text-slate-600 dark:text-[#8B92A5]">
-                        <span className="inline-flex items-center gap-1.5 font-bold text-orange-600 dark:text-orange-400">
+                        <span className={`inline-flex items-center gap-1.5 font-bold ${
+                          isIte ? "text-blue-600 dark:text-blue-400" : "text-orange-600 dark:text-orange-400"
+                        }`}>
                           <Flame className="w-4 h-4 fill-orange-500 text-orange-500" />
                           {streak}-Day Login Streak
                         </span>
@@ -462,15 +488,23 @@ export default function ProfileEditClient({
                               key={b.badgeRuleId}
                               href={`/${instituteCode}/achievements?badge=${b.badgeRuleId}`}
                               title={`View ${name} in Achievements`}
-                              className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-200/80 dark:border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 dark:hover:bg-orange-500/10 transition-all duration-150 text-center cursor-pointer active:scale-95 shadow-xs"
+                              className={`group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-200/80 dark:border-white/5 transition-all duration-150 text-center cursor-pointer active:scale-95 shadow-xs ${
+                                isIte
+                                  ? "hover:border-blue-500/50 hover:bg-blue-500/5 dark:hover:bg-blue-500/10"
+                                  : "hover:border-orange-500/50 hover:bg-orange-500/5 dark:hover:bg-orange-500/10"
+                              }`}
                             >
-                              <div className={`p-2 rounded-xl transition-transform group-hover:scale-110 ${def?.bgColor || "bg-orange-500/10"}`}>
+                              <div className={`p-2 rounded-xl transition-transform group-hover:scale-110 ${def?.bgColor || (isIte ? "bg-blue-500/10" : "bg-orange-500/10")}`}>
                                 <BadgeIcon
                                   name={def?.iconName || "Trophy"}
-                                  className={`w-5 h-5 ${def?.color || "text-orange-500"} ${def?.darkColor || "dark:text-orange-400"}`}
+                                  className={`w-5 h-5 ${def?.color || (isIte ? "text-blue-500" : "text-orange-500")} ${def?.darkColor || (isIte ? "dark:text-blue-400" : "dark:text-orange-400")}`}
                                 />
                               </div>
-                              <span className="text-[11px] font-bold text-slate-700 dark:text-[#F0F2F8] group-hover:text-orange-600 dark:group-hover:text-orange-400 leading-tight line-clamp-1 transition-colors">
+                              <span className={`text-[11px] font-bold text-slate-700 dark:text-[#F0F2F8] leading-tight line-clamp-1 transition-colors ${
+                                isIte
+                                  ? "group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                                  : "group-hover:text-orange-600 dark:group-hover:text-orange-400"
+                              }`}>
                                 {name}
                               </span>
                               <span className="text-[10px] text-slate-400 dark:text-[#555C72] font-mono">
@@ -482,6 +516,7 @@ export default function ProfileEditClient({
                       </div>
                     )}
                   </div>
+
                 </div>
               );
             })()}
@@ -542,13 +577,14 @@ export default function ProfileEditClient({
                     key={course.id}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-[#F0F2F8]"
                   >
-                    <span className="font-bold text-[#F97316]">
+                    <span className={`font-bold ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`}>
                       {course.code}
                     </span>
                     <span className="text-slate-400 dark:text-slate-600">·</span>
                     <span className="max-w-35 truncate">{course.title}</span>
                   </span>
                 ))}
+
               </div>
             )}
           </div>

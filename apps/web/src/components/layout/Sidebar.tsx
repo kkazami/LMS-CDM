@@ -32,6 +32,8 @@ import {
   Settings,
   HelpCircle,
   MessageSquareQuote,
+  NotebookPen,
+  Video,
   X,
   LifeBuoy,
   type LucideIcon,
@@ -67,6 +69,10 @@ interface SidebarProps {
   isEligibleForActivities?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
+  /** When true, renders the "Practicum" nav entry (ITE students and instructors only). */
+  isEligibleForPracticum?: boolean;
+  /** When true, renders the "Meetings" nav entry (ITE students and instructors only). */
+  isEligibleForMeetings?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -74,7 +80,7 @@ interface SidebarProps {
 /** Sidebar link ID for "My Courses" — used to detect the accordion item. */
 const MY_COURSES_KEY = "my-courses";
 
-const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
+export const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: Library },
@@ -84,6 +90,26 @@ const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Flashcards", href: `/${code}/flashcards`, icon: FlashcardIcon },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
+
+/**
+ * Shared ITE student navigation destinations for Sidebar and FocusFloatingBar.
+ */
+export function getIteStudentNavLinks(
+  code: string,
+  options?: { isEligibleForPracticum?: boolean; isEligibleForMeetings?: boolean }
+): NavLink[] {
+  const base = getStudentLinks(code).map(({ key, ...item }) => item);
+  const includeMeetings = options?.isEligibleForMeetings ?? (code.toLowerCase() === "ite");
+  const includePracticum = options?.isEligibleForPracticum ?? true;
+  const list = [...base];
+  if (includeMeetings) {
+    list.push({ label: "Meetings", href: `/${code}/meetings`, icon: Video });
+  }
+  if (includePracticum) {
+    list.push({ label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen });
+  }
+  return list;
+}
 
 const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
@@ -125,6 +151,8 @@ export default function Sidebar({
   onCloseMobileDrawer,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForPracticum,
+  isEligibleForMeetings,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -149,6 +177,16 @@ export default function Sidebar({
         { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
       ];
     }
+  }
+
+  const meetingsEligible =
+    (isEligibleForMeetings ?? (instituteCode.toLowerCase() === "ite")) && (isStudent || isProfessor);
+  if (meetingsEligible) {
+    links = [...links, { label: "Meetings", href: `/${instituteCode}/meetings`, icon: Video }];
+  }
+
+  if (isEligibleForPracticum && (isStudent || isProfessor)) {
+    links = [...links, { label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen }];
   }
 
   if (isEligibleForKnowledgeExchange) {
@@ -189,7 +227,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`${
+      className={`dashboard-sidebar ${
         isMobileDrawer
           ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
           : `hidden h-screen border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${

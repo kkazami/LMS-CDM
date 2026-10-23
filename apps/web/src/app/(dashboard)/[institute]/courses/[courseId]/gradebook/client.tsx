@@ -23,23 +23,15 @@ function useIsMobileView(): boolean {
   );
 }
 
-export function getGradingScaleEquivalent(pct: number): string {
-  const p = Math.round(pct);
-  if (p >= 98) return "1.00";
-  if (p >= 96) return "1.25";
-  if (p >= 93) return "1.50";
-  if (p >= 90) return "1.75";
-  if (p >= 87) return "2.00";
-  if (p >= 84) return "2.25";
-  if (p >= 81) return "2.50";
-  if (p >= 78) return "2.75";
-  if (p >= 75) return "3.00";
-  if (p >= 70) return "INC";
-  return "F";
-}
+import { percentToGradePoint, formatGradePoint, isPassing } from "@/lib/grading/ph-scale";
 import GradingPolicyModal from "@/components/courses/GradingPolicyModal";
 import GradeEvaluationModal from "@/components/courses/GradeEvaluationModal";
 import type { InstituteTheme } from "@/lib/theme";
+
+export function getGradingScaleEquivalent(pct: number): string {
+  const gp = percentToGradePoint(pct);
+  return formatGradePoint(gp);
+}
 
 interface GradebookClientProps {
   data: GradebookData;
@@ -59,6 +51,7 @@ function gradeColor(grade: number | null, maxPoints: number | null): string {
 }
 
 export default function GradebookClient({ data, courseId, courseTitle, instituteCode, theme }: GradebookClientProps) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const isMobileView = useIsMobileView();
   const [localGrades, setLocalGrades] = useState<Record<string, Record<string, string>>>({});
   const [editingCell, setEditingCell] = useState<{ studentId: string; assignmentId: string } | null>(null);
@@ -367,10 +360,15 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                 </th>
               ))}
               {hasValidPolicy && (
-                <th className="sticky right-0 bg-orange-50/50 dark:bg-orange-950/20 z-20 px-5 py-3 text-right text-xs font-bold text-orange-900 dark:text-orange-300 uppercase tracking-wide border-l border-orange-200/50 dark:border-orange-900/30 min-w-[120px] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
+                <th className={`sticky right-0 z-20 px-5 py-3 text-right text-xs font-bold uppercase tracking-wide min-w-[120px] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] ${
+                  isIte
+                    ? "bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300 border-l border-blue-200/50 dark:border-blue-900/30"
+                    : "bg-orange-50/50 dark:bg-orange-950/20 text-orange-900 dark:text-orange-300 border-l border-orange-200/50 dark:border-orange-900/30"
+                }`}>
                   Final Grade
                 </th>
               )}
+
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -504,7 +502,11 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                                   studentId: student.id,
                                 });
                               }}
-                              className="hidden md:inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/10 dark:hover:bg-orange-500/20 border border-slate-200/50 dark:border-white/10 shrink-0 cursor-pointer"
+                              className={`hidden md:inline-flex items-center justify-center p-1 rounded-md border border-slate-200/50 dark:border-white/10 shrink-0 cursor-pointer ${
+                                isIte
+                                  ? "text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 dark:hover:bg-blue-500/20"
+                                  : "text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/10 dark:hover:bg-orange-500/20"
+                              }`}
                             >
                               {cell?.attachments && cell.attachments.length > 0 ? (
                                 <FileText className="w-3.5 h-3.5" />
@@ -575,6 +577,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                               className={`hidden md:inline-flex items-center justify-center p-1 rounded-md transition-all shrink-0 cursor-pointer ${
                                 isNeedsGrading
                                   ? "text-amber-700 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/30"
+                                  : isIte
+                                  ? "text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 dark:hover:bg-blue-500/20 border border-slate-200/50 dark:border-white/10"
                                   : "text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/10 dark:hover:bg-orange-500/20 border border-slate-200/50 dark:border-white/10"
                               }`}
                             >
@@ -591,14 +595,21 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                   );
                 })}
                 {hasValidPolicy && (
-                  <td className="sticky right-0 bg-orange-50/30 dark:bg-orange-950/10 z-10 px-5 py-3 border-l border-orange-200/40 dark:border-orange-900/30 text-right shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
+                  <td className={`sticky right-0 z-10 px-5 py-3 text-right shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] ${
+                    isIte
+                      ? "bg-blue-50/30 dark:bg-blue-950/10 border-l border-blue-200/40 dark:border-blue-900/30"
+                      : "bg-orange-50/30 dark:bg-orange-950/10 border-l border-orange-200/40 dark:border-orange-900/30"
+                  }`}>
+
                     {(() => {
                       const final = computeFinalGrade(student.id);
                       if (final === null) return <span className="text-slate-400 dark:text-slate-600">—</span>;
-                      const eq = getGradingScaleEquivalent(final);
+                      const gp = percentToGradePoint(final);
+                      const eq = formatGradePoint(gp);
+                      const passed = isPassing(gp);
                       return (
                         <div className="flex flex-col items-end">
-                          <span className={`font-bold text-lg font-mono tabular-nums ${final >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          <span className={`font-bold text-lg font-mono tabular-nums ${passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {eq}
                           </span>
                           <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono tabular-nums">{final.toFixed(1)}%</span>

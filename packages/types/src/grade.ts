@@ -6,6 +6,8 @@ export interface Grade {
   courseCode: string;
   assignmentTitle: string;
   gradedAt: string;
+  courseId?: string;
+  itemType?: string;
 }
 
 export interface GradeSummary {

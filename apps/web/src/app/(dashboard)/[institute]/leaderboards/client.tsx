@@ -55,11 +55,13 @@ export default function LeaderboardsClient({
   enrolledCourses,
   leaderboardActivities,
   currentUserId,
+  instituteCode,
   theme,
   initialSelfAnonymized,
   initialCourseId,
   initialActivityId,
 }: LeaderboardsClientProps) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>(initialCourseId || leaderboardActivities.length ? "course" : "global");
   const [selectedCourseId, setSelectedCourseId] = useState<string>(
@@ -264,16 +266,24 @@ export default function LeaderboardsClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search students..."
-            className="w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 outline-none focus:border-[#F97316] transition-colors"
+            className={`w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 outline-none transition-colors ${
+              isIte ? "focus:border-blue-600" : "focus:border-[#F97316]"
+            }`}
           />
         </div>}
       </div>
 
       {/* Your Rank Floating Snapshot Card (if logged in user has rank) */}
       {activeTab === "global" && selfRecord && (
-        <div className="p-4 rounded-3xl border border-orange-500/30 bg-orange-500/5 dark:bg-orange-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className={`p-4 rounded-3xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+          isIte
+            ? "border-blue-500/30 bg-blue-500/5 dark:bg-blue-950/20"
+            : "border-orange-500/30 bg-orange-500/5 dark:bg-orange-950/20"
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#F97316] text-white font-black text-sm">
+            <div className={`flex items-center justify-center w-10 h-10 rounded-2xl text-white font-black text-sm ${
+              isIte ? "bg-blue-600" : "bg-[#F97316]"
+            }`}>
               #{selfRecord.rank}
             </div>
             <div>
@@ -291,12 +301,15 @@ export default function LeaderboardsClient({
 
           <div className="text-right">
             <span className="text-xs text-slate-500 dark:text-[#8B92A5] block">Total Points</span>
-            <span className="text-base font-black font-mono text-[#F97316]">
+            <span className={`text-base font-black font-mono ${
+              isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"
+            }`}>
               <CountUpNumber value={selfRecord.exp} /> EXP
             </span>
           </div>
         </div>
       )}
+
 
       {/* Global Tab Content */}
       {activeTab === "global" && (
@@ -333,7 +346,9 @@ export default function LeaderboardsClient({
                       onClick={() => openProfile(student)}
                       className={`flex items-center justify-between px-6 py-3.5 transition-colors cursor-pointer ${
                         student.isSelf
-                          ? "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
+                          ? isIte
+                            ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
+                            : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
                           : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                       }`}
                     >
@@ -356,7 +371,11 @@ export default function LeaderboardsClient({
                               {student.name}
                             </span>
                             {student.isSelf && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-orange-500/15 text-orange-600 dark:text-orange-400 font-bold">
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                                isIte
+                                  ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                                  : "bg-orange-500/15 text-orange-600 dark:text-orange-400"
+                              }`}>
                                 You
                               </span>
                             )}
@@ -381,11 +400,14 @@ export default function LeaderboardsClient({
                           </span>
                         </div>
 
-                        <div className="text-xs font-black font-mono text-[#F97316] min-w-[70px]">
+                        <div className={`text-xs font-black font-mono min-w-[70px] ${
+                          isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"
+                        }`}>
                           <CountUpNumber value={student.exp} duration={800} /> EXP
                         </div>
                       </div>
                     </div>
+
                   );
                 })}
               </div>
@@ -408,7 +430,9 @@ export default function LeaderboardsClient({
                   <button
                     key={activity.id}
                     onClick={() => { setLoadingActivity(true); setSelectedActivityId(activity.id); }}
-                    className="text-left p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] hover:border-[#F97316]/50 transition-colors shadow-xs"
+                    className={`text-left p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] transition-colors shadow-xs ${
+                      isIte ? "hover:border-blue-600/50" : "hover:border-[#F97316]/50"
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-[#555C72] tracking-wider">
@@ -432,7 +456,9 @@ export default function LeaderboardsClient({
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5 text-xs text-orange-500 font-bold">
+                    <div className={`flex items-center gap-1.5 text-xs font-bold ${
+                      isIte ? "text-blue-600 dark:text-blue-400" : "text-orange-500"
+                    }`}>
                       <Trophy className="w-3.5 h-3.5" />
                       View Rankings
                     </div>
@@ -495,7 +521,9 @@ export default function LeaderboardsClient({
                           onClick={() => openProfile(student)}
                           className={`flex items-center justify-between px-6 py-3.5 transition-colors cursor-pointer ${
                             student.isSelf
-                              ? "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
+                              ? isIte
+                                ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
+                                : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
                               : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                           }`}
                         >
@@ -507,7 +535,14 @@ export default function LeaderboardsClient({
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{student.name}</span>
-                                {student.isSelf && <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-orange-500/15 text-orange-600 font-bold">You</span>}
+                                {student.isSelf && (
+                                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                                    isIte ? "bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-orange-500/15 text-orange-600"
+                                  }`}>
+                                    You
+                                  </span>
+                                )}
+
                                 {(() => {
                                   const matchingReward = activityRewards
                                     .filter(r => student.rank <= r.placement)

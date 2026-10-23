@@ -27,6 +27,7 @@ export default async function CourseMaterialsPage({ params }: Props) {
 
   const userId = session.user.id;
   const theme = getInstituteTheme(institute);
+  const isIte = institute.toLowerCase() === "ite";
 
   // Validate course & enrollment
   const course = await db.course.findUnique({
@@ -125,7 +126,11 @@ export default async function CourseMaterialsPage({ params }: Props) {
                   {/* Title and Note Section */}
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-xs font-bold text-[#F97316] ring-1 ring-orange-500/20">
+                      <span className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold ${
+                        isIte
+                          ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20"
+                          : "bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] ring-1 ring-orange-500/20"
+                      }`}>
                         {index + 1}
                       </span>
                       <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight">
@@ -155,14 +160,24 @@ export default async function CourseMaterialsPage({ params }: Props) {
                           <Link
                             href={`/${institute}/learning-materials/${courseId}/${material.id}/read?attachmentId=${file.id}`}
                             key={file.id}
-                            className="flex items-center justify-between gap-4 rounded-2xl bg-white dark:bg-[#181B26] p-4 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all duration-300 hover:-translate-y-1 hover:border-[#F97316] dark:hover:border-[#F97316] hover:shadow-md group/link"
+                            className={`flex items-center justify-between gap-4 rounded-2xl bg-white dark:bg-[#181B26] p-4 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md group/link ${
+                              isIte
+                                ? "hover:border-blue-600 dark:hover:border-blue-500"
+                                : "hover:border-[#F97316] dark:hover:border-[#F97316]"
+                            }`}
                           >
                             <div className="flex items-center gap-4 min-w-0">
-                              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] transition-transform duration-300 group-hover/link:scale-110">
+                              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover/link:scale-110 ${
+                                isIte
+                                  ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                                  : "bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316]"
+                              }`}>
                                 <FileText className="h-6 w-6" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="truncate text-base font-bold text-slate-900 dark:text-[#F0F2F8] group-hover/link:text-[#F97316] transition-colors">
+                                <p className={`truncate text-base font-bold text-slate-900 dark:text-[#F0F2F8] transition-colors ${
+                                  isIte ? "group-hover/link:text-blue-600 dark:group-hover/link:text-blue-400" : "group-hover/link:text-[#F97316]"
+                                }`}>
                                   {file.fileName || "Document"}
                                 </p>
                                 <p className="text-xs font-semibold text-slate-500 dark:text-[#8B92A5]">
@@ -171,7 +186,11 @@ export default async function CourseMaterialsPage({ params }: Props) {
                               </div>
                             </div>
                             
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 dark:bg-[#1E2132] text-slate-400 dark:text-[#8B92A5] transition-all duration-300 group-hover/link:bg-orange-500/10 group-hover/link:text-[#F97316]">
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 dark:bg-[#1E2132] text-slate-400 dark:text-[#8B92A5] transition-all duration-300 ${
+                              isIte
+                                ? "group-hover/link:bg-blue-500/10 group-hover/link:text-blue-600 dark:group-hover/link:text-blue-400"
+                                : "group-hover/link:bg-orange-500/10 group-hover/link:text-[#F97316]"
+                            }`}>
                               <ArrowRight className="h-5 w-5" />
                             </div>
                           </Link>

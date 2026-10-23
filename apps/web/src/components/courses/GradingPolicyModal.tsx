@@ -23,6 +23,7 @@ export default function GradingPolicyModal({
   initialWeights,
   readOnly = false,
 }: GradingPolicyModalProps) {
+  const isIte = (theme?.code || "").toLowerCase() === "ite";
   // Local state for weights, keyed by category
   const [weights, setWeights] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -149,7 +150,9 @@ export default function GradingPolicyModal({
                       value={weights[category]}
                       onChange={(e) => setWeights({ ...weights, [category]: e.target.value })}
                       className={`w-20 rounded-lg border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-1.5 text-right text-sm text-slate-900 dark:text-[#F0F2F8] outline-none ${
-                        readOnly ? "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-[#141721]" : "focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        readOnly
+                          ? "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-[#141721]"
+                          : (isIte ? "focus:border-blue-600 focus:ring-1 focus:ring-blue-600" : "focus:border-orange-500 focus:ring-1 focus:ring-orange-500")
                       }`}
                     />
                     <span className="text-slate-400 dark:text-slate-500 text-sm font-medium w-4">%</span>

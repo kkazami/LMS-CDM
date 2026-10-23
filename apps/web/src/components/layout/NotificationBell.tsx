@@ -73,6 +73,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bellButtonRef = useRef<HTMLButtonElement>(null);
   const notificationRequest = useRef<AbortController | null>(null);
 
   // Fetch notifications from API
@@ -97,18 +98,42 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
     }
   }, []);
 
-  // Initial fetch + polling every 30 seconds
+  // Initial fetch + polling every 30 seconds, paused while the tab is hidden
+  // and refreshed immediately when it becomes visible again.
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+
     const refresh = () => {
-      if (document.visibilityState === "visible" && navigator.onLine) void fetchNotifications();
+      if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
+        void fetchNotifications();
+      }
     };
+    const start = () => {
+      if (interval === undefined) interval = setInterval(refresh, 30000);
+    };
+    const stop = () => {
+      if (interval !== undefined) {
+        clearInterval(interval);
+        interval = undefined;
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        refresh();
+        start();
+      }
+    };
+
     refresh();
-    const interval = setInterval(refresh, 30000);
-    document.addEventListener("visibilitychange", refresh);
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("online", refresh);
+
     return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", refresh);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("online", refresh);
       notificationRequest.current?.abort();
     };
@@ -120,6 +145,19 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  // Close on Esc and return focus to the bell
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        bellButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen]);
 
   // Close on outside click or touch
   useEffect(() => {
@@ -239,6 +277,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
       {/* Bell button */}
       <button
         id="notification-bell"
+        ref={bellButtonRef}
         onClick={handleToggle}
         className="relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0"
         aria-label="Notifications"
@@ -248,7 +287,7 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
         <Bell className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-1 -top-1 grid h-3.5 w-3.5 sm:h-5 sm:w-5 place-items-center rounded-full text-[8px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
+            className="notification-bell-badge absolute -right-1 -top-1 grid h-3.5 w-3.5 sm:h-5 sm:w-5 place-items-center rounded-full text-[8px] sm:text-[10px] font-bold text-white shadow-xs animate-in"
             style={{ backgroundColor: theme.colors.primary }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -258,6 +297,8 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
 
       {/* Dropdown panel */}
       <div
+        inert={!isOpen}
+        aria-hidden={!isOpen}
         className={`absolute -right-8 sm:right-0 mt-2 w-[min(340px,calc(100vw-24px))] sm:w-96 rounded-xl bg-white dark:bg-[#1A1D27] shadow-xl border border-slate-200/80 dark:border-white/10 ring-1 ring-black/5 dark:ring-0 transition-all duration-200 origin-top-right z-50 ${
           isOpen
             ? "opacity-100 scale-100 pointer-events-auto"

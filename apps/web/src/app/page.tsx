@@ -566,6 +566,8 @@ function CoverflowDepartmentPortal({
   const springX = useSpring(mouseX, { damping: 25, stiffness: 320, mass: 0.5 });
   const springY = useSpring(mouseY, { damping: 25, stiffness: 320, mass: 0.5 });
   const [isCenterHovered, setIsCenterHovered] = useState(false);
+  const mobileDeckRef = useRef<HTMLDivElement>(null);
+  const isMobileDeckInView = useInView(mobileDeckRef, { once: true, amount: 0.05 });
 
   // Magnetic 3D tilt for the active center card
   // tiltX drives rotateX (vertical tilt), tiltY drives rotateY (horizontal tilt)
@@ -1435,37 +1437,37 @@ export default function HomePage() {
 
   /* ─── Platform Preview Section InView Hooks ─── */
   const previewSectionRef = useRef<HTMLDivElement>(null);
-  const isPreviewInView = useInView(previewSectionRef, { once: false, amount: 0.1 });
+  const isPreviewInView = useInView(previewSectionRef, { once: true, amount: 0.1 });
 
   /* ─── Program Portal Section InView Hooks ─── */
   const portalHeadingRef = useRef<HTMLDivElement>(null);
   const isHeadingInView = useInView(portalHeadingRef, { once: true, amount: 0.1 });
 
   const portalCardRef = useRef<HTMLDivElement>(null);
-  const isCardInView = useInView(portalCardRef, { once: false, amount: 0.1 });
+  const isCardInView = useInView(portalCardRef, { once: true, amount: 0.1 });
 
   const portalTabBarRef = useRef<HTMLDivElement>(null);
-  const isTabBarInView = useInView(portalTabBarRef, { once: false, amount: 0.05 });
+  const isTabBarInView = useInView(portalTabBarRef, { once: true, amount: 0.05 });
 
   const portalPanelRef = useRef<HTMLDivElement>(null);
-  const isPanelInView = useInView(portalPanelRef, { once: false, amount: 0.05 });
+  const isPanelInView = useInView(portalPanelRef, { once: true, amount: 0.05 });
 
   /* ─── Mission & Vision Section InView Hooks ─── */
   const mvHeadingRef = useRef<HTMLDivElement>(null);
-  const isMvHeadingInView = useInView(mvHeadingRef, { once: false, amount: 0.1 });
+  const isMvHeadingInView = useInView(mvHeadingRef, { once: true, amount: 0.1 });
 
   const missionCardRef = useRef<HTMLDivElement>(null);
-  const isMissionInView = useInView(missionCardRef, { once: false, amount: 0.1 });
+  const isMissionInView = useInView(missionCardRef, { once: true, amount: 0.1 });
 
   const visionCardRef = useRef<HTMLDivElement>(null);
-  const isVisionInView = useInView(visionCardRef, { once: false, amount: 0.1 });
+  const isVisionInView = useInView(visionCardRef, { once: true, amount: 0.1 });
 
   /* ─── About Section InView Hooks ─── */
   const aboutHeadingRef = useRef<HTMLDivElement>(null);
-  const isAboutHeadingInView = useInView(aboutHeadingRef, { once: false, amount: 0.1 });
+  const isAboutHeadingInView = useInView(aboutHeadingRef, { once: true, amount: 0.1 });
 
   const aboutGridRef = useRef<HTMLDivElement>(null);
-  const isAboutGridInView = useInView(aboutGridRef, { once: false, amount: 0.1 });
+  const isAboutGridInView = useInView(aboutGridRef, { once: true, amount: 0.1 });
 
 
 

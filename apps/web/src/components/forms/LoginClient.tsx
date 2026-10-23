@@ -88,7 +88,11 @@ export default function LoginClient({
   }
 
   return (
-    <main className={styles.page} style={instituteStyle}>
+    <main
+      data-institute={instituteCode.toLowerCase()}
+      className={styles.page}
+      style={instituteStyle}
+    >
       <div className={`${styles.ambient} ${styles.sage}`} aria-hidden="true" />
       <div className={`${styles.ambient} ${styles.gold}`} aria-hidden="true" />
 

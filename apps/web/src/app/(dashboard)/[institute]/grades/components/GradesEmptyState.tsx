@@ -29,15 +29,18 @@ const TAB_COPY: Record<
   },
 };
 
-export default function GradesEmptyState({ tab }: GradesEmptyStateProps) {
+export default function GradesEmptyState({ tab, theme }: GradesEmptyStateProps) {
   const { heading, message } = TAB_COPY[tab];
+  const isIte = (theme?.code || "").toLowerCase() === "ite";
 
   return (
     <div
       id={`grades-empty-state-${tab}`}
-      className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#1A1D27] border border-[#E4E6EF] dark:border-[rgba(255,255,255,0.07)] rounded-3xl p-8 shadow-xs"
+      className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 rounded-3xl p-8 shadow-xs transition-colors"
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-orange-500/10 text-[#F97316]">
+      <div className={`flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${
+        isIte ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-[#F97316]"
+      }`}>
         <GraduationCap className="w-8 h-8" />
       </div>
       <h2 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] mb-2">{heading}</h2>
