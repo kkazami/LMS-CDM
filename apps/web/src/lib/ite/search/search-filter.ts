@@ -1,3 +1,5 @@
+import { getInstituteName } from "@lms/types";
+
 /**
  * Canonical institute code that qualifies for Interactive Activities (CodeLab, 3D simulations).
  * Client-safe pure constant to avoid bundling server-only database modules into client components.
@@ -168,8 +170,8 @@ export function getSearchFooterText(instituteCode: string): string {
 
 /**
  * Returns the welcome banner portal badge text.
- * For ITE: overrides stale database seed name to "Institute of Teacher Education".
- * For ICS / IBE: preserves database / theme institute name exactly.
+ * For ITE: resolves canonical name "Institute of Teacher Education" via shared helper.
+ * For ICS / IBE: preserves defaultName exactly.
  */
 export function getWelcomeBannerPortalLabel(
   instituteCode: string,
@@ -177,7 +179,7 @@ export function getWelcomeBannerPortalLabel(
   isTeacher: boolean = false
 ): string {
   const isIte = (instituteCode || "").toLowerCase() === "ite";
-  const displayName = isIte ? "Institute of Teacher Education" : defaultName;
+  const displayName = isIte ? getInstituteName(instituteCode, defaultName) : defaultName;
   return isTeacher ? `${displayName} • Faculty Portal` : `${displayName} · Portal`;
 }
 

@@ -142,11 +142,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   return (
     <StudentDashboardClient
       userName={user.name as string}
-      instituteName={
-        institute.toLowerCase() === "ite"
-          ? "Institute of Teacher Education"
-          : getInstituteName(institute, instituteRecord.name)
-      }
+      instituteName={getInstituteName(institute, instituteRecord.name)}
       instituteCode={institute}
       theme={theme}
       initialCourses={enrolledCourses}

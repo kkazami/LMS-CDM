@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu, FileText } from "lucide-react";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
+import { getInstituteName } from "@lms/types";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -56,7 +57,7 @@ export default function Topbar({
   // Shortcut hint: "Ctrl K" by default, "⌘K" on Apple platforms (set after mount to avoid hydration mismatch).
   const [isMac, setIsMac] = useState(false);
   const isIte = (instituteCode || "").toLowerCase() === "ite";
-  const resolvedInstituteName = isIte ? "Institute of Teacher Education" : instituteName;
+  const resolvedInstituteName = getInstituteName(instituteCode, instituteName);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));

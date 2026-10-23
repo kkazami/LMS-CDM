@@ -40,6 +40,7 @@ import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import InstructorAtRiskWidget from "@/components/institute/ite/InstructorAtRiskWidget";
+import { getWelcomeBannerPortalLabel } from "@/lib/ite/search/search-filter";
 
 interface TaughtCourse {
   id: string;
@@ -312,9 +313,7 @@ export default function TeacherDashboardClient({
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>
-                  {instituteCode.toLowerCase() === "ite"
-                    ? "Institute of Teacher Education • Faculty Portal"
-                    : `${instituteName} • Faculty Portal`}
+                  {getWelcomeBannerPortalLabel(instituteCode, instituteName, true)}
                 </span>
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">

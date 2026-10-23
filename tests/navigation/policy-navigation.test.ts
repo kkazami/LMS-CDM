@@ -27,9 +27,12 @@ test('direct policy visits and unsafe return destinations fall back to the landi
   assert.equal(policyReturnTo('/ite/students?tab=courses#upcoming'), '/ite/students?tab=courses#upcoming');
 });
 
-test('ICS uses the current name even with older stored data; other institute names remain intact', () => {
+test('ICS and ITE use the canonical names even with older stored data; other institute names remain intact', () => {
   assert.equal(getInstituteName('ics', 'Legacy institute name'), 'Institute of Computing Studies');
   assert.equal(getInstituteName('ICS', ''), 'Institute of Computing Studies');
+  assert.equal(getInstituteName('ite', 'Institute of Technology and Engineering'), 'Institute of Teacher Education');
+  assert.equal(getInstituteName('ITE', ''), 'Institute of Teacher Education');
+  assert.equal(getInstituteName(undefined, 'Institute of Technology and Engineering'), 'Institute of Teacher Education');
   assert.equal(getInstituteName('ibe', 'Institute of Business and Entrepreneurship'), 'Institute of Business and Entrepreneurship');
   assert.equal(getInstituteName('custom', 'Custom Institute'), 'Custom Institute');
 });
