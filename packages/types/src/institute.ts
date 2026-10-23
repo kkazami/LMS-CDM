@@ -1,12 +1,15 @@
 export type InstituteCode = 'ics' | 'ibe' | 'ite';
 
 /** Keep existing roster names consistent with the current institute identity. */
-export function getInstituteName(code: string | null | undefined, storedName: string): string {
-  const c = code?.toLowerCase();
-  if (c === 'ics') return 'Institute of Computing Studies';
-  if (c === 'ibe') return 'Institute of Business and Entrepreneurship';
-  if (c === 'ite') return 'Institute of Teacher Education';
-  return storedName;
+export function getInstituteName(code: string | null | undefined, storedName?: string | null): string {
+  const norm = code?.toLowerCase().trim();
+  if (norm === 'ics') return 'Institute of Computing Studies';
+  if (norm === 'ibe') return 'Institute of Business and Entrepreneurship';
+  if (norm === 'ite') return 'Institute of Teacher Education';
+  if (storedName && /technology\s*(?:and|&)\s*engineering/i.test(storedName)) {
+    return 'Institute of Teacher Education';
+  }
+  return storedName ?? '';
 }
 
 export interface Institute {

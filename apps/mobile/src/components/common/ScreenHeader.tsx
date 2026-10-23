@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 
@@ -14,7 +14,7 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, subtitle, rightAction, showBack }: ScreenHeaderProps) {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { s, font, headerPaddingTop, maxFontSizeMultiplier } = useResponsive();
   const router = useRouter();
 
   return (
@@ -23,29 +23,41 @@ export function ScreenHeader({ title, subtitle, rightAction, showBack }: ScreenH
         styles.container,
         {
           backgroundColor: theme.colors.card,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: headerPaddingTop,
           borderBottomColor: theme.colors.border,
         },
       ]}
     >
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingHorizontal: s(16), paddingBottom: s(12) }]}>
         {showBack && (
           <TouchableOpacity
             onPress={() => router.back()}
-            style={styles.backButton}
+            style={[styles.backButton, { marginRight: s(10) }]}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={22} color={theme.colors.text} />
+            <ArrowLeft size={s(20)} color={theme.colors.text} />
           </TouchableOpacity>
         )}
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
+          <Text
+            style={[styles.title, { color: theme.colors.text, fontSize: font(22) }]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
+            {title}
+          </Text>
           {subtitle && (
-            <Text style={[styles.subtitle, { color: theme.colors.sidebarMuted }]}>{subtitle}</Text>
+            <Text
+              style={[styles.subtitle, { color: theme.colors.sidebarMuted, fontSize: font(12.5) }]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              {subtitle}
+            </Text>
           )}
         </View>
-        {rightAction && <View style={styles.rightAction}>{rightAction}</View>}
+        {rightAction && <View style={[styles.rightAction, { marginLeft: s(12) }]}>{rightAction}</View>}
       </View>
     </View>
   );
@@ -59,25 +71,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
   },
   backButton: {
-    marginRight: 12,
     padding: 4,
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   subtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    marginTop: 2,
   },
-  rightAction: {
-    marginLeft: 16,
-  },
+  rightAction: {},
 });

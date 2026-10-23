@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
 import type { FlashcardCard, FlashcardStudyStats } from "@/lib/lms-types";
+import FocusButton from "@/components/focus/FocusButton";
+import { useOfflineStatus } from "@/components/offline/useOfflineStatus";
+import { saveCachedDeck, getCachedDeck, savePendingFlashcardReview } from "@/lib/ite/offline/idb";
+import { generateIdempotencyKey } from "@/lib/ite/offline/pure-logic";
 import {
   ArrowLeft,
   Lightbulb,
@@ -117,9 +122,14 @@ export default function StudyMode({
   deckColor,
   onExit,
 }: StudyModeProps) {
+  const params = useParams();
+  const institute = (params?.institute as string) || "";
+  const isIte = institute.toLowerCase() === "ite";
+
   // ── Remote data ──
   const [allCards, setAllCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const { online, userId } = useOfflineStatus();
   const [stats, setStats] = useState<FlashcardStudyStats | null>(null);
   const [expEarned, setExpEarned] = useState<number | null>(null);
   const sessionStartTimeRef = useRef<number>(Date.now());
@@ -149,7 +159,7 @@ export default function StudyMode({
   const [tfAnswer, setTfAnswer] = useState<boolean | null>(null);
   const [tfAnswered, setTfAnswered] = useState(false);
 
-  // ── Fetch cards from API ──
+  // ── Fetch cards from API (or IndexedDB cache when offline) ──
   useEffect(() => {
     (async () => {
       try {
@@ -158,16 +168,53 @@ export default function StudyMode({
         const data = await res.json();
         setAllCards(data.cards);
         setStats(data.stats);
+        if (userId) {
+          saveCachedDeck(userId, {
+            deckId,
+            userId,
+            cards: data.cards,
+            stats: data.stats,
+            cachedAt: Date.now(),
+          }).catch(() => {});
+        }
+      } catch (err) {
+        if (userId) {
+          try {
+            const cached = await getCachedDeck(userId, deckId);
+            if (cached && Array.isArray(cached.cards) && cached.cards.length > 0) {
+              setAllCards(cached.cards as FlashcardCard[]);
+              if (cached.stats) setStats(cached.stats as FlashcardStudyStats);
+              return;
+            }
+          } catch {}
+        }
+        console.warn("Failed to load cards", err);
       } finally {
         setLoading(false);
       }
     })();
-  }, [deckId]);
+  }, [deckId, userId]);
 
   // Trigger session completion EXP grant when study finishes
   useEffect(() => {
     if (phase === "summary" && sessionResults.length >= 3) {
       const elapsedSeconds = Math.max(5, Math.round((Date.now() - sessionStartTimeRef.current) / 1000));
+      const idempotencyKey = generateIdempotencyKey();
+
+      if (!navigator.onLine && userId) {
+        savePendingFlashcardReview(userId, {
+          id: `rev_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          idempotencyKey,
+          deckId,
+          cardsReviewed: sessionResults.length,
+          durationSeconds: elapsedSeconds,
+          timestamp: Date.now(),
+          retryCount: 0,
+          status: "PENDING",
+        }).catch(() => {});
+        return;
+      }
+
       fetch("/api/flashcards/complete-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,6 +222,7 @@ export default function StudyMode({
           deckId,
           cardsReviewed: sessionResults.length,
           durationSeconds: elapsedSeconds,
+          idempotencyKey,
         }),
       })
         .then((r) => r.json())
@@ -183,9 +231,22 @@ export default function StudyMode({
             setExpEarned(data.grantedExp);
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          if (userId) {
+            savePendingFlashcardReview(userId, {
+              id: `rev_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              idempotencyKey,
+              deckId,
+              cardsReviewed: sessionResults.length,
+              durationSeconds: elapsedSeconds,
+              timestamp: Date.now(),
+              retryCount: 0,
+              status: "PENDING",
+            }).catch(() => {});
+          }
+        });
     }
-  }, [phase, deckId, sessionResults.length]);
+  }, [phase, deckId, sessionResults.length, userId]);
 
   const currentCard = sessionCards[currentIndex] ?? null;
 
@@ -567,9 +628,19 @@ export default function StudyMode({
             </p>
 
             {expEarned !== null && expEarned > 0 && (
-              <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-xs font-black animate-in zoom-in-95">
+              <div className={`mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black animate-in zoom-in-95 ${
+                isIte
+                  ? "bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400"
+                  : "bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400"
+              }`}>
                 <span>✨</span>
                 <span>+{expEarned} EXP Earned!</span>
+              </div>
+            )}
+
+            {!online && (
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-semibold animate-in zoom-in-95">
+                <span>You're offline. Your review will sync when you reconnect.</span>
               </div>
             )}
           </div>
@@ -665,9 +736,16 @@ export default function StudyMode({
         <ArrowLeft className="h-4 w-4" />
         {modeLabelMap[studyMode]}
       </button>
-      <span className="text-sm font-bold text-slate-500 dark:text-[#8B92A5] bg-slate-100 dark:bg-[#1E2132] px-3.5 py-1 rounded-full border border-slate-200/60 dark:border-white/5">
-        {currentIndex + 1} / {sessionCards.length}
-      </span>
+      <div className="flex items-center gap-3">
+        <FocusButton
+          contextType="FLASHCARDS"
+          refId={deckId}
+          title={deckTitle}
+        />
+        <span className="text-sm font-bold text-slate-500 dark:text-[#8B92A5] bg-slate-100 dark:bg-[#1E2132] px-3.5 py-1 rounded-full border border-slate-200/60 dark:border-white/5">
+          {currentIndex + 1} / {sessionCards.length}
+        </span>
+      </div>
     </div>
   );
 

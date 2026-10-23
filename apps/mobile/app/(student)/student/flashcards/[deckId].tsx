@@ -4,13 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
-  Alert,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   RotateCw,
   HelpCircle,
   Trophy,
@@ -22,9 +19,18 @@ import {
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Button } from '../../../../src/components/common/Button';
+import { Card } from '../../../../src/components/common/Card';
+import {
+  Screen,
+  AppHeader,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
+import { radius, spacing } from '../../../../src/lib/theme';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { FlashcardCard } from '@lms/types';
 
@@ -33,9 +39,11 @@ export default function StudentFlashcardStudyScreen() {
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -50,6 +58,7 @@ export default function StudentFlashcardStudyScreen() {
     if (!deckId) return;
 
     try {
+      setErrorMessage(null);
       const cached = await getCachedData<FlashcardCard[]>(`deck_cards_${deckId}`);
       if (cached && cached.length > 0) {
         setCards(cached);
@@ -61,8 +70,10 @@ export default function StudentFlashcardStudyScreen() {
         setCards(response.cards);
         await setCachedData(`deck_cards_${deckId}`, response.cards);
       }
-    } catch {
-      // Graceful fallback to cached cards
+    } catch (err: any) {
+      if (!cards.length) {
+        setErrorMessage(err?.message || 'Could not load flashcards. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -131,271 +142,458 @@ export default function StudentFlashcardStudyScreen() {
   const progressPercent = cards.length > 0 ? ((currentIndex + (sessionCompleted ? 1 : 0)) / cards.length) * 100 : 0;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Top Header */}
-      <View style={[styles.topBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: theme.colors.border }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <ArrowLeft size={20} color={theme.colors.text} />
-        </TouchableOpacity>
-
-        <Text style={[styles.topTitle, { color: theme.colors.text }]}>
-          {sessionCompleted ? 'Session Complete' : `Card ${currentIndex + 1} of ${cards.length}`}
-        </Text>
-
-        <View style={{ width: 38 }} />
-      </View>
+    <Screen contentContainerStyle={styles.screenInner}>
+      <AppHeader
+        showBack
+        title={sessionCompleted ? 'Session Complete' : `Card ${currentIndex + 1} of ${cards.length}`}
+        subtitle="Active Recall Practice Session"
+      />
 
       {/* Progress Bar */}
-      <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.cardSecondary }]}>
-        <View style={[styles.progressBarFill, { width: `${progressPercent}%`, backgroundColor: theme.colors.primary }]} />
+      <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.surfaceAlt, height: s(4) }]}>
+        <View
+          style={[
+            styles.progressBarFill,
+            { width: `${progressPercent}%`, backgroundColor: theme.colors.primary, height: s(4) },
+          ]}
+        />
       </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : cards.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Cards in this Deck</Text>
-          <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-            Add flashcards to begin your active recall study session.
-          </Text>
-          <Button title="Go Back" onPress={() => router.back()} style={{ marginTop: 16 }} />
-        </View>
-      ) : sessionCompleted ? (
-        /* ==================== SUMMARY SCREEN ==================== */
-        <View style={styles.summaryContainer}>
-          <View style={[styles.trophyCircle, { backgroundColor: `${theme.colors.primary}18` }]}>
-            <Trophy size={56} color={theme.colors.primary} />
-          </View>
+      <ScrollView contentContainerStyle={[styles.contentScroll, { padding: s(spacing.lg) }]}>
+        {errorMessage && (
+          <ErrorBanner
+            message={errorMessage}
+            onRetry={loadCards}
+            onDismiss={() => setErrorMessage(null)}
+            retryAccessibilityLabel="Retry loading flashcards"
+            style={{ marginBottom: s(spacing.md) }}
+          />
+        )}
 
-          <Text style={[styles.summaryTitle, { color: theme.colors.text }]}>
-            Fantastic Practice!
-          </Text>
-          <Text style={[styles.summarySub, { color: theme.colors.textSecondary }]}>
-            You completed all cards in this active recall deck.
-          </Text>
-
-          {/* EXP Reward Pill */}
-          <View style={[styles.rewardBadge, { backgroundColor: '#FEF9C3', borderColor: '#F59E0B' }]}>
-            <Zap size={20} color="#D97706" />
-            <Text style={styles.rewardText}>+{expAwarded} EXP Earned</Text>
-          </View>
-
-          {/* Stats Box */}
-          <View style={[styles.statsCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <View style={styles.statCol}>
-              <Text style={[styles.statNum, { color: theme.colors.success }]}>{correctCount}</Text>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Correct</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
-            <View style={styles.statCol}>
-              <Text style={[styles.statNum, { color: theme.colors.danger }]}>{incorrectCount}</Text>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Review Needed</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
-            <View style={styles.statCol}>
-              <Text style={[styles.statNum, { color: theme.colors.primary }]}>
-                {cards.length > 0 ? Math.round((correctCount / cards.length) * 100) : 0}%
-              </Text>
-              <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Accuracy</Text>
-            </View>
-          </View>
-
-          <View style={styles.summaryActions}>
-            <Button
-              title="Practice Again"
-              onPress={handleRestart}
-              icon={RotateCcw}
-              style={{ flex: 1, backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <SkeletonBlock
+              width="100%"
+              height={s(280)}
+              borderRadius={radius.xl}
+              style={{ marginBottom: s(spacing.xl) }}
             />
-            <Button
-              title="Return to Decks"
-              onPress={() => router.back()}
-              variant="outline"
-              style={{ flex: 1 }}
-            />
+            <View style={{ flexDirection: 'row', gap: s(spacing.md) }}>
+              <SkeletonBlock width="48%" height={s(48)} borderRadius={radius.md} />
+              <SkeletonBlock width="48%" height={s(48)} borderRadius={radius.md} />
+            </View>
           </View>
-        </View>
-      ) : (
-        /* ==================== ACTIVE STUDY CARD ==================== */
-        <View style={styles.cardContainer}>
-          <TouchableOpacity
-            activeOpacity={0.95}
-            onPress={() => setIsFlipped((prev) => !prev)}
+        ) : cards.length === 0 ? (
+          <Card
             style={[
-              styles.flashcard,
+              styles.emptyCard,
               {
-                backgroundColor: theme.colors.card,
-                borderColor: isFlipped ? theme.colors.primary : theme.colors.border,
+                padding: s(spacing.xxxl),
+                borderRadius: radius.lg,
+                borderColor: theme.colors.border,
               },
             ]}
           >
-            <View style={styles.cardSideBadge}>
-              <Badge
-                label={isFlipped ? 'ANSWER (BACK)' : 'PROMPT (FRONT)'}
-                variant={isFlipped ? 'primary' : 'default'}
-                size="sm"
-              />
-              <View style={styles.flipPromptRow}>
-                <RotateCw size={13} color={theme.colors.textSecondary} />
-                <Text style={[styles.flipPromptText, { color: theme.colors.textSecondary }]}>Tap to flip</Text>
-              </View>
+            <HelpCircle size={s(48)} color={theme.colors.textSecondary} />
+            <Text
+              style={[
+                styles.emptyTitle,
+                { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              No Cards in this Deck
+            </Text>
+            <Text
+              style={[
+                styles.emptySubtitle,
+                { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Add flashcards to begin your active recall study session.
+            </Text>
+            <Button
+              title="Go Back"
+              onPress={() => router.back()}
+              style={{ marginTop: s(spacing.lg) }}
+            />
+          </Card>
+        ) : sessionCompleted ? (
+          /* ==================== SUMMARY SCREEN ==================== */
+          <View style={styles.summaryContainer}>
+            <View
+              style={[
+                styles.trophyCircle,
+                {
+                  backgroundColor: `${theme.colors.primary}18`,
+                  width: s(88),
+                  height: s(88),
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Trophy size={s(50)} color={theme.colors.primary} />
             </View>
 
-            <View style={styles.cardContentBox}>
-              <Text style={[styles.cardMainText, { color: theme.colors.text }]}>
-                {isFlipped ? currentCard.back : currentCard.front}
+            <Text
+              style={[
+                styles.summaryTitle,
+                { color: theme.colors.text, fontSize: font(22), lineHeight: font(28) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Fantastic Practice!
+            </Text>
+            <Text
+              style={[
+                styles.summarySub,
+                { color: theme.colors.textSecondary, fontSize: font(14), lineHeight: font(20) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              You completed all cards in this active recall deck.
+            </Text>
+
+            {/* EXP Reward Pill */}
+            <View
+              style={[
+                styles.rewardBadge,
+                {
+                  backgroundColor: theme.colors.warningBg,
+                  borderColor: theme.colors.warning,
+                  borderRadius: radius.full,
+                  paddingHorizontal: s(spacing.lg),
+                  paddingVertical: s(spacing.sm),
+                },
+              ]}
+            >
+              <Zap size={s(20)} color={theme.colors.warning} />
+              <Text
+                style={[
+                  styles.rewardText,
+                  { color: theme.colors.warning, fontSize: font(14) },
+                ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                +{expAwarded} EXP Earned
               </Text>
             </View>
 
-            {/* Hint Section */}
-            {!isFlipped && currentCard.hint ? (
-              <View style={styles.hintContainer}>
-                {showHint ? (
-                  <View style={[styles.hintBox, { backgroundColor: theme.colors.cardSecondary }]}>
-                    <Text style={[styles.hintText, { color: theme.colors.textSecondary }]}>
-                      Hint: {currentCard.hint}
-                    </Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.revealHintBtn}
-                    onPress={() => setShowHint(true)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <HelpCircle size={14} color={theme.colors.primary} />
-                    <Text style={[styles.revealHintText, { color: theme.colors.primary }]}>
-                      Reveal Hint
-                    </Text>
-                  </TouchableOpacity>
-                )}
+            {/* Stats Box */}
+            <View
+              style={[
+                styles.statsCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  padding: s(spacing.lg),
+                  marginVertical: s(spacing.xl),
+                },
+              ]}
+            >
+              <View style={styles.statCol}>
+                <Text
+                  style={[styles.statNum, { color: theme.colors.success, fontSize: font(22) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  {correctCount}
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Correct
+                </Text>
               </View>
-            ) : null}
-          </TouchableOpacity>
+              <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
+              <View style={styles.statCol}>
+                <Text
+                  style={[styles.statNum, { color: theme.colors.danger, fontSize: font(22) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  {incorrectCount}
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Review Needed
+                </Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
+              <View style={styles.statCol}>
+                <Text
+                  style={[styles.statNum, { color: theme.colors.primary, fontSize: font(22) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  {cards.length > 0 ? Math.round((correctCount / cards.length) * 100) : 0}%
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Accuracy
+                </Text>
+              </View>
+            </View>
 
-          {/* Spaced Repetition Buttons */}
-          <View style={styles.responseButtonsRow}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Incorrect"
-              style={[styles.respBtn, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}
-              onPress={() => handleResponse('incorrect')}
-              activeOpacity={0.8}
-            >
-              <XCircle size={20} color="#DC2626" />
-              <Text style={[styles.respBtnText, { color: '#991B1B' }]}>Again</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Hard"
-              style={[styles.respBtn, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}
-              onPress={() => handleResponse('incorrect')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.respBtnText, { color: '#92400E' }]}>Hard</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Good"
-              style={[styles.respBtn, { backgroundColor: '#DBEAFE', borderColor: '#3B82F6' }]}
-              onPress={() => handleResponse('correct')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.respBtnText, { color: '#1E40AF' }]}>Good</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Easy"
-              style={[styles.respBtn, { backgroundColor: '#D1FAE5', borderColor: '#10B981' }]}
-              onPress={() => handleResponse('correct')}
-              activeOpacity={0.8}
-            >
-              <CheckCircle2 size={20} color="#059669" />
-              <Text style={[styles.respBtnText, { color: '#065F46' }]}>Easy</Text>
-            </TouchableOpacity>
+            <View style={[styles.summaryActions, { gap: s(spacing.md) }]}>
+              <Button
+                title="Practice Again"
+                onPress={handleRestart}
+                icon={RotateCcw}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Return to Decks"
+                onPress={() => router.back()}
+                variant="outline"
+                style={{ flex: 1 }}
+              />
+            </View>
           </View>
-        </View>
-      )}
-    </SafeAreaView>
+        ) : (
+          /* ==================== ACTIVE STUDY CARD ==================== */
+          <View style={styles.cardContainer}>
+            <TouchableOpacity
+              activeOpacity={0.92}
+              onPress={() => setIsFlipped((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityLabel={`Flashcard: ${isFlipped ? 'showing answer' : 'showing question'}. Double tap to flip.`}
+              style={[
+                styles.flashcard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: isFlipped ? theme.colors.primary : theme.colors.border,
+                  borderRadius: radius.xl,
+                  padding: s(spacing.xl),
+                  minHeight: s(280),
+                },
+              ]}
+            >
+              <View style={styles.cardSideBadge}>
+                <Badge
+                  label={isFlipped ? 'ANSWER (BACK)' : 'PROMPT (FRONT)'}
+                  variant={isFlipped ? 'primary' : 'default'}
+                  size="sm"
+                />
+                <View style={[styles.flipPromptRow, { gap: s(spacing.xs) }]}>
+                  <RotateCw size={s(13)} color={theme.colors.textSecondary} />
+                  <Text
+                    style={[styles.flipPromptText, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    Tap to flip
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.cardContentBox}>
+                <Text
+                  style={[
+                    styles.cardMainText,
+                    {
+                      color: theme.colors.text,
+                      fontSize: font(19),
+                      lineHeight: font(27),
+                    },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  {isFlipped ? currentCard.back : currentCard.front}
+                </Text>
+              </View>
+
+              {/* Hint Section */}
+              {!isFlipped && Boolean(currentCard.hint) ? (
+                <View style={[styles.hintContainer, { marginTop: s(spacing.md) }]}>
+                  {showHint ? (
+                    <View
+                      style={[
+                        styles.hintBox,
+                        {
+                          backgroundColor: theme.colors.surfaceAlt,
+                          borderRadius: radius.md,
+                          padding: s(spacing.md),
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.hintText,
+                          { color: theme.colors.textSecondary, fontSize: font(12.5), lineHeight: font(18) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        Hint: {currentCard.hint}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.revealHintBtn, { minHeight: TOUCH_TARGET }]}
+                      onPress={() => setShowHint(true)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Reveal flashcard hint"
+                    >
+                      <HelpCircle size={s(14)} color={theme.colors.primary} />
+                      <Text
+                        style={[
+                          styles.revealHintText,
+                          { color: theme.colors.primary, fontSize: font(13), marginLeft: s(spacing.xs) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        Reveal Hint
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : null}
+            </TouchableOpacity>
+
+            {/* Spaced Repetition Response Buttons */}
+            <View style={[styles.responseButtonsRow, { marginTop: s(spacing.xl), gap: s(spacing.md) }]}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Mark incorrect or review needed"
+                style={[
+                  styles.respBtn,
+                  {
+                    backgroundColor: theme.colors.dangerBg,
+                    borderColor: theme.colors.danger,
+                    borderRadius: radius.md,
+                    paddingVertical: s(spacing.md),
+                  },
+                ]}
+                onPress={() => handleResponse('incorrect')}
+                activeOpacity={0.8}
+              >
+                <XCircle size={s(20)} color={theme.colors.danger} />
+                <Text
+                  style={[styles.respBtnText, { color: theme.colors.danger, fontSize: font(14), marginLeft: s(spacing.xs) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Again
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Mark correct and confident"
+                style={[
+                  styles.respBtn,
+                  {
+                    backgroundColor: theme.colors.successBg,
+                    borderColor: theme.colors.success,
+                    borderRadius: radius.md,
+                    paddingVertical: s(spacing.md),
+                  },
+                ]}
+                onPress={() => handleResponse('correct')}
+                activeOpacity={0.8}
+              >
+                <CheckCircle2 size={s(20)} color={theme.colors.success} />
+                <Text
+                  style={[styles.respBtnText, { color: theme.colors.success, fontSize: font(14), marginLeft: s(spacing.xs) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Got It
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screenInner: {
     flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topTitle: {
-    fontSize: 16,
-    fontWeight: '700',
   },
   progressBarBackground: {
-    height: 4,
     width: '100%',
   },
-  progressBarFill: {
-    height: '100%',
+  progressBarFill: {},
+  contentScroll: {
+    flexGrow: 1,
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 32,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  emptyCard: {
     alignItems: 'center',
-    padding: 24,
+    marginTop: 32,
   },
   emptyTitle: {
-    fontSize: 18,
     fontWeight: '700',
+    marginTop: 14,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
-    marginTop: 6,
     textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  summaryContainer: {
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  trophyCircle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  summaryTitle: {
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  summarySub: {
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  rewardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    gap: 8,
+  },
+  rewardText: {
+    fontWeight: '700',
+  },
+  statsCard: {
+    flexDirection: 'row',
+    width: '100%',
+    borderWidth: 1,
+  },
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNum: {
+    fontWeight: '800',
+  },
+  statLabel: {
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+  },
+  summaryActions: {
+    flexDirection: 'row',
+    width: '100%',
   },
   cardContainer: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'space-between',
   },
   flashcard: {
-    flex: 1,
-    borderRadius: 24,
-    borderWidth: 2,
-    padding: 24,
+    borderWidth: 1.5,
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 20,
   },
   cardSideBadge: {
     flexDirection: 'row',
@@ -405,130 +603,40 @@ const styles = StyleSheet.create({
   flipPromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
-  flipPromptText: {
-    fontSize: 11,
-  },
+  flipPromptText: {},
   cardContentBox: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24,
   },
   cardMainText: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 32,
   },
-  hintContainer: {
-    alignItems: 'center',
-  },
+  hintContainer: {},
+  hintBox: {},
+  hintText: {},
   revealHintBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   revealHintText: {
-    fontSize: 13,
     fontWeight: '600',
-  },
-  hintBox: {
-    padding: 10,
-    borderRadius: 10,
-    width: '100%',
-  },
-  hintText: {
-    fontSize: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
   responseButtonsRow: {
     flexDirection: 'row',
-    gap: 8,
   },
   respBtn: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 14,
-    borderRadius: 14,
+    justifyContent: 'center',
     borderWidth: 1,
-    minHeight: TOUCH_TARGET,
+    minHeight: TOUCH_TARGET ?? 44,
   },
   respBtnText: {
-    fontSize: 13,
     fontWeight: '700',
-  },
-  summaryContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  trophyCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  summaryTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  summarySub: {
-    fontSize: 14,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  rewardBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  rewardText: {
-    color: '#854D0E',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingVertical: 16,
-    marginBottom: 24,
-  },
-  statCol: {
-    alignItems: 'center',
-  },
-  statNum: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 24,
-  },
-  summaryActions: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
   },
 });

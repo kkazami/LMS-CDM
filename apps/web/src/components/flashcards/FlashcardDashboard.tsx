@@ -10,10 +10,13 @@ import {
   Search,
   SlidersHorizontal,
   X,
+  CloudOff,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
+import { useOfflineStatus } from "@/components/offline/useOfflineStatus";
 
 import type { InstituteTheme } from "@/lib/theme";
+import FocusButton from "@/components/focus/FocusButton";
 
 interface CourseOption {
   id: string;
@@ -47,6 +50,7 @@ export default function FlashcardDashboard({
   courseOptions,
   theme,
 }: FlashcardDashboardProps) {
+  const { online, pendingCount, isIteStudent } = useOfflineStatus();
   const [decks, setDecks] = useState<FlashcardDeck[]>(initialDecks);
   const [activeDeck, setActiveDeck] = useState<FlashcardDeck | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -186,6 +190,7 @@ export default function FlashcardDashboard({
       <div className="page-enter">
         <DeckDetailView
           deck={activeDeck}
+          instituteCode={instituteCode}
           onBack={() => {
             setActiveDeck(null);
             // Refresh decks to get updated stats
@@ -230,6 +235,10 @@ export default function FlashcardDashboard({
           </div>
 
           <div className="shrink-0 flex items-center gap-3">
+            <FocusButton
+              contextType="FLASHCARDS"
+              title="Flashcard Practice"
+            />
             <button
               onClick={() => setCreateOpen(true)}
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-11"
@@ -241,6 +250,23 @@ export default function FlashcardDashboard({
           </div>
         </div>
       </div>
+
+      {/* Offline notice for ITE students */}
+      {!online && isIteStudent && (
+        <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CloudOff className="h-4 w-4 shrink-0" />
+            <span>
+              You're offline. Decks you've opened this session are available. Your reviews will sync when you reconnect.
+            </span>
+          </div>
+          {pendingCount > 0 && (
+            <span className="font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-200 shrink-0">
+              {pendingCount} review{pendingCount === 1 ? "" : "s"} waiting to sync
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="mb-8 flex flex-col sm:flex-row items-center gap-4">

@@ -163,7 +163,7 @@ function DesktopTimelineRow({
   reducedMotion: boolean;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(rowRef, { once: false, amount: 0.15 });
+  const isInView = useInView(rowRef, { once: true, amount: 0.15 });
   const isLeft = entry.side === "left";
 
   return (
@@ -220,7 +220,7 @@ function MobileTimelineRow({
   reducedMotion: boolean;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(rowRef, { once: false, amount: 0.15 });
+  const isInView = useInView(rowRef, { once: true, amount: 0.15 });
 
   return (
     <div ref={rowRef} className="relative flex items-center w-full overflow-hidden">
@@ -250,7 +250,7 @@ export default function AlternatingTimelineSection({
 }: AlternatingTimelineSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const isHeaderInView = useInView(sectionRef, { once: false, amount: 0.1 });
+  const isHeaderInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   // Scroll-drawn connecting line progress:
   // Starts when timeline enters center, reaches full length exactly as LAST card finishes entering viewport

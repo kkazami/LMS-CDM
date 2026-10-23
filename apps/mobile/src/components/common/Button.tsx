@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { LucideIcon } from 'lucide-react-native';
+import { getOnPrimaryColor } from '../../lib/design-system';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 
@@ -14,6 +15,7 @@ interface ButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  textColor?: string;
 }
 
 export function Button({
@@ -25,6 +27,7 @@ export function Button({
   disabled = false,
   style,
   textStyle,
+  textColor: explicitTextColor,
 }: ButtonProps) {
   const theme = useTheme();
 
@@ -45,8 +48,10 @@ export function Button({
 
   const getTextColor = (): string => {
     if (disabled) return '#9CA3AF';
+    if (explicitTextColor) return explicitTextColor;
     switch (variant) {
       case 'primary':
+        return getOnPrimaryColor(theme.colors.primary);
       case 'secondary':
       case 'danger':
         return '#FFFFFF';

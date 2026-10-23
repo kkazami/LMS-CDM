@@ -6,49 +6,49 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
-  Modal,
   Alert,
-  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   Radio,
   FileText,
   Users,
   Award,
-  Megaphone,
   Clock,
   Paperclip,
   CheckCircle2,
-  AlertCircle,
   UploadCloud,
   FileUp,
   Image as ImageIcon,
   Trash2,
-  X,
-  ExternalLink,
-  BookOpen,
 } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../../src/hooks/useResponsive';
 import { Badge } from '../../../../../src/components/common/Badge';
 import { Card } from '../../../../../src/components/common/Card';
 import { Button } from '../../../../../src/components/common/Button';
+import {
+  Screen,
+  AppHeader,
+  FormModal,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../../src/lib/typography';
+import { radius, spacing } from '../../../../../src/lib/theme';
+import { percentToGradePoint, formatGradePoint, getGradeRemark, isPassing } from '../../../../../src/lib/ph-scale';
+import { ClassworkAttachments, ClassworkDescription } from '../../../../../src/components/classwork/ClassworkAttachments';
+import type { CourseGradesResponse } from '@lms/api-client';
 import type {
   CourseDetail,
   CourseStreamResponse,
   CourseClassworkResponse,
   ClassworkItem,
-  ClassworkSubmission,
   CoursePeopleResponse,
-  CourseGradesResponse,
 } from '@lms/types';
 
 type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'GRADES';
@@ -57,12 +57,13 @@ export default function StudentCourseHubScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
-  const user = useAuthStore((s) => s.user);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [activeTab, setActiveTab] = useState<TabType>('STREAM');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Data states
   const [course, setCourse] = useState<CourseDetail | null>(null);
@@ -83,6 +84,7 @@ export default function StudentCourseHubScreen() {
     if (!courseId) return;
 
     try {
+      setErrorMessage(null);
       const [courseRes, streamRes, classworkRes, peopleRes, gradesRes] = await Promise.allSettled([
         api.courses.get(courseId),
         api.courses.getStream(courseId),
@@ -91,23 +93,33 @@ export default function StudentCourseHubScreen() {
         api.courses.getGrades(courseId),
       ]);
 
+      let loadedSomething = false;
       if (courseRes.status === 'fulfilled' && courseRes.value?.course) {
         setCourse(courseRes.value.course as CourseDetail);
+        loadedSomething = true;
       }
       if (streamRes.status === 'fulfilled') {
         setStream(streamRes.value);
+        loadedSomething = true;
       }
       if (classworkRes.status === 'fulfilled') {
         setClasswork(classworkRes.value);
+        loadedSomething = true;
       }
       if (peopleRes.status === 'fulfilled') {
         setPeople(peopleRes.value);
+        loadedSomething = true;
       }
       if (gradesRes.status === 'fulfilled') {
         setGrades(gradesRes.value);
+        loadedSomething = true;
       }
-    } catch {
-      // Graceful fallback
+
+      if (!loadedSomething) {
+        setErrorMessage('Could not load course details. Please check your connection.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to load course information.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -140,18 +152,15 @@ export default function StudentCourseHubScreen() {
             ...prev,
             { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
           ]);
-        } catch {
-          // Fallback if direct server upload fails in dev: attach local name
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: file.uri, fileName: file.name, type: 'FILE' },
-          ]);
+        } catch (uploadErr: any) {
+          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload file to the server.';
+          Alert.alert('Upload Failed', msg);
         } finally {
           setSubmitting(false);
         }
       }
-    } catch {
-      Alert.alert('File Error', 'Could not open document picker.');
+    } catch (err: any) {
+      Alert.alert('File Error', err?.message || 'Could not open document picker.');
     }
   };
 
@@ -174,23 +183,33 @@ export default function StudentCourseHubScreen() {
             ...prev,
             { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
           ]);
-        } catch {
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: asset.uri, fileName, type: 'FILE' },
-          ]);
+        } catch (uploadErr: any) {
+          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload image to the server.';
+          Alert.alert('Upload Failed', msg);
         } finally {
           setSubmitting(false);
         }
       }
-    } catch {
-      Alert.alert('Image Error', 'Could not open photo gallery.');
+    } catch (err: any) {
+      Alert.alert('Image Error', err?.message || 'Could not open photo gallery.');
     }
   };
 
   // Submit Assignment
   const handleSubmitAssignment = async () => {
     if (!selectedAssignment || !courseId) return;
+
+    // Reject unuploaded local device URIs before sending to server
+    const invalidAttachment = localAttachments.find(
+      (att) => !att.url || att.url.startsWith('file:') || att.url.startsWith('content:')
+    );
+    if (invalidAttachment) {
+      Alert.alert(
+        'Upload Required',
+        `The file "${invalidAttachment.fileName}" has not been uploaded to the server yet. Please re-attach it or remove it before turning in.`
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -202,7 +221,7 @@ export default function StudentCourseHubScreen() {
         primaryAtt?.url,
         primaryAtt?.fileName,
         undefined,
-        localAttachments
+        localAttachments.length > 0 ? localAttachments : undefined
       );
 
       try {
@@ -219,7 +238,8 @@ export default function StudentCourseHubScreen() {
       setLocalAttachments([]);
       loadAllCourseData();
     } catch (err: any) {
-      Alert.alert('Submission Failed', err?.message || 'Please try again.');
+      const serverMessage = err?.message || err?.error?.message || err?.bodyData?.message || err?.bodyData?.error;
+      Alert.alert('Submission Failed', serverMessage || 'Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -277,149 +297,167 @@ export default function StudentCourseHubScreen() {
   });
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Course Banner & Navigation Topbar */}
-      <View style={[styles.headerBanner, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <View style={styles.headerTopRow}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={[styles.backBtn, { borderColor: theme.colors.border }]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <ArrowLeft size={20} color={theme.colors.text} />
-          </TouchableOpacity>
-
-          <View style={styles.courseMetaBadges}>
+    <Screen
+      scrollable
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.colors.primary}
+          colors={[theme.colors.primary]}
+        />
+      }
+      contentContainerStyle={styles.screenInner}
+    >
+      {/* Course Banner Topbar */}
+      <AppHeader
+        showBack
+        title={course?.title || 'Course Hub'}
+        subtitle={`Instructor: ${course?.instructorName || 'Faculty Instructor'}`}
+        rightAction={
+          <View style={[styles.headerBadgeGroup, { gap: s(spacing.xs) }]}>
             <Badge label={course?.code || course?.courseCode || 'COURSE'} variant="primary" size="sm" />
-            {course?.section && (
-              <Badge label={course.section} variant="default" size="sm" />
-            )}
-            {course?.room && (
-              <Badge label={`Rm ${course.room}`} variant="info" size="sm" />
-            )}
+            {course?.section ? <Badge label={course.section} variant="default" size="sm" /> : null}
           </View>
-        </View>
+        }
+      />
 
-        <Text style={[styles.courseTitle, { color: theme.colors.text }]} numberOfLines={2}>
-          {course?.title || 'Course Hub'}
-        </Text>
-
-        <Text style={[styles.instructorSubtitle, { color: theme.colors.textSecondary }]}>
-          Instructor: {course?.instructorName || 'Faculty Instructor'}
-        </Text>
-
-        {/* 4 Segmented Navigation Tabs */}
-        <View style={[styles.tabBar, { borderTopColor: theme.colors.border }]}>
-          <TouchableOpacity
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'STREAM' }}
+      {/* 4 Segmented Navigation Tabs */}
+      <View
+        style={[
+          styles.tabBar,
+          {
+            backgroundColor: theme.colors.card,
+            borderBottomColor: theme.colors.border,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'STREAM' }}
+          accessibilityLabel="Course stream tab"
+          style={[
+            styles.tabBtn,
+            { paddingVertical: s(spacing.md) },
+            activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+          ]}
+          onPress={() => setActiveTab('STREAM')}
+        >
+          <Radio size={s(16)} color={activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text
             style={[
-              styles.tabBtn,
-              activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+              styles.tabLabel,
+              {
+                fontSize: font(13),
+                color: activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary,
+                fontWeight: activeTab === 'STREAM' ? '700' : '500',
+              },
             ]}
-            onPress={() => setActiveTab('STREAM')}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
-            <Radio size={16} color={activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary} />
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: activeTab === 'STREAM' ? theme.colors.primary : theme.colors.textSecondary,
-                  fontWeight: activeTab === 'STREAM' ? '700' : '500',
-                },
-              ]}
-            >
-              Stream
-            </Text>
-          </TouchableOpacity>
+            Stream
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'CLASSWORK' }}
+        <TouchableOpacity
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'CLASSWORK' }}
+          accessibilityLabel="Classwork syllabus tab"
+          style={[
+            styles.tabBtn,
+            { paddingVertical: s(spacing.md) },
+            activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+          ]}
+          onPress={() => setActiveTab('CLASSWORK')}
+        >
+          <FileText size={s(16)} color={activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text
             style={[
-              styles.tabBtn,
-              activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+              styles.tabLabel,
+              {
+                fontSize: font(13),
+                color: activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary,
+                fontWeight: activeTab === 'CLASSWORK' ? '700' : '500',
+              },
             ]}
-            onPress={() => setActiveTab('CLASSWORK')}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
-            <FileText size={16} color={activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary} />
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: activeTab === 'CLASSWORK' ? theme.colors.primary : theme.colors.textSecondary,
-                  fontWeight: activeTab === 'CLASSWORK' ? '700' : '500',
-                },
-              ]}
-            >
-              Classwork
-            </Text>
-          </TouchableOpacity>
+            Classwork
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'PEOPLE' }}
+        <TouchableOpacity
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'PEOPLE' }}
+          accessibilityLabel="People and roster tab"
+          style={[
+            styles.tabBtn,
+            { paddingVertical: s(spacing.md) },
+            activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+          ]}
+          onPress={() => setActiveTab('PEOPLE')}
+        >
+          <Users size={s(16)} color={activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text
             style={[
-              styles.tabBtn,
-              activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+              styles.tabLabel,
+              {
+                fontSize: font(13),
+                color: activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary,
+                fontWeight: activeTab === 'PEOPLE' ? '700' : '500',
+              },
             ]}
-            onPress={() => setActiveTab('PEOPLE')}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
-            <Users size={16} color={activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary} />
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: activeTab === 'PEOPLE' ? theme.colors.primary : theme.colors.textSecondary,
-                  fontWeight: activeTab === 'PEOPLE' ? '700' : '500',
-                },
-              ]}
-            >
-              People
-            </Text>
-          </TouchableOpacity>
+            People
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'GRADES' }}
+        <TouchableOpacity
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'GRADES' }}
+          accessibilityLabel="Course grades tab"
+          style={[
+            styles.tabBtn,
+            { paddingVertical: s(spacing.md) },
+            activeTab === 'GRADES' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+          ]}
+          onPress={() => setActiveTab('GRADES')}
+        >
+          <Award size={s(16)} color={activeTab === 'GRADES' ? theme.colors.primary : theme.colors.textSecondary} />
+          <Text
             style={[
-              styles.tabBtn,
-              activeTab === 'GRADES' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+              styles.tabLabel,
+              {
+                fontSize: font(13),
+                color: activeTab === 'GRADES' ? theme.colors.primary : theme.colors.textSecondary,
+                fontWeight: activeTab === 'GRADES' ? '700' : '500',
+              },
             ]}
-            onPress={() => setActiveTab('GRADES')}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
-            <Award size={16} color={activeTab === 'GRADES' ? theme.colors.primary : theme.colors.textSecondary} />
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: activeTab === 'GRADES' ? theme.colors.primary : theme.colors.textSecondary,
-                  fontWeight: activeTab === 'GRADES' ? '700' : '500',
-                },
-              ]}
-            >
-              Grades
-            </Text>
-          </TouchableOpacity>
-        </View>
+            Grades
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Main Tab Content */}
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
+      <View style={[styles.mainTabContent, { padding: s(spacing.lg) }]}>
+        {errorMessage && (
+          <ErrorBanner
+            message={errorMessage}
+            onRetry={loadAllCourseData}
+            onDismiss={() => setErrorMessage(null)}
+            retryAccessibilityLabel="Retry loading course details"
+            style={{ marginBottom: s(spacing.md) }}
           />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+        )}
+
         {loading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+          <View style={styles.loadingContainer}>
+            <SkeletonBlock width="100%" height={s(84)} borderRadius={radius.lg} style={{ marginBottom: s(spacing.md) }} />
+            <SkeletonBlock width="100%" height={s(120)} borderRadius={radius.lg} style={{ marginBottom: s(spacing.md) }} />
+            <SkeletonBlock width="100%" height={s(100)} borderRadius={radius.lg} />
           </View>
         ) : (
           <>
@@ -427,9 +465,9 @@ export default function StudentCourseHubScreen() {
             {activeTab === 'STREAM' && (
               <View>
                 {/* Pinned Broadcast Alerts */}
-                {stream?.broadcasts && stream.broadcasts.length > 0 && (
-                  <View style={styles.broadcastSection}>
-                    {stream.broadcasts.map((b) => (
+                {Boolean(stream?.broadcasts && stream.broadcasts.length > 0) && (
+                  <View style={[styles.broadcastSection, { marginBottom: s(spacing.md) }]}>
+                    {stream!.broadcasts.map((b) => (
                       <View
                         key={b.id}
                         style={[
@@ -437,12 +475,15 @@ export default function StudentCourseHubScreen() {
                           {
                             backgroundColor:
                               b.category === 'URGENT' || b.category === 'ALERT'
-                                ? `${theme.colors.danger}15`
-                                : `${theme.colors.warning}15`,
+                                ? theme.colors.dangerBg
+                                : theme.colors.warningBg,
                             borderColor:
                               b.category === 'URGENT' || b.category === 'ALERT'
                                 ? theme.colors.danger
                                 : theme.colors.warning,
+                            borderRadius: radius.lg,
+                            padding: s(spacing.md),
+                            marginBottom: s(spacing.sm),
                           },
                         ]}
                       >
@@ -452,14 +493,23 @@ export default function StudentCourseHubScreen() {
                             variant={b.category === 'URGENT' || b.category === 'ALERT' ? 'danger' : 'warning'}
                             size="sm"
                           />
-                          <Text style={[styles.broadcastTimestamp, { color: theme.colors.textSecondary }]}>
+                          <Text
+                            style={[styles.broadcastTimestamp, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
                             {new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                         </View>
-                        <Text style={[styles.broadcastMessage, { color: theme.colors.text }]}>
+                        <Text
+                          style={[styles.broadcastMessage, { color: theme.colors.text, fontSize: font(14), lineHeight: font(20) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {b.message}
                         </Text>
-                        <Text style={[styles.broadcastSender, { color: theme.colors.textSecondary }]}>
+                        <Text
+                          style={[styles.broadcastSender, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           &bull; Broadcast by {b.senderName}
                         </Text>
                       </View>
@@ -468,17 +518,44 @@ export default function StudentCourseHubScreen() {
                 )}
 
                 {/* Stream Announcements Feed */}
-                <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.sectionHeading,
+                    { color: theme.colors.text, fontSize: font(16), marginBottom: s(spacing.md) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   Course Announcements
                 </Text>
 
                 {(!stream?.announcements || stream.announcements.length === 0) ? (
-                  <Card style={styles.emptyCard}>
-                    <Radio size={40} color={theme.colors.textSecondary} />
-                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                  <Card
+                    style={[
+                      styles.emptyCard,
+                      {
+                        padding: s(spacing.xxxl),
+                        borderRadius: radius.lg,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <Radio size={s(40)} color={theme.colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.emptyTitle,
+                        { color: theme.colors.text, fontSize: font(16), lineHeight: font(22) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       No Stream Announcements Yet
                     </Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.emptySubtitle,
+                        { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       Your instructor will post course updates, reminders, and links here.
                     </Text>
                   </Card>
@@ -486,24 +563,56 @@ export default function StudentCourseHubScreen() {
                   stream.announcements.map((ann) => (
                     <View
                       key={ann.id}
-                      style={[styles.streamCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.streamCard,
+                        {
+                          backgroundColor: theme.colors.card,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.lg,
+                          padding: s(spacing.lg),
+                          marginBottom: s(spacing.md),
+                        },
+                      ]}
                     >
-                      <View style={styles.streamCardHeader}>
-                        <View style={[styles.authorAvatar, { backgroundColor: theme.colors.primary }]}>
-                          <Text style={styles.avatarLetter}>{getInitials(ann.author?.name)}</Text>
+                      <View style={[styles.streamCardHeader, { marginBottom: s(spacing.md) }]}>
+                        <View
+                          style={[
+                            styles.authorAvatar,
+                            {
+                              backgroundColor: theme.colors.primary,
+                              width: s(40),
+                              height: s(40),
+                              borderRadius: radius.full,
+                              marginRight: s(spacing.sm),
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.avatarLetter, { fontSize: font(15) }]}>
+                            {getInitials(ann.author?.name)}
+                          </Text>
                         </View>
                         <View style={styles.authorMeta}>
-                          <Text style={[styles.authorName, { color: theme.colors.text }]}>
+                          <Text
+                            style={[styles.authorName, { color: theme.colors.text, fontSize: font(14) }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
                             {ann.author?.name || 'Course Instructor'}
                           </Text>
-                          <Text style={[styles.annTimestamp, { color: theme.colors.textSecondary }]}>
+                          <Text
+                            style={[styles.annTimestamp, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
                             {new Date(ann.createdAt).toLocaleDateString()} at{' '}
                             {new Date(ann.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                         </View>
                       </View>
 
-                      <Text style={[styles.annContent, { color: theme.colors.text }]}>
+                      <Text
+                        style={[styles.annContent, { color: theme.colors.text, fontSize: font(14), lineHeight: font(20) }]}
+                        selectable
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {ann.content}
                       </Text>
                     </View>
@@ -516,7 +625,12 @@ export default function StudentCourseHubScreen() {
             {activeTab === 'CLASSWORK' && (
               <View>
                 {/* Filter Pills */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollView}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={[styles.filterScrollView, { marginBottom: s(spacing.md) }]}
+                  contentContainerStyle={{ gap: s(spacing.sm) }}
+                >
                   {(['ALL', 'ASSIGNMENT', 'QUIZ', 'MATERIAL'] as const).map((cat) => {
                     const isSelected = classworkFilter === cat;
                     const label =
@@ -530,10 +644,15 @@ export default function StudentCourseHubScreen() {
                     return (
                       <TouchableOpacity
                         key={cat}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Filter ${label}`}
                         style={[
                           styles.filterPill,
                           {
-                            backgroundColor: isSelected ? theme.colors.primary : theme.colors.card,
+                            borderRadius: radius.full,
+                            paddingHorizontal: s(spacing.md),
+                            paddingVertical: s(spacing.xs),
+                            backgroundColor: isSelected ? theme.colors.primary : theme.colors.surfaceAlt,
                             borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                           },
                         ]}
@@ -542,8 +661,13 @@ export default function StudentCourseHubScreen() {
                         <Text
                           style={[
                             styles.filterPillText,
-                            { color: isSelected ? '#FFFFFF' : theme.colors.textSecondary, fontWeight: isSelected ? '700' : '500' },
+                            {
+                              fontSize: font(12),
+                              color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
+                              fontWeight: isSelected ? '700' : '500',
+                            },
                           ]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
                         >
                           {label}
                         </Text>
@@ -553,19 +677,40 @@ export default function StudentCourseHubScreen() {
                 </ScrollView>
 
                 {filteredClassworkItems.length === 0 ? (
-                  <Card style={styles.emptyCard}>
-                    <FileText size={40} color={theme.colors.textSecondary} />
-                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                  <Card
+                    style={[
+                      styles.emptyCard,
+                      {
+                        padding: s(spacing.xxxl),
+                        borderRadius: radius.lg,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <FileText size={s(40)} color={theme.colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.emptyTitle,
+                        { color: theme.colors.text, fontSize: font(16), lineHeight: font(22) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       No Classwork Found
                     </Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.emptySubtitle,
+                        { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       No syllabus items currently match this category filter.
                     </Text>
                   </Card>
                 ) : (
                   filteredClassworkItems.map((item) => {
                     const submission = item.submission;
-                    const isGraded = submission?.status === 'GRADED' || (typeof submission?.grade === 'number');
+                    const isGraded = submission?.status === 'GRADED' || typeof submission?.grade === 'number';
                     const isSubmitted = submission?.status === 'SUBMITTED';
                     const isMissing = !submission && item.dueDate && new Date(item.dueDate) < new Date();
 
@@ -574,9 +719,19 @@ export default function StudentCourseHubScreen() {
                         key={item.id}
                         style={[
                           styles.classworkCard,
-                          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                          {
+                            backgroundColor: theme.colors.card,
+                            borderColor: theme.colors.border,
+                            borderRadius: radius.lg,
+                            padding: s(spacing.lg),
+                            marginBottom: s(spacing.md),
+                          },
                         ]}
                         onPress={() => {
+                          if (item.type === 'MATERIAL') {
+                            router.push(`/student/courses/${courseId}/materials/${item.id}` as any);
+                            return;
+                          }
                           setSelectedAssignment(item);
                           setLocalAttachments(
                             submission?.attachments?.map((a) => ({
@@ -587,8 +742,10 @@ export default function StudentCourseHubScreen() {
                           );
                         }}
                         activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Classwork item ${item.title}, ${item.type}`}
                       >
-                        <View style={styles.classworkCardTop}>
+                        <View style={[styles.classworkCardTop, { marginBottom: s(spacing.sm) }]}>
                           <Badge
                             label={item.type}
                             variant={item.type === 'ASSIGNMENT' ? 'primary' : item.type === 'QUIZ' ? 'warning' : 'info'}
@@ -615,37 +772,58 @@ export default function StudentCourseHubScreen() {
                           ) : null}
                         </View>
 
-                        <Text style={[styles.classworkTitle, { color: theme.colors.text }]}>
+                        <Text
+                          style={[styles.classworkTitle, { color: theme.colors.text, fontSize: font(16) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {item.title}
                         </Text>
 
-                        {item.description ? (
+                        {Boolean(item.description) && (
                           <Text
-                            style={[styles.classworkDescription, { color: theme.colors.textSecondary }]}
+                            style={[
+                              styles.classworkDescription,
+                              { color: theme.colors.textSecondary, fontSize: font(13), marginBottom: s(spacing.md) },
+                            ]}
                             numberOfLines={2}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
                           >
                             {item.description}
                           </Text>
-                        ) : null}
+                        )}
 
-                        <View style={[styles.classworkFooter, { borderTopColor: theme.colors.border }]}>
-                          <View style={styles.footerInfoRow}>
+                        <View
+                          style={[
+                            styles.classworkFooter,
+                            { borderTopColor: theme.colors.border, paddingTop: s(spacing.sm) },
+                          ]}
+                        >
+                          <View style={[styles.footerInfoRow, { gap: s(spacing.sm) }]}>
                             {item.maxPoints && (
-                              <Text style={[styles.ptsText, { color: theme.colors.textSecondary }]}>
+                              <Text
+                                style={[styles.ptsText, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                                maxFontSizeMultiplier={maxFontSizeMultiplier}
+                              >
                                 {item.maxPoints} Points
                               </Text>
                             )}
-                            {item.attachments && item.attachments.length > 0 && (
-                              <View style={styles.attCount}>
-                                <Paperclip size={13} color={theme.colors.textSecondary} />
-                                <Text style={[styles.ptsText, { color: theme.colors.textSecondary }]}>
-                                  {item.attachments.length} files
+                            {Boolean(item.attachments && item.attachments.length > 0) && (
+                              <View style={[styles.attCount, { gap: 4 }]}>
+                                <Paperclip size={s(13)} color={theme.colors.textSecondary} />
+                                <Text
+                                  style={[styles.ptsText, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                                >
+                                  {item.attachments!.length} files
                                 </Text>
                               </View>
                             )}
                           </View>
 
-                          <Text style={[styles.submissionActionPrompt, { color: theme.colors.primary }]}>
+                          <Text
+                            style={[styles.submissionActionPrompt, { color: theme.colors.primary, fontSize: font(12) }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
                             {item.type === 'MATERIAL' ? 'View Details' : submission ? 'View Submission' : 'Turn In & Submit'} &rarr;
                           </Text>
                         </View>
@@ -660,18 +838,54 @@ export default function StudentCourseHubScreen() {
             {activeTab === 'PEOPLE' && (
               <View>
                 {/* Instructor Section */}
-                <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.sectionHeading,
+                    { color: theme.colors.text, fontSize: font(16), marginBottom: s(spacing.sm) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   Course Instructor
                 </Text>
-                <View style={[styles.personCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                  <View style={[styles.authorAvatar, { backgroundColor: theme.colors.primary }]}>
-                    <Text style={styles.avatarLetter}>{getInitials(people?.instructor?.name)}</Text>
+                <View
+                  style={[
+                    styles.personCard,
+                    {
+                      backgroundColor: theme.colors.card,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.lg,
+                      padding: s(spacing.md),
+                      marginBottom: s(spacing.lg),
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.authorAvatar,
+                      {
+                        backgroundColor: theme.colors.primary,
+                        width: s(40),
+                        height: s(40),
+                        borderRadius: radius.full,
+                        marginRight: s(spacing.sm),
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.avatarLetter, { fontSize: font(15) }]}>
+                      {getInitials(people?.instructor?.name)}
+                    </Text>
                   </View>
                   <View style={styles.authorMeta}>
-                    <Text style={[styles.personName, { color: theme.colors.text }]}>
+                    <Text
+                      style={[styles.personName, { color: theme.colors.text, fontSize: font(14) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {people?.instructor?.name || 'Professor'}
                     </Text>
-                    <Text style={[styles.personEmail, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[styles.personEmail, { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 2 }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {people?.instructor?.email || 'instructor@cdm.edu.ph'}
                     </Text>
                   </View>
@@ -679,20 +893,44 @@ export default function StudentCourseHubScreen() {
                 </View>
 
                 {/* Classmates Section */}
-                <View style={styles.classmatesHeader}>
-                  <Text style={[styles.sectionHeading, { color: theme.colors.text, marginBottom: 0 }]}>
+                <View style={[styles.classmatesHeader, { marginTop: s(spacing.md), marginBottom: s(spacing.sm) }]}>
+                  <Text
+                    style={[styles.sectionHeading, { color: theme.colors.text, fontSize: font(16), marginBottom: 0 }]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
                     Classmates
                   </Text>
                   <Badge label={`${people?.totalEnrolled ?? 0} Enrolled`} variant="default" size="sm" />
                 </View>
 
                 {(!people?.students || people.students.length === 0) ? (
-                  <Card style={styles.emptyCard}>
-                    <Users size={40} color={theme.colors.textSecondary} />
-                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                  <Card
+                    style={[
+                      styles.emptyCard,
+                      {
+                        padding: s(spacing.xxxl),
+                        borderRadius: radius.lg,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <Users size={s(40)} color={theme.colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.emptyTitle,
+                        { color: theme.colors.text, fontSize: font(16), lineHeight: font(22) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       No Classmates Enrolled
                     </Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.emptySubtitle,
+                        { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       Class roster will update as students enroll and receive approval.
                     </Text>
                   </Card>
@@ -700,18 +938,47 @@ export default function StudentCourseHubScreen() {
                   people.students.map((student) => (
                     <View
                       key={student.id}
-                      style={[styles.personCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.personCard,
+                        {
+                          backgroundColor: theme.colors.card,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.md,
+                          padding: s(spacing.md),
+                          marginBottom: s(spacing.sm),
+                        },
+                      ]}
                     >
-                      <View style={[styles.studentAvatar, { backgroundColor: theme.colors.cardSecondary }]}>
-                        <Text style={[styles.studentAvatarText, { color: theme.colors.text }]}>
+                      <View
+                        style={[
+                          styles.studentAvatar,
+                          {
+                            backgroundColor: theme.colors.surfaceAlt,
+                            width: s(38),
+                            height: s(38),
+                            borderRadius: radius.full,
+                            marginRight: s(spacing.sm),
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.studentAvatarText, { color: theme.colors.text, fontSize: font(13) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {getInitials(student.name)}
                         </Text>
                       </View>
                       <View style={styles.authorMeta}>
-                        <Text style={[styles.personName, { color: theme.colors.text }]}>
+                        <Text
+                          style={[styles.personName, { color: theme.colors.text, fontSize: font(14) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {student.name}
                         </Text>
-                        <Text style={[styles.personEmail, { color: theme.colors.textSecondary }]}>
+                        <Text
+                          style={[styles.personEmail, { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 2 }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {student.studentNumber !== 'N/A' ? student.studentNumber : student.email}
                         </Text>
                       </View>
@@ -725,49 +992,143 @@ export default function StudentCourseHubScreen() {
             {activeTab === 'GRADES' && (
               <View>
                 {/* Course Standing Summary Card */}
-                <View style={[styles.courseGradeSummaryCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                  <View style={styles.gradeSummaryTop}>
+                <View
+                  style={[
+                    styles.courseGradeSummaryCard,
+                    {
+                      backgroundColor: theme.colors.card,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.xl,
+                      padding: s(spacing.xl),
+                      marginBottom: s(spacing.xl),
+                    },
+                  ]}
+                >
+                  <View style={[styles.gradeSummaryTop, { marginBottom: s(spacing.lg) }]}>
                     <View>
-                      <Text style={[styles.gradeSummaryLabel, { color: theme.colors.textSecondary }]}>
+                      <Text
+                        style={[
+                          styles.gradeSummaryLabel,
+                          { color: theme.colors.textSecondary, fontSize: font(11) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         ESTIMATED COURSE STANDING
                       </Text>
-                      <Text style={[styles.courseGradePercentage, { color: theme.colors.primary }]}>
-                        {grades?.summary?.averagePercentage !== null && grades?.summary?.averagePercentage !== undefined
-                          ? `${grades.summary.averagePercentage}%`
-                          : 'In Progress'}
+                      <Text
+                        style={[
+                          styles.courseGradePercentage,
+                          { color: theme.colors.primary, fontSize: font(32) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        {(() => {
+                          const avg = grades?.summary?.averagePercentage;
+                          if (avg !== null && avg !== undefined) return `${avg}%`;
+                          if (grades?.summary && grades.summary.totalPossiblePoints > 0) {
+                            return `${Math.round((grades.summary.totalEarnedPoints / grades.summary.totalPossiblePoints) * 100)}%`;
+                          }
+                          return 'In Progress';
+                        })()}
                       </Text>
                     </View>
-                    <View style={[styles.letterGradeBox, { backgroundColor: `${theme.colors.primary}18` }]}>
-                      <Text style={[styles.letterGradeText, { color: theme.colors.primary }]}>
-                        {grades?.summary?.letterGrade || '—'}
+                    <View
+                      style={[
+                        styles.gradePointBox,
+                        {
+                          backgroundColor: `${theme.colors.primary}18`,
+                          paddingHorizontal: s(spacing.md),
+                          minWidth: s(72),
+                          height: s(60),
+                          borderRadius: radius.lg,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.gradePointText,
+                          { color: theme.colors.primary, fontSize: font(22) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        {(() => {
+                          let avg = grades?.summary?.averagePercentage;
+                          if ((avg === null || avg === undefined) && grades?.summary && grades.summary.totalPossiblePoints > 0) {
+                            avg = Math.round((grades.summary.totalEarnedPoints / grades.summary.totalPossiblePoints) * 100);
+                          }
+                          const gp = grades?.summary?.gradePoint ?? percentToGradePoint(avg);
+                          return gp !== null ? (grades?.summary?.gradePointFormatted || formatGradePoint(gp)) : '—';
+                        })()}
                       </Text>
+                      {(() => {
+                        let avg = grades?.summary?.averagePercentage;
+                        if ((avg === null || avg === undefined) && grades?.summary && grades.summary.totalPossiblePoints > 0) {
+                          avg = Math.round((grades.summary.totalEarnedPoints / grades.summary.totalPossiblePoints) * 100);
+                        }
+                        const gp = grades?.summary?.gradePoint ?? percentToGradePoint(avg);
+                        const remark = grades?.summary?.remark || (gp !== null ? getGradeRemark(gp) : '');
+                        return remark ? (
+                          <Text
+                            style={[
+                              styles.gradeRemarkSub,
+                              { color: isPassing(gp) ? theme.colors.primary : theme.colors.danger, fontSize: font(10) },
+                            ]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
+                            {remark}
+                          </Text>
+                        ) : null;
+                      })()}
                     </View>
                   </View>
 
-                  <View style={[styles.gradeMetricsRow, { borderTopColor: theme.colors.border }]}>
+                  <View
+                    style={[
+                      styles.gradeMetricsRow,
+                      { borderTopColor: theme.colors.border, paddingTop: s(spacing.md) },
+                    ]}
+                  >
                     <View style={styles.metricItem}>
-                      <Text style={[styles.metricNum, { color: theme.colors.text }]}>
+                      <Text
+                        style={[styles.metricNum, { color: theme.colors.text, fontSize: font(16) }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {grades?.summary?.totalEarnedPoints ?? 0} / {grades?.summary?.totalPossiblePoints ?? 0}
                       </Text>
-                      <Text style={[styles.metricLabel, { color: theme.colors.textSecondary }]}>
+                      <Text
+                        style={[styles.metricLabel, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         Points Earned
                       </Text>
                     </View>
                     <View style={[styles.metricDivider, { backgroundColor: theme.colors.border }]} />
                     <View style={styles.metricItem}>
-                      <Text style={[styles.metricNum, { color: theme.colors.success }]}>
+                      <Text
+                        style={[styles.metricNum, { color: theme.colors.success, fontSize: font(16) }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {grades?.summary?.gradedCount ?? 0}
                       </Text>
-                      <Text style={[styles.metricLabel, { color: theme.colors.textSecondary }]}>
+                      <Text
+                        style={[styles.metricLabel, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         Graded
                       </Text>
                     </View>
                     <View style={[styles.metricDivider, { backgroundColor: theme.colors.border }]} />
                     <View style={styles.metricItem}>
-                      <Text style={[styles.metricNum, { color: theme.colors.danger }]}>
+                      <Text
+                        style={[styles.metricNum, { color: theme.colors.danger, fontSize: font(16) }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {grades?.summary?.missingCount ?? 0}
                       </Text>
-                      <Text style={[styles.metricLabel, { color: theme.colors.textSecondary }]}>
+                      <Text
+                        style={[styles.metricLabel, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         Missing
                       </Text>
                     </View>
@@ -775,17 +1136,44 @@ export default function StudentCourseHubScreen() {
                 </View>
 
                 {/* Itemized Grade List */}
-                <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
+                <Text
+                  style={[
+                    styles.sectionHeading,
+                    { color: theme.colors.text, fontSize: font(16), marginBottom: s(spacing.md) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   Course Assessments
                 </Text>
 
                 {(!grades?.items || grades.items.length === 0) ? (
-                  <Card style={styles.emptyCard}>
-                    <Award size={40} color={theme.colors.textSecondary} />
-                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                  <Card
+                    style={[
+                      styles.emptyCard,
+                      {
+                        padding: s(spacing.xxxl),
+                        borderRadius: radius.lg,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <Award size={s(40)} color={theme.colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.emptyTitle,
+                        { color: theme.colors.text, fontSize: font(16), lineHeight: font(22) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       No Evaluated Items
                     </Text>
-                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.emptySubtitle,
+                        { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                      ]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       Grades for assignments and quizzes in this course will be listed here.
                     </Text>
                   </Card>
@@ -793,15 +1181,30 @@ export default function StudentCourseHubScreen() {
                   grades.items.map((item) => (
                     <View
                       key={item.id}
-                      style={[styles.gradeItemCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      style={[
+                        styles.gradeItemCard,
+                        {
+                          backgroundColor: theme.colors.card,
+                          borderColor: theme.colors.border,
+                          borderRadius: radius.lg,
+                          padding: s(spacing.md),
+                          marginBottom: s(spacing.sm),
+                        },
+                      ]}
                     >
-                      <View style={styles.gradeItemHeader}>
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                          <Text style={[styles.gradeItemTitle, { color: theme.colors.text }]}>
+                      <View style={[styles.gradeItemHeader, { marginBottom: s(spacing.sm) }]}>
+                        <View style={{ flex: 1, marginRight: s(spacing.sm) }}>
+                          <Text
+                            style={[styles.gradeItemTitle, { color: theme.colors.text, fontSize: font(15) }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
                             {item.title}
                           </Text>
-                          <Text style={[styles.gradeItemType, { color: theme.colors.textSecondary }]}>
-                            {item.type} {item.dueDate ? `&bull; Due ${new Date(item.dueDate).toLocaleDateString()}` : ''}
+                          <Text
+                            style={[styles.gradeItemType, { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 2 }]}
+                            maxFontSizeMultiplier={maxFontSizeMultiplier}
+                          >
+                            {item.type} {item.dueDate ? `• Due ${new Date(item.dueDate).toLocaleDateString()}` : ''}
                           </Text>
                         </View>
                         <Badge
@@ -811,9 +1214,27 @@ export default function StudentCourseHubScreen() {
                         />
                       </View>
 
-                      <View style={[styles.scoreBadgeBox, { backgroundColor: theme.colors.cardSecondary }]}>
-                        <Text style={[styles.scoreTitle, { color: theme.colors.textSecondary }]}>Score</Text>
-                        <Text style={[styles.scoreResult, { color: theme.colors.text }]}>
+                      <View
+                        style={[
+                          styles.scoreBadgeBox,
+                          {
+                            backgroundColor: theme.colors.surfaceAlt,
+                            borderRadius: radius.sm,
+                            paddingHorizontal: s(spacing.md),
+                            paddingVertical: s(spacing.xs),
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.scoreTitle, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
+                          Score
+                        </Text>
+                        <Text
+                          style={[styles.scoreResult, { color: theme.colors.text, fontSize: font(13) }]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
                           {item.score !== null ? `${item.score} / ${item.maxPoints}` : `— / ${item.maxPoints}`}
                         </Text>
                       </View>
@@ -824,249 +1245,293 @@ export default function StudentCourseHubScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </View>
 
-      {/* ==================== SUBMISSION / ASSIGNMENT MODAL ==================== */}
-      <Modal
+      {/* ==================== SUBMISSION / ASSIGNMENT FORM MODAL ==================== */}
+      <FormModal
         visible={!!selectedAssignment}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSelectedAssignment(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <Badge
-                  label={selectedAssignment?.type || 'ASSIGNMENT'}
-                  variant="primary"
-                  size="sm"
+        onClose={() => setSelectedAssignment(null)}
+        title={selectedAssignment?.title || 'Assignment Details'}
+        subtitle={
+          selectedAssignment
+            ? `${selectedAssignment.type} ${selectedAssignment.maxPoints ? `• ${selectedAssignment.maxPoints} pts` : ''}`
+            : undefined
+        }
+        closeAccessibilityLabel="Close assignment modal"
+        actions={
+          selectedAssignment?.type !== 'MATERIAL' ? (
+            <View style={{ width: '100%' }}>
+              {selectedAssignment?.submission?.status === 'SUBMITTED' && !selectedAssignment.submission.isReturned ? (
+                <Button
+                  title="Unsubmit Assignment"
+                  onPress={handleUnsubmitAssignment}
+                  loading={submitting}
+                  variant="outline"
+                  style={{ width: '100%' }}
                 />
-                <Text style={[styles.modalTitle, { color: theme.colors.text }]} numberOfLines={2}>
-                  {selectedAssignment?.title}
+              ) : selectedAssignment?.submission?.isReturned ? (
+                <View style={[styles.gradedNoticeBox, { paddingVertical: s(spacing.sm) }]}>
+                  <Text
+                    style={[styles.gradedNoticeText, { color: theme.colors.success, fontSize: font(13) }]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    Assignment has been officially finalized.
+                  </Text>
+                </View>
+              ) : (
+                <Button
+                  title={localAttachments.length > 0 ? 'Turn In Assignment' : 'Mark as Done'}
+                  onPress={handleSubmitAssignment}
+                  loading={submitting}
+                  icon={CheckCircle2}
+                  style={{ width: '100%' }}
+                />
+              )}
+            </View>
+          ) : undefined
+        }
+      >
+        {/* Assignment Prompt */}
+        {Boolean(selectedAssignment?.description) && (
+          <View style={[styles.modalSection, { marginBottom: s(spacing.md) }]}>
+            <Text
+              style={[
+                styles.modalSectionHeading,
+                { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.xs) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              INSTRUCTIONS
+            </Text>
+            <ClassworkDescription
+              content={selectedAssignment!.description}
+              textStyle={[
+                styles.modalPrompt,
+                { color: theme.colors.text, fontSize: font(14), lineHeight: font(20) },
+              ]}
+            />
+          </View>
+        )}
+
+        {/* Assignment Metadata */}
+        <View style={[styles.modalMetaRow, { gap: s(spacing.md), marginBottom: s(spacing.md) }]}>
+          {selectedAssignment?.maxPoints && (
+            <View style={[styles.modalMetaItem, { gap: 6 }]}>
+              <Award size={s(16)} color={theme.colors.primary} />
+              <Text
+                style={[styles.modalMetaText, { color: theme.colors.text, fontSize: font(12) }]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                {selectedAssignment.maxPoints} Points Possible
+              </Text>
+            </View>
+          )}
+          {selectedAssignment?.dueDate && (
+            <View style={[styles.modalMetaItem, { gap: 6 }]}>
+              <Clock size={s(16)} color={theme.colors.warning} />
+              <Text
+                style={[styles.modalMetaText, { color: theme.colors.text, fontSize: font(12) }]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                Due: {new Date(selectedAssignment.dueDate).toLocaleString()}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Syllabus Attachments from Instructor */}
+        {Boolean(selectedAssignment?.attachments && selectedAssignment.attachments.length > 0) && (
+          <View style={[styles.modalSection, { marginBottom: s(spacing.md) }]}>
+            <ClassworkAttachments
+              attachments={selectedAssignment?.attachments}
+              title="ATTACHED REFERENCE MATERIALS"
+            />
+          </View>
+        )}
+
+        {/* Graded Feedback if already evaluated */}
+        {selectedAssignment?.submission?.grade !== null &&
+          selectedAssignment?.submission?.grade !== undefined && (
+            <View
+              style={[
+                styles.feedbackBox,
+                {
+                  backgroundColor: theme.colors.successBg,
+                  borderColor: theme.colors.success,
+                  borderRadius: radius.md,
+                  padding: s(spacing.md),
+                  marginBottom: s(spacing.md),
+                },
+              ]}
+            >
+              <CheckCircle2 size={s(24)} color={theme.colors.success} />
+              <View style={{ flex: 1, marginLeft: s(spacing.sm) }}>
+                <Text
+                  style={[styles.feedbackTitle, { color: theme.colors.success, fontSize: font(14) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Submission Graded: {selectedAssignment.submission.grade} / {selectedAssignment.maxPoints}
+                </Text>
+                <Text
+                  style={[styles.feedbackSubtitle, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Returned on {selectedAssignment.submission.submittedAt ? new Date(selectedAssignment.submission.submittedAt).toLocaleDateString() : 'Official Assessment'}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => setSelectedAssignment(null)}
-                style={styles.closeBtn}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <X size={22} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
             </View>
+          )}
 
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
-              {/* Assignment Prompt */}
-              {selectedAssignment?.description ? (
-                <View style={styles.modalSection}>
-                  <Text style={[styles.modalSectionHeading, { color: theme.colors.textSecondary }]}>
-                    INSTRUCTIONS
-                  </Text>
-                  <Text style={[styles.modalPrompt, { color: theme.colors.text }]}>
-                    {selectedAssignment.description}
-                  </Text>
-                </View>
-              ) : null}
+        {/* Student Uploads Section */}
+        {selectedAssignment?.type !== 'MATERIAL' && (
+          <View style={styles.modalSection}>
+            <Text
+              style={[
+                styles.modalSectionHeading,
+                { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.xs) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              YOUR SUBMISSION FILES
+            </Text>
 
-              {/* Assignment Metadata */}
-              <View style={styles.modalMetaRow}>
-                {selectedAssignment?.maxPoints && (
-                  <View style={styles.modalMetaItem}>
-                    <Award size={16} color={theme.colors.primary} />
-                    <Text style={[styles.modalMetaText, { color: theme.colors.text }]}>
-                      {selectedAssignment.maxPoints} Points Possible
-                    </Text>
-                  </View>
-                )}
-                {selectedAssignment?.dueDate && (
-                  <View style={styles.modalMetaItem}>
-                    <Clock size={16} color={theme.colors.warning} />
-                    <Text style={[styles.modalMetaText, { color: theme.colors.text }]}>
-                      Due: {new Date(selectedAssignment.dueDate).toLocaleString()}
-                    </Text>
-                  </View>
-                )}
+            {localAttachments.length === 0 ? (
+              <View
+                style={[
+                  styles.dropZone,
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surfaceAlt,
+                    borderRadius: radius.md,
+                    paddingVertical: s(spacing.xl),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <UploadCloud size={s(32)} color={theme.colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.dropZoneText,
+                    { color: theme.colors.textSecondary, fontSize: font(13), marginTop: s(spacing.xs) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  No files attached yet
+                </Text>
               </View>
-
-              {/* Syllabus Attachments from Instructor */}
-              {selectedAssignment?.attachments && selectedAssignment.attachments.length > 0 && (
-                <View style={styles.modalSection}>
-                  <Text style={[styles.modalSectionHeading, { color: theme.colors.textSecondary }]}>
-                    ATTACHED REFERENCE MATERIALS
+            ) : (
+              localAttachments.map((file, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.uploadedFileRow,
+                    {
+                      backgroundColor: theme.colors.surfaceAlt,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.md,
+                      paddingHorizontal: s(spacing.md),
+                      paddingVertical: s(spacing.sm),
+                      marginBottom: s(spacing.xs),
+                    },
+                  ]}
+                >
+                  <Paperclip size={s(16)} color={theme.colors.primary} />
+                  <Text
+                    style={[styles.uploadedFileName, { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) }]}
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    {file.fileName}
                   </Text>
-                  {selectedAssignment.attachments.map((att) => (
-                    <View
-                      key={att.id}
-                      style={[styles.attItem, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-                    >
-                      <Paperclip size={16} color={theme.colors.primary} />
-                      <Text style={[styles.attFileName, { color: theme.colors.text }]} numberOfLines={1}>
-                        {att.fileName}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* Graded Feedback if already evaluated */}
-              {selectedAssignment?.submission?.grade !== null &&
-                selectedAssignment?.submission?.grade !== undefined && (
-                  <View style={[styles.feedbackBox, { backgroundColor: `${theme.colors.success}15`, borderColor: theme.colors.success }]}>
-                    <CheckCircle2 size={24} color={theme.colors.success} />
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                      <Text style={[styles.feedbackTitle, { color: theme.colors.success }]}>
-                        Submission Graded: {selectedAssignment.submission.grade} / {selectedAssignment.maxPoints}
-                      </Text>
-                      <Text style={[styles.feedbackSubtitle, { color: theme.colors.textSecondary }]}>
-                        Returned on {selectedAssignment.submission.submittedAt ? new Date(selectedAssignment.submission.submittedAt).toLocaleDateString() : 'Official Assessment'}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-
-              {/* Student Uploads Section (if assignment can receive submission) */}
-              {selectedAssignment?.type !== 'MATERIAL' && (
-                <View style={styles.modalSection}>
-                  <Text style={[styles.modalSectionHeading, { color: theme.colors.textSecondary }]}>
-                    YOUR SUBMISSION FILES
-                  </Text>
-
-                  {localAttachments.length === 0 ? (
-                    <View style={[styles.dropZone, { borderColor: theme.colors.border, backgroundColor: theme.colors.cardSecondary }]}>
-                      <UploadCloud size={32} color={theme.colors.textSecondary} />
-                      <Text style={[styles.dropZoneText, { color: theme.colors.textSecondary }]}>
-                        No files attached yet
-                      </Text>
-                    </View>
-                  ) : (
-                    localAttachments.map((file, idx) => (
-                      <View
-                        key={idx}
-                        style={[styles.uploadedFileRow, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-                      >
-                        <Paperclip size={16} color={theme.colors.primary} />
-                        <Text style={[styles.uploadedFileName, { color: theme.colors.text }]} numberOfLines={1}>
-                          {file.fileName}
-                        </Text>
-                        {!selectedAssignment?.submission?.isReturned && (
-                          <TouchableOpacity
-                            onPress={() => {
-                              setLocalAttachments((prev) => prev.filter((_, i) => i !== idx));
-                            }}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Trash2 size={16} color={theme.colors.danger} />
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    ))
-                  )}
-
-                  {/* File Pickers (disabled if already returned/graded) */}
                   {!selectedAssignment?.submission?.isReturned && (
-                    <View style={styles.pickerActionsRow}>
-                      <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel="Attach Document"
-                        style={[styles.pickerBtn, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-                        onPress={handlePickDocument}
-                        activeOpacity={0.8}
-                      >
-                        <FileUp size={18} color={theme.colors.primary} />
-                        <Text style={[styles.pickerBtnText, { color: theme.colors.text }]}>Add Document</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityLabel="Attach Photo"
-                        style={[styles.pickerBtn, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-                        onPress={handlePickImage}
-                        activeOpacity={0.8}
-                      >
-                        <ImageIcon size={18} color={theme.colors.primary} />
-                        <Text style={[styles.pickerBtnText, { color: theme.colors.text }]}>Add Photo</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setLocalAttachments((prev) => prev.filter((_, i) => i !== idx));
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete attached file ${file.fileName}`}
+                    >
+                      <Trash2 size={s(16)} color={theme.colors.danger} />
+                    </TouchableOpacity>
                   )}
                 </View>
-              )}
-            </ScrollView>
+              ))
+            )}
 
-            {/* Turn In / Unsubmit Bottom Actions */}
-            {selectedAssignment?.type !== 'MATERIAL' && (
-              <View style={[styles.modalActions, { borderTopColor: theme.colors.border }]}>
-                {selectedAssignment?.submission?.status === 'SUBMITTED' && !selectedAssignment.submission.isReturned ? (
-                  <Button
-                    title="Unsubmit Assignment"
-                    onPress={handleUnsubmitAssignment}
-                    loading={submitting}
-                    variant="outline"
-                    style={{ flex: 1 }}
-                  />
-                ) : selectedAssignment?.submission?.isReturned ? (
-                  <View style={styles.gradedNoticeBox}>
-                    <Text style={[styles.gradedNoticeText, { color: theme.colors.success }]}>
-                      Assignment has been officially finalized.
-                    </Text>
-                  </View>
-                ) : (
-                  <Button
-                    title={localAttachments.length > 0 ? 'Turn In Assignment' : 'Mark as Done'}
-                    onPress={handleSubmitAssignment}
-                    loading={submitting}
-                    icon={CheckCircle2}
-                    style={{ flex: 1, backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }}
-                  />
-                )}
+            {/* File Pickers */}
+            {!selectedAssignment?.submission?.isReturned && (
+              <View style={[styles.pickerActionsRow, { gap: s(spacing.md), marginTop: s(spacing.xs) }]}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Attach Document"
+                  style={[
+                    styles.pickerBtn,
+                    {
+                      backgroundColor: theme.colors.surfaceAlt,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.md,
+                    },
+                  ]}
+                  onPress={handlePickDocument}
+                  activeOpacity={0.8}
+                >
+                  <FileUp size={s(18)} color={theme.colors.primary} />
+                  <Text
+                    style={[
+                      styles.pickerBtnText,
+                      { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    Add Document
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Attach Photo"
+                  style={[
+                    styles.pickerBtn,
+                    {
+                      backgroundColor: theme.colors.surfaceAlt,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.md,
+                    },
+                  ]}
+                  onPress={handlePickImage}
+                  activeOpacity={0.8}
+                >
+                  <ImageIcon size={s(18)} color={theme.colors.primary} />
+                  <Text
+                    style={[
+                      styles.pickerBtnText,
+                      { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    Add Photo
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        )}
+      </FormModal>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  screenInner: {
+    paddingBottom: 40,
   },
-  headerBanner: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    borderBottomWidth: 1,
-  },
-  headerTopRow: {
+  headerBadgeGroup: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  courseMetaBadges: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  courseTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  instructorSubtitle: {
-    fontSize: 13,
-    marginBottom: 12,
   },
   tabBar: {
     flexDirection: 'row',
-    borderTopWidth: 1,
+    borderBottomWidth: 1,
   },
   tabBtn: {
     flex: 1,
@@ -1074,29 +1539,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
+    minHeight: TOUCH_TARGET ?? 44,
+  },
+  tabLabel: {},
+  mainTabContent: {
+    flex: 1,
+  },
+  loadingContainer: {
     paddingVertical: 12,
-    minHeight: TOUCH_TARGET,
   },
-  tabLabel: {
-    fontSize: 13,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  loadingBox: {
-    paddingVertical: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  broadcastSection: {
-    marginBottom: 16,
-  },
+  broadcastSection: {},
   broadcastCard: {
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 10,
   },
   broadcastCardTop: {
     flexDirection: 'row',
@@ -1104,414 +1558,251 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  broadcastTimestamp: {
-    fontSize: 11,
-  },
+  broadcastTimestamp: {},
   broadcastMessage: {
-    fontSize: 14,
     fontWeight: '600',
-    lineHeight: 20,
     marginBottom: 4,
   },
-  broadcastSender: {
-    fontSize: 11,
-  },
+  broadcastSender: {},
   sectionHeading: {
-    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
   },
   streamCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 12,
   },
   streamCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   authorAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
   },
   avatarLetter: {
     color: '#FFFFFF',
-    fontSize: 15,
     fontWeight: '700',
   },
   authorMeta: {
     flex: 1,
   },
   authorName: {
-    fontSize: 14,
     fontWeight: '700',
   },
-  annTimestamp: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  annContent: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  annTimestamp: {},
+  annContent: {},
   filterScrollView: {
     flexDirection: 'row',
-    marginBottom: 16,
   },
   filterPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
     borderWidth: 1,
-    marginRight: 8,
-    minHeight: 36,
+    minHeight: 34,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  filterPillText: {
-    fontSize: 12,
-  },
+  filterPillText: {},
   classworkCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 12,
   },
   classworkCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   classworkTitle: {
-    fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
   },
   classworkDescription: {
-    fontSize: 13,
     lineHeight: 18,
-    marginBottom: 12,
   },
   classworkFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 10,
     borderTopWidth: 1,
   },
   footerInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
   ptsText: {
-    fontSize: 12,
     fontWeight: '500',
   },
   attCount: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   submissionActionPrompt: {
-    fontSize: 12,
     fontWeight: '700',
   },
   personCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 12,
-    marginBottom: 10,
   },
   personName: {
-    fontSize: 14,
     fontWeight: '700',
   },
-  personEmail: {
-    fontSize: 12,
-    marginTop: 2,
-  },
+  personEmail: {},
   classmatesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 12,
   },
   studentAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
   },
   studentAvatarText: {
-    fontSize: 13,
     fontWeight: '700',
   },
   courseGradeSummaryCard: {
-    borderRadius: 20,
     borderWidth: 1,
-    padding: 20,
-    marginBottom: 20,
   },
   gradeSummaryTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
   },
   gradeSummaryLabel: {
-    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
   courseGradePercentage: {
-    fontSize: 32,
     fontWeight: '900',
     marginTop: 4,
   },
-  letterGradeBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  gradePointBox: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  letterGradeText: {
-    fontSize: 28,
+  gradePointText: {
     fontWeight: '900',
+  },
+  gradeRemarkSub: {
+    fontWeight: '700',
+    marginTop: -2,
   },
   gradeMetricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingTop: 14,
     borderTopWidth: 1,
   },
   metricItem: {
     alignItems: 'center',
   },
   metricNum: {
-    fontSize: 16,
     fontWeight: '800',
   },
-  metricLabel: {
-    fontSize: 11,
-    marginTop: 2,
-  },
+  metricLabel: {},
   metricDivider: {
     width: 1,
     height: 24,
   },
   gradeItemCard: {
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 10,
   },
   gradeItemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
   },
   gradeItemTitle: {
-    fontSize: 15,
     fontWeight: '700',
   },
-  gradeItemType: {
-    fontSize: 12,
-    marginTop: 2,
-  },
+  gradeItemType: {},
   scoreBadgeBox: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   scoreTitle: {
-    fontSize: 11,
     fontWeight: '600',
   },
   scoreResult: {
-    fontSize: 13,
     fontWeight: '700',
   },
   emptyCard: {
     alignItems: 'center',
-    paddingVertical: 36,
   },
   emptyTitle: {
-    fontSize: 15,
     fontWeight: '600',
     marginTop: 10,
   },
   emptySubtitle: {
-    fontSize: 12,
     textAlign: 'center',
     marginTop: 4,
     paddingHorizontal: 16,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB20',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 6,
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  modalScroll: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-  },
-  modalSection: {
-    marginBottom: 18,
-  },
+  modalSection: {},
   modalSectionHeading: {
-    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 6,
   },
-  modalPrompt: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  modalPrompt: {},
   modalMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
   },
   modalMetaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   modalMetaText: {
-    fontSize: 12,
     fontWeight: '500',
   },
   attItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    padding: 10,
-    borderRadius: 8,
     borderWidth: 1,
-    marginBottom: 6,
   },
   attFileName: {
-    fontSize: 13,
     flex: 1,
   },
   feedbackBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
     borderWidth: 1,
-    padding: 12,
-    marginBottom: 18,
   },
   feedbackTitle: {
-    fontSize: 14,
     fontWeight: '700',
   },
-  feedbackSubtitle: {
-    fontSize: 11,
-    marginTop: 2,
-  },
+  feedbackSubtitle: {},
   dropZone: {
-    borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  dropZoneText: {
-    fontSize: 13,
-    marginTop: 6,
-  },
+  dropZoneText: {},
   uploadedFileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    gap: 8,
   },
   uploadedFileName: {
     flex: 1,
-    fontSize: 13,
     fontWeight: '500',
   },
   pickerActionsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
   },
   pickerBtn: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
     borderWidth: 1,
-    minHeight: TOUCH_TARGET,
+    minHeight: TOUCH_TARGET ?? 44,
   },
   pickerBtnText: {
-    fontSize: 13,
     fontWeight: '600',
   },
-  modalActions: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    borderTopWidth: 1,
-  },
   gradedNoticeBox: {
-    paddingVertical: 12,
     alignItems: 'center',
   },
   gradedNoticeText: {
-    fontSize: 13,
     fontWeight: '600',
   },
 });

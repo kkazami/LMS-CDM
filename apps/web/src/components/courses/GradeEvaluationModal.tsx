@@ -41,6 +41,7 @@ export default function GradeEvaluationModal({
   onClose,
   onGraded,
 }: GradeEvaluationModalProps) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const [grade, setGrade] = useState(submission.grade?.toString() ?? "");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -134,16 +135,20 @@ export default function GradeEvaluationModal({
                       href={att.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27] p-3 hover:border-orange-500/30 transition-all group"
+                      className={`flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27] p-3 transition-all group ${
+                        isIte ? "hover:border-blue-500/30" : "hover:border-orange-500/30"
+                      }`}
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10 shrink-0">
-                        <Icon className="h-4 w-4 text-[#F97316]" />
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg shrink-0 ${
+                        isIte ? "bg-blue-500/10" : "bg-orange-500/10"
+                      }`}>
+                        <Icon className={`h-4 w-4 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-800 dark:text-[#F0F2F8] truncate">
                           {att.fileName || att.url}
                         </p>
-                        <p className="text-[11px] text-[#F97316]">
+                        <p className={`text-[11px] ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`}>
                           {att.type === "LINK" ? "Open link" : "View file"} →
                         </p>
                       </div>
@@ -169,7 +174,9 @@ export default function GradeEvaluationModal({
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
               <Link
                 href={`/${instituteCode}/courses/${courseId}/classwork/${itemId}/submissions`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#F97316] hover:underline"
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold hover:underline ${
+                  isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"
+                }`}
               >
                 <span>View all class submissions</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -194,7 +201,9 @@ export default function GradeEvaluationModal({
                   placeholder={`/ ${maxPoints ?? "∞"}`}
                   value={grade}
                   onChange={(e) => handleGradeChange(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none focus:border-orange-500"
+                  className={`w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] pl-9 pr-3 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none ${
+                    isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+                  }`}
                 />
               </div>
               {maxPoints && (
@@ -204,9 +213,15 @@ export default function GradeEvaluationModal({
 
             {/* Current grade badge */}
             {submission.isReturned && submission.grade !== null && (
-              <div className="flex items-center gap-2 rounded-xl bg-purple-500/10 border border-purple-500/20 px-3 py-2">
-                <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+              <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${
+                isIte
+                  ? "bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300"
+                  : "bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300"
+              }`}>
+                <CheckCircle2 className={`h-4 w-4 ${
+                  isIte ? "text-blue-600 dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
+                }`} />
+                <span className="text-xs font-medium">
                   Previously graded: {submission.grade}
                 </span>
               </div>
@@ -219,7 +234,11 @@ export default function GradeEvaluationModal({
             <button
               onClick={handleReturn}
               disabled={isPending || !grade}
-              className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-[#F97316] py-2.5 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-50 transition-all shadow-xs cursor-pointer"
+              className={`mt-auto flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer ${
+                isIte
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-[#F97316] hover:bg-orange-600"
+              }`}
             >
               <Send className="h-4 w-4" />
               {isPending ? "Returning..." : "Return grade"}

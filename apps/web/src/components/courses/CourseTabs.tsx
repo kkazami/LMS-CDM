@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { InstituteTheme } from "@/lib/theme";
-import { MessageSquare, BookOpen, Users, BarChart2, Radio, type LucideIcon } from "lucide-react";
+import { MessageSquare, BookOpen, Users, BarChart2, Radio, Activity, type LucideIcon } from "lucide-react";
 
 interface CourseTabsProps {
   courseId: string;
@@ -13,6 +13,8 @@ interface CourseTabsProps {
   pendingCount?: number;
   pendingWorkCount?: number;
   isInstructor?: boolean;
+  /** True only when the current course is ITE and user is instructor */
+  showParticipation?: boolean;
 }
 
 export default function CourseTabs({
@@ -22,6 +24,7 @@ export default function CourseTabs({
   pendingCount = 0,
   pendingWorkCount = 0,
   isInstructor = false,
+  showParticipation = false,
 }: CourseTabsProps) {
   const pathname = usePathname();
   const activeTabRef = useRef<HTMLAnchorElement | null>(null);
@@ -36,6 +39,10 @@ export default function CourseTabs({
           { key: "broadcast", label: "Broadcast", icon: Radio },
           { key: "gradebook", label: "Gradebook", icon: BarChart2 },
         ]
+      : []),
+    // ITE-only: only rendered when showParticipation=true (server-enforced)
+    ...(showParticipation
+      ? [{ key: "participation", label: "Participation", icon: Activity }]
       : []),
   ];
 

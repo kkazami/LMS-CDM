@@ -12,7 +12,9 @@ export async function GET(request: Request, context: { params: Promise<{ assetId
     const session = await getSession(request);
     if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const { assetId } = await context.params;
-    return fileResponse(await readPrivateUpload(session.user, assetId), true);
+    const { searchParams } = new URL(request.url);
+    const inline = searchParams.get('inline') === '1' || searchParams.get('inline') === 'true';
+    return fileResponse(await readPrivateUpload(session.user, assetId), inline);
   } catch (error) {
     return Response.json({ error: error instanceof AccessError ? error.message : 'File unavailable.' }, { status: error instanceof AccessError ? error.status : 503 });
   }

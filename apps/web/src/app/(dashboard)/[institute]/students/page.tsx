@@ -3,6 +3,8 @@ import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
+import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
+import { getInstituteByCode, getStudentEnrollments, getStudentRank } from "@/lib/dashboard-data";
 import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
@@ -34,46 +36,27 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     redirect(`/login?institute=${institute}`);
   }
 
-  const gamificationPromise = db.gamificationProfile.findUnique({
-    where: { studentId },
-    select: {
-      exp: true, loginStreakCurrent: true, level: true, totalLoginDays: true,
-      badges: { where: { badgeRuleId: "first-day" }, select: { earnedAt: true }, take: 1 },
-    },
-  });
-
-  // 1. Fetch student's approved enrolled courses
-  const [enrollments, gamification, session] = await Promise.all([
-    db.enrollment.findMany({
+  // 1. Independent lookups run together: approved courses (shared with the layout),
+  //    gamification profile with login streak/badges, student's pending join requests, and auth session.
+  const [enrollments, gamification, pendingJoinCount, session] = await Promise.all([
+    getStudentEnrollments(studentId, instituteRecord.id),
+    db.gamificationProfile.findUnique({
+      where: { studentId },
+      select: {
+        exp: true,
+        loginStreakCurrent: true,
+        level: true,
+        totalLoginDays: true,
+        badges: { where: { badgeRuleId: "first-day" }, select: { earnedAt: true }, take: 1 },
+      },
+    }),
+    db.enrollment.count({
       where: {
         studentId,
-        status: "APPROVED",
-        course: {
-          instituteId: instituteRecord.id,
-          isArchived: false,
-        },
+        status: "PENDING",
+        course: { instituteId: instituteRecord.id, isArchived: false },
       },
-      select: {
-        course: {
-          select: {
-            id: true,
-            title: true,
-            code: true,
-            section: true,
-            room: true,
-            description: true,
-            coverImage: true,
-            instructor: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { displayOrderIndex: "asc" },
     }),
-    gamificationPromise,
     getSession(),
   ]);
 
@@ -89,50 +72,71 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   }));
 
   const courseIds = enrolledCourses.map((c) => c.id);
+  const exp = gamification?.exp ?? 0;
 
-  // 3. Fetch classwork due in the next 7 days (or overdue and pending)
+  // 2. Classwork due within 7 days or already overdue (never submitted), the student's
+  //    submissions, calendar, and the real rank all run in parallel.
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const rawDueSoon = await db.syllabusItem.findMany({
-    where: {
-      courseId: { in: courseIds },
-      type: { not: "MATERIAL" },
-      submissions: { none: { studentId, status: { in: ["SUBMITTED", "GRADED", "RETURNED"] } } },
-      dueDate: {
-        not: null,
-        lte: sevenDaysFromNow,
+  const [submissions, rawDueSoon, rank, calendar] = await Promise.all([
+    db.studentSubmission.findMany({
+      where: {
+        studentId,
+        syllabusItem: { courseId: { in: courseIds } },
       },
-    },
-    select: {
-      id: true,
-      title: true,
-      type: true,
-      dueDate: true,
-      course: {
-        select: {
-          id: true,
-          title: true,
-          code: true,
-          section: true,
+      select: { syllabusItemId: true, status: true },
+    }),
+    db.syllabusItem.findMany({
+      where: {
+        courseId: { in: courseIds },
+        type: { not: "MATERIAL" },
+        dueDate: {
+          not: null,
+          lte: sevenDaysFromNow,
+        },
+        // An item with no target groups is for everyone; otherwise only members of a
+        // targeted group see it (same rule as lib/skills/group-permission-resolver.ts).
+        OR: [
+          { targetGroups: { none: {} } },
+          { targetGroups: { some: { group: { members: { some: { studentId } } } } } },
+        ],
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            section: true,
+          },
         },
       },
-    },
-    orderBy: { dueDate: "asc" },
-  });
+      orderBy: { dueDate: "asc" },
+    }),
+    getStudentRank(studentId, instituteRecord.id, exp),
+    calendarPromise,
+  ]);
 
-  const dueSoonItems = rawDueSoon.map((item) => ({
-    id: item.id,
-    title: item.title,
-    type: item.type,
-    dueDate: item.dueDate!.toISOString(),
-    courseId: item.course.id,
-    courseTitle: item.course.title,
-    courseCode: item.course.code,
-    courseSection: item.course.section,
-  }));
+  const submittedIds = new Set(
+    submissions
+      .filter((s) => ["SUBMITTED", "GRADED", "RETURNED"].includes(s.status))
+      .map((s) => s.syllabusItemId)
+  );
 
-  const calendar = await calendarPromise;
+  const dueSoonItems = rawDueSoon
+    .filter((item) => !submittedIds.has(item.id))
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      type: item.type,
+      dueDate: item.dueDate!.toISOString(),
+      courseId: item.course.id,
+      courseTitle: item.course.title,
+      courseCode: item.course.code,
+      courseSection: item.course.section,
+    }));
+
   const typingSessionKey = `cdm_typed_${studentId.slice(0, 8)}`;
 
   return (
@@ -147,11 +151,17 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       today={schoolDateKey(now)}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
-      greeting={getDashboardGreeting(user.name, now, session?.id ?? studentId,
-        !gamification || gamification.totalLoginDays === 0 || isFirstLoginSession(session?.createdAt, gamification.badges[0]?.earnedAt))}
-      exp={gamification?.exp ?? 0}
-      streakCurrent={gamification?.loginStreakCurrent ?? 1}
-      level={gamification?.level ?? 1}
+      greeting={getDashboardGreeting(
+        user.name,
+        now,
+        session?.id ?? studentId,
+        !gamification || gamification.totalLoginDays === 0 || isFirstLoginSession(session?.createdAt, gamification.badges[0]?.earnedAt)
+      )}
+      exp={exp}
+      streakCurrent={gamification?.loginStreakCurrent ?? 0}
+      rank={rank}
+      pendingJoinCount={pendingJoinCount}
+      showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
     />
   );

@@ -82,6 +82,7 @@ export default function SyllabusAccordion({
   onEdit,
   onDelete,
 }: SyllabusAccordionProps) {
+  const isIte = (instituteCode || theme?.code || "").toLowerCase() === "ite";
   // Collect all unique types from items
   const itemTypes = Array.from(new Set(items.map((i) => i.type || "MATERIAL")));
   const baseTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL"];
@@ -181,7 +182,9 @@ export default function SyllabusAccordion({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] group-hover:text-[#F97316] transition-colors">
+                        <p className={`text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] transition-colors ${
+                          isIte ? "group-hover:text-blue-600 dark:group-hover:text-blue-400" : "group-hover:text-[#F97316]"
+                        }`}>
                           {item.title}
                         </p>
                         {item.description && (

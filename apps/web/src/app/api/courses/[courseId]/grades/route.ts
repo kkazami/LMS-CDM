@@ -2,6 +2,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
+import { percentToGradePoint, formatGradePoint, getGradeRemark } from '@/lib/grading/ph-scale';
 
 export const dynamic = "force-dynamic";
 
@@ -115,20 +116,17 @@ export async function GET(request: Request, context: RouteContext) {
         ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
         : null;
 
-    let letterGrade = 'N/A';
-    if (averagePercentage !== null) {
-      if (averagePercentage >= 90) letterGrade = 'A';
-      else if (averagePercentage >= 80) letterGrade = 'B';
-      else if (averagePercentage >= 70) letterGrade = 'C';
-      else if (averagePercentage >= 60) letterGrade = 'D';
-      else letterGrade = 'F';
-    }
+    const gradePoint = averagePercentage !== null ? percentToGradePoint(averagePercentage) : null;
+    const gradePointFormatted = gradePoint !== null ? formatGradePoint(gradePoint) : 'N/A';
+    const remark = gradePoint !== null ? getGradeRemark(gradePoint) : 'N/A';
 
     return NextResponse.json(
       {
         summary: {
           averagePercentage,
-          letterGrade,
+          gradePoint,
+          gradePointFormatted,
+          remark,
           totalEarnedPoints,
           totalPossiblePoints,
           totalItems: gradableItems.length,

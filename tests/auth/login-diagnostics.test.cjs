@@ -10,9 +10,9 @@ test('login logs the failure stage and code without exposing credentials or data
     platform: 'node', format: 'cjs', tsconfig: 'apps/web/tsconfig.json',
     nodePaths: [path.resolve('apps/web/node_modules')],
     plugins: [{ name: 'service-boundaries', setup(b) {
-      b.onResolve({ filter: /^next\/server$|^bcryptjs$|^@\/lib\/(db|auth-session|gamification\/login-rewards|rate-limit|cors|roster\/rate-limit|super-user-v1\/actor)$/ }, ({ path }) => ({ path, namespace: 'mock' }));
+      b.onResolve({ filter: /^next\/server$|^bcryptjs$|^@\/lib\/(db|auth-session|gamification\/login-rewards|rate-limit|cors|roster\/rate-limit|super-user-v1\/actor|ite\/activity-logger)$/ }, ({ path }) => ({ path, namespace: 'mock' }));
       b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path: name }) => ({ contents:
-        name === 'next/server' ? 'export const NextResponse=Response;' :
+        name === 'next/server' ? 'export const NextResponse=Response; export const after=(fn)=>{Promise.resolve().then(fn).catch(()=>{});};' :
         name === 'bcryptjs' ? 'export async function compare(){return true;}' :
         name.endsWith('/db') ? 'export const db={user:{findMany(){throw Object.assign(new Error("database-secret"),{code:"P2022"})}}};' :
         name.endsWith('auth-session') ? 'export class SessionAdmissionError extends Error{} export async function createSession(){}' :
@@ -20,6 +20,7 @@ test('login logs the failure stage and code without exposing credentials or data
         name.endsWith('login-rewards') ? 'export async function processLoginReward(){}' :
         name.endsWith('/cors') ? 'export function getCorsHeaders(){return {}} export function handleCorsPreflight(){}' :
         name.endsWith('roster/rate-limit') ? 'export async function persistentLimit(){}' :
+        name.endsWith('activity-logger') ? 'export const logActivity = async () => {};' :
         'export const RATE_LIMIT_CONFIG={loginIp:{maxRequests:10,windowMs:1000},loginAccount:{maxRequests:5,windowMs:1000}}; export function getClientIp(){return "127.0.0.1"} export async function checkDualRateLimit(){return {allowed:true}} export function createRateLimitResponse(){}'
       }));
     } }],

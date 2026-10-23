@@ -19,10 +19,12 @@ export function getSecurityHeaders(nonce?: string): Record<string, string> {
     "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
     // Connect sources: LMS API, OpenAI API if configured, Judge0 service
     "connect-src 'self' https: http://localhost:* ws: wss:",
+    // Practicum: uploaded demo videos (Vercel Blob)
+    "media-src 'self' blob: https:",
     // Worker sources for Monaco Editor and PDF.js
     "worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com",
-    // Frame sources for document viewer (YouTube, Office Online embeds)
-    "frame-src 'self' https://www.youtube.com https://view.officeapps.live.com blob:",
+    // Frame sources: document viewer (YouTube, Vimeo, Google Drive/Docs, Office Online embeds)
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://drive.google.com https://docs.google.com https://view.officeapps.live.com blob:",
     // Prevent clickjacking: no framing allowed
     "frame-ancestors 'none'",
     "base-uri 'self'",

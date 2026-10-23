@@ -12,6 +12,7 @@ interface CardEditorModalProps {
   /** If provided, we are editing; otherwise creating */
   editingCard?: FlashcardCard | null;
   onSaved: (card: FlashcardCard) => void;
+  instituteCode?: string;
 }
 
 export default function CardEditorModal({
@@ -20,7 +21,9 @@ export default function CardEditorModal({
   deckId,
   editingCard,
   onSaved,
+  instituteCode,
 }: CardEditorModalProps) {
+  const isIte = (instituteCode || "").toLowerCase() === "ite";
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [hint, setHint] = useState("");
@@ -137,7 +140,11 @@ export default function CardEditorModal({
             onChange={(e) => setFront(e.target.value)}
             placeholder="Type your question here..."
             rows={3}
-            className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+            className={`w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 ${
+              isIte
+                ? "focus:border-blue-600 focus:ring-blue-500/10"
+                : "focus:border-[#F97316] focus:ring-orange-500/10"
+            }`}
           />
           <div className="flex flex-col gap-2 pt-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
@@ -154,7 +161,9 @@ export default function CardEditorModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-bold text-slate-600 dark:text-[#8B92A5] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#25293C] hover:border-slate-400 dark:hover:border-white/20 focus:outline-none focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-bold text-slate-600 dark:text-[#8B92A5] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#25293C] hover:border-slate-400 dark:hover:border-white/20 focus:outline-none focus:ring-4 cursor-pointer ${
+                  isIte ? "focus:ring-blue-500/10" : "focus:ring-orange-500/10"
+                }`}
               >
                 <ImagePlus className="h-5 w-5" />
                 {imageUrl ? "Change Image" : "Upload Image"}
@@ -193,7 +202,11 @@ export default function CardEditorModal({
             onChange={(e) => setBack(e.target.value)}
             placeholder="Type the exact answer here..."
             rows={3}
-            className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#F97316] focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+            className={`w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 ${
+              isIte
+                ? "focus:border-blue-600 focus:ring-blue-500/10"
+                : "focus:border-[#F97316] focus:ring-orange-500/10"
+            }`}
           />
         </div>
 
@@ -224,7 +237,11 @@ export default function CardEditorModal({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-xl bg-[#F97316] px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-orange-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+            className={`rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
+              isIte
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-[#F97316] hover:bg-orange-600"
+            }`}
           >
             {saving ? "Saving..." : editingCard ? "Update Card" : "Add Flashcard"}
           </button>

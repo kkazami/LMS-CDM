@@ -1,5 +1,6 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -9,6 +10,9 @@ import DocumentViewerDynamic from "@/components/learning-materials/DocumentViewe
 import PomodoroTimer from "@/components/learning-materials/PomodoroTimer";
 import FocusSidebar from "@/components/learning-materials/FocusSidebar";
 import ConvertFlashcardsButton from "@/components/courses/ConvertFlashcardsButton";
+import FocusButton from "@/components/focus/FocusButton";
+import StudyHelpPanel from "@/components/guidance/StudyHelpPanel";
+import { logActivity } from "@/lib/ite/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +31,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/learning-materials/[courseId]/[materialId]/read/page.tsx", await params);
 
   const { institute, courseId, materialId } = await params;
+  const isIte = institute.toLowerCase() === "ite";
   const { attachmentId } = await searchParams;
   const session = await getSession();
 
@@ -60,6 +65,21 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   if (!material || material.courseId !== courseId || material.type !== "MATERIAL") {
     redirect(`/${institute}/learning-materials/${courseId}`);
   }
+
+  // Log MATERIAL_VIEW event (deduplicated, no-op for non-ITE)
+  after(async () => {
+    try {
+      await logActivity({
+        userId,
+        instituteId: (session.user as Record<string, unknown>).instituteId as string | undefined,
+        courseId,
+        type: "MATERIAL_VIEW",
+        refId: materialId,
+      });
+    } catch (err) {
+      console.error("[activity-logger] material view error:", err);
+    }
+  });
 
   // Determine which attachment to show
   let activeAttachment = material.attachments[0];
@@ -100,14 +120,28 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {/* Convert to Flashcards button */}
-        <ConvertFlashcardsButton
-          attachmentId={activeAttachment.id}
-          attachmentName={activeAttachment.fileName || "Document"}
-          attachmentUrl={activeAttachment.url}
-          courseId={courseId}
-          instituteCode={institute}
-        />
+        <div className="flex items-center gap-3">
+          {institute.toLowerCase() === "ite" && (session.user.role as string)?.toUpperCase() === "STUDENT" && (
+            <StudyHelpPanel
+              materialId={materialId}
+              materialTitle={material.title}
+            />
+          )}
+          <FocusButton
+            contextType="MATERIAL"
+            courseId={courseId}
+            refId={materialId}
+            title={material.title}
+          />
+          {/* Convert to Flashcards button */}
+          <ConvertFlashcardsButton
+            attachmentId={activeAttachment.id}
+            attachmentName={activeAttachment.fileName || "Document"}
+            attachmentUrl={activeAttachment.url}
+            courseId={courseId}
+            instituteCode={institute}
+          />
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0">
@@ -149,7 +183,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
                     key={file.id}
                     className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                       file.id === activeAttachment.id
-                        ? "bg-[#F97316] text-white shadow-xs"
+                        ? (isIte ? "bg-blue-600 text-white shadow-xs" : "bg-[#F97316] text-white shadow-xs")
                         : "bg-slate-50 dark:bg-[#181B26] text-slate-700 dark:text-[#8B92A5] border border-slate-200/80 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-[#1E2132] hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >

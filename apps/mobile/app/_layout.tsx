@@ -10,6 +10,7 @@ import { queryClient } from '../src/lib/query-client';
 import { useThemeStore } from '../src/stores/theme-store';
 import { useAuthStore } from '../src/stores/auth-store';
 import { OfflineNotice } from '../src/components/common/OfflineNotice';
+import { Toaster } from 'burnt/web';
 
 // Prevent splash from auto-hiding until we explicitly dismiss it
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -45,7 +46,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={isDark ? '#0F1117' : '#FFFFFF'} />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <View
             style={[
               styles.container,
@@ -54,6 +55,7 @@ export default function RootLayout() {
           >
             <OfflineNotice />
             <Slot />
+            <Toaster />
           </View>
         </SafeAreaProvider>
       </QueryClientProvider>

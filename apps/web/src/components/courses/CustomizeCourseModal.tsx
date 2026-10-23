@@ -35,6 +35,7 @@ export default function CustomizeCourseModal({
   instituteCode,
   onSuccess,
 }: CustomizeCourseModalProps) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const [activeTab, setActiveTab] = useState<"presets" | "custom">("presets");
   const [selectedCover, setSelectedCover] = useState<string>(currentCoverImage);
   const [customImageUrl, setCustomImageUrl] = useState<string>("");
@@ -185,7 +186,9 @@ export default function CustomizeCourseModal({
                       onClick={() => setSelectedCover(preset.url)}
                       className={`group relative h-28 rounded-xl border-2 overflow-hidden cursor-pointer transition-all shadow-xs ${
                         isSelected
-                          ? "border-orange-500 ring-2 ring-orange-500/20"
+                          ? isIte
+                            ? "border-blue-600 ring-2 ring-blue-500/20"
+                            : "border-orange-500 ring-2 ring-orange-500/20"
                           : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
                       }`}
                     >
@@ -197,7 +200,9 @@ export default function CustomizeCourseModal({
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3 flex flex-col justify-between">
                         <div className="flex justify-end">
                           {isSelected && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F97316] text-white shadow-md">
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md ${
+                              isIte ? "bg-blue-600" : "bg-[#F97316]"
+                            }`}>
                               <Check className="h-3.5 w-3.5" />
                             </span>
                           )}
@@ -211,6 +216,7 @@ export default function CustomizeCourseModal({
                 })}
               </div>
             </div>
+
           ) : (
             /* ─── Custom Image Upload & Cropper Preview ─── */
             <div className="space-y-5">

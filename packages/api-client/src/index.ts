@@ -8,7 +8,8 @@ import type {
   CourseClassworkResponse,
   CreateClassworkInput,
   CoursePeopleResponse,
-  CourseGradesResponse,
+  CourseGradeItem,
+  CourseFeedbackComment,
   CourseSubmissionResponse,
   GradeSubmissionInput,
   Announcement,
@@ -30,6 +31,25 @@ import type {
   AppNotification,
   RegisterPushTokenInput,
 } from '@lms/types';
+
+export interface CourseGradeSummary {
+  averagePercentage: number | null;
+  gradePoint: number | null;
+  gradePointFormatted: string;
+  remark: string;
+  totalEarnedPoints: number;
+  totalPossiblePoints: number;
+  totalItems: number;
+  completedCount: number;
+  gradedCount: number;
+  missingCount: number;
+}
+
+export interface CourseGradesResponse {
+  summary: CourseGradeSummary | null;
+  items: CourseGradeItem[];
+  feedback: CourseFeedbackComment[];
+}
 
 export interface ApiClientConfig {
   baseUrl: string;
@@ -68,11 +88,44 @@ export function createApiClient(config: ApiClientConfig) {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiClientError(response.status, error.message || 'Request failed', error.errors);
+      let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
+      let errors: any = undefined;
+      let bodyData: any = undefined;
+
+      try {
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          if (json && typeof json === 'object') {
+            bodyData = json;
+            if (json.reply) message = json.reply;
+            else if (json.message) message = json.message;
+            else if (json.error) message = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
+            if (json.errors) errors = json.errors;
+          }
+        } catch {
+          // If non-JSON, surface raw text if short and not HTML
+          const trimmed = text.trim();
+          if (trimmed.length > 0 && trimmed.length <= 150 && !trimmed.startsWith('<')) {
+            message = trimmed;
+          }
+        }
+      } catch {
+        // Fallback to HTTP status message
+      }
+
+      throw new ApiClientError(response.status, message, errors, bodyData);
     }
 
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new ApiClientError(
+        response.status,
+        `HTTP ${response.status}: Received non-JSON response from server`
+      );
+    }
   }
 
   return {
@@ -110,6 +163,23 @@ export function createApiClient(config: ApiClientConfig) {
           {
             method: 'POST',
             body: JSON.stringify({ content }),
+          }
+        ),
+
+      updateStream: (courseId: string, announcementId: string, content: string) =>
+        request<{ success: boolean; announcement: CourseAnnouncementItem }>(
+          `/api/courses/${courseId}/stream`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ announcementId, content }),
+          }
+        ),
+
+      deleteStream: (courseId: string, announcementId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/stream?announcementId=${encodeURIComponent(announcementId)}`,
+          {
+            method: 'DELETE',
           }
         ),
 
@@ -180,16 +250,59 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify({ enrollmentId, action }),
         }),
 
-      broadcast: (courseId: string, message: string, category = 'GENERAL') =>
+      getBroadcasts: (courseId: string) =>
+        request<{
+          broadcasts: Array<{
+            id: string;
+            message: string;
+            category: string;
+            scope: string;
+            scopeLabel: string;
+            recipientCount: number;
+            createdAt: string;
+            senderName?: string;
+            senderAvatar?: string | null;
+          }>;
+          enrolledStudents: Array<{
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+          }>;
+        }>(`/api/courses/${courseId}/broadcast`),
+
+      broadcast: (courseId: string, message: string, category = 'GENERAL', scope: string = 'ALL') =>
         request<{ success: boolean; broadcast: any }>(`/api/courses/${courseId}/broadcast`, {
           method: 'POST',
-          body: JSON.stringify({ message, category }),
+          body: JSON.stringify({ message, category, scope }),
         }),
+
+      updateBroadcast: (courseId: string, broadcastId: string, message: string, category?: string) =>
+        request<{ success: boolean; broadcast: any }>(`/api/courses/${courseId}/broadcast`, {
+          method: 'PATCH',
+          body: JSON.stringify({ broadcastId, message, category }),
+        }),
+
+      deleteBroadcast: (courseId: string, broadcastId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/broadcast?broadcastId=${encodeURIComponent(broadcastId)}`,
+          {
+            method: 'DELETE',
+          }
+        ),
     },
 
     announcements: {
-      list: (instituteCode: string) =>
-        request<{ announcements: Announcement[] }>(`/api/announcements?institute=${instituteCode}`),
+      list: (instituteCode: string, params?: { courseId?: string; page?: number; limit?: number }) => {
+        const query = new URLSearchParams({ institute: instituteCode });
+        if (params?.courseId) query.set('courseId', params.courseId);
+        if (params?.page) query.set('page', String(params.page));
+        if (params?.limit) query.set('limit', String(params.limit));
+        return request<{
+          announcements: Announcement[];
+          pagination?: { page: number; limit: number; totalCount: number; totalPages: number; hasMore: boolean };
+        }>(`/api/announcements?${query.toString()}`);
+      },
     },
 
     grades: {
@@ -336,6 +449,16 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify({ action: 'markAllRead' }),
         }),
 
+      delete: (notificationId: string) =>
+        request<{ success: boolean; count?: number }>(`/api/notifications?id=${encodeURIComponent(notificationId)}`, {
+          method: 'DELETE',
+        }),
+
+      clearAll: () =>
+        request<{ success: boolean; count?: number }>('/api/notifications?all=true', {
+          method: 'DELETE',
+        }),
+
       registerPushToken: (data: RegisterPushTokenInput) =>
         request<{ success: boolean }>('/api/notifications/push-token', {
           method: 'POST',
@@ -377,14 +500,465 @@ export function createApiClient(config: ApiClientConfig) {
       list: () =>
         request<{ institutes: Array<{ id: string; code: string; name: string }> }>('/api/institutes'),
     },
+
+    analytics: {
+      getAtRisk: (courseId?: string) => {
+        const query = courseId && courseId !== 'all' ? `?courseId=${encodeURIComponent(courseId)}` : '';
+        return request<{ atRiskStudents: any[] }>(`/api/analytics/at-risk${query}`);
+      },
+      importSupplementary: (data: {
+        courseId: string;
+        rows: Array<{
+          studentEmail?: string;
+          studentNumber?: string;
+          supplementaryScore: any;
+        }>;
+        commit?: boolean;
+      }) =>
+        request<{
+          courseTitle: string;
+          courseCode: string;
+          totalRows: number;
+          validCount: number;
+          invalidCount: number;
+          canCommit: boolean;
+          results: Array<{
+            identifier: string;
+            matchedStudent: {
+              id: string;
+              name: string;
+              email: string;
+              studentNumber: string | null;
+            } | null;
+            score: number | null;
+            isValid: boolean;
+            error?: string;
+          }>;
+          message?: string;
+          createdAssignmentId?: string;
+          updatedCount?: number;
+        }>('/api/analytics/supplementary-import', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+    },
+
+    chatbot: {
+      sendMessage: (
+        message: string,
+        history?: Array<{ role: 'user' | 'bot' | 'model'; text: string }>
+      ) =>
+        request<{
+          reply: string;
+          role?: string;
+          rateLimited?: boolean;
+          error?: string;
+        }>('/api/chatbot/message', {
+          method: 'POST',
+          body: JSON.stringify({ message, history }),
+        }),
+    },
+
+    meetings: {
+      list: (params?: { courseId?: string; status?: string; cursor?: string; take?: number }) => {
+        const query = new URLSearchParams();
+        if (params?.courseId && params.courseId !== 'all' && params.courseId !== 'ALL') {
+          query.set('courseId', params.courseId);
+        }
+        if (params?.status && params.status !== 'all' && params.status !== 'ALL') {
+          query.set('status', params.status);
+        }
+        if (params?.cursor) query.set('cursor', params.cursor);
+        if (params?.take) query.set('take', String(params.take));
+        const qs = query.toString();
+        return request<MeetingsListResponse>(`/api/ite/meetings${qs ? `?${qs}` : ''}`);
+      },
+
+      join: (id: string) =>
+        request<{ joinUrl: string }>(`/api/ite/meetings/${id}/join`, {
+          method: 'POST',
+        }),
+
+      create: (data: CreateMeetingInput) =>
+        request<ClassMeetingItem>('/api/ite/meetings', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      cancel: (id: string) =>
+        request<ClassMeetingItem>(`/api/ite/meetings/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'cancel' }),
+        }),
+
+      getAttendance: (id: string) =>
+        request<MeetingAttendanceResponse>(`/api/ite/meetings/${id}/attendance`),
+    },
+
+    ite: {
+      getParticipation: () =>
+        request<StudentParticipationResponse>('/api/ite/students/my-participation'),
+      getFocusSummary: () =>
+        request<FocusSummaryResponse>('/api/ite/focus/summary'),
+      getSuggestions: () =>
+        request<StudySuggestionsResponse>('/api/ite/guidance/suggestions'),
+      getInstructorAtRiskSummary: () =>
+        request<InstructorAtRiskSummaryResponse>('/api/ite/instructor/at-risk-summary'),
+      getCourseParticipation: (courseId: string) =>
+        request<CourseParticipationDetailResponse>(`/api/ite/courses/${courseId}/participation`),
+    },
+
+    broadcasts: {
+      list: (courseId: string) =>
+        request<CourseBroadcastResponse>(`/api/courses/${courseId}/broadcast`),
+      create: (courseId: string, data: { message: string; category?: string; scope?: string }) =>
+        request<CreateBroadcastResponse>(`/api/courses/${courseId}/broadcast`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: (courseId: string, broadcastId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/broadcast?broadcastId=${encodeURIComponent(broadcastId)}`,
+          { method: 'DELETE' }
+        ),
+    },
+
+    forms: {
+      list: (courseId: string) =>
+        request<CourseFormsResponse>(`/api/courses/${courseId}/forms`),
+      getResponses: (courseId: string, formId: string, params?: { q?: string; sort?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.q) query.set('q', params.q);
+        if (params?.sort) query.set('sort', params.sort);
+        const qs = query.toString();
+        return request<FormResponsesResponse>(
+          `/api/courses/${courseId}/forms/${formId}/responses${qs ? `?${qs}` : ''}`
+        );
+      },
+    },
+
+    knowledgeExchange: {
+      listPosts: (params?: {
+        tab?: string;
+        sort?: string;
+        search?: string;
+        tag?: string;
+        courseId?: string;
+        page?: number;
+        limit?: number;
+      }) => {
+        const query = new URLSearchParams();
+        if (params?.tab) query.set('tab', params.tab);
+        if (params?.sort) query.set('sort', params.sort);
+        if (params?.search) query.set('search', params.search);
+        if (params?.tag) query.set('tag', params.tag);
+        if (params?.courseId) query.set('courseId', params.courseId);
+        if (params?.page) query.set('page', String(params.page));
+        if (params?.limit) query.set('limit', String(params.limit));
+        const qs = query.toString();
+        return request<KxFeedResponse>(`/api/knowledge-exchange/posts${qs ? `?${qs}` : ''}`);
+      },
+    },
   };
 }
+
+export type MeetingStatus = 'SCHEDULED' | 'LIVE' | 'ENDED' | 'CANCELLED';
+export type MeetingProvider = 'GOOGLE_MEET' | 'GOOGLE_CLASSROOM' | 'ZOOM' | 'MICROSOFT_TEAMS' | 'OTHER';
+
+export interface ClassMeetingItem {
+  id: string;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  createdById: string;
+  title: string;
+  description: string | null;
+  provider: MeetingProvider;
+  joinUrl?: string;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  status: MeetingStatus;
+  derivedStatus: MeetingStatus;
+  primaryTimeIso: string;
+  formattedPrimaryDateTime: string;
+  formattedStartedTime: string | null;
+  formattedEndedTime: string | null;
+  durationLabel: string | null;
+  joinCount?: number;
+  hasJoined?: boolean;
+  createdAt: string;
+}
+
+export interface MeetingAttendee {
+  userId: string;
+  name: string;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+  formattedJoinedAt: string;
+}
+
+export interface MeetingAttendanceResponse {
+  meetingId: string;
+  totalAttendees: number;
+  attendees: MeetingAttendee[];
+}
+
+export interface CreateMeetingInput {
+  courseId: string;
+  title: string;
+  description?: string;
+  joinUrl: string;
+  scheduledAt?: string;
+  startNow?: boolean;
+}
+
+export interface MeetingsListResponse {
+  meetings: ClassMeetingItem[];
+  nextCursor: string | null;
+}
+
+export interface DailySeriesItem {
+  date: string;
+  count: number;
+}
+
+export interface StudentCourseParticipation {
+  courseId: string;
+  courseTitle: string;
+  courseCode: string;
+  engagementScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  dailySeries: DailySeriesItem[];
+  onTimeRate: number | null;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  reasons: string[];
+  lastActivityAt: string | null;
+  hasEnoughData: boolean;
+}
+
+export interface StudentParticipationResponse {
+  courses: StudentCourseParticipation[];
+}
+
+export interface DailyFocusStat {
+  date: string;
+  label: string;
+  focusedMinutes: number;
+}
+
+export interface FocusSummaryResponse {
+  focusedMinutesThisWeek: number;
+  focusedMinutesLastWeek: number;
+  completedSessionsThisWeek: number;
+  averageTabSwitchesThisWeek: number;
+  longestCompletedSessionMinutes: number;
+  sevenDaySeries: DailyFocusStat[];
+  activeSessionId: string | null;
+}
+
+export type SuggestionPriority = 1 | 2 | 3 | 4 | 5;
+export type SuggestionCategory = 'OVERDUE' | 'DUE_SOON' | 'ENGAGEMENT' | 'FOCUS' | 'ON_TRACK';
+
+export interface StudySuggestion {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  priority: SuggestionPriority;
+  category: SuggestionCategory;
+}
+
+export interface StudySuggestionsResponse {
+  suggestions: StudySuggestion[];
+}
+
+export interface KxPostAuthor {
+  id: string | null;
+  name: string;
+  role: string | null;
+  email: string | null;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+  initials?: string;
+}
+
+export interface KxTagItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  postCount: number;
+}
+
+export interface KxPostItem {
+  id: string;
+  title: string;
+  body: string;
+  postType: string;
+  status: string;
+  isAnonymous: boolean;
+  authorId: string | null;
+  instituteId: string;
+  courseId: string | null;
+  viewCount: number;
+  voteCount: number;
+  answerCount: number;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userVote: number;
+  isBookmarked: boolean;
+  author: KxPostAuthor;
+  tags: KxTagItem[];
+}
+
+export interface KxFeedResponse {
+  posts: KxPostItem[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface InstructorAtRiskReason {
+  detail: string;
+  code?: string;
+}
+
+export interface InstructorAtRiskEntry {
+  studentId: string;
+  name: string;
+  courseTitle: string;
+  courseId: string;
+  riskLevel: 'HIGH';
+  reasons: InstructorAtRiskReason[];
+}
+
+export interface InstructorAtRiskSummaryResponse {
+  entries: InstructorAtRiskEntry[];
+}
+
+export interface CourseParticipationStudentRow {
+  studentId: string;
+  name: string;
+  email: string;
+  studentNumber?: string | null;
+  avatarUrl: string | null;
+  engagementScore: number;
+  trend: 'UP' | 'DOWN' | 'STABLE' | 'improving' | 'declining' | 'stable';
+  lastActivityAt: string | null;
+  overdueCount: number;
+  daysInactive?: number;
+  gradeAvg: number | null;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskScore: number;
+  suggestedAction?: string;
+  reasons: Array<{ code?: string; type?: string; detail: string; severity?: string; suggestedAction?: string }>;
+  dailySeries: Array<{ date: string; count: number }>;
+  computedAt: string | null;
+}
+
+export interface CourseParticipationKpis {
+  activeThisWeek: number;
+  avgEngagement: number;
+  highCount: number;
+  mediumCount: number;
+}
+
+export interface CourseParticipationDetailResponse {
+  students: CourseParticipationStudentRow[];
+  kpis: CourseParticipationKpis;
+  courseDaily: Array<{ date: string; count: number }>;
+  computedAt: string | null;
+}
+
+export interface CourseBroadcastItem {
+  id: string;
+  senderId: string;
+  message: string;
+  category: string;
+  scope: string;
+  scopeLabel?: string;
+  recipientCount: number;
+  createdAt: string;
+  senderName?: string;
+  senderAvatar?: string | null;
+}
+
+export interface CourseBroadcastEnrolledStudent {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+}
+
+export interface CourseBroadcastResponse {
+  broadcasts: CourseBroadcastItem[];
+  enrolledStudents: CourseBroadcastEnrolledStudent[];
+}
+
+export interface CreateBroadcastResponse {
+  success: boolean;
+  broadcast: CourseBroadcastItem;
+}
+
+export interface CourseFormItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  status: string;
+  timeLimitMinutes: number | null;
+  maxAttempts: number | null;
+  passingScore: number | null;
+  dueDate: string | null;
+  createdAt: string;
+  _count?: {
+    questions: number;
+    attempts: number;
+  };
+}
+
+export interface CourseFormsResponse {
+  forms: CourseFormItem[];
+}
+
+export interface FormAttemptUser {
+  id: string;
+  name: string;
+  email: string;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+}
+
+export interface FormAttemptItem {
+  id: string;
+  formId: string;
+  userId: string;
+  status: string;
+  score: number | null;
+  maxScore: number | null;
+  percentage: number | null;
+  startedAt: string;
+  submittedAt: string | null;
+  user: FormAttemptUser;
+}
+
+export interface FormResponsesResponse {
+  attempts: FormAttemptItem[];
+}
+
+
+
 
 export class ApiClientError extends Error {
   constructor(
     public status: number,
     message: string,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
+    public data?: any
   ) {
     super(message);
     this.name = 'ApiClientError';

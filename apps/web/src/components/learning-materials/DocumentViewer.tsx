@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -27,6 +28,10 @@ interface DocumentViewerProps {
 }
 
 export default function DocumentViewer({ url, attachmentId, userId, type, fileName, materialId }: DocumentViewerProps) {
+  const params = useParams();
+  const institute = (params?.institute as string) || "";
+  const isIte = institute.toLowerCase() === "ite";
+
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -219,7 +224,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             )}
             {!showPdfControls && (
               <span className="text-sm font-bold text-slate-700 dark:text-[#F0F2F8] flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#F97316]" />
+                <FileText className={`h-4 w-4 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
                 {isLink ? "External Link Preview" : (fileName || "File Preview")}
               </span>
             )}
@@ -255,7 +260,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             <button
               onClick={() => setShowNotes(!showNotes)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                showNotes ? "bg-orange-500/10 text-[#F97316]" : "hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8]"
+                showNotes
+                  ? (isIte ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 text-[#F97316]")
+                  : "hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8]"
               }`}
             >
               <MessageSquare className="h-4 w-4" />
@@ -298,7 +305,11 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
           {isLink && !youtubeUrl && (
             <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-[#0B0D13]">
               <div className="bg-white dark:bg-[#141721] p-10 rounded-3xl shadow-xs border border-slate-200/80 dark:border-white/5 max-w-md w-full transition-all duration-300 hover:shadow-lg hover:border-slate-300 dark:hover:border-white/10">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] ring-8 ring-orange-500/10 mb-6 transition-transform duration-300 hover:scale-110">
+                <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full mb-6 transition-transform duration-300 hover:scale-110 ${
+                  isIte
+                    ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 ring-8 ring-blue-500/10"
+                    : "bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316] ring-8 ring-orange-500/10"
+                }`}>
                   <ExternalLink className="h-10 w-10" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-3 tracking-tight">External Resource</h2>
@@ -309,7 +320,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#F97316] px-6 py-4 text-sm font-bold text-white shadow-xs transition-all duration-300 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98]"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-sm font-bold text-white shadow-xs transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                    isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
+                  }`}
                 >
                   <ExternalLink className="h-5 w-5" />
                   Open Link Securely
@@ -327,7 +340,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                 </pre>
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#F97316]" />
+                  <Loader2 className={`h-8 w-8 animate-spin ${isIte ? "text-blue-600" : "text-[#F97316]"}`} />
                 </div>
               )}
             </div>
@@ -360,7 +373,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                   download
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F97316] px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 transition-colors shadow-xs"
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-colors shadow-xs ${
+                    isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
+                  }`}
                 >
                   <Download className="h-4 w-4" />
                   Download File
@@ -388,7 +403,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                 onLoadSuccess={onDocumentLoadSuccess}
                 loading={
                   <div className="flex h-64 items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#F97316]" />
+                    <Loader2 className={`h-8 w-8 animate-spin ${isIte ? "text-blue-600" : "text-[#F97316]"}`} />
                   </div>
                 }
                 className="shadow-md"
@@ -415,7 +430,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => setIsAddingNote(true)}
-                      className="flex-1 rounded-lg bg-[#F97316] px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-600 transition-colors cursor-pointer"
+                      className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer ${
+                        isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
+                      }`}
                     >
                       Highlight & Note
                     </button>
@@ -427,7 +444,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                       placeholder="Add a sticky note..."
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
-                      className="w-full resize-none rounded-lg bg-slate-800 dark:bg-[#1E2132] p-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className={`w-full resize-none rounded-lg bg-slate-800 dark:bg-[#1E2132] p-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
+                        isIte ? "focus:ring-blue-500" : "focus:ring-orange-500"
+                      }`}
                       rows={3}
                     />
                     <div className="flex items-center justify-between">
@@ -442,7 +461,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => { setIsAddingNote(false); setShowTooltip(false); }} className="text-xs text-slate-400 hover:text-white cursor-pointer">Cancel</button>
-                        <button onClick={saveAnnotation} className="rounded-lg bg-[#F97316] px-3 py-1 text-xs font-bold text-white hover:bg-orange-600 cursor-pointer">Save</button>
+                        <button onClick={saveAnnotation} className={`rounded-lg px-3 py-1 text-xs font-bold text-white cursor-pointer ${
+                          isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
+                        }`}>Save</button>
                       </div>
                     </div>
                   </>
@@ -459,7 +480,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
         <div className="w-full md:w-80 shrink-0 flex flex-col h-150 md:h-auto rounded-3xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs overflow-hidden animate-in slide-in-from-right-8">
           <div className="bg-slate-50 dark:bg-[#181B26] border-b border-slate-200/80 dark:border-white/5 px-5 py-4">
           <h3 className="font-bold text-slate-900 dark:text-[#F0F2F8] flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-[#F97316]" />
+            <MessageSquare className={`h-5 w-5 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
             Notes & Highlights
           </h3>
         </div>

@@ -93,8 +93,68 @@ export async function approveAllPending(
 import { grantExp } from "@/lib/gamification/grant-exp";
 import { EXP_VALUES, DAILY_EXP_CAPS } from "@/lib/gamification/exp-engine";
 import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { evaluatePrivateCommentAccess } from "@/lib/ite/people-drawer-rules";
 
 // ─── Private Comment Actions ───
+
+async function ensurePrivateCommentAccess(
+  courseId: string,
+  targetUserId: string
+) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  if (typeof courseId !== "string" || !courseId.trim() || courseId.length > 100) {
+    throw new Error("Invalid course ID");
+  }
+  if (typeof targetUserId !== "string" || !targetUserId.trim() || targetUserId.length > 100) {
+    throw new Error("Invalid target user ID");
+  }
+
+  const course = await db.course.findUnique({
+    where: { id: courseId },
+    select: {
+      id: true,
+      instructorId: true,
+      isArchived: true,
+      institute: { select: { code: true } },
+    },
+  });
+
+  if (!course) throw new Error("Course not found");
+
+  let enrollmentStatus: string | null = null;
+  const role = session.user.role.toUpperCase();
+  if (role === "STUDENT") {
+    const enrollment = await db.enrollment.findFirst({
+      where: {
+        courseId,
+        studentId: session.user.id,
+      },
+      select: { status: true },
+    });
+    enrollmentStatus = enrollment?.status ?? null;
+  }
+
+  const access = evaluatePrivateCommentAccess({
+    userId: session.user.id,
+    userRole: session.user.role,
+    targetUserId,
+    course: {
+      id: course.id,
+      instructorId: course.instructorId,
+      isArchived: course.isArchived,
+      instituteCode: course.institute?.code,
+    },
+    enrollmentStatus,
+  });
+
+  if (!access.allowed) {
+    throw new Error(`Unauthorized: ${access.reason || "Access denied"}`);
+  }
+
+  return session.user;
+}
 
 export async function sendPrivateComment(
   courseId: string,
@@ -104,10 +164,26 @@ export async function sendPrivateComment(
 ) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#sendPrivateComment", () => ({ institute: instituteCode, courseId, recipientId }));
 
-  const user = await ensureCourseAccess(courseId);
+  const user = await ensurePrivateCommentAccess(courseId, recipientId);
+  const isStudent = user.role.toUpperCase() === "STUDENT";
+
+  let finalContent = content;
+  if (isStudent) {
+    if (typeof content !== "string") {
+      throw new Error("Invalid comment content");
+    }
+    const trimmed = content.trim();
+    if (!trimmed) {
+      throw new Error("Comment content cannot be empty");
+    }
+    if (trimmed.length > 4000) {
+      throw new Error("Comment exceeds maximum allowed length (4,000 characters)");
+    }
+    finalContent = trimmed;
+  }
 
   // Run sentiment analysis via agentic skill
-  const sentimentResult = await flagSentiment(content);
+  const sentimentResult = await flagSentiment(finalContent);
   const sentiment = sentimentResult.success
     ? sentimentResult.data?.sentiment ?? null
     : null;
@@ -117,13 +193,13 @@ export async function sendPrivateComment(
       courseId,
       senderId: user.id,
       recipientId,
-      content,
+      content: finalContent,
       sentiment: sentimentResult.data?.flagged ? sentiment : null,
     },
   });
 
   // Grant EXP for constructive participation (≥15 characters, max 25 EXP/day)
-  if (content.trim().length >= 15 && user.role.toUpperCase() === "STUDENT") {
+  if (finalContent.trim().length >= 15 && isStudent) {
     try {
       await grantExp({
         userId: user.id,
@@ -145,12 +221,20 @@ export async function sendPrivateComment(
 
 export async function getPrivateComments(
   courseId: string,
-  studentId: string
+  studentId: string,
+  _instituteCode?: string
 ) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#getPrivateComments", () => ({ courseId, studentId }));
 
   const session = await getSession();
   if (!session) return [];
+
+  // Enforce the same authorization on reading comments
+  try {
+    await ensurePrivateCommentAccess(courseId, studentId);
+  } catch {
+    return [];
+  }
 
   return db.privateComment.findMany({
     where: {

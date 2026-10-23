@@ -29,6 +29,7 @@ export default function JoinCourseModal({
   theme: InstituteTheme;
   instituteCode: string;
 }) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   const [mode, setMode] = useState<"browse" | "code">("code");
   const [courseCode, setCourseCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,7 +116,9 @@ export default function JoinCourseModal({
             onClick={() => { setMode("code"); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition cursor-pointer ${
               mode === "code"
-                ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
+                ? isIte
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-white dark:bg-[#1A1D27]"
+                  : "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
                 : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
             }`}
           >
@@ -126,7 +129,9 @@ export default function JoinCourseModal({
             onClick={() => { setMode("browse"); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition cursor-pointer ${
               mode === "browse"
-                ? "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
+                ? isIte
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-white dark:bg-[#1A1D27]"
+                  : "text-[#F97316] border-b-2 border-[#F97316] bg-white dark:bg-[#1A1D27]"
                 : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
             }`}
           >
@@ -153,13 +158,18 @@ export default function JoinCourseModal({
                   }}
                   placeholder="ABC123"
                   maxLength={6}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-center font-mono text-2xl tracking-[0.3em] font-bold text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-300 dark:placeholder:text-[#555C72] placeholder:tracking-[0.3em] focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
+                  className={`flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-4 py-3 text-center font-mono text-2xl tracking-[0.3em] font-bold text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-300 dark:placeholder:text-[#555C72] placeholder:tracking-[0.3em] ${
+                    isIte
+                      ? "focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                      : "focus:ring-2 focus:ring-orange-500/20 focus:border-[#F97316]"
+                  }`}
                 />
               </div>
 
               <div className="text-center text-xs text-slate-400 dark:text-[#555C72]">
                 {courseCode.length}/6 characters
               </div>
+
 
               <Button
                 theme={theme}

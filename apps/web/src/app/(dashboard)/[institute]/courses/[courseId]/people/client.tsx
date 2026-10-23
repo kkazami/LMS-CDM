@@ -8,6 +8,7 @@ import Badge from "@/components/common/Badge";
 import UserAvatar from "@/components/common/UserAvatar";
 import UserMiniCard from "@/components/common/UserMiniCard";
 import PrivateCommentDrawer from "@/components/courses/PrivateCommentDrawer";
+import { canOpenFeedbackDrawer, getFeedbackDrawerCopy } from "@/lib/ite/people-drawer-rules";
 import {
   approveEnrollment,
   declineEnrollment,
@@ -81,9 +82,16 @@ export default function PeopleClient({
   canManage: boolean;
   currentUserId: string;
 }) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
   // Private comment drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [drawerTarget, setDrawerTarget] = useState<{
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    role: "STUDENT" | "PROFESSOR";
+  } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [sendingComment, setSendingComment] = useState(false);
 
@@ -102,10 +110,26 @@ export default function PeopleClient({
   } | null>(null);
 
   const openCommentDrawer = async (student: Student) => {
+    if (
+      !canOpenFeedbackDrawer({
+        userRole: canManage ? "PROFESSOR" : "STUDENT",
+        targetRole: "STUDENT",
+        instituteCode,
+        action: "message_button",
+      })
+    ) {
+      return;
+    }
     setSelectedStudent(student);
+    setDrawerTarget({
+      id: student.id,
+      name: student.name,
+      avatarUrl: student.avatarUrl,
+      role: "STUDENT",
+    });
     setDrawerOpen(true);
     // Fetch comments
-    const fetchedComments = await getPrivateComments(courseId, student.id);
+    const fetchedComments = await getPrivateComments(courseId, student.id, instituteCode);
     setComments(
       fetchedComments.map((c) => ({
         ...c,
@@ -117,19 +141,33 @@ export default function PeopleClient({
     );
   };
 
-  const handleSendComment = async (content: string) => {
-    if (!selectedStudent) return;
-    setSendingComment(true);
-    await sendPrivateComment(
-      courseId,
-      selectedStudent.id,
-      content,
-      instituteCode
-    );
-    // Refresh comments
-    const updated = await getPrivateComments(courseId, selectedStudent.id);
+  const openInstructorDrawer = async (inst: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  }) => {
+    if (
+      !canOpenFeedbackDrawer({
+        userRole: "STUDENT",
+        targetRole: "PROFESSOR",
+        instituteCode,
+        action: "message_button",
+      })
+    ) {
+      return;
+    }
+    setSelectedStudent(null);
+    setDrawerTarget({
+      id: inst.id,
+      name: inst.name,
+      avatarUrl: inst.avatarUrl,
+      role: "PROFESSOR",
+    });
+    setDrawerOpen(true);
+    // Fetch comments
+    const fetchedComments = await getPrivateComments(courseId, inst.id, instituteCode);
     setComments(
-      updated.map((c) => ({
+      fetchedComments.map((c) => ({
         ...c,
         createdAt:
           c.createdAt instanceof Date
@@ -137,7 +175,41 @@ export default function PeopleClient({
             : c.createdAt,
       }))
     );
-    setSendingComment(false);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedStudent(null);
+    setDrawerTarget(null);
+  };
+
+  const handleSendComment = async (content: string) => {
+    const recipientId = drawerTarget?.id || selectedStudent?.id;
+    if (!recipientId) return;
+    setSendingComment(true);
+    try {
+      await sendPrivateComment(
+        courseId,
+        recipientId,
+        content,
+        instituteCode
+      );
+      // Refresh comments
+      const updated = await getPrivateComments(courseId, recipientId, instituteCode);
+      setComments(
+        updated.map((c) => ({
+          ...c,
+          createdAt:
+            c.createdAt instanceof Date
+              ? c.createdAt.toISOString()
+              : c.createdAt,
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to send private comment:", err);
+    } finally {
+      setSendingComment(false);
+    }
   };
 
   const handleApprove = async (enrollmentId: string) => {
@@ -203,30 +275,49 @@ export default function PeopleClient({
           Instructor
         </h2>
         {instructor ? (
-          <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
-            <UserAvatar
-              name={instructor.name}
-              avatarUrl={instructor.avatarUrl}
-              size="md"
-              color={theme.colors.primary}
-              onClick={(e: React.MouseEvent<HTMLElement>) => {
-                const el = e.currentTarget;
-                setMiniCard({
-                  userId: instructor.id,
-                  anchorRect: el.getBoundingClientRect(),
-                  anchorElement: el,
-                });
-              }}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-                  {instructor.name}
-                </span>
-                <Crown className="h-3.5 w-3.5 text-amber-500" />
+          <div className="flex items-center justify-between gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-5 shadow-xs">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <UserAvatar
+                name={instructor.name}
+                avatarUrl={instructor.avatarUrl}
+                size="md"
+                color={theme.colors.primary}
+                onClick={(e: React.MouseEvent<HTMLElement>) => {
+                  e.stopPropagation();
+                  const el = e.currentTarget;
+                  setMiniCard({
+                    userId: instructor.id,
+                    anchorRect: el.getBoundingClientRect(),
+                    anchorElement: el,
+                  });
+                }}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate">
+                    {instructor.name}
+                  </span>
+                  <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                </div>
+                <span className="text-xs text-slate-500 dark:text-[#8B92A5] truncate block">{instructor.email}</span>
               </div>
-              <span className="text-xs text-slate-500 dark:text-[#8B92A5]">{instructor.email}</span>
             </div>
+
+            {!canManage && (
+              <button
+                type="button"
+                onClick={() => openInstructorDrawer(instructor)}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition cursor-pointer shrink-0 ${
+                  isIte
+                    ? "bg-blue-600/10 text-blue-600 hover:bg-blue-600/20 dark:bg-blue-500/15 dark:text-blue-400 dark:hover:bg-blue-500/25"
+                    : "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:bg-orange-500/15 dark:text-orange-400 dark:hover:bg-orange-500/25"
+                }`}
+                aria-label={`Message instructor ${instructor.name}`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Message instructor</span>
+              </button>
+            )}
           </div>
         ) : (
           <p className="text-sm text-slate-400 dark:text-slate-500 italic">No instructor assigned</p>
@@ -320,7 +411,14 @@ export default function PeopleClient({
             {enrolledStudents.map((student) => (
               <div
                 key={student.id}
-                className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
+                onClick={() => {
+                  if (canManage) {
+                    openCommentDrawer(student);
+                  }
+                }}
+                className={`flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-white/[0.02] ${
+                  canManage ? "cursor-pointer" : ""
+                }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <UserAvatar
@@ -330,6 +428,7 @@ export default function PeopleClient({
                     color={theme.colors.primary}
                     className="shrink-0"
                     onClick={(e: React.MouseEvent<HTMLElement>) => {
+                      e.stopPropagation();
                       const el = e.currentTarget;
                       setMiniCard({
                         userId: student.id,
@@ -348,7 +447,10 @@ export default function PeopleClient({
 
                 {canManage && (
                   <button
-                    onClick={() => openCommentDrawer(student)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCommentDrawer(student);
+                    }}
                     className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer"
                     aria-label={`Private message ${student.name}`}
                   >
@@ -443,7 +545,9 @@ export default function PeopleClient({
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               placeholder="e.g. Project Team A"
-              className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 focus:border-orange-500"
+              className={`w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 ${
+                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+              }`}
             />
           </div>
 
@@ -461,8 +565,11 @@ export default function PeopleClient({
                     type="checkbox"
                     checked={selectedStudentIds.has(student.id)}
                     onChange={() => toggleStudentSelection(student.id)}
-                    className="rounded border-slate-300 dark:border-white/20 text-[#F97316]"
+                    className={`rounded border-slate-300 dark:border-white/20 ${
+                      isIte ? "text-blue-600" : "text-[#F97316]"
+                    }`}
                   />
+
                   <span className="text-xs font-medium text-slate-800 dark:text-[#F0F2F8]">{student.name}</span>
                   <span className="text-[11px] text-slate-400 dark:text-[#8B92A5]">{student.email}</span>
                 </label>
@@ -482,17 +589,33 @@ export default function PeopleClient({
       </Modal>
 
       {/* ─── Private Comment Drawer ─── */}
-      <PrivateCommentDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        theme={theme}
-        studentName={selectedStudent?.name || ""}
-        studentId={selectedStudent?.id || ""}
-        comments={comments}
-        currentUserId={currentUserId}
-        onSend={handleSendComment}
-        sending={sendingComment}
-      />
+      {(() => {
+        const drawerCopy = getFeedbackDrawerCopy({
+          userRole: canManage ? "PROFESSOR" : "STUDENT",
+          targetRole: drawerTarget?.role || "STUDENT",
+          targetName: drawerTarget?.name,
+          instituteCode,
+        });
+
+        return (
+          <PrivateCommentDrawer
+            open={drawerOpen}
+            onClose={handleCloseDrawer}
+            theme={theme}
+            targetName={drawerCopy.displayName}
+            studentName={drawerCopy.displayName}
+            studentId={drawerTarget?.id || selectedStudent?.id || ""}
+            studentAvatarUrl={drawerTarget?.avatarUrl ?? selectedStudent?.avatarUrl}
+            comments={comments}
+            currentUserId={currentUserId}
+            onSend={handleSendComment}
+            sending={sendingComment}
+            subtitle={drawerCopy.subtitle}
+            emptyStateSubtitle={drawerCopy.emptyStateSubtitle}
+            inputPlaceholder={drawerCopy.inputPlaceholder}
+          />
+        );
+      })()}
 
       {/* ─── MiniCard Popover ─── */}
       {miniCard && (

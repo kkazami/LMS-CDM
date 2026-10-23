@@ -34,9 +34,67 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Institute not found.' }, { status: 404 });
     }
 
-    const whereCondition = {
-      course: { instituteId: institute.id },
-    };
+    // Check role-based scoping: students only see announcements for their approved courses
+    const userRole = (session.user.role || '').toUpperCase();
+    const courseIdFilter = searchParams.get('courseId');
+
+    let whereCondition: any;
+
+    if (userRole === 'STUDENT') {
+      const enrollments = await db.enrollment.findMany({
+        where: {
+          studentId: session.user.id,
+          status: 'APPROVED',
+          course: {
+            instituteId: institute.id,
+            isArchived: false,
+          },
+        },
+        select: { courseId: true },
+      });
+
+      const enrolledCourseIds = enrollments.map((e) => e.courseId);
+
+      if (enrolledCourseIds.length === 0) {
+        return NextResponse.json({
+          announcements: [],
+          pagination: {
+            page,
+            limit,
+            totalCount: 0,
+            totalPages: 0,
+            hasMore: false,
+          },
+        });
+      }
+
+      const targetCourseIds = courseIdFilter
+        ? (enrolledCourseIds.includes(courseIdFilter) ? [courseIdFilter] : [])
+        : enrolledCourseIds;
+
+      if (targetCourseIds.length === 0) {
+        return NextResponse.json({
+          announcements: [],
+          pagination: {
+            page,
+            limit,
+            totalCount: 0,
+            totalPages: 0,
+            hasMore: false,
+          },
+        });
+      }
+
+      whereCondition = {
+        courseId: { in: targetCourseIds },
+        course: { instituteId: institute.id, isArchived: false },
+      };
+    } else {
+      whereCondition = {
+        course: { instituteId: institute.id, isArchived: false },
+        ...(courseIdFilter ? { courseId: courseIdFilter } : {}),
+      };
+    }
 
     const [announcements, totalCount] = await Promise.all([
       db.announcement.findMany({
@@ -45,8 +103,8 @@ export async function GET(request: Request) {
           id: true,
           content: true,
           createdAt: true,
-          author: { select: { name: true } },
-          course: { select: { title: true, id: true } },
+          author: { select: { name: true, avatarUrl: true } },
+          course: { select: { title: true, id: true, code: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -62,7 +120,9 @@ export async function GET(request: Request) {
           title: a.content.slice(0, 45) || 'Announcement',
           content: a.content,
           authorName: a.author?.name || 'Instructor',
+          authorAvatarUrl: a.author?.avatarUrl || null,
           courseName: a.course?.title || null,
+          courseCode: a.course?.code || null,
           courseId: a.course?.id || null,
           createdAt: a.createdAt.toISOString(),
         })),

@@ -20,6 +20,21 @@ export interface ToastMessage {
 type Listener = (toasts: ToastMessage[]) => void;
 let toasts: ToastMessage[] = [];
 const listeners: Set<Listener> = new Set();
+let toastSuppressionActive = false;
+let suppressedToastCount = 0;
+
+export function setFocusModeToastSuppression(active: boolean): number {
+  if (active) {
+    toastSuppressionActive = true;
+    suppressedToastCount = 0;
+    return 0;
+  } else {
+    toastSuppressionActive = false;
+    const count = suppressedToastCount;
+    suppressedToastCount = 0;
+    return count;
+  }
+}
 
 function notify() {
   listeners.forEach((l) => l([...toasts]));
@@ -31,6 +46,10 @@ function addToast(
   description?: string,
   duration = 4000
 ) {
+  if (toastSuppressionActive && type !== "error") {
+    suppressedToastCount++;
+    return;
+  }
   const id = crypto.randomUUID();
   toasts = [...toasts, { id, type, title, description, duration }];
   notify();

@@ -18,6 +18,7 @@
     "postinstall": "prisma generate",
     "harness:check": "tsx scripts/harness-check.ts",
     "harness:verify": "tsx scripts/harness-verify-run.ts",
+    "test:unit": "pnpm --filter web run test:unit",
     "harness": "tsx scripts/harness-cli.ts",
     "harness:test": "node --import tsx --test --test-reporter ./scripts/harness/test-reporter.cjs tests/harness/*.test.ts",
     "harness:typecheck": "pnpm --filter web exec tsc --project ../../scripts/harness/tsconfig.json",
@@ -35,7 +36,8 @@
     "prisma": "^7.9.1",
     "puppeteer-core": "^25.10.0",
     "tsx": "^4.19.2",
-    "turbo": "^2.4.0"
+    "turbo": "^2.4.0",
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

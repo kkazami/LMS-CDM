@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0F1117"
-    },
     "platforms": [
       "ios",
       "android",
@@ -46,6 +41,14 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#FF7517"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0F1117"
         }
       ]
     ]
