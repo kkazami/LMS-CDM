@@ -387,8 +387,8 @@ export default function ClassworkClient({
           {(selectedType !== "MATERIAL") && (
             <div className={`rounded-2xl border p-4 space-y-3 ${
               isIte
-                ? "border-blue-500/20 bg-blue-500/[0.04]"
-                : "border-orange-500/20 bg-orange-500/[0.04]"
+                ? "border-blue-500/20 bg-blue-500/4"
+                : "border-orange-500/20 bg-orange-500/4"
             }`}>
               <div className="flex items-center gap-2">
                 <Shield className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-orange-500"}`} />
@@ -463,8 +463,8 @@ export default function ClassworkClient({
           {selectedType !== "MATERIAL" && (
             <div className={`rounded-2xl border p-4 space-y-3 ${
               isIte
-                ? "border-blue-500/20 bg-blue-500/[0.04]"
-                : "border-amber-500/20 bg-amber-500/[0.04]"
+                ? "border-blue-500/20 bg-blue-500/4"
+                : "border-amber-500/20 bg-amber-500/4"
             }`}>
               <div className="flex items-center gap-2">
                 <Trophy className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-amber-500"}`} />

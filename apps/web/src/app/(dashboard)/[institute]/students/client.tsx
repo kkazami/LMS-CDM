@@ -196,7 +196,7 @@ export default function StudentDashboardClient({
       <Link
         key={item.id}
         href={`/${instituteCode}/courses/${item.courseId}/classwork/${item.id}`}
-        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-[48px]"
+        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/4 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all min-h-12"
         style={{
           animation: `staggerFadeIn 0.2s ease-out both`,
           animationDelay: `${Math.min(idx, 10) * 40}ms`,

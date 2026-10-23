@@ -281,7 +281,7 @@ export default function Sidebar({
               CdM LMS
             </span>
             <span
-              className="h-1.5 w-1.5 rounded-full shrink-0 bg-[var(--brand-gold)]"
+              className="h-1.5 w-1.5 rounded-full shrink-0 bg-(--brand-gold)"
             />
           </Link>
         </div>
