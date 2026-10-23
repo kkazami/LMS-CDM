@@ -1,0 +1,17 @@
+.composition { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 56px; }
+.panel { max-width: 510px; }
+.journey { display: grid; gap: 0; margin: 34px 0 0; padding: 0; list-style: none; }
+.journey li { position: relative; display: flex; gap: 15px; align-items: flex-start; padding: 0 0 28px; }
+.journey li:not(:last-child)::after { content: ""; position: absolute; top: 43px; bottom: 6px; left: 18px; width: 1px; background: var(--login-border); }
+.journey h2 { margin: 0 0 4px; font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
+.journey p { max-width: 30ch; margin: 0; font-size: 13px; line-height: 1.7; color: var(--login-secondary); }
+.instituteNote { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--login-secondary); font-size: 13px; }
+.instituteNote>span { width: 7px; height: 7px; border-radius: 50%; background: var(--login-institute); flex-shrink: 0; }
+.details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; align-items: start; }
+.field input { padding-left: 12px; }
+.field input[readonly] { background: var(--login-soft); }
+.fullWidth { grid-column: 1 / -1; }
+.hint { display: block; margin: 5px 0 0; font-size: 12px; line-height: 1.6; color: var(--login-secondary); font-weight: 400; }
+p.hint { margin-top: -7px; }
+@media (max-width: 850px) { .composition { gap: 28px; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); } .details { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .composition { grid-template-columns: 1fr; gap: 27px; } .journey, .instituteNote { display: none; } .panel { max-width: 420px; } .field input { font-size: 16px; } }
