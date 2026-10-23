@@ -39,8 +39,11 @@ const studentRegistrationFields = z.object({
 export const studentRegistrationSchema = studentRegistrationFields.refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match.', path: ['confirmPassword'],
 });
-// Existing roster accounts can retain their original ID and credential policy when linking.
-export const googleLinkSchema = studentRegistrationFields.extend({
-  studentNumber: z.string().trim().min(1).max(40),
+// Linking authenticates an existing account; it must not register or edit its student details.
+export const googleLinkSchema = studentRegistrationFields.pick({
+  email: true,
+  instituteCode: true,
+  acceptedPolicies: true,
+}).extend({
   password: z.string().min(1, 'Enter your existing password.').max(1024),
-}).refine(data => data.password === data.confirmPassword, { message: 'Passwords do not match.', path: ['confirmPassword'] });
+});
