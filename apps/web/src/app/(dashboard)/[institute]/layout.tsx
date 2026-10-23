@@ -52,9 +52,9 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
-  // Eligibility is a pure function of the user's institute code (same rule as the guards).
-  const activityEligible = isEligibleInstituteCode(userInstituteCode) || isAdmin;
-  const kxEligible = institute.toLowerCase() === "ics" && (isEligibleKxInstituteCode(userInstituteCode) || isAdmin);
+  // Compute activity & KX eligibility synchronously from session (CodeLab is strictly ICS-only)
+  const activityEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
+  const kxEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
 
   const isStudent = userRole === "STUDENT";
   const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";

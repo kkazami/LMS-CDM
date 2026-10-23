@@ -11,7 +11,6 @@ import {
   MapPin,
   CheckCircle2,
   GraduationCap,
-  Sparkles,
   Plus,
   KeyRound,
   Compass,
@@ -20,6 +19,7 @@ import {
   CheckSquare,
   Code2,
   Trophy,
+  Sparkles,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -83,8 +83,9 @@ interface StudentDashboardClientProps {
   /** The student's join requests still waiting for instructor approval. */
   pendingJoinCount: number;
   /** Whether the CodeLab / interactive activities suite is available to this user. */
-  showCodeLab: boolean;
+  showCodeLab?: boolean;
   typingSessionKey?: string;
+  greeting: string;
 }
 
 /** Max overdue rows listed on the dashboard; the rest are reachable from the To-do page. */
@@ -114,6 +115,7 @@ export default function StudentDashboardClient({
   pendingJoinCount,
   showCodeLab,
   typingSessionKey,
+  greeting,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -229,13 +231,55 @@ export default function StudentDashboardClient({
 
   const unenrollTarget = confirmUnenroll ? courses.find((c) => c.id === confirmUnenroll) : null;
 
+  const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
+
+  // Quick action items for mobile and desktop quick navigation bar
+  const quickActions = [
+    {
+      label: "Join Class",
+      icon: Plus,
+      onClick: () => setJoinModalOpen(true),
+      highlight: true,
+    },
+    {
+      label: "To-do",
+      icon: ClipboardList,
+      href: `/${instituteCode}/assignments`,
+      badge: dueSoonItems.length > 0 ? `${dueSoonItems.length}` : undefined,
+    },
+    {
+      label: "Flashcards",
+      icon: Flame,
+      href: `/${instituteCode}/flashcards`,
+    },
+    {
+      label: "Tasks",
+      icon: CheckSquare,
+      href: `/${instituteCode}/tasks`,
+    },
+    ...(isCodeLabVisible
+      ? [
+          {
+            label: "CodeLab",
+            icon: Code2,
+            href: `/${instituteCode}/activities/codelab`,
+          },
+        ]
+      : []),
+    {
+      label: "Leaderboard",
+      icon: Trophy,
+      href: `/${instituteCode}/leaderboards`,
+    },
+  ];
+
   return (
     <>
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto page-enter">
         {/* ─── 1. Premium Anti-Slop Hero Banner ─── */}
         <FadeIn y={20} duration={0.45}>
           <div
-            className="hero-noise relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xl transition-colors"
+            className="relative rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs transition-colors"
             style={{
               background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}1A 0%, transparent 65%), var(--bg-surface, #FFFFFF)`,
             }}
@@ -259,11 +303,13 @@ export default function StudentDashboardClient({
                   </span>
                 </div>
 
-                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
+                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                   <TypingBanner
-                    text={`Welcome back, ${userName}!`}
+                    text={greeting}
+                    cursorColor={theme.colors.primary}
+                    keepCursor={false}
+                    speed={28}
                     sessionKey={typingSessionKey ?? "cdm_typed_greeting"}
-                    cursorColor={instituteCode.toLowerCase() === "ite" ? theme.colors.primary : undefined}
                   />
                 </h1>
 
@@ -274,8 +320,8 @@ export default function StudentDashboardClient({
                 </p>
               </div>
 
-              {/* EXP Ring: progress within the current level */}
-              <div className="self-center md:self-auto shrink-0">
+              {/* EXP Ring */}
+              <div className="hidden sm:block self-center md:self-auto shrink-0">
                 <ExpRing
                   level={levelInfo.level}
                   currentExp={levelInfo.currentLevelProgress}
@@ -287,7 +333,7 @@ export default function StudentDashboardClient({
             </div>
 
             {/* Bottom StatPills Row */}
-            <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-3 sm:px-8 pb-3 sm:pb-5 pt-1 border-t border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-none">
+            <div className="relative z-10 hidden sm:flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-3 sm:px-8 pb-3 sm:pb-5 pt-1 border-t border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-none">
               <StatPill
                 icon={Flame}
                 label={`${streakCurrent} Day${streakCurrent === 1 ? "" : "s"} Streak`}
@@ -308,9 +354,7 @@ export default function StudentDashboardClient({
         </FadeIn>
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup
-          className={`grid grid-cols-2 sm:grid-cols-3 ${showCodeLab ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}
-        >
+        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${isCodeLabVisible ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
           <StaggerItem>
             <QuickActionCard
               icon={Plus}
@@ -325,7 +369,7 @@ export default function StudentDashboardClient({
           <StaggerItem>
             <QuickActionCard
               icon={ClipboardList}
-              label="To-do"
+              label="Assignments"
               href={`/${instituteCode}/assignments`}
               sublabel={
                 overdueItems.length > 0 ? "Overdue work" : upcomingItems.length > 0 ? "Due soon" : "All clear"
@@ -347,13 +391,13 @@ export default function StudentDashboardClient({
           <StaggerItem>
             <QuickActionCard
               icon={CheckSquare}
-              label="Tasks"
+              label="Study tasks"
               href={`/${instituteCode}/tasks`}
               sublabel="Your task list"
               color={theme.colors.primary}
             />
           </StaggerItem>
-          {showCodeLab && (
+          {isCodeLabVisible && (
             <StaggerItem>
               <QuickActionCard
                 icon={Code2}
@@ -367,7 +411,7 @@ export default function StudentDashboardClient({
           <StaggerItem>
             <QuickActionCard
               icon={Trophy}
-              label="Leaderboard"
+              label="Leaderboards"
               href={`/${instituteCode}/leaderboards`}
               sublabel="Top rankings"
               color={theme.colors.primary}
@@ -375,21 +419,21 @@ export default function StudentDashboardClient({
           </StaggerItem>
         </StaggerGroup>
 
-        {/* ─── 3. Main Grid: Enrolled Courses & Due Soon ─── */}
         <div id="calendar" className="min-w-0 scroll-mt-20">
           <StudentCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} />
         </div>
 
+        {/* ─── 2. Main Grid: Enrolled Courses & Due Soon ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left 2 Columns: Enrolled Classes */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div
                   className="p-2 rounded-xl"
                   style={{
                     backgroundColor: `${theme.colors.primary}1A`,
-                    color: theme.colors.primary,
+                    color: "var(--institute-ink)",
                   }}
                 >
                   <GraduationCap className="h-5 w-5" />
@@ -404,12 +448,12 @@ export default function StudentDashboardClient({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-2.5">
                 <span
                   className="text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{
                     backgroundColor: `${theme.colors.primary}1A`,
-                    color: theme.colors.primary,
+                    color: "var(--institute-ink)",
                   }}
                 >
                   {courses.length} {courses.length === 1 ? "Class" : "Classes"}
@@ -443,7 +487,7 @@ export default function StudentDashboardClient({
                     className="mx-auto h-12 w-12 rounded-2xl flex items-center justify-center mb-3"
                     style={{
                       backgroundColor: `${theme.colors.primary}18`,
-                      color: theme.colors.primary,
+                      color: "var(--institute-ink)",
                     }}
                   >
                     <Compass className="h-6 w-6" />
@@ -457,7 +501,7 @@ export default function StudentDashboardClient({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6">
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -474,7 +518,7 @@ export default function StudentDashboardClient({
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -522,10 +566,10 @@ export default function StudentDashboardClient({
                         style={
                           hasCover
                             ? { backgroundImage: `url("${course.coverImage}")` }
-                            : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
+                            : { background: "var(--course-banner)" }
                         }
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/20" />
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
@@ -598,7 +642,7 @@ export default function StudentDashboardClient({
                           <Link
                             href={`/${instituteCode}/courses/${course.id}`}
                             className="inline-flex items-center gap-1 text-xs font-semibold hover:underline transition-colors"
-                            style={{ color: theme.colors.primary }}
+                            style={{ color: "var(--institute-ink)" }}
                             draggable={false}
                           >
                             <span>Go to Course</span>
@@ -629,7 +673,7 @@ export default function StudentDashboardClient({
                   className="p-2 rounded-xl"
                   style={{
                     backgroundColor: `${theme.colors.primary}1A`,
-                    color: theme.colors.primary,
+                    color: "var(--institute-ink)",
                   }}
                 >
                   <Clock className="h-5 w-5" />
@@ -698,7 +742,7 @@ export default function StudentDashboardClient({
                 <Link
                   href={`/${instituteCode}/assignments`}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline"
-                  style={{ color: theme.colors.primary }}
+                  style={{ color: "var(--institute-ink)" }}
                 >
                   <span>Go to full To-do page</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -731,7 +775,7 @@ export default function StudentDashboardClient({
             <button
               type="button"
               onClick={() => setConfirmUnenroll(null)}
-              className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px]"
+              className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-11"
             >
               Cancel
             </button>
@@ -739,7 +783,7 @@ export default function StudentDashboardClient({
               type="button"
               onClick={() => handleUnenroll(confirmUnenroll)}
               disabled={isPending}
-              className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-[44px]"
+              className="flex-1 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors cursor-pointer min-h-11"
             >
               {isPending ? "Unenrolling..." : "Unenroll"}
             </button>

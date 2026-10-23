@@ -15,7 +15,7 @@ export async function draftAnswer(
   questionTitle: string,
   questionBody: string
 ): Promise<DraftAnswerResult> {
-  const prompt = `You are a helpful Computer Science teaching assistant at the Institute of Computer Studies (ICS).
+  const prompt = `You are a helpful Computer Science teaching assistant at the Institute of Computing Studies (ICS).
 Draft a comprehensive, pedagogical answer to this student question.
 Include:
 - Clear conceptual explanation

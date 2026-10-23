@@ -25,9 +25,9 @@ export default function Button({
 }: ButtonProps) {
   const styles = {
     primary: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
-      color: "#FFFFFF",
+      backgroundColor: "var(--action-bg, #0F1724)",
+      borderColor: "var(--action-bg, #0F1724)",
+      color: "var(--action-ink, #FFFFFF)",
     },
     secondary: {
       backgroundColor: "var(--bg-surface, #FFFFFF)",
@@ -52,14 +52,14 @@ export default function Button({
       disabled={loading || disabled}
       onMouseEnter={(e) => {
         if (variant === "primary") {
-          e.currentTarget.style.backgroundColor = theme.colors.primaryHover;
-          e.currentTarget.style.borderColor = theme.colors.primaryHover;
+          e.currentTarget.style.backgroundColor = "var(--action-hover, #26364B)";
+          e.currentTarget.style.borderColor = "var(--action-hover, #26364B)";
         }
       }}
       onMouseLeave={(e) => {
         if (variant === "primary") {
-          e.currentTarget.style.backgroundColor = theme.colors.primary;
-          e.currentTarget.style.borderColor = theme.colors.primary;
+          e.currentTarget.style.backgroundColor = "var(--action-bg, #0F1724)";
+          e.currentTarget.style.borderColor = "var(--action-bg, #0F1724)";
         }
       }}
       {...props}

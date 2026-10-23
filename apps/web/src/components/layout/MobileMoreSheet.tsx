@@ -293,7 +293,7 @@ export default function MobileMoreSheet({
                     isActive
                       ? {
                           borderColor: primaryColor,
-                          color: primaryColor,
+                          color: "var(--institute-ink)",
                         }
                       : undefined
                   }
@@ -307,7 +307,7 @@ export default function MobileMoreSheet({
                     >
                       <Icon
                         className="w-4 h-4"
-                        style={{ color: isActive ? primaryColor : undefined }}
+                        style={{ color: isActive ? "var(--institute-ink)" : undefined }}
                       />
                     </div>
                     <div className="min-w-0 flex-1">

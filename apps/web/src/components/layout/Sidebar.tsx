@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -34,6 +35,7 @@ import {
   NotebookPen,
   Video,
   X,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -81,7 +83,7 @@ const MY_COURSES_KEY = "my-courses";
 export const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
   { label: "My Courses", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
-  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: BookOpen },
+  { label: "Learning Materials", href: `/${code}/learning-materials`, icon: Library },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
   { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
@@ -125,8 +127,9 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
   ...(code === "ics" ? [{ label: "Faculty & Program Heads", href: `/${code}/admin/faculty`, icon: Network }] : []),
   { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
-  { label: "Backup & Recovery", href: `/${code}/backup`, icon: HardDrive },
+  { label: "Database Management", href: `/${code}/admin/database`, icon: HardDrive },
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
+  { label: "Support Tickets", href: `/${code}/admin/support-tickets`, icon: LifeBuoy },
   { label: "Settings", href: `/${code}/settings`, icon: Settings },
   { label: "Help", href: `/${code}/help`, icon: HelpCircle },
 ];
@@ -228,7 +231,7 @@ export default function Sidebar({
         isMobileDrawer
           ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
           : `hidden h-screen border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
-              isCollapsed ? "w-[72px]" : "w-72"
+              isCollapsed ? "w-18" : "w-72"
             }`
       }`}
     >
@@ -244,14 +247,14 @@ export default function Sidebar({
             onClick={handleLinkClick}
             className="flex items-center gap-2 group"
           >
+            <Image src="/images/cdm-logo.png" alt="" width={30} height={30} className="shrink-0" />
             <span
               className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8] tracking-tight whitespace-nowrap transition-colors"
             >
               CdM LMS
             </span>
             <span
-              className="h-2 w-2 rounded-full shrink-0 animate-pulse"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="h-1.5 w-1.5 rounded-full shrink-0 bg-[var(--brand-gold)]"
             />
           </Link>
         </div>
@@ -260,7 +263,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onCloseMobileDrawer}
-            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
@@ -269,7 +272,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            className="shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
@@ -308,14 +311,14 @@ export default function Sidebar({
                   className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
                     isSubActive && !isMyCoursesOpen
                       ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
-                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] rounded-xl"
                   }`}
                   style={
                     isSubActive && !isMyCoursesOpen
                       ? {
                           borderColor: theme.colors.primary,
                           backgroundColor: `${theme.colors.primary}1A`,
-                          color: theme.colors.primary,
+                          color: "var(--institute-ink)",
                         }
                       : undefined
                   }
@@ -359,14 +362,14 @@ export default function Sidebar({
                             pathname === `/${instituteCode}/assignments` ||
                             pathname.startsWith(`/${instituteCode}/assignments/`)
                               ? "font-semibold"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8]"
                           }`}
                           style={
                             pathname === `/${instituteCode}/assignments` ||
                             pathname.startsWith(`/${instituteCode}/assignments/`)
                               ? {
                                   backgroundColor: `${theme.colors.primary}1A`,
-                                  color: theme.colors.primary,
+                                  color: "var(--institute-ink)",
                                 }
                               : undefined
                           }
@@ -391,13 +394,13 @@ export default function Sidebar({
                             className={`flex items-center gap-2 rounded-xl pl-8 pr-3 py-2 text-xs font-medium transition-colors ${
                               isCourseActive
                                 ? "font-semibold"
-                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8]"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8]"
                             }`}
                             style={
                               isCourseActive
                                 ? {
                                     backgroundColor: `${theme.colors.primary}1A`,
-                                    color: theme.colors.primary,
+                                    color: "var(--institute-ink)",
                                   }
                                 : undefined
                             }
@@ -425,14 +428,14 @@ export default function Sidebar({
               className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                 active
                   ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
-                  : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/[0.05] dark:hover:text-[#F0F2F8] rounded-xl"
+                  : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] rounded-xl"
               }`}
               style={
                 active
                   ? {
                       borderColor: theme.colors.primary,
                       backgroundColor: `${theme.colors.primary}1A`,
-                      color: theme.colors.primary,
+                      color: "var(--institute-ink)",
                     }
                   : undefined
               }

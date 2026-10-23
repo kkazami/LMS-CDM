@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { getInstituteName } from "@lms/types";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         {
-          message: "Validation failed.",
+          message: parsed.error.flatten().fieldErrors.acceptedPolicies?.[0] || "Validation failed.",
           errors: parsed.error.flatten().fieldErrors,
         },
         { status: 400, headers: corsHeaders }
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Unsupported institute.' }, { status: 400, headers: corsHeaders });
     }
     if (!isAdmin && !isSuperUser && userInstituteCode !== targetInstituteCode) {
-      const userInstituteName = user.institute?.name || userInstituteCode?.toUpperCase();
+      const userInstituteName = getInstituteName(userInstituteCode, user.institute?.name || userInstituteCode?.toUpperCase() || 'Institute');
       return NextResponse.json(
         {
           message: `Access denied. Your account is registered under ${userInstituteName} (${userInstituteCode?.toUpperCase()}). You cannot log in through the ${targetInstituteCode.toUpperCase()} portal.`,
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
     });
 
     const instituteCode = isSuperUser ? 'ics' : user.institute?.code || targetInstituteCode;
-    const instituteName = initialSuperInstitute?.name || user.institute?.name || `${instituteCode.toUpperCase()} Institute`;
+    const instituteName = getInstituteName(instituteCode, initialSuperInstitute?.name || user.institute?.name || `${instituteCode.toUpperCase()} Institute`);
 
     // 9. Return opaque token (NOT internal session.id)
     return NextResponse.json(

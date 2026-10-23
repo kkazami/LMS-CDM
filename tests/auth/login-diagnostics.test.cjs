@@ -33,7 +33,7 @@ test('login logs the failure stage and code without exposing credentials or data
     console.error = (...args) => logs.push(args);
     response = await loaded.exports.POST(new Request('http://localhost/api/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: 'private@example.invalid', password: 'private-password', instituteCode: 'ics' }),
+      body: JSON.stringify({ identifier: 'private@example.invalid', password: 'private-password', instituteCode: 'ics', acceptedPolicies: true }),
     }));
   } finally { console.error = original; }
   assert.equal(response.status, 500);

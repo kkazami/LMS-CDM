@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Shield, ChevronDown, ChevronUp, Bell, MessageSquare, BookOpen, Settings2 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
@@ -15,6 +15,7 @@ import { UserPreferences } from "@lms/types";
 import { ToggleRow } from "@/components/common/ToggleRow";
 import { useTheme } from "@/lib/theme-context";
 import { Moon, Sun } from "lucide-react";
+import { toast } from "@/components/common/Toast";
 
 interface UserData {
   id: string;
@@ -46,6 +47,10 @@ export default function SettingsClient({
   const { themeMode, setThemeMode } = useTheme();
   const [pendingTheme, setPendingTheme] = useState(preferences.display_theme || themeMode);
 
+  useEffect(() => {
+    if (!preferences.display_theme) setPendingTheme(themeMode);
+  }, [themeMode, preferences.display_theme]);
+
   // Helper to handle boolean toggles
   const handleToggle = async (key: keyof UserPreferences, value: boolean) => {
     const updatedPrefs = { ...preferences, [key]: value };
@@ -61,8 +66,10 @@ export default function SettingsClient({
       if (!res.ok) {
         throw new Error("Failed to save settings");
       }
+      toast.success("Preference updated", "Your settings have been saved.");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to save", "Could not update your preferences.");
       // Revert on failure
       setPreferences(preferences);
     } finally {
@@ -91,8 +98,10 @@ export default function SettingsClient({
       if (!res.ok) {
         throw new Error("Failed to save settings");
       }
+      toast.success("Preference updated", "Your settings have been saved.");
     } catch (error) {
       console.error(error);
+      toast.error("Failed to save", "Could not update your preferences.");
       setPreferences(preferences);
     } finally {
       setSaving(false);
@@ -137,27 +146,29 @@ export default function SettingsClient({
                   {/* Light Mode Button */}
                   <button
                     onClick={() => setPendingTheme("light")}
+                    aria-pressed={pendingTheme === "light"}
                     className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 ${
                       pendingTheme === "light"
-                        ? "border-[#1E88E5] bg-[#1E88E5]/5 dark:bg-[#1E88E5]/10 shadow-sm"
+                        ? "border-[var(--action-bg)] bg-slate-100 dark:bg-white/5 shadow-sm"
                         : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#1E2132]"
                     }`}
                   >
-                    <Sun className={`h-8 w-8 mb-3 ${pendingTheme === "light" ? "text-[#1E88E5]" : "text-slate-400"}`} />
-                    <span className={`text-sm font-bold ${pendingTheme === "light" ? "text-[#1E88E5]" : "text-slate-600 dark:text-[#8B92A5]"}`}>Light Mode</span>
+                    <Sun className={`h-8 w-8 mb-3 ${pendingTheme === "light" ? "text-[var(--text-primary)]" : "text-slate-400"}`} />
+                    <span className={`text-sm font-bold ${pendingTheme === "light" ? "text-[var(--text-primary)]" : "text-slate-600 dark:text-[#8B92A5]"}`}>Light Mode</span>
                   </button>
 
                   {/* Dark Mode Button */}
                   <button
                     onClick={() => setPendingTheme("dark")}
+                    aria-pressed={pendingTheme === "dark"}
                     className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 ${
                       pendingTheme === "dark"
-                        ? "border-[#1E88E5] bg-[#1E88E5]/5 dark:bg-[#1E88E5]/10 shadow-sm"
+                        ? "border-[var(--action-bg)] bg-slate-100 dark:bg-white/5 shadow-sm"
                         : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#1E2132]"
                     }`}
                   >
-                    <Moon className={`h-8 w-8 mb-3 ${pendingTheme === "dark" ? "text-[#1E88E5]" : "text-slate-400"}`} />
-                    <span className={`text-sm font-bold ${pendingTheme === "dark" ? "text-[#1E88E5]" : "text-slate-600 dark:text-[#8B92A5]"}`}>Dark Mode</span>
+                    <Moon className={`h-8 w-8 mb-3 ${pendingTheme === "dark" ? "text-[var(--text-primary)]" : "text-slate-400"}`} />
+                    <span className={`text-sm font-bold ${pendingTheme === "dark" ? "text-[var(--text-primary)]" : "text-slate-600 dark:text-[#8B92A5]"}`}>Dark Mode</span>
                   </button>
                 </div>
               </div>
@@ -169,7 +180,7 @@ export default function SettingsClient({
                   className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
                     saving || pendingTheme === preferences.display_theme
                       ? "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/30 cursor-not-allowed"
-                      : "bg-[#1E88E5] text-white hover:bg-[#1E88E5]/90 shadow-sm hover:shadow"
+                      : "bg-[var(--action-bg)] text-[var(--action-ink)] hover:bg-[var(--action-hover)] shadow-sm"
                   }`}
                 >
                   {saving ? "Saving..." : "Save Theme"}
@@ -201,7 +212,7 @@ export default function SettingsClient({
                 <select
                   value={preferences.email_frequency || "immediate"}
                   onChange={(e) => handleSelect("email_frequency", e.target.value)}
-                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
+                  className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-sm focus:border-[var(--focus-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] cursor-pointer"
                 >
                   <option value="immediate">Send Immediately</option>
                   <option value="daily_digest">Daily Digest</option>

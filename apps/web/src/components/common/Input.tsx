@@ -34,7 +34,7 @@ export default function Input({
           id={id}
           className={cn(
             "w-full min-h-[44px] rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition scroll-my-20",
-            "placeholder:text-slate-400 dark:placeholder:text-[#555C72]",
+            "placeholder:text-[var(--text-muted)]",
             isPassword && "pr-10",
             className
           )}
@@ -42,8 +42,8 @@ export default function Input({
             boxShadow: "none",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = theme.colors.primary;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${theme.colors.primary}33`;
+            e.currentTarget.style.borderColor = "var(--focus-ring)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent)";
             props.onFocus?.(e);
 
             // On mobile devices & WebViews, ensure focused input is smoothly centered above virtual keyboard
@@ -66,14 +66,16 @@ export default function Input({
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8] focus:outline-none cursor-pointer"
-            tabIndex={-1}
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8] focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:opacity-50"
+            disabled={props.disabled}
+            aria-label={`${showPassword ? "Hide" : "Show"} ${label?.toLowerCase() || "password"}`}
+            aria-pressed={showPassword}
+            aria-controls={id}
           >
             {showPassword ? (
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <Eye className="h-4 w-4" />
+              <Eye className="h-4 w-4" aria-hidden="true" />
             )}
           </button>
         )}

@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -8,6 +9,8 @@ import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
 import StudentDashboardClient from "./client";
+import { getSession } from "@/lib/auth-session";
+import { getDashboardGreeting, isFirstLoginSession } from "@/lib/dashboard-greeting";
 
 export const dynamic = "force-dynamic";
 
@@ -34,12 +37,18 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   }
 
   // 1. Independent lookups run together: approved courses (shared with the layout),
-  //    gamification profile, and the student's pending join requests.
-  const [enrollments, gamification, pendingJoinCount] = await Promise.all([
+  //    gamification profile with login streak/badges, student's pending join requests, and auth session.
+  const [enrollments, gamification, pendingJoinCount, session] = await Promise.all([
     getStudentEnrollments(studentId, instituteRecord.id),
     db.gamificationProfile.findUnique({
       where: { studentId },
-      select: { exp: true, loginStreakCurrent: true },
+      select: {
+        exp: true,
+        loginStreakCurrent: true,
+        level: true,
+        totalLoginDays: true,
+        badges: { where: { badgeRuleId: "first-day" }, select: { earnedAt: true }, take: 1 },
+      },
     }),
     db.enrollment.count({
       where: {
@@ -48,6 +57,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
         course: { instituteId: instituteRecord.id, isArchived: false },
       },
     }),
+    getSession(),
   ]);
 
   const enrolledCourses = enrollments.map((e) => ({
@@ -132,7 +142,11 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   return (
     <StudentDashboardClient
       userName={user.name as string}
-      instituteName={institute.toLowerCase() === "ite" ? "Institute of Teacher Education" : instituteRecord.name}
+      instituteName={
+        institute.toLowerCase() === "ite"
+          ? "Institute of Teacher Education"
+          : getInstituteName(institute, instituteRecord.name)
+      }
       instituteCode={institute}
       theme={theme}
       initialCourses={enrolledCourses}
@@ -141,6 +155,12 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       today={schoolDateKey(now)}
       dueSoonItems={dueSoonItems}
       serverNow={now.toISOString()}
+      greeting={getDashboardGreeting(
+        user.name,
+        now,
+        session?.id ?? studentId,
+        !gamification || gamification.totalLoginDays === 0 || isFirstLoginSession(session?.createdAt, gamification.badges[0]?.earnedAt)
+      )}
       exp={exp}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}
       rank={rank}

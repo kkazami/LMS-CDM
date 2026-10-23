@@ -88,7 +88,7 @@ export default function MobileBottomNav({
                   type="button"
                   onClick={handleMoreToggle}
                   className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-[80px] min-h-[44px] gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
-                  style={{ color: isActive ? primaryColor : undefined }}
+                  style={{ color: isActive ? "var(--institute-ink)" : undefined }}
                   aria-label="Open more navigation options"
                   aria-expanded={isMoreOpen}
                 >
@@ -116,7 +116,7 @@ export default function MobileBottomNav({
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-[80px] min-h-[44px] gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
-                style={{ color: isActive ? primaryColor : undefined }}
+                style={{ color: isActive ? "var(--institute-ink)" : undefined }}
               >
                 <Icon
                   className={`w-5 h-5 shrink-0 ${isActive ? "" : "text-slate-500 dark:text-slate-400"}`}

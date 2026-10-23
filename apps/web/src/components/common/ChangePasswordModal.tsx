@@ -2,18 +2,26 @@
 
 import { useState } from "react";
 import { passwordSchema } from '@/lib/auth-schema';
-import { X, Lock, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Lock, KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { toast } from "@/components/common/Toast";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
+  hasSecurityPin?: boolean;
 }
 
-export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = false }: ChangePasswordModalProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [pin, setPin] = useState("");
   
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -40,19 +48,22 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
       const res = await fetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword, ...(hasSecurityPin && { pin }) }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Failed to change password.");
+        toast.error("Update Failed", data.error || "Failed to change password.");
       } else {
         setSuccess(true);
+        toast.success("Password Updated", "Your account password has been successfully changed.");
         // Clear form
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setPin("");
         
         // Auto-close after a few seconds
         setTimeout(() => {
@@ -111,13 +122,20 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 <div className="relative">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
-                    type="password"
+                    type={showCurrentPassword ? "text" : "password"}
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
                     placeholder="Enter current password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1"
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -126,14 +144,21 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     required
                     minLength={8}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
                     placeholder="At least 8 characters"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -142,16 +167,51 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     minLength={8}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow"
                     placeholder="Re-enter new password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
+
+              {hasSecurityPin && (
+                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/5 mt-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Security PIN</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type={showPin ? "text" : "password"}
+                      required
+                      maxLength={6}
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#141721] border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white transition-shadow text-center tracking-[1em]"
+                      placeholder="••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1"
+                    >
+                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Required to change your password
+                  </p>
+                </div>
+              )}
 
               <div className="pt-2">
                 <button

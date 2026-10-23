@@ -1,9 +1,0 @@
-▲ Next.js 16.2.0
-- Local:         http://127.0.0.1:56851
-- Network:       http://127.0.0.1:56851
-✓ Ready in 204ms
-prisma:error 
-Invalid `prisma.auditLog.create()` invocation:
-
-
-Database error. Code: `42501`. Message: `permission denied for table AuditLog`

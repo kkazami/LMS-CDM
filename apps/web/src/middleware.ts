@@ -7,7 +7,7 @@ import { sessionActivity } from '@/lib/session-policy';
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const api = pathname.startsWith('/api/');
-  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname === '/ite-sw.js' || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml)$/i.test(pathname))) return NextResponse.next();
+  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || pathname === '/ite-sw.js' || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());
   const security = getSecurityHeaders(nonce);
   const incoming = new Headers(request.headers);
@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   if (!mutationOriginAllowed(request)) {
     response = NextResponse.json({ error: 'Forbidden request origin.' }, { status: 403 });
   } else {
-    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/offline.html'].includes(pathname);
+    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support', '/offline.html'].includes(pathname);
     response = !api && !publicPage && !request.cookies.get('lumina_session')?.value
       ? NextResponse.redirect(new URL(`/login?institute=${encodeURIComponent(pathname.split('/').filter(Boolean)[0] || 'ics')}`, request.url))
       : NextResponse.next({ request: { headers: incoming } });

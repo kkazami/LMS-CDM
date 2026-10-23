@@ -7,6 +7,7 @@ async function compile(source, state = {}) {
   globalThis[key] = state;
   const global = `globalThis[${JSON.stringify(key)}]`;
   const bundled = await build({ stdin: { contents: source, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', tsconfig: 'apps/web/tsconfig.json', plugins: [{ name: 'owned-test-boundaries', setup(b) {
+    b.onResolve({ filter: /^@lms\/types$/ }, () => ({ path: path.resolve('packages/types/src/index.ts') }));
     b.onResolve({ filter: /(^|\/)db$|(^|\/)auth-session$|^next\/headers$/ }, ({ path: name }) => /auth-session$/.test(name) && state.realAuth ? null : { path: name, namespace: 'test' });
     b.onLoad({ filter: /.*/, namespace: 'test' }, ({ path: name }) => ({ contents: /(^|\/)db$/.test(name) ? `export const db=${global}.db;` : name === 'next/headers' ? `export async function headers(){return ${global}.headers || new Headers()} export async function cookies(){return ${global}.cookies || {get(){},set(){},delete(){}}}` : `export async function getSession(){return ${global}.session;}` }));
   } }] });

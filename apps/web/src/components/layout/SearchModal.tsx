@@ -285,14 +285,18 @@ export default function SearchModal({
         href: `/${instituteCode}/manage-leaderboard`,
         icon: Trophy,
       },
-      {
-        id: "prof-codelab",
-        title: "CodeLab Analytics",
-        subtitle: "Student progress, coding errors, and submissions",
-        category: "Activities",
-        href: `/${instituteCode}/activities/codelab/instructor`,
-        icon: Terminal,
-      },
+      ...(instituteCode.toLowerCase() === "ics"
+        ? [
+            {
+              id: "prof-codelab",
+              title: "CodeLab Analytics",
+              subtitle: "Student progress, coding errors, and submissions",
+              category: "Activities" as const,
+              href: `/${instituteCode}/activities/codelab/instructor`,
+              icon: Terminal,
+            },
+          ]
+        : []),
       {
         id: "prof-settings",
         title: "Account Settings",
@@ -377,14 +381,18 @@ export default function SearchModal({
         href: `/${instituteCode}/tasks`,
         icon: CheckSquare,
       },
-      {
-        id: "nav-codelab",
-        title: "CodeLab Interactive IDE",
-        subtitle: "Multi-language online coding exercises",
-        category: "Activities",
-        href: `/${instituteCode}/activities/codelab`,
-        icon: Code2,
-      },
+      ...(instituteCode.toLowerCase() === "ics"
+        ? [
+            {
+              id: "nav-codelab",
+              title: "CodeLab Interactive IDE",
+              subtitle: "Multi-language online coding exercises",
+              category: "Activities" as const,
+              href: `/${instituteCode}/activities/codelab`,
+              icon: Code2,
+            },
+          ]
+        : []),
       {
         id: "nav-leaderboard",
         title: "Leaderboards & EXP",
@@ -485,7 +493,7 @@ export default function SearchModal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-100 flex items-start sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -501,6 +509,7 @@ export default function SearchModal({
         aria-modal="true"
         aria-label="Search CdM LMS"
       >
+        {/* Search Header Bar */}
         {/* Search Header Bar */}
         <div
           className="relative flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] sm:rounded-t-2xl transition-all focus-within:ring-2 focus-within:ring-inset"
@@ -526,7 +535,7 @@ export default function SearchModal({
                 ? "Search classes, grading, tools..."
                 : "Search courses, assignments, tools..."
             }
-            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 min-h-[44px]"
+            className="flex-1 bg-transparent text-base sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 dark:placeholder:text-[#555C72] outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 min-h-11"
             style={{ outline: "none", boxShadow: "none" }}
           />
           {query && (
@@ -541,7 +550,7 @@ export default function SearchModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/10 transition-colors"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/10 transition-colors"
             aria-label="Close search"
           >
             <X className="h-5 w-5" />
@@ -582,10 +591,10 @@ export default function SearchModal({
                   aria-selected={isSelected}
                   onClick={() => handleSelect(item.href)}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group cursor-pointer min-h-[48px] ${
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group cursor-pointer min-h-12 ${
                     isSelected
                       ? "bg-slate-100 dark:bg-white/[0.08] border-slate-300 dark:border-white/20"
-                      : "hover:bg-slate-100 dark:hover:bg-white/[0.05] border-transparent hover:border-slate-200 dark:hover:border-white/5"
+                      : "hover:bg-slate-100 dark:hover:bg-white/5 border-transparent hover:border-slate-200 dark:hover:border-white/5"
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">

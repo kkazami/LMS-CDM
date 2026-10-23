@@ -18,6 +18,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { PolicyLink } from "@/components/legal/PolicyNavigation";
+import { getInstituteName } from "@lms/types";
 import type { InstituteTheme } from "@/lib/theme";
 import { useAvatar } from "@/lib/avatar-context";
 import { toast } from "@/components/common/Toast";
@@ -64,16 +66,22 @@ interface ProfileEditClientProps {
 }
 
 const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduate", "N/A"];
-const PROGRAM_OPTIONS = [
-  "BSIT",
-  "BSCPE",
-  "BSBA HRM",
-  "BS ENTREP",
-  "BECEd",
-  "BSEd SCIENCE",
-  "BEEd",
-  "BTLEd ICT",
-  "GENERAL EDUCATION ACROSS INSTITUTE",
+export const INSTITUTE_PROGRAMS: Record<string, string[]> = {
+  ics: ["BSIT", "BSCPE"],
+  ite: [
+    "BECEd",
+    "BSEd SCIENCE",
+    "BEEd",
+    "BTLEd ICT",
+    "GENERAL EDUCATION ACROSS INSTITUTE",
+  ],
+  ibe: ["BSBA HRM", "BS ENTREP"],
+};
+
+export const ALL_PROGRAM_OPTIONS = [
+  ...INSTITUTE_PROGRAMS.ics,
+  ...INSTITUTE_PROGRAMS.ite,
+  ...INSTITUTE_PROGRAMS.ibe,
 ];
 const COLOR_PRESETS = [
   "#1E88E5", "#E53935", "#43A047", "#FB8C00",
@@ -114,6 +122,14 @@ export default function ProfileEditClient({
 
   // Use context avatar or fallback to user.avatarUrl
   const currentAvatarUrl = avatarUrl ?? user.avatarUrl;
+
+  const currentInstituteKey = (instituteCode || user.institute?.code || "").toLowerCase();
+  const availablePrograms =
+    INSTITUTE_PROGRAMS[currentInstituteKey] ?? ALL_PROGRAM_OPTIONS;
+  const programOptions =
+    department && !availablePrograms.includes(department)
+      ? [department, ...availablePrograms]
+      : availablePrograms;
 
   async function handleSave() {
     if (!name.trim()) {
@@ -162,7 +178,7 @@ export default function ProfileEditClient({
             <button
               type="button"
               onClick={() => setAvatarModalOpen(true)}
-              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
+              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-11 min-w-11 place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
               aria-label="Change profile photo"
             >
               <Camera className="h-5 w-5" />
@@ -183,7 +199,7 @@ export default function ProfileEditClient({
             {roleLabel}
           </span>
           <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
-          <span>{user.institute.name}</span>
+          <span>{getInstituteName(user.institute.code, user.institute.name)}</span>
         </div>
       </div>
 
@@ -263,7 +279,7 @@ export default function ProfileEditClient({
               }`}
             >
               <option value="">Select program</option>
-              {PROGRAM_OPTIONS.map((opt) => (
+              {programOptions.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>
@@ -308,7 +324,7 @@ export default function ProfileEditClient({
                   key={color}
                   type="button"
                   onClick={() => setCoverColor(color)}
-                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
+                  className="h-11 w-11 min-h-11 min-w-11 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
                   style={{
                     backgroundColor: color,
                     borderColor: coverColor === color ? (theme.colors.primary || "#F97316") : "transparent",
@@ -532,6 +548,15 @@ export default function ProfileEditClient({
           </div>
         </div>
 
+        <section id="lms-policies" className="scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-white/5 dark:bg-[#141721]">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">LMS policies</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Review how to use CdM LMS and how your information is handled.</p>
+          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+            <PolicyLink href="/terms" className="inline-block py-2 underline underline-offset-4">Terms and Conditions</PolicyLink>
+            <PolicyLink href="/privacy" className="inline-block py-2 underline underline-offset-4">Privacy Policy</PolicyLink>
+          </div>
+        </section>
+
         {/* Courses Section */}
         <div className="pb-8">
           <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3">
@@ -556,7 +581,7 @@ export default function ProfileEditClient({
                       {course.code}
                     </span>
                     <span className="text-slate-400 dark:text-slate-600">·</span>
-                    <span className="max-w-[140px] truncate">{course.title}</span>
+                    <span className="max-w-35 truncate">{course.title}</span>
                   </span>
                 ))}
 

@@ -17,7 +17,7 @@ export async function improveQuestion(
   title: string,
   body: string
 ): Promise<ImprovedQuestionResult> {
-  const prompt = `You are a computer science teaching assistant at the Institute of Computer Studies (ICS).
+  const prompt = `You are a computer science teaching assistant at the Institute of Computing Studies (ICS).
 Help a student improve their technical question to be clearer, more specific, and better formatted.
 
 Current Title: ${title}

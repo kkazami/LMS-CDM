@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu } from "lucide-react";
+import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu, FileText } from "lucide-react";
+import { PolicyLink } from "@/components/legal/PolicyNavigation";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
-import LevelBadge from "@/components/common/LevelBadge";
 import SearchModal from "@/components/layout/SearchModal";
 import TopbarFocusButton from "@/components/focus/TopbarFocusButton";
 import TopbarOfflineIndicator from "@/components/offline/TopbarOfflineIndicator";
@@ -180,7 +180,7 @@ export default function Topbar({
 
               <span
                 className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs flex items-center"
-                style={{ backgroundColor: theme.colors.primary }}
+                style={{ backgroundColor: `${theme.colors.primary}18`, color: "var(--institute-ink)" }}
               >
                 {instituteCode.toUpperCase()}
               </span>
@@ -195,7 +195,7 @@ export default function Topbar({
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
                 <span
                   className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
-                  style={{ backgroundColor: theme.colors.primary }}
+                  style={{ backgroundColor: `${theme.colors.primary}18`, color: "var(--institute-ink)" }}
                 >
                   {instituteCode.toUpperCase()}
                 </span>
@@ -303,6 +303,7 @@ export default function Topbar({
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-1 sm:gap-2.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-0.5 sm:px-2.5 sm:py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs h-8 sm:h-10 shrink-0 touch-manipulation active:scale-95"
               aria-expanded={isDropdownOpen}
+              aria-label="Open profile menu"
               aria-haspopup="true"
             >
               {/* Tablet Compact User Info (1024px - 1279px) */}
@@ -315,18 +316,11 @@ export default function Topbar({
               <div className="text-right hidden xl:block min-w-0 max-w-[150px] 2xl:max-w-[200px]">
                 <div className="flex items-center justify-end gap-1.5 min-w-0">
                   <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
-                  {userRole === "STUDENT" && <LevelBadge exp={exp} size="sm" />}
                 </div>
                 <div className="flex items-center gap-1.5 justify-end">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] shrink-0">
                     {userRole === "ADMIN" ? "Administrator" : userRole}
                   </p>
-                  {userRole === "STUDENT" && studentNumber && (
-                    <>
-                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0" />
-                      <p className="text-[11px] font-mono text-slate-500 dark:text-[#8B92A5] truncate">{studentNumber}</p>
-                    </>
-                  )}
                 </div>
               </div>
               <UserAvatar
@@ -341,13 +335,18 @@ export default function Topbar({
             <div
               inert={!isDropdownOpen}
               aria-hidden={!isDropdownOpen}
-              className={`absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-[rgba(255,255,255,0.1)] py-1.5 shadow-xl transition-all duration-200 origin-top-right ${
+              className={`absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-[#22263A] border border-slate-200 dark:border-[rgba(255,255,255,0.1)] py-1.5 shadow-xl transition-all duration-200 origin-top-right ${
                 isDropdownOpen
                   ? "opacity-100 scale-100 pointer-events-auto"
                   : "opacity-0 scale-95 pointer-events-none"
               }`}
               style={{ transformOrigin: "top right" }}
             >
+              <div className="border-b border-[var(--border-color)] px-4 py-3">
+                <p className="text-sm font-semibold text-[var(--text-primary)] break-words">{userName}</p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
+                {studentNumber && <p className="mt-1 text-xs text-[var(--text-secondary)]">Student ID: {studentNumber}</p>}
+              </div>
               <Link
                 href={`/${instituteCode}/profile`}
                 onClick={() => setIsDropdownOpen(false)}
@@ -370,8 +369,16 @@ export default function Topbar({
                 className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium"
               >
                 <Shield className="mr-3 h-4 w-4 text-slate-400 dark:text-[#8B92A5]" aria-hidden="true" />
-                Privacy
+                Privacy Settings
               </Link>
+              <PolicyLink href="/terms" onClick={() => setIsDropdownOpen(false)} className="flex items-center px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-[#F0F2F8] dark:hover:bg-white/5">
+                <FileText className="mr-3 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                Terms and Conditions
+              </PolicyLink>
+              <PolicyLink href="/privacy" onClick={() => setIsDropdownOpen(false)} className="flex items-center px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-[#F0F2F8] dark:hover:bg-white/5">
+                <Shield className="mr-3 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                Privacy Policy
+              </PolicyLink>
               <Link
                 href={`/${instituteCode}/help`}
                 onClick={() => setIsDropdownOpen(false)}

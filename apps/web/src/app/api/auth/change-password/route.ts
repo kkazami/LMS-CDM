@@ -14,9 +14,26 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
     const parsed = passwordSchema.safeParse(body.newPassword);
-    if (!parsed.success || typeof body.currentPassword !== 'string' || body.currentPassword.length > 1024) return NextResponse.json({ error: parsed.success ? 'Invalid current password.' : parsed.error.issues[0].message }, { status: 400 });
-    const user = await db.user.findUnique({ where: { id: session.userId }, select: { password: true } });
-    if (!user?.password || !await compare(body.currentPassword, user.password)) return NextResponse.json({ error: 'Incorrect current password' }, { status: 400 });
+    if (!parsed.success || typeof body.currentPassword !== 'string' || body.currentPassword.length > 1024) {
+      return NextResponse.json({ error: parsed.success ? 'Invalid current password.' : parsed.error.issues[0].message }, { status: 400 });
+    }
+    const user = await db.user.findUnique({
+      where: { id: session.userId },
+      select: { password: true, securityPin: true },
+    });
+    if (!user?.password || !(await compare(body.currentPassword, user.password))) {
+      return NextResponse.json({ error: 'Incorrect current password' }, { status: 400 });
+    }
+    // Verify PIN if set
+    if (user.securityPin) {
+      if (!body.pin) {
+        return NextResponse.json({ error: 'Security PIN is required' }, { status: 400 });
+      }
+      const isPinValid = await compare(body.pin, user.securityPin);
+      if (!isPinValid) {
+        return NextResponse.json({ error: 'Incorrect Security PIN' }, { status: 400 });
+      }
+    }
     const password = await hash(parsed.data, 10);
     const changed = await db.$transaction(async tx => {
       await lockAccounts(tx, [session.userId]);

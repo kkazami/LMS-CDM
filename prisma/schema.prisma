@@ -22,6 +22,8 @@ model Institute {
   kxPosts        KxPost[]
   programs       AcademicProgram[]
   terms          AcademicTerm[]
+  supportTickets SupportTicket[]
+  arenaQuizzes   ArenaQuiz[]
 }
 
 model User {
@@ -40,6 +42,7 @@ model User {
   role              String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
   isActive          Boolean                 @default(true)
   permissions       String                  @default("[]") // JSON array of permission strings
+  securityPin       String?                 // 6-digit hashed security PIN for step-up MFA
   instituteId       String
   createdAt         DateTime                @default(now())
 
@@ -113,6 +116,11 @@ model User {
   programMemberships          ProgramMembership[]
   programHeadAssignments      ProgramHeadAssignment[]
   uploadedAssets              PrivateAsset[]
+  supportTickets              SupportTicket[]              @relation("UserSupportTickets")
+  arenaHostedSessions         ArenaGameSession[]           @relation("ArenaSessionHost")
+  arenaParticipations         ArenaParticipant[]           @relation("ArenaUserParticipants")
+  arenaAnswers                ArenaPlayerAnswer[]          @relation("ArenaUserAnswers")
+  arenaQuizzes                ArenaQuiz[]                  @relation("ArenaQuizAuthor")
 
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventUser")
@@ -132,7 +140,6 @@ model User {
   // ─── ITE Meetings relations ───
   createdMeetings ClassMeeting[] @relation("ClassMeetingCreatedBy")
   meetingJoins    MeetingJoin[]
-
   @@unique([id, instituteId])
 }
 
@@ -192,6 +199,7 @@ model Course {
   broadcasts          NotificationBroadcast[]
   gradeIncentiveRules GradeIncentiveRule[]
   kxPosts             KxPost[]
+  arenaQuizzes        ArenaQuiz[]
   forms               Form[]
   questionBankItems   QuestionBankItem[]
 
@@ -1739,6 +1747,194 @@ model LegacyAssetBinding {
   @@id([kind, sourceId])
   @@index([url, instituteId])
 }
+
+// ─────────────────────────────────────────────────────────────
+// ─── Help Desk & Support Ticket System ───────────────────────
+// ─────────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  subject     String
+  message     String   @db.Text
+  category    String   @default("GENERAL") // "TECHNICAL", "ACCOUNT", "COURSE", "OTHER"
+  status      String   @default("OPEN")    // "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"
+  priority    String   @default("NORMAL")  // "LOW", "NORMAL", "HIGH", "URGENT"
+  
+  authorId    String
+  instituteId String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+  adminReply  String?  @db.Text
+  repliedAt   DateTime?
+
+  author      User      @relation("UserSupportTickets", fields: [authorId], references: [id], onDelete: Cascade)
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([instituteId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ─── Quiz Arena (Kahoot-Style Interactive Live Quiz) ─────────
+// ─────────────────────────────────────────────────────────────
+
+model ArenaQuiz {
+  id                        String              @id @default(cuid())
+  title                     String
+  description               String?             @db.Text
+  coverImage                String?
+  courseId                  String?
+  instituteId               String
+  authorId                  String
+  status                    String              @default("DRAFT") // "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  
+  // Game Configuration & Default Rules
+  defaultTimeLimitSeconds   Int                 @default(20) // 10, 20, 30, 60, 120
+  scoringMethod             String              @default("SPEED_BASED") // "SPEED_BASED" | "ACCURACY_BASED"
+  enableIntegrityMonitoring Boolean             @default(false)
+  shuffleQuestions          Boolean             @default(false)
+  shuffleAnswers            Boolean             @default(false)
+  showLeaderboardAfterEach  Boolean             @default(true)
+  showAnswerFeedback        String              @default("IMMEDIATE") // "IMMEDIATE" | "END_OF_GAME"
+  allowReconnection         Boolean             @default(true)
+  
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  
+  institute                 Institute           @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  author                    User                @relation("ArenaQuizAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  course                    Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  questions                 ArenaQuestion[]
+  sessions                  ArenaGameSession[]
+
+  @@index([instituteId])
+  @@index([authorId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model ArenaQuestion {
+  id                  String              @id @default(cuid())
+  quizId              String
+  questionText        String              @db.Text
+  questionType        String              @default("MULTIPLE_CHOICE") // "MULTIPLE_CHOICE" | "TRUE_FALSE"
+  mediaUrl            String?
+  timeLimitSeconds    Int                 @default(20)
+  basePoints          Int                 @default(1000)
+  speedBonusEnabled   Boolean             @default(true)
+  explanation         String?             @db.Text
+  orderIndex          Int                 @default(0)
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  quiz                ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  choices             ArenaAnswerChoice[]
+  playerAnswers       ArenaPlayerAnswer[]
+
+  @@index([quizId, orderIndex])
+}
+
+model ArenaAnswerChoice {
+  id            String              @id @default(cuid())
+  questionId    String
+  choiceText    String
+  isCorrect     Boolean             @default(false)
+  colorIndex    Int                 @default(0) // 0: Red/Triangle, 1: Blue/Diamond, 2: Yellow/Circle, 3: Green/Square
+  orderIndex    Int                 @default(0)
+  
+  question      ArenaQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  playerAnswers ArenaPlayerAnswer[]
+
+  @@index([questionId, orderIndex])
+}
+
+model ArenaGameSession {
+  id                      String              @id @default(cuid())
+  quizId                  String
+  hostId                  String
+  pin                     String              @unique // 6-digit unique join PIN
+  mode                    String              @default("LIVE") // "LIVE" | "SELF_PACED"
+  status                  String              @default("LOBBY") // "LOBBY" | "QUESTION_ACTIVE" | "QUESTION_RESULT" | "LEADERBOARD" | "FINISHED"
+  
+  currentQuestionIndex    Int                 @default(0)
+  currentQuestionStartedAt DateTime?
+  currentQuestionDeadline DateTime?
+  
+  // Snapshot of game settings used for this session
+  scoringMethod           String              @default("SPEED_BASED")
+  enableIntegrityMonitoring Boolean           @default(false)
+  showLeaderboardAfterEach Boolean           @default(true)
+  showAnswerFeedback      String              @default("IMMEDIATE")
+  
+  startedAt               DateTime?
+  endedAt                 DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  
+  quiz                    ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  host                    User                @relation("ArenaSessionHost", fields: [hostId], references: [id], onDelete: Cascade)
+  participants            ArenaParticipant[]
+  playerAnswers           ArenaPlayerAnswer[]
+
+  @@index([pin])
+  @@index([quizId])
+  @@index([hostId])
+  @@index([status])
+}
+
+model ArenaParticipant {
+  id              String              @id @default(cuid())
+  sessionId       String
+  studentId       String
+  nickname        String
+  avatar          String?
+  score           Int                 @default(0)
+  currentStreak   Int                 @default(0)
+  rank            Int                 @default(0)
+  isConnected     Boolean             @default(true)
+  joinedAt        DateTime            @default(now())
+  lastActiveAt    DateTime            @default(now())
+  
+  session         ArenaGameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student         User                @relation("ArenaUserParticipants", fields: [studentId], references: [id], onDelete: Cascade)
+  playerAnswers   ArenaPlayerAnswer[]
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId, score])
+  @@index([studentId])
+}
+
+model ArenaPlayerAnswer {
+  id              String              @id @default(cuid())
+  sessionId       String
+  questionId      String
+  participantId   String
+  studentId       String
+  choiceId        String?
+  isCorrect       Boolean             @default(false)
+  responseTimeMs  Int                 @default(0) // Time taken in milliseconds
+  pointsEarned    Int                 @default(0)
+  submittedAt     DateTime            @default(now())
+  
+  // Anti-cheating flags accumulated during question attempt
+  integrityFlags  Int                 @default(0)
+  
+  session         ArenaGameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question        ArenaQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  choice          ArenaAnswerChoice?  @relation(fields: [choiceId], references: [id], onDelete: SetNull)
+  participant     ArenaParticipant    @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  student         User                @relation("ArenaUserAnswers", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId, studentId])
+  @@index([sessionId, questionId])
+  @@index([participantId])
+  @@index([studentId])
+}
+
 
 enum AccountActivationStatus {
   PENDING_ACTIVATION

@@ -62,7 +62,7 @@ const FAQ_ITEMS: FaqItem[] = [
     id: "faq-account-access",
     question: "What credentials do I need to sign in, and how do I reset my password?",
     answer:
-      "Sign in with your registered institutional email address and password. If you misplace your credentials, use the self-service password recovery page (/forgot-password) to receive a one-time verification code via email, or contact your department administrator at TODO_HELPDESK_EMAIL for account verification.",
+      "Sign in with your registered institutional email address and password. If you misplace your credentials, use the self-service password recovery page (/forgot-password) to receive a one-time verification code via email, or contact your institute administrator or the Office of the Registrar for account verification.",
   },
 ];
 
@@ -160,10 +160,8 @@ export default function FaqAndCtaSection({
               </div>
               <div className="inline-flex flex-wrap items-center gap-2 px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-300">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Contact campus helpdesk:</span>
-                <code className="font-mono text-amber-300 font-semibold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/25">
-                  TODO_HELPDESK_EMAIL
-                </code>
+                <span>Accounts and technical assistance:</span>
+                <Link href="/support" className="font-semibold text-amber-300 underline underline-offset-4">Contact &amp; Support</Link>
               </div>
             </div>
           </motion.div>

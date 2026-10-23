@@ -20,6 +20,12 @@ export default async function PrivacySettingsPage({
     redirect(`/login?institute=${institute}`);
   }
 
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { securityPin: true },
+  });
+  const hasSecurityPin = !!user?.securityPin;
+
   // Fetch active sessions for the user, ordered by most recent first
   const activeSessions = await db.session.findMany({
     where: {
@@ -56,6 +62,7 @@ export default async function PrivacySettingsPage({
           expiresAt: s.expiresAt.toISOString(),
         }))} 
         currentSessionId={session.id} // Pass current session to prevent self-revocation accidentally
+        hasSecurityPin={hasSecurityPin}
       />
     </div>
   );

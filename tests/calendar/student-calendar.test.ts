@@ -15,6 +15,7 @@ test("dashboard renders the calendar before enrolled classes and Tasks no longer
   const dashboard = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/students/client.tsx"), "utf8");
   const workspace = readFileSync(path.resolve("apps/web/src/components/workspace/WorkspaceDashboard.tsx"), "utf8");
   assert.ok(dashboard.indexOf("<StudentCalendar ") > 0);
+  assert.ok(dashboard.indexOf("My Enrolled Classes") > 0);
   assert.ok(dashboard.indexOf("<StudentCalendar ") < dashboard.indexOf("My Enrolled Classes"));
   assert.ok(!workspace.includes("Monthly Calendar"));
   assert.ok(!workspace.includes("Assignment Details"));

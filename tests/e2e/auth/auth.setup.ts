@@ -16,6 +16,7 @@ setup('authenticate as student', async ({ page }) => {
   // Fill login form using accessible selectors
   await page.getByLabel(/email/i).fill(TEST_ACCOUNTS.student.email);
   await page.getByLabel('Password', { exact: true }).fill(TEST_ACCOUNTS.student.password);
+  await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
   await page.getByRole('button', { name: /sign in|log in|login/i }).click();
 
   // Wait for redirect to dashboard
@@ -32,6 +33,7 @@ setup('authenticate as instructor', async ({ page }) => {
 
   await page.getByLabel(/email/i).fill(TEST_ACCOUNTS.instructor.email);
   await page.getByLabel('Password', { exact: true }).fill(TEST_ACCOUNTS.instructor.password);
+  await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
   await page.getByRole('button', { name: /sign in|log in|login/i }).click();
 
   await page.waitForURL(`**/${TEST_INSTITUTE}/**`, { timeout: 15_000 });
@@ -46,6 +48,7 @@ setup('authenticate as admin', async ({ page }) => {
 
   await page.getByLabel(/email/i).fill(TEST_ACCOUNTS.admin.email);
   await page.getByLabel('Password', { exact: true }).fill(TEST_ACCOUNTS.admin.password);
+  await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
   await page.getByRole('button', { name: /sign in|log in|login/i }).click();
 
   await page.waitForURL(`**/${TEST_INSTITUTE}/**`, { timeout: 15_000 });

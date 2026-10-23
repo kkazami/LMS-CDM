@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Alert,
   Animated,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LogIn, GraduationCap, Building2, BookOpen, ShieldCheck, Sparkles, Sun, Moon } from 'lucide-react-native';
@@ -22,6 +23,7 @@ import { getOnPrimaryColor } from '../../src/lib/design-system';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
 import { TOUCH_TARGET } from '../../src/lib/typography';
+import { API_BASE_URL } from '../../src/lib/constants';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Initialize theme from storage/system on mount
@@ -89,11 +92,15 @@ export default function LoginScreen() {
       return;
     }
 
+    if (!acceptedPolicies) {
+      setErrorMessage('Agree to the Terms and Conditions and acknowledge the Privacy Policy to sign in.');
+      return;
+    }
     setLoading(true);
     setErrorMessage(null);
 
     try {
-      const response = await login(email.trim().toLowerCase(), password, selectedInstitute);
+      const response = await login(email.trim().toLowerCase(), password, selectedInstitute, acceptedPolicies);
 
       try {
         Burnt.toast({
@@ -280,6 +287,27 @@ export default function LoginScreen() {
               ringColor={currentTheme.colors.primary}
               theme={currentTheme}
             />
+
+            <TouchableOpacity
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: acceptedPolicies, disabled: loading }}
+              accessibilityLabel="I agree to the Terms and Conditions and acknowledge the Privacy Policy"
+              disabled={loading}
+              onPress={() => setAcceptedPolicies(value => !value)}
+              style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 48, paddingVertical: 12 }}
+            >
+              <View style={{ width: 22, height: 22, borderWidth: 2, borderColor: currentTheme.colors.primary, borderRadius: 4, backgroundColor: acceptedPolicies ? currentTheme.colors.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {acceptedPolicies && <ShieldCheck size={16} color="#FFFFFF" />}
+              </View>
+              <Text style={{ flex: 1, fontSize: 14, lineHeight: 21, color: currentTheme.colors.text }}>I agree to the Terms and Conditions and acknowledge the Privacy Policy.</Text>
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+              {([{ title: 'Terms and Conditions', path: '/terms' }, { title: 'Privacy Policy', path: '/privacy' }]).map(policy => (
+                <TouchableOpacity key={policy.path} accessibilityRole="link" accessibilityLabel={`${policy.title} (opens in browser)`} style={{ minHeight: 44, justifyContent: 'center' }} onPress={() => Linking.openURL(`${API_BASE_URL}${policy.path}`).catch(() => setErrorMessage('Unable to open the policy. Please try again.'))}>
+                  <Text style={{ color: currentTheme.colors.text, textDecorationLine: 'underline', fontSize: 13 }}>{policy.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <Button
               title="Sign In"

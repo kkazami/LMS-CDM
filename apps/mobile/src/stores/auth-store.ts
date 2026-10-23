@@ -1,3 +1,4 @@
+import { getInstituteName } from "@lms/types";
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { createApiClient, type ApiClient } from '@lms/api-client';
@@ -50,7 +51,7 @@ interface AuthState {
   api: ApiClient;
 
   initialize: () => Promise<void>;
-  login: (email: string, password: string, instituteCode?: string) => Promise<LoginResponse>;
+  login: (email: string, password: string, instituteCode: string, acceptedPolicies: boolean) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
   clearRewardReceipt: () => void;
@@ -77,6 +78,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         if (token && userStr) {
           const user = JSON.parse(userStr) as AuthUser;
+          user.institute.name = getInstituteName(user.institute.code, user.institute.name);
           set({ token, user, isAuthenticated: true, isLoading: false });
 
           // Verify token is still valid
@@ -99,8 +101,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    login: async (email: string, password: string, instituteCode?: string) => {
-      const response = await api.auth.login({ identifier: email, password, instituteCode });
+    login: async (email: string, password: string, instituteCode: string, acceptedPolicies: boolean) => {
+      const response = await api.auth.login({ identifier: email, password, instituteCode, acceptedPolicies });
 
       await storage.setItem(TOKEN_KEY, response.token);
       await storage.setItem(USER_KEY, JSON.stringify(response.user));

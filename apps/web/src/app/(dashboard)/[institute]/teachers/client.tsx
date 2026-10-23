@@ -92,8 +92,9 @@ interface TeacherDashboardClientProps {
   initialPendingWorkClasses?: PendingClassWork[];
   totalPendingWorkCount?: number;
   /** Whether the CodeLab / interactive activities suite is available to this user. */
-  showCodeLab: boolean;
+  showCodeLab?: boolean;
   typingSessionKey?: string;
+  greeting: string;
 }
 
 export default function TeacherDashboardClient({
@@ -110,6 +111,7 @@ export default function TeacherDashboardClient({
   totalPendingWorkCount,
   showCodeLab,
   typingSessionKey,
+  greeting,
 }: TeacherDashboardClientProps) {
   const router = useRouter();
   const [approveError, setApproveError] = useState<string | null>(null);
@@ -315,11 +317,13 @@ export default function TeacherDashboardClient({
                     : `${instituteName} • Faculty Portal`}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] break-words">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                 <TypingBanner
-                  text={`Welcome back, ${userName}!`}
+                  text={greeting || `Welcome back, ${userName}!`}
+                  cursorColor={theme.colors.primary}
+                  keepCursor={false}
+                  speed={28}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
-                  cursorColor={instituteCode.toLowerCase() === "ite" ? theme.colors.primary : undefined}
                 />
               </h1>
               <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
@@ -361,7 +365,9 @@ export default function TeacherDashboardClient({
             </h2>
           </div>
           <StaggerGroup
-            className={`grid grid-cols-2 sm:grid-cols-3 ${showCodeLab ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}
+            className={`grid grid-cols-2 sm:grid-cols-3 ${
+              (showCodeLab ?? instituteCode.toLowerCase() === "ics") ? "lg:grid-cols-6" : "lg:grid-cols-5"
+            } gap-3`}
           >
             <StaggerItem>
               <QuickActionCard
@@ -412,7 +418,7 @@ export default function TeacherDashboardClient({
                 color="#EC4899"
               />
             </StaggerItem>
-            {showCodeLab && (
+            {(showCodeLab ?? instituteCode.toLowerCase() === "ics") && (
               <StaggerItem>
                 <QuickActionCard
                   icon={Compass}
@@ -497,7 +503,7 @@ export default function TeacherDashboardClient({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6">
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -514,7 +520,7 @@ export default function TeacherDashboardClient({
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] flex items-start gap-3">
+                  <div className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/2 flex items-start gap-3">
                     <div
                       className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white mt-0.5"
                       style={{ backgroundColor: theme.colors.primary }}
@@ -568,7 +574,7 @@ export default function TeacherDashboardClient({
                               }
                         }
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-black/20" />
 
                         {/* Top Badges & 3-dots Menu */}
                         <div className="relative z-20 flex items-center justify-between gap-2">
@@ -737,7 +743,7 @@ export default function TeacherDashboardClient({
                     {pendingWorkClasses.map((item) => (
                       <div
                         key={item.courseId}
-                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all gap-3"
+                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/3 hover:bg-slate-100/80 dark:hover:bg-white/6 transition-all gap-3"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -835,7 +841,7 @@ export default function TeacherDashboardClient({
                   {pendingRequests.map((req) => (
                     <div
                       key={req.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-all gap-3"
+                      className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-white/3 hover:bg-slate-100/80 dark:hover:bg-white/6 transition-all gap-3"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-slate-900 dark:text-[#F1F5F9] truncate">

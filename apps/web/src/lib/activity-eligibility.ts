@@ -4,7 +4,7 @@
  * Single source of truth for determining whether a user can access
  * the Interactive Activities feature suite (3D simulations, CodeLab).
  *
- * RULE: Only users belonging to the Institute of Computer Studies (ICS)
+ * RULE: Only users belonging to the Institute of Computing Studies (ICS)
  * are eligible. ICS exclusively houses BSIT and BSCpE programs at CDM.
  *
  * If a Program model is added to the schema in the future, refine the
@@ -40,7 +40,7 @@ interface EligibilitySession {
  * Checks if a user session is eligible for Interactive Activities.
  *
  * Eligible when:
- *   - The user's institute code is "ics" (Institute of Computer Studies)
+ *   - The user's institute code is "ics" (Institute of Computing Studies)
  *   - Students: must be enrolled under ICS
  *   - Instructors: must belong to ICS (they teach ICS courses by definition,
  *     since Course.instituteId matches the instructor's institute)

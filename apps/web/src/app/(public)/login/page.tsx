@@ -2,6 +2,7 @@ import LoginClient from "@/components/forms/LoginClient";
 import { headers } from "next/headers";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { publicDisplay } from "@/lib/public-fonts";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -48,11 +49,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <LoginClient
-      key={resolvedSearchParams?.force ? "force" : existingUser?.id || "anon"}
-      initialInstituteCode={instituteCode}
-      initialIsDesktopAdmin={isDesktopAdmin}
-      existingUser={existingUser}
-    />
+    <div className={publicDisplay.variable}>
+      <LoginClient
+        key={resolvedSearchParams?.force ? "force" : existingUser?.id || "anon"}
+        initialInstituteCode={instituteCode}
+        initialIsDesktopAdmin={isDesktopAdmin}
+        existingUser={existingUser}
+      />
+    </div>
   );
 }

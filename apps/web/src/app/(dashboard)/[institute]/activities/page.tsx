@@ -9,5 +9,8 @@ export default async function ActivitiesRedirectPage({
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/page.tsx", await params);
 
   const { institute } = await params;
+  if (institute.toLowerCase() !== "ics") {
+    redirect(`/${institute}`);
+  }
   redirect(`/${institute}/activities/codelab`);
 }
