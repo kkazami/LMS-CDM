@@ -105,8 +105,8 @@ export default function InstructorCreateCourseModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Section</label>
-            <Input name="section" placeholder="e.g. A" theme={theme} />
+            <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Section *</label>
+            <Input name="section" placeholder="e.g. A" required theme={theme} />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">Room</label>

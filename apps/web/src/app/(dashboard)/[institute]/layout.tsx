@@ -48,8 +48,8 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
-  // Compute activity & KX eligibility synchronously from session in 0ms (no DB queries)
-  const activityEligible = userInstituteCode === "ics" || isAdmin;
+  // Compute activity & KX eligibility synchronously from session (CodeLab is strictly ICS-only)
+  const activityEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
   const kxEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
 
   const role = userRole;

@@ -125,7 +125,7 @@ export default function IntroPreloader({ onIntroComplete, reducedMotion }: Intro
       aria-hidden="true"
       tabIndex={-1}
       suppressHydrationWarning
-      className={`fixed inset-0 z-[999] flex items-center justify-center bg-[#070A11] pointer-events-none select-none transition-opacity ease-out ${isFadingOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 z-999 flex items-center justify-center bg-[#070A11] pointer-events-none select-none transition-opacity ease-out ${isFadingOut ? "opacity-0" : "opacity-100"}`}
       style={{ transitionDuration: `${FADE_MS}ms` }}
     >
       {/*

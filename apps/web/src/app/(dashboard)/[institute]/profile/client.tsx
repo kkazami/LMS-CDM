@@ -66,16 +66,22 @@ interface ProfileEditClientProps {
 }
 
 const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduate", "N/A"];
-const PROGRAM_OPTIONS = [
-  "BSIT",
-  "BSCPE",
-  "BSBA HRM",
-  "BS ENTREP",
-  "BECEd",
-  "BSEd SCIENCE",
-  "BEEd",
-  "BTLEd ICT",
-  "GENERAL EDUCATION ACROSS INSTITUTE",
+export const INSTITUTE_PROGRAMS: Record<string, string[]> = {
+  ics: ["BSIT", "BSCPE"],
+  ite: [
+    "BECEd",
+    "BSEd SCIENCE",
+    "BEEd",
+    "BTLEd ICT",
+    "GENERAL EDUCATION ACROSS INSTITUTE",
+  ],
+  ibe: ["BSBA HRM", "BS ENTREP"],
+};
+
+export const ALL_PROGRAM_OPTIONS = [
+  ...INSTITUTE_PROGRAMS.ics,
+  ...INSTITUTE_PROGRAMS.ite,
+  ...INSTITUTE_PROGRAMS.ibe,
 ];
 const COLOR_PRESETS = [
   "#1E88E5", "#E53935", "#43A047", "#FB8C00",
@@ -115,6 +121,14 @@ export default function ProfileEditClient({
 
   // Use context avatar or fallback to user.avatarUrl
   const currentAvatarUrl = avatarUrl ?? user.avatarUrl;
+
+  const currentInstituteKey = (instituteCode || user.institute?.code || "").toLowerCase();
+  const availablePrograms =
+    INSTITUTE_PROGRAMS[currentInstituteKey] ?? ALL_PROGRAM_OPTIONS;
+  const programOptions =
+    department && !availablePrograms.includes(department)
+      ? [department, ...availablePrograms]
+      : availablePrograms;
 
   async function handleSave() {
     if (!name.trim()) {
@@ -163,7 +177,7 @@ export default function ProfileEditClient({
             <button
               type="button"
               onClick={() => setAvatarModalOpen(true)}
-              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
+              className="absolute bottom-0 right-0 grid h-11 w-11 min-h-11 min-w-11 place-items-center rounded-full border-2 border-white bg-gray-800 text-white shadow-lg transition-colors hover:bg-gray-700 cursor-pointer active:scale-95"
               aria-label="Change profile photo"
             >
               <Camera className="h-5 w-5" />
@@ -256,7 +270,7 @@ export default function ProfileEditClient({
               className="rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
             >
               <option value="">Select program</option>
-              {PROGRAM_OPTIONS.map((opt) => (
+              {programOptions.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>
@@ -298,7 +312,7 @@ export default function ProfileEditClient({
                   key={color}
                   type="button"
                   onClick={() => setCoverColor(color)}
-                  className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
+                  className="h-11 w-11 min-h-11 min-w-11 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer shadow-xs active:scale-95"
                   style={{
                     backgroundColor: color,
                     borderColor: coverColor === color ? (theme.colors.primary || "#F97316") : "transparent",
@@ -532,7 +546,7 @@ export default function ProfileEditClient({
                       {course.code}
                     </span>
                     <span className="text-slate-400 dark:text-slate-600">·</span>
-                    <span className="max-w-[140px] truncate">{course.title}</span>
+                    <span className="max-w-35 truncate">{course.title}</span>
                   </span>
                 ))}
               </div>

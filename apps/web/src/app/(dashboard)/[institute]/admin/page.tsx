@@ -14,6 +14,7 @@ import {
   ArrowRight,
   UserCheck,
   Layers,
+  LifeBuoy,
 } from "lucide-react";
 import { TypingBanner } from "@/components/motion/TypingBanner";
 import { StatPill } from "@/components/dashboard/StatPill";
@@ -102,12 +103,12 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       count: "System Activity",
     },
     {
-      title: "Backup & Recovery",
-      description: "Database snapshots, data export, and disaster recovery",
-      href: `/${institute}/backup`,
+      title: "Database Management",
+      description: "Categorized schema explorer, live row inspection, and backups",
+      href: `/${institute}/admin/database`,
       icon: HardDrive,
       color: "#EC4899",
-      count: "Automated Daily",
+      count: "7 Domains",
     },
     {
       title: "Security Tools",
@@ -116,6 +117,14 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       icon: ShieldCheck,
       color: "#06B6D4",
       count: "Protected",
+    },
+    {
+      title: "Support Tickets",
+      description: "Manage and resolve user inquiries and support requests",
+      href: `/${institute}/admin/support-tickets`,
+      icon: LifeBuoy,
+      color: "#EF4444",
+      count: "Support Queue",
     },
   ];
 

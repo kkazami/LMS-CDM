@@ -29,6 +29,11 @@ export default async function ActivitiesLayout({
     redirect(`/login?institute=${institute}`);
   }
 
+  // Interactive activities (including CodeLab) are strictly exclusive to ICS
+  if (institute.toLowerCase() !== "ics") {
+    redirect(`/${institute}`);
+  }
+
   // Authenticated but not eligible — redirect to their dashboard
   const eligible = await isEligibleForActivities({
     user: {

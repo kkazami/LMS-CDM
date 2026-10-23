@@ -62,7 +62,7 @@ export default function DashboardLayout({
 
   const layoutContent = (
     <div
-      className="lms-shell min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
+      className="lms-shell min-h-dvh bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--institute-accent": theme.colors.primary,
       } as React.CSSProperties}
@@ -85,7 +85,7 @@ export default function DashboardLayout({
         />
 
         <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-72"
+          isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
         }`}>
           <Topbar
             theme={theme}
@@ -97,6 +97,7 @@ export default function DashboardLayout({
             instituteCode={instituteCode}
             exp={exp}
           />
+
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {children}

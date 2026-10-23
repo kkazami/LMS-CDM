@@ -233,7 +233,7 @@ export default function MultiPlatformSection({
             </div>
 
             {/* Working Anchor Button to Institutes */}
-            <div className="mt-7 pt-4 border-t border-white/[0.08]">
+            <div className="mt-7 pt-4 border-t border-white/8">
               <a
                 href="#departments"
                 onClick={(e) => {
@@ -315,7 +315,7 @@ export default function MultiPlatformSection({
               </div>
 
               {/* Pure CSS/Tailwind Phone Mockup (Lightweight, no images, no new deps) */}
-              <div className="mt-4 w-full max-w-[250px] mx-auto rounded-[28px] border-2 border-slate-700/60 bg-[#070A11] p-3 shadow-inner select-none">
+              <div className="mt-4 w-full max-w-62.5 mx-auto rounded-[28px] border-2 border-slate-700/60 bg-[#070A11] p-3 shadow-inner select-none">
                 {/* Phone Notch/Pill */}
                 <div className="w-16 h-2 bg-slate-800 rounded-full mx-auto mb-2.5" />
 
@@ -351,7 +351,7 @@ export default function MultiPlatformSection({
                         className={`h-4 rounded-md flex items-center justify-center text-[8px] font-mono font-bold ${
                           i < 6
                             ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
-                            : "bg-white/[0.04] text-slate-500 border border-dashed border-amber-400/30"
+                            : "bg-white/4 text-slate-500 border border-dashed border-amber-400/30"
                         }`}
                       >
                         {d}
@@ -367,7 +367,7 @@ export default function MultiPlatformSection({
                     <span className="font-mono text-amber-400 font-bold">3,450 / 5,000 EXP</span>
                   </div>
                   <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full w-[69%]" />
+                    <div className="h-full bg-linear-to-r from-amber-400 to-amber-300 rounded-full w-[69%]" />
                   </div>
                 </div>
 
@@ -378,7 +378,7 @@ export default function MultiPlatformSection({
               </div>
 
               {/* Planned Capabilities Row (Chips only, not clickable) */}
-              <div className="mt-4 pt-3 border-t border-white/[0.08]">
+              <div className="mt-4 pt-3 border-t border-white/8">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                   Planned Capabilities
                 </div>
@@ -391,7 +391,7 @@ export default function MultiPlatformSection({
                   ].map((chip, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-white/[0.04] border border-white/[0.08] text-slate-300 cursor-default select-none"
+                      className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-white/4 border border-white/8 text-slate-300 cursor-default select-none"
                     >
                       {chip}
                     </span>
@@ -441,7 +441,7 @@ export default function MultiPlatformSection({
             <div>
               {/* Header: Icon + Status Pill */}
               <div className="flex items-center justify-between gap-3 mb-5">
-                <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0 text-slate-300">
+                <div className="w-11 h-11 rounded-xl bg-white/4 border border-white/10 flex items-center justify-center shrink-0 text-slate-300">
                   <Monitor className="w-5 h-5" />
                 </div>
 
@@ -487,8 +487,8 @@ export default function MultiPlatformSection({
             </div>
 
             {/* Non-interactive disabled roadmap indicator (no download button, no version) */}
-            <div className="mt-7 pt-4 border-t border-white/[0.06]">
-              <div className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 border border-white/[0.08] bg-white/[0.02] select-none cursor-not-allowed">
+            <div className="mt-7 pt-4 border-t border-white/6">
+              <div className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 border border-white/8 bg-white/2 select-none cursor-not-allowed">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>Scheduled for Phase 3 Roadmap</span>
               </div>
@@ -498,7 +498,7 @@ export default function MultiPlatformSection({
 
         {/* ─── TECH STRIP — INFINITE AUTO-SCROLL MARQUEE ─── */}
         <motion.div
-          className="mt-14 pt-8 border-t border-white/[0.08]"
+          className="mt-14 pt-8 border-t border-white/8"
           initial={{ opacity: 0, y: reducedMotion ? 0 : 16 }}
           animate={
             isSectionInView
@@ -536,7 +536,7 @@ export default function MultiPlatformSection({
                 {TECH_STACK_CHIPS.map((tech) => (
                   <span
                     key={`tech-1-${tech}`}
-                    className="px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium text-slate-400 bg-white/[0.03] border border-white/[0.07] select-none whitespace-nowrap"
+                    className="px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium text-slate-400 bg-white/3 border border-white/[0.07] select-none whitespace-nowrap"
                   >
                     {tech}
                   </span>
@@ -551,7 +551,7 @@ export default function MultiPlatformSection({
                 {TECH_STACK_CHIPS.map((tech, i) => (
                   <span
                     key={`tech-2-${tech}-${i}`}
-                    className="px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium text-slate-400 bg-white/[0.03] border border-white/[0.07] select-none whitespace-nowrap"
+                    className="px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium text-slate-400 bg-white/3 border border-white/[0.07] select-none whitespace-nowrap"
                   >
                     {tech}
                   </span>

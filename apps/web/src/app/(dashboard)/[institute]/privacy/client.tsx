@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { KeyRound, Smartphone, Monitor, Shield, LogOut, Loader2 } from "lucide-react";
 import ChangePasswordModal from "@/components/common/ChangePasswordModal";
+import SetPinModal from "@/components/common/SetPinModal";
 import { useRouter } from "next/navigation";
 
 interface SessionInfo {
@@ -14,11 +15,13 @@ interface SessionInfo {
 interface PrivacyClientProps {
   sessions: SessionInfo[];
   currentSessionId: string;
+  hasSecurityPin?: boolean;
 }
 
-export default function PrivacyClient({ sessions, currentSessionId }: PrivacyClientProps) {
+export default function PrivacyClient({ sessions, currentSessionId, hasSecurityPin = false }: PrivacyClientProps) {
   const router = useRouter();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const handleRevokeSession = async (sessionId: string) => {
@@ -67,6 +70,30 @@ export default function PrivacyClient({ sessions, currentSessionId }: PrivacyCli
               className="shrink-0 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-white font-semibold rounded-xl text-sm transition-colors"
             >
               Change Password
+            </button>
+          </div>
+
+          {/* Security PIN Section */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-8">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] flex items-center gap-2">
+                <Shield className="w-4 h-4 text-slate-400" />
+                Security PIN
+                {hasSecurityPin && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] uppercase tracking-wider font-bold">
+                    Active
+                  </span>
+                )}
+              </span>
+              <p className="text-sm text-slate-500 dark:text-[#8B92A5] max-w-md">
+                Add an extra layer of security. When active, a 6-digit PIN is required to change your password or perform sensitive actions.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsPinModalOpen(true)}
+              className="shrink-0 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-white font-semibold rounded-xl text-sm transition-colors"
+            >
+              {hasSecurityPin ? "Change PIN" : "Set up PIN"}
             </button>
           </div>
 
@@ -142,6 +169,13 @@ export default function PrivacyClient({ sessions, currentSessionId }: PrivacyCli
       <ChangePasswordModal 
         isOpen={isPasswordModalOpen} 
         onClose={() => setIsPasswordModalOpen(false)} 
+        hasSecurityPin={hasSecurityPin}
+      />
+
+      <SetPinModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        isUpdate={hasSecurityPin}
       />
     </div>
   );

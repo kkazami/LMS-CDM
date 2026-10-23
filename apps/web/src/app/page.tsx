@@ -154,7 +154,7 @@ const programs: ProgramData[] = [
     subtitle: "Enterprise Management, Finance & Strategic Leadership",
     description:
       "The Institute of Business and Entrepreneurship nurtures future enterprise managers and ethical entrepreneurs through comprehensive training in financial analysis, corporate administration, marketing strategies, and venture creation.",
-    logo: "/images/ibe-logo.jpg",
+    logo: "/images/ibe-logo.png",
     alt: "IBE — Institute of Business and Entrepreneurship emblem",
     color: "#EAB308",
     colorLight: "rgba(234, 179, 8, 0.15)",
@@ -630,7 +630,7 @@ function CoverflowDepartmentPortal({
         <div
           tabIndex={0}
           onKeyDown={handleKeyDown}
-          className="relative w-full max-w-5xl flex items-center justify-center min-h-[580px] py-4 outline-none select-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-3xl"
+          className="relative w-full max-w-5xl flex items-center justify-center min-h-145 py-4 outline-none select-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-3xl"
           style={{
             perspective: reducedMotion ? "none" : 1200,
             transformStyle: "preserve-3d",
@@ -639,7 +639,7 @@ function CoverflowDepartmentPortal({
         >
         {/* Center Deck Anchor (holds the 3 overlapping cards in 3D space) */}
         <div
-          className="relative w-[380px] lg:w-[440px] h-[520px]"
+          className="relative w-95 lg:w-110 h-130"
           style={{
             transformStyle: "preserve-3d",
           }}
@@ -707,7 +707,7 @@ function CoverflowDepartmentPortal({
                 }}
                 className={`absolute inset-0 rounded-3xl border p-6 sm:p-7 backdrop-blur-xl transition-colors duration-300 flex flex-col justify-between overflow-hidden outline-none select-none ${
                   isCenter
-                    ? "cursor-none [&_*]:cursor-none shadow-2xl"
+                    ? "cursor-none **:cursor-none shadow-2xl"
                     : "cursor-pointer shadow-lg hover:opacity-85"
                 }`}
                 style={{
@@ -878,7 +878,7 @@ function CoverflowDepartmentPortal({
                 </div>
 
                 {/* Bottom Row / Status Indicator */}
-                <div className="relative z-10 mt-auto pt-4 border-t border-white/[0.08]">
+                <div className="relative z-10 mt-auto pt-4 border-t border-white/8">
                   <div className="flex items-center justify-between text-xs text-slate-400">
                     <span className="flex items-center gap-1.5 font-medium">
                       <span
@@ -1071,7 +1071,7 @@ function CoverflowDepartmentPortal({
             </div>
 
             {/* Mobile Action Button (Always Visible on Touch) */}
-            <div className="mt-5 pt-3.5 border-t border-white/[0.08]">
+            <div className="mt-5 pt-3.5 border-t border-white/8">
               <div
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs tracking-wide text-white shadow-lg"
                 style={{
@@ -1963,7 +1963,7 @@ export default function HomePage() {
                 </div>
 
                 {/* 4-Stat Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-8 pt-6 border-t border-white/[0.08]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-8 pt-6 border-t border-white/8">
                   {[
                     { value: "3", label: "Academic Institutes", sub: "ICS · ITE · IBE" },
                     { value: "7+", label: "Feature Areas", sub: "Modules & Tools" },
@@ -2158,7 +2158,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Dashboard Inner App Body */}
-                  <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
+                  <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/8">
                     {/* Sidebar */}
                     <div
                       className="w-full md:w-44 xl:w-48 shrink-0 flex flex-col py-3.5 px-2.5 sm:px-3 gap-1 overflow-hidden"
@@ -2222,7 +2222,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Main Content Area (Dynamic per sidebar selection and role) */}
-                    <div className="flex-1 p-4 sm:p-5 flex flex-col gap-3.5 min-h-[390px] overflow-hidden">
+                    <div className="flex-1 p-4 sm:p-5 flex flex-col gap-3.5 min-h-97.5 overflow-hidden">
                       {/* Top Content Header */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
@@ -2376,7 +2376,7 @@ export default function HomePage() {
                                             {code}
                                           </div>
                                         </div>
-                                        <div className="mt-2 pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px]">
+                                        <div className="mt-2 pt-2 border-t border-white/6 flex items-center justify-between text-[10px]">
                                           <span className="text-slate-400">{enrolled} students</span>
                                           <span
                                             className="font-bold px-1.5 py-0.5 rounded"
@@ -2462,8 +2462,8 @@ export default function HomePage() {
                               {previewRole === "instructor" ? "Class Average: 1.75" : "Cumulative GWA: 1.58"}
                             </span>
                           </div>
-                          <div className="border border-white/[0.08] rounded-xl overflow-hidden text-xs">
-                            <div className="grid grid-cols-3 bg-white/[0.04] p-2 font-semibold text-slate-400 text-[10px] uppercase">
+                          <div className="border border-white/8 rounded-xl overflow-hidden text-xs">
+                            <div className="grid grid-cols-3 bg-white/4 p-2 font-semibold text-slate-400 text-[10px] uppercase">
                               <span>Course</span>
                               <span className="text-center">{previewRole === "instructor" ? "Pass Rate" : "Midterm Grade"}</span>
                               <span className="text-right">Status</span>
@@ -2474,7 +2474,7 @@ export default function HomePage() {
                             ).map((c) => (
                               <div
                                 key={c.code}
-                                className="grid grid-cols-3 p-2.5 border-t border-white/[0.06] items-center text-[11px]"
+                                className="grid grid-cols-3 p-2.5 border-t border-white/6 items-center text-[11px]"
                               >
                                 <span className="font-medium text-white/90 truncate">{c.name}</span>
                                 <span
@@ -2671,7 +2671,7 @@ export default function HomePage() {
                       )}
 
                       {/* Footer Disclaimer */}
-                      <div className="mt-auto pt-2.5 border-t border-white/[0.06] text-[11px] text-slate-500 italic text-center">
+                      <div className="mt-auto pt-2.5 border-t border-white/6 text-[11px] text-slate-500 italic text-center">
                         Illustrative preview — not a live account
                       </div>
                     </div>
@@ -2826,7 +2826,7 @@ export default function HomePage() {
         */}
         <section
           id="mission-vision"
-          className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-[580px]"
+          className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-145"
         >
           {/* Photographic Background & Layered Atmosphere */}
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
@@ -3035,7 +3035,7 @@ export default function HomePage() {
         {/* ─── SECTION 3: ABOUT CDM LMS ─── */}
         <section
           id="about"
-          className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-[640px]"
+          className="relative px-4 sm:px-6 lg:px-8 py-16 sm:py-24 min-h-160"
         >
           {/* Photographic Background & Layered Atmosphere */}
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
