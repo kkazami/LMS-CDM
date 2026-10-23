@@ -31,6 +31,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/learning-materials/[courseId]/[materialId]/read/page.tsx", await params);
 
   const { institute, courseId, materialId } = await params;
+  const isIte = institute.toLowerCase() === "ite";
   const { attachmentId } = await searchParams;
   const session = await getSession();
 
@@ -182,7 +183,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
                     key={file.id}
                     className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                       file.id === activeAttachment.id
-                        ? "bg-[#F97316] text-white shadow-xs"
+                        ? (isIte ? "bg-blue-600 text-white shadow-xs" : "bg-[#F97316] text-white shadow-xs")
                         : "bg-slate-50 dark:bg-[#181B26] text-slate-700 dark:text-[#8B92A5] border border-slate-200/80 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-[#1E2132] hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >

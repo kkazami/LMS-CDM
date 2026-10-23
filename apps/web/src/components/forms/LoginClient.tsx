@@ -121,6 +121,7 @@ export default function LoginClient({
 
   return (
     <main
+      data-institute={instituteCode.toLowerCase()}
       className="relative flex min-h-[100dvh] flex-col items-center justify-center p-4 sm:p-6 py-8 sm:py-12 overflow-y-auto transition-colors duration-300"
       style={{ backgroundColor: theme.colors.background }}
     >

@@ -40,6 +40,7 @@ export default function InstructorCreateCourseModal({
   instituteCode,
   theme,
 }: InstructorCreateCourseModalProps) {
+  const isIte = (instituteCode || theme?.code || "").toLowerCase() === "ite";
   const [programReady, setProgramReady] = useState(false);
   const [state, formAction] = useActionState(instructorCreateCourse, initialState);
 
@@ -121,7 +122,9 @@ export default function InstructorCreateCourseModal({
           <textarea
             name="description"
             rows={3}
-            className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 focus:border-orange-500"
+            className={`w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 ${
+              isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+            }`}
             placeholder="Enter class description..."
           />
         </div>

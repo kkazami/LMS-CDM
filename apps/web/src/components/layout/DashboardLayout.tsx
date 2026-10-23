@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Sidebar from "@/components/layout/Sidebar";
 import type { EnrolledCourseSummary } from "@/components/layout/Sidebar";
@@ -76,10 +76,23 @@ export default function DashboardLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    const prev = document.body.getAttribute("data-institute");
+    document.body.setAttribute("data-institute", instituteCode.toLowerCase());
+    return () => {
+      if (prev !== null) {
+        document.body.setAttribute("data-institute", prev);
+      } else {
+        document.body.removeAttribute("data-institute");
+      }
+    };
+  }, [instituteCode]);
+
   const isStudent = userRole.toUpperCase() === "STUDENT";
 
   const layoutContent = (
     <div
+      data-institute={instituteCode.toLowerCase()}
       className="min-h-[100dvh] bg-canvas text-primary-theme transition-colors duration-200 overflow-x-clip max-w-full"
       style={{
         "--focus-ring": theme.colors.primary,
@@ -188,6 +201,7 @@ export default function DashboardLayout({
               streakCurrent={streakCurrent}
               expEarned={loginRewardExp}
               totalExp={exp}
+              instituteCode={instituteCode}
             />
           )}
           <FloatingStudyTimer />

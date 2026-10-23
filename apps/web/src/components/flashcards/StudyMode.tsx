@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
 import type { FlashcardCard, FlashcardStudyStats } from "@/lib/lms-types";
 import FocusButton from "@/components/focus/FocusButton";
 import { useOfflineStatus } from "@/components/offline/useOfflineStatus";
@@ -121,6 +122,10 @@ export default function StudyMode({
   deckColor,
   onExit,
 }: StudyModeProps) {
+  const params = useParams();
+  const institute = (params?.institute as string) || "";
+  const isIte = institute.toLowerCase() === "ite";
+
   // ── Remote data ──
   const [allCards, setAllCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -623,7 +628,11 @@ export default function StudyMode({
             </p>
 
             {expEarned !== null && expEarned > 0 && (
-              <div className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-xs font-black animate-in zoom-in-95">
+              <div className={`mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black animate-in zoom-in-95 ${
+                isIte
+                  ? "bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400"
+                  : "bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400"
+              }`}>
                 <span>✨</span>
                 <span>+{expEarned} EXP Earned!</span>
               </div>

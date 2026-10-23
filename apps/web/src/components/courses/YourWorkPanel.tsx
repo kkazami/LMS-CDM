@@ -79,6 +79,7 @@ export default function YourWorkPanel({
   const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const isIte = instituteCode?.toLowerCase() === "ite";
 
   const isLocked = isPastDeadline && submission.status === "DRAFT";
   const isSubmitted = submission.status === "SUBMITTED";
@@ -208,11 +209,11 @@ export default function YourWorkPanel({
   }
 
   return (
-    <div className="sticky top-6 space-y-4">
+    <div className="sticky top-6 space-y-4 w-full min-w-0 max-w-full">
       {/* Status Badge */}
-      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${status.bg} ${status.color}`}>
-        <status.Icon className="h-3.5 w-3.5" />
-        {status.label}
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold max-w-full overflow-hidden ${status.bg} ${status.color}`}>
+        <status.Icon className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate" title={status.label}>{status.label}</span>
       </div>
 
       {/* Grade display (returned) */}
@@ -235,23 +236,27 @@ export default function YourWorkPanel({
       )}
 
       {/* Your work card */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden w-full min-w-0 max-w-full">
         <div className="px-5 py-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">Your work</h3>
           {canEdit && (
             <button
               onClick={() => setIsAttachModalOpen(true)}
               disabled={isPending}
-              className="flex items-center gap-1 text-xs font-semibold text-[#F97316] hover:text-[#EA580C] transition-colors cursor-pointer"
+              className={`flex items-center gap-1 text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                isIte
+                  ? "text-blue-600 hover:text-blue-700"
+                  : "text-[#F97316] hover:text-[#EA580C]"
+              }`}
             >
-              <Paperclip className="h-3.5 w-3.5" />
+              <Paperclip className="h-3.5 w-3.5 shrink-0" />
               Add or create
             </button>
           )}
         </div>
 
         {/* Attachment list */}
-        <div className="p-3 min-h-[80px] space-y-1.5">
+        <div className="p-3 min-h-[80px] space-y-1.5 w-full min-w-0">
           {submission.attachments.length === 0 && (
             <p className="text-xs text-slate-400 dark:text-[#8B92A5] text-center py-6">
               {canEdit ? "Attach files or links to your work" : "No attachments"}
@@ -264,7 +269,7 @@ export default function YourWorkPanel({
             return (
               <div
                 key={att.id}
-                className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group"
+                className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group w-full min-w-0 overflow-hidden"
               >
                 <Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 <a
@@ -273,6 +278,7 @@ export default function YourWorkPanel({
                   rel="noopener noreferrer"
                   download={att.url.startsWith("data:") ? (att.fileName || "file") : undefined}
                   className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline truncate flex-1 min-w-0"
+                  title={att.fileName || att.url}
                 >
                   {att.fileName || att.url}
                 </a>
@@ -286,7 +292,7 @@ export default function YourWorkPanel({
                     className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 shrink-0 cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center p-1 rounded-md active:scale-95"
                     aria-label={`Remove attachment ${att.fileName || "file"}`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5 shrink-0" />
                   </button>
                 )}
               </div>
@@ -314,13 +320,18 @@ export default function YourWorkPanel({
               <button
                 onClick={handleSubmit}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F97316] hover:bg-[#EA580C] py-3 text-sm font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer min-h-[44px] active:scale-[0.98]"
+                className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer min-h-[44px] active:scale-[0.98] ${
+                  isIte
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-[#F97316] hover:bg-[#EA580C]"
+                }`}
               >
                 <Send className="h-4 w-4" />
                 {isPending ? "Submitting..." : "Turn in"}
               </button>
             )
           )}
+
         </div>
       </div>
 

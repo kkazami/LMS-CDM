@@ -100,12 +100,18 @@ export async function storedFile(tx: Tx, url: string, expectedOwnerId?: string) 
     // Never fetch arbitrary attachment URLs or turn legacy public blobs into a proxy.
     throw new AccessError(503, 'This legacy external attachment requires an authorized private-storage migration.');
 }
+import { SAFE_INLINE_MIME_TYPES, isSafeInlineMime, buildFileHeaders } from '@/lib/ite/media-preview';
+export { SAFE_INLINE_MIME_TYPES, isSafeInlineMime };
+
 export function fileResponse(file: {
     bytes: Buffer;
     mime: string;
     name: string;
 }, inline = false) {
-    const name = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 180) || 'attachment';
-    return new Response(new Uint8Array(file.bytes), { headers: { 'Content-Type': file.mime, 'Content-Length': String(file.bytes.length), 'Content-Disposition': `${inline && /^image\/(png|jpeg|gif|webp)$/.test(file.mime) ? 'inline' : 'attachment'}; filename="${name}"`, 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+    const headers = buildFileHeaders(
+        { mime: file.mime, name: file.name, length: file.bytes.length },
+        inline
+    );
+    return new Response(new Uint8Array(file.bytes), { headers });
 }
 export const assetId = () => randomUUID();

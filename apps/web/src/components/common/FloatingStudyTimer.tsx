@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Timer, Sparkles, ChevronUp, ChevronDown, X } from "lucide-react";
 
 export default function FloatingStudyTimer() {
+  const params = useParams();
+  const instituteCode = (params?.institute as string) || "";
+  const isIte = instituteCode.toLowerCase() === "ite";
   const [secondsToday, setSecondsToday] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -131,12 +135,14 @@ export default function FloatingStudyTimer() {
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-[#F0F2F8] hover:text-[#F97316] transition-colors cursor-pointer"
+            className={`flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-[#F0F2F8] ${
+              isIte ? "hover:text-blue-600 dark:hover:text-blue-400" : "hover:text-[#F97316]"
+            } transition-colors cursor-pointer`}
             aria-expanded={isExpanded}
             aria-label="Toggle active study timer details"
           >
             <div className="relative">
-              <Timer className="w-4 h-4 text-[#F97316]" />
+              <Timer className={`w-4 h-4 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
               <span
                 className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${
                   isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-400"
@@ -168,7 +174,7 @@ export default function FloatingStudyTimer() {
             </div>
             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#F97316] rounded-full transition-all duration-500 ease-out"
+                className={`h-full ${isIte ? "bg-blue-600" : "bg-[#F97316]"} rounded-full transition-all duration-500 ease-out`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

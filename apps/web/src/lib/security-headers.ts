@@ -23,9 +23,8 @@ export function getSecurityHeaders(nonce?: string): Record<string, string> {
     "media-src 'self' blob: https:",
     // Worker sources for Monaco Editor and PDF.js
     "worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com",
-    // Frame sources: document viewer (YouTube, Office Online embeds) and Practicum's
-    // privacy-friendly YouTube embeds. A CSP directive may appear only once (browsers ignore repeats).
-    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://view.officeapps.live.com blob:",
+    // Frame sources: document viewer (YouTube, Vimeo, Google Drive/Docs, Office Online embeds)
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://drive.google.com https://docs.google.com https://view.officeapps.live.com blob:",
     // Prevent clickjacking: no framing allowed
     "frame-ancestors 'none'",
     "base-uri 'self'",

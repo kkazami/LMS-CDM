@@ -9,7 +9,7 @@ export function getBotResponse(message: string): string {
   const lower = message.toLowerCase().trim();
 
   // ── Grade-related keywords ──
-  if (/\b(grade|grades|gpa|score|marks|result|graded)\b/.test(lower)) {
+  if (/\b(grade|grades|gpa|gwa|score|marks|result|graded)\b/.test(lower)) {
     return (
       "📊 You can check all your grades on the **Grades** page in the sidebar. " +
       "It shows grades for every class you're enrolled in, with visual analytics and progress tracking. " +
@@ -83,7 +83,7 @@ export function getBotResponse(message: string): string {
   // ── Fallback ──
   return (
     "🤔 I'm not sure I understand that. I can help you with:\n\n" +
-    "• **Grades** — checking your scores and GPA\n" +
+    "• **Grades** — checking your scores and GWA\n" +
     "• **Assignments** — finding deadlines and classwork\n" +
     "• **Announcements** — reading class updates\n" +
     "• **Courses** — joining and viewing classes\n" +

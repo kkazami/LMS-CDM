@@ -8,7 +8,8 @@ import type {
   CourseClassworkResponse,
   CreateClassworkInput,
   CoursePeopleResponse,
-  CourseGradesResponse,
+  CourseGradeItem,
+  CourseFeedbackComment,
   CourseSubmissionResponse,
   GradeSubmissionInput,
   Announcement,
@@ -30,6 +31,25 @@ import type {
   AppNotification,
   RegisterPushTokenInput,
 } from '@lms/types';
+
+export interface CourseGradeSummary {
+  averagePercentage: number | null;
+  gradePoint: number | null;
+  gradePointFormatted: string;
+  remark: string;
+  totalEarnedPoints: number;
+  totalPossiblePoints: number;
+  totalItems: number;
+  completedCount: number;
+  gradedCount: number;
+  missingCount: number;
+}
+
+export interface CourseGradesResponse {
+  summary: CourseGradeSummary | null;
+  items: CourseGradeItem[];
+  feedback: CourseFeedbackComment[];
+}
 
 export interface ApiClientConfig {
   baseUrl: string;
@@ -538,8 +558,400 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify({ message, history }),
         }),
     },
+
+    meetings: {
+      list: (params?: { courseId?: string; status?: string; cursor?: string; take?: number }) => {
+        const query = new URLSearchParams();
+        if (params?.courseId && params.courseId !== 'all' && params.courseId !== 'ALL') {
+          query.set('courseId', params.courseId);
+        }
+        if (params?.status && params.status !== 'all' && params.status !== 'ALL') {
+          query.set('status', params.status);
+        }
+        if (params?.cursor) query.set('cursor', params.cursor);
+        if (params?.take) query.set('take', String(params.take));
+        const qs = query.toString();
+        return request<MeetingsListResponse>(`/api/ite/meetings${qs ? `?${qs}` : ''}`);
+      },
+
+      join: (id: string) =>
+        request<{ joinUrl: string }>(`/api/ite/meetings/${id}/join`, {
+          method: 'POST',
+        }),
+
+      create: (data: CreateMeetingInput) =>
+        request<ClassMeetingItem>('/api/ite/meetings', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      cancel: (id: string) =>
+        request<ClassMeetingItem>(`/api/ite/meetings/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'cancel' }),
+        }),
+
+      getAttendance: (id: string) =>
+        request<MeetingAttendanceResponse>(`/api/ite/meetings/${id}/attendance`),
+    },
+
+    ite: {
+      getParticipation: () =>
+        request<StudentParticipationResponse>('/api/ite/students/my-participation'),
+      getFocusSummary: () =>
+        request<FocusSummaryResponse>('/api/ite/focus/summary'),
+      getSuggestions: () =>
+        request<StudySuggestionsResponse>('/api/ite/guidance/suggestions'),
+      getInstructorAtRiskSummary: () =>
+        request<InstructorAtRiskSummaryResponse>('/api/ite/instructor/at-risk-summary'),
+      getCourseParticipation: (courseId: string) =>
+        request<CourseParticipationDetailResponse>(`/api/ite/courses/${courseId}/participation`),
+    },
+
+    broadcasts: {
+      list: (courseId: string) =>
+        request<CourseBroadcastResponse>(`/api/courses/${courseId}/broadcast`),
+      create: (courseId: string, data: { message: string; category?: string; scope?: string }) =>
+        request<CreateBroadcastResponse>(`/api/courses/${courseId}/broadcast`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: (courseId: string, broadcastId: string) =>
+        request<{ success: boolean }>(
+          `/api/courses/${courseId}/broadcast?broadcastId=${encodeURIComponent(broadcastId)}`,
+          { method: 'DELETE' }
+        ),
+    },
+
+    forms: {
+      list: (courseId: string) =>
+        request<CourseFormsResponse>(`/api/courses/${courseId}/forms`),
+      getResponses: (courseId: string, formId: string, params?: { q?: string; sort?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.q) query.set('q', params.q);
+        if (params?.sort) query.set('sort', params.sort);
+        const qs = query.toString();
+        return request<FormResponsesResponse>(
+          `/api/courses/${courseId}/forms/${formId}/responses${qs ? `?${qs}` : ''}`
+        );
+      },
+    },
+
+    knowledgeExchange: {
+      listPosts: (params?: {
+        tab?: string;
+        sort?: string;
+        search?: string;
+        tag?: string;
+        courseId?: string;
+        page?: number;
+        limit?: number;
+      }) => {
+        const query = new URLSearchParams();
+        if (params?.tab) query.set('tab', params.tab);
+        if (params?.sort) query.set('sort', params.sort);
+        if (params?.search) query.set('search', params.search);
+        if (params?.tag) query.set('tag', params.tag);
+        if (params?.courseId) query.set('courseId', params.courseId);
+        if (params?.page) query.set('page', String(params.page));
+        if (params?.limit) query.set('limit', String(params.limit));
+        const qs = query.toString();
+        return request<KxFeedResponse>(`/api/knowledge-exchange/posts${qs ? `?${qs}` : ''}`);
+      },
+    },
   };
 }
+
+export type MeetingStatus = 'SCHEDULED' | 'LIVE' | 'ENDED' | 'CANCELLED';
+export type MeetingProvider = 'GOOGLE_MEET' | 'GOOGLE_CLASSROOM' | 'ZOOM' | 'MICROSOFT_TEAMS' | 'OTHER';
+
+export interface ClassMeetingItem {
+  id: string;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  createdById: string;
+  title: string;
+  description: string | null;
+  provider: MeetingProvider;
+  joinUrl?: string;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  status: MeetingStatus;
+  derivedStatus: MeetingStatus;
+  primaryTimeIso: string;
+  formattedPrimaryDateTime: string;
+  formattedStartedTime: string | null;
+  formattedEndedTime: string | null;
+  durationLabel: string | null;
+  joinCount?: number;
+  hasJoined?: boolean;
+  createdAt: string;
+}
+
+export interface MeetingAttendee {
+  userId: string;
+  name: string;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+  formattedJoinedAt: string;
+}
+
+export interface MeetingAttendanceResponse {
+  meetingId: string;
+  totalAttendees: number;
+  attendees: MeetingAttendee[];
+}
+
+export interface CreateMeetingInput {
+  courseId: string;
+  title: string;
+  description?: string;
+  joinUrl: string;
+  scheduledAt?: string;
+  startNow?: boolean;
+}
+
+export interface MeetingsListResponse {
+  meetings: ClassMeetingItem[];
+  nextCursor: string | null;
+}
+
+export interface DailySeriesItem {
+  date: string;
+  count: number;
+}
+
+export interface StudentCourseParticipation {
+  courseId: string;
+  courseTitle: string;
+  courseCode: string;
+  engagementScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  dailySeries: DailySeriesItem[];
+  onTimeRate: number | null;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  reasons: string[];
+  lastActivityAt: string | null;
+  hasEnoughData: boolean;
+}
+
+export interface StudentParticipationResponse {
+  courses: StudentCourseParticipation[];
+}
+
+export interface DailyFocusStat {
+  date: string;
+  label: string;
+  focusedMinutes: number;
+}
+
+export interface FocusSummaryResponse {
+  focusedMinutesThisWeek: number;
+  focusedMinutesLastWeek: number;
+  completedSessionsThisWeek: number;
+  averageTabSwitchesThisWeek: number;
+  longestCompletedSessionMinutes: number;
+  sevenDaySeries: DailyFocusStat[];
+  activeSessionId: string | null;
+}
+
+export type SuggestionPriority = 1 | 2 | 3 | 4 | 5;
+export type SuggestionCategory = 'OVERDUE' | 'DUE_SOON' | 'ENGAGEMENT' | 'FOCUS' | 'ON_TRACK';
+
+export interface StudySuggestion {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  priority: SuggestionPriority;
+  category: SuggestionCategory;
+}
+
+export interface StudySuggestionsResponse {
+  suggestions: StudySuggestion[];
+}
+
+export interface KxPostAuthor {
+  id: string | null;
+  name: string;
+  role: string | null;
+  email: string | null;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+  initials?: string;
+}
+
+export interface KxTagItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  postCount: number;
+}
+
+export interface KxPostItem {
+  id: string;
+  title: string;
+  body: string;
+  postType: string;
+  status: string;
+  isAnonymous: boolean;
+  authorId: string | null;
+  instituteId: string;
+  courseId: string | null;
+  viewCount: number;
+  voteCount: number;
+  answerCount: number;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userVote: number;
+  isBookmarked: boolean;
+  author: KxPostAuthor;
+  tags: KxTagItem[];
+}
+
+export interface KxFeedResponse {
+  posts: KxPostItem[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface InstructorAtRiskReason {
+  detail: string;
+  code?: string;
+}
+
+export interface InstructorAtRiskEntry {
+  studentId: string;
+  name: string;
+  courseTitle: string;
+  courseId: string;
+  riskLevel: 'HIGH';
+  reasons: InstructorAtRiskReason[];
+}
+
+export interface InstructorAtRiskSummaryResponse {
+  entries: InstructorAtRiskEntry[];
+}
+
+export interface CourseParticipationStudentRow {
+  studentId: string;
+  name: string;
+  email: string;
+  studentNumber?: string | null;
+  avatarUrl: string | null;
+  engagementScore: number;
+  trend: 'UP' | 'DOWN' | 'STABLE' | 'improving' | 'declining' | 'stable';
+  lastActivityAt: string | null;
+  overdueCount: number;
+  daysInactive?: number;
+  gradeAvg: number | null;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskScore: number;
+  suggestedAction?: string;
+  reasons: Array<{ code?: string; type?: string; detail: string; severity?: string; suggestedAction?: string }>;
+  dailySeries: Array<{ date: string; count: number }>;
+  computedAt: string | null;
+}
+
+export interface CourseParticipationKpis {
+  activeThisWeek: number;
+  avgEngagement: number;
+  highCount: number;
+  mediumCount: number;
+}
+
+export interface CourseParticipationDetailResponse {
+  students: CourseParticipationStudentRow[];
+  kpis: CourseParticipationKpis;
+  courseDaily: Array<{ date: string; count: number }>;
+  computedAt: string | null;
+}
+
+export interface CourseBroadcastItem {
+  id: string;
+  senderId: string;
+  message: string;
+  category: string;
+  scope: string;
+  scopeLabel?: string;
+  recipientCount: number;
+  createdAt: string;
+  senderName?: string;
+  senderAvatar?: string | null;
+}
+
+export interface CourseBroadcastEnrolledStudent {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+}
+
+export interface CourseBroadcastResponse {
+  broadcasts: CourseBroadcastItem[];
+  enrolledStudents: CourseBroadcastEnrolledStudent[];
+}
+
+export interface CreateBroadcastResponse {
+  success: boolean;
+  broadcast: CourseBroadcastItem;
+}
+
+export interface CourseFormItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  status: string;
+  timeLimitMinutes: number | null;
+  maxAttempts: number | null;
+  passingScore: number | null;
+  dueDate: string | null;
+  createdAt: string;
+  _count?: {
+    questions: number;
+    attempts: number;
+  };
+}
+
+export interface CourseFormsResponse {
+  forms: CourseFormItem[];
+}
+
+export interface FormAttemptUser {
+  id: string;
+  name: string;
+  email: string;
+  studentNumber: string | null;
+  avatarUrl: string | null;
+}
+
+export interface FormAttemptItem {
+  id: string;
+  formId: string;
+  userId: string;
+  status: string;
+  score: number | null;
+  maxScore: number | null;
+  percentage: number | null;
+  startedAt: string;
+  submittedAt: string | null;
+  user: FormAttemptUser;
+}
+
+export interface FormResponsesResponse {
+  attempts: FormAttemptItem[];
+}
+
+
+
 
 export class ApiClientError extends Error {
   constructor(

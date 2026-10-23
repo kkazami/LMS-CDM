@@ -18,13 +18,17 @@ interface PrivateCommentDrawerProps {
   open: boolean;
   onClose: () => void;
   theme: InstituteTheme;
-  studentName: string;
+  studentName?: string;
+  targetName?: string;
   studentId: string;
   studentAvatarUrl?: string | null;
   comments: Comment[];
   currentUserId: string;
   onSend: (content: string) => void;
   sending?: boolean;
+  subtitle?: string;
+  emptyStateSubtitle?: string;
+  inputPlaceholder?: string;
 }
 
 function timeAgo(date: Date | string): string {
@@ -46,22 +50,97 @@ export default function PrivateCommentDrawer({
   open,
   onClose,
   theme,
-  studentName,
+  studentName = "",
+  targetName,
   studentId,
   studentAvatarUrl,
   comments,
   currentUserId,
   onSend,
   sending = false,
+  subtitle,
+  emptyStateSubtitle,
+  inputPlaceholder,
 }: PrivateCommentDrawerProps) {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
 
+  // Derive non-empty display name so UserAvatar never derives "?"
+  const displayName =
+    (targetName && targetName.trim()) ||
+    (studentName && studentName.trim()) ||
+    "User";
+
+  // Capture trigger element for focus restoration
+  useEffect(() => {
+    if (open) {
+      triggerElementRef.current = document.activeElement as HTMLElement | null;
+      // Focus input or drawer on next frame
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    } else if (triggerElementRef.current) {
+      triggerElementRef.current.focus();
+      triggerElementRef.current = null;
+    }
+  }, [open]);
+
+  // Close on Escape & trap focus
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+
+        const firstElement = focusables[0];
+        const lastElement = focusables[focusables.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
+
+  // Auto-scroll messages
   useEffect(() => {
     if (open) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [open, comments.length]);
+
+  if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,36 +150,54 @@ export default function PrivateCommentDrawer({
     }
   };
 
-  if (!open) return null;
+  const isIte = theme?.code?.toLowerCase() === "ite";
+  const drawerSubtitle = subtitle || "Private feedback channel";
+  const emptySubtitle =
+    emptyStateSubtitle || "Send private feedback about this student's progress";
+  const placeholder = inputPlaceholder || "Write private feedback...";
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — raised above chatbot bubble (z-[60]) and panel (z-[70]) */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
+        className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-xs transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        aria-hidden="true"
       />
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/5 shadow-2xl">
+      {/* Drawer — raised above chatbot widget to ensure Send button and input are never overlapped */}
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${displayName} private feedback channel`}
+        className="fixed inset-y-0 right-0 z-[85] flex w-full max-w-md flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/5 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/5 px-5 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <UserAvatar
-              name={studentName}
+              name={displayName}
               avatarUrl={studentAvatarUrl}
               size="md"
               color={theme.colors.primary}
             />
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-                {studentName}
+                {displayName}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">Private feedback channel</p>
+              <p className="text-xs text-slate-500 dark:text-[#8B92A5]">{drawerSubtitle}</p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition cursor-pointer"
             aria-label="Close drawer"
           >
@@ -117,7 +214,7 @@ export default function PrivateCommentDrawer({
               </div>
               <p className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">No messages yet</p>
               <p className="text-xs text-slate-400 dark:text-[#8B92A5] mt-1">
-                Send private feedback about this student's progress
+                {emptySubtitle}
               </p>
             </div>
           ) : (
@@ -168,16 +265,19 @@ export default function PrivateCommentDrawer({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
+        {/* Input form — stay fully visible and reachable */}
         <form
           onSubmit={handleSubmit}
-          className="border-t border-slate-200/80 dark:border-white/5 p-4 flex gap-2 bg-slate-50/30 dark:bg-white/[0.01]"
+          className="border-t border-slate-200/80 dark:border-white/5 p-4 flex gap-2 bg-slate-50/30 dark:bg-white/[0.01] shrink-0"
         >
           <input
+            ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write private feedback..."
-            className="flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 focus:border-orange-500"
+            placeholder={placeholder}
+            className={`flex-1 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition placeholder:text-slate-400 ${
+              isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+            }`}
             disabled={sending}
           />
           <Button

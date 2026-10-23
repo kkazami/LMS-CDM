@@ -58,6 +58,25 @@
   --rank1-glow: rgba(212, 160, 23, 0.10);
 }
 
+/* ─── ITE Text Selection Highlight (ITE Blue Tint) ─── */
+[data-institute="ite"] *::selection,
+[data-institute="ite"]::selection {
+  background-color: rgba(37, 99, 235, 0.32) !important;
+  color: inherit !important;
+}
+
+[data-theme="dark"] [data-institute="ite"] *::selection,
+[data-theme="dark"] [data-institute="ite"]::selection,
+.dark [data-institute="ite"] *::selection,
+.dark [data-institute="ite"]::selection,
+[data-institute="ite"][data-theme="dark"] *::selection,
+[data-institute="ite"][data-theme="dark"]::selection,
+.dark[data-institute="ite"] *::selection,
+.dark[data-institute="ite"]::selection {
+  background-color: rgba(59, 130, 246, 0.40) !important;
+  color: inherit !important;
+}
+
 /* ─── Scrollbar Theming (Adaptive Light & Dark) ─── */
 * {
   scrollbar-width: thin;

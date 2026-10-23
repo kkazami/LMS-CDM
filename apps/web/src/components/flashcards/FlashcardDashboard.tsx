@@ -190,6 +190,7 @@ export default function FlashcardDashboard({
       <div className="page-enter">
         <DeckDetailView
           deck={activeDeck}
+          instituteCode={instituteCode}
           onBack={() => {
             setActiveDeck(null);
             // Refresh decks to get updated stats

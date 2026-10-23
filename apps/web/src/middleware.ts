@@ -24,6 +24,11 @@ export async function middleware(request: NextRequest) {
       : NextResponse.next({ request: { headers: incoming } });
   }
   for (const [key, value] of Object.entries({ ...security, ...getCorsHeaders(request) })) response.headers.set(key, value);
+  if (pathname.startsWith('/api/assets/')) {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    const assetCsp = response.headers.get('Content-Security-Policy')?.replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+    if (assetCsp) response.headers.set('Content-Security-Policy', assetCsp);
+  }
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }

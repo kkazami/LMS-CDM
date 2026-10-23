@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
@@ -10,12 +11,18 @@ export const dynamic = "force-dynamic";
 
 export default async function GradesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ institute: string }>;
+  searchParams?: Promise<{ course?: string; tab?: string }>;
 }) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/grades/page.tsx", await params);
 
   const { institute } = await params;
+  const search = searchParams ? await searchParams : {};
+  const initialCourseId = search.course || "all";
+  const initialTab = search.tab as "dashboard" | "analytics" | "progress" | undefined;
+
   const session = await getSession();
 
   if (!session) {
@@ -119,11 +126,16 @@ export default async function GradesPage({
   }));
 
   return (
-    <GradesClient
-      gradeRows={gradeRows}
-      enrolledCourses={enrolledCourses}
-      theme={theme}
-      instituteCode={theme.code}
-    />
+    <Suspense fallback={null}>
+      <GradesClient
+        gradeRows={gradeRows}
+        enrolledCourses={enrolledCourses}
+        theme={theme}
+        instituteCode={theme.code}
+        initialCourseId={initialCourseId}
+        initialTab={initialTab}
+      />
+    </Suspense>
   );
 }
+

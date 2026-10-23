@@ -348,7 +348,7 @@ export default function SearchModal({
       {
         id: "nav-grades",
         title: "Grades & Performance",
-        subtitle: "GPA tracker, assignment scores, and feedback",
+        subtitle: "GWA tracker, assignment scores, and feedback",
         category: "Navigation",
         href: `/${instituteCode}/grades`,
         icon: GraduationCap,

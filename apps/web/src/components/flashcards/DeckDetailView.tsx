@@ -21,15 +21,18 @@ import FlashcardIcon from "@/components/icons/FlashcardIcon";
 
 interface DeckDetailViewProps {
   deck: FlashcardDeck;
+  instituteCode?: string;
   onBack: () => void;
   onDeckUpdated: (deck: FlashcardDeck) => void;
 }
 
 export default function DeckDetailView({
   deck,
+  instituteCode,
   onBack,
   onDeckUpdated,
 }: DeckDetailViewProps) {
+  const isIte = (instituteCode || "").toLowerCase() === "ite";
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -400,7 +403,11 @@ export default function DeckDetailView({
                         setEditingCard(card);
                         setEditorOpen(true);
                       }}
-                      className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-orange-500/10 hover:text-[#F97316] cursor-pointer"
+                      className={`rounded-xl p-2.5 text-slate-400 transition-all ${
+                        isIte
+                          ? "hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
+                          : "hover:bg-orange-500/10 hover:text-[#F97316]"
+                      } cursor-pointer`}
                       title="Edit Card"
                     >
                       <Edit3 className="h-4.5 w-4.5" />
@@ -430,6 +437,7 @@ export default function DeckDetailView({
         deckId={deck.id}
         editingCard={editingCard}
         onSaved={handleCardSaved}
+        instituteCode={instituteCode}
       />
 
       {/* Delete Single Card Modal */}

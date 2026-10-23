@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/assets/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
         source: '/ite-sw.js',
         headers: [
           {
