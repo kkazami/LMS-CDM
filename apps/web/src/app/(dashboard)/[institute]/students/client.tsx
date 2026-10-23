@@ -42,6 +42,7 @@ import StudentFocusCard from "@/components/focus/StudentFocusCard";
 import StudentSuggestionsCard from "@/components/guidance/StudentSuggestionsCard";
 import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 import { classifyDueDate, splitOverdue, type DueStatus } from "@/lib/dashboard/due-dates";
+import { getWelcomeBannerPortalLabel } from "@/lib/ite/search/search-filter";
 
 interface EnrolledCourse {
   id: string;
@@ -296,9 +297,7 @@ export default function StudentDashboardClient({
                   >
                     <Sparkles className="h-3.5 w-3.5" />
                     <span>
-                      {instituteCode.toLowerCase() === "ite"
-                        ? "Institute of Teacher Education · Portal"
-                        : `${instituteName} · Portal`}
+                      {getWelcomeBannerPortalLabel(instituteCode, instituteName, false)}
                     </span>
                   </span>
                 </div>

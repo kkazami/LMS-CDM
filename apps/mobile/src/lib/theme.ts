@@ -1,3 +1,5 @@
+import { getInstituteName } from '@lms/types';
+
 export type InstituteCode = 'ics' | 'ibe' | 'ite';
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -252,18 +254,14 @@ export const CANONICAL_INSTITUTE_NAMES: Record<InstituteCode, string> = {
 };
 
 /**
- * Resolves the canonical institute display name, overriding stale database seed values
- * like "Institute of Technology and Engineering" for ITE.
+ * Resolves the canonical institute display name, using shared getInstituteName helper.
  */
 export function getCanonicalInstituteName(code?: string, fallbackName?: string): string {
   const norm = (code || '').toLowerCase().trim();
   if (norm === 'ics') return CANONICAL_INSTITUTE_NAMES.ics;
   if (norm === 'ibe') return CANONICAL_INSTITUTE_NAMES.ibe;
   if (norm === 'ite') return CANONICAL_INSTITUTE_NAMES.ite;
-  if (fallbackName && /technology\s+and\s+engineering/i.test(fallbackName)) {
-    return CANONICAL_INSTITUTE_NAMES.ite;
-  }
-  return fallbackName || CANONICAL_INSTITUTE_NAMES.ics;
+  return getInstituteName(code, fallbackName) || CANONICAL_INSTITUTE_NAMES.ics;
 }
 
 export const INSTITUTE_LIST = [
