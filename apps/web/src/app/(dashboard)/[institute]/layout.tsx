@@ -52,13 +52,13 @@ export default async function InstituteLayout({
 
   const theme = getInstituteTheme(institute);
 
+  const isStudent = userRole === "STUDENT";
+  const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
+
   // Compute activity & KX eligibility synchronously from session (CodeLab is strictly ICS-only)
   const activityEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
   const kxEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
-  const arenaEligible = institute.toLowerCase() === "ibe" && (userInstituteCode === "ibe" || isAdmin);
-
-  const isStudent = userRole === "STUDENT";
-  const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
+  const arenaEligible = (isStudent || isProfessor) && institute.toLowerCase() === "ibe" && (userInstituteCode === "ibe" || isAdmin);
 
   // Practicum and Meetings are ITE-only (students and their instructors); hidden everywhere else.
   const practicumEligible =
