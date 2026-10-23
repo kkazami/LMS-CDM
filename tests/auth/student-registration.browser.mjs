@@ -23,7 +23,7 @@ export async function browserChecks({ cluster, output, check }) {
     }
     assert.equal(ready, true, 'isolated Next.js server starts');
     browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
-    const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
     await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort());
     const page = await context.newPage();
     page.setDefaultTimeout(45000);
@@ -32,6 +32,13 @@ export async function browserChecks({ cluster, output, check }) {
       await page.goto(base + '/register?institute=ite');
       await page.getByRole('heading', { name: 'Create your student account' }).waitFor();
       await page.getByRole('button', { name: 'Continue with Google' }).waitFor();
+      assert.equal(await page.locator('input[name=acceptedPolicies]').count(), 1);
+      await page.getByRole('button', { name: 'Continue with Google' }).click();
+      await page.getByRole('alert').filter({ hasText: 'Agree to the Terms' }).waitFor();
+      assert.equal(await page.locator('input[name=name]').inputValue(), '');
+      await page.getByRole('button', { name: 'ICS', exact: true }).click();
+      await page.getByRole('button', { name: 'ITE', exact: true }).click();
+      assert.equal(await page.locator('input[name=instituteCode]').inputValue(), 'ite');
       await page.screenshot({ path: path.join(output, 'registration-desktop.png'), fullPage: true });
       await page.setViewportSize({ width: 390, height: 844 });
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -72,16 +79,44 @@ export async function browserChecks({ cluster, output, check }) {
       await page.goto(base + '/join-class'); assert.ok(!page.url().endsWith('/join-class'));
     });
     await check('Google button starts the server OAuth flow and sets an HttpOnly state cookie', async () => {
-      const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const fresh = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
       await fresh.route('https://accounts.google.com/**', route => route.abort());
       const login = await fresh.newPage(); await login.goto(base + '/login?institute=ite');
       const form = login.locator('form').filter({ has: login.getByRole('button', { name: 'Continue with Google' }) });
+      assert.equal(await login.locator('input[name=acceptedPolicies]').count(), 1);
+      assert.equal(await login.getByRole('link', { name: 'Request a New Activation Link' }).count(), 0);
+      await form.getByRole('button', { name: 'Continue with Google' }).click();
+      await login.getByRole('alert').filter({ hasText: 'Agree to the Terms' }).waitFor();
       await form.locator('input[name=acceptedPolicies]').check();
+      const consentBox = await form.locator('input[name=acceptedPolicies]').boundingBox();
+      const registerBox = await form.getByRole('link', { name: 'Create student account' }).boundingBox();
+      const signInBox = await form.getByRole('button', { name: 'Sign In', exact: true }).boundingBox();
+      const googleBox = await form.getByRole('button', { name: 'Continue with Google' }).boundingBox();
+      assert.ok(consentBox.y < registerBox.y && registerBox.y < signInBox.y && signInBox.y + signInBox.height <= googleBox.y);
+      await login.screenshot({ path: path.join(output, 'login-desktop.png'), fullPage: true });
+      await login.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await login.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await login.screenshot({ path: path.join(output, 'login-mobile.png'), fullPage: true });
+      await login.route('**/api/auth/google', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'Test provider temporarily unavailable' }) }));
+      await form.getByRole('button', { name: 'Continue with Google' }).click();
+      await login.getByRole('alert').filter({ hasText: 'Test provider temporarily unavailable' }).waitFor();
+      assert.equal(await form.getByRole('button', { name: 'Continue with Google' }).isEnabled(), true);
+      await login.unroute('**/api/auth/google');
       const request = login.waitForRequest('https://accounts.google.com/**');
       await form.getByRole('button', { name: 'Continue with Google' }).click();
       const url = new URL((await request).url()); assert.equal(url.searchParams.get('redirect_uri'), base + '/api/auth/callback/google');
       assert.equal(url.searchParams.get('code_challenge_method'), 'S256');
       assert.ok((await fresh.cookies()).some(cookie => cookie.name === 'lms_google_flow' && cookie.httpOnly));
+      const registration = await fresh.newPage();
+      await registration.goto(base + '/register?institute=ics');
+      await registration.getByRole('button', { name: 'IBE', exact: true }).click();
+      await registration.locator('input[name=acceptedPolicies]').check();
+      const registrationRequest = registration.waitForRequest('https://accounts.google.com/**');
+      const registrationPost = registration.waitForRequest(request => request.url() === base + '/api/auth/google' && request.method() === 'POST');
+      await registration.getByRole('button', { name: 'Continue with Google' }).click();
+      const post = await registrationPost;
+      assert.match(post.postData(), /name="instituteCode"\r?\n\r?\nibe/);
+      assert.equal(new URL((await registrationRequest).url()).searchParams.get('redirect_uri'), base + '/api/auth/callback/google');
       await fresh.close();
     });
   } finally {

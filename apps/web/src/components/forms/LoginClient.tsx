@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen, ChartNoAxesCombined, ClipboardList, Megaphone, ShieldCheck, UserCheck } from "lucide-react";
 import LoginForm from "@/components/forms/LoginForm";
-import GoogleSignIn from './GoogleSignIn';
 import { INSTITUTES } from "@/components/common/InstituteSelector";
 import UserAvatar from "@/components/common/UserAvatar";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
@@ -158,8 +157,7 @@ export default function LoginClient({
                   </div>
                   <p className={styles.instituteName} id="login-institute-name" aria-live="polite">{theme.name}</p>
                 </div>
-                <LoginForm theme={theme} instituteCode={instituteCode} isDesktopAdmin={isDesktopAdminMode} />
-                {!isDesktopAdminMode && googleEnabled && <div className={styles.accountHelp}><GoogleSignIn instituteCode={instituteCode} /></div>}
+                <LoginForm theme={theme} instituteCode={instituteCode} isDesktopAdmin={isDesktopAdminMode} googleEnabled={googleEnabled} />
               </>
             )}
           </section>
