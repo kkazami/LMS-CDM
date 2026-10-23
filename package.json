@@ -15,7 +15,7 @@
     "build:web": "prisma generate && pnpm --filter web build",
     "build:mobile": "pnpm --filter mobile build",
     "build:desktop": "pnpm --filter desktop build",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && pnpm --filter web exec prisma generate --schema=../../prisma/schema.prisma",
     "harness:check": "tsx scripts/harness-check.ts",
     "harness:verify": "tsx scripts/harness-verify-run.ts",
     "test:unit": "pnpm --filter web run test:unit",

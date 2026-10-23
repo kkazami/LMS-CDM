@@ -44,6 +44,7 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate && pnpm --filter web exec prisma generate --schema=../../prisma/schema.prisma
       - run: mkdir -p .orchestra/runs/ci-logs
       - run: |
           set -o pipefail

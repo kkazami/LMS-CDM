@@ -23,6 +23,7 @@ jobs:
           cache: pnpm
       - run: node scripts/check-repository-files.mjs
       - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate && pnpm --filter web exec prisma generate --schema=../../prisma/schema.prisma
       - run: node tests/web-quality/test.mjs
       - run: pnpm --filter web exec tsc --noEmit --incremental false
       - run: pnpm build:web

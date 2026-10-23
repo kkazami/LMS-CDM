@@ -55,6 +55,11 @@ runSensor("Prisma Schema Sensor", () => {
     stdio: "pipe",
     timeout: 120000,
   });
+  execSync("pnpm --filter web exec prisma generate --schema=../../prisma/schema.prisma", {
+    cwd: ROOT_DIR,
+    stdio: "pipe",
+    timeout: 120000,
+  });
 });
 
 // 2. TypeScript Compilation Sensor (apps/web)
