@@ -16,6 +16,7 @@ import { MessageCircle, X, Send, Bot, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/auth-store';
+import { useFloatingTabBarHeight, getOnPrimaryColor } from '../../lib/design-system';
 
 interface Message {
   id: string;
@@ -160,9 +161,9 @@ export function ChatbotFAB() {
   };
 
   // Bottom tab bar height clearance:
-  // Tab bar in _layout is 64 (Android) or 60 + insets.bottom (iOS)
-  const tabHeight = Platform.OS === 'ios' ? 60 + insets.bottom : 64;
-  const fabBottom = tabHeight + 16;
+  const { totalClearance, fabBottom } = useFloatingTabBarHeight();
+
+  const onPrimary = getOnPrimaryColor(theme);
 
   return (
     <>
@@ -181,7 +182,7 @@ export function ChatbotFAB() {
           accessibilityRole="button"
           accessibilityLabel="Open CdM Assistant Chatbot"
         >
-          <MessageCircle size={26} color="#FFFFFF" />
+          <MessageCircle size={26} color={onPrimary} />
         </TouchableOpacity>
       )}
 
@@ -210,7 +211,7 @@ export function ChatbotFAB() {
               {
                 backgroundColor: theme.colors.card,
                 borderColor: theme.colors.border,
-                bottom: tabHeight + 8,
+                bottom: totalClearance + 8,
               },
             ]}
           >
@@ -222,12 +223,14 @@ export function ChatbotFAB() {
               ]}
             >
               <View style={styles.headerLeft}>
-                <View style={styles.botAvatarBadge}>
-                  <Bot size={18} color="#FFFFFF" />
+                <View style={[styles.botAvatarBadge, { backgroundColor: onPrimary === '#111827' ? 'rgba(17, 24, 39, 0.15)' : 'rgba(255, 255, 255, 0.25)' }]}>
+                  <Bot size={18} color={onPrimary} />
                 </View>
                 <View>
-                  <Text style={styles.headerTitle}>CdM Assistant</Text>
-                  <Text style={styles.headerSubtitle}>Always here to help</Text>
+                  <Text style={[styles.headerTitle, { color: onPrimary }]}>CdM Assistant</Text>
+                  <Text style={[styles.headerSubtitle, { color: onPrimary === '#111827' ? 'rgba(17, 24, 39, 0.75)' : 'rgba(255, 255, 255, 0.8)' }]}>
+                    Always here to help
+                  </Text>
                 </View>
               </View>
 
@@ -238,7 +241,7 @@ export function ChatbotFAB() {
                 accessibilityRole="button"
                 accessibilityLabel="Close CdM Assistant"
               >
-                <X size={20} color="#FFFFFF" />
+                <X size={20} color={onPrimary} />
               </TouchableOpacity>
             </View>
 

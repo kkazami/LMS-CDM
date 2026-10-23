@@ -6,29 +6,28 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
   TextInput,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
-  Bell,
   Search,
   X,
   BookOpen,
-  Calendar,
   Clock,
-  User,
   Megaphone,
-  CheckCircle2,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { Card } from '../../../../src/components/common/Card';
-import { Badge } from '../../../../src/components/common/Badge';
+import {
+  Screen,
+  AppHeader,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../src/components/ui';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
+import { radius, spacing } from '../../../../src/lib/theme';
 import type { Announcement, Course } from '@lms/types';
 
 function formatDate(iso: string): string {
@@ -59,16 +58,19 @@ export default function StudentAnnouncementsScreen() {
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = async () => {
     try {
+      setErrorMessage(null);
       // 1. Offline storage first for instant display
       const [cachedAnnouncements, cachedCourses] = await Promise.all([
         getCachedData<Announcement[]>('student_announcements_full'),
@@ -90,16 +92,25 @@ export default function StudentAnnouncementsScreen() {
         api.courses.list(instituteCode),
       ]);
 
+      let hadSuccess = false;
       if (annRes.status === 'fulfilled' && annRes.value?.announcements) {
         setAnnouncements(annRes.value.announcements);
         await setCachedData('student_announcements_full', annRes.value.announcements);
+        hadSuccess = true;
       }
       if (coursesRes.status === 'fulfilled' && coursesRes.value?.courses) {
         setCourses(coursesRes.value.courses);
         await setCachedData('student_courses', coursesRes.value.courses);
+        hadSuccess = true;
       }
-    } catch {
-      // Graceful fallback to cached state
+
+      if (!hadSuccess && (!cachedAnnouncements || cachedAnnouncements.length === 0)) {
+        if (annRes.status === 'rejected') {
+          setErrorMessage((annRes as PromiseRejectedResult).reason?.message || 'Could not load announcements.');
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Could not load announcements. Please check your connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -134,99 +145,117 @@ export default function StudentAnnouncementsScreen() {
   }, [announcements, selectedCourseId, searchQuery]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* ── Screen Header ── */}
-      <View
-        style={[
-          styles.topHeader,
-          {
-            backgroundColor: theme.colors.card,
-            borderBottomColor: theme.colors.border,
-          },
-        ]}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: `${theme.colors.border}40` }]}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <ArrowLeft size={20} color={theme.colors.text} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-              Announcements
-            </Text>
+    <Screen
+      scrollable
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.colors.primary}
+          colors={[theme.colors.primary]}
+        />
+      }
+      contentContainerStyle={styles.screenInner}
+    >
+      <AppHeader
+        showBack
+        title="Announcements"
+        subtitle="Updates & notices for your enrolled courses"
+        rightAction={
+          <View style={[styles.headerPill, { backgroundColor: `${theme.colors.primary}18` }]}>
+            <Megaphone size={s(15)} color={theme.colors.primary} />
             <Text
-              style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
+              style={[styles.headerPillText, { color: theme.colors.primary, fontSize: font(12) }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
-              Updates & notices for your enrolled courses
-            </Text>
-          </View>
-
-          <View style={[styles.headerPill, { backgroundColor: `${theme.colors.primary}15` }]}>
-            <Megaphone size={16} color={theme.colors.primary} />
-            <Text style={[styles.headerPillText, { color: theme.colors.primary }]}>
               {filteredAnnouncements.length}
             </Text>
           </View>
-        </View>
+        }
+      />
 
-        {/* ── Search Input ── */}
+      {/* Top Filter and Search Control Box */}
+      <View
+        style={[
+          styles.controlsContainer,
+          {
+            backgroundColor: theme.colors.card,
+            borderBottomColor: theme.colors.border,
+            paddingHorizontal: s(spacing.lg),
+            paddingTop: s(spacing.md),
+            paddingBottom: s(spacing.md),
+          },
+        ]}
+      >
+        {/* Search Input */}
         <View
           style={[
             styles.searchBar,
             {
               backgroundColor: theme.colors.background,
               borderColor: theme.colors.border,
+              borderRadius: radius.md,
+              height: s(42),
+              paddingHorizontal: s(spacing.md),
             },
           ]}
         >
-          <Search size={18} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
+          <Search size={s(18)} color={theme.colors.textSecondary} style={{ marginRight: s(spacing.sm) }} />
           <TextInput
-            style={[styles.searchInput, { color: theme.colors.text }]}
+            style={[styles.searchInput, { color: theme.colors.text, fontSize: font(13.5) }]}
             placeholder="Search by keyword, instructor, or subject..."
             placeholderTextColor={theme.colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
             clearButtonMode="while-editing"
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <X size={16} color={theme.colors.textSecondary} />
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
+              <X size={s(16)} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* ── Course Scope Filter Chips ── */}
+        {/* Course Scope Filter Chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterChipsContainer}
+          contentContainerStyle={[styles.filterChipsContainer, { gap: s(spacing.sm) }]}
         >
           <TouchableOpacity
             style={[
               styles.chipButton,
+              {
+                borderRadius: radius.full,
+                paddingHorizontal: s(spacing.md),
+                paddingVertical: s(spacing.xs),
+              },
               selectedCourseId === 'all'
                 ? { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                : { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                : { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border },
             ]}
             onPress={() => setSelectedCourseId('all')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Filter all courses, ${announcements.length} announcements`}
           >
             <Text
               style={[
                 styles.chipText,
                 {
+                  fontSize: font(12),
                   color: selectedCourseId === 'all' ? '#FFFFFF' : theme.colors.textSecondary,
                   fontWeight: selectedCourseId === 'all' ? '700' : '500',
                 },
               ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               All Courses ({announcements.length})
             </Text>
@@ -240,21 +269,30 @@ export default function StudentAnnouncementsScreen() {
                 key={course.id}
                 style={[
                   styles.chipButton,
+                  {
+                    borderRadius: radius.full,
+                    paddingHorizontal: s(spacing.md),
+                    paddingVertical: s(spacing.xs),
+                  },
                   isSelected
                     ? { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                    : { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                    : { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border },
                 ]}
                 onPress={() => setSelectedCourseId(course.id)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter course ${course.code || course.title}, ${count} announcements`}
               >
                 <Text
                   style={[
                     styles.chipText,
                     {
+                      fontSize: font(12),
                       color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
                       fontWeight: isSelected ? '700' : '500',
                     },
                   ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   {course.code || course.title} ({count})
                 </Text>
@@ -264,27 +302,67 @@ export default function StudentAnnouncementsScreen() {
         </ScrollView>
       </View>
 
-      {/* ── Announcements Content List ── */}
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
+      {/* Main Content Area */}
+      <View style={[styles.contentArea, { padding: s(spacing.lg) }]}>
+        {errorMessage && (
+          <ErrorBanner
+            message={errorMessage}
+            onRetry={loadData}
+            onDismiss={() => setErrorMessage(null)}
+            retryAccessibilityLabel="Retry loading announcements"
+            style={{ marginBottom: s(spacing.md) }}
           />
-        }
-        showsVerticalScrollIndicator={false}
-      >
+        )}
+
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+          <View style={styles.loadingSkeletonList}>
+            {[1, 2, 3].map((key) => (
+              <View
+                key={key}
+                style={[
+                  styles.announcementCard,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.lg),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <View style={styles.skeletonHeader}>
+                  <SkeletonBlock width={s(36)} height={s(36)} borderRadius={radius.full} />
+                  <View style={{ flex: 1, marginLeft: s(spacing.sm) }}>
+                    <SkeletonBlock width="45%" height={s(14)} style={{ marginBottom: s(spacing.xs) }} />
+                    <SkeletonBlock width="25%" height={s(11)} />
+                  </View>
+                  <SkeletonBlock width={s(60)} height={s(20)} borderRadius={radius.sm} />
+                </View>
+                <SkeletonBlock width="80%" height={s(16)} style={{ marginVertical: s(spacing.md) }} />
+                <SkeletonBlock width="100%" height={s(12)} style={{ marginBottom: s(spacing.xs) }} />
+                <SkeletonBlock width="90%" height={s(12)} />
+              </View>
+            ))}
           </View>
         ) : filteredAnnouncements.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Megaphone size={44} color={theme.colors.textSecondary} />
-            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+          <Card
+            style={[
+              styles.emptyCard,
+              {
+                padding: s(spacing.xxxl),
+                borderRadius: radius.lg,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Megaphone size={s(44)} color={theme.colors.textSecondary} />
+            <Text
+              style={[
+                styles.emptyTitle,
+                { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               {searchQuery.trim().length > 0
                 ? 'No Matching Announcements'
                 : selectedCourseId !== 'all'
@@ -293,7 +371,13 @@ export default function StudentAnnouncementsScreen() {
                 ? 'No Course Enrollments'
                 : 'No Announcements Yet'}
             </Text>
-            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+            <Text
+              style={[
+                styles.emptySubtitle,
+                { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               {searchQuery.trim().length > 0
                 ? `No announcements found matching "${searchQuery}". Try a different keyword.`
                 : selectedCourseId !== 'all'
@@ -312,29 +396,45 @@ export default function StudentAnnouncementsScreen() {
                 {
                   backgroundColor: theme.colors.card,
                   borderColor: theme.colors.border,
+                  borderRadius: radius.lg,
+                  marginBottom: s(spacing.md),
                 },
               ]}
             >
               {/* Card Header: Author info, Course Code badge, Date */}
-              <View style={styles.cardHeader}>
+              <View style={[styles.cardHeader, { padding: s(spacing.md) }]}>
                 <View style={styles.authorGroup}>
                   <View
                     style={[
                       styles.avatarFallback,
-                      { backgroundColor: `${theme.colors.primary}20` },
+                      {
+                        backgroundColor: `${theme.colors.primary}20`,
+                        width: s(36),
+                        height: s(36),
+                        borderRadius: radius.full,
+                      },
                     ]}
                   >
-                    <Text style={[styles.avatarInitial, { color: theme.colors.primary }]}>
+                    <Text
+                      style={[styles.avatarInitial, { color: theme.colors.primary, fontSize: font(15) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {(item.authorName || 'I').charAt(0).toUpperCase()}
                     </Text>
                   </View>
-                  <View style={styles.authorMeta}>
-                    <Text style={[styles.authorName, { color: theme.colors.text }]}>
+                  <View style={[styles.authorMeta, { marginLeft: s(spacing.sm) }]}>
+                    <Text
+                      style={[styles.authorName, { color: theme.colors.text, fontSize: font(14) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {item.authorName || 'Course Instructor'}
                     </Text>
                     <View style={styles.timestampRow}>
-                      <Clock size={11} color={theme.colors.textSecondary} />
-                      <Text style={[styles.timestampText, { color: theme.colors.textSecondary }]}>
+                      <Clock size={s(11)} color={theme.colors.textSecondary} />
+                      <Text
+                        style={[styles.timestampText, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
                         {formatDate(item.createdAt)}
                       </Text>
                     </View>
@@ -345,10 +445,18 @@ export default function StudentAnnouncementsScreen() {
                   <View
                     style={[
                       styles.courseCodeBadge,
-                      { backgroundColor: `${theme.colors.primary}15` },
+                      {
+                        backgroundColor: `${theme.colors.primary}18`,
+                        borderRadius: radius.sm,
+                        paddingHorizontal: s(spacing.sm),
+                        paddingVertical: s(spacing.xs),
+                      },
                     ]}
                   >
-                    <Text style={[styles.courseCodeBadgeText, { color: theme.colors.primary }]}>
+                    <Text
+                      style={[styles.courseCodeBadgeText, { color: theme.colors.primary, fontSize: font(11) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {item.courseCode}
                     </Text>
                   </View>
@@ -356,15 +464,19 @@ export default function StudentAnnouncementsScreen() {
               </View>
 
               {/* Title & Body */}
-              <View style={styles.contentBody}>
+              <View style={[styles.contentBody, { paddingHorizontal: s(spacing.md), paddingBottom: s(spacing.md) }]}>
                 {item.title && item.title !== item.content && (
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                  <Text
+                    style={[styles.cardTitle, { color: theme.colors.text, fontSize: font(15), lineHeight: font(21) }]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
                     {item.title}
                   </Text>
                 )}
                 <Text
-                  style={[styles.cardContentText, { color: theme.colors.text }]}
+                  style={[styles.cardContentText, { color: theme.colors.text, fontSize: font(13.5), lineHeight: font(20) }]}
                   selectable
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   {item.content}
                 </Text>
@@ -376,15 +488,18 @@ export default function StudentAnnouncementsScreen() {
                   style={[
                     styles.cardFooter,
                     {
-                      backgroundColor: `${theme.colors.background}80`,
+                      backgroundColor: theme.colors.surfaceAlt,
                       borderTopColor: theme.colors.border,
+                      paddingHorizontal: s(spacing.md),
+                      paddingVertical: s(spacing.sm),
                     },
                   ]}
                 >
-                  <BookOpen size={13} color={theme.colors.textSecondary} />
+                  <BookOpen size={s(13)} color={theme.colors.textSecondary} />
                   <Text
-                    style={[styles.footerCourseText, { color: theme.colors.textSecondary }]}
+                    style={[styles.footerCourseText, { color: theme.colors.textSecondary, fontSize: font(11.5) }]}
                     numberOfLines={1}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
                   >
                     {item.courseName}
                   </Text>
@@ -393,45 +508,17 @@ export default function StudentAnnouncementsScreen() {
             </View>
           ))
         )}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  screenInner: {
+    paddingBottom: 36,
   },
-  topHeader: {
+  controlsContainer: {
     borderBottomWidth: 1,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  headerTitleContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    marginTop: 1,
   },
   headerPill: {
     flexDirection: 'row',
@@ -442,105 +529,79 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   headerPillText: {
-    fontSize: 12,
     fontWeight: '700',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 42,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
     paddingVertical: 0,
   },
   filterChipsContainer: {
     flexDirection: 'row',
-    gap: 8,
     paddingVertical: 2,
   },
   chipButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chipText: {
-    fontSize: 12,
+    fontWeight: '500',
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 36,
+  contentArea: {
+    flex: 1,
   },
-  loadingContainer: {
-    paddingVertical: 48,
+  loadingSkeletonList: {
+    paddingVertical: 8,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   emptyCard: {
-    padding: 32,
     alignItems: 'center',
     marginTop: 20,
-    borderRadius: 16,
   },
   emptyTitle: {
-    fontSize: 17,
     fontWeight: '700',
     marginTop: 14,
     marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 19,
     paddingHorizontal: 12,
   },
   announcementCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 14,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 10,
   },
   authorGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
     flex: 1,
   },
   avatarFallback: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
-    fontSize: 15,
     fontWeight: '700',
   },
   authorMeta: {
     flex: 1,
   },
   authorName: {
-    fontSize: 14,
     fontWeight: '700',
   },
   timestampRow: {
@@ -550,44 +611,30 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timestampText: {
-    fontSize: 11,
     fontWeight: '500',
   },
   courseCodeBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8,
     marginLeft: 8,
   },
   courseCodeBadgeText: {
-    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
   contentBody: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    marginTop: 2,
   },
   cardTitle: {
-    fontSize: 15,
     fontWeight: '700',
     marginBottom: 6,
-    lineHeight: 20,
   },
-  cardContentText: {
-    fontSize: 13.5,
-    lineHeight: 20,
-  },
+  cardContentText: {},
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
     borderTopWidth: 1,
   },
   footerCourseText: {
-    fontSize: 11.5,
     fontWeight: '500',
     flex: 1,
   },

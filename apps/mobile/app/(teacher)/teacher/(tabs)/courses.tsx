@@ -17,6 +17,7 @@ import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { ScreenWrapper, ScreenHeaderContainer } from '../../../../src/components/common/ScreenWrapper';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Card } from '../../../../src/components/common/Card';
+import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import type { Course } from '@lms/types';
 
 export default function TeacherCoursesScreen() {
@@ -88,7 +89,7 @@ export default function TeacherCoursesScreen() {
           maxFontSizeMultiplier={maxFontSizeMultiplier}
           numberOfLines={1}
         >
-          {courses.length} Active Teaching Assignments &bull; {user?.institute?.name || theme.name}
+          {courses.length} Active Teaching Assignments &bull; {getCanonicalInstituteName(user?.institute?.code, user?.institute?.name || theme.name)}
         </Text>
 
         {/* Compact Search Bar */}

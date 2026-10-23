@@ -6,29 +6,32 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
-  Modal,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   Layers,
-  PlusCircle,
+  Plus,
   Play,
-  CheckCircle2,
-  Sparkles,
-  X,
 } from 'lucide-react-native';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Card } from '../../../../src/components/common/Card';
 import { Button } from '../../../../src/components/common/Button';
 import { Input } from '../../../../src/components/common/Input';
+import {
+  Screen,
+  AppHeader,
+  HeaderIconButton,
+  FormModal,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
+import { radius, spacing } from '../../../../src/lib/theme';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { FlashcardDeck } from '@lms/types';
 
@@ -37,21 +40,24 @@ export default function StudentFlashcardsListScreen() {
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [decks, setDecks] = useState<FlashcardDeck[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Create Deck Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagsInput, setTagsInput] = useState('');
-  const [selectedColor, setSelectedColor] = useState('#FF7517');
+  const [selectedColor, setSelectedColor] = useState(theme.colors.primary);
   const [savingDeck, setSavingDeck] = useState(false);
 
   const loadDecks = async () => {
     try {
+      setErrorMessage(null);
       const cached = await getCachedData<FlashcardDeck[]>('student_flashcard_decks');
       if (cached && cached.length > 0) {
         setDecks(cached);
@@ -64,8 +70,10 @@ export default function StudentFlashcardsListScreen() {
         setDecks(response.decks);
         await setCachedData('student_flashcard_decks', response.decks);
       }
-    } catch {
-      // Graceful fallback
+    } catch (err: any) {
+      if (!decks.length) {
+        setErrorMessage(err?.message || 'Could not load flashcard decks. Please check your connection.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -123,374 +131,419 @@ export default function StudentFlashcardsListScreen() {
     }
   };
 
-  const colorOptions = ['#FF7517', '#D4A017', '#2563EB', '#10B981', '#8B5CF6', '#EC4899'];
+  const colorOptions = [theme.colors.primary, '#FF7517', '#D4A017', '#10B981', '#8B5CF6', '#EC4899'];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Top Header */}
-      <View style={[styles.topBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: theme.colors.border }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <ArrowLeft size={20} color={theme.colors.text} />
-        </TouchableOpacity>
-        <View style={styles.topTextCol}>
-          <Text style={[styles.topTitle, { color: theme.colors.text }]}>Study Flashcards</Text>
-          <Text style={[styles.topSubtitle, { color: theme.colors.textSecondary }]}>
-            Active Recall & Spaced Repetition Decks
-          </Text>
-        </View>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Create Deck"
-          style={[styles.addBtn, { backgroundColor: theme.colors.primary }]}
-          onPress={() => setShowCreateModal(true)}
-          activeOpacity={0.8}
-        >
-          <PlusCircle size={18} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+    <Screen contentContainerStyle={styles.screenInner}>
+      <AppHeader
+        showBack
+        title="Study Flashcards"
+        subtitle="Active Recall & Spaced Repetition Decks"
+        rightAction={
+          <HeaderIconButton
+            onPress={() => setShowCreateModal(true)}
+            accessibilityLabel="Create flashcard deck"
+            style={[styles.addBtn, { backgroundColor: theme.colors.primary, borderRadius: radius.full }]}
+          >
+            <Plus size={s(18)} color="#FFFFFF" />
+          </HeaderIconButton>
+        }
+      />
 
-      {/* Decks List */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={decks}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={theme.colors.primary}
-              colors={[theme.colors.primary]}
-            />
-          }
-          ListEmptyComponent={
-            <Card style={styles.emptyCard}>
-              <Layers size={48} color={theme.colors.textSecondary} />
-              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Study Decks Yet</Text>
-              <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-                Tap the plus button above to build your first active recall flashcard deck.
-              </Text>
-            </Card>
-          }
-          renderItem={({ item }) => {
-            const mastery =
-              item.cardCount > 0 ? Math.round(((item.correctCount || 0) / item.cardCount) * 100) : 0;
-
-            return (
-              <TouchableOpacity
-                style={[styles.deckCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-                onPress={() => router.push({ pathname: '/student/flashcards/[deckId]' as any, params: { deckId: item.id } })}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.deckColorBar, { backgroundColor: item.color || theme.colors.primary }]} />
-
-                <View style={styles.deckBody}>
-                  <View style={styles.deckTopRow}>
-                    <Text style={[styles.deckTitle, { color: theme.colors.text }]}>
-                      {item.title}
-                    </Text>
-                    <Badge label={`${item.cardCount || 0} Cards`} variant="default" size="sm" />
-                  </View>
-
-                  {item.description ? (
-                    <Text style={[styles.deckDesc, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  ) : null}
-
-                  {item.tags && item.tags.length > 0 && (
-                    <View style={styles.tagRow}>
-                      {item.tags.slice(0, 3).map((tag, i) => (
-                        <View key={i} style={[styles.tagPill, { backgroundColor: theme.colors.cardSecondary }]}>
-                          <Text style={[styles.tagText, { color: theme.colors.textSecondary }]}>#{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  <View style={[styles.deckFooter, { borderTopColor: theme.colors.border }]}>
-                    <View style={styles.masteryInfo}>
-                      <Text style={[styles.masteryLabel, { color: theme.colors.textSecondary }]}>
-                        Mastery: <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{mastery}%</Text>
-                      </Text>
-                    </View>
-
-                    <View style={styles.studyPrompt}>
-                      <Play size={14} color={theme.colors.primary} />
-                      <Text style={[styles.studyPromptText, { color: theme.colors.primary }]}>
-                        Practice Now
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      )}
-
-      {/* Create Deck Modal */}
-      <Modal
-        visible={showCreateModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowCreateModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Create Flashcard Deck</Text>
-              <TouchableOpacity
-                onPress={() => setShowCreateModal(false)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <X size={22} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            <Input
-              label="Deck Title"
-              placeholder="e.g. Data Structures Terminology"
-              value={title}
-              onChangeText={setTitle}
-              ringColor={theme.colors.primary}
-            />
-
-            <Input
-              label="Description (Optional)"
-              placeholder="Summary of topics covered in this deck..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={2}
-              ringColor={theme.colors.primary}
-            />
-
-            <Input
-              label="Tags (Comma separated)"
-              placeholder="algorithms, cs201, exams"
-              value={tagsInput}
-              onChangeText={setTagsInput}
-              ringColor={theme.colors.primary}
-            />
-
-            {/* Color Accent Picker */}
-            <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>DECK ACCENT COLOR</Text>
-            <View style={styles.colorRow}>
-              {colorOptions.map((col) => (
-                <TouchableOpacity
-                  key={col}
-                  style={[
-                    styles.colorCircle,
-                    { backgroundColor: col },
-                    selectedColor === col && styles.selectedColorCircle,
-                  ]}
-                  onPress={() => setSelectedColor(col)}
-                />
-              ))}
-            </View>
-
-            <Button
-              title="Create Study Deck"
-              onPress={handleCreateDeck}
-              loading={savingDeck}
-              icon={PlusCircle}
-              style={{ marginTop: 20 }}
+      <View style={styles.mainContainer}>
+        {errorMessage && (
+          <View style={{ paddingHorizontal: s(spacing.lg), paddingTop: s(spacing.md) }}>
+            <ErrorBanner
+              message={errorMessage}
+              onRetry={loadDecks}
+              onDismiss={() => setErrorMessage(null)}
+              retryAccessibilityLabel="Retry loading flashcard decks"
             />
           </View>
+        )}
+
+        {loading ? (
+          <View style={[styles.loadingContainer, { padding: s(spacing.lg) }]}>
+            {[1, 2, 3].map((i) => (
+              <View
+                key={i}
+                style={[
+                  styles.deckCard,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    padding: s(spacing.lg),
+                    marginBottom: s(spacing.md),
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: s(spacing.md) }}>
+                  <SkeletonBlock width="60%" height={s(18)} />
+                  <SkeletonBlock width={s(65)} height={s(20)} borderRadius={radius.sm} />
+                </View>
+                <SkeletonBlock width="90%" height={s(12)} style={{ marginBottom: s(spacing.xs) }} />
+                <SkeletonBlock width="40%" height={s(12)} style={{ marginBottom: s(spacing.md) }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <SkeletonBlock width="35%" height={s(14)} />
+                  <SkeletonBlock width={s(80)} height={s(24)} borderRadius={radius.sm} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <FlatList
+            data={decks}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[styles.listContent, { padding: s(spacing.lg) }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]}
+              />
+            }
+            ListEmptyComponent={
+              <Card
+                style={[
+                  styles.emptyCard,
+                  {
+                    padding: s(spacing.xxxl),
+                    borderRadius: radius.lg,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
+                <Layers size={s(48)} color={theme.colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.emptyTitle,
+                    { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  No Study Decks Yet
+                </Text>
+                <Text
+                  style={[
+                    styles.emptySubtitle,
+                    { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Tap the plus button above to build your first active recall flashcard deck.
+                </Text>
+              </Card>
+            }
+            renderItem={({ item }) => {
+              const mastery =
+                item.cardCount > 0 ? Math.round(((item.correctCount || 0) / item.cardCount) * 100) : 0;
+
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.deckCard,
+                    {
+                      backgroundColor: theme.colors.card,
+                      borderColor: theme.colors.border,
+                      borderRadius: radius.lg,
+                      marginBottom: s(spacing.md),
+                    },
+                  ]}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/student/flashcards/[deckId]' as any,
+                      params: { deckId: item.id },
+                    })
+                  }
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open deck ${item.title}, ${item.cardCount || 0} cards, mastery ${mastery} percent`}
+                >
+                  <View
+                    style={[
+                      styles.deckColorBar,
+                      { backgroundColor: item.color || theme.colors.primary, width: s(6) },
+                    ]}
+                  />
+
+                  <View style={[styles.deckBody, { padding: s(spacing.md) }]}>
+                    <View style={styles.deckTopRow}>
+                      <Text
+                        style={[
+                          styles.deckTitle,
+                          { color: theme.colors.text, fontSize: font(16) },
+                        ]}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        {item.title}
+                      </Text>
+                      <Badge label={`${item.cardCount || 0} Cards`} variant="default" size="sm" />
+                    </View>
+
+                    {Boolean(item.description) && (
+                      <Text
+                        style={[
+                          styles.deckDesc,
+                          { color: theme.colors.textSecondary, fontSize: font(13), marginTop: s(spacing.xs) },
+                        ]}
+                        numberOfLines={2}
+                        maxFontSizeMultiplier={maxFontSizeMultiplier}
+                      >
+                        {item.description}
+                      </Text>
+                    )}
+
+                    {Boolean(item.tags && item.tags.length > 0) && (
+                      <View style={[styles.tagRow, { marginTop: s(spacing.sm), gap: s(spacing.xs) }]}>
+                        {item.tags!.slice(0, 3).map((tag, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.tagPill,
+                              {
+                                backgroundColor: theme.colors.surfaceAlt,
+                                borderRadius: radius.xs,
+                                paddingHorizontal: s(spacing.sm),
+                                paddingVertical: 2,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.tagText,
+                                { color: theme.colors.textSecondary, fontSize: font(11) },
+                              ]}
+                              maxFontSizeMultiplier={maxFontSizeMultiplier}
+                            >
+                              #{tag}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <View
+                      style={[
+                        styles.deckFooter,
+                        {
+                          borderTopColor: theme.colors.border,
+                          marginTop: s(spacing.md),
+                          paddingTop: s(spacing.sm),
+                        },
+                      ]}
+                    >
+                      <View style={styles.masteryInfo}>
+                        <Text
+                          style={[
+                            styles.masteryLabel,
+                            { color: theme.colors.textSecondary, fontSize: font(12.5) },
+                          ]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
+                          Mastery:{' '}
+                          <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                            {mastery}%
+                          </Text>
+                        </Text>
+                      </View>
+
+                      <View style={[styles.studyPrompt, { gap: s(spacing.xs) }]}>
+                        <Play size={s(14)} color={theme.colors.primary} />
+                        <Text
+                          style={[
+                            styles.studyPromptText,
+                            { color: theme.colors.primary, fontSize: font(12.5) },
+                          ]}
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
+                          Practice Now
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
+      </View>
+
+      {/* Create Deck Modal using shared FormModal */}
+      <FormModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create Flashcard Deck"
+        subtitle="Build an active recall study deck with spaced repetition"
+        closeAccessibilityLabel="Cancel and close create deck modal"
+        actions={
+          <Button
+            title="Create Study Deck"
+            onPress={handleCreateDeck}
+            loading={savingDeck}
+            icon={Plus}
+          />
+        }
+      >
+        <Input
+          label="Deck Title"
+          placeholder="e.g. Data Structures Terminology"
+          value={title}
+          onChangeText={setTitle}
+          ringColor={theme.colors.primary}
+        />
+
+        <Input
+          label="Description (Optional)"
+          placeholder="Summary of topics covered in this deck..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={2}
+          ringColor={theme.colors.primary}
+        />
+
+        <Input
+          label="Tags (Comma separated)"
+          placeholder="algorithms, cs201, exams"
+          value={tagsInput}
+          onChangeText={setTagsInput}
+          ringColor={theme.colors.primary}
+        />
+
+        {/* Color Accent Picker */}
+        <Text
+          style={[
+            styles.fieldLabel,
+            {
+              color: theme.colors.textSecondary,
+              fontSize: font(12),
+              marginTop: s(spacing.sm),
+              marginBottom: s(spacing.xs),
+            },
+          ]}
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
+        >
+          DECK ACCENT COLOR
+        </Text>
+        <View style={[styles.colorRow, { gap: s(spacing.md), marginBottom: s(spacing.lg) }]}>
+          {colorOptions.map((col) => (
+            <TouchableOpacity
+              key={col}
+              accessibilityRole="button"
+              accessibilityLabel={`Select accent color ${col}`}
+              style={[
+                styles.colorCircle,
+                {
+                  backgroundColor: col,
+                  width: s(36),
+                  height: s(36),
+                  borderRadius: radius.full,
+                  borderColor: theme.colors.border,
+                },
+                selectedColor === col && [
+                  styles.selectedColorCircle,
+                  { borderColor: theme.colors.text, borderWidth: 3 },
+                ],
+              ]}
+              onPress={() => setSelectedColor(col)}
+            />
+          ))}
         </View>
-      </Modal>
-    </SafeAreaView>
+      </FormModal>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screenInner: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topTextCol: {
+  mainContainer: {
     flex: 1,
-    marginLeft: 12,
-  },
-  topTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  topSubtitle: {
-    fontSize: 11,
-    marginTop: 2,
   },
   addBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 32,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 40,
   },
   deckCard: {
     flexDirection: 'row',
-    borderRadius: 18,
     borderWidth: 1,
-    marginBottom: 14,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
-  deckColorBar: {
-    width: 8,
-  },
+  deckColorBar: {},
   deckBody: {
     flex: 1,
-    padding: 16,
   },
   deckTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: 8,
   },
   deckTitle: {
-    fontSize: 16,
     fontWeight: '700',
     flex: 1,
-    marginRight: 8,
   },
   deckDesc: {
-    fontSize: 13,
     lineHeight: 18,
-    marginBottom: 10,
   },
   tagRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 12,
   },
-  tagPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
+  tagPill: {},
   tagText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   deckFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 10,
     borderTopWidth: 1,
   },
-  masteryInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  masteryLabel: {
-    fontSize: 12,
-  },
+  masteryInfo: {},
+  masteryLabel: {},
   studyPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   studyPromptText: {
-    fontSize: 12,
     fontWeight: '700',
   },
   emptyCard: {
     alignItems: 'center',
-    paddingVertical: 44,
-    marginTop: 20,
+    marginTop: 24,
   },
   emptyTitle: {
-    fontSize: 16,
     fontWeight: '700',
-    marginTop: 12,
+    marginTop: 14,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
     textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
-    lineHeight: 18,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    paddingHorizontal: 12,
   },
   fieldLabel: {
-    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginTop: 6,
+    letterSpacing: 0.5,
   },
   colorRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 10,
+    alignItems: 'center',
   },
   colorCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    borderWidth: 1,
   },
-  selectedColorCircle: {
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.15 }],
-  },
+  selectedColorCircle: {},
 });

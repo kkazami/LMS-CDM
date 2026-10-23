@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useFloatingTabBarHeight } from '../../lib/design-system';
 
 export interface ScreenProps {
   children: React.ReactNode;
@@ -62,15 +63,23 @@ export function Screen({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const isScroll = scrollable !== undefined ? scrollable : scroll;
-  const { headerPaddingTop, bottomClearance, width } = useResponsive();
+  const { headerPaddingTop, width } = useResponsive();
+  const { contentPaddingBottom } = useFloatingTabBarHeight();
 
   const isWideScreen = maxWidth > 0 && width > maxWidth;
   const resolvedBg = backgroundColor || theme.colors.background;
 
+  const scrollInnerStyle: StyleProp<ViewStyle> = [
+    styles.scrollInner,
+    isWideScreen && { maxWidth, alignSelf: 'center', width: '100%' },
+    withBottomInset && { paddingBottom: contentPaddingBottom },
+    contentContainerStyle,
+  ];
+
   const innerStyle: StyleProp<ViewStyle> = [
     styles.inner,
     isWideScreen && { maxWidth, alignSelf: 'center', width: '100%' },
-    withBottomInset && { paddingBottom: bottomClearance },
+    withBottomInset && { paddingBottom: contentPaddingBottom },
     contentContainerStyle,
   ];
 
@@ -88,7 +97,7 @@ export function Screen({
       <View style={rootStyle}>
         <ScrollView
           style={styles.root}
-          contentContainerStyle={innerStyle}
+          contentContainerStyle={scrollInnerStyle}
           refreshControl={refreshControl}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -112,5 +121,8 @@ const styles = StyleSheet.create({
   },
   inner: {
     flex: 1,
+  },
+  scrollInner: {
+    flexGrow: 1,
   },
 });

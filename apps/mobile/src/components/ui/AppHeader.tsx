@@ -112,7 +112,7 @@ export function AppHeader({
           </HeaderIconButton>
         )}
 
-        <View style={styles.textContainer}>
+        <View style={[styles.textContainer, { marginRight: rightAction ? s(8) : s(12) }]}>
           <Text
             style={[
               styles.title,

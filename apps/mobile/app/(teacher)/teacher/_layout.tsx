@@ -9,6 +9,8 @@ export default function TeacherLayout() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="meetings/index" options={{ headerShown: false }} />
+      <Stack.Screen name="knowledge-exchange/index" options={{ headerShown: false }} />
     </Stack>
   );
 }

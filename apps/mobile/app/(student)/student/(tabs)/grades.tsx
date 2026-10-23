@@ -19,32 +19,39 @@ import {
   BookOpen,
   ClipboardList,
   CheckCircle2,
-  AlertCircle,
   FileText,
   X,
-  TrendingUp,
+  Sparkles,
 } from 'lucide-react-native';
 import Svg, { Rect, Circle, Line as SvgLine, Path, Text as SvgText, G } from 'react-native-svg';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
-import { Badge } from '../../../../src/components/common/Badge';
 import { Screen, ErrorBanner } from '../../../../src/components/ui';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
+import {
+  percentToGradePoint,
+  isPassing,
+  formatGradePoint,
+  HIGHEST_GRADE_POINT,
+  LOWEST_PASSING_GRADE_POINT,
+  PASSING_MIN_PERCENT,
+} from '../../../../src/lib/ph-scale';
+import {
+  filterMobileGradeData,
+  getPercent,
+  type PerSubjectStat,
+} from '../../../../src/lib/grade-filter';
 import type { Grade, GradeSummary } from '@lms/types';
 
 type SubTab = 'dashboard' | 'analytics' | 'progress';
 
 const SUB_TABS: { key: SubTab; label: string; icon: any }[] = [
-  { key: 'dashboard', label: 'Student Grades Dashboard', icon: GraduationCap },
-  { key: 'analytics', label: 'Visual Grade Analytics', icon: BarChart2 },
-  { key: 'progress', label: 'Academic Progress Tracking', icon: LineChart },
+  { key: 'dashboard', label: 'Grades', icon: GraduationCap },
+  { key: 'analytics', label: 'Analytics', icon: BarChart2 },
+  { key: 'progress', label: 'Progress', icon: LineChart },
 ];
-
-function getPercent(grade: Grade): number {
-  if (!grade.maxValue || grade.maxValue <= 0) return Math.round(grade.value);
-  return Math.round((grade.value / grade.maxValue) * 100 * 10) / 10;
-}
 
 function formatDate(iso: string): string {
   try {
@@ -58,32 +65,11 @@ function formatDate(iso: string): string {
   }
 }
 
-function getLetterGrade(pct: number): string {
-  if (pct >= 95) return 'A+';
-  if (pct >= 90) return 'A';
-  if (pct >= 85) return 'B+';
-  if (pct >= 80) return 'B';
-  if (pct >= 75) return 'C+';
-  if (pct >= 70) return 'C';
-  if (pct >= 60) return 'D';
-  return 'F';
-}
-
-function getGpaValue(pct: number): number {
-  if (pct >= 95) return 4.0;
-  if (pct >= 90) return 3.75;
-  if (pct >= 85) return 3.5;
-  if (pct >= 80) return 3.0;
-  if (pct >= 75) return 2.5;
-  if (pct >= 70) return 2.0;
-  if (pct >= 60) return 1.5;
-  return 0.0;
-}
-
 export default function StudentGradesScreen() {
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { headerPaddingTop } = useResponsive();
 
   const [activeTab, setActiveTab] = useState<SubTab>('dashboard');
   const [selectedCourseId, setSelectedCourseId] = useState('all');
@@ -100,10 +86,11 @@ export default function StudentGradesScreen() {
     setErrorMessage(null);
     try {
       // 1. Offline storage first for instant display
-      const [cachedGrades, cachedSummaries, cachedCourses] = await Promise.all([
+      const [cachedGrades, cachedSummaries, cachedEnrolled, cachedCourses] = await Promise.all([
         getCachedData<Grade[]>('student_grades'),
         getCachedData<GradeSummary[]>('student_grade_summaries'),
         getCachedData<Array<{ id: string; title: string; code: string }>>('student_enrolled_courses'),
+        getCachedData<Array<{ id: string; title: string; code: string }>>('student_courses'),
       ]);
       if (cachedGrades && cachedGrades.length > 0) {
         setGrades(cachedGrades);
@@ -112,25 +99,79 @@ export default function StudentGradesScreen() {
       if (cachedSummaries && cachedSummaries.length > 0) {
         setSummaries(cachedSummaries);
       }
-      if (cachedCourses && cachedCourses.length > 0) {
-        setEnrolledCourses(cachedCourses);
+      const initialCourses = (cachedEnrolled && cachedEnrolled.length > 0)
+        ? cachedEnrolled
+        : (cachedCourses && cachedCourses.length > 0)
+        ? cachedCourses
+        : [];
+      if (initialCourses.length > 0) {
+        setEnrolledCourses(initialCourses);
       }
 
-      // 2. Fetch fresh real data from backend
+      // 2. Fetch fresh real data from backend (grades and courses in parallel)
       const instituteCode = user?.institute?.code || 'ics';
-      const response = (await api.grades.list(instituteCode)) as any;
+      const [gradesRes, coursesRes] = await Promise.allSettled([
+        api.grades.list(instituteCode),
+        api.courses.list(instituteCode),
+      ]);
 
-      if (response?.grades) {
-        setGrades(response.grades);
-        await setCachedData('student_grades', response.grades);
+      let coursesFromApi: Array<{ id: string; title: string; code: string }> = [];
+
+      if (coursesRes.status === 'fulfilled' && coursesRes.value?.courses) {
+        coursesFromApi = coursesRes.value.courses.map((c) => ({
+          id: c.id,
+          title: c.title,
+          code: c.code,
+        }));
       }
-      if (response?.summary) {
-        setSummaries(response.summary);
-        await setCachedData('student_grade_summaries', response.summary);
+
+      if (gradesRes.status === 'fulfilled') {
+        const response = gradesRes.value as any;
+        if (response?.grades) {
+          setGrades(response.grades);
+          await setCachedData('student_grades', response.grades);
+        }
+        if (response?.summary) {
+          setSummaries(response.summary);
+          await setCachedData('student_grade_summaries', response.summary);
+        }
+        if (response?.enrolledCourses && Array.isArray(response.enrolledCourses) && response.enrolledCourses.length > 0) {
+          coursesFromApi = response.enrolledCourses;
+        }
       }
-      if (response?.enrolledCourses) {
-        setEnrolledCourses(response.enrolledCourses);
-        await setCachedData('student_enrolled_courses', response.enrolledCourses);
+
+      // 3. Fallback: derive enrolled courses from summaries/grades if courses list was empty
+      if (coursesFromApi.length === 0) {
+        const derivedMap = new Map<string, { id: string; title: string; code: string }>();
+        if (gradesRes.status === 'fulfilled' && (gradesRes.value as any)?.summary) {
+          for (const s of (gradesRes.value as any).summary) {
+            if (s.courseId && !derivedMap.has(s.courseId)) {
+              derivedMap.set(s.courseId, {
+                id: s.courseId,
+                title: s.courseName || s.courseCode || 'Course',
+                code: s.courseCode || 'CRS',
+              });
+            }
+          }
+        }
+        if (gradesRes.status === 'fulfilled' && (gradesRes.value as any)?.grades) {
+          for (const g of (gradesRes.value as any).grades) {
+            if (g.courseId && !derivedMap.has(g.courseId)) {
+              derivedMap.set(g.courseId, {
+                id: g.courseId,
+                title: g.courseName || g.courseCode || 'Course',
+                code: g.courseCode || 'CRS',
+              });
+            }
+          }
+        }
+        coursesFromApi = Array.from(derivedMap.values());
+      }
+
+      if (coursesFromApi.length > 0) {
+        setEnrolledCourses(coursesFromApi);
+        await setCachedData('student_enrolled_courses', coursesFromApi);
+        await setCachedData('student_courses', coursesFromApi);
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to load grades. Displaying cached data if available.');
@@ -149,50 +190,47 @@ export default function StudentGradesScreen() {
     loadGrades();
   };
 
-  // Filter grades based on selected course scope
-  const filteredGrades = useMemo(() => {
-    if (selectedCourseId === 'all') return grades;
-    return grades.filter((g) => g.courseId === selectedCourseId);
-  }, [grades, selectedCourseId]);
+  // Pure filtering transformation shared across all sub-tabs (Task 3)
+  const {
+    isAllSubjects,
+    selectedCourse,
+    filteredGrades,
+    perSubjectStats,
+    gwa,
+    gwaRemark,
+    isGwaPassing,
+    overallPercent,
+    hasGradedWork,
+    milestones,
+  } = useMemo(
+    () => filterMobileGradeData(grades, summaries, enrolledCourses, selectedCourseId),
+    [grades, summaries, enrolledCourses, selectedCourseId]
+  );
 
-  // Selected course label for dropdown
+  // Selected subject label for dropdown
   const selectedCourseLabel = useMemo(() => {
-    if (selectedCourseId === 'all') return 'All Classes';
-    const course = enrolledCourses.find((c) => c.id === selectedCourseId);
-    return course ? `${course.code} — ${course.title}` : 'All Classes';
-  }, [selectedCourseId, enrolledCourses]);
+    if (isAllSubjects || !selectedCourse) return 'All subjects';
+    return `${selectedCourse.code} — ${selectedCourse.title}`;
+  }, [isAllSubjects, selectedCourse]);
 
-  // Overall average percentage
-  const avgPercent = useMemo(() => {
-    if (filteredGrades.length === 0) return 0;
-    const sum = filteredGrades.reduce((acc, g) => acc + getPercent(g), 0);
-    return Math.round((sum / filteredGrades.length) * 10) / 10;
-  }, [filteredGrades]);
-
-  const overallAvgAll = useMemo(() => {
-    if (grades.length === 0) return 0;
-    const sum = grades.reduce((acc, g) => acc + getPercent(g), 0);
-    return Math.round((sum / grades.length) * 10) / 10;
-  }, [grades]);
-
-  const hasEvaluations = grades.length > 0;
-
-  const cumulativeGpa = useMemo(() => {
-    if (!hasEvaluations) return null;
-    return getGpaValue(overallAvgAll).toFixed(2);
-  }, [hasEvaluations, overallAvgAll]);
-
-  const cumulativeLetter = useMemo(() => {
-    if (!hasEvaluations) return null;
-    return getLetterGrade(overallAvgAll);
-  }, [hasEvaluations, overallAvgAll]);
+  // Derived progress scale caption (Task 2)
+  const progressScaleCaption = `${HIGHEST_GRADE_POINT.toFixed(2)} is the highest · ${LOWEST_PASSING_GRADE_POINT.toFixed(2)} (${PASSING_MIN_PERCENT}%) is the lowest passing grade · below ${PASSING_MIN_PERCENT}% is failing`;
 
   const screenWidth = Dimensions.get('window').width;
 
   return (
     <Screen scrollable={false}>
       {/* ── Screen Header ── */}
-      <View style={[styles.topHeader, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+      <View
+        style={[
+          styles.topHeader,
+          {
+            backgroundColor: theme.colors.card,
+            borderBottomColor: theme.colors.border,
+            paddingTop: headerPaddingTop,
+          },
+        ]}
+      >
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Grades</Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
           View and track your academic performance across all your classes
@@ -264,6 +302,47 @@ export default function StudentGradesScreen() {
             />
           </View>
         )}
+
+        {/* ── Shared "Subject" Selector (Task 3: Shared across all 3 sub-tabs) ── */}
+        {enrolledCourses.length > 0 && (
+          <TouchableOpacity
+            style={[
+              styles.sharedSubjectDropdown,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.border,
+              },
+            ]}
+            onPress={() => setIsCoursePickerOpen(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`Subject filter, currently ${selectedCourseLabel}`}
+          >
+            <View style={styles.sharedSubjectLeft}>
+              <View
+                style={[
+                  styles.subjectIconBox,
+                  { backgroundColor: `${theme.colors.primary}18` },
+                ]}
+              >
+                <BookOpen size={16} color={theme.colors.primary} />
+              </View>
+              <View style={styles.subjectTextGroup}>
+                <Text style={[styles.subjectMiniLabel, { color: theme.colors.textSecondary }]}>
+                  SUBJECT
+                </Text>
+                <Text
+                  style={[styles.subjectDropdownTitle, { color: theme.colors.text }]}
+                  numberOfLines={1}
+                >
+                  {selectedCourseLabel}
+                </Text>
+              </View>
+            </View>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -275,92 +354,75 @@ export default function StudentGradesScreen() {
                ══════════════════════════════════════════════════════════════ */}
             {activeTab === 'dashboard' && (
               <View style={styles.viewContainer}>
-                {/* Filter Dropdown + Summary Pill Row */}
-                <View style={styles.filterRow}>
-                  {/* Class Scope Dropdown Button */}
-                  <TouchableOpacity
+                {/* Summary Pill for currently selected subject / all subjects */}
+                {filteredGrades.length > 0 && (
+                  <View
                     style={[
-                      styles.courseDropdownButton,
+                      styles.summaryPillRow,
                       {
                         backgroundColor: theme.colors.card,
                         borderColor: theme.colors.border,
                       },
                     ]}
-                    onPress={() => setIsCoursePickerOpen(true)}
-                    activeOpacity={0.8}
                   >
-                    <Text
-                      style={[styles.courseDropdownText, { color: theme.colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {selectedCourseLabel}
-                    </Text>
-                    <ChevronDown size={18} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
-
-                  {/* Items / Average Summary Pill (matching Web Header) */}
-                  {filteredGrades.length > 0 && (
-                    <View
-                      style={[
-                        styles.summaryPill,
-                        {
-                          backgroundColor: theme.colors.card,
-                          borderColor: theme.colors.border,
-                        },
-                      ]}
-                    >
-                      <View style={styles.summaryPillCol}>
-                        <Text style={[styles.summaryPillLabel, { color: theme.colors.textSecondary }]}>
-                          ITEMS
-                        </Text>
-                        <Text style={[styles.summaryPillValue, { color: theme.colors.text }]}>
-                          {filteredGrades.length}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[styles.summaryPillDivider, { backgroundColor: theme.colors.border }]}
-                      />
-
-                      <View style={styles.summaryPillCol}>
-                        <Text style={[styles.summaryPillLabel, { color: theme.colors.textSecondary }]}>
-                          AVERAGE
-                        </Text>
-                        <Text style={[styles.summaryPillValue, { color: theme.colors.primary }]}>
-                          {avgPercent.toFixed(1)}%
-                        </Text>
-                      </View>
+                    <View style={styles.summaryPillCol}>
+                      <Text style={[styles.summaryPillLabel, { color: theme.colors.textSecondary }]}>
+                        GRADED ITEMS
+                      </Text>
+                      <Text style={[styles.summaryPillValue, { color: theme.colors.text }]}>
+                        {filteredGrades.length}
+                      </Text>
                     </View>
-                  )}
-                </View>
 
-                {/* Table Header Row (Mobile card style matching web columns) */}
+                    <View
+                      style={[styles.summaryPillDivider, { backgroundColor: theme.colors.border }]}
+                    />
+
+                    <View style={styles.summaryPillCol}>
+                      <Text style={[styles.summaryPillLabel, { color: theme.colors.textSecondary }]}>
+                        AVERAGE SCORE
+                      </Text>
+                      <Text style={[styles.summaryPillValue, { color: theme.colors.primary }]}>
+                        {overallPercent.toFixed(1)}%
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Table Header Row */}
                 <View style={[styles.tableColumnHeader, { borderBottomColor: theme.colors.border }]}>
                   <Text style={[styles.columnHeaderText, { color: theme.colors.textSecondary, flex: 2 }]}>
                     ASSIGNMENT / QUIZ
                   </Text>
-                  <Text style={[styles.columnHeaderText, { color: theme.colors.textSecondary, flex: 1, textAlign: 'right' }]}>
+                  <Text
+                    style={[
+                      styles.columnHeaderText,
+                      { color: theme.colors.textSecondary, flex: 1, textAlign: 'right' },
+                    ]}
+                  >
                     SCORE / %
                   </Text>
                 </View>
 
-                {/* Graded Items List */}
-                {filteredGrades.length === 0 ? (
+                {/* Graded Items List or Clear Empty State */}
+                {!hasGradedWork ? (
                   <Card style={styles.emptyCard}>
                     <ClipboardList size={44} color={theme.colors.primary} />
                     <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                      No Graded Items Found
+                      {isAllSubjects
+                        ? 'No Graded Items Found'
+                        : `No Graded Work for ${selectedCourse?.code || 'Subject'}`}
                     </Text>
                     <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-                      {selectedCourseId === 'all'
+                      {isAllSubjects
                         ? 'Grades will appear here once your instructors record evaluations for your classwork.'
-                        : 'No graded work has been recorded yet for this specific class.'}
+                        : `No graded submissions have been recorded yet for ${selectedCourse?.title || 'this class'}.`}
                     </Text>
                   </Card>
                 ) : (
                   filteredGrades.map((grade) => {
                     const pct = getPercent(grade);
-                    const isPassing = pct >= 75;
+                    const passing = isPassing(percentToGradePoint(pct));
                     const isAssignment =
                       (grade.itemType || '').toUpperCase() === 'ASSIGNMENT' ||
                       !/quiz/i.test(grade.assignmentTitle);
@@ -422,7 +484,10 @@ export default function StudentGradesScreen() {
                         <View style={styles.gradeRowScores}>
                           <View style={styles.scoreNumberCol}>
                             <Text style={[styles.scoreValueText, { color: theme.colors.text }]}>
-                              {grade.value} <Text style={{ color: theme.colors.textSecondary, fontSize: 11 }}>/ {grade.maxValue}</Text>
+                              {grade.value}{' '}
+                              <Text style={{ color: theme.colors.textSecondary, fontSize: 11 }}>
+                                / {grade.maxValue}
+                              </Text>
                             </Text>
                             <Text style={[styles.gradedDateText, { color: theme.colors.textSecondary }]}>
                               {formatDate(grade.gradedAt)}
@@ -433,7 +498,7 @@ export default function StudentGradesScreen() {
                             style={[
                               styles.pctPill,
                               {
-                                backgroundColor: isPassing
+                                backgroundColor: passing
                                   ? `${theme.colors.primary}20`
                                   : theme.colors.dangerBg,
                               },
@@ -443,7 +508,7 @@ export default function StudentGradesScreen() {
                               style={[
                                 styles.pctPillText,
                                 {
-                                  color: isPassing ? theme.colors.primary : theme.colors.danger,
+                                  color: passing ? theme.colors.primary : theme.colors.danger,
                                 },
                               ]}
                             >
@@ -463,19 +528,23 @@ export default function StudentGradesScreen() {
                ══════════════════════════════════════════════════════════════ */}
             {activeTab === 'analytics' && (
               <View style={styles.viewContainer}>
-                {grades.length === 0 ? (
+                {!hasGradedWork ? (
                   <Card style={styles.emptyCard}>
                     <BarChart2 size={44} color={theme.colors.primary} />
                     <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                      Insufficient Data for Analytics
+                      {isAllSubjects
+                        ? 'Insufficient Data for Analytics'
+                        : `No Chart Data for ${selectedCourse?.code || 'Subject'}`}
                     </Text>
                     <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-                      Visual analytics will automatically generate once multiple graded evaluations are recorded.
+                      {isAllSubjects
+                        ? 'Visual analytics will automatically generate once multiple graded evaluations are recorded.'
+                        : `Charts will appear once you have graded submissions recorded in ${selectedCourse?.title || 'this class'}.`}
                     </Text>
                   </Card>
                 ) : (
                   <>
-                    {/* SVG Chart 1: Average Grade by Course */}
+                    {/* SVG Chart 1: Average Grade by Course (Filtered) */}
                     <View
                       style={[
                         styles.chartCard,
@@ -487,10 +556,12 @@ export default function StudentGradesScreen() {
                     >
                       <View style={styles.chartHeader}>
                         <Text style={[styles.chartTitle, { color: theme.colors.text }]}>
-                          Average Grade by Course
+                          {isAllSubjects ? 'Average Grade by Course' : 'Subject Average Grade'}
                         </Text>
                         <Text style={[styles.chartSubtitle, { color: theme.colors.textSecondary }]}>
-                          Course percentage averages across your enrolled subjects
+                          {isAllSubjects
+                            ? 'Course percentage averages across your enrolled subjects'
+                            : `Performance score for ${selectedCourse?.title || 'selected subject'}`}
                         </Text>
                       </View>
 
@@ -499,19 +570,10 @@ export default function StudentGradesScreen() {
                         {(() => {
                           const chartWidth = Math.max(screenWidth - 64, 300);
                           const chartHeight = 180;
-                          const activeSummaries = summaries.filter((s) => s.gradeCount > 0);
-                          const dataToRender =
-                            activeSummaries.length > 0
-                              ? activeSummaries
-                              : enrolledCourses.map((c) => ({
-                                  courseCode: c.code,
-                                  courseName: c.title,
-                                  percentage: 0,
-                                  gradeCount: 0,
-                                }));
+                          const dataToRender = perSubjectStats;
 
                           const barWidth = Math.min(
-                            36,
+                            44,
                             (chartWidth - 50) / Math.max(dataToRender.length, 1) - 16
                           );
                           const spacing = (chartWidth - 40) / Math.max(dataToRender.length, 1);
@@ -538,24 +600,24 @@ export default function StudentGradesScreen() {
                                 100%
                               </SvgText>
 
-                              {/* 75% Passing Benchmark Line */}
+                              {/* Passing Benchmark Line derived from scale */}
                               <SvgLine
                                 x1="36"
-                                y1="52.5"
+                                y1={150 - (PASSING_MIN_PERCENT / 100) * 130}
                                 x2={chartWidth - 10}
-                                y2="52.5"
+                                y2={150 - (PASSING_MIN_PERCENT / 100) * 130}
                                 stroke={theme.colors.primary}
                                 strokeDasharray="4 4"
                                 strokeWidth="1.2"
                               />
                               <SvgText
                                 x="12"
-                                y="56.5"
+                                y={150 - (PASSING_MIN_PERCENT / 100) * 130 + 4}
                                 fill={theme.colors.primary}
                                 fontSize="9"
                                 fontWeight="700"
                               >
-                                75%
+                                {`${PASSING_MIN_PERCENT}%`}
                               </SvgText>
 
                               {/* 50% Grid Line */}
@@ -590,7 +652,7 @@ export default function StudentGradesScreen() {
 
                               {/* Bars */}
                               {dataToRender.map((item, idx) => {
-                                const clampedPct = Math.min(Math.max(item.percentage, 0), 100);
+                                const clampedPct = Math.min(Math.max(item.avgPercent, 0), 100);
                                 const barHeight = (clampedPct / 100) * 130;
                                 const x = 44 + idx * spacing + (spacing - barWidth) / 2;
                                 const y = 150 - barHeight;
@@ -604,7 +666,7 @@ export default function StudentGradesScreen() {
                                       height={Math.max(barHeight, 3)}
                                       rx={4}
                                       fill={
-                                        item.percentage >= 75
+                                        isPassing(item.gradePoint)
                                           ? theme.colors.primary
                                           : theme.colors.danger
                                       }
@@ -618,7 +680,7 @@ export default function StudentGradesScreen() {
                                       fontWeight="bold"
                                       textAnchor="middle"
                                     >
-                                      {item.percentage}%
+                                      {item.avgPercent}%
                                     </SvgText>
                                     {/* Course Code below bar */}
                                     <SvgText
@@ -629,7 +691,7 @@ export default function StudentGradesScreen() {
                                       fontWeight="600"
                                       textAnchor="middle"
                                     >
-                                      {item.courseCode.slice(0, 7)}
+                                      {item.courseCode.slice(0, 8)}
                                     </SvgText>
                                   </G>
                                 );
@@ -664,13 +726,13 @@ export default function StudentGradesScreen() {
                         {(() => {
                           const chartWidth = Math.max(screenWidth - 64, 300);
                           const chartHeight = 160;
-                          const chronologicalGrades = [...grades].reverse();
+                          const chronologicalGrades = [...filteredGrades].reverse();
 
                           if (chronologicalGrades.length < 2) {
                             return (
                               <View style={styles.minChartNotice}>
                                 <Text style={[styles.minNoticeText, { color: theme.colors.textSecondary }]}>
-                                  Complete at least 2 evaluations to visualize your performance trendline.
+                                  Complete at least 2 evaluations in this scope to visualize your performance trendline.
                                 </Text>
                               </View>
                             );
@@ -692,12 +754,12 @@ export default function StudentGradesScreen() {
 
                           return (
                             <Svg width={chartWidth} height={chartHeight}>
-                              {/* Baseline 75% reference */}
+                              {/* Baseline passing reference derived from scale */}
                               <SvgLine
                                 x1="36"
-                                y1="57.5"
+                                y1={140 - (PASSING_MIN_PERCENT / 100) * 110}
                                 x2={chartWidth - 10}
-                                y2="57.5"
+                                y2={140 - (PASSING_MIN_PERCENT / 100) * 110}
                                 stroke={theme.colors.border}
                                 strokeDasharray="3 3"
                                 strokeWidth="1"
@@ -749,31 +811,32 @@ export default function StudentGradesScreen() {
                ══════════════════════════════════════════════════════════════ */}
             {activeTab === 'progress' && (
               <View style={styles.viewContainer}>
-                {/* GPA Radial Gauge & Standing Card */}
+                {/* GWA Radial Gauge Card (Task 2: Accessibility label, derived scale caption) */}
                 <View
+                  accessibilityRole="summary"
+                  accessibilityLabel="Cumulative GWA (General Weighted Average)"
                   style={[
-                    styles.gpaRadialCard,
+                    styles.gwaRadialCard,
                     {
                       backgroundColor: theme.colors.card,
                       borderColor: theme.colors.border,
                     },
                   ]}
                 >
-                  {/* SVG Circular Ring */}
+                  {/* SVG Circular Ring (driven by percentage) */}
                   <View style={styles.radialWrapper}>
                     {(() => {
                       const size = 130;
                       const strokeWidth = 10;
                       const radius = (size - strokeWidth) / 2;
                       const circumference = 2 * Math.PI * radius;
-                      const gpaRatio = hasEvaluations && cumulativeGpa
-                        ? Math.min(Number(cumulativeGpa) / 4.0, 1.0)
+                      const percentRatio = hasGradedWork
+                        ? Math.max(0, Math.min(100, overallPercent)) / 100
                         : 0;
-                      const dashOffset = circumference * (1 - gpaRatio);
-                      const isPassing = overallAvgAll >= 75;
-                      const ringColor = !hasEvaluations
+                      const dashOffset = circumference * (1 - percentRatio);
+                      const ringColor = !hasGradedWork
                         ? theme.colors.border
-                        : isPassing
+                        : isGwaPassing
                         ? theme.colors.primary
                         : theme.colors.danger;
 
@@ -788,7 +851,7 @@ export default function StudentGradesScreen() {
                               strokeWidth={strokeWidth}
                               fill="none"
                             />
-                            {hasEvaluations && (
+                            {hasGradedWork && (
                               <Circle
                                 cx={size / 2}
                                 cy={size / 2}
@@ -803,11 +866,16 @@ export default function StudentGradesScreen() {
                             )}
                           </Svg>
                           <View style={styles.radialInsideText}>
-                            <Text style={[styles.radialGpaNumber, { color: hasEvaluations ? ringColor : theme.colors.textSecondary }]}>
-                              {hasEvaluations ? cumulativeGpa : '—'}
+                            <Text
+                              style={[
+                                styles.radialGwaNumber,
+                                { color: hasGradedWork ? ringColor : theme.colors.textSecondary },
+                              ]}
+                            >
+                              {hasGradedWork ? formatGradePoint(gwa) : '—'}
                             </Text>
-                            <Text style={[styles.radialGpaSub, { color: theme.colors.textSecondary }]}>
-                              {hasEvaluations ? 'out of 4.0' : 'No Grades'}
+                            <Text style={[styles.radialGwaSub, { color: theme.colors.textSecondary }]}>
+                              {hasGradedWork ? (isGwaPassing ? 'Passed' : 'Failed') : 'No Grades'}
                             </Text>
                           </View>
                         </View>
@@ -815,62 +883,67 @@ export default function StudentGradesScreen() {
                     })()}
                   </View>
 
-                  <View style={styles.gpaTextGroup}>
-                    <Text style={[styles.gpaStandingLabel, { color: theme.colors.textSecondary }]}>
-                      CUMULATIVE STANDING
-                    </Text>
-                    <View style={styles.letterGradeRow}>
-                      <Text style={[styles.letterGradeText, { color: theme.colors.text }]}>
-                        {hasEvaluations ? `Grade ${cumulativeLetter}` : 'No Grades Yet'}
+                  <View style={styles.gwaTextGroup}>
+                    {/* Note: Visible "Cumulative GWA ..." heading removed per Task 2 */}
+                    <View style={styles.gwaRemarkRow}>
+                      <Text style={[styles.gwaRemarkText, { color: theme.colors.text }]}>
+                        {hasGradedWork
+                          ? `${formatGradePoint(gwa)}`
+                          : 'No Grades Yet'}
                       </Text>
-                      <View
-                        style={[
-                          styles.standingPill,
-                          {
-                            backgroundColor: !hasEvaluations
-                              ? `${theme.colors.textSecondary}18`
-                              : overallAvgAll >= 75
-                              ? `${theme.colors.primary}20`
-                              : theme.colors.dangerBg,
-                          },
-                        ]}
-                      >
-                        <Text
+                      {hasGradedWork && gwaRemark ? (
+                        <View
                           style={[
-                            styles.standingPillText,
+                            styles.standingPill,
                             {
-                              color: !hasEvaluations
-                                ? theme.colors.textSecondary
-                                : overallAvgAll >= 75
-                                ? theme.colors.primary
-                                : theme.colors.danger,
+                              backgroundColor: isGwaPassing
+                                ? `${theme.colors.primary}20`
+                                : theme.colors.dangerBg,
                             },
                           ]}
                         >
-                          {!hasEvaluations
-                            ? 'NO EVALUATIONS'
-                            : overallAvgAll >= 75
-                            ? 'GOOD STANDING'
-                            : 'ACADEMIC REVIEW'}
-                        </Text>
-                      </View>
+                          <Text
+                            style={[
+                              styles.standingPillText,
+                              {
+                                color: isGwaPassing ? theme.colors.primary : theme.colors.danger,
+                              },
+                            ]}
+                          >
+                            {gwaRemark.toUpperCase()}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
-                    <Text style={[styles.gpaDesc, { color: theme.colors.textSecondary }]}>
-                      {hasEvaluations
-                        ? `Overall average of ${overallAvgAll}% across ${grades.length} recorded evaluation${grades.length === 1 ? '' : 's'}.`
-                        : 'Cumulative GPA and academic standing will be computed once evaluations are recorded.'}
+
+                    {/* Derived scale caption (Task 2) */}
+                    <Text style={[styles.gwaScaleCaption, { color: theme.colors.primary }]}>
+                      {progressScaleCaption}
+                    </Text>
+
+                    <Text style={[styles.gwaDesc, { color: theme.colors.textSecondary }]}>
+                      {hasGradedWork
+                        ? `Average of ${overallPercent}% across ${filteredGrades.length} recorded evaluation${
+                            filteredGrades.length === 1 ? '' : 's'
+                          }.`
+                        : 'Cumulative GWA and academic standing will be computed once evaluations are recorded.'}
                     </Text>
                   </View>
                 </View>
 
-                {/* Per-Subject Progress List */}
+                {/* Per-Subject Progress List (Task 3: Tap a row to select that subject) */}
                 <View style={styles.progressSectionHeader}>
                   <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                     Subject Progress & Completion
                   </Text>
+                  {isAllSubjects && perSubjectStats.length > 0 && (
+                    <Text style={[styles.sectionHint, { color: theme.colors.textSecondary }]}>
+                      Tap any subject to filter by that class
+                    </Text>
+                  )}
                 </View>
 
-                {summaries.length === 0 ? (
+                {perSubjectStats.length === 0 ? (
                   <Card style={styles.emptyCard}>
                     <Award size={40} color={theme.colors.textSecondary} />
                     <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
@@ -881,13 +954,19 @@ export default function StudentGradesScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  summaries.map((s) => {
-                    const isPassing = s.percentage >= 75;
-                    const hasItems = s.gradeCount > 0;
+                  perSubjectStats.map((s) => {
+                    const coursePassed = s.remark === 'Passed';
+                    const hasItems = s.itemCount > 0;
 
                     return (
-                      <View
+                      <TouchableOpacity
                         key={s.courseId}
+                        onPress={() => {
+                          if (isAllSubjects) {
+                            setSelectedCourseId(s.courseId);
+                          }
+                        }}
+                        activeOpacity={isAllSubjects ? 0.7 : 1}
                         style={[
                           styles.subjectProgressCard,
                           {
@@ -905,7 +984,7 @@ export default function StudentGradesScreen() {
                               style={[styles.subjectTitle, { color: theme.colors.textSecondary }]}
                               numberOfLines={1}
                             >
-                              {s.courseName}
+                              {s.courseTitle}
                             </Text>
                           </View>
 
@@ -915,7 +994,7 @@ export default function StudentGradesScreen() {
                               {
                                 backgroundColor: !hasItems
                                   ? `${theme.colors.textSecondary}20`
-                                  : isPassing
+                                  : coursePassed
                                   ? `${theme.colors.primary}18`
                                   : theme.colors.dangerBg,
                               },
@@ -927,7 +1006,7 @@ export default function StudentGradesScreen() {
                                 {
                                   color: !hasItems
                                     ? theme.colors.textSecondary
-                                    : isPassing
+                                    : coursePassed
                                     ? theme.colors.primary
                                     : theme.colors.danger,
                                 },
@@ -935,9 +1014,9 @@ export default function StudentGradesScreen() {
                             >
                               {!hasItems
                                 ? 'NO WORK YET'
-                                : s.percentage >= 90
-                                ? 'EXCELLENT'
-                                : 'ON TRACK'}
+                                : coursePassed
+                                ? 'PASSED'
+                                : 'FAILED'}
                             </Text>
                           </View>
                         </View>
@@ -954,10 +1033,10 @@ export default function StudentGradesScreen() {
                               style={[
                                 styles.progressBarFill,
                                 {
-                                  width: `${Math.min(s.percentage, 100)}%`,
+                                  width: `${Math.min(s.avgPercent, 100)}%`,
                                   backgroundColor: !hasItems
                                     ? 'transparent'
-                                    : isPassing
+                                    : coursePassed
                                     ? theme.colors.primary
                                     : theme.colors.danger,
                                 },
@@ -968,8 +1047,8 @@ export default function StudentGradesScreen() {
 
                         <View style={styles.subjectPointsRow}>
                           <Text style={[styles.subjectPointsText, { color: theme.colors.textSecondary }]}>
-                            {s.earnedPoints} / {s.totalPoints} points earned ({s.gradeCount} item
-                            {s.gradeCount === 1 ? '' : 's'})
+                            {s.earnedPoints} / {s.totalPoints} points earned ({s.itemCount} item
+                            {s.itemCount === 1 ? '' : 's'})
                           </Text>
                           <Text
                             style={[
@@ -977,12 +1056,91 @@ export default function StudentGradesScreen() {
                               { color: hasItems ? theme.colors.text : theme.colors.textSecondary },
                             ]}
                           >
-                            {s.percentage}%
+                            {hasItems ? `${formatGradePoint(s.gradePoint)} · ${s.avgPercent}%` : `${s.avgPercent}%`}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })
+                )}
+
+                {/* ── Recent Milestones (Task 4: Respects Subject Filter) ── */}
+                {milestones.length > 0 && (
+                  <View style={{ marginTop: 12 }}>
+                    <View style={styles.progressSectionHeader}>
+                      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                        Recent Milestones
+                      </Text>
+                      <Text style={[styles.sectionHint, { color: theme.colors.textSecondary }]}>
+                        Latest {milestones.length} graded item{milestones.length === 1 ? '' : 's'}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.milestonesCard,
+                        {
+                          backgroundColor: theme.colors.card,
+                          borderColor: theme.colors.border,
+                        },
+                      ]}
+                    >
+                      {milestones.map((item, idx) => {
+                        const pct = getPercent(item);
+                        const passing = isPassing(percentToGradePoint(pct));
+                        const isLast = idx === milestones.length - 1;
+
+                        return (
+                          <View
+                            key={item.id}
+                            style={[
+                              styles.milestoneRow,
+                              !isLast && { borderBottomColor: theme.colors.border, borderBottomWidth: 1 },
+                            ]}
+                          >
+                            <View style={styles.milestoneLeft}>
+                              <View
+                                style={[
+                                  styles.milestoneIconBox,
+                                  { backgroundColor: `${theme.colors.primary}18` },
+                                ]}
+                              >
+                                <Sparkles size={14} color={theme.colors.primary} />
+                              </View>
+                              <View style={{ flex: 1, minWidth: 0 }}>
+                                <Text
+                                  style={[styles.milestoneTitle, { color: theme.colors.text }]}
+                                  numberOfLines={1}
+                                >
+                                  {item.assignmentTitle}
+                                </Text>
+                                <Text
+                                  style={[styles.milestoneMeta, { color: theme.colors.textSecondary }]}
+                                  numberOfLines={1}
+                                >
+                                  {item.courseCode} · {formatDate(item.gradedAt)}
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.milestoneRight}>
+                              <Text
+                                style={[
+                                  styles.milestoneScorePct,
+                                  { color: passing ? theme.colors.primary : theme.colors.danger },
+                                ]}
+                              >
+                                {pct}%
+                              </Text>
+                              <Text style={[styles.milestoneScorePts, { color: theme.colors.textSecondary }]}>
+                                {item.value}/{item.maxValue}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
                 )}
               </View>
             )}
@@ -990,7 +1148,7 @@ export default function StudentGradesScreen() {
         )}
       </ScrollView>
 
-      {/* ── Course Scope Picker Modal ── */}
+      {/* ── Shared Course Scope Picker Modal ── */}
       <Modal
         visible={isCoursePickerOpen}
         transparent
@@ -1009,13 +1167,13 @@ export default function StudentGradesScreen() {
           >
             <View style={[styles.modalHeader, { borderBottomColor: theme.colors.border }]}>
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-                Select Class Scope
+                Select Subject
               </Text>
               <TouchableOpacity
                 onPress={() => setIsCoursePickerOpen(false)}
                 style={styles.modalCloseBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Close class scope picker"
+                accessibilityLabel="Close subject picker"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <X size={20} color={theme.colors.textSecondary} />
@@ -1023,7 +1181,7 @@ export default function StudentGradesScreen() {
             </View>
 
             <ScrollView style={styles.modalList}>
-              {/* "All Classes" Option */}
+              {/* "All subjects" Option */}
               <TouchableOpacity
                 style={[
                   styles.modalItem,
@@ -1050,10 +1208,10 @@ export default function StudentGradesScreen() {
                       },
                     ]}
                   >
-                    All Classes
+                    All subjects
                   </Text>
                   <Text style={[styles.modalItemDesc, { color: theme.colors.textSecondary }]}>
-                    Consolidated grades across all enrolled subjects
+                    Combined overview across all your enrolled classes
                   </Text>
                 </View>
                 {selectedCourseId === 'all' && (
@@ -1113,11 +1271,7 @@ export default function StudentGradesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   topHeader: {
-    paddingTop: 16,
     borderBottomWidth: 1,
   },
   headerTitle: {
@@ -1134,6 +1288,7 @@ const styles = StyleSheet.create({
   subTabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
+    paddingRight: 24,
   },
   subTabButton: {
     flexDirection: 'row',
@@ -1152,7 +1307,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   loadingContainer: {
     paddingVertical: 48,
@@ -1161,35 +1316,57 @@ const styles = StyleSheet.create({
   },
   viewContainer: {
     gap: 16,
+    marginTop: 14,
   },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  courseDropdownButton: {
-    flex: 1,
+  sharedSubjectDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 4,
   },
-  courseDropdownText: {
-    fontSize: 13,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 8,
-  },
-  summaryPill: {
+  sharedSubjectLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
+    flex: 1,
+    gap: 10,
+    marginRight: 8,
+  },
+  subjectIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subjectTextGroup: {
+    flex: 1,
+  },
+  subjectMiniLabel: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  subjectDropdownTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  summaryPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     borderWidth: 1,
   },
   summaryPillCol: {
@@ -1201,14 +1378,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   summaryPillValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
-    marginTop: 1,
+    marginTop: 2,
   },
   summaryPillDivider: {
     width: 1,
-    height: 22,
-    marginHorizontal: 10,
+    height: 24,
   },
   tableColumnHeader: {
     flexDirection: 'row',
@@ -1345,7 +1521,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  gpaRadialCard: {
+  gwaRadialCard: {
     borderRadius: 16,
     borderWidth: 1,
     padding: 20,
@@ -1362,32 +1538,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radialGpaNumber: {
+  radialGwaNumber: {
     fontSize: 22,
     fontWeight: '900',
   },
-  radialGpaSub: {
+  radialGwaSub: {
     fontSize: 9,
     fontWeight: '600',
   },
-  gpaTextGroup: {
+  gwaTextGroup: {
     flex: 1,
     gap: 4,
   },
-  gpaStandingLabel: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  letterGradeRow: {
+  gwaRemarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
   },
-  letterGradeText: {
-    fontSize: 20,
-    fontWeight: '800',
+  gwaRemarkText: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  gwaScaleCaption: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
   },
   standingPill: {
     paddingHorizontal: 8,
@@ -1398,17 +1574,22 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
   },
-  gpaDesc: {
+  gwaDesc: {
     fontSize: 11,
     lineHeight: 15,
     marginTop: 2,
   },
   progressSectionHeader: {
     marginTop: 6,
+    marginBottom: 2,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  sectionHint: {
+    fontSize: 11,
+    marginTop: 2,
   },
   subjectProgressCard: {
     borderRadius: 14,
@@ -1462,6 +1643,53 @@ const styles = StyleSheet.create({
   subjectPctText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  milestonesCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    marginTop: 8,
+  },
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    gap: 12,
+  },
+  milestoneLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+    minWidth: 0,
+  },
+  milestoneIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  milestoneTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  milestoneMeta: {
+    fontSize: 10.5,
+    marginTop: 2,
+  },
+  milestoneRight: {
+    alignItems: 'flex-end',
+  },
+  milestoneScorePct: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  milestoneScorePts: {
+    fontSize: 10,
+    marginTop: 2,
   },
   modalBackdrop: {
     flex: 1,

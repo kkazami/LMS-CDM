@@ -6,14 +6,11 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
   Switch,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   Trophy,
   Award,
   Flame,
@@ -25,9 +22,17 @@ import {
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Card } from '../../../../src/components/common/Card';
+import {
+  Screen,
+  AppHeader,
+  ErrorBanner,
+  SkeletonBlock,
+} from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
+import { radius, spacing } from '../../../../src/lib/theme';
 import type { LeaderboardEntry, StudentBadge } from '@lms/types';
 
 type ActiveTab = 'leaderboard' | 'badges';
@@ -38,10 +43,12 @@ export default function StudentLeaderboardScreen() {
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('leaderboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Leaderboard data
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -56,14 +63,17 @@ export default function StudentLeaderboardScreen() {
 
   const loadData = async () => {
     try {
+      setErrorMessage(null);
       const [leaderboardRes, badgesRes] = await Promise.allSettled([
         api.leaderboard.get(instituteCode),
         api.gamification.getBadges(),
       ]);
 
+      let hadSuccess = false;
       if (leaderboardRes.status === 'fulfilled') {
         const list = leaderboardRes.value.entries || [];
         setEntries(list);
+        hadSuccess = true;
         const selfEntry = list.find((e) => e.isCurrentUser || e.userId === user?.id);
         if (selfEntry?.userName?.startsWith('Student #')) {
           setIsAnonymized(true);
@@ -72,13 +82,14 @@ export default function StudentLeaderboardScreen() {
 
       if (badgesRes.status === 'fulfilled') {
         setBadges(badgesRes.value.badges || []);
+        hadSuccess = true;
+      }
+
+      if (!hadSuccess) {
+        setErrorMessage('Could not load leaderboard data. Please check your connection.');
       }
     } catch (err: any) {
-      Burnt.toast({
-        title: 'Error loading data',
-        message: err?.message || 'Could not fetch gamification data',
-        preset: 'error',
-      });
+      setErrorMessage(err?.message || 'Could not fetch gamification data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,13 +110,17 @@ export default function StudentLeaderboardScreen() {
       setTogglingPrivacy(true);
       await api.gamification.updatePrivacy(value);
       setIsAnonymized(value);
-      Burnt.toast({
-        title: value ? 'Anonymous Mode On' : 'Public Profile Enabled',
-        message: value
-          ? 'Your real name is hidden on the leaderboard'
-          : 'Your name is now visible on the leaderboard',
-        preset: 'done',
-      });
+      try {
+        Burnt.toast({
+          title: value ? 'Anonymous Mode On' : 'Public Profile Enabled',
+          message: value
+            ? 'Your real name is hidden on the leaderboard'
+            : 'Your name is now visible on the leaderboard',
+          preset: 'done',
+        });
+      } catch {
+        // Fallback
+      }
       loadData();
     } catch (err: any) {
       Alert.alert('Privacy Update Failed', err?.message || 'Could not update anonymity preference.');
@@ -150,21 +165,36 @@ export default function StudentLeaderboardScreen() {
       <View
         style={[
           styles.privacyBox,
-          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+          {
+            backgroundColor: theme.colors.card,
+            borderColor: theme.colors.border,
+            borderRadius: radius.lg,
+            padding: s(spacing.md),
+            marginBottom: s(spacing.lg),
+          },
         ]}
       >
         <View style={styles.privacyInfo}>
-          <View style={styles.privacyTitleRow}>
+          <View style={[styles.privacyTitleRow, { gap: s(spacing.xs) }]}>
             {isAnonymized ? (
-              <EyeOff size={18} color={theme.colors.textSecondary} />
+              <EyeOff size={s(18)} color={theme.colors.textSecondary} />
             ) : (
-              <Eye size={18} color={theme.colors.primary} />
+              <Eye size={s(18)} color={theme.colors.primary} />
             )}
-            <Text style={[styles.privacyTitle, { color: theme.colors.text }]}>
+            <Text
+              style={[styles.privacyTitle, { color: theme.colors.text, fontSize: font(14) }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               Anonymous Mode
             </Text>
           </View>
-          <Text style={[styles.privacyDesc, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.privacyDesc,
+              { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 3 },
+            ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             {isAnonymized
               ? 'You appear as Student #XXXX to classmates'
               : 'Your name is visible to peers on the leaderboard'}
@@ -187,47 +217,78 @@ export default function StudentLeaderboardScreen() {
             {
               backgroundColor: `${theme.colors.primary}12`,
               borderColor: theme.colors.primary,
+              borderRadius: radius.lg,
+              padding: s(spacing.md),
+              marginBottom: s(spacing.lg),
             },
           ]}
         >
           <View style={styles.selfRankRow}>
-            <View style={styles.selfRankLeft}>
+            <View style={[styles.selfRankLeft, { gap: s(spacing.md) }]}>
               <View
                 style={[
                   styles.selfRankBadge,
-                  { backgroundColor: theme.colors.primary },
+                  {
+                    backgroundColor: theme.colors.primary,
+                    width: s(44),
+                    height: s(44),
+                    borderRadius: radius.full,
+                  },
                 ]}
               >
-                <Text style={styles.selfRankNumber}>#{selfRankEntry.rank}</Text>
+                <Text
+                  style={[styles.selfRankNumber, { fontSize: font(16) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  #{selfRankEntry.rank}
+                </Text>
               </View>
               <View style={styles.selfRankDetails}>
-                <Text style={[styles.selfRankTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.selfRankTitle, { color: theme.colors.text, fontSize: font(15) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   Your Standing
                 </Text>
-                <Text style={[styles.selfRankSubtitle, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[styles.selfRankSubtitle, { color: theme.colors.textSecondary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   {selfRankEntry.userName}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.selfRankMetrics}>
+            <View style={[styles.selfRankMetrics, { gap: s(spacing.lg) }]}>
               <View style={styles.metricItem}>
-                <Text style={[styles.metricValue, { color: theme.colors.primary }]}>
+                <Text
+                  style={[styles.metricValue, { color: theme.colors.primary, fontSize: font(16) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   {selfRankEntry.totalPoints.toLocaleString()}
                 </Text>
-                <Text style={[styles.metricLabel, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[styles.metricLabel, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   EXP
                 </Text>
               </View>
               {selfRankEntry.currentStreak > 0 ? (
                 <View style={styles.metricItem}>
-                  <View style={styles.streakRow}>
-                    <Flame size={14} color={theme.colors.warning} />
-                    <Text style={[styles.metricValue, { color: theme.colors.warning }]}>
+                  <View style={[styles.streakRow, { gap: 2 }]}>
+                    <Flame size={s(14)} color={theme.colors.warning} />
+                    <Text
+                      style={[styles.metricValue, { color: theme.colors.warning, fontSize: font(16) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {selfRankEntry.currentStreak}d
                     </Text>
                   </View>
-                  <Text style={[styles.metricLabel, { color: theme.colors.textSecondary }]}>
+                  <Text
+                    style={[styles.metricLabel, { color: theme.colors.textSecondary, fontSize: font(11) }]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
                     Streak
                   </Text>
                 </View>
@@ -239,33 +300,70 @@ export default function StudentLeaderboardScreen() {
 
       {/* Podium Top 3 */}
       {top3.length > 0 ? (
-        <View style={styles.podiumContainer}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>
+        <View style={[styles.podiumContainer, { marginBottom: s(spacing.lg) }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.colors.textSecondary, fontSize: font(12), marginBottom: s(spacing.md) },
+            ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             TOP SCHOLARS
           </Text>
-          <View style={styles.podiumRow}>
+          <View style={[styles.podiumRow, { gap: s(spacing.sm) }]}>
             {/* 2nd Place */}
             {top3[1] ? (
               <View
                 style={[
                   styles.podiumItem,
                   styles.podiumSecond,
-                  { backgroundColor: theme.colors.card, borderColor: '#94A3B8' },
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    paddingVertical: s(spacing.md),
+                  },
                 ]}
               >
-                <View style={[styles.podiumRankBadge, { backgroundColor: '#94A3B8' }]}>
-                  <Text style={styles.podiumRankText}>2</Text>
+                <View
+                  style={[
+                    styles.podiumRankBadge,
+                    {
+                      backgroundColor: theme.colors.surfaceAlt,
+                      width: s(28),
+                      height: s(28),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.podiumRankText, { color: theme.colors.textSecondary, fontSize: font(13) }]}>2</Text>
                 </View>
-                <View style={[styles.avatarCircle, { backgroundColor: '#64748B' }]}>
-                  <Text style={styles.avatarText}>{getInitials(top3[1].userName)}</Text>
+                <View
+                  style={[
+                    styles.avatarCircle,
+                    {
+                      backgroundColor: theme.colors.surfaceAlt,
+                      width: s(44),
+                      height: s(44),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.avatarText, { color: theme.colors.text, fontSize: font(16) }]}>
+                    {getInitials(top3[1].userName)}
+                  </Text>
                 </View>
                 <Text
-                  style={[styles.podiumName, { color: theme.colors.text }]}
+                  style={[styles.podiumName, { color: theme.colors.text, fontSize: font(13) }]}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   {top3[1].userName}
                 </Text>
-                <Text style={[styles.podiumExp, { color: theme.colors.primary }]}>
+                <Text
+                  style={[styles.podiumExp, { color: theme.colors.primary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   {top3[1].totalPoints.toLocaleString()} EXP
                 </Text>
               </View>
@@ -279,34 +377,73 @@ export default function StudentLeaderboardScreen() {
                 style={[
                   styles.podiumItem,
                   styles.podiumFirst,
-                  { backgroundColor: theme.colors.card, borderColor: '#F59E0B' },
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.warning,
+                    borderRadius: radius.lg,
+                    paddingVertical: s(spacing.md),
+                  },
                 ]}
               >
-                <View style={[styles.podiumRankBadge, { backgroundColor: '#F59E0B' }]}>
-                  <Trophy size={16} color="#FFFFFF" />
+                <View
+                  style={[
+                    styles.podiumRankBadge,
+                    {
+                      backgroundColor: theme.colors.warning,
+                      width: s(28),
+                      height: s(28),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Trophy size={s(16)} color="#FFFFFF" />
                 </View>
                 <View
                   style={[
                     styles.avatarCircle,
                     styles.avatarFirst,
-                    { backgroundColor: theme.colors.primary },
+                    {
+                      backgroundColor: theme.colors.primary,
+                      width: s(52),
+                      height: s(52),
+                      borderRadius: radius.full,
+                    },
                   ]}
                 >
-                  <Text style={styles.avatarText}>{getInitials(top3[0].userName)}</Text>
+                  <Text style={[styles.avatarText, { color: '#FFFFFF', fontSize: font(18) }]}>
+                    {getInitials(top3[0].userName)}
+                  </Text>
                 </View>
                 <Text
-                  style={[styles.podiumName, { color: theme.colors.text, fontWeight: '700' }]}
+                  style={[styles.podiumName, { color: theme.colors.text, fontWeight: '700', fontSize: font(13.5) }]}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   {top3[0].userName}
                 </Text>
-                <Text style={[styles.podiumExp, { color: theme.colors.primary, fontWeight: '800' }]}>
+                <Text
+                  style={[styles.podiumExp, { color: theme.colors.primary, fontWeight: '800', fontSize: font(12.5) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   {top3[0].totalPoints.toLocaleString()} EXP
                 </Text>
                 {top3[0].currentStreak > 0 ? (
-                  <View style={styles.streakPill}>
-                    <Flame size={12} color={theme.colors.warning} />
-                    <Text style={[styles.streakPillText, { color: theme.colors.warning }]}>
+                  <View
+                    style={[
+                      styles.streakPill,
+                      {
+                        backgroundColor: theme.colors.warningBg,
+                        borderRadius: radius.sm,
+                        paddingHorizontal: s(6),
+                        paddingVertical: 2,
+                      },
+                    ]}
+                  >
+                    <Flame size={s(12)} color={theme.colors.warning} />
+                    <Text
+                      style={[styles.streakPillText, { color: theme.colors.warning, fontSize: font(11) }]}
+                      maxFontSizeMultiplier={maxFontSizeMultiplier}
+                    >
                       {top3[0].currentStreak}d
                     </Text>
                   </View>
@@ -320,22 +457,53 @@ export default function StudentLeaderboardScreen() {
                 style={[
                   styles.podiumItem,
                   styles.podiumThird,
-                  { backgroundColor: theme.colors.card, borderColor: '#D97706' },
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    borderRadius: radius.lg,
+                    paddingVertical: s(spacing.md),
+                  },
                 ]}
               >
-                <View style={[styles.podiumRankBadge, { backgroundColor: '#D97706' }]}>
-                  <Text style={styles.podiumRankText}>3</Text>
+                <View
+                  style={[
+                    styles.podiumRankBadge,
+                    {
+                      backgroundColor: `${theme.colors.primary}20`,
+                      width: s(28),
+                      height: s(28),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.podiumRankText, { color: theme.colors.primary, fontSize: font(13) }]}>3</Text>
                 </View>
-                <View style={[styles.avatarCircle, { backgroundColor: '#B45309' }]}>
-                  <Text style={styles.avatarText}>{getInitials(top3[2].userName)}</Text>
+                <View
+                  style={[
+                    styles.avatarCircle,
+                    {
+                      backgroundColor: `${theme.colors.primary}25`,
+                      width: s(44),
+                      height: s(44),
+                      borderRadius: radius.full,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.avatarText, { color: theme.colors.primary, fontSize: font(16) }]}>
+                    {getInitials(top3[2].userName)}
+                  </Text>
                 </View>
                 <Text
-                  style={[styles.podiumName, { color: theme.colors.text }]}
+                  style={[styles.podiumName, { color: theme.colors.text, fontSize: font(13) }]}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   {top3[2].userName}
                 </Text>
-                <Text style={[styles.podiumExp, { color: theme.colors.primary }]}>
+                <Text
+                  style={[styles.podiumExp, { color: theme.colors.primary, fontSize: font(12) }]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
                   {top3[2].totalPoints.toLocaleString()} EXP
                 </Text>
               </View>
@@ -347,7 +515,13 @@ export default function StudentLeaderboardScreen() {
       ) : null}
 
       {restEntries.length > 0 ? (
-        <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary, marginTop: 12 }]}>
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: theme.colors.textSecondary, fontSize: font(12), marginTop: s(spacing.md), marginBottom: s(spacing.sm) },
+          ]}
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
+        >
           HONOR ROLL RANKINGS
         </Text>
       ) : null}
@@ -363,6 +537,9 @@ export default function StudentLeaderboardScreen() {
           {
             backgroundColor: isSelf ? `${theme.colors.primary}15` : theme.colors.card,
             borderColor: isSelf ? theme.colors.primary : theme.colors.border,
+            borderRadius: radius.md,
+            padding: s(spacing.md),
+            marginBottom: s(spacing.sm),
           },
         ]}
       >
@@ -370,8 +547,9 @@ export default function StudentLeaderboardScreen() {
           <Text
             style={[
               styles.rowRankText,
-              { color: isSelf ? theme.colors.primary : theme.colors.textSecondary },
+              { color: isSelf ? theme.colors.primary : theme.colors.textSecondary, fontSize: font(14) },
             ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             #{item.rank}
           </Text>
@@ -380,20 +558,32 @@ export default function StudentLeaderboardScreen() {
         <View
           style={[
             styles.rowAvatar,
-            { backgroundColor: isSelf ? theme.colors.primary : `${theme.colors.textSecondary}30` },
+            {
+              backgroundColor: isSelf ? theme.colors.primary : theme.colors.surfaceAlt,
+              width: s(38),
+              height: s(38),
+              borderRadius: radius.full,
+              marginRight: s(spacing.sm),
+            },
           ]}
         >
-          <Text style={styles.rowAvatarText}>{getInitials(item.userName)}</Text>
+          <Text
+            style={[styles.rowAvatarText, { color: isSelf ? '#FFFFFF' : theme.colors.text, fontSize: font(14) }]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
+            {getInitials(item.userName)}
+          </Text>
         </View>
 
         <View style={styles.rowMainInfo}>
-          <View style={styles.rowNameLine}>
+          <View style={[styles.rowNameLine, { gap: s(spacing.xs) }]}>
             <Text
               style={[
                 styles.rowName,
-                { color: theme.colors.text, fontWeight: isSelf ? '700' : '600' },
+                { color: theme.colors.text, fontWeight: isSelf ? '700' : '600', fontSize: font(14) },
               ]}
               numberOfLines={1}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
             >
               {item.userName}
             </Text>
@@ -402,17 +592,26 @@ export default function StudentLeaderboardScreen() {
             ) : null}
           </View>
           {item.levelTier ? (
-            <Text style={[styles.rowTier, { color: theme.colors.textSecondary }]}>
+            <Text
+              style={[styles.rowTier, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               Tier: {item.levelTier.toUpperCase()}
             </Text>
           ) : null}
         </View>
 
         <View style={styles.rowExpCol}>
-          <Text style={[styles.rowExpValue, { color: theme.colors.primary }]}>
+          <Text
+            style={[styles.rowExpValue, { color: theme.colors.primary, fontSize: font(14) }]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             {item.totalPoints.toLocaleString()}
           </Text>
-          <Text style={[styles.rowExpLabel, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[styles.rowExpLabel, { color: theme.colors.textSecondary, fontSize: font(10), marginTop: 1 }]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             EXP
           </Text>
         </View>
@@ -421,36 +620,53 @@ export default function StudentLeaderboardScreen() {
   };
 
   const renderBadgesHeader = () => (
-    <View style={styles.badgesHeader}>
+    <View style={[styles.badgesHeader, { marginBottom: s(spacing.md) }]}>
       {/* Progress Summary Card */}
       <Card
         style={[
           styles.badgeStatsCard,
-          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+          {
+            backgroundColor: theme.colors.card,
+            borderColor: theme.colors.border,
+            borderRadius: radius.lg,
+            padding: s(spacing.lg),
+            marginBottom: s(spacing.md),
+          },
         ]}
       >
         <View style={styles.badgeStatsRow}>
           <View style={styles.badgeStatsLeft}>
-            <Text style={[styles.badgeStatsValue, { color: theme.colors.primary }]}>
+            <Text
+              style={[styles.badgeStatsValue, { color: theme.colors.primary, fontSize: font(22) }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               {unlockedBadgesCount} / {badges.length}
             </Text>
-            <Text style={[styles.badgeStatsLabel, { color: theme.colors.textSecondary }]}>
+            <Text
+              style={[styles.badgeStatsLabel, { color: theme.colors.textSecondary, fontSize: font(13), marginTop: 4 }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               Badges Unlocked ({Math.round((unlockedBadgesCount / (badges.length || 1)) * 100)}%)
             </Text>
           </View>
           <View
             style={[
               styles.badgeTrophyCircle,
-              { backgroundColor: `${theme.colors.primary}18` },
+              {
+                backgroundColor: `${theme.colors.primary}18`,
+                width: s(54),
+                height: s(54),
+                borderRadius: radius.full,
+              },
             ]}
           >
-            <Award size={28} color={theme.colors.primary} />
+            <Award size={s(28)} color={theme.colors.primary} />
           </View>
         </View>
       </Card>
 
       {/* Category Filter Pills */}
-      <View style={styles.categoryPillScroll}>
+      <View style={[styles.categoryPillScroll, { gap: s(spacing.sm), marginBottom: s(spacing.xs) }]}>
         {(
           [
             { id: 'ALL', label: 'All' },
@@ -470,7 +686,10 @@ export default function StudentLeaderboardScreen() {
               style={[
                 styles.categoryPill,
                 {
-                  backgroundColor: isSelected ? theme.colors.primary : theme.colors.card,
+                  borderRadius: radius.full,
+                  paddingHorizontal: s(spacing.md),
+                  paddingVertical: s(spacing.xs),
+                  backgroundColor: isSelected ? theme.colors.primary : theme.colors.surfaceAlt,
                   borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                 },
               ]}
@@ -480,8 +699,13 @@ export default function StudentLeaderboardScreen() {
               <Text
                 style={[
                   styles.categoryPillText,
-                  { color: isSelected ? '#FFFFFF' : theme.colors.text },
+                  {
+                    fontSize: font(12),
+                    color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
+                    fontWeight: isSelected ? '700' : '500',
+                  },
                 ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
               >
                 {cat.label}
               </Text>
@@ -500,6 +724,9 @@ export default function StudentLeaderboardScreen() {
           {
             backgroundColor: theme.colors.card,
             borderColor: item.isUnlocked ? theme.colors.primary : theme.colors.border,
+            borderRadius: radius.lg,
+            padding: s(spacing.md),
+            marginBottom: s(spacing.sm),
             opacity: item.isUnlocked ? 1 : 0.65,
           },
         ]}
@@ -510,20 +737,27 @@ export default function StudentLeaderboardScreen() {
             {
               backgroundColor: item.isUnlocked
                 ? `${theme.colors.primary}18`
-                : `${theme.colors.textSecondary}15`,
+                : theme.colors.surfaceAlt,
+              width: s(48),
+              height: s(48),
+              borderRadius: radius.full,
+              marginRight: s(spacing.md),
             },
           ]}
         >
           {item.isUnlocked ? (
-            <Sparkles size={24} color={theme.colors.primary} />
+            <Sparkles size={s(24)} color={theme.colors.primary} />
           ) : (
-            <Lock size={22} color={theme.colors.textSecondary} />
+            <Lock size={s(22)} color={theme.colors.textSecondary} />
           )}
         </View>
 
         <View style={styles.badgeInfo}>
-          <View style={styles.badgeTitleRow}>
-            <Text style={[styles.badgeTitle, { color: theme.colors.text }]}>
+          <View style={[styles.badgeTitleRow, { gap: s(spacing.sm) }]}>
+            <Text
+              style={[styles.badgeTitle, { color: theme.colors.text, fontSize: font(15) }]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               {item.title}
             </Text>
             {item.isUnlocked ? (
@@ -532,11 +766,23 @@ export default function StudentLeaderboardScreen() {
               <Badge label="LOCKED" variant="muted" size="sm" />
             )}
           </View>
-          <Text style={[styles.badgeDescription, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.badgeDescription,
+              { color: theme.colors.textSecondary, fontSize: font(12), marginTop: 3, lineHeight: font(17) },
+            ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
+          >
             {item.description}
           </Text>
           {item.earnedAt ? (
-            <Text style={[styles.earnedDate, { color: theme.colors.primary }]}>
+            <Text
+              style={[
+                styles.earnedDate,
+                { color: theme.colors.primary, fontSize: font(11), marginTop: 4 },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
               Earned {new Date(item.earnedAt).toLocaleDateString()}
             </Text>
           ) : null}
@@ -546,33 +792,12 @@ export default function StudentLeaderboardScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      {/* Navigation Header */}
-      <View
-        style={[
-          styles.headerBar,
-          { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border },
-        ]}
-      >
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={22} color={theme.colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleGroup}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-            Hall of Fame
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-            {instituteCode.toUpperCase()} • EXP & Badges
-          </Text>
-        </View>
-        <View style={styles.headerRightSpacer} />
-      </View>
+    <Screen contentContainerStyle={styles.screenInner}>
+      <AppHeader
+        showBack
+        title="Hall of Fame"
+        subtitle={`${instituteCode.toUpperCase()} • EXP & Badges`}
+      />
 
       {/* Segment Tab Bar */}
       <View
@@ -583,9 +808,11 @@ export default function StudentLeaderboardScreen() {
       >
         <TouchableOpacity
           accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'leaderboard' }}
           accessibilityLabel="Leaderboard Tab"
           style={[
             styles.tabItem,
+            { paddingVertical: s(spacing.md) },
             activeTab === 'leaderboard' && {
               borderBottomColor: theme.colors.primary,
               borderBottomWidth: 3,
@@ -595,13 +822,14 @@ export default function StudentLeaderboardScreen() {
           activeOpacity={0.8}
         >
           <Trophy
-            size={18}
+            size={s(18)}
             color={activeTab === 'leaderboard' ? theme.colors.primary : theme.colors.textSecondary}
           />
           <Text
             style={[
               styles.tabText,
               {
+                fontSize: font(14),
                 color:
                   activeTab === 'leaderboard'
                     ? theme.colors.primary
@@ -609,6 +837,7 @@ export default function StudentLeaderboardScreen() {
                 fontWeight: activeTab === 'leaderboard' ? '700' : '500',
               },
             ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             Leaderboard
           </Text>
@@ -616,9 +845,11 @@ export default function StudentLeaderboardScreen() {
 
         <TouchableOpacity
           accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'badges' }}
           accessibilityLabel="Badges & Rewards Tab"
           style={[
             styles.tabItem,
+            { paddingVertical: s(spacing.md) },
             activeTab === 'badges' && {
               borderBottomColor: theme.colors.primary,
               borderBottomWidth: 3,
@@ -628,13 +859,14 @@ export default function StudentLeaderboardScreen() {
           activeOpacity={0.8}
         >
           <Award
-            size={18}
+            size={s(18)}
             color={activeTab === 'badges' ? theme.colors.primary : theme.colors.textSecondary}
           />
           <Text
             style={[
               styles.tabText,
               {
+                fontSize: font(14),
                 color:
                   activeTab === 'badges'
                     ? theme.colors.primary
@@ -642,111 +874,157 @@ export default function StudentLeaderboardScreen() {
                 fontWeight: activeTab === 'badges' ? '700' : '500',
               },
             ]}
+            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             Badges & Rewards
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content */}
-      {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-            Loading rankings & badges...
-          </Text>
-        </View>
-      ) : activeTab === 'leaderboard' ? (
-        <FlatList
-          data={restEntries}
-          keyExtractor={(item) => item.userId}
-          ListHeaderComponent={renderLeaderboardHeader}
-          renderItem={renderLeaderboardItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.colors.primary}
+      {/* Main Content Area */}
+      <View style={styles.mainContainer}>
+        {errorMessage && (
+          <View style={{ paddingHorizontal: s(spacing.lg), paddingTop: s(spacing.md) }}>
+            <ErrorBanner
+              message={errorMessage}
+              onRetry={loadData}
+              onDismiss={() => setErrorMessage(null)}
+              retryAccessibilityLabel="Retry loading rankings"
             />
-          }
-          ListEmptyComponent={
-            top3.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Trophy size={48} color={theme.colors.textSecondary} />
-                <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                  No Leaderboard Rankings Yet
-                </Text>
-                <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-                  Complete assignments and practice on CodeLab to earn EXP!
-                </Text>
-              </View>
-            ) : null
-          }
-        />
-      ) : (
-        <FlatList
-          data={filteredBadges}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderBadgesHeader}
-          renderItem={renderBadgeItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.colors.primary}
+          </View>
+        )}
+
+        {loading ? (
+          <View style={[styles.loadingContainer, { padding: s(spacing.lg) }]}>
+            <SkeletonBlock
+              width="100%"
+              height={s(72)}
+              borderRadius={radius.lg}
+              style={{ marginBottom: s(spacing.md) }}
             />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Award size={48} color={theme.colors.textSecondary} />
-              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                No Badges in this Category
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-                Select another category or earn new achievements!
-              </Text>
+            <View style={{ flexDirection: 'row', gap: s(spacing.sm), marginBottom: s(spacing.lg), alignItems: 'flex-end' }}>
+              <SkeletonBlock width="31%" height={s(140)} borderRadius={radius.lg} />
+              <SkeletonBlock width="34%" height={s(170)} borderRadius={radius.lg} />
+              <SkeletonBlock width="31%" height={s(130)} borderRadius={radius.lg} />
             </View>
-          }
-        />
-      )}
-    </SafeAreaView>
+            {[1, 2, 3].map((i) => (
+              <SkeletonBlock
+                key={i}
+                width="100%"
+                height={s(56)}
+                borderRadius={radius.md}
+                style={{ marginBottom: s(spacing.sm) }}
+              />
+            ))}
+          </View>
+        ) : activeTab === 'leaderboard' ? (
+          <FlatList
+            data={restEntries}
+            keyExtractor={(item) => item.userId}
+            ListHeaderComponent={renderLeaderboardHeader}
+            renderItem={renderLeaderboardItem}
+            contentContainerStyle={[styles.listContent, { padding: s(spacing.lg) }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={theme.colors.primary}
+              />
+            }
+            ListEmptyComponent={
+              top3.length === 0 ? (
+                <Card
+                  style={[
+                    styles.emptyContainer,
+                    {
+                      padding: s(spacing.xxxl),
+                      borderRadius: radius.lg,
+                      borderColor: theme.colors.border,
+                    },
+                  ]}
+                >
+                  <Trophy size={s(48)} color={theme.colors.textSecondary} />
+                  <Text
+                    style={[
+                      styles.emptyTitle,
+                      { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    No Leaderboard Rankings Yet
+                  </Text>
+                  <Text
+                    style={[
+                      styles.emptySubtitle,
+                      { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                    ]}
+                    maxFontSizeMultiplier={maxFontSizeMultiplier}
+                  >
+                    Complete assignments and practice on CodeLab to earn EXP!
+                  </Text>
+                </Card>
+              ) : null
+            }
+          />
+        ) : (
+          <FlatList
+            data={filteredBadges}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={renderBadgesHeader}
+            renderItem={renderBadgeItem}
+            contentContainerStyle={[styles.listContent, { padding: s(spacing.lg) }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={theme.colors.primary}
+              />
+            }
+            ListEmptyComponent={
+              <Card
+                style={[
+                  styles.emptyContainer,
+                  {
+                    padding: s(spacing.xxxl),
+                    borderRadius: radius.lg,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
+                <Award size={s(48)} color={theme.colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.emptyTitle,
+                    { color: theme.colors.text, fontSize: font(17), lineHeight: font(23) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  No Badges in this Category
+                </Text>
+                <Text
+                  style={[
+                    styles.emptySubtitle,
+                    { color: theme.colors.textSecondary, fontSize: font(13), lineHeight: font(19) },
+                  ]}
+                  maxFontSizeMultiplier={maxFontSizeMultiplier}
+                >
+                  Select another category or complete course challenges to earn new achievements!
+                </Text>
+              </Card>
+            }
+          />
+        )}
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screenInner: {
     flex: 1,
   },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 22,
-  },
-  headerTitleGroup: {
+  mainContainer: {
     flex: 1,
-    marginLeft: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    marginTop: 1,
-  },
-  headerRightSpacer: {
-    width: 44,
   },
   tabBar: {
     flexDirection: 'row',
@@ -758,25 +1036,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
-    minHeight: TOUCH_TARGET,
+    minHeight: TOUCH_TARGET ?? 44,
   },
-  tabText: {
-    fontSize: 14,
+  tabText: {},
+  loadingContainer: {
+    flex: 1,
   },
   listContent: {
-    padding: 16,
     paddingBottom: 40,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    fontSize: 14,
-    marginTop: 12,
   },
   leaderboardHeader: {
     marginBottom: 8,
@@ -784,10 +1051,7 @@ const styles = StyleSheet.create({
   privacyBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 16,
   },
   privacyInfo: {
     flex: 1,
@@ -796,22 +1060,15 @@ const styles = StyleSheet.create({
   privacyTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   privacyTitle: {
-    fontSize: 14,
     fontWeight: '600',
   },
   privacyDesc: {
-    fontSize: 12,
-    marginTop: 3,
     lineHeight: 16,
   },
   selfRankCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 18,
   },
   selfRankRow: {
     flexDirection: 'row',
@@ -821,73 +1078,53 @@ const styles = StyleSheet.create({
   selfRankLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
   selfRankBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   selfRankNumber: {
     color: '#FFFFFF',
-    fontSize: 16,
     fontWeight: '800',
   },
   selfRankDetails: {
     justifyContent: 'center',
   },
   selfRankTitle: {
-    fontSize: 15,
     fontWeight: '700',
   },
   selfRankSubtitle: {
-    fontSize: 12,
     marginTop: 2,
   },
   selfRankMetrics: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
   },
   metricItem: {
     alignItems: 'center',
   },
   metricValue: {
-    fontSize: 16,
     fontWeight: '800',
   },
-  metricLabel: {
-    fontSize: 11,
-    marginTop: 1,
-  },
+  metricLabel: {},
   streakRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
   },
   sectionTitle: {
-    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 12,
   },
-  podiumContainer: {
-    marginBottom: 18,
-  },
+  podiumContainer: {},
   podiumRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: 8,
   },
   podiumItem: {
     flex: 1,
     alignItems: 'center',
-    borderRadius: 16,
     borderWidth: 1,
-    paddingVertical: 14,
     paddingHorizontal: 8,
   },
   podiumFirst: {
@@ -901,87 +1138,56 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   podiumRankBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
   podiumRankText: {
-    color: '#FFFFFF',
-    fontSize: 13,
     fontWeight: '800',
   },
   avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
-  avatarFirst: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
+  avatarFirst: {},
   avatarText: {
-    color: '#FFFFFF',
-    fontSize: 16,
     fontWeight: '800',
   },
   podiumName: {
-    fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 4,
   },
   podiumExp: {
-    fontSize: 12,
     fontWeight: '700',
   },
   streakPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
     marginTop: 4,
   },
   streakPillText: {
-    fontSize: 11,
     fontWeight: '700',
   },
   leaderboardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
     borderWidth: 1,
-    padding: 12,
-    marginBottom: 8,
   },
   rowRankCol: {
     width: 36,
     alignItems: 'center',
   },
   rowRankText: {
-    fontSize: 14,
     fontWeight: '700',
   },
   rowAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
   },
   rowAvatarText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '700',
   },
   rowMainInfo: {
@@ -991,38 +1197,23 @@ const styles = StyleSheet.create({
   rowNameLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
-  rowName: {
-    fontSize: 14,
-  },
+  rowName: {},
   youBadge: {
     paddingHorizontal: 4,
     paddingVertical: 1,
   },
-  rowTier: {
-    fontSize: 11,
-    marginTop: 2,
-  },
+  rowTier: {},
   rowExpCol: {
     alignItems: 'flex-end',
   },
   rowExpValue: {
-    fontSize: 14,
     fontWeight: '700',
   },
-  rowExpLabel: {
-    fontSize: 10,
-    marginTop: 1,
-  },
-  badgesHeader: {
-    marginBottom: 12,
-  },
+  rowExpLabel: {},
+  badgesHeader: {},
   badgeStatsCard: {
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 14,
   },
   badgeStatsRow: {
     flexDirection: 'row',
@@ -1033,53 +1224,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   badgeStatsValue: {
-    fontSize: 22,
     fontWeight: '800',
   },
-  badgeStatsLabel: {
-    fontSize: 13,
-    marginTop: 4,
-  },
+  badgeStatsLabel: {},
   badgeTrophyCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
     justifyContent: 'center',
     alignItems: 'center',
   },
   categoryPillScroll: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 6,
   },
   categoryPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
     borderWidth: 1,
-    minHeight: TOUCH_TARGET - 8,
+    minHeight: (TOUCH_TARGET ?? 44) - 8,
     justifyContent: 'center',
   },
-  categoryPillText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  categoryPillText: {},
   badgeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 10,
   },
   badgeIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
   },
   badgeInfo: {
     flex: 1,
@@ -1088,36 +1257,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
   },
   badgeTitle: {
-    fontSize: 15,
     fontWeight: '700',
     flex: 1,
   },
-  badgeDescription: {
-    fontSize: 12,
-    marginTop: 3,
-    lineHeight: 16,
-  },
+  badgeDescription: {},
   earnedDate: {
-    fontSize: 11,
     fontWeight: '600',
-    marginTop: 4,
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
+    marginTop: 24,
   },
   emptyTitle: {
-    fontSize: 16,
     fontWeight: '700',
     marginTop: 14,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
     textAlign: 'center',
     marginTop: 6,
+    paddingHorizontal: 16,
   },
 });

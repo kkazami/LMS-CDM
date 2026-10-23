@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { typography, TOUCH_TARGET } from '../../lib/typography';
 import { Flame, Zap } from 'lucide-react-native';
+import { getOnPrimaryColor } from '../../lib/design-system';
 
 interface LoginRewardModalProps {
   visible: boolean;
@@ -18,8 +19,8 @@ export function LoginRewardModal({ visible, streak, expEarned, onClaim }: LoginR
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClaim}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          <View style={[styles.flameCircle, { backgroundColor: '#FEF3C7' }]}>
-            <Flame size={44} color="#F59E0B" />
+          <View style={[styles.flameCircle, { backgroundColor: theme.colors.primary + '1A' }]}>
+            <Flame size={44} color={theme.colors.primary} />
           </View>
 
           <Text style={[styles.title, typography.headingLg, { color: theme.colors.text }]}>
@@ -30,13 +31,13 @@ export function LoginRewardModal({ visible, streak, expEarned, onClaim }: LoginR
           </Text>
 
           <View style={styles.rewardRow}>
-            <View style={[styles.rewardBadge, { backgroundColor: '#FEF3C7' }]}>
-              <Flame size={18} color="#D97706" />
-              <Text style={[styles.rewardText, { color: '#92400E' }]}>{streak} Day Streak</Text>
+            <View style={[styles.rewardBadge, { backgroundColor: theme.isDark ? theme.colors.primary + '25' : theme.colors.primary + '18' }]}>
+              <Flame size={18} color={theme.colors.primary} />
+              <Text style={[styles.rewardText, { color: theme.isDark ? theme.colors.text : theme.colors.primary }]}>{streak} Day Streak</Text>
             </View>
-            <View style={[styles.rewardBadge, { backgroundColor: '#FEF9C3' }]}>
-              <Zap size={18} color="#CA8A04" />
-              <Text style={[styles.rewardText, { color: '#854D0E' }]}>{'+' + expEarned + ' EXP'}</Text>
+            <View style={[styles.rewardBadge, { backgroundColor: theme.isDark ? theme.colors.primary + '25' : theme.colors.primary + '18' }]}>
+              <Zap size={18} color={theme.colors.primary} />
+              <Text style={[styles.rewardText, { color: theme.isDark ? theme.colors.text : theme.colors.primary }]}>{'+' + expEarned + ' EXP'}</Text>
             </View>
           </View>
 
@@ -47,7 +48,7 @@ export function LoginRewardModal({ visible, streak, expEarned, onClaim }: LoginR
             onPress={onClaim}
             activeOpacity={0.85}
           >
-            <Text style={styles.claimBtnText}>Claim Reward</Text>
+            <Text style={[styles.claimBtnText, { color: getOnPrimaryColor(theme) }]}>Claim Reward</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -114,7 +115,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   claimBtnText: {
-    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },

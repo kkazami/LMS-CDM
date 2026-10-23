@@ -200,8 +200,8 @@ const iteDarkTheme: InstituteTheme = {
   name: 'Institute of Teacher Education',
   isDark: true,
   colors: {
-    primary: '#3B82F6',
-    primaryHover: '#60A5FA',
+    primary: '#2563EB',
+    primaryHover: '#3B82F6',
     sidebar: '#12151E',
     sidebarMuted: '#1E2230',
     background: '#0F1117',
@@ -214,7 +214,7 @@ const iteDarkTheme: InstituteTheme = {
     textMuted: '#6B7280',
     border: '#2E3547',
     borderMuted: '#1F2433',
-    ring: '#3B82F6',
+    ring: '#2563EB',
     ...DARK_SEMANTIC,
   },
 };
@@ -243,6 +243,27 @@ export function getInstituteTheme(code: string, isDark = false): InstituteTheme 
   if (normalized === 'ibe') return isDark ? ibeDarkTheme : ibeLightTheme;
   if (normalized === 'ite') return isDark ? iteDarkTheme : iteLightTheme;
   return isDark ? icsDarkTheme : icsLightTheme;
+}
+
+export const CANONICAL_INSTITUTE_NAMES: Record<InstituteCode, string> = {
+  ics: 'Institute of Computing Studies',
+  ibe: 'Institute of Business and Entrepreneurship',
+  ite: 'Institute of Teacher Education',
+};
+
+/**
+ * Resolves the canonical institute display name, overriding stale database seed values
+ * like "Institute of Technology and Engineering" for ITE.
+ */
+export function getCanonicalInstituteName(code?: string, fallbackName?: string): string {
+  const norm = (code || '').toLowerCase().trim();
+  if (norm === 'ics') return CANONICAL_INSTITUTE_NAMES.ics;
+  if (norm === 'ibe') return CANONICAL_INSTITUTE_NAMES.ibe;
+  if (norm === 'ite') return CANONICAL_INSTITUTE_NAMES.ite;
+  if (fallbackName && /technology\s+and\s+engineering/i.test(fallbackName)) {
+    return CANONICAL_INSTITUTE_NAMES.ite;
+  }
+  return fallbackName || CANONICAL_INSTITUTE_NAMES.ics;
 }
 
 export const INSTITUTE_LIST = [

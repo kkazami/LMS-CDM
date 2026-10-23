@@ -9,18 +9,26 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Bell, CheckCheck, BookOpen, Award, Info, AlertTriangle, Trash2 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Screen, ErrorBanner } from '../../../../src/components/ui';
+import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
+import { isIteUser } from '../../../../src/lib/ite-eligibility';
+import { getOnPrimaryColor } from '../../../../src/lib/design-system';
 import type { AppNotification } from '@lms/types';
 
 export default function StudentAlertsScreen() {
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const onPrimary = getOnPrimaryColor(theme);
+  const { headerPaddingTop } = useResponsive();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +140,7 @@ export default function StudentAlertsScreen() {
   return (
     <Screen scrollable={false}>
       {/* Header */}
-      <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+      <View style={[styles.headerContainer, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border, paddingTop: headerPaddingTop }]}>
         <View style={styles.headerTop}>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Notifications</Text>
           <View style={styles.headerRightGroup}>
@@ -185,7 +193,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'ALL' ? theme.colors.card : theme.colors.textSecondary },
+                { color: filter === 'ALL' ? onPrimary : theme.colors.textSecondary, fontWeight: filter === 'ALL' ? '700' : '500' },
               ]}
             >
               All ({notifications.length})
@@ -207,7 +215,7 @@ export default function StudentAlertsScreen() {
             <Text
               style={[
                 styles.filterTabText,
-                { color: filter === 'UNREAD' ? theme.colors.card : theme.colors.textSecondary },
+                { color: filter === 'UNREAD' ? onPrimary : theme.colors.textSecondary, fontWeight: filter === 'UNREAD' ? '700' : '500' },
               ]}
             >
               Unread ({unreadCount})
@@ -271,6 +279,15 @@ export default function StudentAlertsScreen() {
                 style={styles.cardMainTouch}
                 onPress={() => {
                   if (!item.isRead) handleMarkRead(item.id);
+                  const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
+                  const isMeetingAlert =
+                    (item.type && item.type.toLowerCase().includes('meeting')) ||
+                    text.includes('meeting is live') ||
+                    text.includes('class meeting') ||
+                    text.includes('meeting');
+                  if (isMeetingAlert && isIteUser(user)) {
+                    router.push('/student/meetings' as any);
+                  }
                 }}
                 activeOpacity={0.8}
               >
@@ -322,7 +339,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
@@ -398,7 +414,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,

@@ -51,7 +51,7 @@ export function Card({
   };
 
   const getBorderColor = () => {
-    if (themedBorder) return theme.colors.primary;
+    if (themedBorder) return `${theme.colors.primary}40`;
     return theme.colors.border;
   };
 
@@ -62,7 +62,8 @@ export function Card({
         {
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderRadius: radius.lg,
+          borderRadius: 16,
+          shadowOpacity: theme.isDark ? 0.25 : 0.05,
         },
         style,
       ]}
@@ -149,6 +150,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',

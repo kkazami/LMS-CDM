@@ -34,6 +34,13 @@ import {
   BookOpen,
   Pencil,
   Trash2,
+  Megaphone,
+  ClipboardList,
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  RefreshCw,
 } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Burnt from 'burnt';
@@ -46,6 +53,8 @@ import { Card } from '../../../../../src/components/common/Card';
 import { Button } from '../../../../../src/components/common/Button';
 import { Input } from '../../../../../src/components/common/Input';
 import { TOUCH_TARGET } from '../../../../../src/lib/typography';
+import { isIteUser } from '../../../../../src/lib/ite-eligibility';
+import { ClassworkAttachments, ClassworkDescription } from '../../../../../src/components/classwork/ClassworkAttachments';
 import type {
   CourseDetail,
   CourseStreamResponse,
@@ -55,8 +64,14 @@ import type {
   CreateClassworkInput,
   GradeSubmissionInput,
 } from '@lms/types';
+import type {
+  CourseBroadcastItem,
+  CourseFormItem,
+  FormAttemptItem,
+  CourseParticipationDetailResponse,
+} from '@lms/api-client';
 
-type TeacherTab = 'STREAM' | 'CLASSWORK' | 'GRADEBOOK' | 'PEOPLE';
+type TeacherTab = 'STREAM' | 'CLASSWORK' | 'BROADCAST' | 'FORMS' | 'GRADEBOOK' | 'PEOPLE' | 'PARTICIPATION';
 
 interface GradebookData {
   course: { id: string; title: string; code: string };
@@ -116,6 +131,144 @@ export default function TeacherCourseDetailScreen() {
   const [feedbackInput, setFeedbackInput] = useState('');
   const [submittingGrade, setSubmittingGrade] = useState(false);
 
+  // Broadcasts state
+  const [broadcasts, setBroadcasts] = useState<CourseBroadcastItem[]>([]);
+  const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+  const [broadcastModalVisible, setBroadcastModalVisible] = useState(false);
+  const [broadcastMsgInput, setBroadcastMsgInput] = useState('');
+  const [broadcastCategoryInput, setBroadcastCategoryInput] = useState<'GENERAL' | 'URGENT' | 'REMINDER'>('GENERAL');
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
+  // Forms & Responses state
+  const [formsList, setFormsList] = useState<CourseFormItem[]>([]);
+  const [loadingForms, setLoadingForms] = useState(false);
+  const [formsError, setFormsError] = useState<string | null>(null);
+  const [selectedFormForResponses, setSelectedFormForResponses] = useState<CourseFormItem | null>(null);
+  const [formResponses, setFormResponses] = useState<FormAttemptItem[]>([]);
+  const [loadingResponses, setLoadingResponses] = useState(false);
+  const [responsesError, setResponsesError] = useState<string | null>(null);
+  const [responsesModalVisible, setResponsesModalVisible] = useState(false);
+
+  // ITE Participation state (strictly ITE only)
+  const isIte = isIteUser(user);
+  const [participationData, setParticipationData] = useState<CourseParticipationDetailResponse | null>(null);
+  const [loadingParticipation, setLoadingParticipation] = useState(false);
+  const [participationError, setParticipationError] = useState<string | null>(null);
+
+  const fetchBroadcasts = async () => {
+    if (!courseId) return;
+    setLoadingBroadcasts(true);
+    setBroadcastError(null);
+    try {
+      const res = await api.broadcasts.list(courseId);
+      setBroadcasts(res.broadcasts || []);
+    } catch {
+      setBroadcastError('Failed to load course broadcasts. Please try again.');
+    } finally {
+      setLoadingBroadcasts(false);
+    }
+  };
+
+  const handleCreateBroadcast = async () => {
+    if (!courseId || !broadcastMsgInput.trim()) return;
+    setSendingBroadcast(true);
+    try {
+      await api.broadcasts.create(courseId, {
+        message: broadcastMsgInput.trim(),
+        category: broadcastCategoryInput,
+      });
+      setBroadcastModalVisible(false);
+      setBroadcastMsgInput('');
+      try {
+        Burnt.toast({
+          title: 'Broadcast Sent',
+          message: 'Alert dispatched to all enrolled students.',
+          preset: 'done',
+        });
+      } catch {}
+      await fetchBroadcasts();
+    } catch (err: any) {
+      Alert.alert('Broadcast Error', err?.message || 'Could not send broadcast alert.');
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
+  const handleDeleteBroadcast = (broadcastId: string) => {
+    if (!courseId) return;
+    Alert.alert(
+      'Remove Broadcast',
+      'Are you sure you want to delete this broadcast alert from the course feed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.broadcasts.delete(courseId, broadcastId);
+              try {
+                Burnt.toast({
+                  title: 'Broadcast Removed',
+                  preset: 'done',
+                });
+              } catch {}
+              setBroadcasts((prev) => prev.filter((b) => b.id !== broadcastId));
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Could not delete broadcast.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const fetchForms = async () => {
+    if (!courseId) return;
+    setLoadingForms(true);
+    setFormsError(null);
+    try {
+      const res = await api.forms.list(courseId);
+      setFormsList(res.forms || []);
+    } catch {
+      setFormsError('Failed to load course forms and quizzes. Please try again.');
+    } finally {
+      setLoadingForms(false);
+    }
+  };
+
+  const handleOpenFormResponses = async (item: CourseFormItem) => {
+    if (!courseId) return;
+    setSelectedFormForResponses(item);
+    setResponsesModalVisible(true);
+    setLoadingResponses(true);
+    setResponsesError(null);
+    try {
+      const res = await api.forms.getResponses(courseId, item.id);
+      setFormResponses(res.attempts || []);
+    } catch {
+      setResponsesError('Could not load student responses. Please retry.');
+    } finally {
+      setLoadingResponses(false);
+    }
+  };
+
+  const fetchParticipation = async () => {
+    if (!courseId || !isIte) return;
+    setLoadingParticipation(true);
+    setParticipationError(null);
+    try {
+      const res = await api.ite.getCourseParticipation(courseId);
+      setParticipationData(res);
+    } catch {
+      // User-friendly message, never raw database text
+      setParticipationError('Participation analytics unavailable. Check permissions or try again later.');
+    } finally {
+      setLoadingParticipation(false);
+    }
+  };
+
   const loadData = async () => {
     if (!courseId) return;
 
@@ -159,9 +312,22 @@ export default function TeacherCourseDetailScreen() {
     loadData();
   }, [courseId]);
 
+  useEffect(() => {
+    if (activeTab === 'BROADCAST' && broadcasts.length === 0 && !loadingBroadcasts) {
+      fetchBroadcasts();
+    } else if (activeTab === 'FORMS' && formsList.length === 0 && !loadingForms) {
+      fetchForms();
+    } else if (activeTab === 'PARTICIPATION' && isIte && !participationData && !loadingParticipation) {
+      fetchParticipation();
+    }
+  }, [activeTab]);
+
   const onRefresh = () => {
     setRefreshing(true);
     loadData();
+    if (activeTab === 'BROADCAST') fetchBroadcasts();
+    if (activeTab === 'FORMS') fetchForms();
+    if (activeTab === 'PARTICIPATION' && isIte) fetchParticipation();
   };
 
   // Post Stream Announcement
@@ -480,14 +646,18 @@ export default function TeacherCourseDetailScreen() {
           Faculty: {course?.instructorName || user?.name} &bull; {people?.totalEnrolled ?? 0} Students Enrolled
         </Text>
 
-        {/* 4 Segmented Faculty Tabs */}
-        <View style={[styles.tabBar, { borderTopColor: theme.colors.border }]}>
+        {/* Faculty Navigation Tabs */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.tabBarScroll, { borderTopColor: theme.colors.border }]}
+        >
           <TouchableOpacity
             accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === 'STREAM' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
               activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('STREAM')}
@@ -513,7 +683,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'CLASSWORK' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
               activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('CLASSWORK')}
@@ -536,10 +706,62 @@ export default function TeacherCourseDetailScreen() {
 
           <TouchableOpacity
             accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'BROADCAST' }}
+            style={[
+              styles.tabBtn,
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              activeTab === 'BROADCAST' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+            ]}
+            onPress={() => setActiveTab('BROADCAST')}
+          >
+            <Megaphone size={s(14)} color={activeTab === 'BROADCAST' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Text
+              style={[
+                styles.tabLabel,
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'BROADCAST' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'BROADCAST' ? '700' : '500',
+                },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Broadcast
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'FORMS' }}
+            style={[
+              styles.tabBtn,
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              activeTab === 'FORMS' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+            ]}
+            onPress={() => setActiveTab('FORMS')}
+          >
+            <ClipboardList size={s(14)} color={activeTab === 'FORMS' ? theme.colors.primary : theme.colors.textSecondary} />
+            <Text
+              style={[
+                styles.tabLabel,
+                {
+                  fontSize: font(11.5),
+                  color: activeTab === 'FORMS' ? theme.colors.primary : theme.colors.textSecondary,
+                  fontWeight: activeTab === 'FORMS' ? '700' : '500',
+                },
+              ]}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Forms & Quizzes
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === 'GRADEBOOK' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
               activeTab === 'GRADEBOOK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('GRADEBOOK')}
@@ -565,7 +787,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'PEOPLE' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
               activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('PEOPLE')}
@@ -585,7 +807,35 @@ export default function TeacherCourseDetailScreen() {
               Roster
             </Text>
           </TouchableOpacity>
-        </View>
+
+          {isIte && (
+            <TouchableOpacity
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === 'PARTICIPATION' }}
+              style={[
+                styles.tabBtn,
+                { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+                activeTab === 'PARTICIPATION' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+              ]}
+              onPress={() => setActiveTab('PARTICIPATION')}
+            >
+              <Activity size={s(14)} color={activeTab === 'PARTICIPATION' ? theme.colors.primary : theme.colors.textSecondary} />
+              <Text
+                style={[
+                  styles.tabLabel,
+                  {
+                    fontSize: font(11.5),
+                    color: activeTab === 'PARTICIPATION' ? theme.colors.primary : theme.colors.textSecondary,
+                    fontWeight: activeTab === 'PARTICIPATION' ? '700' : '500',
+                  },
+                ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                Participation
+              </Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
       </ScreenHeaderContainer>
 
       {/* Main Tab Content */}
@@ -776,10 +1026,20 @@ export default function TeacherCourseDetailScreen() {
                       </Text>
 
                       {item.description ? (
-                        <Text style={[styles.cwDesc, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-                          {item.description}
-                        </Text>
+                        <ClassworkDescription
+                          content={item.description}
+                          numberOfLines={2}
+                          textStyle={[styles.cwDesc, { color: theme.colors.textSecondary }]}
+                        />
                       ) : null}
+
+                      {Boolean(item.attachments && item.attachments.length > 0) && (
+                        <ClassworkAttachments
+                          attachments={item.attachments}
+                          title="ATTACHED RESOURCES"
+                          style={{ marginTop: 8 }}
+                        />
+                      )}
 
                       <View style={[styles.cwFooter, { borderTopColor: theme.colors.border }]}>
                         <Text style={[styles.cwDueDate, { color: theme.colors.textSecondary }]}>
@@ -970,6 +1230,393 @@ export default function TeacherCourseDetailScreen() {
                       </View>
                     </View>
                   ))
+                )}
+              </View>
+            )}
+
+            {/* ==================== TAB 5: BROADCAST ALERTS ==================== */}
+            {activeTab === 'BROADCAST' && (
+              <View>
+                <View style={styles.tabHeaderRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.sectionHeading, { color: theme.colors.text, marginBottom: 2 }]}>
+                      Class Broadcast Alerts
+                    </Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
+                      High-priority push notifications and announcements
+                    </Text>
+                  </View>
+                  <Button
+                    title="Send Alert"
+                    icon={PlusCircle}
+                    onPress={() => setBroadcastModalVisible(true)}
+                    style={{ paddingVertical: 6, paddingHorizontal: 12, minHeight: 32 }}
+                  />
+                </View>
+
+                {loadingBroadcasts ? (
+                  <View style={styles.loadingBox}>
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                      Loading class broadcasts...
+                    </Text>
+                  </View>
+                ) : broadcastError ? (
+                  <Card style={[styles.errorCard, { borderColor: theme.colors.danger }]}>
+                    <AlertTriangle size={24} color={theme.colors.danger} />
+                    <Text style={[styles.errorCardText, { color: theme.colors.text }]}>
+                      {broadcastError}
+                    </Text>
+                    <Button
+                      title="Retry"
+                      variant="outline"
+                      icon={RefreshCw}
+                      onPress={fetchBroadcasts}
+                      style={{ marginTop: 8, paddingVertical: 6, paddingHorizontal: 12, minHeight: 32 }}
+                    />
+                  </Card>
+                ) : broadcasts.length === 0 ? (
+                  <Card style={styles.emptyCard}>
+                    <Megaphone size={40} color={theme.colors.textSecondary} />
+                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                      No Active Broadcasts
+                    </Text>
+                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                      Tap "Send Alert" above to dispatch reminders or urgent updates to all enrolled students.
+                    </Text>
+                  </Card>
+                ) : (
+                  broadcasts.map((item) => {
+                    const catVariant =
+                      item.category === 'URGENT' ? 'danger' : item.category === 'REMINDER' ? 'warning' : 'primary';
+                    return (
+                      <View
+                        key={item.id}
+                        style={[styles.streamCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      >
+                        <View style={styles.streamCardHeader}>
+                          <Badge label={item.category} variant={catVariant} size="sm" />
+                          <View style={{ flex: 1, marginLeft: 8 }}>
+                            <Text style={[styles.annTimestamp, { color: theme.colors.textSecondary }]}>
+                              {new Date(item.createdAt).toLocaleDateString()} at{' '}
+                              {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityLabel="Delete broadcast alert"
+                            onPress={() => handleDeleteBroadcast(item.id)}
+                            style={[styles.annActionBtn, { borderColor: theme.colors.border }]}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Trash2 size={14} color={theme.colors.danger} />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={[styles.annContent, { color: theme.colors.text, marginTop: 8 }]}>
+                          {item.message}
+                        </Text>
+                        <View style={[styles.broadcastMetaRow, { borderTopColor: theme.colors.border }]}>
+                          <Text style={[styles.broadcastMetaText, { color: theme.colors.textSecondary }]}>
+                            Sender: {item.senderName || 'Course Instructor'}
+                          </Text>
+                          {item.scopeLabel ? (
+                            <Text style={[styles.broadcastMetaText, { color: theme.colors.textSecondary }]}>
+                              Target: {item.scopeLabel}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            )}
+
+            {/* ==================== TAB 6: FORMS & QUIZZES (VIEW-ONLY) ==================== */}
+            {activeTab === 'FORMS' && (
+              <View>
+                <View style={styles.tabHeaderRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.sectionHeading, { color: theme.colors.text, marginBottom: 2 }]}>
+                      Forms & Quiz Responses
+                    </Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
+                      View student attempt scores and submissions (view-only on mobile)
+                    </Text>
+                  </View>
+                  <Badge label={`${formsList.length} Forms`} variant="default" size="sm" />
+                </View>
+
+                {loadingForms ? (
+                  <View style={styles.loadingBox}>
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                      Loading course forms...
+                    </Text>
+                  </View>
+                ) : formsError ? (
+                  <Card style={[styles.errorCard, { borderColor: theme.colors.danger }]}>
+                    <AlertTriangle size={24} color={theme.colors.danger} />
+                    <Text style={[styles.errorCardText, { color: theme.colors.text }]}>
+                      {formsError}
+                    </Text>
+                    <Button
+                      title="Retry"
+                      variant="outline"
+                      icon={RefreshCw}
+                      onPress={fetchForms}
+                      style={{ marginTop: 8, paddingVertical: 6, paddingHorizontal: 12, minHeight: 32 }}
+                    />
+                  </Card>
+                ) : formsList.length === 0 ? (
+                  <Card style={styles.emptyCard}>
+                    <ClipboardList size={40} color={theme.colors.textSecondary} />
+                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                      No Forms or Quizzes
+                    </Text>
+                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                      Forms published on the web will appear here. Build quizzes using the web Form Builder.
+                    </Text>
+                  </Card>
+                ) : (
+                  formsList.map((form) => {
+                    const attemptsCount = form._count?.attempts ?? 0;
+                    return (
+                      <View
+                        key={form.id}
+                        style={[styles.cwCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                      >
+                        <View style={styles.cwTop}>
+                          <Badge
+                            label={form.status || 'PUBLISHED'}
+                            variant={form.status === 'PUBLISHED' ? 'success' : form.status === 'CLOSED' ? 'danger' : 'default'}
+                            size="sm"
+                          />
+                          <Text style={[styles.cwPointsText, { color: theme.colors.textSecondary }]}>
+                            {form._count?.questions ?? 0} Questions
+                            {form.timeLimitMinutes ? ` · ${form.timeLimitMinutes} mins` : ''}
+                          </Text>
+                        </View>
+
+                        <Text style={[styles.cwTitle, { color: theme.colors.text }]}>
+                          {form.title}
+                        </Text>
+
+                        {form.description ? (
+                          <Text style={[styles.cwDesc, { color: theme.colors.textSecondary }]} numberOfLines={2}>
+                            {form.description}
+                          </Text>
+                        ) : null}
+
+                        <View style={[styles.cwFooter, { borderTopColor: theme.colors.border }]}>
+                          <Text style={[styles.cwDueDate, { color: theme.colors.textSecondary }]}>
+                            {attemptsCount} submission{attemptsCount === 1 ? '' : 's'} recorded
+                          </Text>
+
+                          <TouchableOpacity
+                            onPress={() => handleOpenFormResponses(form)}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text style={[styles.gradeActionLink, { color: theme.colors.primary }]}>
+                              View Responses &rarr;
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            )}
+
+            {/* ==================== TAB 7: ITE PARTICIPATION & RISK (VIEW-ONLY) ==================== */}
+            {activeTab === 'PARTICIPATION' && isIte && (
+              <View>
+                <View style={styles.tabHeaderRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.sectionHeading, { color: theme.colors.text, marginBottom: 2 }]}>
+                      Participation & Risk Monitoring
+                    </Text>
+                    <Text style={[styles.sectionSubtitle, { color: theme.colors.textSecondary }]}>
+                      Student engagement analytics & at-risk cohort alerts (view-only)
+                    </Text>
+                  </View>
+                  <Badge label="ITE Analytics" variant="primary" size="sm" />
+                </View>
+
+                {loadingParticipation ? (
+                  <View style={styles.loadingBox}>
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                      Analyzing student participation metrics...
+                    </Text>
+                  </View>
+                ) : participationError ? (
+                  <Card style={[styles.errorCard, { borderColor: theme.colors.danger }]}>
+                    <AlertTriangle size={24} color={theme.colors.danger} />
+                    <Text style={[styles.errorCardText, { color: theme.colors.text }]}>
+                      {participationError}
+                    </Text>
+                    <Button
+                      title="Retry"
+                      variant="outline"
+                      icon={RefreshCw}
+                      onPress={fetchParticipation}
+                      style={{ marginTop: 8, paddingVertical: 6, paddingHorizontal: 12, minHeight: 32 }}
+                    />
+                  </Card>
+                ) : !participationData ? (
+                  <Card style={styles.emptyCard}>
+                    <Activity size={40} color={theme.colors.textSecondary} />
+                    <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                      No Participation Data Available
+                    </Text>
+                    <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                      Class activity and engagement statistics will show up once students begin working on assignments.
+                    </Text>
+                  </Card>
+                ) : (
+                  <>
+                    {/* KPI Cards Row */}
+                    <View style={styles.kpiRow}>
+                      <View style={[styles.kpiCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+                        <Text style={[styles.kpiValue, { color: theme.colors.primary }]}>
+                          {participationData.kpis.activeThisWeek}
+                        </Text>
+                        <Text style={[styles.kpiLabel, { color: theme.colors.textSecondary }]}>
+                          Active This Week
+                        </Text>
+                      </View>
+                      <View style={[styles.kpiCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+                        <Text style={[styles.kpiValue, { color: theme.colors.success }]}>
+                          {Math.round(participationData.kpis.avgEngagement)}%
+                        </Text>
+                        <Text style={[styles.kpiLabel, { color: theme.colors.textSecondary }]}>
+                          Avg Engagement
+                        </Text>
+                      </View>
+                      <View style={[styles.kpiCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+                        <Text style={[styles.kpiValue, { color: participationData.kpis.highCount > 0 ? theme.colors.danger : theme.colors.textSecondary }]}>
+                          {participationData.kpis.highCount} High &bull; {participationData.kpis.mediumCount} Med
+                        </Text>
+                        <Text style={[styles.kpiLabel, { color: theme.colors.textSecondary }]}>
+                          At-Risk Students
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Students List */}
+                    <Text style={[styles.sectionHeading, { color: theme.colors.text, marginTop: 14 }]}>
+                      Student Engagement Roster ({participationData.students.length})
+                    </Text>
+
+                    {participationData.students.length === 0 ? (
+                      <Card style={styles.emptyCard}>
+                        <Users size={36} color={theme.colors.textSecondary} />
+                        <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+                          No Students Enrolled
+                        </Text>
+                      </Card>
+                    ) : (
+                      participationData.students.map((st) => {
+                        const isHigh = st.riskLevel === 'HIGH';
+                        const isMedium = st.riskLevel === 'MEDIUM';
+                        const riskVariant = isHigh ? 'danger' : isMedium ? 'warning' : 'success';
+
+                        return (
+                          <View
+                            key={st.studentId}
+                            style={[
+                              styles.participationStudentCard,
+                              {
+                                backgroundColor: theme.colors.card,
+                                borderColor: isHigh ? `${theme.colors.danger}60` : theme.colors.border,
+                              },
+                            ]}
+                          >
+                            <View style={styles.pCardHeader}>
+                              <View style={{ flex: 1, marginRight: 8 }}>
+                                <Text style={[styles.pStudentName, { color: theme.colors.text }]}>
+                                  {st.name}
+                                </Text>
+                                <Text style={[styles.pStudentMeta, { color: theme.colors.textSecondary }]}>
+                                  {st.studentNumber || st.email}
+                                </Text>
+                              </View>
+                              <Badge label={`${st.riskLevel} RISK`} variant={riskVariant} size="sm" />
+                            </View>
+
+                            {/* Engagement Progress Bar */}
+                            <View style={styles.pProgressSection}>
+                              <View style={styles.pProgressLabels}>
+                                <Text style={[styles.pProgressTitle, { color: theme.colors.textSecondary }]}>
+                                  Engagement Score: {st.engagementScore}%
+                                </Text>
+                                <View style={styles.trendRow}>
+                                  {st.trend === 'UP' && <TrendingUp size={12} color={theme.colors.success} />}
+                                  {st.trend === 'DOWN' && <TrendingDown size={12} color={theme.colors.danger} />}
+                                  {st.trend === 'STABLE' && <Minus size={12} color={theme.colors.textSecondary} />}
+                                  <Text
+                                    style={[
+                                      styles.trendText,
+                                      {
+                                        color:
+                                          st.trend === 'UP'
+                                            ? theme.colors.success
+                                            : st.trend === 'DOWN'
+                                            ? theme.colors.danger
+                                            : theme.colors.textSecondary,
+                                      },
+                                    ]}
+                                  >
+                                    {st.trend}
+                                  </Text>
+                                </View>
+                              </View>
+                              <View style={[styles.progressBarTrack, { backgroundColor: theme.colors.cardSecondary }]}>
+                                <View
+                                  style={[
+                                    styles.progressBarFill,
+                                    {
+                                      width: `${Math.min(100, Math.max(0, st.engagementScore))}%`,
+                                      backgroundColor:
+                                        st.engagementScore >= 75
+                                          ? theme.colors.success
+                                          : st.engagementScore >= 50
+                                          ? theme.colors.warning
+                                          : theme.colors.danger,
+                                    },
+                                  ]}
+                                />
+                              </View>
+                            </View>
+
+                            {/* Inactivity & Overdue info */}
+                            <View style={styles.pStatsRow}>
+                              <Text style={[styles.pStatItem, { color: theme.colors.textSecondary }]}>
+                                Overdue: {st.overdueCount}
+                              </Text>
+                              {st.lastActivityAt && (
+                                <Text style={[styles.pStatItem, { color: theme.colors.textSecondary }]}>
+                                  Last active: {new Date(st.lastActivityAt).toLocaleDateString()}
+                                </Text>
+                              )}
+                            </View>
+
+                            {/* Suggested Action */}
+                            {(st.suggestedAction || st.reasons?.[0]?.detail) ? (
+                              <View style={[styles.suggestedActionBox, { backgroundColor: `${theme.colors.primary}12`, borderColor: `${theme.colors.primary}30` }]}>
+                                <AlertTriangle size={13} color={theme.colors.primary} style={{ marginTop: 2 }} />
+                                <Text style={[styles.suggestedActionText, { color: theme.colors.text }]}>
+                                  Action: {st.suggestedAction || st.reasons?.[0]?.detail}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        );
+                      })
+                    )}
+                  </>
                 )}
               </View>
             )}
@@ -1268,6 +1915,208 @@ export default function TeacherCourseDetailScreen() {
                 style={{ borderRadius: 12 }}
               />
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ==================== CREATE BROADCAST MODAL ==================== */}
+      <Modal
+        visible={broadcastModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setBroadcastModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                  Dispatch Class Broadcast
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: theme.colors.textSecondary }]}>
+                  Send high-priority alert to enrolled students
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setBroadcastModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <X size={22} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                ALERT CATEGORY
+              </Text>
+              <View style={styles.typeRow}>
+                {(['GENERAL', 'URGENT', 'REMINDER'] as const).map((cat) => {
+                  const isSelected = broadcastCategoryInput === cat;
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.typeBtn,
+                        {
+                          backgroundColor: isSelected ? theme.colors.primary : theme.colors.cardSecondary,
+                          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => setBroadcastCategoryInput(cat)}
+                    >
+                      <Text
+                        style={[
+                          styles.typeBtnText,
+                          { color: isSelected ? '#FFFFFF' : theme.colors.textSecondary, fontWeight: isSelected ? '700' : '500' },
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                MESSAGE
+              </Text>
+              <TextInput
+                style={[
+                  styles.postInput,
+                  {
+                    backgroundColor: theme.colors.cardSecondary,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.text,
+                    minHeight: 90,
+                    marginBottom: 16,
+                  },
+                ]}
+                multiline
+                numberOfLines={4}
+                placeholder="Write your broadcast notification here..."
+                placeholderTextColor={theme.colors.textSecondary}
+                value={broadcastMsgInput}
+                onChangeText={setBroadcastMsgInput}
+              />
+            </ScrollView>
+
+            <View style={styles.modalBottomActions}>
+              <Button
+                title="Send Broadcast Alert"
+                onPress={handleCreateBroadcast}
+                loading={sendingBroadcast}
+                disabled={!broadcastMsgInput.trim()}
+                icon={Send}
+                style={{ borderRadius: 12 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ==================== FORM RESPONSES MODAL (VIEW-ONLY) ==================== */}
+      <Modal
+        visible={responsesModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setResponsesModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                  {selectedFormForResponses?.title || 'Form Responses'}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: theme.colors.textSecondary }]}>
+                  Student submissions & scores (view-only)
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setResponsesModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <X size={22} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+              {loadingResponses ? (
+                <View style={[styles.loadingBox, { paddingVertical: 40 }]}>
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                  <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+                    Loading student responses...
+                  </Text>
+                </View>
+              ) : responsesError ? (
+                <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                  <Text style={[{ color: theme.colors.danger, marginBottom: 8 }]}>
+                    {responsesError}
+                  </Text>
+                  {selectedFormForResponses && (
+                    <Button
+                      title="Retry"
+                      variant="outline"
+                      onPress={() => handleOpenFormResponses(selectedFormForResponses)}
+                      style={{ marginTop: 8, paddingVertical: 6, paddingHorizontal: 12, minHeight: 32 }}
+                    />
+                  )}
+                </View>
+              ) : formResponses.length === 0 ? (
+                <View style={{ paddingVertical: 36, alignItems: 'center' }}>
+                  <ClipboardList size={36} color={theme.colors.textSecondary} />
+                  <Text style={[styles.emptyTitle, { color: theme.colors.text, marginTop: 8 }]}>
+                    No Submissions Yet
+                  </Text>
+                  <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+                    Student submissions will be listed here once they complete this quiz or form.
+                  </Text>
+                </View>
+              ) : (
+                formResponses.map((attempt) => {
+                  const percent = attempt.percentage !== undefined && attempt.percentage !== null
+                    ? Math.round(attempt.percentage)
+                    : null;
+                  const scoreDisplay = attempt.score !== null && attempt.score !== undefined
+                    ? `${attempt.score} / ${attempt.maxScore ?? (selectedFormForResponses as any)?.totalPoints ?? 100}`
+                    : 'Not Scored';
+
+                  return (
+                    <View
+                      key={attempt.id}
+                      style={[styles.responseRowCard, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
+                    >
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={[styles.studentRowName, { color: theme.colors.text }]}>
+                          {attempt.user?.name || attempt.user?.email || 'Student'}
+                        </Text>
+                        <Text style={[styles.studentRowId, { color: theme.colors.textSecondary }]}>
+                          {attempt.user?.studentNumber || attempt.user?.email}
+                        </Text>
+                        <Text style={[styles.annTimestamp, { color: theme.colors.textSecondary, marginTop: 4 }]}>
+                          Submitted: {attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleDateString() : 'In Progress'}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                        <Badge
+                          label={attempt.status || (attempt.score !== null ? 'SCORED' : 'SUBMITTED')}
+                          variant={attempt.status === 'GRADED' || attempt.status === 'COMPLETED' ? 'success' : 'primary'}
+                          size="sm"
+                        />
+                        <Text style={[styles.responseScoreText, { color: theme.colors.text, marginTop: 4 }]}>
+                          {scoreDisplay}
+                        </Text>
+                        {percent !== null && (
+                          <Text style={[styles.responsePercentText, { color: percent >= 75 ? theme.colors.success : theme.colors.danger }]}>
+                            {percent}%
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1680,5 +2529,160 @@ const styles = StyleSheet.create({
   },
   noFileText: {
     fontSize: 12,
+  },
+  tabBarScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    paddingHorizontal: 4,
+  },
+  tabHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  loadingText: {
+    fontSize: 12,
+    marginTop: 8,
+  },
+  errorCard: {
+    padding: 18,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  errorCardText: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginVertical: 6,
+  },
+  broadcastMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    paddingTop: 8,
+    marginTop: 10,
+  },
+  broadcastMetaText: {
+    fontSize: 11,
+  },
+  kpiRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  kpiCard: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kpiValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  kpiLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  participationStudentCard: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  pCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  pStudentName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pStudentMeta: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  pProgressSection: {
+    marginBottom: 8,
+  },
+  pProgressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  pProgressTitle: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  trendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  trendText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  progressBarTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  pStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 6,
+  },
+  pStatItem: {
+    fontSize: 11,
+  },
+  suggestedActionBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  suggestedActionText: {
+    fontSize: 11,
+    flex: 1,
+    lineHeight: 15,
+  },
+  responseRowCard: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  responseScoreText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  responsePercentText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

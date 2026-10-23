@@ -102,4 +102,12 @@ export const resolveEffectiveApiUrl = async (): Promise<string> => {
 export const API_BASE_URL = getDefaultApiUrl();
 export const APP_NAME = 'CdM LMS';
 
+/**
+ * Derives the base URL of the web application from the active mobile configuration.
+ */
+export const getWebBaseUrl = (): string => {
+  return API_BASE_URL.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+};
+
+
 

@@ -18,6 +18,7 @@ import { Card } from '../../../../src/components/common/Card';
 import { Screen, AppHeader, ErrorBanner } from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
+import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import type { Course } from '@lms/types';
 
 export default function StudentCoursesScreen() {
@@ -78,7 +79,7 @@ export default function StudentCoursesScreen() {
       {/* AppHeader */}
       <AppHeader
         title="Enrolled Courses"
-        subtitle={`${courses.length} Active Courses • ${user?.institute?.name || theme.name}`}
+        subtitle={`${courses.length} Active ${courses.length === 1 ? 'Course' : 'Courses'} • ${getCanonicalInstituteName(user?.institute?.code, user?.institute?.name || theme.name)}`}
       />
 
       {/* Search Bar */}
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,
