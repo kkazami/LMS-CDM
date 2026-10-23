@@ -26,6 +26,8 @@ import {
   ChevronRight,
   Code2,
   MessageSquareQuote,
+  Gamepad2,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -42,6 +44,7 @@ interface MobileMoreSheetProps {
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
+  isEligibleForArena?: boolean;
 }
 
 interface NavItem {
@@ -61,6 +64,7 @@ export default function MobileMoreSheet({
   avatarUrl = null,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForArena,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -146,13 +150,17 @@ export default function MobileMoreSheet({
       ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
+    ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"
+      ? [{ label: "Quiz Arena", href: `/${instituteCode}/arena`, icon: Gamepad2, description: isProfessor ? "Host live interactive quizzes" : "Live interactive quiz battles" }] : []),
+    ...(isStudent && instituteCode.toLowerCase() === "ibe"
+      ? [{ label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" }] : []),
     ...(isStudent ? studentItems : isProfessor ? teacherItems : adminItems),
   ];
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] lg:hidden">
+    <div className="fixed inset-0 z-100 lg:hidden">
       {/* Backdrop scrim */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 touch-manipulation"
@@ -191,7 +199,7 @@ export default function MobileMoreSheet({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+            className="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer min-h-11 min-w-11 flex items-center justify-center touch-manipulation"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -200,7 +208,7 @@ export default function MobileMoreSheet({
 
         {/* User Card */}
         <div className="px-4 pt-3 pb-2 shrink-0">
-          <div className="p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] flex items-center justify-between gap-3">
+          <div className="p-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/70 dark:bg-white/3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <UserAvatar
                 name={userName}
@@ -226,7 +234,7 @@ export default function MobileMoreSheet({
                   triggerNativeHaptic("light");
                   onClose();
                 }}
-                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
+                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
                 title="Profile"
                 aria-label="Profile"
               >
@@ -238,7 +246,7 @@ export default function MobileMoreSheet({
                   triggerNativeHaptic("light");
                   onClose();
                 }}
-                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center active:scale-95"
+                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
                 title="Settings"
                 aria-label="Settings"
               >
@@ -264,7 +272,7 @@ export default function MobileMoreSheet({
                     triggerNativeHaptic("light");
                     onClose();
                   }}
-                  className={`${isStudent ? "flex flex-col p-3 rounded-2xl border min-h-[72px]" : "flex items-center gap-3 px-3 py-3 rounded-xl min-h-16"} transition-colors duration-150 cursor-pointer touch-manipulation ${
+                  className={`${isStudent ? "flex flex-col p-3 rounded-2xl border min-h-18" : "flex items-center gap-3 px-3 py-3 rounded-xl min-h-16"} transition-colors duration-150 cursor-pointer touch-manipulation ${
                     isActive
                       ? "border-transparent bg-slate-100/90 dark:bg-white/10"
                       : `${isStudent ? "border-slate-200/70 dark:border-white/5 bg-slate-50/50 dark:bg-[#1A1D27]" : ""} hover:bg-slate-100/70 dark:hover:bg-white/[0.07]`
@@ -291,7 +299,7 @@ export default function MobileMoreSheet({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className={`${isStudent ? "text-xs" : "text-sm"} font-semibold text-slate-900 dark:text-[#F0F2F8] leading-snug break-words`}>{item.label}</span>
+                      <span className={`${isStudent ? "text-xs" : "text-sm"} font-semibold text-slate-900 dark:text-[#F0F2F8] leading-snug wrap-break-word`}>{item.label}</span>
                       {!isStudent && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{item.description}</p>}
                     </div>
                   </div>
@@ -313,7 +321,7 @@ export default function MobileMoreSheet({
             type="button"
             disabled={loggingOut}
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-500/20 transition-all cursor-pointer active:scale-[0.98] min-h-[48px] touch-manipulation"
+            className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-500/20 transition-all cursor-pointer active:scale-[0.98] min-h-12 touch-manipulation"
           >
             <LogOut className="w-4 h-4" />
             <span>{loggingOut ? "Signing Out..." : "Sign Out / Switch Account"}</span>

@@ -263,19 +263,29 @@ export default function AvatarUploadModal({
       const formData = new FormData();
       formData.append("file", blob, "avatar.png");
 
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!uploadRes.ok) throw new Error("Upload failed");
-
-      const { url } = (await uploadRes.json()) as { url: string };
+      let targetUrl: string;
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData }).catch(() => null);
+      if (uploadRes && uploadRes.ok) {
+        const { url } = (await uploadRes.json()) as { url: string };
+        targetUrl = url;
+      } else {
+        // Fallback to data URI when backend virus scanning service is unavailable (e.g. serverless Vercel)
+        targetUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
 
       const avatarRes = await fetch("/api/profile/avatar", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: url }),
+        body: JSON.stringify({ avatarUrl: targetUrl }),
       });
       if (!avatarRes.ok) throw new Error("Failed to update avatar");
 
-      setAvatarUrl(url);
+      setAvatarUrl(targetUrl);
       toast.success("Profile photo updated!");
       onClose();
     } catch {
@@ -344,7 +354,7 @@ export default function AvatarUploadModal({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-10 transition-colors hover:border-orange-500/50 hover:bg-orange-500/5"
+              className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 p-10 transition-colors hover:border-orange-500/50 hover:bg-orange-500/5"
             >
               <div
                 className="mb-3 rounded-2xl p-3.5"

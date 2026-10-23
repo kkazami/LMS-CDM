@@ -34,6 +34,8 @@ import {
   MessageSquareQuote,
   X,
   LifeBuoy,
+  Gamepad2,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -67,6 +69,8 @@ interface SidebarProps {
   isEligibleForActivities?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
+  /** When true, renders the "Quiz Arena" nav entry for IBE. */
+  isEligibleForArena?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -125,6 +129,7 @@ export default function Sidebar({
   onCloseMobileDrawer,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForArena,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -158,6 +163,28 @@ export default function Sidebar({
         label: "Knowledge Exchange",
         href: `/${instituteCode}/knowledge-exchange`,
         icon: MessageSquareQuote,
+      },
+    ];
+  }
+
+  if (isEligibleForArena || instituteCode.toLowerCase() === "ibe") {
+    links = [
+      ...links,
+      {
+        label: "Quiz Arena",
+        href: `/${instituteCode}/arena`,
+        icon: Gamepad2,
+      },
+    ];
+  }
+
+  if (isStudent && instituteCode.toLowerCase() === "ibe") {
+    links = [
+      ...links,
+      {
+        label: "Financial Statement Generator",
+        href: `/${instituteCode}/financial-statements`,
+        icon: FileSpreadsheet,
       },
     ];
   }

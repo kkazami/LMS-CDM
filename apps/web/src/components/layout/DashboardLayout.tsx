@@ -30,6 +30,8 @@ interface DashboardLayoutProps {
   isEligibleForActivities?: boolean;
   /** Whether this user qualifies for Knowledge Exchange. Controls sidebar entry visibility. */
   isEligibleForKnowledgeExchange?: boolean;
+  /** Whether this user qualifies for Quiz Arena (IBE). Controls sidebar entry visibility. */
+  isEligibleForArena?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -50,6 +52,7 @@ export default function DashboardLayout({
   theme,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForArena,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -81,6 +84,7 @@ export default function DashboardLayout({
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+          isEligibleForArena={isEligibleForArena}
           enrolledCourses={enrolledCourses}
         />
 
@@ -118,6 +122,7 @@ export default function DashboardLayout({
         avatarUrl={avatarUrl ?? null}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+        isEligibleForArena={isEligibleForArena}
       />
 
       {/* Student Gamification Widgets */}

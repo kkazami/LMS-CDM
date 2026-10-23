@@ -21,6 +21,7 @@ import {
   CheckSquare,
   Code2,
   Trophy,
+  Gamepad2,
   Sparkles,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
@@ -197,6 +198,7 @@ export default function StudentDashboardClient({
   };
 
   const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
+  const isArenaVisible = instituteCode.toLowerCase() === "ibe";
 
   // Quick action items for mobile and desktop quick navigation bar
   const quickActions = [
@@ -231,6 +233,15 @@ export default function StudentDashboardClient({
           },
         ]
       : []),
+    ...(isArenaVisible
+      ? [
+          {
+            label: "Quiz Arena",
+            icon: Gamepad2,
+            href: `/${instituteCode}/arena`,
+          },
+        ]
+      : []),
     {
       label: "Leaderboard",
       icon: Trophy,
@@ -241,25 +252,18 @@ export default function StudentDashboardClient({
   return (
     <>
       <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto page-enter">
-        {/* ─── 1. Premium Anti-Slop Hero Banner ─── */}
+        {/* ─── 1. Neutral Academic Hero Banner ─── */}
         <FadeIn y={20} duration={0.45}>
           <div
             className="relative rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs transition-colors"
-            style={{
-              background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}1A 0%, transparent 65%), var(--bg-surface, #FFFFFF)`,
-            }}
           >
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
               <div className="space-y-2 max-w-xl min-w-0">
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: `${theme.colors.primary}1A`,
-                      color: theme.colors.primary,
-                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Sparkles className="h-3.5 w-3.5 text-slate-400" />
                     <span>{instituteName} · Portal</span>
                   </span>
                 </div>
@@ -267,7 +271,7 @@ export default function StudentDashboardClient({
                 <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                   <TypingBanner
                     text={greeting}
-                    cursorColor={theme.colors.primary}
+                    cursorColor="#94A3B8"
                     keepCursor={false}
                     speed={28}
                     sessionKey={typingSessionKey ?? "cdm_typed_greeting"}
@@ -314,7 +318,7 @@ export default function StudentDashboardClient({
         </FadeIn>
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${isCodeLabVisible ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
+        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${(isCodeLabVisible || isArenaVisible) ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
           <StaggerItem>
             <QuickActionCard
               icon={Plus}
@@ -365,6 +369,19 @@ export default function StudentDashboardClient({
                 href={`/${instituteCode}/activities/codelab`}
                 sublabel="Interactive labs"
                 color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
+          {isArenaVisible && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Gamepad2}
+                label="Quiz Arena"
+                href={`/${instituteCode}/arena`}
+                sublabel="Live multiplayer"
+                color={theme.colors.primary}
+                badge="Live"
+                badgeVariant="warning"
               />
             </StaggerItem>
           )}
