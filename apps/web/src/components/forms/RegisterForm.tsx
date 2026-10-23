@@ -1,42 +1,102 @@
-'use client';
-import { useState } from 'react';
+"use client";
+import { useState, type CSSProperties } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight, BookOpen, KeyRound, UserRoundPlus, LoaderCircle } from 'lucide-react';
 import { PolicyLink } from '@/components/legal/PolicyNavigation';
+import { INSTITUTES } from '@/components/common/InstituteSelector';
+import Input from '@/components/common/Input';
+import { getInstituteTheme } from '@/lib/get-institute-theme';
 import { syncSessionToNative } from '@/lib/mobile-bridge';
 import GoogleSignIn from './GoogleSignIn';
-import styles from './StudentAccess.module.css';
+import styles from './login.module.css';
+import register from './register.module.css';
 
-type Props = { instituteCode: string; googleEnabled: boolean; googleProfile: { name: string; email: string } | null; linking: boolean; studentNumber?: string };
-export default function RegisterForm({ instituteCode, googleEnabled, googleProfile, linking, studentNumber = '' }: Props) {
+type Props = { instituteCode: string; googleEnabled: boolean; googleProfile: { name: string; email: string } | null; linking: boolean; studentNumber?: string; googleExpired?: boolean };
+export default function RegisterForm({ instituteCode, googleEnabled, googleProfile, linking, studentNumber = '', googleExpired = false }: Props) {
   const [institute, setInstitute] = useState(instituteCode);
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [error, setError] = useState('');
+  const busy = saving || googleBusy;
+  const theme = getInstituteTheme(institute);
+  const instituteStyle = {
+    '--login-institute': theme.colors.primary,
+    '--login-institute-index': INSTITUTES.findIndex(item => item.code === institute),
+  } as CSSProperties;
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError('');
+    event.preventDefault(); setSaving(true); setError('');
     const form = new FormData(event.currentTarget);
     try {
-      const response = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...Object.fromEntries(form), instituteCode: institute, google: Boolean(googleProfile), acceptedPolicies: form.get('acceptedPolicies') === 'on' }) });
+      const response = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...Object.fromEntries(form), instituteCode: institute, google: Boolean(googleProfile), acceptedPolicies }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to register. Please try again.');
       syncSessionToNative(data.token, data.user);
       window.location.assign(data.redirectTo);
-    } catch (error) { setError(error instanceof Error ? error.message : 'Unable to register.'); setBusy(false); }
+    } catch (error) { setError(error instanceof Error ? error.message : 'Unable to register.'); setSaving(false); }
   }
-  return <>
-    <h1>{linking ? 'Connect your Google account' : googleProfile ? 'Complete your student account' : 'Create your student account'}</h1>
-    <p>{linking ? 'Confirm your existing student ID and password to connect Google. Your institute stays the same.' : 'Choose your institute. After registration, enter a class code from your instructor to unlock your learning space.'}</p>
-    <form onSubmit={submit} className={styles.form} aria-busy={busy}>
-      <label className={styles.field}>Institute<select name="instituteCode" value={institute} onChange={event => setInstitute(event.target.value)} disabled={busy || linking} required><option value="ics">ICS — Institute of Computing Studies</option><option value="ite">ITE — Institute of Teacher Education</option><option value="ibe">IBE — Institute of Business and Entrepreneurship</option></select></label>
-      <label className={styles.field}>Full name<input name="name" autoComplete="name" defaultValue={googleProfile?.name} minLength={2} maxLength={150} required disabled={busy} /></label>
-      <div className={styles.field}><label htmlFor="register-student-id">Student ID</label><input id="register-student-id" name="studentNumber" aria-describedby="student-id-hint" autoComplete="off" placeholder="26-12345" defaultValue={studentNumber} pattern={linking ? undefined : "[0-9]{2}-[0-9]{5}"} maxLength={linking ? 40 : 8} title="Two digits, a hyphen, then five digits (26-12345)" required disabled={busy} /><span id="student-id-hint" className={styles.hint}>{linking ? 'Use the student ID on your existing account.' : 'Format: XX-XXXXX. Use the ID issued by your school.'}</span></div>
-      <label className={styles.field}>Email<input name="email" type="email" autoComplete="email" defaultValue={googleProfile?.email} readOnly={Boolean(googleProfile)} maxLength={254} required disabled={busy} /></label>
-      <div className={styles.field}><label htmlFor="register-password">{linking ? 'Existing password' : 'Password'}</label><input id="register-password" name="password" aria-describedby="password-hint" type="password" autoComplete={linking ? 'current-password' : 'new-password'} minLength={linking ? 1 : 8} required disabled={busy} /><span id="password-hint" className={styles.hint}>{linking ? 'Enter your current LMS password to verify account ownership.' : 'At least 8 characters, including uppercase, lowercase, and a number.'}</span></div>
-      <label className={styles.field}>Confirm password<input name="confirmPassword" type="password" autoComplete={linking ? "current-password" : "new-password"} minLength={linking ? 1 : 8} required disabled={busy} /></label>
-      <label className={styles.consent}><input type="checkbox" name="acceptedPolicies" required disabled={busy} /><span>I agree to the <PolicyLink href="/terms">Terms and Conditions</PolicyLink> and acknowledge the <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.</span></label>
-      {error && <p role="alert" className={styles.error}>{error}</p>}
-      <button className={styles.button} disabled={busy}>{busy ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
-    </form>
-    {!googleProfile && googleEnabled && <div className={styles.footer}><GoogleSignIn instituteCode={institute} /></div>}
-    <div className={styles.footer}><Link href={`/login?institute=${institute}`}>Already have an account? Sign in</Link></div>
-  </>;
+
+  return <main className={styles.page} style={instituteStyle} data-institute={institute}>
+    <div className={`${styles.ambient} ${styles.sage}`} aria-hidden="true" />
+    <div className={`${styles.ambient} ${styles.gold}`} aria-hidden="true" />
+    <nav className={styles.navigation} aria-label="Page navigation">
+      <Link href={`/login?institute=${institute}`} className={styles.home}><ArrowLeft aria-hidden="true" />Back to sign in</Link>
+    </nav>
+    <div className={`${styles.composition} ${register.composition}`}>
+      <section className={styles.introduction} aria-labelledby="register-title">
+        <h1 id="register-title" className={styles.headline}>Your next chapter<br /><em>starts with you.</em></h1>
+        <p className={styles.description}>One account for your classes, your community,<br className={styles.desktopBreak} /> and everything you’ll learn along the way.</p>
+        <ol className={register.journey} aria-label="Getting started">
+          <li><span className={styles.featureIcon}><UserRoundPlus aria-hidden="true" /></span><div><h2>Create your account.</h2><p>Use your student ID and choose your institute.</p></div></li>
+          <li><span className={styles.featureIcon}><KeyRound aria-hidden="true" /></span><div><h2>Enter your class code.</h2><p>Your instructor’s code connects you to a class in your institute.</p></div></li>
+          <li><span className={styles.featureIcon}><BookOpen aria-hidden="true" /></span><div><h2>Make yourself at home.</h2><p>Access your classes and your institute’s learning tools.</p></div></li>
+        </ol>
+        <p className={register.instituteNote}><span aria-hidden="true" />Your learning space belongs to your institute.</p>
+      </section>
+      <div className={styles.loginArea}>
+        <section className={`${styles.panel} ${register.panel}`} aria-labelledby="create-account-title">
+          <header className={styles.panelBrand}>
+            <Image src="/images/cdm-logo.png" alt="Colegio de Montalban crest" width={64} height={64} priority />
+            <h2 id="create-account-title">{linking ? 'Connect your Google account' : googleProfile ? 'Complete your student account' : 'Create your student account'}</h2>
+            <p>{linking ? 'Verify your existing account to connect Google.' : 'A few details, and you’re ready for your first class.'}</p>
+          </header>
+          <form onSubmit={submit} className={styles.form} aria-busy={busy}>
+            {googleExpired && <p role="alert" className={styles.error}>Google sign-in expired. Continue with Google again.</p>}
+            <div>
+              <span className={styles.fieldLabel} id="register-institute-label">Select your institute</span>
+              <input type="hidden" name="instituteCode" value={institute} />
+              <div className={styles.instituteTrack} role="group" aria-labelledby="register-institute-label">
+                <span className={styles.instituteSelection} aria-hidden="true" />
+                {INSTITUTES.map(item => <button key={item.code} type="button" className={styles.institute} aria-pressed={institute === item.code} aria-controls="register-institute-name" disabled={busy || linking} onClick={() => setInstitute(item.code)}>{item.short}</button>)}
+              </div>
+              <p className={styles.instituteName} id="register-institute-name" aria-live="polite">{theme.name}{linking ? ' · Your existing institute' : ''}</p>
+            </div>
+            <div className={register.details}>
+              <div className={`${styles.field} ${register.field}`}><Input id="register-name" name="name" label="Full name" placeholder="Your full name" theme={theme} autoComplete="name" defaultValue={googleProfile?.name} minLength={2} maxLength={150} required disabled={busy} /></div>
+              <div className={`${styles.field} ${register.field}`}><Input id="register-student-id" name="studentNumber" label="Student ID" theme={theme} aria-describedby="student-id-hint" autoComplete="off" placeholder="26-12345" defaultValue={studentNumber} pattern={linking ? undefined : "[0-9]{2}-[0-9]{5}"} maxLength={linking ? 40 : 8} title="Two digits, a hyphen, then five digits (26-12345)" required disabled={busy} /><span id="student-id-hint" className={register.hint}>{linking ? 'Use your existing student ID.' : 'Format: XX-XXXXX'}</span></div>
+              <div className={`${styles.field} ${register.field} ${register.fullWidth}`}><Input id="register-email" name="email" label="Email" placeholder="you@example.com" theme={theme} type="email" autoComplete="email" defaultValue={googleProfile?.email} readOnly={Boolean(googleProfile)} maxLength={254} required disabled={busy} /></div>
+              <div className={`${styles.field} ${register.field}`}><Input id="register-password" name="password" label={linking ? 'Existing password' : 'Password'} theme={theme} placeholder="Enter password" aria-describedby="password-hint" type="password" autoComplete={linking ? 'current-password' : 'new-password'} minLength={linking ? 1 : 8} required disabled={busy} /></div>
+              <div className={`${styles.field} ${register.field}`}><Input id="register-confirm-password" name="confirmPassword" label="Confirm password" theme={theme} placeholder="Repeat password" type="password" autoComplete={linking ? 'current-password' : 'new-password'} minLength={linking ? 1 : 8} required disabled={busy} /></div>
+              <p id="password-hint" className={`${register.hint} ${register.fullWidth}`}>{linking ? 'Enter your current LMS password to verify account ownership.' : 'Use at least 8 characters with uppercase, lowercase, and a number.'}</p>
+            </div>
+            <div className={styles.consent}>
+              <input id="register-policies" type="checkbox" name="acceptedPolicies" checked={acceptedPolicies} onChange={event => { setAcceptedPolicies(event.target.checked); setError(''); }} required disabled={busy} />
+              <label htmlFor="register-policies">I agree to the <PolicyLink href="/terms">Terms and Conditions</PolicyLink> and acknowledge the <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.</label>
+            </div>
+            {error && <p role="alert" className={styles.error}>{error}</p>}
+            <button type="submit" className={styles.submit} disabled={busy}>{saving ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}{saving ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
+            {!googleProfile && googleEnabled && <GoogleSignIn instituteCode={institute} acceptedPolicies={acceptedPolicies} disabled={busy} onBusyChange={setGoogleBusy} onError={setError} />}
+            <div className={styles.accountHelp}><span>Already have an account?</span><Link href={`/login?institute=${institute}`}>Sign in</Link></div>
+          </form>
+        </section>
+        <p className={styles.cardCaption}>Colegio de Montalban · Learning Management System</p>
+      </div>
+    </div>
+    <div className={styles.pageFooter}>
+      <span>© {new Date().getFullYear()} Colegio de Montalban</span>
+      <nav aria-label="Registration policies and support"><PolicyLink href="/privacy">Privacy</PolicyLink><PolicyLink href="/terms">Terms</PolicyLink><PolicyLink href="/support">Support</PolicyLink></nav>
+    </div>
+  </main>;
 }
