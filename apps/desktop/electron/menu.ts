@@ -1,11 +1,7 @@
 import { Menu, BrowserWindow, app, shell, dialog } from 'electron';
 import * as fs from 'fs';
 
-const WEB_URL = process.env.NODE_ENV !== 'production'
-  ? 'http://localhost:3000'
-  : (process.env.LMS_WEB_URL || 'http://localhost:3000');
-
-export function setupMenu(mainWindow: BrowserWindow) {
+export function setupMenu(mainWindow: BrowserWindow, WEB_URL: string) {
   const isMac = process.platform === 'darwin';
 
   const template: Electron.MenuItemConstructorOptions[] = [

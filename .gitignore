@@ -67,6 +67,12 @@ test-results/
 *.tsbuildinfo
 *.log
 
+# Next.js regenerates this file for development/build/typegen.
+next-env.d.ts
+
+# Dated investigation notes stay local; reusable quality guides stay versioned.
+/docs/quality/*-20??-??-??.md
+
 # Keep configuration templates, never credentials or deployment sessions.
 .env*
 !.env.example

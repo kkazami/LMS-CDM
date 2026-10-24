@@ -2,15 +2,21 @@
   "name": "cdm-lms",
   "private": true,
   "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "^22.13.0 || >=24.3.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
-    "dev:mobile": "pnpm --filter mobile start",
-    "dev:mobile:tunnel": "pnpm --filter mobile tunnel",
-    "dev:desktop": "pnpm --filter desktop dev",
+    "check:setup": "node scripts/check-local-setup.mjs",
+    "dev:web": "node scripts/check-local-setup.mjs web && pnpm --filter web dev",
+    "dev:mobile": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile start",
+    "dev:mobile:clear": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile start --clear",
+    "dev:mobile:tunnel": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile tunnel",
+    "dev:mobile:usb": "node scripts/check-local-setup.mjs mobile && adb reverse tcp:8081 tcp:8081 && pnpm --filter mobile start --localhost --port 8081",
+    "dev:desktop": "node scripts/check-local-setup.mjs desktop && pnpm --filter desktop dev",
     "dev:all": "turbo dev start --parallel",
     "build:web": "prisma generate && pnpm --filter web build",
     "build:mobile": "pnpm --filter mobile build",

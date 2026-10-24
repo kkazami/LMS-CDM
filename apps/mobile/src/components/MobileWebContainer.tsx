@@ -35,12 +35,14 @@ function isSameOrigin(targetUrl?: string, referenceUrl?: string): boolean {
 
 export default function MobileWebContainer({ onReady }: MobileWebContainerProps) {
   const webViewRef = useRef<WebView>(null);
+  const loadFailed = useRef(false);
   const insets = useSafeAreaInsets();
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [initialUri, setInitialUri] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Hardware Back Button Handler (Android)
   useEffect(() => {
@@ -262,7 +264,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Safety Timeout
   useEffect(() => {
@@ -278,10 +280,12 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
   }, [isLoading]);
 
   const handleRetry = useCallback(() => {
+    loadFailed.current = false;
     setHasError(false);
     setIsLoading(true);
     setErrorMessage(null);
-    webViewRef.current?.reload();
+    setInitialUri(null);
+    setReloadKey(key => key + 1);
   }, []);
 
   // Injected scripts
@@ -386,6 +390,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
   return (
     <View style={styles.container}>
       <WebView
+        key={reloadKey}
         ref={webViewRef}
         source={{ uri: initialUri }}
         style={styles.webview}
@@ -397,10 +402,12 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
         onShouldStartLoadWithRequest={handleShouldStartLoad}
         onLoadEnd={() => {
           setIsLoading(false);
+          if (loadFailed.current) return;
           setHasError(false);
           onReady?.();
         }}
         onError={(syntheticEvent) => {
+          loadFailed.current = true;
           const desc = syntheticEvent.nativeEvent?.description || 'Connection failed';
           console.warn('WebView error: ', desc);
           setIsLoading(false);
@@ -411,12 +418,13 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
           const code = syntheticEvent.nativeEvent?.statusCode;
           console.warn('WebView HTTP error: ', code);
           if (code >= 400) {
+            loadFailed.current = true;
             setIsLoading(false);
             setHasError(true);
             setErrorMessage(`Server returned HTTP ${code}`);
           }
         }}
-        originWhitelist={['https://*', 'http://localhost:*', 'http://127.0.0.1:*', API_BASE_URL]}
+        originWhitelist={['https://*', new URL(initialUri).origin]}
         mixedContentMode="never"
         allowFileAccess={false}
         allowUniversalAccessFromFileURLs={false}

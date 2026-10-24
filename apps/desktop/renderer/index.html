@@ -129,7 +129,7 @@
   <div class="card">
     <div class="icon-badge">⚡</div>
     <h1>Cannot Connect to CdM LMS Server</h1>
-    <p class="desc">The Administrator Console requires the CdM LMS web server to be running on <code>http://localhost:3000</code>.</p>
+    <p class="desc">The Administrator Console could not reach <code id="server-address">the LMS server</code>. Check your connection. For local development, start the web server first.</p>
     
     <button class="action-btn" id="retry-btn" onclick="checkAndReload()">
       Check Server Status
@@ -145,20 +145,25 @@
   </div>
 
   <script>
+    const serverUrl = new URLSearchParams(location.search).get('server') || 'http://localhost:3000';
+    document.getElementById('server-address').textContent = serverUrl;
     function checkAndReload() {
       const btn = document.getElementById('retry-btn');
       btn.innerText = 'Connecting...';
       btn.disabled = true;
 
-      fetch('http://localhost:3000/api/auth/me')
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      fetch(serverUrl + '/api/health', { mode: 'no-cors', signal: controller.signal })
         .then(() => {
-          window.location.href = 'http://localhost:3000/login?institute=ics&desktop=admin';
+          window.location.href = serverUrl + '/login?institute=ics&desktop=admin';
         })
         .catch(() => {
           btn.innerText = 'Check Server Status';
           btn.disabled = false;
-          alert('Server still not reachable. Please start the Next.js server with: pnpm dev:web');
-        });
+          alert('Server still not reachable. Check your connection and server address. For a local server, run pnpm dev:web.');
+        })
+        .finally(() => clearTimeout(timer));
     }
   </script>
 </body>
