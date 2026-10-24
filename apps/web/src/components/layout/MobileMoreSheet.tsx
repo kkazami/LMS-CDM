@@ -166,7 +166,7 @@ export default function MobileMoreSheet({
       ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
-    ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"
+    ...((isEligibleForArena || instituteCode.toLowerCase() === "ibe") && (isStudent || isProfessor)
       ? [{ label: "Quiz Arena", href: `/${instituteCode}/arena`, icon: Gamepad2, description: isProfessor ? "Host live interactive quizzes" : "Live interactive quiz battles" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
       ? [{ label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" }] : []),

@@ -20,7 +20,10 @@ export default async function ArenaHubPage({
   }
 
   const role = normalizeRole(session.user.role as string);
-  const isInstructor = role === "INSTRUCTOR" || role === "ADMIN";
+  if (role === "ADMIN") {
+    redirect(`/${institute}/admin`);
+  }
+  const isInstructor = role === "INSTRUCTOR";
 
   const instituteRecord = await db.institute.findUnique({
     where: { code: institute.toLowerCase() },
@@ -36,9 +39,7 @@ export default async function ArenaHubPage({
     where: {
       instituteId: instituteRecord.id,
       ...(isInstructor
-        ? role === "ADMIN"
-          ? {}
-          : { authorId: session.user.id }
+        ? { authorId: session.user.id }
         : { status: "PUBLISHED" }),
     },
     include: {
