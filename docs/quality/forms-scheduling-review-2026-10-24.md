@@ -14,9 +14,9 @@ Confirmed issues and changes:
 
 Validation:
 
-- `pnpm build:web` passed (includes the web TypeScript check).
+- `pnpm build:web` passed (includes the web TypeScript check), repeated after merging production dependency security patches and the concurrent gradebook display fix.
 - `node tests/forms/assessment.integration.mjs --browser` passed all 20 checks using disposable loopback PostgreSQL and synthetic instructor/student accounts. Includes real browser → login → API → database → response checks for the scheduled-form and save/submit workflows.
-- `node --test tests/web-quality/academic.test.cjs tests/web-quality/sessions.test.cjs tests/auth/login-policies.test.cjs` passed all 11 regression checks.
+- `node --test tests/web-quality/academic.test.cjs tests/web-quality/sessions.test.cjs tests/auth/login-policies.test.cjs` passed all 12 regression checks.
 - Desktop settings and mobile start/result views inspected. The existing responsive shell settles after viewport changes; a snapshot taken mid-transition is not used as a layout verdict.
 
 Operational limits:
