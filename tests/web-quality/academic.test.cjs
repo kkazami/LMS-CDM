@@ -2,6 +2,31 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { load, as, request } = require('./helpers.cjs');
 
+test('gradebook final grade requires every score, accepts zero, and hides again when cleared', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const ts = require(require.resolve('typescript', { paths: [path.resolve('apps/web')] }));
+  const source = fs.readFileSync('apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/client.tsx', 'utf8');
+  const calculation = source.slice(source.indexOf('  function computeFinalGrade('), source.indexOf('  function handleCellEdit('));
+  const js = ts.transpile(calculation + '\nreturn computeFinalGrade("student");');
+  const compute = new Function('data', 'localGrades', 'hasValidPolicy', 'policyWeights', js);
+  const assignments = [{ id: 'a', type: 'QUIZ', maxPoints: 10 }, { id: 'b', type: 'ASSIGNMENT', maxPoints: 10 }];
+  const weights = [{ category: 'QUIZ', weightPercentage: 40 }, { category: 'ASSIGNMENT', weightPercentage: 60 }];
+  const data = { assignments, grades: { student: { a: { grade: 10 } } } };
+  const final = (localGrades = {}) => compute(data, localGrades, true, weights);
+  assert.equal(final(), null);
+  data.grades.student.b = { grade: null };
+  assert.equal(final(), null);
+  data.grades.student.b.grade = 0;
+  assert.equal(final(), 40);
+  assert.equal(final({ student: { b: '' } }), null);
+  assert.equal(final({ student: { b: ' ' } }), null);
+  assert.equal(final({ student: { b: '0' } }), 40);
+  assert.equal(final({ student: { b: '5' } }), 70);
+  data.grades.student.a.grade = 0;
+  assert.equal(final(), 0);
+});
+
 test('submission and grading contracts reject malformed data before writes', async () => {
   const api = await load();
   const student = { id: 's', instituteId: 'ics', role: 'STUDENT' };
