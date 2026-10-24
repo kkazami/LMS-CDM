@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -16,13 +19,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const url = new URL(request.url);
     const courseId = url.searchParams.get("courseId");
+    if (courseId) await requireCourseAccess(session.user, courseId, true);
     const qType = url.searchParams.get("type");
     const search = url.searchParams.get("q") || "";
 
@@ -62,6 +66,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ items: parsedItems });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("QUESTION_BANK_GET_ERROR", error);
     return NextResponse.json({ message: "Failed to fetch question bank." }, { status: 500 });
   }
@@ -77,14 +82,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const body = await request.json();
     const { courseId, questionType, prompt, config = {}, points = 1, tags = [] } = body;
 
+    if (courseId) await requireCourseAccess(session.user, courseId, true);
     if (!prompt || !questionType) {
       return NextResponse.json({ message: "Prompt and questionType are required." }, { status: 400 });
     }
@@ -103,6 +109,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, item });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("QUESTION_BANK_POST_ERROR", error);
     return NextResponse.json({ message: "Failed to create question bank item." }, { status: 500 });
   }

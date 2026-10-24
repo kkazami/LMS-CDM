@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { formIsVisible } from '@/lib/forms/availability';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { notFound, redirect } from "next/navigation";
 import { after } from "next/server";
@@ -20,11 +23,13 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const session = await getSession();
   if (!session) redirect(`/login?institute=${institute}`);
 
+  try { await requireCourseAccess(session.user, courseId); } catch { redirect(`/${institute}/courses`); }
+
   const theme = getInstituteTheme(institute);
 
-  const role = session.user.role.toUpperCase();
+  const role = canonicalRole(session.user.role);
   const isStudent = role === "STUDENT";
-  const isInstructor = role === "PROFESSOR" || role === "ADMIN";
+  const isInstructor = role === "INSTRUCTOR" || role === "ADMIN";
 
   // Fetch syllabus item with attachments and linked Form
   const item = await db.syllabusItem.findUnique({
@@ -36,6 +41,8 @@ export default async function AssignmentDetailPage({ params }: Props) {
         select: {
           id: true,
           status: true,
+          opensAt: true,
+          showScoreAfter: true,
           formType: true,
           timeLimitMins: true,
           maxAttempts: true,
@@ -45,7 +52,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
     },
   });
 
-  if (!item || item.courseId !== courseId) notFound();
+  if (!item || item.courseId !== courseId || isStudent && item.form && !formIsVisible(item.form)) notFound();
 
   // Access control: student must be enrolled
   if (isStudent) {
@@ -100,7 +107,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
     const maxAttempts = item.form.maxAttempts ?? 1;
     canRetakeForm = submittedAttempts.length > 0 && attempts.length < maxAttempts;
 
-    if (submittedAttempts.length > 0) {
+    if (submittedAttempts.length > 0 && item.form.showScoreAfter) {
       const validScores = submittedAttempts.filter(
         (a) => a.rawScore !== null && a.totalPoints !== null
       );

@@ -1,3 +1,8 @@
+import { parseFormSettings, checkFormSchedule } from '@/lib/forms/settings';
+import { publicForm, visibleForms, visibleSyllabusForms } from '@/lib/forms/availability';
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -25,14 +30,15 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId } = await context.params;
-    const role = (session.user.role as string).toUpperCase();
-    const isInstructor = role === "PROFESSOR" || role === "TEACHER" || role === "ADMIN";
+    await requireFormAccess(session.user, courseId, undefined, false);
+    const role = canonicalRole(session.user.role);
+    const isInstructor = role === "INSTRUCTOR" || role === "ADMIN";
 
     const forms = await db.form.findMany({
       where: {
         courseId,
         // Students only see published or closed forms
-        ...(isInstructor ? {} : { status: { in: ["PUBLISHED", "CLOSED"] } }),
+        ...(isInstructor ? {} : { ...visibleForms(), syllabusItem: visibleSyllabusForms(undefined, session.user.id) }),
       },
       include: {
         _count: {
@@ -45,8 +51,9 @@ export async function GET(request: Request, context: RouteContext) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ forms });
+    return NextResponse.json({ forms: forms.map(publicForm) });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("FORMS_GET_ERROR", error);
     return NextResponse.json({ message: "Failed to fetch forms." }, { status: 500 });
   }
@@ -66,12 +73,13 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId } = await context.params;
+    await requireFormAccess(session.user, courseId, undefined, true);
     const course = await db.course.findUnique({
       where: { id: courseId },
       select: { id: true, instructorId: true },
@@ -85,7 +93,8 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "You are not the instructor for this course." }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = parseFormSettings(await request.json());
+    checkFormSchedule(body);
     const {
       title,
       description = "",
@@ -129,6 +138,7 @@ export async function POST(request: Request, context: RouteContext) {
           type: syllabusType,
           title: title.trim(),
           description: description.trim(),
+          dueDate: body.closesAt,
           orderIndex: (lastItem?.orderIndex ?? -1) + 1,
           enableIntegrityMonitoring: isProctored || detectTabSwitch,
           requireFullscreen: lockBrowser,
@@ -145,6 +155,7 @@ export async function POST(request: Request, context: RouteContext) {
           description: description.trim(),
           formType: syllabusType as FormType,
           status: "DRAFT",
+          opensAt: body.opensAt, closesAt: body.closesAt,
           timeLimitMins: timeLimitMins ? Number(timeLimitMins) : null,
           maxAttempts: Math.max(1, Number(maxAttempts) || 1),
           scoreToKeep,
@@ -201,6 +212,7 @@ export async function POST(request: Request, context: RouteContext) {
       syllabusItemId: result.syllabusItem.id,
     });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("FORMS_POST_ERROR", error);
     return NextResponse.json({ message: "Failed to create form." }, { status: 500 });
   }

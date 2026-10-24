@@ -1,3 +1,4 @@
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -44,7 +45,7 @@ export async function getDashboardCalendar(user: { id: string; instituteId: stri
         course: courseScope,
         AND: [
           { OR: [{ targetGroups: { none: {} } }, { targetGroups: { some: { group: { members: { some: { studentId: user.id } } } } } }] },
-          { OR: [{ form: null }, { form: { status: { in: ["PUBLISHED", "CLOSED"] } } }] },
+          visibleSyllabusForms(),
         ],
       },
       include: { course: { select: { code: true, title: true, instructor: { select: { name: true } } } } },

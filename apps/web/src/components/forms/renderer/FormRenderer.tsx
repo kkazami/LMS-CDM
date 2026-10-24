@@ -87,6 +87,7 @@ export default function FormRenderer({
   const [answers, setAnswers] = useState<Record<string, AnswerRecord>>(initialAnswers);
   const [currentPage, setCurrentPage] = useState(1);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{
     score?: number | null;
@@ -95,7 +96,7 @@ export default function FormRenderer({
     passed?: boolean | null;
     confirmationMessage?: string;
   } | null>(
-    attempt.status === "SUBMITTED"
+    ["SUBMITTED", "TIMED_OUT"].includes(attempt.status)
       ? {
           score: attempt.rawScore,
           totalPoints: attempt.totalPoints,
@@ -194,7 +195,7 @@ export default function FormRenderer({
   );
 
   // Autosave hook
-  const { save, isSaving, lastSavedAt } = useFormAutosave(
+  const { save, flush, isSaving, lastSavedAt, saveError } = useFormAutosave(
     courseId,
     form.id,
     attempt.id
@@ -202,8 +203,10 @@ export default function FormRenderer({
 
   // Submit attempt handler
   const handleAutoSubmit = useCallback(async () => {
+    if (isPreview || attempt.status !== "IN_PROGRESS") return;
     setIsSubmitting(true);
     try {
+      await flush().catch(() => {});
       const res = await fetch(
         `/api/courses/${courseId}/forms/${form.id}/attempts/${attempt.id}/submit`,
         {
@@ -216,15 +219,16 @@ export default function FormRenderer({
         }
       );
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Unable to submit. Please try again.");
       if (res.ok) {
         setSubmissionResult(data);
       }
     } catch (err) {
-      console.error(err);
+      setSubmitError(err instanceof Error ? err.message : "Unable to submit. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-  }, [courseId, form.id, attempt.id]);
+  }, [courseId, form.id, attempt.id, attempt.status, isPreview, flush]);
 
   // Exam timer
   const secondsLeft = useExamTimer(attempt.deadlineAt, handleAutoSubmit);
@@ -510,9 +514,11 @@ export default function FormRenderer({
 
   const handleSubmit = async () => {
     if (!validateCurrentPage()) return;
+    if (isPreview) { setSubmissionResult({ confirmationMessage: "Preview complete. No response was submitted." }); return; }
 
     setIsSubmitting(true);
     try {
+      await flush();
       const res = await fetch(
         `/api/courses/${courseId}/forms/${form.id}/attempts/${attempt.id}/submit`,
         {
@@ -525,12 +531,13 @@ export default function FormRenderer({
         }
       );
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Unable to submit. Please try again.");
       if (res.ok) {
         setSubmissionResult(data);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (err) {
-      console.error(err);
+      setSubmitError(err instanceof Error ? err.message : "Unable to submit. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -782,7 +789,7 @@ export default function FormRenderer({
               </button>
             ) : (
               <span className="text-xs text-slate-400">
-                {isSaving ? "Saving..." : lastSavedAt ? "Draft saved" : ""}
+                {submitError || saveError || (isSaving ? "Saving..." : lastSavedAt ? "Draft saved" : "")}
               </span>
             )}
           </div>

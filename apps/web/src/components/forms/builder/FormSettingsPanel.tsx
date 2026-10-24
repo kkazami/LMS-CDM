@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { localDateTimeValue } from "@/lib/forms/availability";
 import {
   X,
   Clock,
@@ -32,10 +33,10 @@ export default function FormSettingsPanel({
   theme,
 }: FormSettingsPanelProps) {
   const [opensAt, setOpensAt] = useState(
-    form.opensAt ? new Date(form.opensAt).toISOString().slice(0, 16) : ""
+    localDateTimeValue(form.opensAt)
   );
   const [closesAt, setClosesAt] = useState(
-    form.closesAt ? new Date(form.closesAt).toISOString().slice(0, 16) : ""
+    localDateTimeValue(form.closesAt)
   );
   const [timeLimitMins, setTimeLimitMins] = useState<number | "">(
     form.timeLimitMins ?? ""
@@ -55,12 +56,15 @@ export default function FormSettingsPanel({
   const [passingScore, setPassingScore] = useState<number | "">(form.passingScore ?? "");
   const [confirmationMessage, setConfirmationMessage] = useState(form.confirmationMessage || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   const primaryColor = theme?.colors?.primary || "#3B82F6";
 
   const handleSave = async () => {
+    setError("");
+    if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) { setError("Close date and time must be after open date and time."); return; }
     setIsSaving(true);
     try {
       await onSave({
@@ -84,7 +88,7 @@ export default function FormSettingsPanel({
       });
       onClose();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Unable to save settings. Try again.");
     } finally {
       setIsSaving(false);
     }
@@ -125,6 +129,7 @@ export default function FormSettingsPanel({
               <Calendar className="w-4 h-4 text-primary" />
               <span>Availability & Deadlines</span>
             </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-300">Times use your device’s local timezone. Students can see this form only after its opening time.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <label className="block text-slate-600 dark:text-slate-300 font-medium mb-1">
@@ -132,6 +137,7 @@ export default function FormSettingsPanel({
                 </label>
                 <input
                   type="datetime-local"
+                  aria-label="Opens at"
                   value={opensAt}
                   onChange={(e) => setOpensAt(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white"
@@ -143,6 +149,7 @@ export default function FormSettingsPanel({
                 </label>
                 <input
                   type="datetime-local"
+                  aria-label="Closes at"
                   value={closesAt}
                   onChange={(e) => setClosesAt(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white"
@@ -356,6 +363,7 @@ export default function FormSettingsPanel({
           </div>
         </div>
 
+        {error && <p role="alert" className="px-6 pb-4 text-sm text-red-700 dark:text-red-300">{error}</p>}
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
           <button

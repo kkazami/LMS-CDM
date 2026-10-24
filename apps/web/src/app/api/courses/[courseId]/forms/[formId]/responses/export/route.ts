@@ -1,3 +1,6 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -19,12 +22,13 @@ export async function GET(request: Request, context: RouteContext) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
     const { courseId, formId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const form = await db.form.findUnique({
       where: { id: formId },
       include: {
@@ -143,6 +147,7 @@ export async function GET(request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("EXPORT_CSV_ERROR", error);
     return new NextResponse("Export Failed", { status: 500 });
   }

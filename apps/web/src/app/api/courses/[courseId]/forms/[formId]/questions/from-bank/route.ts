@@ -1,3 +1,6 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -19,13 +22,18 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId, formId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const body = await request.json();
+    if (body.sectionId && !await db.formSection.findFirst({ where: { id: body.sectionId, formId } })) throw new AccessError(400, 'Section does not belong to this form.');
+    if (body.showIfQuestionId && !await db.formQuestion.findFirst({ where: { id: body.showIfQuestionId, formId } })) throw new AccessError(400, 'Conditional question does not belong to this form.');
+    if (body.points !== undefined && (typeof body.points !== 'number' || !Number.isFinite(body.points) || body.points < 0)) throw new AccessError(400, 'Question points must be a non-negative number.');
+
     const { bankItemIds, sectionId } = body as { bankItemIds: string[]; sectionId?: string };
 
     if (!Array.isArray(bankItemIds) || bankItemIds.length === 0) {
@@ -33,9 +41,10 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const bankItems = await db.questionBankItem.findMany({
-      where: { id: { in: bankItemIds } },
+      where: { id: { in: bankItemIds }, OR: [{ createdBy: session.user.id }, { courseId }] },
     });
 
+    if (bankItems.length !== new Set(bankItemIds).size) throw new AccessError(403, 'Question bank items are unavailable.');
     const lastQ = await db.formQuestion.findFirst({
       where: { formId },
       orderBy: { position: "desc" },
@@ -73,6 +82,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json({ success: true, count: created.length, questions: created });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("QUESTIONS_FROM_BANK_ERROR", error);
     return NextResponse.json({ message: "Failed to import questions from bank." }, { status: 500 });
   }

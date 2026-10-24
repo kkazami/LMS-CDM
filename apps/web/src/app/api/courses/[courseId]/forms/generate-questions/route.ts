@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/lib/api-auth";
@@ -5,7 +8,7 @@ import { generateQuestionsFromContent } from "@/lib/forms/ai-question-generator"
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST(request: Request, context: { params: Promise<{ courseId: string }> }) {
   const ceilingDenial = await denyLegacyApi(request, "POST courses/[courseId]/forms/generate-questions/route.ts");
   if (ceilingDenial) return ceilingDenial;
 
@@ -15,11 +18,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
+    const { courseId } = await context.params;
+    await requireCourseAccess(session.user, courseId, true);
     const body = await request.json();
     const { contentOrTopic, count = 5, questionTypes, difficulty = "MEDIUM" } = body;
 
@@ -36,6 +41,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, questions: generated });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("AI_QUESTION_GEN_ERROR", error);
     return NextResponse.json({ message: "Failed to generate questions." }, { status: 500 });
   }

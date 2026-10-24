@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -18,9 +21,11 @@ export default async function ClassworkPage({ params }: PageProps) {
 
   if (!session) redirect(`/login?institute=${institute}`);
 
+  try { await requireCourseAccess(session.user, courseId); } catch { redirect(`/${institute}/courses`); }
+
   const theme = getInstituteTheme(institute);
-  const role = session.user.role.toUpperCase();
-  const isProfessor = role === "PROFESSOR" || role === "TEACHER";
+  const role = canonicalRole(session.user.role);
+  const isProfessor = role === "INSTRUCTOR";
   const isAdmin = role === "ADMIN";
 
   const course = await db.course.findUnique({
@@ -35,7 +40,7 @@ export default async function ClassworkPage({ params }: PageProps) {
 
   // Get all syllabus items
   let syllabusItems = await db.syllabusItem.findMany({
-    where: { courseId },
+    where: { courseId, ...(!canEdit ? visibleSyllabusForms() : {}) },
     include: {
       targetGroups: {
         include: {
