@@ -7,7 +7,6 @@ import {
   Users,
   GraduationCap,
   Library,
-  ShieldCheck,
   FileText,
   HardDrive,
   Sparkles,
@@ -109,14 +108,6 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       icon: HardDrive,
       color: "#EC4899",
       count: "7 Domains",
-    },
-    {
-      title: "Security Tools",
-      description: "Two-factor authentication, active sessions, IP filtering",
-      href: `/${institute}/security`,
-      icon: ShieldCheck,
-      color: "#06B6D4",
-      count: "Protected",
     },
     {
       title: "Support Tickets",
