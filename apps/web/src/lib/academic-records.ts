@@ -41,8 +41,9 @@ export async function saveSubmission(actor: CourseActor, courseId: string, raw: 
     if (requestId) await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${requestId}, 0))`;
     await lockAcademicRecord(tx, actor.id, input.syllabusItemId);
     await requireCourseAccess(actor, courseId, false, tx);
-    const item = await tx.syllabusItem.findFirst({ where: { id: input.syllabusItemId, courseId } });
+    const item = await tx.syllabusItem.findFirst({ where: { id: input.syllabusItemId, courseId }, include: { form: { select: { id: true } } } });
     if (!item || item.type === 'MATERIAL') throw new AccessError(404, 'Assignment not found.');
+    if (item.form) throw new AccessError(400, 'Submit this assessment through its form.');
     if (requestId) {
       const receipt = await tx.submissionRequest.findUnique({ where: { id: requestId } });
       if (receipt) {

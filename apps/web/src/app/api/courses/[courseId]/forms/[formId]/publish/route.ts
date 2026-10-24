@@ -1,3 +1,7 @@
+import { formIsOpen, publicForm } from '@/lib/forms/availability';
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -22,12 +26,13 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId, formId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const form = await db.form.findUnique({
       where: { id: formId },
       include: {
@@ -97,11 +102,11 @@ export async function POST(request: Request, context: RouteContext) {
 
     // Notify enrolled students
     try {
-      await createNotificationsForCourseStudents(courseId, {
+      if (form.status !== "PUBLISHED" && formIsOpen(updated)) await createNotificationsForCourseStudents(courseId, {
         type: "CLASSWORK",
         title: `New Assessment: ${form.title}`,
         message: `Your instructor published a new ${form.formType.toLowerCase().replace("_", " ")}: ${form.title}.`,
-        link: `/${courseId}/classwork/${form.syllabusItemId}`,
+        link: `/${session.user.institute.code}/courses/${courseId}/classwork/${form.syllabusItemId}`,
       });
     } catch (notifErr) {
       console.warn("NOTIFY_STUDENTS_FORM_ERROR", notifErr);
@@ -111,9 +116,10 @@ export async function POST(request: Request, context: RouteContext) {
       success: true,
       status: "PUBLISHED",
       totalPoints,
-      form: updated,
+      form: publicForm(updated),
     });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("FORM_PUBLISH_ERROR", error);
     return NextResponse.json({ message: "Failed to publish form." }, { status: 500 });
   }

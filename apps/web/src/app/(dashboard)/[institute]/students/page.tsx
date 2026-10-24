@@ -1,3 +1,4 @@
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import { getInstituteName } from "@lms/types";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
@@ -91,6 +92,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       where: {
         courseId: { in: courseIds },
         type: { not: "MATERIAL" },
+        AND: [visibleSyllabusForms(now)],
         dueDate: {
           not: null,
           lte: sevenDaysFromNow,

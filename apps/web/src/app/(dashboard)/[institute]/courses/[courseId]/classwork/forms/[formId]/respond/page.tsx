@@ -1,5 +1,8 @@
+import { formIsVisible, formIsOpen, publicForm, studentQuestionConfig } from '@/lib/forms/availability';
+import { requireFormAccess } from '@/lib/forms/access';
+import StartForm from '@/components/forms/renderer/StartForm';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
@@ -33,6 +36,8 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
 
   const role = (session.user.role as string).toUpperCase();
   const isStudent = role === "STUDENT";
+
+  try { await requireFormAccess(session.user, courseId, formId); } catch { notFound(); }
 
   // Concurrently fetch enrollment, form details, and all user attempts in parallel
   const [enrollment, form, existingAttempts] = await Promise.all([
@@ -72,31 +77,13 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
   const lastAttempt = existingAttempts[0];
   const canRetake = previousCount < form.maxAttempts;
 
-  if (!attempt) {
-    if (lastAttempt && lastAttempt.status === "SUBMITTED" && !isRetakeRequested) {
-      // Viewing submitted result; do not create a new attempt unless explicitly requested
-      attempt = lastAttempt;
-    } else if (canRetake) {
-      // Create new attempt
-      const deadlineAt = form.timeLimitMins
-        ? new Date(Date.now() + form.timeLimitMins * 60 * 1000)
-        : null;
-
-      attempt = await db.formAttempt.create({
-        data: {
-          formId,
-          userId: session.user.id,
-          attemptNumber: previousCount + 1,
-          status: "IN_PROGRESS",
-          deadlineAt,
-        },
-        include: { answers: true },
-      });
-    } else {
-      // Reached limit, show completed result
-      attempt = lastAttempt;
-    }
+  if (!formIsVisible(form)) redirect(`/${institute}/courses/${courseId}/classwork`);
+  if (!attempt && lastAttempt && ['SUBMITTED', 'TIMED_OUT'].includes(lastAttempt.status) && !isRetakeRequested) attempt = lastAttempt;
+  if (!attempt && (!formIsOpen(form) || !canRetake)) {
+    if (lastAttempt) attempt = lastAttempt;
+    else redirect(`/${institute}/courses/${courseId}/classwork`);
   }
+  if (!attempt) return <StartForm courseId={courseId} formId={formId} institute={institute} title={form.title} hasPassword={Boolean(form.passwordHash)} />;
 
   const theme = getInstituteTheme(institute);
 
@@ -107,23 +94,7 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
       cfg = JSON.parse(q.config || "{}");
     } catch {}
 
-    const options = (cfg as { options?: Array<{ id: string; text: string; imageUrl?: string }> }).options;
-    if (Array.isArray(options)) {
-      cfg = {
-        ...cfg,
-        options: options.map((opt) => ({
-          id: opt.id,
-          text: opt.text,
-          imageUrl: opt.imageUrl,
-        })),
-      };
-    }
-    if ((cfg as { shortAnswer?: unknown }).shortAnswer) {
-      cfg = {
-        ...cfg,
-        shortAnswer: {},
-      };
-    }
+    cfg = studentQuestionConfig(q.config);
 
     return {
       ...q,
@@ -167,17 +138,17 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
       fileUrl: ans.fileUrl,
       fileName: ans.fileName,
       fileSizeBytes: ans.fileSizeBytes,
-      isCorrect: ans.isCorrect,
-      pointsAwarded: ans.pointsAwarded,
+      isCorrect: form.showAnswersAfter ? ans.isCorrect : null,
+      pointsAwarded: form.showScoreAfter ? ans.pointsAwarded : null,
       autoGraded: ans.autoGraded,
       instructorGraded: ans.instructorGraded,
-      feedback: ans.feedback,
+      feedback: form.showFeedbackAfter ? ans.feedback : null,
       answeredAt: ans.answeredAt,
     };
   });
 
   const parsedForm: FormData = {
-    ...form,
+    ...publicForm(form),
     formType: form.formType as FormData["formType"],
     status: form.status as FormData["status"],
     scoreToKeep: form.scoreToKeep as FormData["scoreToKeep"],
@@ -186,6 +157,9 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
 
   const parsedAttempt: FormAttemptData = {
     ...attempt,
+    rawScore: form.showScoreAfter ? attempt.rawScore : null,
+    percentage: form.showScoreAfter ? attempt.percentage : null,
+    passed: form.showScoreAfter ? attempt.passed : null,
     status: attempt.status as FormAttemptData["status"],
     answers: parsedAnswers,
   };
