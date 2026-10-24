@@ -1,3 +1,5 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -29,8 +31,9 @@ export default async function FormResponsesPage({ params, searchParams }: PagePr
     redirect(`/login?institute=${institute}`);
   }
 
-  const role = (session.user.role as string).toUpperCase();
-  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+  try { await requireFormAccess(session.user, courseId, formId, true); } catch { redirect(`/${institute}/courses/${courseId}/classwork`); }
+  const role = canonicalRole(session.user.role);
+  if (role !== "INSTRUCTOR" && role !== "ADMIN") {
     redirect(`/${institute}/courses/${courseId}/classwork`);
   }
 

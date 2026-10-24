@@ -1,3 +1,6 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -19,12 +22,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId, formId, questionId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const question = await db.formQuestion.findUnique({
       where: { id: questionId },
       include: { form: true },
@@ -35,6 +39,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const body = await request.json();
+    if (body.sectionId && !await db.formSection.findFirst({ where: { id: body.sectionId, formId } })) throw new AccessError(400, 'Section does not belong to this form.');
+    if (body.showIfQuestionId && !await db.formQuestion.findFirst({ where: { id: body.showIfQuestionId, formId } })) throw new AccessError(400, 'Conditional question does not belong to this form.');
+    if (body.points !== undefined && (typeof body.points !== 'number' || !Number.isFinite(body.points) || body.points < 0)) throw new AccessError(400, 'Question points must be a non-negative number.');
+
     const updateData: Record<string, unknown> = {};
 
     const fields = [
@@ -89,6 +97,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("QUESTION_PATCH_ERROR", error);
     return NextResponse.json({ message: "Failed to update question." }, { status: 500 });
   }
@@ -104,12 +113,13 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId, formId, questionId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const question = await db.formQuestion.findUnique({
       where: { id: questionId },
       include: { form: true },
@@ -125,6 +135,7 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("QUESTION_DELETE_ERROR", error);
     return NextResponse.json({ message: "Failed to delete question." }, { status: 500 });
   }

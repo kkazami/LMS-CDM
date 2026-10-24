@@ -1,3 +1,6 @@
+import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
@@ -25,6 +28,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId } = await context.params;
+    await requireCourseAccess(session.user, courseId);
 
     const [gradableItems, studentSubmissions, feedbackComments] = await Promise.all([
       db.syllabusItem.findMany({
@@ -32,6 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
           courseId,
           type: { not: 'MATERIAL' },
           maxPoints: { not: null },
+          ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}),
         },
         select: {
           id: true,
@@ -39,6 +44,7 @@ export async function GET(request: Request, context: RouteContext) {
           type: true,
           maxPoints: true,
           dueDate: true,
+          form: { select: { showScoreAfter: true } },
         },
         orderBy: { dueDate: 'asc' },
       }),
@@ -85,7 +91,7 @@ export async function GET(request: Request, context: RouteContext) {
     const items = gradableItems.map((item) => {
       const sub = subMap.get(item.id);
       const maxPts = item.maxPoints || 100;
-      const score = typeof sub?.grade === 'number' ? sub.grade : null;
+      const score = item.form?.showScoreAfter === false ? null : typeof sub?.grade === 'number' ? sub.grade : null;
       const isSubmitted = sub?.status === 'SUBMITTED' || sub?.status === 'GRADED';
       const isPastDue = item.dueDate ? new Date(item.dueDate) < new Date() : false;
 
@@ -150,6 +156,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
     );
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error('COURSE_GRADES_GET_ERROR', error);
     return NextResponse.json({ message: 'Failed to fetch course grades.' }, { status: 500 });
   }

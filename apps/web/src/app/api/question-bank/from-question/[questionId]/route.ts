@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -19,8 +22,8 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
@@ -34,6 +37,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Question not found." }, { status: 404 });
     }
 
+    await requireCourseAccess(session.user, question.form.courseId, true);
     const bankItem = await db.questionBankItem.create({
       data: {
         courseId: question.form.courseId,
@@ -55,6 +59,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json({ success: true, bankItem });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("SAVE_QUESTION_TO_BANK_ERROR", error);
     return NextResponse.json({ message: "Failed to save question to bank." }, { status: 500 });
   }

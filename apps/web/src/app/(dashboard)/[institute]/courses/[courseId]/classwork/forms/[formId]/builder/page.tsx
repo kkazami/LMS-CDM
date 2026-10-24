@@ -1,3 +1,6 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { publicForm } from '@/lib/forms/availability';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -24,8 +27,9 @@ export default async function FormBuilderPage({ params }: PageProps) {
     redirect(`/login?institute=${institute}`);
   }
 
-  const role = (session.user.role as string).toUpperCase();
-  if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+  try { await requireFormAccess(session.user, courseId, formId, true); } catch { redirect(`/${institute}/courses/${courseId}/classwork`); }
+  const role = canonicalRole(session.user.role);
+  if (role !== "INSTRUCTOR" && role !== "ADMIN") {
     redirect(`/${institute}/courses/${courseId}/classwork`);
   }
 
@@ -58,7 +62,7 @@ export default async function FormBuilderPage({ params }: PageProps) {
   });
 
   const parsedForm: FormData = {
-    ...form,
+    ...publicForm(form),
     formType: form.formType as FormData["formType"],
     status: form.status as FormData["status"],
     scoreToKeep: form.scoreToKeep as FormData["scoreToKeep"],

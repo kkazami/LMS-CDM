@@ -1,3 +1,7 @@
+import { formIsOpen } from '@/lib/forms/availability';
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { requireOwnedUpload } from '@/lib/private-upload';
 import { NextResponse } from "next/server";
@@ -21,6 +25,7 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const { courseId, formId, attemptId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, false);
     const attempt = await db.formAttempt.findUnique({
       where: { id: attemptId },
       include: { form: true },
@@ -38,14 +43,7 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "This attempt is already submitted or closed." }, { status: 400 });
     }
 
-    // Check timer expiration
-    if (attempt.deadlineAt && new Date() > new Date(attempt.deadlineAt)) {
-      await db.formAttempt.update({
-        where: { id: attemptId },
-        data: { status: "TIMED_OUT", submittedAt: new Date() },
-      });
-      return NextResponse.json({ message: "Time expired for this attempt.", timedOut: true }, { status: 400 });
-    }
+    if (!formIsOpen(attempt.form) || attempt.deadlineAt && new Date() >= attempt.deadlineAt) throw new AccessError(403, 'Time expired for this attempt. Submit your saved answers.');
 
     const body = await request.json();
     const {
@@ -65,6 +63,7 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "questionId is required." }, { status: 400 });
     }
 
+    if (!await db.formQuestion.findFirst({ where: { id: questionId, formId } })) throw new AccessError(400, 'Question does not belong to this form.');
     if (fileUrl) await requireOwnedUpload(db, session.user, String(fileUrl));
     // Prepare serializable storage values
     const stringifiedOptions = Array.isArray(answerOptions) ? JSON.stringify(answerOptions) : null;
@@ -72,7 +71,11 @@ export async function PUT(request: Request, context: RouteContext) {
     const stringifiedMatrix = typeof answerMatrix === "object" && answerMatrix !== null ? JSON.stringify(answerMatrix) : null;
     const parsedDate = answerDate ? new Date(answerDate) : null;
 
-    const answer = await db.formAttemptAnswer.upsert({
+    const answer = await db.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['form-attempt', attemptId])}, 0))`;
+      const current = await tx.formAttempt.findUniqueOrThrow({ where: { id: attemptId }, include: { form: true } });
+      if (current.status !== 'IN_PROGRESS' || !formIsOpen(current.form) || current.deadlineAt && new Date() >= current.deadlineAt) throw new AccessError(403, 'This attempt is closed for answers.');
+      return tx.formAttemptAnswer.upsert({
       where: {
         attemptId_questionId: {
           attemptId,
@@ -107,8 +110,11 @@ export async function PUT(request: Request, context: RouteContext) {
       },
     });
 
+    });
+
     return NextResponse.json({ saved: true, answerId: answer.id });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("AUTOSAVE_PUT_ERROR", error);
     return NextResponse.json({ message: "Failed to save answer." }, { status: 500 });
   }

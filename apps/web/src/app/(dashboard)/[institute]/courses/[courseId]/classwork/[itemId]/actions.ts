@@ -1,5 +1,6 @@
 "use server";
 import { requireOwnedUpload } from '@/lib/private-upload';
+import { formIsVisible } from '@/lib/forms/availability';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth-session';
 import { revalidatePath } from 'next/cache';
@@ -31,8 +32,8 @@ export async function getOrCreateSubmission(syllabusItemId: string) {
   const actor = await student();
   return db.$transaction(async tx => {
     await lockAcademicRecord(tx, actor.id, syllabusItemId);
-    const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId } });
-    if (!item) throw new Error('Assignment not found.');
+    const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId }, include: { form: true } });
+    if (!item || item.form && !formIsVisible(item.form)) throw new Error('Assignment not found.');
     await requireCourseAccess(actor, item.courseId, false, tx);
     return tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId, studentId: actor.id } }, create: { syllabusItemId, studentId: actor.id }, update: {}, include: { attachments: true } });
   });

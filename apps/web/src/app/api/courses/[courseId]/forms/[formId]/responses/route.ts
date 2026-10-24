@@ -1,3 +1,6 @@
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -19,12 +22,13 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
-    if (role !== "PROFESSOR" && role !== "TEACHER" && role !== "ADMIN") {
+    const role = canonicalRole(session.user.role);
+    if (role !== "INSTRUCTOR" && role !== "ADMIN") {
       return NextResponse.json({ message: "Instructors only." }, { status: 403 });
     }
 
     const { courseId, formId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, true);
     const url = new URL(request.url);
     const search = url.searchParams.get("q") || "";
     const sort = url.searchParams.get("sort") || "date_desc";
@@ -69,6 +73,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     return NextResponse.json({ attempts });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("RESPONSES_GET_ERROR", error);
     return NextResponse.json({ message: "Failed to fetch responses." }, { status: 500 });
   }
