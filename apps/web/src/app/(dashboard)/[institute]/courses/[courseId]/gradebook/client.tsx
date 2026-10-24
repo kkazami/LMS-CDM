@@ -149,6 +149,13 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
 
   function computeFinalGrade(studentId: string): number | null {
     if (!hasValidPolicy) return null;
+
+    // A final grade requires an explicit score in every cell, including zero.
+    for (const assignment of data.assignments) {
+      const localValue = localGrades[studentId]?.[assignment.id];
+      const grade = localValue !== undefined ? parseFloat(localValue) : data.grades[studentId]?.[assignment.id]?.grade;
+      if (grade === null || grade === undefined || !Number.isFinite(grade)) return null;
+    }
     
     let totalScore = 0;
     let computedWeight = 0; // Track how much weight was actually computable
@@ -179,8 +186,7 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
       }
     }
     
-    // Scale the score if the student hasn't completed assignments in all weighted categories yet
-    // This provides a running average rather than punishing them for future categories
+    // Normalize across weighted categories that have gradable items.
     if (computedWeight > 0) {
       return (totalScore / computedWeight) * 100;
     }
