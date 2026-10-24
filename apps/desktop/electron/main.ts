@@ -3,11 +3,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { setupMenu } from './menu';
 import { registerIpcHandlers } from './ipc/handlers';
+import { resolveDesktopWebUrl } from './web-url';
 
-const IS_DEV = process.env.NODE_ENV !== 'production';
-const WEB_URL = IS_DEV
-  ? 'http://localhost:3000'
-  : (process.env.LMS_WEB_URL || 'http://localhost:3000');
+const IS_DEV = !app.isPackaged;
+const WEB_URL = resolveDesktopWebUrl(process.env.LMS_WEB_URL, IS_DEV);
 
 // Admin-only entry point
 const ADMIN_LOGIN_URL = WEB_URL + '/login?institute=ics&desktop=admin';
@@ -98,11 +97,11 @@ function createWindow() {
     const targetURL = hasSession ? (WEB_URL + '/ics/admin') : ADMIN_LOGIN_URL;
 
     win.loadURL(targetURL).catch(() => {
-      win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+      win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), { query: { server: WEB_URL } });
     });
   }).catch(() => {
     win.loadURL(ADMIN_LOGIN_URL).catch(() => {
-      win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+      win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), { query: { server: WEB_URL } });
     });
   });
 
@@ -156,7 +155,7 @@ function createWindow() {
     mainWindow = null;
   });
 
-  setupMenu(win);
+  setupMenu(win, WEB_URL);
   registerIpcHandlers(win, WEB_URL);
 }
 

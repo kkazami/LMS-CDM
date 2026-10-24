@@ -1,6 +1,13 @@
 packages:
   - "apps/*"
   - "packages/*"
+# Worklets 0.10.1 imports these from its Babel plugin but omits their declarations.
+# Declare them at the package boundary so isolated pnpm installs resolve them.
+packageExtensions:
+  'react-native-worklets@0.10.1':
+    dependencies:
+      '@babel/generator': 7.29.8
+      '@babel/traverse': 7.29.10
 # Security patches scoped to the web parser/storage and Prisma toolchain parents.
 overrides:
   'officeparser>pdfjs-dist': 6.2.108

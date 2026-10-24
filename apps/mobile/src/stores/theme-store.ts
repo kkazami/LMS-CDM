@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../lib/storage';
 import { Appearance } from 'react-native';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -20,7 +20,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
   initializeTheme: async () => {
     try {
-      const saved = await SecureStore.getItemAsync(THEME_PREF_KEY);
+      const saved = await storage.getItem(THEME_PREF_KEY);
       const pref = (saved as ThemePreference) || 'system';
       const systemDark = Appearance.getColorScheme() === 'dark';
       const isDark = pref === 'system' ? systemDark : pref === 'dark';
@@ -35,7 +35,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const isDark = pref === 'system' ? systemDark : pref === 'dark';
     set({ themePreference: pref, isDark });
     try {
-      await SecureStore.setItemAsync(THEME_PREF_KEY, pref);
+      await storage.setItem(THEME_PREF_KEY, pref);
     } catch {
       // Fallback
     }
@@ -46,7 +46,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const pref: ThemePreference = nextDark ? 'dark' : 'light';
     set({ themePreference: pref, isDark: nextDark });
     try {
-      await SecureStore.setItemAsync(THEME_PREF_KEY, pref);
+      await storage.setItem(THEME_PREF_KEY, pref);
     } catch {
       // Fallback
     }

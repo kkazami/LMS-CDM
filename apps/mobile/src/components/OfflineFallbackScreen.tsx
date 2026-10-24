@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { WifiOff, RefreshCw, Settings, Check, AlertCircle, Server } from 'lucide-react-native';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../lib/storage';
+import { normalizeApiUrl } from '../lib/api-url';
 import { getDefaultApiUrl } from '../lib/constants';
 
 interface Props {
@@ -17,7 +18,7 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
   const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
-    SecureStore.getItemAsync('lumina_custom_api_url').then((val) => {
+    storage.getItem('lumina_custom_api_url').then((val) => {
       if (val) {
         setCustomUrl(val);
       } else {
@@ -28,11 +29,15 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
 
   const handleSaveCustomUrl = async () => {
     try {
-      const clean = customUrl.trim().replace(/\/+$/, '');
+      const clean = normalizeApiUrl(customUrl);
+      if (customUrl.trim() && !clean) {
+        setTestStatus('Enter an http:// or https:// server address without a page path or credentials.');
+        return;
+      }
       if (clean) {
-        await SecureStore.setItemAsync('lumina_custom_api_url', clean);
+        await storage.setItem('lumina_custom_api_url', clean);
       } else {
-        await SecureStore.deleteItemAsync('lumina_custom_api_url');
+        await storage.deleteItem('lumina_custom_api_url');
       }
       setShowConfig(false);
       onRetry();
@@ -43,7 +48,7 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
 
   const handleResetUrl = async () => {
     try {
-      await SecureStore.deleteItemAsync('lumina_custom_api_url');
+      await storage.deleteItem('lumina_custom_api_url');
       setCustomUrl(getDefaultApiUrl());
       setShowConfig(false);
       onRetry();
@@ -55,14 +60,14 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestStatus(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
     try {
-      const testHost = (customUrl.trim() || getDefaultApiUrl()).replace(/\/+$/, '');
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
+      const testHost = customUrl.trim() ? normalizeApiUrl(customUrl) : getDefaultApiUrl();
+      if (!testHost) throw new Error('Enter a valid server address.');
       const res = await fetch(`${testHost}/api/health`, {
         signal: controller.signal,
       });
-      clearTimeout(timer);
       if (res.ok) {
         setTestStatus('SUCCESS: Server is reachable and healthy!');
       } else {
@@ -71,6 +76,7 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
     } catch (err) {
       setTestStatus(err instanceof Error ? `FAILED: ${err.message}` : 'FAILED: Connection refused or timed out');
     } finally {
+      clearTimeout(timer);
       setIsTesting(false);
     }
   };
@@ -87,7 +93,7 @@ export default function OfflineFallbackScreen({ onRetry, targetUrl, errorMessage
 
         <Text style={styles.title}>Connecting to CdM LMS</Text>
         <Text style={styles.subtitle}>
-          Unable to establish a connection with the CdM LMS web server. Ensure Next.js is running on your computer.
+          The LMS server could not be reached. Check your internet connection and server address. For a local server, also start the web app on your computer.
         </Text>
 
         {targetUrl && (

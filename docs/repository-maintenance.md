@@ -17,6 +17,16 @@ checks. The student-facing AI features inside `apps/web/src` are application cod
 files. CI runs the same check. It supplements credential review rather than proving
 that arbitrary source text contains no secrets.
 
+Next.js generates `next-env.d.ts`; it stays local because development and production
+use different generated type paths. CI runs `pnpm --filter web exec next typegen`
+before TypeScript checks. Run that command before a standalone type check on a
+fresh clone; `pnpm dev:web` and `pnpm build:web` also regenerate the file.
+
+Dated notes in `docs/quality/*-YYYY-MM-DD.md` are local investigation reports.
+Keep reusable guides, deployment SQL, maintenance scripts, migrations, and their
+regression tests in Git. Do not ignore whole script or test folders to hide pending
+source changes. Put new disposable evidence under `tmp/`.
+
 ## Moving to another computer
 
 Clone the product repository and install Node.js 22, pnpm 10.32.1, and the required

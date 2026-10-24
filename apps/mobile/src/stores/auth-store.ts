@@ -1,46 +1,13 @@
 import { getInstituteName } from "@lms/types";
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
-import { createApiClient, type ApiClient } from '@lms/api-client';
+import { storage } from '../lib/storage';
+import { createApiClient, ApiClientError, type ApiClient } from '@lms/api-client';
 import { API_BASE_URL } from '../lib/constants';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 import type { AuthUser, LoginResponse } from '@lms/types';
 
-import { Platform } from 'react-native';
-
 const TOKEN_KEY = 'lumina_auth_token';
 const USER_KEY = 'lumina_user';
-
-const storage = {
-  getItem: async (key: string): Promise<string | null> => {
-    if (Platform.OS === 'web') {
-      try {
-        return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
-      } catch {
-        return null;
-      }
-    }
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: async (key: string, value: string): Promise<void> => {
-    if (Platform.OS === 'web') {
-      try {
-        if (typeof window !== 'undefined') window.localStorage.setItem(key, value);
-      } catch {}
-      return;
-    }
-    return SecureStore.setItemAsync(key, value);
-  },
-  deleteItem: async (key: string): Promise<void> => {
-    if (Platform.OS === 'web') {
-      try {
-        if (typeof window !== 'undefined') window.localStorage.removeItem(key);
-      } catch {}
-      return;
-    }
-    return SecureStore.deleteItemAsync(key);
-  },
-};
 
 interface AuthState {
   token: string | null;
@@ -88,8 +55,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
             set({ user: response.user });
             await storage.setItem(USER_KEY, JSON.stringify(response.user));
             registerForPushNotificationsAsync(api).catch(() => {});
-          } catch {
-            // Token invalid, clear state
+          } catch (error) {
+            if (!(error instanceof ApiClientError) || ![401, 403].includes(error.status)) return;
+            // Only a server rejection invalidates saved credentials.
             await storage.deleteItem(TOKEN_KEY);
             await storage.deleteItem(USER_KEY);
             set({ token: null, user: null, isAuthenticated: false, isLoading: false });
@@ -122,8 +90,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     register: async data => {
       const response = await api.auth.register(data);
-      await SecureStore.setItemAsync(TOKEN_KEY, response.token);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+      await storage.setItem(TOKEN_KEY, response.token);
+      await storage.setItem(USER_KEY, JSON.stringify(response.user));
       set({ token: response.token, user: response.user as AuthUser, isAuthenticated: true, rewardReceipt: null });
     },
 

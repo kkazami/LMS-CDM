@@ -1,7 +1,7 @@
 name: Web product quality
 on:
   pull_request:
-    paths: ['apps/web/**', 'packages/**', 'prisma/**', 'tests/web-quality/**', 'tests/security/**', 'tests/database/**', 'tests/codelab/**', 'tests/calendar/**', 'tests/auth/**', 'tests/roster/**', 'tests/program-head/**', 'tests/navigation/**', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.gitignore', 'scripts/check-repository-files.mjs', '.github/workflows/web-quality.yml', 'docker/**']
+    paths: ['apps/web/**', 'apps/mobile/**', 'apps/desktop/**', 'packages/**', 'prisma/**', 'tests/web-quality/**', 'tests/mobile/**', 'tests/security/**', 'tests/database/**', 'tests/codelab/**', 'tests/calendar/**', 'tests/auth/**', 'tests/roster/**', 'tests/program-head/**', 'tests/navigation/**', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.gitignore', 'scripts/check-repository-files.mjs', 'scripts/check-local-setup.mjs', '.github/workflows/web-quality.yml', 'docker/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,6 +24,8 @@ jobs:
       - run: node scripts/check-repository-files.mjs
       - run: pnpm install --frozen-lockfile
       - run: node tests/web-quality/test.mjs
+      - run: pnpm --filter mobile typecheck
+      - run: pnpm --filter web exec next typegen
       - run: pnpm --filter web exec tsc --noEmit --incremental false
       - run: pnpm build:web
       - name: Web and Prisma production advisory gate
