@@ -18,7 +18,7 @@ export default function CourseTermField({
       .then((next) => {
         if (live) {
           setTerms(next);
-          setValue(next.find((t) => t.isCurrent)?.id ?? "");
+          setValue(next.find((t) => t.isCurrent)?.id ?? next[0]?.id ?? "");
         }
       })
       .catch(() => {

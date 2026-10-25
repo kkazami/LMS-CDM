@@ -17,6 +17,7 @@ interface MobileBottomNavProps {
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
+  isEligibleForArena?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -27,6 +28,7 @@ export default function MobileBottomNav({
   avatarUrl,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
+  isEligibleForArena,
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -74,8 +76,8 @@ export default function MobileBottomNav({
 
   return (
     <>
-      <nav data-mobile-bottom-nav className="fixed bottom-0 left-0 right-0 z-[90] lg:hidden bg-white dark:bg-[#1A1D27] border-t border-slate-200/80 dark:border-white/10 pb-[env(safe-area-inset-bottom)] shadow-lg">
-        <div className="flex justify-around items-center min-h-[56px] px-1">
+      <nav data-mobile-bottom-nav className="fixed bottom-0 left-0 right-0 z-90 lg:hidden bg-white dark:bg-[#1A1D27] border-t border-slate-200/80 dark:border-white/10 pb-[env(safe-area-inset-bottom)] shadow-lg">
+        <div className="flex justify-around items-center min-h-14 px-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
 
@@ -87,7 +89,7 @@ export default function MobileBottomNav({
                   id="mobile-nav-more"
                   type="button"
                   onClick={handleMoreToggle}
-                  className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-[80px] min-h-[44px] gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
+                  className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-20 min-h-11 gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
                   style={{ color: isActive ? "var(--institute-ink)" : undefined }}
                   aria-label="Open more navigation options"
                   aria-expanded={isMoreOpen}
@@ -115,7 +117,7 @@ export default function MobileBottomNav({
                 key={tab.name}
                 href={href}
                 aria-current={isActive ? "page" : undefined}
-                className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-[80px] min-h-[44px] gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
+                className="flex flex-col items-center justify-center flex-1 min-w-0 max-w-20 min-h-11 gap-1 py-1.5 px-0.5 active:scale-95 transition-transform cursor-pointer touch-manipulation select-none"
                 style={{ color: isActive ? "var(--institute-ink)" : undefined }}
               >
                 <Icon
@@ -144,6 +146,7 @@ export default function MobileBottomNav({
         avatarUrl={avatarUrl}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+        isEligibleForArena={isEligibleForArena}
       />
     </>
   );

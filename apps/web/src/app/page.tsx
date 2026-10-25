@@ -678,7 +678,7 @@ function CoverflowDepartmentPortal({
                     onSelectIndex(idx);
                   }
                 }}
-                onKeyDown={(e) => {
+                onKeyDown={(e: React.KeyboardEvent) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     if (isCenter) {

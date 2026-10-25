@@ -24,6 +24,7 @@ model Institute {
   terms          AcademicTerm[]
   supportTickets SupportTicket[]
   arenaQuizzes   ArenaQuiz[]
+  financialStatements FinancialStatement[]
 }
 
 model User {
@@ -122,6 +123,7 @@ model User {
   arenaParticipations         ArenaParticipant[]           @relation("ArenaUserParticipants")
   arenaAnswers                ArenaPlayerAnswer[]          @relation("ArenaUserAnswers")
   arenaQuizzes                ArenaQuiz[]                  @relation("ArenaQuizAuthor")
+  financialStatements         FinancialStatement[]         @relation("StudentFinancialStatements")
 
   // ─── ITE Participation Tracker relations ───
   activityEvents  ActivityEvent[]  @relation("ActivityEventUser")
@@ -2068,6 +2070,31 @@ model RateLimitBucket {
   expiresAt DateTime
 
   @@index([expiresAt])
+}
+
+// ─── IBE Financial Statement Generator ───────────────────────
+// Each row is a private, student-owned copy of a code-defined template.
+model FinancialStatement {
+  id            String    @id @default(cuid())
+  studentId     String
+  instituteId   String
+  statementType String    // INCOME_STATEMENT | BALANCE_SHEET | ... (see lib/financial-statements/types.ts)
+  status        String    @default("DRAFT") // "DRAFT" | "GENERATED"
+  businessName  String    @default("")
+  periodStart   DateTime? @db.Date
+  periodEnd     DateTime? @db.Date // reporting period end, or the statement date for point-in-time reports
+  data          Json      // editable entries (meta + sections/rows)
+  results       Json?     // last deterministic calculation summary
+  generatedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  student   User      @relation("StudentFinancialStatements", fields: [studentId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, status])
+  @@index([studentId, updatedAt])
+  @@index([instituteId])
 }
 
 // ─── ITE Meetings Enums & Models ───

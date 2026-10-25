@@ -61,11 +61,16 @@ const getTypeConfig = (type: string) => {
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
+  const dateFormatted = d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+  const timeFormatted = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${dateFormatted} · ${timeFormatted}`;
 }
 
 export default function SyllabusAccordion({
@@ -132,7 +137,7 @@ export default function SyllabusAccordion({
             {/* Section Header */}
             <button
               onClick={() => toggleSection(type)}
-              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer"
+              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/3 cursor-pointer"
             >
               {isExpanded ? (
                 <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />
@@ -160,7 +165,7 @@ export default function SyllabusAccordion({
                     <Link
                       href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}`}
                       key={item.id}
-                      className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.02] group"
+                      className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-white/2 group"
                       style={{
                         animation: `staggerFadeIn 0.2s ease-out both`,
                         animationDelay: `${Math.min(index, 10) * 40}ms`,
@@ -213,14 +218,14 @@ export default function SyllabusAccordion({
                         <div className="flex shrink-0 items-center gap-1">
                           <button
                             onClick={(e) => { e.preventDefault(); onEdit?.(item); }}
-                            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center active:scale-95"
+                            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer min-h-9 min-w-9 flex items-center justify-center active:scale-95"
                             aria-label={`Edit ${item.title}`}
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={(e) => { e.preventDefault(); onDelete?.(item.id); }}
-                            className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center active:scale-95"
+                            className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition cursor-pointer min-h-9 min-w-9 flex items-center justify-center active:scale-95"
                             aria-label={`Delete ${item.title}`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

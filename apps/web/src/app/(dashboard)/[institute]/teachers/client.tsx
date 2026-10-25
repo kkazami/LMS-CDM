@@ -21,6 +21,7 @@ import {
   Share2,
   BarChart3,
   ClipboardCheck,
+  Gamepad2,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import DashboardCalendar from "@/components/calendar/StudentCalendar";
@@ -294,24 +295,16 @@ export default function TeacherDashboardClient({
   return (
     <>
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
-        {/* ─── 1. Anti-Slop Faculty Hero Banner ─── */}
+        {/* ─── 1. Neutral Academic Faculty Hero Banner ─── */}
         <div
           className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 sm:p-6 lg:p-8 shadow-xs transition-colors"
-          style={{
-            borderLeft: `4px solid ${theme.colors.primary}`,
-            background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
-          }}
         >
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
             <div className="space-y-2 max-w-2xl min-w-0">
               <div
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider"
-                style={{
-                  backgroundColor: `${theme.colors.primary}1A`,
-                  color: theme.colors.primary,
-                }}
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10"
               >
-                <Sparkles className="h-3.5 w-3.5" />
+                <Sparkles className="h-3.5 w-3.5 text-slate-400" />
                 <span>
                   {getWelcomeBannerPortalLabel(instituteCode, instituteName, true)}
                 </span>
@@ -319,7 +312,7 @@ export default function TeacherDashboardClient({
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] wrap-break-word">
                 <TypingBanner
                   text={greeting || `Welcome back, ${userName}!`}
-                  cursorColor={theme.colors.primary}
+                  cursorColor="#94A3B8"
                   keepCursor={false}
                   speed={28}
                   sessionKey={typingSessionKey ?? "cdm_faculty_typed_greeting"}
@@ -365,7 +358,9 @@ export default function TeacherDashboardClient({
           </div>
           <StaggerGroup
             className={`grid grid-cols-2 sm:grid-cols-3 ${
-              (showCodeLab ?? instituteCode.toLowerCase() === "ics") ? "lg:grid-cols-6" : "lg:grid-cols-5"
+              ((showCodeLab ?? instituteCode.toLowerCase() === "ics") || instituteCode.toLowerCase() === "ibe")
+                ? "lg:grid-cols-6"
+                : "lg:grid-cols-5"
             } gap-3`}
           >
             <StaggerItem>
@@ -425,6 +420,19 @@ export default function TeacherDashboardClient({
                   sublabel="Lab workspace"
                   href={`/${instituteCode}/activities/codelab`}
                   color="#06B6D4"
+                />
+              </StaggerItem>
+            )}
+            {instituteCode.toLowerCase() === "ibe" && (
+              <StaggerItem>
+                <QuickActionCard
+                  icon={Gamepad2}
+                  label="Quiz Arena"
+                  sublabel="Host live battle"
+                  href={`/${instituteCode}/arena`}
+                  color={theme.colors.primary}
+                  badge="IBE Live"
+                  badgeVariant="warning"
                 />
               </StaggerItem>
             )}

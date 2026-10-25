@@ -45,12 +45,11 @@ export default function Workbench3D({
     <div className="w-full h-full relative" style={{ minHeight: "500px" }}>
       <GLTFErrorBoundary>
         <Suspense fallback={<GLTFLoadingSkeleton height="100%" />}>
-          <Canvas
-            shadows
-            camera={{ position: cameraPosition, fov }}
-            className="w-full h-full rounded-xl bg-gray-50"
-            style={{ touchAction: "none" }}
-          >
+          <div className="w-full h-full rounded-xl bg-gray-50 overflow-hidden" style={{ touchAction: "none" }}>
+            <Canvas
+              shadows
+              camera={{ position: cameraPosition, fov }}
+            >
             <color attach="background" args={[backgroundColor]} />
 
             {/* Orbit Controls for standard panning, rotating, zooming */}
@@ -97,6 +96,7 @@ export default function Workbench3D({
             {/* The actual activity content */}
             {children}
           </Canvas>
+          </div>
         </Suspense>
       </GLTFErrorBoundary>
     </div>

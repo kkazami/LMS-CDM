@@ -57,6 +57,7 @@ export default async function InstituteLayout({
   // Compute activity & KX eligibility synchronously from session (CodeLab is strictly ICS-only)
   const activityEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
   const kxEligible = institute.toLowerCase() === "ics" && (userInstituteCode === "ics" || isAdmin);
+  const arenaEligible = institute.toLowerCase() === "ibe" && (userInstituteCode === "ibe" || isAdmin);
 
   const isStudent = userRole === "STUDENT";
   const isProfessor = userRole === "PROFESSOR" || userRole === "TEACHER";
@@ -153,6 +154,7 @@ export default async function InstituteLayout({
       theme={theme}
       isEligibleForActivities={activityEligible}
       isEligibleForKnowledgeExchange={kxEligible}
+      isEligibleForArena={arenaEligible}
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}

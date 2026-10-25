@@ -45,7 +45,7 @@ export function QuickActionCard({
     >
       <Link
         href={href}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent) => {
           if (onClick) {
             e.preventDefault();
             onClick();

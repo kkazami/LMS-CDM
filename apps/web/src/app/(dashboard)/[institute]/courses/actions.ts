@@ -216,7 +216,35 @@ export async function getClassPrograms(instituteCode: string, courseId?: string)
     select: { programId: true, program: { select: { id: true, code: true, name: true } } },
   }) : null;
   if (courseId && !course) throw new AccessError(404, "Class not found.");
-  const programs = await db.academicProgram.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } });
+  let programs = await db.academicProgram.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } });
+  if (programs.length === 0) {
+    const defaultPrograms: Record<string, Array<{ code: string; name: string }>> = {
+      ics: [
+        { code: "BSIT", name: "BS Information Technology" },
+        { code: "BSCPE", name: "BS Computer Engineering" },
+      ],
+      ibe: [
+        { code: "BSBA HRM", name: "BS Business Administration Major in Human Resource Management" },
+        { code: "BS ENTREP", name: "BS Entrepreneurship" },
+      ],
+      ite: [
+        { code: "BECEd", name: "Bachelor of Early Childhood Education" },
+        { code: "BSEd SCIENCE", name: "Bachelor of Secondary Education Major in Science" },
+        { code: "BEEd", name: "Bachelor of Elementary Education" },
+        { code: "BTLEd ICT", name: "Bachelor of Technology and Livelihood Education Major in ICT" },
+        { code: "GENERAL EDUCATION", name: "General Education across Institute" },
+      ],
+    };
+    const toSeed = defaultPrograms[instituteCode.toLowerCase()] || [];
+    for (const prog of toSeed) {
+      await db.academicProgram.upsert({
+        where: { instituteId_code: { instituteId: institute.id, code: prog.code } },
+        update: { name: prog.name, isActive: true },
+        create: { instituteId: institute.id, code: prog.code, name: prog.name, isActive: true, chartVersion: 1 },
+      }).catch(() => {});
+    }
+    programs = await db.academicProgram.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } });
+  }
   return { programs, currentProgram: course?.program ?? null };
 }
 
@@ -607,5 +635,22 @@ export async function getCourseTerms(instituteCode: string) {
   if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Instructors and administrators only.');
   const institute = await db.institute.findFirst({ where: { id: actor.instituteId, code: instituteCode } });
   if (!institute) throw new AccessError(403, 'Forbidden institute.');
-  return db.academicTerm.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, name: true, isCurrent: true }, orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }] });
+  const terms = await db.academicTerm.findMany({ where: { instituteId: institute.id, isActive: true }, select: { id: true, name: true, isCurrent: true }, orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }] });
+  if (terms.length > 0) return terms;
+
+  try {
+    const defaultTerm = await db.academicTerm.create({
+      data: {
+        instituteId: institute.id,
+        code: "2025-2026-1S",
+        name: "A.Y. 2025-2026 - 1st Semester",
+        isActive: true,
+        isCurrent: true,
+      },
+      select: { id: true, name: true, isCurrent: true },
+    });
+    return [defaultTerm];
+  } catch {
+    return terms;
+  }
 }

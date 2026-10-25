@@ -12,7 +12,7 @@ import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
 import Link from "next/link";
 import FocusButton from "@/components/focus/FocusButton";
-import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles } from "lucide-react";
+import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles, Calendar, Clock } from "lucide-react";
 import {
   createSyllabusItem,
   updateSyllabusItem,
@@ -332,34 +332,63 @@ export default function ClassworkClient({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              name="dueDate"
-              label="Due Date"
-              type="date"
-              defaultValue={
-                editingItem?.dueDate
-                  ? editingItem.dueDate.split("T")[0]
-                  : undefined
-              }
-              theme={theme}
-            />
-            <Input
-              name="maxPoints"
-              label="Max Points"
-              type="number"
-              defaultValue={editingItem?.maxPoints?.toString()}
-              placeholder="e.g. 100"
-              theme={theme}
-            />
+          {/* Due Date & Due Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#8B92A5]">
+                <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                <span>Due Date</span>
+              </label>
+              <input
+                type="date"
+                name="dueDate"
+                defaultValue={
+                  editingItem?.dueDate
+                    ? editingItem.dueDate.split("T")[0]
+                    : undefined
+                }
+                className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#8B92A5]">
+                <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                <span>Due Time</span>
+              </label>
+              <input
+                type="time"
+                name="dueTime"
+                defaultValue={
+                  editingItem?.dueDate && editingItem.dueDate.includes("T")
+                    ? (() => {
+                        const d = new Date(editingItem.dueDate);
+                        const hours = String(d.getHours()).padStart(2, "0");
+                        const mins = String(d.getMinutes()).padStart(2, "0");
+                        return `${hours}:${mins}`;
+                      })()
+                    : "23:59"
+                }
+                className="w-full min-h-11 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3.5 py-2.5 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition focus:border-orange-500"
+              />
+            </div>
           </div>
+
+          <Input
+            name="maxPoints"
+            label="Max Points"
+            type="number"
+            defaultValue={editingItem?.maxPoints?.toString()}
+            placeholder="e.g. 100"
+            theme={theme}
+          />
 
           {/* Proctoring & Integrity Monitoring Settings */}
           {(selectedType !== "MATERIAL") && (
             <div className={`rounded-2xl border p-4 space-y-3 ${
               isIte
-                ? "border-blue-500/20 bg-blue-500/[0.04]"
-                : "border-orange-500/20 bg-orange-500/[0.04]"
+                ? "border-blue-500/20 bg-blue-500/4"
+                : "border-orange-500/20 bg-orange-500/4"
             }`}>
               <div className="flex items-center gap-2">
                 <Shield className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-orange-500"}`} />
@@ -434,8 +463,8 @@ export default function ClassworkClient({
           {selectedType !== "MATERIAL" && (
             <div className={`rounded-2xl border p-4 space-y-3 ${
               isIte
-                ? "border-blue-500/20 bg-blue-500/[0.04]"
-                : "border-amber-500/20 bg-amber-500/[0.04]"
+                ? "border-blue-500/20 bg-blue-500/4"
+                : "border-amber-500/20 bg-amber-500/4"
             }`}>
               <div className="flex items-center gap-2">
                 <Trophy className={`w-4 h-4 ${isIte ? "text-blue-500" : "text-amber-500"}`} />
@@ -546,7 +575,7 @@ export default function ClassworkClient({
             </label>
 
             {attachments.length > 0 && (
-              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-2 max-h-28 overflow-y-auto bg-slate-50/50 dark:bg-white/[0.02]">
+              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-2 max-h-28 overflow-y-auto bg-slate-50/50 dark:bg-white/2">
                 {attachments.map((att, idx) => {
                   const isLink = att.type === "LINK";
                   const Icon = isLink ? Link2 : FileText;
@@ -593,7 +622,7 @@ export default function ClassworkClient({
               <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
                 Leave all unchecked to make visible to all students
               </p>
-              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-3 max-h-32 overflow-y-auto bg-slate-50/50 dark:bg-white/[0.02]">
+              <div className="space-y-1.5 rounded-xl border border-slate-200 dark:border-white/10 p-3 max-h-32 overflow-y-auto bg-slate-50/50 dark:bg-white/2">
                 {studentGroups.map((group) => (
                   <label
                     key={group.id}
