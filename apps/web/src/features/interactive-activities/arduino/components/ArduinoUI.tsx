@@ -90,7 +90,7 @@ export default function ArduinoUI({
             defaultLanguage="cpp"
             theme="vs-dark"
             value={code}
-            onChange={(v) => setCode(v || "")}
+            onChange={(v?: string) => setCode(v || "")}
             options={{
               minimap: { enabled: false },
               fontSize: 14,

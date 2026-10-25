@@ -212,7 +212,7 @@ export default function KxPostCard({
               <Link
                 href={`/${instituteCode}/knowledge-exchange/post/${post.id}`}
                 className="block mt-2"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <div className="rounded-xl border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.03] px-3.5 py-2.5 space-y-1 hover:border-orange-300 dark:hover:border-orange-500/30 transition-colors">
                   <div className="flex items-center gap-1.5">
