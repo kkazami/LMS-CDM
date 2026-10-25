@@ -12,6 +12,8 @@ export const LIMITS = {
   cell: 160,
   rowsPerSection: 150,
   rowId: 40,
+  name: 120,
+  title: 120,
 } as const;
 
 /**
@@ -104,6 +106,22 @@ export function normalizeData(type: StatementType, input: unknown): StatementDat
       periodEnd: cleanDate(rawMeta.periodEnd),
       asOfDate: cleanDate(rawMeta.asOfDate),
       notes: cleanString(rawMeta.notes, LIMITS.notes),
+      preparedByName:
+        typeof rawMeta.preparedByName === "string"
+          ? cleanString(rawMeta.preparedByName, LIMITS.name)
+          : (defaults.meta.preparedByName ?? ""),
+      preparedByTitle:
+        typeof rawMeta.preparedByTitle === "string"
+          ? cleanString(rawMeta.preparedByTitle, LIMITS.title)
+          : (defaults.meta.preparedByTitle ?? "Student / Accounting Preparer"),
+      approvedByName:
+        typeof rawMeta.approvedByName === "string"
+          ? cleanString(rawMeta.approvedByName, LIMITS.name)
+          : (defaults.meta.approvedByName ?? ""),
+      approvedByTitle:
+        typeof rawMeta.approvedByTitle === "string"
+          ? cleanString(rawMeta.approvedByTitle, LIMITS.title)
+          : (defaults.meta.approvedByTitle ?? "Faculty Instructor / Supervisor"),
       options,
     },
     sections,

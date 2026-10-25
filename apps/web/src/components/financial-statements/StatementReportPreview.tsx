@@ -1,28 +1,23 @@
 "use client";
 
-import {
-  FileCheck2,
-  AlertTriangle,
-  Info,
-  Calendar,
-  Building2,
-  Download,
-  CheckCircle2,
-} from "lucide-react";
-import type { ReportDocument, ReportLine, ReportTableBlock } from "@/lib/financial-statements/types";
+import type { ReportDocument, ReportLine, ReportTableBlock, StatementMeta } from "@/lib/financial-statements/types";
 import { formatCents } from "@/lib/financial-statements/format";
-import { cardClass, headingText, mutedText } from "./shared";
+import { Edit3 } from "lucide-react";
 
 interface StatementReportPreviewProps {
   document: ReportDocument;
   onDownloadPdf?: () => void;
   canDownloadPdf?: boolean;
+  onUpdateMeta?: (field: "preparedByName" | "preparedByTitle" | "approvedByName" | "approvedByTitle", value: string) => void;
+  meta?: StatementMeta;
 }
 
 export default function StatementReportPreview({
   document: doc,
   onDownloadPdf,
   canDownloadPdf = false,
+  onUpdateMeta,
+  meta,
 }: StatementReportPreviewProps) {
   return (
     <div className="space-y-6">
@@ -89,61 +84,91 @@ export default function StatementReportPreview({
           })}
         </div>
 
-        {/* Validation Checks Section */}
-        {doc.checks && doc.checks.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#555C72]">
-              Accounting Validation & Integrity Results
-            </h4>
-            <div className="space-y-2">
-              {doc.checks.map((chk) => {
-                const isPass = chk.status === "pass";
-                const isFail = chk.status === "fail";
-                return (
-                  <div
-                    key={chk.id}
-                    className={`p-3 rounded-xl border flex items-start gap-3 text-xs ${
-                      isPass
-                        ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-800 dark:text-emerald-300"
-                        : isFail
-                        ? "bg-rose-500/5 border-rose-500/20 text-rose-800 dark:text-rose-300"
-                        : "bg-blue-500/5 border-blue-500/20 text-blue-800 dark:text-blue-300"
-                    }`}
-                  >
-                    {isPass ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    ) : isFail ? (
-                      <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                    ) : (
-                      <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <p className="font-bold">{chk.label}</p>
-                      <p className="opacity-90 mt-0.5 leading-relaxed">{chk.detail}</p>
-                    </div>
-                  </div>
-                );
-              })}
+
+
+        {/* Prepared By and Certification Block */}
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+          {onUpdateMeta && (
+            <div className="flex justify-end mb-3">
+              <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <Edit3 className="w-3 h-3" />
+                <span>Editable signature details</span>
+              </span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 space-y-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Prepared By:
+              </p>
+              <div className="h-9 border-b border-dashed border-slate-300 dark:border-white/20 flex items-end pb-1 font-serif text-sm italic text-slate-800 dark:text-slate-200">
+                {onUpdateMeta ? (
+                  <input
+                    type="text"
+                    value={meta?.preparedByName ?? doc.preparedBy ?? ""}
+                    placeholder="Enter preparer / proponent name"
+                    onChange={(e) => onUpdateMeta("preparedByName", e.target.value)}
+                    className="w-full bg-transparent border-none outline-none font-serif text-sm italic text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-0 p-0"
+                  />
+                ) : (
+                  doc.preparedBy || "Student Preparer"
+                )}
+              </div>
+              <div>
+                {onUpdateMeta ? (
+                  <input
+                    type="text"
+                    value={meta?.preparedByTitle ?? doc.preparedByTitle ?? ""}
+                    placeholder="Student / Accounting Preparer"
+                    onChange={(e) => onUpdateMeta("preparedByTitle", e.target.value)}
+                    className="w-full bg-transparent border-none outline-none text-[10px] text-slate-500 dark:text-slate-400 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-0 p-0"
+                  />
+                ) : (
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    {doc.preparedByTitle || "Student / Accounting Preparer"}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 space-y-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Reviewed & Approved By:
+              </p>
+              <div className="h-9 border-b border-dashed border-slate-300 dark:border-white/20 flex items-end pb-1 font-serif text-sm italic text-slate-800 dark:text-slate-200">
+                {onUpdateMeta ? (
+                  <input
+                    type="text"
+                    value={meta?.approvedByName ?? doc.approvedBy ?? ""}
+                    placeholder="Enter reviewer / approver name"
+                    onChange={(e) => onUpdateMeta("approvedByName", e.target.value)}
+                    className="w-full bg-transparent border-none outline-none font-serif text-sm italic text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-0 p-0"
+                  />
+                ) : (
+                  doc.approvedBy || "Faculty Instructor / Supervisor"
+                )}
+              </div>
+              <div>
+                {onUpdateMeta ? (
+                  <input
+                    type="text"
+                    value={meta?.approvedByTitle ?? doc.approvedByTitle ?? ""}
+                    placeholder="Faculty Instructor / Supervisor"
+                    onChange={(e) => onUpdateMeta("approvedByTitle", e.target.value)}
+                    className="w-full bg-transparent border-none outline-none text-[10px] text-slate-500 dark:text-slate-400 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-0 p-0"
+                  />
+                ) : (
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    {doc.approvedByTitle || "Institute of Business and Entrepreneurship (IBE)"}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Student Notes */}
-        {doc.notes && (
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-white/10 space-y-1.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#555C72]">
-              Explanatory Notes
-            </h4>
-            <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed bg-slate-50 dark:bg-white/2 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-              {doc.notes}
-            </p>
-          </div>
-        )}
+        </div>
 
         {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-slate-400 dark:text-[#555C72]">
-          <span>Generated via CdM LMS Financial Statement Generator</span>
-          <span>College of Business and Entrepreneurship (IBE)</span>
+        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-end text-[10px] text-slate-400 dark:text-[#555C72]">
+          <span>Page 1 of 1</span>
         </div>
       </div>
     </div>

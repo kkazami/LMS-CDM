@@ -1,5 +1,5 @@
-import { formatCents } from "./format";
-import type { ReportBlock, ReportCheck, ReportDocument, ReportLine, ReportTableBlock } from "./types";
+import { formatCents, normalizeCheckStatus } from "./format";
+import type { CheckStatus, ReportBlock, ReportCheck, ReportDocument, ReportLine, ReportTableBlock } from "./types";
 
 /**
  * Minimal, dependency-free PDF 1.4 writer that renders a ReportDocument using
@@ -93,6 +93,8 @@ const MUTED: Rgb = [0.4, 0.44, 0.5];
 const GREEN: Rgb = [0.07, 0.5, 0.25];
 const RED: Rgb = [0.75, 0.12, 0.12];
 const BLUE: Rgb = [0.15, 0.3, 0.6];
+const AMBER: Rgb = [0.85, 0.45, 0.05];
+const GRAY: Rgb = [0.45, 0.48, 0.55];
 
 const num = (n: number) => (Math.round(n * 100) / 100).toString();
 const rgb = (c: Rgb) => `${num(c[0])} ${num(c[1])} ${num(c[2])}`;
@@ -162,15 +164,17 @@ class Pdf {
   }
 
   /** Adds footers and serializes. */
-  finish(title: string, footerLeft: string): Buffer {
+  finish(title: string, footerLeft?: string): Buffer {
     const total = this.pages.length;
     this.pages.forEach((content, index) => {
       content.push(
         `q 0.8 0.82 0.86 RG 0.5 w ${num(this.left)} ${num(this.H - (this.H - 40))} m ${num(this.right)} ${num(this.H - (this.H - 40))} l S Q`,
       );
-      content.push(
-        `BT /F1 8 Tf ${rgb(MUTED)} rg ${num(this.left)} ${num(28)} Td ${pdfString(footerLeft)} Tj ET`,
-      );
+      if (footerLeft && footerLeft.trim()) {
+        content.push(
+          `BT /F1 8 Tf ${rgb(MUTED)} rg ${num(this.left)} ${num(28)} Td ${pdfString(footerLeft)} Tj ET`,
+        );
+      }
       const label = `Page ${index + 1} of ${total}`;
       content.push(
         `BT /F1 8 Tf ${rgb(MUTED)} rg ${num(this.right - textWidth(label, 8))} ${num(28)} Td ${pdfString(label)} Tj ET`,
@@ -238,33 +242,37 @@ function drawLinesBlock(pdf: Pdf, block: Extract<ReportBlock, { type: "lines" }>
 }
 
 function drawLine(pdf: Pdf, line: ReportLine) {
-  const bold = line.kind === "heading" || line.kind === "total" || line.kind === "grand";
-  const size = line.kind === "grand" ? 11 : 10;
-  const indent = 14 * (line.indent ?? 0) + (line.kind === "heading" ? 0 : 0);
+  const isGrand = line.kind === "grand";
+  const isTotal = line.kind === "total" || line.kind === "subtotal";
+  const isHeading = line.kind === "heading";
+  const bold = isHeading || isTotal || isGrand;
+  const size = isGrand ? 11 : isHeading ? 10.5 : 10;
+  const indent = 14 * (line.indent ?? 0);
   const hasAmount = line.cents !== undefined;
   const labelWidth = pdf.contentWidth - indent - (hasAmount ? AMOUNT_W + 8 : 0);
   const labelLines = wrap(line.label, labelWidth, size, bold);
-  const rowHeight = labelLines.length * (size + 3) + 3;
+  const rowHeight = labelLines.length * (size + 4) + 4;
 
-  pdf.ensure(rowHeight + (line.kind === "heading" ? 10 : 0));
-  if (line.kind === "heading") pdf.y += 8;
+  const extraTop = isHeading ? 12 : isGrand ? 8 : isTotal ? 4 : 0;
+  pdf.ensure(rowHeight + extraTop + (isGrand ? 8 : 0));
+  pdf.y += extraTop;
   const top = pdf.y;
   labelLines.forEach((text, i) => {
-    pdf.text(pdf.left + indent, top + size + i * (size + 3), text, size, bold, line.kind === "heading" ? BLUE : BLACK);
+    pdf.text(pdf.left + indent, top + size + i * (size + 4), text, size, bold, isHeading ? BLUE : BLACK);
   });
   if (hasAmount) {
     const base = top + size;
     const amountLeft = pdf.right - AMOUNT_W;
-    if (line.kind === "subtotal" || line.kind === "total" || line.kind === "grand") {
-      pdf.line(amountLeft, top - 1, pdf.right, top - 1, 0.6);
+    if (isTotal || isGrand) {
+      pdf.line(amountLeft, top - 2, pdf.right, top - 2, 0.6);
     }
     pdf.textRight(pdf.right, base, formatCents(line.cents as number), size, bold);
-    if (line.kind === "grand") {
-      pdf.line(amountLeft, top + size + 3, pdf.right, top + size + 3, 0.6);
-      pdf.line(amountLeft, top + size + 5, pdf.right, top + size + 5, 0.6);
+    if (isGrand) {
+      pdf.line(amountLeft, top + size + 4, pdf.right, top + size + 4, 0.6);
+      pdf.line(amountLeft, top + size + 6.5, pdf.right, top + size + 6.5, 0.6);
     }
   }
-  pdf.y += rowHeight + (line.kind === "grand" ? 4 : 0);
+  pdf.y += rowHeight + (isGrand ? 8 : 2);
 }
 
 function columnWidths(block: ReportTableBlock, available: number): number[] {
@@ -347,17 +355,62 @@ function drawChecks(pdf: Pdf, checks: ReportCheck[]) {
   pdf.text(pdf.left, pdf.y + 11, "Validation Results", 11, true, BLUE);
   pdf.y += 16;
   pdf.line(pdf.left, pdf.y, pdf.right, pdf.y, 0.6, BLUE);
-  pdf.y += 6;
-  const badge = (c: ReportCheck) => (c.status === "pass" ? "PASS" : c.status === "fail" ? "REVIEW" : "NOTE");
-  const color = (c: ReportCheck): Rgb => (c.status === "pass" ? GREEN : c.status === "fail" ? RED : MUTED);
+  pdf.y += 8;
+
+  const badgeMap: Record<CheckStatus, { text: string; color: Rgb }> = {
+    PASS: { text: "[PASS]", color: GREEN },
+    WARNING: { text: "[WARNING]", color: AMBER },
+    FAIL: { text: "[FAIL]", color: RED },
+    NOT_CHECKED: { text: "[NOT CHECKED]", color: GRAY },
+    REVIEW_REQUIRED: { text: "[REVIEW REQ]", color: BLUE },
+  };
+
+  const badgeColW = 86;
+  const contentLeft = pdf.left + badgeColW;
+  const contentW = pdf.contentWidth - badgeColW;
+
   for (const check of checks) {
-    const detail = wrap(check.detail, pdf.contentWidth - 60, 9);
-    const height = 12 + detail.length * 11 + 4;
-    pdf.ensure(height);
-    pdf.text(pdf.left, pdf.y + 10, badge(check), 8.5, true, color(check));
-    pdf.text(pdf.left + 56, pdf.y + 10, toLatin1(check.label), 9.5, true);
-    detail.forEach((t, i) => pdf.text(pdf.left + 56, pdf.y + 22 + i * 11, t, 9, false, MUTED));
-    pdf.y += height + 6;
+    const status = normalizeCheckStatus(check.status);
+    const b = badgeMap[status] || { text: `[${status}]`, color: MUTED };
+
+    const formulaLines = check.formula ? wrap(`Formula: ${check.formula}`, contentW, 8) : [];
+    const calcLines = check.calculation ? wrap(`Calculation: ${check.calculation}`, contentW, 8) : [];
+    const detailLines = wrap(check.detail, contentW, 8.5);
+
+    const checkHeight =
+      14 +
+      (formulaLines.length > 0 ? formulaLines.length * 10 : 0) +
+      (calcLines.length > 0 ? calcLines.length * 10 : 0) +
+      detailLines.length * 11 +
+      6;
+
+    pdf.ensure(checkHeight);
+    let curY = pdf.y;
+
+    pdf.text(pdf.left, curY + 10, b.text, 8, true, b.color);
+    pdf.text(contentLeft, curY + 10, toLatin1(check.label), 9.5, true);
+    curY += 13;
+
+    if (formulaLines.length > 0) {
+      formulaLines.forEach((t) => {
+        pdf.text(contentLeft, curY + 8, t, 8, false, BLUE);
+        curY += 10;
+      });
+    }
+
+    if (calcLines.length > 0) {
+      calcLines.forEach((t) => {
+        pdf.text(contentLeft, curY + 8, t, 8, false, MUTED);
+        curY += 10;
+      });
+    }
+
+    detailLines.forEach((t) => {
+      pdf.text(contentLeft, curY + 9, t, 8.5, false, BLACK);
+      curY += 11;
+    });
+
+    pdf.y = curY + 6;
   }
 }
 
@@ -381,6 +434,43 @@ function drawNotes(pdf: Pdf, notes: string) {
   }
 }
 
+function drawSignatureBlock(pdf: Pdf, options: PdfOptions, report: ReportDocument) {
+  const sigHeight = 70;
+  // If the document content is compact and fits comfortably on the page, anchor the signatures
+  // near the bottom of the page to eliminate large awkward voids in the lower half.
+  const targetBottomY = pdf.bottomLimit - sigHeight - 15;
+  if (pdf.y < targetBottomY) {
+    pdf.y = targetBottomY;
+  } else {
+    pdf.ensure(sigHeight);
+    pdf.y += 18;
+  }
+
+  const colWidth = (pdf.contentWidth - 40) / 2;
+  const leftColX = pdf.left;
+  const rightColX = pdf.left + colWidth + 40;
+
+  const preparer = report.preparedBy || options.preparedBy || "Student Preparer";
+  const preparerTitle = report.preparedByTitle || "Student / Accounting Preparer";
+  const approver = report.approvedBy || "Faculty Instructor / Supervisor";
+  const approverTitle = report.approvedByTitle || "Institute of Business and Entrepreneurship (IBE)";
+  const lineY = pdf.y + 26;
+
+  // Left column: Prepared By
+  pdf.text(leftColX, pdf.y + 8, "Prepared By:", 9, true, BLACK);
+  pdf.line(leftColX, lineY, leftColX + colWidth, lineY, 0.8, BLACK);
+  pdf.text(leftColX, lineY + 11, toLatin1(preparer), 8.5, false, BLACK);
+  pdf.text(leftColX, lineY + 22, toLatin1(preparerTitle), 7.5, false, MUTED);
+
+  // Right column: Reviewed & Approved By
+  pdf.text(rightColX, pdf.y + 8, "Reviewed & Approved By:", 9, true, BLACK);
+  pdf.line(rightColX, lineY, rightColX + colWidth, lineY, 0.8, BLACK);
+  pdf.text(rightColX, lineY + 11, toLatin1(approver), 8.5, false, BLACK);
+  pdf.text(rightColX, lineY + 22, toLatin1(approverTitle), 7.5, false, MUTED);
+
+  pdf.y = lineY + 28;
+}
+
 export interface PdfOptions {
   generatedAt: Date;
   preparedBy?: string;
@@ -394,6 +484,20 @@ export function renderStatementPdf(report: ReportDocument, options: PdfOptions):
 
   // Header
   const centerX = pdf.W / 2;
+
+  // Watermark for test data / invalid sample scenarios
+  if (report.watermark) {
+    const isInvalid = report.watermark === "INVALID SAMPLE";
+    const bannerBg: Rgb = isInvalid ? [0.99, 0.9, 0.9] : [1.0, 0.96, 0.88];
+    const bannerFg: Rgb = isInvalid ? RED : AMBER;
+    pdf.rect(pdf.left, pdf.y, pdf.contentWidth, 18, bannerBg);
+    const bannerText = isInvalid
+      ? "[ INVALID SAMPLE -- CONTAINS DELIBERATE ACCOUNTING DISCREPANCIES -- NOT A VERIFIED FINANCIAL STATEMENT ]"
+      : "[ TEST DATA -- FOR TESTING / QA PURPOSES ONLY -- NOT AN OFFICIAL STUDENT REPORT ]";
+    pdf.textCenter(centerX, pdf.y + 12, bannerText, 8.5, true, bannerFg);
+    pdf.y += 24;
+  }
+
   pdf.text(pdf.left, pdf.y + 7, "FINANCIAL STATEMENT", 7.5, true, MUTED);
   pdf.y += 14;
   pdf.textCenter(centerX, pdf.y + 16, report.businessName || "(Business name not set)", 17, true);
@@ -406,6 +510,10 @@ export function renderStatementPdf(report: ReportDocument, options: PdfOptions):
     pdf.textCenter(centerX, pdf.y + 9, `${option.label}: ${option.value}`, 9, false, MUTED);
     pdf.y += 12;
   }
+  if (report.disclaimer) {
+    pdf.textCenter(centerX, pdf.y + 9, toLatin1(report.disclaimer), 8.5, false, MUTED);
+    pdf.y += 12;
+  }
   pdf.textCenter(centerX, pdf.y + 9, "Amounts in Philippine Peso (PHP)", 8.5, false, MUTED);
   pdf.y += 10;
   pdf.line(pdf.left, pdf.y + 4, pdf.right, pdf.y + 4, 1.2);
@@ -415,10 +523,8 @@ export function renderStatementPdf(report: ReportDocument, options: PdfOptions):
     if (block.type === "lines") drawLinesBlock(pdf, block);
     else drawTable(pdf, block);
   }
-  drawChecks(pdf, report.checks);
-  drawNotes(pdf, report.notes);
+  // Validation checks and explanatory notes omitted from generated official statement per requirement
+  drawSignatureBlock(pdf, options, report);
 
-  const stamp = options.generatedAt.toISOString().slice(0, 16).replace("T", " ");
-  const footer = `${options.preparedBy ? `Prepared by ${options.preparedBy.slice(0, 40)} | ` : ""}Generated ${stamp} UTC | CdM LMS Financial Statement Generator`;
-  return pdf.finish(`${report.title} - ${report.businessName}`, footer);
+  return pdf.finish(`${report.title} - ${report.businessName}`);
 }

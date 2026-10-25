@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: Ctx) {
     const { document } = buildStatement(type, data);
     const pdf = renderStatementPdf(document, {
       generatedAt: row.generatedAt ?? new Date(),
-      preparedBy: access.name,
+      preparedBy: data.meta.preparedByName?.trim() || access.name,
     });
     const filename = `${slug(document.businessName)}-${slug(document.title)}.pdf`;
     return new Response(new Uint8Array(pdf), {

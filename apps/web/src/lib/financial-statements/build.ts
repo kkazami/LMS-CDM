@@ -1,4 +1,4 @@
-import { centsOrZero, formatCents, formatDateText, formatDay, parseDateDay, parseMoney } from "./format";
+import { centsOrZero, formatCents, formatDateText, parseMoney } from "./format";
 import { isRowInUse } from "./data";
 import { getTemplate } from "./templates";
 import type {
@@ -128,7 +128,35 @@ function buildIncomeStatement(c: Ctx): Built {
       id: "cogs-once",
       status: netProfit === grossProfit + otherIncome - opex ? "pass" : "fail",
       label: "Cost of goods sold is counted once",
+      formula: "Net Profit = Gross Profit + Other Income − Operating Expenses",
+      calculation: `${money(grossProfit)} + ${money(otherIncome)} − ${money(opex)} = ${money(netProfit)}`,
       detail: `Net result ${money(netProfit)} = Gross Profit ${money(grossProfit)} + Other Income ${money(otherIncome)} − Operating Expenses ${money(opex)}.`,
+    },
+    {
+      id: "net-sales-check",
+      status: returns > salesRevenue ? "warning" : "pass",
+      label: "Net Sales Calculation",
+      formula: "Net Sales = Sales Revenue − Sales Returns and Allowances",
+      calculation: `${money(salesRevenue)} − ${money(returns)} = ${money(netSales)}`,
+      detail: returns > salesRevenue
+        ? "Sales returns exceed sales revenue resulting in negative Net Sales. Review return entries."
+        : `Gross Sales ${money(salesRevenue)} − Returns ${money(returns)} = Net Sales of ${money(netSales)}.`,
+    },
+    {
+      id: "gross-profit-check",
+      status: grossProfit < 0 ? "warning" : "pass",
+      label: "Gross Profit Calculation",
+      formula: "Gross Profit = Net Sales − Cost of Goods Sold",
+      calculation: `${money(netSales)} − ${money(cogs)} = ${money(grossProfit)}`,
+      detail: grossProfit < 0
+        ? `Gross Loss: Cost of Goods Sold (${money(cogs)}) exceeds Net Sales (${money(netSales)}).`
+        : `Net Sales ${money(netSales)} − COGS ${money(cogs)} = Gross Profit of ${money(grossProfit)}.`,
+    },
+    {
+      id: "income-statement-review",
+      status: "review_required",
+      label: "Revenue Recognition & Classification Review",
+      detail: "Mathematical formula verified. Independent review is recommended to substantiate revenue recognition and correct expense allocation.",
     },
   ];
   if (returns > salesRevenue) {
@@ -136,6 +164,8 @@ function buildIncomeStatement(c: Ctx): Built {
       id: "returns-exceed",
       status: "fail",
       label: "Sales returns exceed sales revenue",
+      formula: "Net Sales = Sales Revenue − Returns",
+      calculation: `${money(salesRevenue)} − ${money(returns)} = ${money(netSales)}`,
       detail: "Net Sales is negative. Review the sales revenue and returns figures.",
     });
   }
@@ -183,9 +213,37 @@ function buildBalanceSheet(c: Ctx): Built {
         id: "balance",
         status: balanced ? "pass" : "fail",
         label: balanced ? "Total Assets equal Total Liabilities and Equity" : "Balance sheet is out of balance",
+        formula: "Total Assets = Total Liabilities + Total Equity",
+        calculation: `${money(totalAssets)} vs ${money(totalLE)} (Difference: ${money(difference)})`,
         detail: balanced
-          ? `Both sides total ${money(totalAssets)}.`
+          ? `Both sides total ${money(totalAssets)}. Accounting equation is satisfied.`
           : `Total Assets ${money(totalAssets)} vs Total Liabilities and Equity ${money(totalLE)}. Difference: ${money(difference)}. Your figures were not adjusted.`,
+      },
+      {
+        id: "assets-subtotal",
+        status: contra > assets ? "warning" : "pass",
+        label: "Total Assets Calculation",
+        formula: "Total Assets = Gross Assets − Contra Assets",
+        calculation: `${money(assets)} − ${money(contra)} = ${money(totalAssets)}`,
+        detail: contra > assets
+          ? `Contra assets (${money(contra)}) exceed gross assets (${money(assets)}). Review accumulated depreciation or allowance accounts.`
+          : `Gross Assets ${money(assets)} minus Contra Assets ${money(contra)} equals Total Assets of ${money(totalAssets)}.`,
+      },
+      {
+        id: "liabilities-equity-subtotal",
+        status: totalEquity < 0 ? "warning" : "pass",
+        label: "Total Liabilities and Equity Calculation",
+        formula: "Total Liabilities and Equity = Total Liabilities + Total Equity",
+        calculation: `${money(totalLiabilities)} + ${money(totalEquity)} = ${money(totalLE)}`,
+        detail: totalEquity < 0
+          ? `Capital deficiency: Total Owner's Equity is negative (${money(totalEquity)}). Liabilities are ${money(totalLiabilities)}.`
+          : `Total Liabilities ${money(totalLiabilities)} plus Total Equity ${money(totalEquity)} equals ${money(totalLE)}.`,
+      },
+      {
+        id: "balance-sheet-review",
+        status: "review_required",
+        label: "Asset Valuation & Classification Review",
+        detail: "Mathematical balance verified. Independent inspection is required to substantiate asset title, allowance adequacy, and debt covenants.",
       },
     ],
     summary: [
@@ -235,22 +293,44 @@ function buildCashFlow(c: Ctx): Built {
     line("grand", "Ending Cash Balance", endingCash),
   ];
 
-  const checks: ReportCheck[] = [];
-  if (endingCash < 0) {
-    checks.push({
-      id: "negative-cash",
-      status: "fail",
-      label: "Ending cash balance is negative",
-      detail: `Ending cash is ${money(endingCash)}. Review your cash inflows, outflows and beginning balance.`,
-    });
-  } else {
-    checks.push({
-      id: "cash-roll",
+  const checks: ReportCheck[] = [
+    {
+      id: endingCash < 0 ? "negative-cash" : "cash-roll",
+      status: endingCash < 0 ? "fail" : "pass",
+      label: endingCash < 0 ? "Ending cash balance is negative (Overdraft)" : "Ending cash reconciles",
+      formula: "Ending Cash = Beginning Cash + Net Change in Cash",
+      calculation: `${money(beginningCash)} + ${money(netChange)} = ${money(endingCash)}`,
+      detail:
+        endingCash < 0
+          ? `Ending cash is negative (${money(endingCash)}). Review your cash inflows, outflows and beginning balance.`
+          : `Beginning cash ${money(beginningCash)} plus net cash change ${money(netChange)} equals ending cash of ${money(endingCash)}.`,
+    },
+    {
+      id: "cf-activities",
       status: "pass",
-      label: "Ending cash reconciles",
-      detail: `${money(beginningCash)} + ${money(netChange)} = ${money(endingCash)}.`,
-    });
-  }
+      label: "Net Cash Movements by Activity",
+      formula: "Net Change in Cash = Operating + Investing + Financing",
+      calculation: `${money(op.net)} + ${money(inv.net)} + ${money(fin.net)} = ${money(netChange)}`,
+      detail: `Operating cash flow: ${money(op.net)}, Investing cash flow: ${money(inv.net)}, Financing cash flow: ${money(fin.net)}.`,
+    },
+    {
+      id: "cf-operating",
+      status: op.net < 0 && (op.inflow > 0 || op.outflow > 0) ? "warning" : "pass",
+      label: "Operating Activities Cash Flow Calculation",
+      formula: "Net Operating Cash Flow = Cash Inflows − Cash Outflows",
+      calculation: `${money(op.inflow)} − ${money(op.outflow)} = ${money(op.net)}`,
+      detail:
+        op.net < 0
+          ? `Net cash used in operating activities is negative (${money(op.net)}). Operational outflows exceed receipts.`
+          : `Net cash generated by operating activities is ${money(op.net)}.`,
+    },
+    {
+      id: "cash-flow-review",
+      status: "review_required",
+      label: "Direct Method & Non-Cash Activity Verification",
+      detail: "Mathematical reconciliations verified. Non-cash investing and financing activities (e.g. debt-financed assets) require separate disclosure.",
+    },
+  ];
 
   return {
     blocks: [{ type: "lines", lines }],
@@ -300,7 +380,20 @@ function buildOwnersEquity(c: Ctx): Built {
     line("grand", "Ending Owner's Equity", ending),
   ];
 
-  const checks: ReportCheck[] = [];
+  const checks: ReportCheck[] = [
+    {
+      id: ending < 0 ? "negative-equity" : "equity-rollforward",
+      status: ending < 0 ? "fail" : "pass",
+      label: ending < 0 ? "Ending owner's equity is negative (Deficit)" : "Owner's Equity roll-forward reconciles",
+      formula: "Ending Equity = Beginning Balance + Additions − Reductions + Other Changes",
+      calculation: `${money(beginning)} + ${money(additions)} − ${money(reductions)}${other !== 0 ? ` + ${money(other)}` : ""} = ${money(ending)}`,
+      detail:
+        ending < 0
+          ? `Ending equity is ${money(ending)}. Capital deficiency: withdrawals and cumulative losses exceed investments and profit.`
+          : `Beginning balance ${money(beginning)} plus additions ${money(additions)} less reductions ${money(reductions)} equals ending equity ${money(ending)}.`,
+    },
+  ];
+
   if (netProfit > 0 && netLoss > 0) {
     checks.push({
       id: "profit-and-loss",
@@ -316,14 +409,13 @@ function buildOwnersEquity(c: Ctx): Built {
       detail: "Net Profit adds to equity and Net Loss subtracts from equity; neither is counted as both.",
     });
   }
-  if (ending < 0) {
-    checks.push({
-      id: "negative-equity",
-      status: "fail",
-      label: "Ending owner's equity is negative",
-      detail: `Ending equity is ${money(ending)}. Review withdrawals and losses.`,
-    });
-  }
+
+  checks.push({
+    id: "equity-review",
+    status: "review_required",
+    label: "Capital Contributions & Withdrawals Verification",
+    detail: "Mathematical roll-forward verified. Owner capital additions and personal withdrawals should be substantiated with bank records and journal vouchers.",
+  });
 
   return {
     blocks: [{ type: "lines", lines }],
@@ -333,423 +425,11 @@ function buildOwnersEquity(c: Ctx): Built {
   };
 }
 
-function buildTrialBalance(c: Ctx): Built {
-  const section = sectionDef(c, "accounts");
-  const rows = used(c, "accounts");
-  const totalDebits = rows.reduce((a, r) => a + centsOrZero(r.values.debit), 0);
-  const totalCredits = rows.reduce((a, r) => a + centsOrZero(r.values.credit), 0);
-  const difference = totalDebits - totalCredits;
-  const cell = (raw: string | undefined) => {
-    const p = parseMoney(raw);
-    return p.status === "ok" ? money(p.cents) : "";
-  };
-
-  const table: ReportTableBlock = {
-    type: "table",
-    columns: [
-      { label: "Code", align: "left" },
-      { label: section.columns[1].label, align: "left" },
-      { label: "Debit", align: "right" },
-      { label: "Credit", align: "right" },
-    ],
-    rows: rows.map((r) => [(r.values.code ?? "").trim(), rowName(r), cell(r.values.debit), cell(r.values.credit)]),
-    footer: [["", "Totals", money(totalDebits), money(totalCredits)]],
-  };
-  const balanced = difference === 0;
-  return {
-    blocks: [table],
-    checks: [
-      {
-        id: "tb-balanced",
-        status: balanced ? "pass" : "fail",
-        label: balanced ? "Trial balance is balanced" : "Trial balance is NOT balanced",
-        detail: balanced
-          ? `Total Debits equal Total Credits (${money(totalDebits)}).`
-          : `Total Debits ${money(totalDebits)} − Total Credits ${money(totalCredits)} = ${money(difference)}.`,
-      },
-      {
-        id: "tb-caveat",
-        status: "info",
-        label: "What a balanced trial balance does not prove",
-        detail: "Equal totals do not guarantee every transaction was recorded, or recorded in the right account or amount.",
-      },
-    ],
-    summary: [
-      { label: "Total Debits", cents: totalDebits },
-      { label: "Total Credits", cents: totalCredits },
-      { label: "Difference", cents: difference },
-    ],
-    figures: { totalDebits, totalCredits, difference },
-  };
-}
-
-function buildCostOfGoodsSold(c: Ctx): Built {
-  const beginning = sum(c, "beginning");
-  const purchases = sum(c, "purchases");
-  const reductions = sum(c, "purchaseReductions");
-  const freightIn = sum(c, "freightIn");
-  const ending = sum(c, "ending");
-  const netPurchases = purchases - reductions + freightIn;
-  const goodsAvailable = beginning + netPurchases;
-  const cogs = goodsAvailable - ending;
-
-  const lines: ReportLine[] = [
-    ...items(c, "beginning").map((l) => ({ ...l, indent: 0 as const })),
-    line("heading", "Purchases"),
-    ...items(c, "purchases"),
-    ...items(c, "purchaseReductions", { prefix: "Less:", negate: true }),
-    ...items(c, "freightIn", { prefix: "Add:" }),
-    line("subtotal", "Net Purchases", netPurchases),
-    line("total", "Goods Available for Sale", goodsAvailable),
-    ...items(c, "ending", { prefix: "Less:", negate: true }).map((l) => ({ ...l, indent: 0 as const })),
-    line("grand", "Cost of Goods Sold", cogs),
-  ];
-
-  const checks: ReportCheck[] = [];
-  if (ending > goodsAvailable) {
-    checks.push({
-      id: "ending-exceeds",
-      status: "fail",
-      label: "Ending inventory exceeds goods available for sale",
-      detail: `Cost of goods sold would be ${money(cogs)}. Review ending inventory and purchases.`,
-    });
-  } else {
-    checks.push({
-      id: "cogs-roll",
-      status: "pass",
-      label: "Cost of goods sold computed",
-      detail: `${money(goodsAvailable)} − ${money(ending)} = ${money(cogs)}.`,
-    });
-  }
-
-  return {
-    blocks: [{ type: "lines", lines }],
-    checks,
-    summary: [
-      { label: "Cost of Goods Sold", cents: cogs },
-      { label: "Goods Available for Sale", cents: goodsAvailable },
-      { label: "Net Purchases", cents: netPurchases },
-    ],
-    figures: { beginning, netPurchases, goodsAvailable, ending, cogs },
-  };
-}
-
-// Aging helpers shared by AR and AP.
-const BUCKETS = ["Current / Not Yet Due", "1–30 Days", "31–60 Days", "61–90 Days", "Over 90 Days"] as const;
-
-function bucketFor(daysPastDue: number): (typeof BUCKETS)[number] {
-  if (daysPastDue <= 0) return BUCKETS[0];
-  if (daysPastDue <= 30) return BUCKETS[1];
-  if (daysPastDue <= 60) return BUCKETS[2];
-  if (daysPastDue <= 90) return BUCKETS[3];
-  return BUCKETS[4];
-}
-
-function buildInvoiceReport(c: Ctx, mode: "AR" | "AP"): Built {
-  const rows = used(c, "invoices");
-  const asOf = parseDateDay(c.data.meta.asOfDate);
-  const rowComputed: Record<string, Record<string, string>> = {};
-  const bucketTotals = new Map<string, number>(BUCKETS.map((b) => [b, 0]));
-  let totalOriginal = 0;
-  let totalPaid = 0;
-  let totalOutstanding = 0;
-  let totalOverdue = 0;
-
-  const tableRows = rows.map((r) => {
-    const original = parseMoney(r.values.original);
-    const paid = parseMoney(r.values.paid);
-    const originalC = original.status === "ok" ? original.cents : 0;
-    const paidC = paid.status === "ok" ? paid.cents : 0;
-    const hasOriginal = original.status === "ok";
-    const outstanding = originalC - paidC;
-    const dueDay = parseDateDay(r.values.dueDate);
-    const daysPastDue = asOf !== null && dueDay !== null ? Math.max(0, asOf - dueDay) : null;
-    const settled = hasOriginal && outstanding <= 0;
-
-    totalOriginal += originalC;
-    totalPaid += paidC;
-    totalOutstanding += outstanding;
-
-    let bucket = "—";
-    if (settled) bucket = "Paid";
-    else if (hasOriginal && daysPastDue !== null) {
-      bucket = bucketFor(daysPastDue);
-      bucketTotals.set(bucket, (bucketTotals.get(bucket) ?? 0) + outstanding);
-      if (daysPastDue > 0) totalOverdue += outstanding;
-    }
-
-    let status = "—";
-    if (hasOriginal) {
-      if (settled) status = "Paid";
-      else if (daysPastDue !== null && daysPastDue > 0) status = "Overdue";
-      else if (paidC > 0) status = "Partially Paid";
-      else status = "Unpaid";
-    }
-
-    const daysText = settled ? "0" : daysPastDue === null || !hasOriginal ? "—" : String(daysPastDue);
-    rowComputed[r.id] = {
-      outstanding: hasOriginal ? money(outstanding) : "—",
-      daysPastDue: daysText,
-      bucket,
-      status,
-    };
-
-    const dateText = (raw: string | undefined) => formatDateText(raw) || "";
-    return [
-      rowName(r),
-      (r.values.invoiceNo ?? "").trim(),
-      dateText(r.values.invoiceDate),
-      dateText(r.values.dueDate),
-      hasOriginal ? money(originalC) : "",
-      paid.status === "ok" ? money(paidC) : "",
-      hasOriginal ? money(outstanding) : "",
-      daysText,
-      mode === "AR" ? bucket : status,
-    ];
-  });
-
-  const party = mode === "AR" ? "Customer" : "Supplier";
-  const detail: ReportTableBlock = {
-    type: "table",
-    title: mode === "AR" ? "Customer Invoices" : "Supplier Invoices",
-    columns: [
-      { label: party, align: "left" },
-      { label: "Invoice No.", align: "left" },
-      { label: "Invoice Date", align: "left" },
-      { label: "Due Date", align: "left" },
-      { label: "Original", align: "right" },
-      { label: "Paid", align: "right" },
-      { label: "Outstanding", align: "right" },
-      { label: mode === "AR" ? "Days Past Due" : "Days Overdue", align: "right" },
-      { label: mode === "AR" ? "Aging Category" : "Payment Status", align: "left" },
-    ],
-    rows: tableRows,
-    footer: [["Totals", "", "", "", money(totalOriginal), money(totalPaid), money(totalOutstanding), "", ""]],
-  };
-
-  const positiveTotal = [...bucketTotals.values()].reduce((a, b) => a + b, 0);
-  const aging: ReportTableBlock = {
-    type: "table",
-    title: mode === "AR" ? "Aging Summary" : "Aging of Unpaid Balances",
-    columns: [
-      { label: "Category", align: "left" },
-      { label: "Outstanding", align: "right" },
-      { label: "% of Total", align: "right" },
-    ],
-    rows: BUCKETS.map((b) => [b, money(bucketTotals.get(b) ?? 0), pct(bucketTotals.get(b) ?? 0, positiveTotal)]),
-    footer: [["Total Outstanding", money(positiveTotal), positiveTotal === 0 ? "n/a" : "100.00%"]],
-  };
-
-  const figures: Record<string, number> = {
-    totalOriginal,
-    totalPaid,
-    totalOutstanding,
-    totalOverdue,
-    current: bucketTotals.get(BUCKETS[0]) ?? 0,
-    days1to30: bucketTotals.get(BUCKETS[1]) ?? 0,
-    days31to60: bucketTotals.get(BUCKETS[2]) ?? 0,
-    days61to90: bucketTotals.get(BUCKETS[3]) ?? 0,
-    over90: bucketTotals.get(BUCKETS[4]) ?? 0,
-  };
-
-  return {
-    blocks: [detail, aging],
-    checks: [
-      {
-        id: "aging-basis",
-        status: "info",
-        label: "Aging reference date",
-        detail:
-          asOf === null
-            ? "Reporting date is not set, so days past due cannot be calculated."
-            : `Days ${mode === "AR" ? "past due" : "overdue"} are measured from the reporting date, ${formatDay(asOf)}.`,
-      },
-    ],
-    summary: [
-      { label: "Total Outstanding", cents: totalOutstanding },
-      { label: "Total Overdue", cents: totalOverdue },
-      { label: "Total Invoiced", cents: totalOriginal },
-    ],
-    figures,
-    rowComputed,
-  };
-}
-
-function buildBankReconciliation(c: Ctx): Built {
-  const bank = sum(c, "bankBalance");
-  const dit = sum(c, "depositsInTransit");
-  const osc = sum(c, "outstandingChecks");
-  const bankAdj = sum(c, "bankAdjustments");
-  const book = sum(c, "bookBalance");
-  const fees = sum(c, "bankFees");
-  const credits = sum(c, "bankCredits");
-  const bookAdj = sum(c, "bookAdjustments");
-
-  const adjustedBank = bank + dit - osc + bankAdj;
-  const adjustedBook = book - fees + credits + bookAdj;
-  const difference = adjustedBank - adjustedBook;
-
-  const bankLines: ReportLine[] = [
-    ...items(c, "bankBalance").map((l) => ({ ...l, indent: 0 as const })),
-    ...items(c, "depositsInTransit", { prefix: "Add:" }),
-    ...items(c, "outstandingChecks", { prefix: "Less:", negate: true }),
-    ...items(c, "bankAdjustments"),
-    line("grand", "Adjusted Bank Balance", adjustedBank),
-  ];
-  const bookLines: ReportLine[] = [
-    ...items(c, "bookBalance").map((l) => ({ ...l, indent: 0 as const })),
-    ...items(c, "bankFees", { prefix: "Less:", negate: true }),
-    ...items(c, "bankCredits", { prefix: "Add:" }),
-    ...items(c, "bookAdjustments"),
-    line("grand", "Adjusted Book Balance", adjustedBook),
-  ];
-
-  const agree = difference === 0;
-  return {
-    blocks: [
-      { type: "lines", title: "Balance per Bank Statement", lines: bankLines },
-      { type: "lines", title: "Balance per Cash Book", lines: bookLines },
-    ],
-    checks: [
-      {
-        id: "br-agree",
-        status: agree ? "pass" : "fail",
-        label: agree ? "Adjusted balances agree" : "Adjusted balances do not agree",
-        detail: agree
-          ? `Both adjusted balances are ${money(adjustedBank)}.`
-          : `Adjusted Bank Balance ${money(adjustedBank)} vs Adjusted Book Balance ${money(adjustedBook)}. Difference: ${money(difference)}. Review your entries — nothing was forced to match.`,
-      },
-    ],
-    summary: [
-      { label: "Adjusted Bank Balance", cents: adjustedBank },
-      { label: "Adjusted Book Balance", cents: adjustedBook },
-      { label: "Difference", cents: difference },
-    ],
-    figures: { adjustedBank, adjustedBook, difference },
-  };
-}
-
-function buildBudgetVsActual(c: Ctx): Built {
-  const rowComputed: Record<string, Record<string, string>> = {};
-
-  const makeTable = (id: "revenues" | "expenses") => {
-    const revenue = id === "revenues";
-    const rows = used(c, id);
-    let budgetTotal = 0;
-    let actualTotal = 0;
-    const favorability = (variance: number) =>
-      variance === 0 ? "On budget" : (variance > 0) === revenue ? "Favorable" : "Unfavorable";
-
-    const body = rows.map((r) => {
-      const budget = parseMoney(r.values.budget);
-      const actual = parseMoney(r.values.actual);
-      const b = budget.status === "ok" ? budget.cents : 0;
-      const a = actual.status === "ok" ? actual.cents : 0;
-      budgetTotal += b;
-      actualTotal += a;
-      const both = budget.status === "ok" && actual.status === "ok";
-      const variance = a - b;
-      rowComputed[r.id] = {
-        variance: both ? money(variance) : "—",
-        favorability: both ? favorability(variance) : "—",
-      };
-      return [
-        rowName(r),
-        budget.status === "ok" ? money(b) : "",
-        actual.status === "ok" ? money(a) : "",
-        both ? money(variance) : "",
-        both ? pct(variance, b) : "",
-        both ? favorability(variance) : "",
-      ];
-    });
-    const totalVariance = actualTotal - budgetTotal;
-    const table: ReportTableBlock = {
-      type: "table",
-      title: revenue ? "Revenue" : "Expenses",
-      columns: [
-        { label: "Account", align: "left" },
-        { label: "Budgeted", align: "right" },
-        { label: "Actual", align: "right" },
-        { label: "Variance", align: "right" },
-        { label: "Variance %", align: "right" },
-        { label: "Favorability", align: "left" },
-      ],
-      rows: body,
-      footer: [
-        [
-          revenue ? "Total Revenue" : "Total Expenses",
-          money(budgetTotal),
-          money(actualTotal),
-          money(totalVariance),
-          pct(totalVariance, budgetTotal),
-          favorability(totalVariance),
-        ],
-      ],
-    };
-    return { table, budgetTotal, actualTotal };
-  };
-
-  const rev = makeTable("revenues");
-  const exp = makeTable("expenses");
-  const netBudget = rev.budgetTotal - exp.budgetTotal;
-  const netActual = rev.actualTotal - exp.actualTotal;
-  const netVariance = netActual - netBudget;
-  const netFav = netVariance === 0 ? "On budget" : netVariance > 0 ? "Favorable" : "Unfavorable";
-
-  const net: ReportTableBlock = {
-    type: "table",
-    title: "Net Result (Revenue − Expenses)",
-    columns: [
-      { label: "", align: "left" },
-      { label: "Budgeted", align: "right" },
-      { label: "Actual", align: "right" },
-      { label: "Variance", align: "right" },
-      { label: "Variance %", align: "right" },
-      { label: "Favorability", align: "left" },
-    ],
-    rows: [["Net Income", money(netBudget), money(netActual), money(netVariance), pct(netVariance, Math.abs(netBudget)), netFav]],
-  };
-
-  return {
-    blocks: [rev.table, exp.table, net],
-    checks: [
-      {
-        id: "variance-rule",
-        status: "info",
-        label: "How favorability is determined",
-        detail:
-          "Variance = Actual − Budget. For revenue, a positive variance is favorable. For expenses, a positive variance is unfavorable.",
-      },
-    ],
-    summary: [
-      { label: "Net Income Variance", cents: netVariance },
-      { label: "Total Budgeted Revenue", cents: rev.budgetTotal },
-      { label: "Total Actual Revenue", cents: rev.actualTotal },
-    ],
-    figures: {
-      revBudget: rev.budgetTotal,
-      revActual: rev.actualTotal,
-      expBudget: exp.budgetTotal,
-      expActual: exp.actualTotal,
-      netBudget,
-      netActual,
-      netVariance,
-    },
-    rowComputed,
-  };
-}
-
 const BUILDERS: Record<StatementType, (c: Ctx) => Built> = {
   INCOME_STATEMENT: buildIncomeStatement,
   BALANCE_SHEET: buildBalanceSheet,
   CASH_FLOW: buildCashFlow,
   OWNERS_EQUITY: buildOwnersEquity,
-  TRIAL_BALANCE: buildTrialBalance,
-  COST_OF_GOODS_SOLD: buildCostOfGoodsSold,
-  AR_AGING: (c) => buildInvoiceReport(c, "AR"),
-  AP_REPORT: (c) => buildInvoiceReport(c, "AP"),
-  BANK_RECONCILIATION: buildBankReconciliation,
-  BUDGET_VS_ACTUAL: buildBudgetVsActual,
 };
 
 /** Primary money column for per-section footers in the editor. */
@@ -783,6 +463,10 @@ export function buildStatement(type: StatementType, data: StatementData): BuildR
       checks: built.checks,
       summary: built.summary,
       notes: data.meta.notes.trim(),
+      preparedBy: data.meta.preparedByName?.trim() || undefined,
+      preparedByTitle: data.meta.preparedByTitle?.trim() || undefined,
+      approvedBy: data.meta.approvedByName?.trim() || undefined,
+      approvedByTitle: data.meta.approvedByTitle?.trim() || undefined,
       options: (def.options ?? []).map((o) => ({ label: o.label, value: data.meta.options[o.id] ?? o.default })),
     },
     rowComputed: built.rowComputed ?? {},

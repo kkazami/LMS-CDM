@@ -115,68 +115,21 @@ export function validateStatement(type: StatementType, data: StatementData): Val
     issues.push(err("Enter at least one amount before generating the statement."));
   }
 
-  // ── Template-specific rules ──
-  const known = issues.some((i) => i.severity === "error" && i.field?.rowId);
-  switch (type) {
-    case "TRIAL_BALANCE": {
-      const section = def.sections[0];
-      (data.sections.accounts ?? []).forEach((row, index) => {
-        if (!isRowInUse(section, row)) return;
-        const debit = parseMoney(row.values.debit);
-        const credit = parseMoney(row.values.credit);
-        const where = rowLabel(section, row, index);
-        if (debit.status === "empty" && credit.status === "empty") {
-          issues.push(err(`${where}: enter a Debit or a Credit amount, or remove the row.`, { sectionId: "accounts", rowId: row.id, columnId: "debit" }));
-        } else if (debit.status === "ok" && credit.status === "ok" && debit.cents !== 0 && credit.cents !== 0) {
-          issues.push(err(`${where}: use either Debit or Credit, not both.`, { sectionId: "accounts", rowId: row.id, columnId: "credit" }));
-        }
-      });
-      break;
-    }
-    case "AR_AGING":
-    case "AP_REPORT": {
-      const section = def.sections[0];
-      const asOf = parseDateDay(data.meta.asOfDate);
-      (data.sections.invoices ?? []).forEach((row, index) => {
-        if (!isRowInUse(section, row)) return;
-        const where = rowLabel(section, row, index);
-        const invoice = parseDateDay(row.values.invoiceDate);
-        const due = parseDateDay(row.values.dueDate);
-        const original = parseMoney(row.values.original);
-        const paid = parseMoney(row.values.paid);
-        if (invoice !== null && due !== null && due < invoice) {
-          issues.push(err(`${where}: the due date is before the invoice date.`, { sectionId: "invoices", rowId: row.id, columnId: "dueDate" }));
-        }
-        if (invoice !== null && asOf !== null && invoice > asOf) {
-          issues.push(err(`${where}: the invoice is dated after the reporting date.`, { sectionId: "invoices", rowId: row.id, columnId: "invoiceDate" }));
-        }
-        if (original.status === "ok" && original.cents <= 0) {
-          issues.push(err(`${where}: the original invoice amount must be greater than zero.`, { sectionId: "invoices", rowId: row.id, columnId: "original" }));
-        }
-        if (original.status === "ok" && paid.status === "ok" && paid.cents > original.cents) {
-          issues.push(err(`${where}: the amount paid is more than the invoice amount.`, { sectionId: "invoices", rowId: row.id, columnId: "paid" }));
-        }
-      });
-      break;
-    }
-    default:
-      break;
-  }
-
   // Figure-based rules (skip if row-level errors already make figures unreliable).
+  const known = issues.some((i) => i.severity === "error" && i.field?.rowId);
   if (!known) {
     const { figures, document } = buildStatement(type, data);
     switch (type) {
       case "OWNERS_EQUITY":
         if (figures.netProfit > 0 && figures.netLoss > 0) {
-          issues.push(err("Enter either Net Profit or Net Loss, not both.", { sectionId: "reductions" }));
+          issues.push(
+            err(
+              "Enter either Net Profit or Net Loss, not both (a business cannot have both profit and loss in the same period). Please clear or delete whichever one does not apply.",
+              { sectionId: "reductions" }
+            )
+          );
         }
         if (figures.ending < 0) issues.push(warn(`Ending owner's equity is negative (${formatCents(figures.ending)}). Check withdrawals and losses.`));
-        break;
-      case "COST_OF_GOODS_SOLD":
-        if (figures.ending > figures.goodsAvailable) {
-          issues.push(err(`Ending inventory (${formatCents(figures.ending)}) cannot exceed goods available for sale (${formatCents(figures.goodsAvailable)}).`, { sectionId: "ending" }));
-        }
         break;
       case "INCOME_STATEMENT":
         if (figures.returns > figures.salesRevenue) {
@@ -187,8 +140,6 @@ export function validateStatement(type: StatementType, data: StatementData): Val
         if (figures.endingCash < 0) issues.push(warn(`Ending cash is negative (${formatCents(figures.endingCash)}). Review your entries.`));
         break;
       case "BALANCE_SHEET":
-      case "BANK_RECONCILIATION":
-      case "TRIAL_BALANCE":
         for (const check of document.checks) {
           if (check.status === "fail") issues.push(warn(`${check.label}. ${check.detail}`));
         }

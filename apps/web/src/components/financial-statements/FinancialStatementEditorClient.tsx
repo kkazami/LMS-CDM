@@ -23,7 +23,8 @@ import {
   Layers,
   ChevronDown,
   Building2,
-  FileText,
+  UserCheck,
+  Award,
 } from "lucide-react";
 import type {
   StatementData,
@@ -35,7 +36,7 @@ import type {
 import { getTemplate, newRowId } from "@/lib/financial-statements/templates";
 import { buildStatement } from "@/lib/financial-statements/build";
 import { validateStatement, hasBlockingErrors } from "@/lib/financial-statements/validate";
-import { formatCents } from "@/lib/financial-statements/format";
+import { formatCents, sanitizeMoneyInput } from "@/lib/financial-statements/format";
 import StatementReportPreview from "./StatementReportPreview";
 import TemplatePickerModal from "./TemplatePickerModal";
 import {
@@ -143,6 +144,54 @@ export default function FinancialStatementEditorClient({
       };
     });
     setHasUnsavedChanges(true);
+  };
+
+  // Restrict key presses on money inputs to digits, single decimal point, and optional leading minus
+  const handleMoneyKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    allowNegative?: boolean
+  ) => {
+    // Allow navigational, editing and system shortcut keys
+    if (
+      e.key === "Backspace" ||
+      e.key === "Delete" ||
+      e.key === "Tab" ||
+      e.key === "Escape" ||
+      e.key === "Enter" ||
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight" ||
+      e.key === "ArrowUp" ||
+      e.key === "ArrowDown" ||
+      e.key === "Home" ||
+      e.key === "End" ||
+      e.ctrlKey ||
+      e.metaKey
+    ) {
+      return;
+    }
+
+    // Allow digits 0-9
+    if (/^[0-9]$/.test(e.key)) {
+      return;
+    }
+
+    // Allow single decimal point if not already present
+    if (e.key === "." && !e.currentTarget.value.includes(".")) {
+      return;
+    }
+
+    // Allow leading minus sign if negative numbers are permitted
+    if (
+      allowNegative &&
+      e.key === "-" &&
+      !e.currentTarget.value.includes("-") &&
+      e.currentTarget.selectionStart === 0
+    ) {
+      return;
+    }
+
+    // Block all other keys (letters, words, special symbols: !@#$%^&* etc.)
+    e.preventDefault();
   };
 
   // Add Row to Section
@@ -459,6 +508,8 @@ export default function FinancialStatementEditorClient({
             document={buildResult.document}
             onDownloadPdf={handleDownloadPdf}
             canDownloadPdf={statement.status === "GENERATED"}
+            onUpdateMeta={updateMeta}
+            meta={data.meta}
           />
         </div>
       ) : (
@@ -689,11 +740,14 @@ export default function FinancialStatementEditorClient({
                                     <td key={col.id} className="p-2 min-w-32.5">
                                       <input
                                         type="text"
+                                        inputMode="decimal"
                                         placeholder={col.placeholder || "0.00"}
                                         value={cellVal}
-                                        onChange={(e) =>
-                                          updateCell(section.id, row.id, col.id, e.target.value)
-                                        }
+                                        onKeyDown={(e) => handleMoneyKeyDown(e, col.allowNegative)}
+                                        onChange={(e) => {
+                                          const clean = sanitizeMoneyInput(e.target.value, col.allowNegative);
+                                          updateCell(section.id, row.id, col.id, clean);
+                                        }}
                                         className="w-full text-xs font-mono text-right p-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E1017] text-slate-900 dark:text-[#F0F2F8] focus:ring-1 focus:ring-amber-500"
                                       />
                                     </td>
@@ -750,24 +804,91 @@ export default function FinancialStatementEditorClient({
             );
           })}
 
-          {/* Student Explanatory Notes & Documentation */}
-          <div className={`${cardClass} p-6 space-y-3`}>
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-white/5">
-              <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <h3 className={`text-sm font-bold ${headingText}`}>
-                Student Notes & Accounting Explanations (Optional)
-              </h3>
+          {/* Certification & Signatures (Sign-off) */}
+          <div className={`${cardClass} p-6 space-y-5`}>
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-white/5">
+              <UserCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <div>
+                <h3 className={`text-sm font-bold ${headingText}`}>
+                  Certification & Signatures (Sign-off)
+                </h3>
+                <p className={`text-xs ${mutedText} mt-0.5`}>
+                  Customize who prepared or proposed this statement and designate the faculty reviewer or supervisor for your official submission.
+                </p>
+              </div>
             </div>
-            <p className={`text-xs ${mutedText}`}>
-              Add any footnotes, assumptions, depreciation methods, or transaction explanations you want to include in the generated PDF report.
-            </p>
-            <textarea
-              rows={4}
-              placeholder="e.g. Straight-line depreciation applied to office equipment. Sales returns occurred within the standard 15-day policy window."
-              value={data.meta.notes}
-              onChange={(e) => updateMeta("notes", e.target.value)}
-              className={`${inputClass} font-sans leading-relaxed`}
-            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Prepared / Proposed By */}
+              <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Prepared / Proposed By</span>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Preparer / Proponent Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Maria Clara Santos"
+                    value={data.meta.preparedByName ?? ""}
+                    onChange={(e) => updateMeta("preparedByName", e.target.value)}
+                    className={inputClass}
+                  />
+                  <p className={`text-[11px] ${mutedText}`}>
+                    Leave blank to default to your student account name.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Designation / Role Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Student / Accounting Preparer"
+                    value={data.meta.preparedByTitle ?? ""}
+                    onChange={(e) => updateMeta("preparedByTitle", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              {/* Reviewed & Approved By */}
+              <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Reviewed & Approved By</span>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Reviewer / Approver Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Prof. Juan Dela Cruz, CPA"
+                    value={data.meta.approvedByName ?? ""}
+                    onChange={(e) => updateMeta("approvedByName", e.target.value)}
+                    className={inputClass}
+                  />
+                  <p className={`text-[11px] ${mutedText}`}>
+                    Faculty instructor, department supervisor, or panel reviewer.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Approver Title / Institution
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Faculty Instructor / Supervisor"
+                    value={data.meta.approvedByTitle ?? ""}
+                    onChange={(e) => updateMeta("approvedByTitle", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Bottom Generation Action Bar */}

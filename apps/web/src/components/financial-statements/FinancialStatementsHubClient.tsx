@@ -150,7 +150,7 @@ export default function FinancialStatementsHubClient({
               Financial Statement Generator
             </h1>
             <p className="text-sm text-slate-600 dark:text-[#8B92A5] leading-relaxed">
-              Create, edit, and manage your financial reports. Choose from 10 standardized accounting templates, enter your accounts, verify automated calculations, preview, and download official PDF statements.
+              Create, edit, and manage your financial reports. Choose from 4 standardized core accounting templates, enter your accounts, verify automated calculations, preview, and download official PDF statements.
             </p>
           </div>
 
@@ -197,7 +197,7 @@ export default function FinancialStatementsHubClient({
               Available Templates
             </p>
             <p className="text-xl font-black text-slate-900 dark:text-[#F0F2F8] mt-1">
-              10
+              {TEMPLATES.length}
             </p>
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function FinancialStatementsHubClient({
         /* Statement Grid List */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStatements.map((stmt) => {
-            const Icon = TEMPLATE_ICONS[stmt.statementType];
+            const Icon = (TEMPLATE_ICONS as Record<string, typeof FileSpreadsheet>)[stmt.statementType] ?? FileSpreadsheet;
             const isGenerated = stmt.status === "GENERATED";
 
             return (

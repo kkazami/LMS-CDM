@@ -203,7 +203,7 @@ export default function Sidebar({
     ];
   }
 
-  if (isEligibleForArena || instituteCode.toLowerCase() === "ibe") {
+  if ((isEligibleForArena || instituteCode.toLowerCase() === "ibe") && (isStudent || isProfessor)) {
     links = [
       ...links,
       {

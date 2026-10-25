@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildStatement } from "../../apps/web/src/lib/financial-statements/build";
 import { normalizeData } from "../../apps/web/src/lib/financial-statements/data";
-import { centsOrZero, formatCents, parseDateDay, parseMoney } from "../../apps/web/src/lib/financial-statements/format";
+import { centsOrZero, formatCents, parseDateDay, parseMoney, sanitizeMoneyInput } from "../../apps/web/src/lib/financial-statements/format";
 import { renderStatementPdf } from "../../apps/web/src/lib/financial-statements/pdf";
 import { TEMPLATES, createDefaultData, getTemplate } from "../../apps/web/src/lib/financial-statements/templates";
 import { STATEMENT_TYPES, type StatementData, type StatementType } from "../../apps/web/src/lib/financial-statements/types";
@@ -64,9 +64,9 @@ test("parseDateDay rejects impossible dates", () => {
 });
 
 // ── templates ──────────────────────────────────────────────────────────────
-test("all 10 templates exist, build, and start with blank (never invented) amounts", () => {
-  assert.equal(TEMPLATES.length, 10);
-  assert.equal(new Set(TEMPLATES.map((t) => t.type)).size, 10);
+test("all 4 templates exist, build, and start with blank (never invented) amounts", () => {
+  assert.equal(TEMPLATES.length, 4);
+  assert.equal(new Set(TEMPLATES.map((t) => t.type)).size, 4);
   for (const type of STATEMENT_TYPES) {
     const data = createDefaultData(type);
     for (const rows of Object.values(data.sections)) {
@@ -200,182 +200,6 @@ test("owner's equity: profit adds, loss subtracts, never both", () => {
   assert.ok(errors("OWNERS_EQUITY", d).some((e) => /either Net Profit or Net Loss/.test(e.message)));
 });
 
-// ── 5. Trial balance ───────────────────────────────────────────────────────
-test("trial balance: totals, difference, add/edit/remove rows", () => {
-  const d = fresh("TRIAL_BALANCE");
-  set(d, "accounts", "cash", { debit: "50000" });
-  set(d, "accounts", "equipment", { debit: "30000" });
-  set(d, "accounts", "payable", { credit: "20000" });
-  set(d, "accounts", "capital", { credit: "60000" });
-  assert.equal(errors("TRIAL_BALANCE", d).length, 0);
-  let r = buildStatement("TRIAL_BALANCE", d);
-  assert.equal(r.figures.totalDebits, 8_000_000);
-  assert.equal(r.figures.totalCredits, 8_000_000);
-  assert.equal(r.document.checks[0].status, "pass");
-
-  add(d, "accounts", { label: "Supplies", code: "150", debit: "100.25", credit: "" });
-  r = buildStatement("TRIAL_BALANCE", d);
-  assert.equal(r.figures.difference, 10_025);
-  assert.equal(r.document.checks[0].status, "fail");
-  d.sections.accounts = d.sections.accounts.filter((row) => row.values.label !== "Supplies");
-  assert.equal(buildStatement("TRIAL_BALANCE", d).figures.difference, 0);
-  assert.equal(buildStatement("TRIAL_BALANCE", d).document.checks.at(-1)!.status, "info");
-});
-
-test("trial balance: one side per account", () => {
-  const d = fresh("TRIAL_BALANCE");
-  set(d, "accounts", "cash", { debit: "10", credit: "10" });
-  assert.ok(errors("TRIAL_BALANCE", d).some((e) => /either Debit or Credit/.test(e.message)));
-  const e = fresh("TRIAL_BALANCE");
-  add(e, "accounts", { label: "", code: "", debit: "", credit: "" });
-  set(e, "accounts", "cash", { debit: "5" });
-  // fully blank added row is ignored; a row with only a name is not
-  assert.equal(errors("TRIAL_BALANCE", e).length, 0);
-  add(e, "accounts", { label: "Prepaid", code: "7", debit: "", credit: "" });
-  assert.ok(errors("TRIAL_BALANCE", e).length > 0);
-});
-
-// ── 6. COGS ────────────────────────────────────────────────────────────────
-test("cost of goods sold: net purchases, goods available, COGS", () => {
-  const d = fresh("COST_OF_GOODS_SOLD");
-  set(d, "beginning", "beginningInventory", { amount: "20000" });
-  set(d, "purchases", "purchases", { amount: "100000" });
-  set(d, "purchaseReductions", "purchaseReturns", { amount: "3000" });
-  set(d, "purchaseReductions", "purchaseDiscounts", { amount: "2000" });
-  set(d, "freightIn", "freightIn", { amount: "1500" });
-  set(d, "ending", "endingInventory", { amount: "25000" });
-  assert.equal(errors("COST_OF_GOODS_SOLD", d).length, 0);
-  const { figures, document } = buildStatement("COST_OF_GOODS_SOLD", d);
-  assert.equal(figures.netPurchases, 9_650_000);
-  assert.equal(figures.goodsAvailable, 11_650_000);
-  assert.equal(figures.cogs, 9_150_000);
-  assert.equal(document.options[0].label, "Inventory costing method");
-
-  set(d, "ending", "endingInventory", { amount: "999999" });
-  assert.ok(errors("COST_OF_GOODS_SOLD", d).some((e) => /cannot exceed goods available/.test(e.message)));
-});
-
-// ── 7. AR aging ────────────────────────────────────────────────────────────
-function invoice(data: StatementData, over: Record<string, string>) {
-  add(data, "invoices", { label: "Cust", invoiceNo: "I", invoiceDate: "2026-01-01", dueDate: "2026-02-01", original: "1000", paid: "", ...over });
-}
-
-test("AR aging: buckets are measured from the reporting date, not today", () => {
-  const d = fresh("AR_AGING", { asOfDate: "2026-06-30" });
-  d.sections.invoices = [];
-  invoice(d, { label: "A", dueDate: "2026-07-15", original: "100" }); //  not yet due
-  invoice(d, { label: "B", dueDate: "2026-06-30", original: "200" }); //  due on reporting date → current
-  invoice(d, { label: "C", dueDate: "2026-06-20", original: "300" }); //  10 days
-  invoice(d, { label: "D", dueDate: "2026-05-01", original: "400" }); //  60 days
-  invoice(d, { label: "E", dueDate: "2026-04-01", original: "500" }); //  90 days
-  invoice(d, { label: "F", dueDate: "2026-03-01", original: "600", paid: "100" }); // 121 days, 500 left
-  invoice(d, { label: "G", dueDate: "2026-03-01", original: "700", paid: "700" }); // paid in full
-  assert.equal(errors("AR_AGING", d).length, 0);
-  const r = buildStatement("AR_AGING", d);
-  assert.equal(r.figures.current, 30_000);
-  assert.equal(r.figures.days1to30, 30_000);
-  assert.equal(r.figures.days31to60, 40_000);
-  assert.equal(r.figures.days61to90, 50_000);
-  assert.equal(r.figures.over90, 50_000);
-  assert.equal(r.figures.totalOutstanding, 200_000);
-  assert.equal(r.figures.totalOverdue, 170_000);
-  const byLabel = (label: string) => r.rowComputed[d.sections.invoices.find((x) => x.values.label === label)!.id];
-  assert.equal(byLabel("D").daysPastDue, "60");
-  assert.equal(byLabel("D").bucket, "31–60 Days");
-  assert.equal(byLabel("G").bucket, "Paid");
-
-  // Move the reporting date back: everything shifts accordingly.
-  d.meta.asOfDate = "2026-03-15";
-  const earlier = buildStatement("AR_AGING", d);
-  assert.equal(earlier.figures.over90, 0);
-  assert.equal(earlier.figures.current, 150_000); // A–E not yet due on 15 Mar
-  assert.equal(earlier.figures.days1to30, 50_000); // F is 14 days past due
-});
-
-test("AR aging: validation of dates and amounts", () => {
-  const d = fresh("AR_AGING", { asOfDate: "2026-06-30" });
-  d.sections.invoices = [];
-  invoice(d, { dueDate: "2025-12-01" }); // due before invoice
-  assert.ok(errors("AR_AGING", d).some((e) => /before the invoice date/.test(e.message)));
-  d.sections.invoices = [];
-  invoice(d, { invoiceDate: "2026-07-01", dueDate: "2026-08-01" });
-  assert.ok(errors("AR_AGING", d).some((e) => /after the reporting date/.test(e.message)));
-  d.sections.invoices = [];
-  invoice(d, { paid: "2000" });
-  assert.ok(errors("AR_AGING", d).some((e) => /more than the invoice amount/.test(e.message)));
-  d.sections.invoices = [];
-  invoice(d, { dueDate: "2026-02-31" });
-  assert.ok(errors("AR_AGING", d).some((e) => /not a valid date/.test(e.message)));
-  d.sections.invoices = [];
-  invoice(d, { original: "" });
-  assert.ok(errors("AR_AGING", d).some((e) => /Original Amount.*required/.test(e.message)));
-});
-
-// ── 8. AP ──────────────────────────────────────────────────────────────────
-test("AP report: outstanding, overdue days and payment status", () => {
-  const d = fresh("AP_REPORT", { asOfDate: "2026-06-30" });
-  d.sections.invoices = [];
-  invoice(d, { label: "S1", dueDate: "2026-07-10", original: "1000" });
-  invoice(d, { label: "S2", dueDate: "2026-07-10", original: "1000", paid: "400" });
-  invoice(d, { label: "S3", dueDate: "2026-06-01", original: "1000", paid: "400" });
-  invoice(d, { label: "S4", dueDate: "2026-06-01", original: "1000", paid: "1000" });
-  const r = buildStatement("AP_REPORT", d);
-  const s = (label: string) => r.rowComputed[d.sections.invoices.find((x) => x.values.label === label)!.id];
-  assert.equal(s("S1").status, "Unpaid");
-  assert.equal(s("S2").status, "Partially Paid");
-  assert.equal(s("S3").status, "Overdue");
-  assert.equal(s("S3").daysPastDue, "29");
-  assert.equal(s("S3").outstanding, "600.00");
-  assert.equal(s("S4").status, "Paid");
-  assert.equal(r.figures.totalOutstanding, 220_000);
-  assert.equal(r.figures.totalOverdue, 60_000);
-});
-
-// ── 9. Bank reconciliation ─────────────────────────────────────────────────
-test("bank reconciliation: both adjusted balances, agree and disagree", () => {
-  const d = fresh("BANK_RECONCILIATION");
-  set(d, "bankBalance", "bankBalance", { amount: "10000" });
-  set(d, "depositsInTransit", "dit", { amount: "1500" });
-  set(d, "outstandingChecks", "osc", { amount: "2200" });
-  set(d, "bookBalance", "bookBalance", { amount: "9150" });
-  set(d, "bankFees", "fees", { amount: "50" });
-  set(d, "bankCredits", "credits", { amount: "200" });
-  assert.equal(errors("BANK_RECONCILIATION", d).length, 0);
-  let r = buildStatement("BANK_RECONCILIATION", d);
-  assert.equal(r.figures.adjustedBank, 930_000);
-  assert.equal(r.figures.adjustedBook, 930_000);
-  assert.equal(r.document.checks[0].status, "pass");
-
-  set(d, "bookAdjustments", "bookAdj", { amount: "-30" }); // e.g. NSF cheque
-  r = buildStatement("BANK_RECONCILIATION", d);
-  assert.equal(r.figures.adjustedBook, 927_000);
-  assert.equal(r.figures.difference, 3_000);
-  assert.equal(r.document.checks[0].status, "fail");
-  assert.equal(r.figures.adjustedBank, 930_000, "bank side not forced to match");
-});
-
-// ── 10. Budget vs actual ───────────────────────────────────────────────────
-test("budget vs actual: variance sign and favorability by account type", () => {
-  const d = fresh("BUDGET_VS_ACTUAL");
-  set(d, "revenues", "sales", { budget: "100000", actual: "110000" }); // +10,000 favorable
-  set(d, "revenues", "otherIncome", { budget: "5000", actual: "4000" }); // −1,000 unfavorable
-  set(d, "expenses", "rent", { budget: "20000", actual: "22000" }); // +2,000 unfavorable
-  set(d, "expenses", "salaries", { budget: "30000", actual: "28000" }); // −2,000 favorable
-  assert.equal(errors("BUDGET_VS_ACTUAL", d).length, 0);
-  const r = buildStatement("BUDGET_VS_ACTUAL", d);
-  const row = (section: string, key: string) => r.rowComputed[d.sections[section].find((x) => x.key === key)!.id];
-  assert.deepEqual(row("revenues", "sales"), { variance: "10,000.00", favorability: "Favorable" });
-  assert.equal(row("revenues", "otherIncome").favorability, "Unfavorable");
-  assert.equal(row("expenses", "rent").favorability, "Unfavorable");
-  assert.equal(row("expenses", "salaries").favorability, "Favorable");
-  assert.equal(row("expenses", "salaries").variance, "(2,000.00)");
-  assert.equal(r.figures.revBudget, 10_500_000);
-  assert.equal(r.figures.revActual, 11_400_000);
-  assert.equal(r.figures.netBudget, 5_500_000);
-  assert.equal(r.figures.netActual, 6_400_000);
-  assert.equal(r.figures.netVariance, 900_000);
-});
-
 // ── meta validation ────────────────────────────────────────────────────────
 test("business name and period are validated", () => {
   const d = fresh("INCOME_STATEMENT", { businessName: "  ", periodStart: "2026-12-31", periodEnd: "2026-01-01" });
@@ -422,9 +246,6 @@ test("normalizeData drops unknown sections, columns and keys and caps sizes", ()
   assert.ok(/^[A-Za-z0-9_-]+$/.test(n.sections.revenue[0].id));
   // missing sections fall back to template defaults
   assert.equal(n.sections.opex.length, 5);
-  const cogs = normalizeData("COST_OF_GOODS_SOLD", { meta: { options: { inventoryMethod: "Perpetual" } } });
-  assert.equal(cogs.meta.options.inventoryMethod, "Perpetual");
-  assert.equal(normalizeData("COST_OF_GOODS_SOLD", {}).meta.options.inventoryMethod, "Not specified");
   assert.deepEqual(normalizeData("INCOME_STATEMENT", null).sections.revenue.map((r) => r.key), ["salesRevenue"]);
 });
 
@@ -454,7 +275,7 @@ test("PDF contains the actual generated report for every template", () => {
     const body = pdf.toString("latin1");
     assert.ok(body.includes("(Sampaguita Trading)"), `${type} business name`);
     assert.ok(body.includes(getTemplate(type).name.replace(/[()\\]/g, "\\$&")), `${type} title`);
-    assert.ok(body.includes("Validation Results"), `${type} checks`);
+    assert.ok(!body.includes("Validation Results"), `${type} validation checks omitted from official PDF`);
     assert.ok(body.includes("Page 1 of"), `${type} footer`);
     assert.ok(pdf.length > 1500, `${type} not a blank document`);
     // xref offsets point at "N 0 obj"
@@ -464,3 +285,53 @@ test("PDF contains the actual generated report for every template", () => {
     offsets.forEach((off, i) => assert.ok(body.slice(off).startsWith(`${i + 1} 0 obj`), `${type} xref ${i + 1}`));
   }
 });
+
+test("Custom editable preparer and approver signatures propagate to build and PDF", () => {
+  const d = fresh("INCOME_STATEMENT");
+  d.meta.preparedByName = "Maria Clara Santos";
+  d.meta.preparedByTitle = "Senior Accounting Proponent";
+  d.meta.approvedByName = "Prof. Crisostomo Ibarra, CPA";
+  d.meta.approvedByTitle = "Dean of Business Administration";
+
+  const normalized = normalizeData("INCOME_STATEMENT", d);
+  assert.equal(normalized.meta.preparedByName, "Maria Clara Santos");
+  assert.equal(normalized.meta.preparedByTitle, "Senior Accounting Proponent");
+  assert.equal(normalized.meta.approvedByName, "Prof. Crisostomo Ibarra, CPA");
+  assert.equal(normalized.meta.approvedByTitle, "Dean of Business Administration");
+
+  const { document } = buildStatement("INCOME_STATEMENT", normalized);
+  assert.equal(document.preparedBy, "Maria Clara Santos");
+  assert.equal(document.preparedByTitle, "Senior Accounting Proponent");
+  assert.equal(document.approvedBy, "Prof. Crisostomo Ibarra, CPA");
+  assert.equal(document.approvedByTitle, "Dean of Business Administration");
+
+  const pdf = renderStatementPdf(document, { generatedAt: new Date("2026-10-22T00:00:00Z") });
+  const body = pdf.toString("latin1");
+  assert.ok(body.includes("(Maria Clara Santos)"));
+  assert.ok(body.includes("(Senior Accounting Proponent)"));
+  assert.ok(body.includes("(Prof. Crisostomo Ibarra, CPA)"));
+  assert.ok(body.includes("(Dean of Business Administration)"));
+});
+
+test("sanitizeMoneyInput restricts letters, words, and special symbols", () => {
+  // Words and letters are completely stripped
+  assert.equal(sanitizeMoneyInput("awdawdaw"), "");
+  assert.equal(sanitizeMoneyInput("Cash1250"), "1250");
+  assert.equal(sanitizeMoneyInput("abc123def456"), "123456");
+
+  // Special symbols are restricted
+  assert.equal(sanitizeMoneyInput("$1,250.50"), "1250.50");
+  assert.equal(sanitizeMoneyInput("₱9,999.00"), "9999.00");
+  assert.equal(sanitizeMoneyInput("@#$%^&*!"), "");
+
+  // Decimals are capped at 2 places and single dot
+  assert.equal(sanitizeMoneyInput("12.345"), "12.34");
+  assert.equal(sanitizeMoneyInput("10..20.30"), "10.20");
+
+  // Negative restrictions
+  assert.equal(sanitizeMoneyInput("-500", false), "500");
+  assert.equal(sanitizeMoneyInput("-500", true), "-500");
+  assert.equal(sanitizeMoneyInput("-", true), "-");
+});
+
+

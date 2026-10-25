@@ -8,12 +8,6 @@ export const STATEMENT_TYPES = [
   "BALANCE_SHEET",
   "CASH_FLOW",
   "OWNERS_EQUITY",
-  "TRIAL_BALANCE",
-  "COST_OF_GOODS_SOLD",
-  "AR_AGING",
-  "AP_REPORT",
-  "BANK_RECONCILIATION",
-  "BUDGET_VS_ACTUAL",
 ] as const;
 
 export type StatementType = (typeof STATEMENT_TYPES)[number];
@@ -66,11 +60,7 @@ export interface TemplateOption {
   hint?: string;
 }
 
-export type TemplateCategory =
-  | "Core Statements"
-  | "Accounting Records"
-  | "Receivables & Payables"
-  | "Cash & Planning";
+export type TemplateCategory = "Core Statements";
 
 export interface TemplateDef {
   type: StatementType;
@@ -100,6 +90,10 @@ export interface StatementMeta {
   periodEnd: string;
   asOfDate: string;
   notes: string;
+  preparedByName?: string;
+  preparedByTitle?: string;
+  approvedByName?: string;
+  approvedByTitle?: string;
   options: Record<string, string>;
 }
 
@@ -148,11 +142,20 @@ export interface ReportTableBlock {
 
 export type ReportBlock = ReportLinesBlock | ReportTableBlock;
 
+export type CheckStatus =
+  | "PASS"
+  | "WARNING"
+  | "FAIL"
+  | "NOT_CHECKED"
+  | "REVIEW_REQUIRED";
+
 export interface ReportCheck {
   id: string;
-  status: "pass" | "fail" | "info";
+  status: CheckStatus | "pass" | "fail" | "warning" | "not_checked" | "review_required" | "info";
   label: string;
   detail: string;
+  formula?: string;
+  calculation?: string;
 }
 
 export interface SummaryMetric {
@@ -172,6 +175,13 @@ export interface ReportDocument {
   notes: string;
   /** Free-text method label shown beneath the heading (e.g. inventory method). */
   options: { label: string; value: string }[];
+  /** Mark reports as test data or invalid sample when loaded from test scenarios. */
+  watermark?: "TEST DATA" | "INVALID SAMPLE";
+  preparedBy?: string;
+  preparedByTitle?: string;
+  approvedBy?: string;
+  approvedByTitle?: string;
+  disclaimer?: string;
 }
 
 export interface BuildResult {

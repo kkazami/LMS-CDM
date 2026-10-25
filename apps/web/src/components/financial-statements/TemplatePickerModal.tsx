@@ -32,9 +32,6 @@ interface TemplatePickerModalProps {
 const CATEGORIES: Array<"All" | TemplateCategory> = [
   "All",
   "Core Statements",
-  "Accounting Records",
-  "Receivables & Payables",
-  "Cash & Planning",
 ];
 
 export default function TemplatePickerModal({
@@ -112,7 +109,7 @@ export default function TemplatePickerModal({
                 Choose a Financial Report Template
               </h2>
               <p className={`text-xs ${mutedText}`}>
-                Select from 10 standardized accounting templates for your business study.
+                Select from 4 fundamental financial statement templates for your business study.
               </p>
             </div>
           </div>

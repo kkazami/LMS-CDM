@@ -3,13 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import {
   ArrowLeftRight,
-  BarChart3,
-  Banknote,
-  CreditCard,
   Landmark,
-  ListChecks,
-  Package,
-  Receipt,
   Scale,
   TrendingUp,
   X,
@@ -22,12 +16,6 @@ export const TEMPLATE_ICONS: Record<StatementType, LucideIcon> = {
   BALANCE_SHEET: Scale,
   CASH_FLOW: ArrowLeftRight,
   OWNERS_EQUITY: Landmark,
-  TRIAL_BALANCE: ListChecks,
-  COST_OF_GOODS_SOLD: Package,
-  AR_AGING: Receipt,
-  AP_REPORT: CreditCard,
-  BANK_RECONCILIATION: Banknote,
-  BUDGET_VS_ACTUAL: BarChart3,
 };
 
 export type ApiResult<T> =
