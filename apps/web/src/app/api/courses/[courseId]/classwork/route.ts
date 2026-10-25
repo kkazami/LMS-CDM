@@ -1,3 +1,4 @@
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import { z } from 'zod';
 import { requireCourseAccess } from '@/lib/course-access';
 import { attachmentLocation } from '@/lib/academic-records';
@@ -42,7 +43,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const [syllabusItems, studentSubmissions] = await Promise.all([
       db.syllabusItem.findMany({
-        where: { courseId },
+        where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}) },
         include: {
           attachments: {
             select: {
@@ -164,7 +165,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const lastItem = await db.syllabusItem.findFirst({
-      where: { courseId },
+      where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}) },
       orderBy: { orderIndex: 'desc' },
       select: { orderIndex: true },
     });

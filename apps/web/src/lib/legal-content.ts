@@ -1,4 +1,4 @@
-export const POLICY_UPDATED = "21 October 2026";
+export const POLICY_UPDATED = "24 October 2026";
 
 export type PolicySection = {
   id: string;
@@ -23,7 +23,7 @@ export const terms: PolicyDocument = {
     },
     {
       id: "accounts-and-access", title: "Accounts and authorized access",
-      paragraphs: ["Accounts are provisioned by authorized school personnel after enrollment or employment verification. Activate your account through the school-issued process, provide accurate information, and report incorrect account details to the Registrar.", "Use only your own account. Keep passwords, activation links, verification codes, and session credentials private; sign out on shared devices and report suspected unauthorized access promptly. Access is limited to the classes, records, and administrative functions assigned to you. An account does not authorize access to another person's records or another institute's restricted resources."],
+      paragraphs: ["Students may register with their school-issued student ID, full name, email, password, and institute, or use Google sign-in and complete these account details. Student access begins after joining an active class in the registered institute. School-issued invitations remain available; staff accounts are provisioned by authorized personnel. Provide accurate information and report incorrect account details to the Registrar.", "Use only your own account. Keep passwords, class codes, activation links, verification codes, and session credentials private; sign out on shared devices and report suspected unauthorized access promptly. Access is limited to the classes, records, and administrative functions assigned to you. An account does not authorize access to another person's records or another institute's restricted resources."],
     },
     {
       id: "acceptable-use", title: "Acceptable use and academic integrity",
@@ -67,7 +67,7 @@ export const privacy: PolicyDocument = {
     },
     {
       id: "information-we-handle", title: "Information the LMS handles",
-      paragraphs: ["The information involved depends on the features you use and the records supplied by authorized school personnel. It may come from you, enrollment or staff rosters, your instructors, school administrators, and your use of the service."],
+      paragraphs: ["The information involved depends on the features you use and the records supplied by authorized school personnel. It may come from you, enrollment or staff rosters, your instructors, school administrators, and your use of the service.", "If you choose Google sign-in, Google provides your verified email address, name, and stable Google account identifier so we can create or connect your student account. We request only identity, email, and profile access; we do not request access to Gmail or Drive. Google has its own privacy policy."],
       items: ["Identity and account information: name, email address, student or employee identifier, institute, role, program, section, year level, account status, password hash, activation and recovery records, and optional profile details such as photo, biography, department, and phone number.", "Academic records: course enrollment, materials, assignments, uploaded files, answers, grades, feedback, private course comments, group membership, assessment attempts, timestamps, and activity or laboratory results.", "Learning and participation records: flashcards and review progress, study sessions, notes, tasks, calendar entries, annotations, experience points, badges, streaks, leaderboard entries, and Knowledge Exchange questions, answers, votes, and moderation records.", "Assessment integrity information: recorded tab switches, copy/paste activity and related details, fullscreen exits, right-click or blocked shortcut events, timing, submitted code, and similarity results where the relevant assessment feature is enabled.", "Security and delivery information: IP address, browser or device information, session timestamps, audit and rate-limit records, email delivery records, and notification device tokens where push notifications are enabled.", "Integration information: selected repository and commit details, submitted code and test inputs, AI prompts, selected learning content and error output, and connected-service credentials where that feature requires them."],
     },
     {

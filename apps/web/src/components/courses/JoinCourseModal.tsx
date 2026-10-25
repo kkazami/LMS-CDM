@@ -66,7 +66,7 @@ export default function JoinCourseModal({
     const result = await joinWithCode(courseCode.toUpperCase(), instituteCode);
 
     if (result.success) {
-      toast.success("Request submitted!", "Waiting for instructor approval.");
+      toast.success("Class joined!", "You now have access to this class.");
       setCourseCode("");
     } else {
       toast.error("Failed to join", result.error || "Failed to join course.");
@@ -180,7 +180,7 @@ export default function JoinCourseModal({
                 {submitting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Request to Join
+                Join Class
               </Button>
             </div>
           ) : (

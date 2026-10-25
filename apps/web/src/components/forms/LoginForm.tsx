@@ -9,6 +9,7 @@ import { isDesktopAdmin as isDesktopAdminCheck } from "@/lib/electron-detect";
 import { triggerNativeHaptic, syncSessionToNative } from "@/lib/mobile-bridge";
 import type { InstituteTheme } from "@/lib/theme";
 import styles from "./login.module.css";
+import GoogleSignIn from "./GoogleSignIn";
 
 type LoginFormValues = {
   identifier: string;
@@ -19,12 +20,14 @@ type LoginFormProps = {
   theme: InstituteTheme;
   instituteCode: string;
   isDesktopAdmin?: boolean;
+  googleEnabled?: boolean;
 };
 
 export default function LoginForm({
   theme,
   instituteCode,
   isDesktopAdmin = false,
+  googleEnabled = false,
 }: LoginFormProps) {
   const [isDesktopMode, setIsDesktopMode] = useState<boolean>(isDesktopAdmin);
 
@@ -45,12 +48,15 @@ export default function LoginForm({
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const busy = isSubmitting || googleBusy;
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [activated, setActivated] = useState(false);
   useEffect(() => { setActivated(new URLSearchParams(window.location.search).get('activated') === '1'); }, []);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('googleError') === '1') setErrorMessage('Google sign-in could not be completed. Check your selected institute and try again.'); }, []);
 
   function updateField<K extends keyof LoginFormValues>(
     key: K,
@@ -105,6 +111,7 @@ export default function LoginForm({
         return;
       }
 
+      if (data.user.requiresEnrollment) { window.location.href = '/join-class'; return; }
       let targetPath = `/${data.user.institute.code}`;
 
       if (role === 'SUPER_USER') {
@@ -133,7 +140,7 @@ export default function LoginForm({
     : `/register?institute=${instituteCode}`;
 
   return (
-    <form onSubmit={handleSubmit} className={styles.form} aria-busy={isSubmitting}>
+    <form onSubmit={handleSubmit} className={styles.form} aria-busy={busy}>
       {activated && <p role="status" className={styles.status}>Account activated. You can now sign in.</p>}
       <div className={styles.field}>
         <Mail className={styles.fieldIcon} aria-hidden="true" />
@@ -147,7 +154,7 @@ export default function LoginForm({
           autoCapitalize="none"
           spellCheck={false}
           value={values.identifier}
-          disabled={!ready || isSubmitting}
+          disabled={!ready || busy}
           onChange={(event) => updateField("identifier", event.target.value)}
           theme={theme}
           required
@@ -165,7 +172,7 @@ export default function LoginForm({
             placeholder="Enter your password"
             autoComplete="current-password"
             value={values.password}
-            disabled={!ready || isSubmitting}
+            disabled={!ready || busy}
             onChange={(event) => updateField("password", event.target.value)}
             theme={theme}
             required
@@ -187,8 +194,8 @@ export default function LoginForm({
           type="checkbox"
           required
           checked={acceptedPolicies}
-          onChange={(event) => setAcceptedPolicies(event.target.checked)}
-          disabled={!ready || isSubmitting}
+          onChange={(event) => { setAcceptedPolicies(event.target.checked); setErrorMessage(''); }}
+          disabled={!ready || busy}
           aria-labelledby="policy-consent-label"
         />
         <div>
@@ -198,24 +205,24 @@ export default function LoginForm({
         </div>
       </div>
 
-      {errorMessage ? (
-        <p role="alert" className={styles.error}>{errorMessage}</p>
-      ) : null}
-
-      <button type="submit" className={styles.submit} disabled={!ready || isSubmitting} onClick={() => triggerNativeHaptic("light")}>
-        {isSubmitting ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <LogIn aria-hidden="true" />}
-        {isSubmitting ? "Signing In..." : "Sign In"}
-      </button>
-      <Link href="/activate" className={styles.activation}>Request a New Activation Link</Link>
-
       <div className={styles.accountHelp}>
         <span>Need an account?</span>
         <Link
           href={registerLink}
         >
-          Contact the Registrar
+          Create student account
         </Link>
       </div>
+
+      {errorMessage ? (
+        <p role="alert" className={styles.error}>{errorMessage}</p>
+      ) : null}
+
+      <button type="submit" className={styles.submit} disabled={!ready || busy} onClick={() => triggerNativeHaptic("light")}>
+        {isSubmitting ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <LogIn aria-hidden="true" />}
+        {isSubmitting ? "Signing In..." : "Sign In"}
+      </button>
+      {!isDesktopMode && googleEnabled && <GoogleSignIn instituteCode={instituteCode} acceptedPolicies={acceptedPolicies} disabled={!ready || busy} onBusyChange={setGoogleBusy} onError={setErrorMessage} />}
     </form>
   );
 }

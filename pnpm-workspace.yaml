@@ -1,14 +1,22 @@
 packages:
   - "apps/*"
   - "packages/*"
+# Worklets 0.10.1 imports these from its Babel plugin but omits their declarations.
+# Declare them at the package boundary so isolated pnpm installs resolve them.
+packageExtensions:
+  'react-native-worklets@0.10.1':
+    dependencies:
+      '@babel/generator': 7.29.8
+      '@babel/traverse': 7.29.10
 # Security patches scoped to the web parser/storage and Prisma toolchain parents.
 overrides:
   'officeparser>pdfjs-dist': 6.2.108
   'officeparser>@xmldom/xmldom': 0.9.12
-  '@vercel/blob>undici': 6.28.1
+  '@vercel/blob>undici': 6.29.1
+  '@vercel/cli-config>zod': 4.6.6
   '@prisma/config>deepmerge-ts': 8.0.2
   'prisma>mysql2': 3.24.6
-  'ajv@8.20.0>fast-uri': 3.1.8
+  'ajv@8.20.0>fast-uri': 3.1.9
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true

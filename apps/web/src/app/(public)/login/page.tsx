@@ -3,6 +3,9 @@ import { headers } from "next/headers";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { publicDisplay } from "@/lib/public-fonts";
+import { needsClassEnrollment } from '@/lib/student-access';
+import { redirect } from 'next/navigation';
+import { googleEnabled } from '@/lib/google-auth';
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -29,7 +32,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   // Only check existing user if not explicitly requesting a forced fresh login
   if (!resolvedSearchParams?.force) {
-    const session = await getSession();
+    const session = await getSession(undefined, { allowUnenrolled: true });
+    if (session && await needsClassEnrollment(session.user)) redirect('/join-class');
     if (session?.user) {
       const userWithInstitute = await db.user.findUnique({
         where: { id: session.user.id },
@@ -51,6 +55,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <div className={publicDisplay.variable}>
       <LoginClient
+        googleEnabled={googleEnabled()}
         key={resolvedSearchParams?.force ? "force" : existingUser?.id || "anon"}
         initialInstituteCode={instituteCode}
         initialIsDesktopAdmin={isDesktopAdmin}

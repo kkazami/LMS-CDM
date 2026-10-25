@@ -54,6 +54,7 @@ export interface CourseGradesResponse {
 export interface ApiClientConfig {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
+  timeoutMs?: number;
 }
 
 interface GradebookPayload {
@@ -82,54 +83,75 @@ export function createApiClient(config: ApiClientConfig) {
       }
     }
 
-    const response = await fetch(`${baseUrl}${path}`, {
-      ...options,
-      headers,
-    });
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (options.signal?.aborted) abort();
+    else options.signal?.addEventListener('abort', abort, { once: true });
+    const timer = setTimeout(abort, config.timeoutMs ?? 30000);
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
-      let errors: any = undefined;
-      let bodyData: any = undefined;
+      if (!response.ok) {
+        let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
+        let errors: any = undefined;
+        let bodyData: any = undefined;
 
-      try {
-        const text = await response.text();
         try {
-          const json = JSON.parse(text);
-          if (json && typeof json === 'object') {
-            bodyData = json;
-            if (json.reply) message = json.reply;
-            else if (json.message) message = json.message;
-            else if (json.error) message = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
-            if (json.errors) errors = json.errors;
+          const text = await response.text();
+          try {
+            const json = JSON.parse(text);
+            if (json && typeof json === 'object') {
+              bodyData = json;
+              if (json.reply) message = json.reply;
+              else if (json.message) message = json.message;
+              else if (json.error) message = typeof json.error === 'string' ? json.error : JSON.stringify(json.error);
+              if (json.errors) errors = json.errors;
+            }
+          } catch {
+            // If non-JSON, surface raw text if short and not HTML
+            const trimmed = text.trim();
+            if (trimmed.length > 0 && trimmed.length <= 150 && !trimmed.startsWith('<')) {
+              message = trimmed;
+            }
           }
         } catch {
-          // If non-JSON, surface raw text if short and not HTML
-          const trimmed = text.trim();
-          if (trimmed.length > 0 && trimmed.length <= 150 && !trimmed.startsWith('<')) {
-            message = trimmed;
-          }
+          // Fallback to HTTP status message
         }
-      } catch {
-        // Fallback to HTTP status message
+
+        throw new ApiClientError(response.status, message, errors, bodyData);
       }
 
-      throw new ApiClientError(response.status, message, errors, bodyData);
-    }
-
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new ApiClientError(
-        response.status,
-        `HTTP ${response.status}: Received non-JSON response from server`
-      );
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new ApiClientError(
+          response.status,
+          `HTTP ${response.status}: Received non-JSON response from server`
+        );
+      }
+    } catch (error) {
+      if (controller.signal.aborted && !options.signal?.aborted) {
+        throw new ApiClientError(0, 'The server took too long to respond. Check your connection and try again.');
+      }
+      if (error instanceof TypeError) {
+        throw new ApiClientError(0, 'Cannot reach the LMS server. Check your connection and server address.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      options.signal?.removeEventListener('abort', abort);
     }
   }
 
   return {
     auth: {
+      register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>
+        request<LoginResponse>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
       login: (data: LoginRequest) =>
         request<LoginResponse>('/api/auth/login', {
           method: 'POST',
@@ -148,6 +170,7 @@ export function createApiClient(config: ApiClientConfig) {
     },
 
     courses: {
+      joinWithCode: (code: string) => request<{ courseId: string; redirectTo: string }>('/api/student/join-class', { method: 'POST', body: JSON.stringify({ code }) }),
       list: (instituteCode: string) =>
         request<{ courses: Course[] }>(`/api/courses?institute=${instituteCode}`),
 

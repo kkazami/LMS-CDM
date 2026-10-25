@@ -37,7 +37,9 @@ export async function syncAttemptScoreToGradebook({
     }
 
     // Determine student score based on scoreToKeep policy
-    let finalRawScore = earnedScore;
+    const maxPoints = form.syllabusItem.maxPoints ?? totalPoints;
+    const normalized = (score: number, possible: number) => possible > 0 ? Math.max(0, Math.min(maxPoints, score / possible * maxPoints)) : 0;
+    let finalRawScore = normalized(earnedScore, totalPoints);
 
     if (form.maxAttempts > 1) {
       const allSubmittedAttempts = await db.formAttempt.findMany({
@@ -46,12 +48,13 @@ export async function syncAttemptScoreToGradebook({
           userId,
           status: { in: ["SUBMITTED", "TIMED_OUT"] },
         },
-        select: { rawScore: true },
+        select: { rawScore: true, totalPoints: true },
+        orderBy: { attemptNumber: "asc" },
       });
 
       const scores = allSubmittedAttempts
-        .map((a) => a.rawScore)
-        .filter((s): s is number => s !== null && s !== undefined);
+        .filter(a => a.rawScore !== null && a.totalPoints !== null)
+        .map(a => normalized(a.rawScore!, a.totalPoints!));
 
       if (scores.length > 0) {
         if (form.scoreToKeep === "HIGHEST") {
@@ -65,8 +68,7 @@ export async function syncAttemptScoreToGradebook({
     }
 
     // Convert to percentage (0 - 100) or normalize to syllabusItem.maxPoints
-    const computedPercentage = totalPoints > 0 ? (finalRawScore / totalPoints) * 100 : 0;
-    const finalGrade = Math.round(computedPercentage * 100) / 100;
+    const finalGrade = Math.round(finalRawScore * 100) / 100;
 
     // Upsert into StudentSubmission
     const submission = await db.studentSubmission.upsert({
@@ -107,7 +109,7 @@ export async function syncAttemptScoreToGradebook({
         userId,
         type: "GRADE",
         title: `Grade Posted: ${form.title}`,
-        message: `Your score for ${form.title} has been recorded: ${finalGrade}%.`,
+        message: `Your score for ${form.title} has been recorded: ${finalGrade}/${maxPoints}.`,
         link: `/${form.courseId}/classwork/${form.syllabusItemId}`,
       });
     }

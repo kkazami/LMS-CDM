@@ -29,6 +29,7 @@
     "file-type": "22.0.1",
     "framer-motion": "^13.2.0",
     "groq-sdk": "^1.6.0",
+    "jose": "^6.2.13",
     "katex": "^0.18.7",
     "lucide-react": "^0.577.0",
     "marked": "^18.0.9",
@@ -46,7 +47,7 @@
     "recharts": "^3.10.1",
     "sanitize-html": "^2.18.1",
     "three": "^0.185.1",
-    "zod": "^4.3.6",
+    "zod": "^4.6.6",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

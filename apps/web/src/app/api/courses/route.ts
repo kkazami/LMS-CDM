@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     if (!institute) {
       return NextResponse.json({ message: 'Institute not found.' }, { status: 404 });
     }
+    if (institute.id !== session.user.instituteId) return NextResponse.json({ message: 'Forbidden institute.' }, { status: 403 });
 
     const role = (session.user.role || 'STUDENT').toUpperCase();
     let courses: any[] = [];

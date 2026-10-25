@@ -7,6 +7,8 @@ const localOnly = file =>
   /^(?:\.agent|\.codex|\.impeccable|\.idea|\.vscode|\.pnpm-store|tmp|output|plans|scratch|storage|playwright)\//.test(file) ||
   /^\.agents\/(?!agents\/|rules\/)/.test(file) ||
   /^\.orchestra\/(?!harness\/)/.test(file) ||
+  /(?:^|\/)next-env\.d\.ts$/.test(file) ||
+  /^docs\/quality\/.*-20\d{2}-\d{2}-\d{2}\.md$/.test(file) ||
   /(?:^|\/)(?:node_modules|\.next|\.expo|\.turbo|\.vercel|\.wrangler)\//.test(file) ||
   /(?:^|\/)\.env[^/]*$/.test(file) && !file.endsWith('/.env.example') && file !== '.env.example' ||
   /(?:^|\/)\.dev\.vars[^/]*$|\.(?:pem|key|p12|pfx|tsbuildinfo|log)$/.test(file) ||

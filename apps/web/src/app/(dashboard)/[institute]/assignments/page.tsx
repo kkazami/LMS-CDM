@@ -1,3 +1,4 @@
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
@@ -180,6 +181,7 @@ export default async function TodoPage({
     where: {
       courseId: { in: courseIds },
       type: { not: "MATERIAL" },
+      AND: [visibleSyllabusForms(undefined, studentId)],
     },
     include: {
       course: {

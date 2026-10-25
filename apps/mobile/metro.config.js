@@ -7,8 +7,7 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// 1. Watch all files in the monorepo, preserving Expo defaults
-config.watchFolders = [...(config.watchFolders || []), monorepoRoot];
+// Expo configures pnpm workspace resolution and watch folders automatically.
 
 // 2. Prevent Metro from watching and re-indexing Next.js build cache (.next), desktop app, and temp files
 const defaultBlockList = Array.isArray(config.resolver.blockList)
@@ -27,12 +26,7 @@ config.resolver.blockList = [
   /[\\/]docs[\\/]/,
   /[\\/]\.turbo[\\/]/,
   /[\\/]\.git[\\/]/,
-];
-
-// 3. Let Metro know where to resolve packages and in what order
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(monorepoRoot, 'node_modules'),
+  new RegExp('^' + monorepoRoot.split(/[\\/]/).map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\\\/]') + '[\\\\/](?:tmp|output|plans|storage|\\.orchestra|\\.agents|\\.agent|\\.codex|\\.impeccable)(?:[\\\\/]|$)'),
 ];
 
 module.exports = config;

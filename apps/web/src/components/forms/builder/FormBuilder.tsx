@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -55,6 +55,27 @@ export default function FormBuilder({
   theme,
 }: FormBuilderProps) {
   const router = useRouter();
+  const pendingWrites = useRef(new Set<Promise<Response>>());
+  const writeQueue = useRef(Promise.resolve());
+  const failedWrites = useRef(new Set<string>());
+  const checkedFetch = useCallback((url: string, init?: RequestInit) => {
+    const key = url + ':' + (init?.method || 'GET') + ':' + (typeof init?.body === 'string' ? Object.keys(JSON.parse(init.body)).sort().join(',') : '');
+    setIsSaving(true);
+    const operation = writeQueue.current.then(async () => {
+      const response = await fetch(url, init);
+      if (!response.ok) {
+        const data = await response.clone().json().catch(() => ({}));
+        throw new Error(data.message || 'Unable to save this change. Please try again.');
+      }
+      failedWrites.current.delete(key);
+      return response;
+    });
+    writeQueue.current = operation.then(() => undefined, () => { failedWrites.current.add(key); });
+    pendingWrites.current.add(operation);
+    const settled = () => { pendingWrites.current.delete(operation); if (!pendingWrites.current.size) setIsSaving(false); };
+    operation.then(settled, settled);
+    return operation;
+  }, []);
   const [form, setForm] = useState<FormData>(initialForm);
   const [questions, setQuestions] = useState<FormQuestionData[]>(initialForm.questions || []);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,14 +116,15 @@ export default function FormBuilder({
 
     // Sync to backend
     try {
-      await fetch(`/api/courses/${courseId}/forms/${form.id}/questions/reorder`, {
+      await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions/reorder`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderedIds: reordered.map((q) => q.id) }),
       });
       setLastSaved(new Date());
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     }
   };
 
@@ -111,7 +133,7 @@ export default function FormBuilder({
     setIsSaving(true);
     try {
       const isHeader = type === "SECTION_HEADER";
-      const res = await fetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
+      const res = await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,7 +158,8 @@ export default function FormBuilder({
         setLastSaved(new Date());
       }
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     } finally {
       setIsSaving(false);
     }
@@ -150,17 +173,18 @@ export default function FormBuilder({
       );
 
       try {
-        await fetch(`/api/courses/${courseId}/forms/${form.id}/questions/${id}`, {
+        await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         });
         setLastSaved(new Date());
       } catch (err) {
-        console.error(err);
+        setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
       }
     },
-    [courseId, form.id]
+    [courseId, form.id, checkedFetch]
   );
 
   // Duplicate question
@@ -170,7 +194,7 @@ export default function FormBuilder({
 
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
+      const res = await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,7 +213,8 @@ export default function FormBuilder({
         setLastSaved(new Date());
       }
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     } finally {
       setIsSaving(false);
     }
@@ -199,30 +224,32 @@ export default function FormBuilder({
   const handleDeleteQuestion = async (id: string) => {
     setQuestions((prev) => prev.filter((q) => q.id !== id));
     try {
-      await fetch(`/api/courses/${courseId}/forms/${form.id}/questions/${id}`, {
+      await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions/${id}`, {
         method: "DELETE",
       });
       setLastSaved(new Date());
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     }
   };
 
   // Save to question bank
   const handleSaveToBank = async (questionId: string) => {
     try {
-      await fetch(`/api/question-bank/from-question/${questionId}`, {
+      await checkedFetch(`/api/question-bank/from-question/${questionId}`, {
         method: "POST",
       });
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     }
   };
 
   // Import from question bank
   const handleImportFromBank = async (bankItemIds: string[]) => {
     try {
-      const res = await fetch(`/api/courses/${courseId}/forms/${form.id}/questions/from-bank`, {
+      const res = await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions/from-bank`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bankItemIds }),
@@ -237,7 +264,8 @@ export default function FormBuilder({
         setLastSaved(new Date());
       }
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
     }
   };
 
@@ -247,7 +275,7 @@ export default function FormBuilder({
   ) => {
     for (const q of newQuestions) {
       try {
-        const res = await fetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
+        const res = await checkedFetch(`/api/courses/${courseId}/forms/${form.id}/questions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(q),
@@ -257,7 +285,8 @@ export default function FormBuilder({
           setQuestions((prev) => [...prev, data.question]);
         }
       } catch (err) {
-        console.error(err);
+        setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
       }
     }
     setLastSaved(new Date());
@@ -265,26 +294,21 @@ export default function FormBuilder({
 
   // Update Form Settings
   const handleSaveSettings = async (updates: Partial<FormData> & { password?: string }) => {
-    try {
-      const res = await fetch(`/api/courses/${courseId}/forms/${form.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      const data = await res.json();
-      if (data.form) {
-        setForm((prev) => ({ ...prev, ...updates }));
-        setLastSaved(new Date());
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await checkedFetch(`/api/courses/${courseId}/forms/${form.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates),
+    });
+    const data = await res.json();
+    setForm(prev => ({ ...prev, ...data.form }));
+    setLastSaved(new Date());
   };
 
   // Publish Form
   const handlePublish = async () => {
     setIsPublishing(true);
     setValidationErrors([]);
+
+    await writeQueue.current;
+    if (failedWrites.current.size) { setValidationErrors(["Some changes could not be saved. Reload the builder and retry those changes before publishing."]); setIsPublishing(false); return; }
 
     // Client-side pre-validation
     const clientErrors: string[] = [];
@@ -359,7 +383,8 @@ export default function FormBuilder({
         router.refresh();
       }
     } catch (err) {
-      console.error(err);
+      setLastSaved(null);
+      setValidationErrors([err instanceof Error ? err.message : "Unable to save. Try again."]);
       setValidationErrors(["Network error while attempting to publish."]);
     } finally {
       setIsPublishing(false);
@@ -391,7 +416,7 @@ export default function FormBuilder({
                   onChange={(e) => {
                     const nextTitle = e.target.value;
                     setForm((prev) => ({ ...prev, title: nextTitle }));
-                    handleSaveSettings({ title: nextTitle });
+                    void handleSaveSettings({ title: nextTitle }).catch(error => setValidationErrors([error.message]));
                   }}
                   className="font-bold text-base sm:text-lg text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-white/20 focus:border-primary focus:outline-hidden py-0.5 px-1"
                 />
@@ -405,7 +430,7 @@ export default function FormBuilder({
                 )}
               </div>
               <div className="text-[11px] text-slate-400 pl-1">
-                {isSaving ? "Saving changes..." : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : "All changes saved"}
+                {validationErrors.length ? "Changes need attention" : isSaving ? "Saving changes..." : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : "All changes saved"}
               </div>
             </div>
           </div>
@@ -475,7 +500,7 @@ export default function FormBuilder({
               onChange={(e) => {
                 const nextDesc = e.target.value;
                 setForm((prev) => ({ ...prev, description: nextDesc }));
-                handleSaveSettings({ description: nextDesc });
+                void handleSaveSettings({ description: nextDesc }).catch(error => setValidationErrors([error.message]));
               }}
               placeholder="Form description or instructions for students..."
               className="w-full text-xs sm:text-sm text-slate-600 dark:text-[#8B92A5] bg-transparent border-0 border-b border-transparent hover:border-slate-200 dark:hover:border-white/10 focus:border-primary focus:outline-hidden p-0 resize-y"
@@ -578,13 +603,13 @@ export default function FormBuilder({
       </div>
 
       {/* Settings Modal */}
-      <FormSettingsPanel
+      {showSettings && <FormSettingsPanel
         form={form}
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         onSave={handleSaveSettings}
         theme={theme}
-      />
+      />}
 
       {/* Question Bank Drawer */}
       <QuestionBankDrawer

@@ -6,7 +6,9 @@ const files = [
   'tests/auth/login-policies.test.cjs', 'tests/navigation/announcements.test.cjs', 'tests/navigation/dashboard-greeting.test.ts',
   'tests/navigation/policy-navigation.test.ts', 'tests/roster/activation-email.test.ts',
   'tests/database/ssl-config.test.cjs', 'tests/calendar/events-api.test.cjs',
+  'tests/mobile/startup.test.ts',
   'tests/web-quality/security.test.cjs', 'tests/web-quality/academic.test.cjs', 'tests/web-quality/sessions.test.cjs', 'tests/web-quality/resources.test.cjs',
+  'tests/security/admin-security-tools.test.cjs',
   'tests/web-quality/load.test.mjs', 'tests/web-quality/dependencies.test.mjs',
 ];
 fs.mkdirSync('tmp/web-quality', { recursive: true });

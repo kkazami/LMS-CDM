@@ -1,3 +1,6 @@
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { visibleSyllabusForms } from '@/lib/forms/availability';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
@@ -20,6 +23,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId } = await context.params;
+    await requireCourseAccess(session.user, courseId);
 
     const course = await db.course.findUnique({
       where: { id: courseId },
@@ -48,6 +52,7 @@ export async function GET(request: Request, context: RouteContext) {
           },
         },
         syllabusItems: {
+          where: session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {},
           select: {
             id: true,
             title: true,
@@ -96,6 +101,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
     );
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error('COURSE_DETAIL_API_ERROR', error);
     return NextResponse.json({ message: 'Failed to fetch course details.' }, { status: 500 });
   }

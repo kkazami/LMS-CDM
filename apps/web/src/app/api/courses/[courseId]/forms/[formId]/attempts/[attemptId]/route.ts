@@ -1,3 +1,7 @@
+import { publicForm } from '@/lib/forms/availability';
+import { requireFormAccess } from '@/lib/forms/access';
+import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
+import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -22,6 +26,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId, formId, attemptId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, false);
     const attempt = await db.formAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -34,9 +39,9 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Attempt not found." }, { status: 404 });
     }
 
-    const role = (session.user.role as string).toUpperCase();
+    const role = canonicalRole(session.user.role);
     const isOwner = attempt.userId === session.user.id;
-    const isInstructor = role === "PROFESSOR" || role === "TEACHER" || role === "ADMIN";
+    const isInstructor = role === "INSTRUCTOR" || role === "ADMIN";
 
     if (!isOwner && !isInstructor) {
       return NextResponse.json({ message: "Access denied." }, { status: 403 });
@@ -83,10 +88,13 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({
       attempt: {
         ...attempt,
+        form: publicForm(attempt.form),
+        ...(!isInstructor && !attempt.form.showScoreAfter ? { rawScore: null, percentage: null, passed: null } : {}),
         answers: parsedAnswers,
       },
     });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("ATTEMPT_DETAIL_GET_ERROR", error);
     return NextResponse.json({ message: "Failed to fetch attempt." }, { status: 500 });
   }
@@ -97,12 +105,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (ceilingDenial) return ceilingDenial;
 
   try {
-    const session = (await getSession()) || (await getSessionFromRequest(request));
+    const session = await getSessionFromRequest(request);
     if (!session) {
       return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
     }
 
     const { courseId, formId, attemptId } = await context.params;
+    await requireFormAccess(session.user, courseId, formId, false);
     const body = await request.json().catch(() => ({}));
     const { action, tabSwitchCount, copyPasteCount } = body as {
       action?: "TAB_SWITCH" | "COPY_PASTE";
@@ -151,6 +160,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return NextResponse.json({ success: true, ...updated });
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("ATTEMPT_INTEGRITY_PATCH_ERROR", error);
     return NextResponse.json({ message: "Failed to update attempt integrity." }, { status: 500 });
   }

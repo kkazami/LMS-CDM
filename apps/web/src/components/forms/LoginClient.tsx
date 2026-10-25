@@ -24,6 +24,7 @@ type ExistingUser = {
 } | null;
 
 type LoginClientProps = {
+  googleEnabled?: boolean;
   initialInstituteCode?: string;
   initialIsDesktopAdmin?: boolean;
   existingUser?: ExistingUser;
@@ -40,6 +41,7 @@ export default function LoginClient({
   initialInstituteCode = "ics",
   initialIsDesktopAdmin = false,
   existingUser = null,
+  googleEnabled = false,
 }: LoginClientProps) {
   const [instituteCode, setInstituteCode] = useState<InstituteCode>(getInstituteTheme(initialInstituteCode).code);
   const [isDesktopAdminMode, setIsDesktopAdminMode] = useState(initialIsDesktopAdmin);
@@ -155,7 +157,7 @@ export default function LoginClient({
                   </div>
                   <p className={styles.instituteName} id="login-institute-name" aria-live="polite">{theme.name}</p>
                 </div>
-                <LoginForm theme={theme} instituteCode={instituteCode} isDesktopAdmin={isDesktopAdminMode} />
+                <LoginForm theme={theme} instituteCode={instituteCode} isDesktopAdmin={isDesktopAdminMode} googleEnabled={googleEnabled} />
               </>
             )}
           </section>

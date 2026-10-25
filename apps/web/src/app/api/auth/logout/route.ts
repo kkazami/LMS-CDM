@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const corsHeaders = getCorsHeaders(request);
 
   try {
-    await getSessionFromRequest(request); // Pin Cookie precedence / initial Bearer fallback.
+    await getSessionFromRequest(request, { allowUnenrolled: true }); // Pin Cookie precedence / initial Bearer fallback.
     await deleteSession();
 
     return NextResponse.json(
