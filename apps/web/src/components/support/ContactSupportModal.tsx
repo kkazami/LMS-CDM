@@ -35,17 +35,19 @@ export function ContactSupportModal({
         body: JSON.stringify({ subject, message, category }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error("Failed to submit ticket");
+        throw new Error(data?.message || "Failed to submit ticket.");
       }
 
       setIsSuccess(true);
       toast.success("Ticket Submitted", "Your support ticket has been received.");
       setTimeout(() => {
         handleClose();
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      toast.error("Error", "Failed to submit your ticket. Please try again.");
+      toast.error("Submission Error", err instanceof Error ? err.message : "Failed to submit your ticket. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -87,7 +87,7 @@ export function CodeEditor() {
           language={MONACO_LANGUAGE_MAP[language] || "python"}
           value={code}
           theme={themeMode === "dark" ? "vs-dark" : "vs"}
-          onChange={(newCode) => updateCode(newCode || "")}
+          onChange={(newCode?: string) => updateCode(newCode || "")}
           onMount={handleEditorMount}
           options={{
             fontSize: 14,

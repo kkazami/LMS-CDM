@@ -54,6 +54,13 @@ const syllabusItemSchema = z.object({
   instituteCode: z.string(),
 });
 
+function parseCombinedDueDateTime(dateVal: FormDataEntryValue | null, timeVal: FormDataEntryValue | null): string | null {
+  if (!dateVal || typeof dateVal !== "string" || !dateVal.trim()) return null;
+  const time = typeof timeVal === "string" && timeVal.trim() ? timeVal.trim() : "23:59";
+  if (dateVal.includes("T")) return dateVal;
+  return `${dateVal}T${time.length === 5 ? `${time}:00` : time}`;
+}
+
 export async function createSyllabusItem(
   prevState: { message: string; errors?: Record<string, string[]> },
   formData: FormData
@@ -65,7 +72,7 @@ export async function createSyllabusItem(
     type: formData.get("type"),
     title: formData.get("title"),
     description: formData.get("description") || "",
-    dueDate: formData.get("dueDate") || null,
+    dueDate: parseCombinedDueDateTime(formData.get("dueDate"), formData.get("dueTime")),
     maxPoints: formData.get("maxPoints") || null,
     enableIntegrityMonitoring: formData.get("enableIntegrityMonitoring") === "true" || formData.get("enableIntegrityMonitoring") === "on",
     requireFullscreen: formData.get("requireFullscreen") === "true" || formData.get("requireFullscreen") === "on",
@@ -212,7 +219,7 @@ export async function updateSyllabusItem(
     type: formData.get("type"),
     title: formData.get("title"),
     description: formData.get("description") || "",
-    dueDate: formData.get("dueDate") || null,
+    dueDate: parseCombinedDueDateTime(formData.get("dueDate"), formData.get("dueTime")),
     maxPoints: formData.get("maxPoints") || null,
     enableIntegrityMonitoring: formData.get("enableIntegrityMonitoring") === "true" || formData.get("enableIntegrityMonitoring") === "on",
     requireFullscreen: formData.get("requireFullscreen") === "true" || formData.get("requireFullscreen") === "on",
