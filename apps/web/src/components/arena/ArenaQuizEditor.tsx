@@ -25,6 +25,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import ArenaQuizPreviewModal from "@/components/arena/ArenaQuizPreviewModal";
+import ArenaConfirmModal from "@/components/arena/ArenaConfirmModal";
 import {
   ARENA_PALETTE,
   type ArenaQuestionConfig,
@@ -115,6 +116,23 @@ export default function ArenaQuizEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // In-App Confirmation / Notice Modal State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    itemName?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
   const activeQuestion = questions[activeQuestionIndex] || questions[0];
 
   const updateActiveQuestion = (patch: Partial<ArenaQuestionConfig>) => {
@@ -153,6 +171,51 @@ export default function ArenaQuizEditor({
     setShowExplanation(false);
   };
 
+  const handleBatchAddQuestions = (count: number, type: "MULTIPLE_CHOICE" | "TRUE_FALSE" = "MULTIPLE_CHOICE") => {
+    if (questions.length + count > 100) {
+      setConfirmDialog({
+        open: true,
+        title: "Question Limit Reached",
+        description: `A quiz can have at most 100 questions. You currently have ${questions.length} questions.`,
+        confirmLabel: "Understood",
+        variant: "warning",
+        onConfirm: () => setConfirmDialog((prev) => ({ ...prev, open: false })),
+      });
+      return;
+    }
+
+    const newBatch: ArenaQuestionConfig[] = [];
+    const startIndex = questions.length;
+
+    for (let i = 0; i < count; i++) {
+      newBatch.push({
+        questionText: "",
+        questionType: type,
+        timeLimitSeconds: defaultTimeLimitSeconds,
+        basePoints: 1000,
+        speedBonusEnabled: true,
+        explanation: "",
+        orderIndex: startIndex + i,
+        choices:
+          type === "TRUE_FALSE"
+            ? [
+                { choiceText: "True", isCorrect: true, colorIndex: 1, orderIndex: 0 },
+                { choiceText: "False", isCorrect: false, colorIndex: 0, orderIndex: 1 },
+              ]
+            : [
+                { choiceText: "", isCorrect: true, colorIndex: 0, orderIndex: 0 },
+                { choiceText: "", isCorrect: false, colorIndex: 1, orderIndex: 1 },
+                { choiceText: "", isCorrect: false, colorIndex: 2, orderIndex: 2 },
+                { choiceText: "", isCorrect: false, colorIndex: 3, orderIndex: 3 },
+              ],
+      });
+    }
+
+    setQuestions((prev) => [...prev, ...newBatch]);
+    setActiveQuestionIndex(startIndex);
+    setShowExplanation(false);
+  };
+
   const handleDuplicateQuestion = (idx: number) => {
     const target = questions[idx];
     const cloned: ArenaQuestionConfig = {
@@ -167,9 +230,38 @@ export default function ArenaQuizEditor({
 
   const handleDeleteQuestion = (idx: number) => {
     if (questions.length <= 1) {
-      alert("A quiz must have at least one question.");
+      setConfirmDialog({
+        open: true,
+        title: "Cannot Delete Question",
+        description: "A quiz must have at least one question slide.",
+        confirmLabel: "Understood",
+        variant: "warning",
+        onConfirm: () => setConfirmDialog((prev) => ({ ...prev, open: false })),
+      });
       return;
     }
+
+    const target = questions[idx];
+    const hasContent = Boolean(target.questionText.trim() || target.choices.some((c) => c.choiceText.trim()));
+
+    if (hasContent) {
+      setConfirmDialog({
+        open: true,
+        title: `Delete Question #${idx + 1}?`,
+        description: "Are you sure you want to remove this question? All written text and choices for this question will be discarded.",
+        itemName: target.questionText ? target.questionText : `Question Slide #${idx + 1}`,
+        confirmLabel: "Delete Question",
+        variant: "danger",
+        onConfirm: () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          const updated = questions.filter((_, i) => i !== idx);
+          setQuestions(updated);
+          setActiveQuestionIndex(Math.max(0, idx - 1));
+        },
+      });
+      return;
+    }
+
     const updated = questions.filter((_, i) => i !== idx);
     setQuestions(updated);
     setActiveQuestionIndex(Math.max(0, idx - 1));
@@ -292,7 +384,7 @@ export default function ArenaQuizEditor({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Failed to save quiz");
+        throw new Error(data.error ? `${data.message} (${data.error})` : data.message || "Failed to save quiz");
       }
 
       router.push(`/${instituteCode}/arena`);
@@ -558,6 +650,33 @@ export default function ArenaQuizEditor({
                 <span>+ True / False</span>
               </button>
             </div>
+
+            {/* Quick Batch Add (+5 / +10 Questions) */}
+            <div className="pt-2.5 border-t border-slate-100 dark:border-white/5 space-y-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block px-1">
+                Batch Quick Add:
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleBatchAddQuestions(5, "MULTIPLE_CHOICE")}
+                  className="py-2 px-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-black text-xs flex items-center justify-center gap-1 transition border border-indigo-500/20 active:scale-95 shadow-2xs"
+                  title="Quickly add 5 questions at once"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+5 Questions</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBatchAddQuestions(10, "MULTIPLE_CHOICE")}
+                  className="py-2 px-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center gap-1 transition border border-purple-500/20 active:scale-95 shadow-2xs"
+                  title="Quickly add 10 questions at once"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+10 Questions</span>
+                </button>
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -703,7 +822,7 @@ export default function ArenaQuizEditor({
                       key={cIdx}
                       className={`relative rounded-2xl p-4 transition-all duration-200 shadow-md ${style.gradient} border ${
                         isCorrect
-                          ? "ring-4 ring-emerald-400 ring-offset-2 ring-offset-[#12151F] shadow-lg"
+                          ? "ring-4 ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-[#12151F] shadow-lg"
                           : "opacity-95 hover:opacity-100"
                       }`}
                     >
@@ -942,6 +1061,19 @@ export default function ArenaQuizEditor({
           onClose={() => setPreviewOpen(false)}
         />
       )}
+
+      {/* Accessible In-App Confirmation / Notice Modal */}
+      <ArenaConfirmModal
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        itemName={confirmDialog.itemName}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

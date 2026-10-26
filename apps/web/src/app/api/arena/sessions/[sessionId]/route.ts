@@ -59,10 +59,15 @@ export async function GET(
     const role = normalizeRole(session.user.role as string);
     const isHost = gameSession.hostId === session.user.id || role === "ADMIN";
 
-    // Auto-update student heartbeat / connection timestamp
+    // Auto-update student heartbeat / connection timestamp (throttled to at most once per 15s to prevent Neon pool exhaustion)
     if (!isHost) {
+      const fifteenSecondsAgo = new Date(Date.now() - 15000);
       await db.arenaParticipant.updateMany({
-        where: { sessionId, studentId: session.user.id },
+        where: {
+          sessionId,
+          studentId: session.user.id,
+          lastActiveAt: { lt: fifteenSecondsAgo },
+        },
         data: { isConnected: true, lastActiveAt: new Date() },
       });
     }
@@ -94,11 +99,26 @@ export async function GET(
     // Tally number of answers submitted for current question
     let answeredCount = 0;
     let distribution: Record<string, number> = {};
+    let answerBreakdown: Array<{
+      participantId: string;
+      nickname: string;
+      choiceId: string | null;
+      isCorrect: boolean;
+      pointsEarned: number;
+    }> = [];
 
     if (currentQuestion) {
       const answers = await db.arenaPlayerAnswer.findMany({
         where: { sessionId, questionId: currentQuestion.id },
-        select: { choiceId: true },
+        select: {
+          participantId: true,
+          choiceId: true,
+          isCorrect: true,
+          pointsEarned: true,
+          participant: {
+            select: { nickname: true },
+          },
+        },
       });
 
       answeredCount = answers.length;
@@ -108,6 +128,16 @@ export async function GET(
         if (a.choiceId) {
           distribution[a.choiceId] = (distribution[a.choiceId] || 0) + 1;
         }
+      }
+
+      if (isHost && gameSession.status !== "QUESTION_ACTIVE") {
+        answerBreakdown = answers.map((a) => ({
+          participantId: a.participantId,
+          nickname: a.participant.nickname,
+          choiceId: a.choiceId,
+          isCorrect: a.isCorrect,
+          pointsEarned: a.pointsEarned,
+        }));
       }
     }
 
@@ -159,6 +189,7 @@ export async function GET(
       participantsCount: gameSession.participants.length,
       answeredCount,
       distribution: isHost || gameSession.status !== "QUESTION_ACTIVE" ? distribution : {},
+      answerBreakdown: isHost && gameSession.status !== "QUESTION_ACTIVE" ? answerBreakdown : [],
       leaderboard: rankedLeaderboard,
       myAnswer,
       isHost,

@@ -172,61 +172,46 @@ export async function POST(request: Request) {
       }
     }
 
-    // Atomic creation via transaction
-    const newQuiz = await db.$transaction(async (tx) => {
-      const baseQuizData: Record<string, unknown> = {
-        title: title.trim(),
-        description: description?.trim() || null,
-        courseId: courseId || null,
-        instituteId: institute.id,
-        authorId: session.user.id,
-        status,
-        defaultTimeLimitSeconds: Number(defaultTimeLimitSeconds) || 20,
-        scoringMethod,
-        enableIntegrityMonitoring: Boolean(enableIntegrityMonitoring),
-        shuffleQuestions: Boolean(shuffleQuestions),
-        shuffleAnswers: Boolean(shuffleAnswers),
-        showLeaderboardAfterEach: Boolean(showLeaderboardAfterEach),
-      };
+    // Atomic creation via Prisma nested write (avoids transaction timeout with large question sets)
+    const baseQuizData = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      courseId: courseId || null,
+      instituteId: institute.id,
+      authorId: session.user.id,
+      status,
+      defaultTimeLimitSeconds: Number(defaultTimeLimitSeconds) || 20,
+      scoringMethod,
+      enableIntegrityMonitoring: Boolean(enableIntegrityMonitoring),
+      shuffleQuestions: Boolean(shuffleQuestions),
+      shuffleAnswers: Boolean(shuffleAnswers),
+      showLeaderboardAfterEach: Boolean(showLeaderboardAfterEach),
+    };
 
-      const quiz = await tx.arenaQuiz.create({
-        data: baseQuizData as any,
-      });
-
-      if (Array.isArray(questions) && questions.length > 0) {
-        for (let qIdx = 0; qIdx < questions.length; qIdx++) {
-          const q = questions[qIdx] as QuestionInput;
-          const createdQuestion = await tx.arenaQuestion.create({
-            data: {
-              quizId: quiz.id,
-              questionText: q.questionText.trim(),
-              questionType: q.questionType || "MULTIPLE_CHOICE",
-              timeLimitSeconds: Number(q.timeLimitSeconds) || 20,
-              basePoints: Number(q.basePoints) || 1000,
-              speedBonusEnabled: q.speedBonusEnabled ?? true,
-              explanation: q.explanation?.trim() || null,
-              orderIndex: qIdx,
+    const newQuiz = await db.arenaQuiz.create({
+      data: {
+        ...(baseQuizData as any),
+        questions: {
+          create: (Array.isArray(questions) ? questions : []).map((q: QuestionInput, qIdx: number) => ({
+            questionText: (q.questionText || "").trim(),
+            questionType: q.questionType || "MULTIPLE_CHOICE",
+            timeLimitSeconds: Number(q.timeLimitSeconds) || 20,
+            basePoints: Number(q.basePoints) || 1000,
+            speedBonusEnabled: q.speedBonusEnabled ?? true,
+            explanation: q.explanation?.trim() || null,
+            orderIndex: qIdx,
+            choices: {
+              create: (Array.isArray(q.choices) ? q.choices : []).map((c: ChoiceInput, cIdx: number) => ({
+                choiceText: (c.choiceText || "").trim(),
+                isCorrect: Boolean(c.isCorrect),
+                colorIndex: c.colorIndex !== undefined ? c.colorIndex : cIdx % 4,
+                orderIndex: cIdx,
+              })),
             },
-          });
-
-          if (Array.isArray(q.choices)) {
-            for (let cIdx = 0; cIdx < q.choices.length; cIdx++) {
-              const c = q.choices[cIdx];
-              await tx.arenaAnswerChoice.create({
-                data: {
-                  questionId: createdQuestion.id,
-                  choiceText: c.choiceText.trim(),
-                  isCorrect: Boolean(c.isCorrect),
-                  colorIndex: cIdx % 4,
-                  orderIndex: cIdx,
-                },
-              });
-            }
-          }
-        }
-      }
-
-      return quiz;
+          })),
+        },
+      },
+      select: { id: true },
     });
 
     return NextResponse.json({ success: true, quizId: newQuiz.id }, { status: 201 });

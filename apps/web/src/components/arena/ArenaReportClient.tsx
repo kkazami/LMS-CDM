@@ -20,6 +20,7 @@ import {
   BarChart2,
 } from "lucide-react";
 import { ARENA_PALETTE } from "@/types/arena";
+import ArenaConfirmModal from "./ArenaConfirmModal";
 
 interface ChoiceStat {
   choiceId: string;
@@ -96,37 +97,64 @@ export default function ArenaReportClient({
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
-  const handleSyncGradebook = async () => {
+  // In-App Confirmation Modal State (replaces ugly browser confirm() / alert())
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    itemName?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const handleSyncGradebook = () => {
     if (!session.course) {
-      alert("This quiz is not attached to a course. Cannot sync to course gradebook.");
-      return;
-    }
-
-    if (
-      !confirm(
-        `Transfer scores for ${students.length} students directly into the course gradebook for ${session.course.code}?`
-      )
-    ) {
-      return;
-    }
-
-    setSyncing(true);
-    setSyncMessage(null);
-
-    try {
-      const res = await fetch(`/api/arena/sessions/${sessionId}/report`, {
-        method: "POST",
+      setConfirmDialog({
+        open: true,
+        title: "No Course Attached",
+        description: "This quiz session is not attached to an active course. Scores cannot be synchronized to a course gradebook.",
+        confirmLabel: "Understood",
+        variant: "info",
+        onConfirm: () => setConfirmDialog((prev) => ({ ...prev, open: false })),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Gradebook sync failed.");
-      }
-      setSyncMessage(data.message || "Scores successfully synchronized to course gradebook!");
-    } catch (err) {
-      setSyncMessage(err instanceof Error ? err.message : "Sync failed.");
-    } finally {
-      setSyncing(false);
+      return;
     }
+
+    setConfirmDialog({
+      open: true,
+      title: "Sync Scores to Gradebook?",
+      description: `Transfer scores for ${students.length} students directly into the course gradebook for ${session.course.code}?`,
+      itemName: `${session.course.code} • ${session.course.title}`,
+      confirmLabel: "Sync Gradebook",
+      variant: "info",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        setSyncing(true);
+        setSyncMessage(null);
+
+        try {
+          const res = await fetch(`/api/arena/sessions/${sessionId}/report`, {
+            method: "POST",
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Gradebook sync failed.");
+          }
+          setSyncMessage(data.message || "Scores successfully synchronized to course gradebook!");
+        } catch (err) {
+          setSyncMessage(err instanceof Error ? err.message : "Sync failed.");
+        } finally {
+          setSyncing(false);
+        }
+      },
+    });
   };
 
   const handleExportCsv = () => {
@@ -441,6 +469,20 @@ export default function ArenaReportClient({
           })}
         </div>
       </div>
+
+      {/* Accessible In-App Confirmation Modal */}
+      <ArenaConfirmModal
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        itemName={confirmDialog.itemName}
+        isBusy={syncing}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }
