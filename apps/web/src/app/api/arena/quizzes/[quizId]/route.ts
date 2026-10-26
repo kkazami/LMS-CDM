@@ -192,10 +192,10 @@ export async function PUT(
       if (Array.isArray(questions) && questions.length > 0) {
         for (let qIdx = 0; qIdx < questions.length; qIdx++) {
           const q = questions[qIdx] as QuestionInput;
-          const createdQuestion = await tx.arenaQuestion.create({
+          await tx.arenaQuestion.create({
             data: {
               quizId,
-              questionText: q.questionText.trim(),
+              questionText: (q.questionText || "").trim(),
               questionType: q.questionType === "TRUE_FALSE" ? "TRUE_FALSE" : "MULTIPLE_CHOICE",
               mediaUrl: q.mediaUrl || null,
               timeLimitSeconds: Number(q.timeLimitSeconds) || 20,
@@ -203,31 +203,30 @@ export async function PUT(
               speedBonusEnabled: q.speedBonusEnabled ?? true,
               explanation: q.explanation?.trim() || null,
               orderIndex: qIdx,
+              choices: {
+                create: (Array.isArray(q.choices) ? q.choices : []).map((c: ChoiceInput, cIdx: number) => ({
+                  choiceText: (c.choiceText || "").trim(),
+                  isCorrect: Boolean(c.isCorrect),
+                  colorIndex: c.colorIndex !== undefined ? c.colorIndex : cIdx % 4,
+                  orderIndex: cIdx,
+                })),
+              },
             },
           });
-
-          if (Array.isArray(q.choices)) {
-            for (let cIdx = 0; cIdx < q.choices.length; cIdx++) {
-              const c = q.choices[cIdx];
-              await tx.arenaAnswerChoice.create({
-                data: {
-                  questionId: createdQuestion.id,
-                  choiceText: c.choiceText.trim(),
-                  isCorrect: Boolean(c.isCorrect),
-                  colorIndex: cIdx % 4,
-                  orderIndex: cIdx,
-                },
-              });
-            }
-          }
         }
       }
+    }, {
+      timeout: 30000,
+      maxWait: 10000,
     });
 
     return NextResponse.json({ success: true, quizId });
   } catch (error) {
     console.error("PUT_ARENA_QUIZ_ERROR", error);
-    return NextResponse.json({ message: "Failed to update quiz" }, { status: 500 });
+    return NextResponse.json({
+      message: "Failed to update quiz",
+      error: error instanceof Error ? error.message : String(error),
+    }, { status: 500 });
   }
 }
 

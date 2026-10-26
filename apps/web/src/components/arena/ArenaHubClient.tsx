@@ -24,6 +24,7 @@ import {
   XCircle,
 } from "lucide-react";
 import ArenaQuizPreviewModal from "@/components/arena/ArenaQuizPreviewModal";
+import ArenaConfirmModal from "@/components/arena/ArenaConfirmModal";
 import type { ArenaQuizDetail } from "@/types/arena";
 
 interface ArenaHubClientProps {
@@ -85,73 +86,120 @@ export default function ArenaHubClient({
   const [hostingQuizId, setHostingQuizId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"QUIZZES" | "REPORTS" | "PAST_GAMES">("QUIZZES");
 
-  const handleEndSession = async (sessionId: string) => {
-    if (!confirm("Are you sure you want to end this live session now? All students will see the final game results.")) {
-      return;
-    }
-    setEndingSessionId(sessionId);
-    try {
-      const res = await fetch(`/api/arena/sessions/${sessionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "FINISH_GAME" }),
-      });
-      if (res.ok) {
-        setCurrentActiveSession(null);
-        setSessionsList((prev) =>
-          prev.map((s) => (s.id === sessionId ? { ...s, status: "FINISHED" } : s))
-        );
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("End session error:", err);
-    } finally {
-      setEndingSessionId(null);
-    }
+  // In-App Confirmation Modal State (replaces ugly browser confirm() popups)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    itemName?: string;
+    isBusy?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const requestEndSession = (sessionId: string, quizTitle?: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "End Live Session?",
+      description: "Are you sure you want to end this live session now? All connected students will immediately see their final score and leaderboard podium.",
+      itemName: quizTitle,
+      confirmLabel: "End Live Session",
+      variant: "warning",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isBusy: true }));
+        setEndingSessionId(sessionId);
+        try {
+          const res = await fetch(`/api/arena/sessions/${sessionId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "FINISH_GAME" }),
+          });
+          if (res.ok) {
+            setCurrentActiveSession(null);
+            setSessionsList((prev) =>
+              prev.map((s) => (s.id === sessionId ? { ...s, status: "FINISHED" } : s))
+            );
+            router.refresh();
+          }
+        } catch (err) {
+          console.error("End session error:", err);
+        } finally {
+          setEndingSessionId(null);
+          setConfirmDialog((prev) => ({ ...prev, open: false, isBusy: false }));
+        }
+      },
+    });
   };
 
-  const handleDeleteSession = async (sessionId: string, isInstructorMode: boolean) => {
-    const msg = isInstructorMode
-      ? "Are you sure you want to permanently delete this game session and all its student reports?"
-      : "Are you sure you want to remove this game from your history?";
-    if (!confirm(msg)) return;
-
-    setDeletingSessionId(sessionId);
-    try {
-      const res = await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
-      if (res.ok) {
-        if (isInstructorMode) {
-          setSessionsList((prev) => prev.filter((s) => s.id !== sessionId));
-        } else {
-          setPastGamesList((prev) => prev.filter((g) => g.session.id !== sessionId));
+  const requestDeleteSession = (sessionId: string, isInstructorMode: boolean, quizTitle?: string) => {
+    setConfirmDialog({
+      open: true,
+      title: isInstructorMode ? "Delete Game Session?" : "Remove Game Record?",
+      description: isInstructorMode
+        ? "Are you sure you want to permanently delete this game session and all associated student reports? This action cannot be undone."
+        : "Are you sure you want to remove this match from your recent history?",
+      itemName: quizTitle,
+      confirmLabel: isInstructorMode ? "Delete Session" : "Remove Record",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isBusy: true }));
+        setDeletingSessionId(sessionId);
+        try {
+          const res = await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
+          if (res.ok) {
+            if (isInstructorMode) {
+              setSessionsList((prev) => prev.filter((s) => s.id !== sessionId));
+            } else {
+              setPastGamesList((prev) => prev.filter((g) => g.session.id !== sessionId));
+            }
+            if (currentActiveSession?.id === sessionId) {
+              setCurrentActiveSession(null);
+            }
+            router.refresh();
+          }
+        } catch (err) {
+          console.error("Delete session error:", err);
+        } finally {
+          setDeletingSessionId(null);
+          setConfirmDialog((prev) => ({ ...prev, open: false, isBusy: false }));
         }
-        if (currentActiveSession?.id === sessionId) {
-          setCurrentActiveSession(null);
-        }
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Delete session error:", err);
-    } finally {
-      setDeletingSessionId(null);
-    }
+      },
+    });
   };
 
-  const handleDismissActiveGame = async (sessionId: string) => {
-    if (!confirm("Are you sure you want to leave / dismiss this live game?")) return;
-    setDeletingSessionId(sessionId);
-    try {
-      const res = await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
-      if (res.ok) {
-        setCurrentActiveSession(null);
-        setPastGamesList((prev) => prev.filter((g) => g.session.id !== sessionId));
-        router.refresh();
-      }
-    } catch (err) {
-      console.error("Dismiss game error:", err);
-    } finally {
-      setDeletingSessionId(null);
-    }
+  const requestDismissActiveGame = (sessionId: string, quizTitle?: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Leave Active Game?",
+      description: "Are you sure you want to leave / dismiss this live game? Your current score will remain recorded.",
+      itemName: quizTitle,
+      confirmLabel: "Leave Game",
+      variant: "warning",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isBusy: true }));
+        setDeletingSessionId(sessionId);
+        try {
+          const res = await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
+          if (res.ok) {
+            setCurrentActiveSession(null);
+            setPastGamesList((prev) => prev.filter((g) => g.session.id !== sessionId));
+            router.refresh();
+          }
+        } catch (err) {
+          console.error("Dismiss game error:", err);
+        } finally {
+          setDeletingSessionId(null);
+          setConfirmDialog((prev) => ({ ...prev, open: false, isBusy: false }));
+        }
+      },
+    });
   };
 
   // Quick Join Game by PIN
@@ -187,13 +235,19 @@ export default function ArenaHubClient({
   // Host Live Game
   const handleHostLive = async (quizId: string) => {
     if (currentActiveSession) {
-      const proceed = confirm(
-        `You already have an active live session for "${currentActiveSession.quiz.title}" (PIN: ${currentActiveSession.pin}).\n\nClick OK to return to and resume your active game, or Cancel to stay on this screen.`
-      );
-      if (proceed) {
-        router.push(`/${instituteCode}/arena/host/${currentActiveSession.id}`);
-        return;
-      }
+      setConfirmDialog({
+        open: true,
+        title: "Active Game Already in Progress",
+        description: `You already have an active live session for "${currentActiveSession.quiz.title}" (PIN: ${currentActiveSession.pin}). Click Resume to return to your running match.`,
+        itemName: `${currentActiveSession.quiz.title} • PIN: ${currentActiveSession.pin}`,
+        confirmLabel: "Resume Active Match",
+        cancelLabel: "Stay on Dashboard",
+        variant: "info",
+        onConfirm: () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          router.push(`/${instituteCode}/arena/host/${currentActiveSession.id}`);
+        },
+      });
       return;
     }
 
@@ -210,35 +264,51 @@ export default function ArenaHubClient({
       }
       router.push(`/${instituteCode}/arena/host/${data.sessionId}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to host game.");
+      setConfirmDialog({
+        open: true,
+        title: "Failed to Host Game",
+        description: err instanceof Error ? err.message : "Failed to host game.",
+        confirmLabel: "Understood",
+        variant: "warning",
+        onConfirm: () => setConfirmDialog((prev) => ({ ...prev, open: false })),
+      });
     } finally {
       setHostingQuizId(null);
     }
   };
 
-  // Delete Quiz
-  const handleDeleteQuiz = async (quizId: string) => {
-    if (!confirm("Are you sure you want to delete this quiz? All questions will be permanently removed.")) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/arena/quizzes/${quizId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-    }
+  // Delete Quiz with In-App Confirmation Modal
+  const requestDeleteQuiz = (quiz: ArenaQuizDetail) => {
+    setConfirmDialog({
+      open: true,
+      title: "Delete Quiz?",
+      description: "Are you sure you want to delete this quiz? All associated questions will be permanently removed.",
+      itemName: quiz.title,
+      confirmLabel: "Delete Quiz",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isBusy: true }));
+        try {
+          const res = await fetch(`/api/arena/quizzes/${quiz.id}`, {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            setQuizzes((prev) => prev.filter((q) => q.id !== quiz.id));
+          }
+        } catch (err) {
+          console.error("Delete error:", err);
+        } finally {
+          setConfirmDialog((prev) => ({ ...prev, open: false, isBusy: false }));
+        }
+      },
+    });
   };
 
   return (
     <div className="space-y-8 pb-20">
       {/* Active Live Session Alert Card */}
       {currentActiveSession && (
-        <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-amber-500/20 via-orange-500/20 to-purple-600/20 border-2 border-amber-500/60 p-6 sm:p-7 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-amber-50 via-orange-50 to-purple-50/60 dark:from-amber-500/20 dark:via-orange-500/20 dark:to-purple-600/20 border-2 border-amber-400/90 dark:border-amber-500/60 p-6 sm:p-7 shadow-lg dark:shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
@@ -246,27 +316,27 @@ export default function ArenaHubClient({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-black uppercase tracking-widest text-amber-400">
+                <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-400">
                   {isInstructor ? "Live Game in Progress (You are the Host)" : "You Are Currently in a Live Game"}
                 </span>
                 <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 shadow-sm">
                   PIN: {currentActiveSession.pin}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                 {currentActiveSession.quiz.title}
               </h2>
-              <div className="flex items-center gap-3 text-xs font-semibold text-slate-300">
+              <div className="flex items-center gap-3 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 {isInstructor && (
                   <>
-                    <span className="flex items-center gap-1.5 text-slate-200">
-                      <Users className="w-4 h-4 text-amber-400" />
+                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 font-bold">
+                      <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       {currentActiveSession._count.participants} Connected Player{currentActiveSession._count.participants !== 1 ? "s" : ""}
                     </span>
                     <span>•</span>
                   </>
                 )}
-                <span className="px-2 py-0.5 rounded-md bg-white/10 text-white font-mono uppercase text-[11px]">
+                <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-white/10 text-amber-900 dark:text-white border border-amber-300/60 dark:border-white/10 font-mono uppercase text-[11px] font-bold">
                   State: {currentActiveSession.status}
                 </span>
               </div>
@@ -288,18 +358,18 @@ export default function ArenaHubClient({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleEndSession(currentActiveSession.id)}
+                    onClick={() => requestEndSession(currentActiveSession.id, currentActiveSession.quiz.title)}
                     disabled={endingSessionId === currentActiveSession.id}
-                    className="px-4 py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+                    className="px-4 py-3 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300/80 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 dark:text-amber-300 dark:border-amber-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>{endingSessionId === currentActiveSession.id ? "Ending..." : "End Session"}</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDeleteSession(currentActiveSession.id, true)}
+                    onClick={() => requestDeleteSession(currentActiveSession.id, true, currentActiveSession.quiz.title)}
                     disabled={deletingSessionId === currentActiveSession.id}
-                    className="px-4 py-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+                    className="px-4 py-3 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 border border-rose-300/80 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border-rose-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>{deletingSessionId === currentActiveSession.id ? "Deleting..." : "Delete"}</span>
@@ -308,9 +378,9 @@ export default function ArenaHubClient({
               ) : (
                 <button
                   type="button"
-                  onClick={() => handleDismissActiveGame(currentActiveSession.id)}
+                  onClick={() => requestDismissActiveGame(currentActiveSession.id, currentActiveSession.quiz.title)}
                   disabled={deletingSessionId === currentActiveSession.id}
-                  className="px-4 py-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+                  className="px-4 py-3 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 border border-rose-300/80 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 dark:text-rose-300 dark:border-rose-500/30 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
                 >
                   <XCircle className="w-4 h-4" />
                   <span>{deletingSessionId === currentActiveSession.id ? "Leaving..." : "Leave / Dismiss Game"}</span>
@@ -364,7 +434,7 @@ export default function ArenaHubClient({
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleDismissActiveGame(currentActiveSession.id)}
+                      onClick={() => requestDismissActiveGame(currentActiveSession.id, currentActiveSession.quiz.title)}
                       disabled={deletingSessionId === currentActiveSession.id}
                       title="Leave / Dismiss this game"
                       className="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition text-xs disabled:opacity-50"
@@ -573,7 +643,7 @@ export default function ArenaHubClient({
                     </Link>
 
                     <button
-                      onClick={() => handleDeleteQuiz(quiz.id)}
+                      onClick={() => requestDeleteQuiz(quiz)}
                       title="Delete Quiz"
                       className="p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/15 text-rose-500 transition"
                     >
@@ -644,7 +714,7 @@ export default function ArenaHubClient({
                         </Link>
                         <button
                           type="button"
-                          onClick={() => handleEndSession(s.id)}
+                          onClick={() => requestEndSession(s.id, `${s.quiz.title} (PIN: ${s.pin})`)}
                           disabled={endingSessionId === s.id}
                           className="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/20 font-bold text-xs transition"
                         >
@@ -663,7 +733,7 @@ export default function ArenaHubClient({
 
                     <button
                       type="button"
-                      onClick={() => handleDeleteSession(s.id, true)}
+                      onClick={() => requestDeleteSession(s.id, true, `${s.quiz.title} (PIN: ${s.pin})`)}
                       disabled={deletingSessionId === s.id}
                       title="Permanently Delete Game Session"
                       className="p-2 rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/20 text-rose-500 transition disabled:opacity-50"
@@ -711,7 +781,7 @@ export default function ArenaHubClient({
                           ? "bg-slate-300 text-slate-950"
                           : g.rank === 3
                           ? "bg-amber-700 text-white"
-                          : "bg-white/10 text-white"
+                          : "bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white"
                       }`}
                     >
                       #{g.rank}
@@ -770,6 +840,24 @@ export default function ArenaHubClient({
           onClose={() => setPreviewQuiz(null)}
         />
       )}
+
+      {/* Accessible In-App Confirmation Modal */}
+      <ArenaConfirmModal
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        itemName={confirmDialog.itemName}
+        isBusy={confirmDialog.isBusy}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => {
+          if (!confirmDialog.isBusy) {
+            setConfirmDialog((prev) => ({ ...prev, open: false }));
+          }
+        }}
+      />
     </div>
   );
 }

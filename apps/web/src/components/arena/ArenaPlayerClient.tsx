@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ARENA_PALETTE, type ArenaSessionStatus } from "@/types/arena";
+import ArenaConfirmModal from "./ArenaConfirmModal";
 
 interface PlayerChoice {
   id: string;
@@ -108,17 +109,58 @@ export default function ArenaPlayerClient({
     }
   }, [currentQuestionIndex]);
 
-  const handleLeaveGame = async () => {
-    if (!confirm("Are you sure you want to leave this game?")) return;
-    setIsLeaving(true);
-    try {
-      await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
-      router.push(`/${instituteCode}/arena`);
-    } catch (err) {
-      console.error("Leave game error:", err);
-      router.push(`/${instituteCode}/arena`);
-    }
+  // In-App Confirmation Modal State (replaces ugly browser confirm() popup)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    itemName?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const handleLeaveGame = () => {
+    setConfirmDialog({
+      open: true,
+      title: "Leave Live Game?",
+      description: "Are you sure you want to leave this game? Your recorded answers will remain saved, but you will disconnect from the active match.",
+      confirmLabel: "Leave Game",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        setIsLeaving(true);
+        try {
+          await fetch(`/api/arena/sessions/${sessionId}`, { method: "DELETE" });
+          router.push(`/${instituteCode}/arena`);
+        } catch (err) {
+          console.error("Leave game error:", err);
+          router.push(`/${instituteCode}/arena`);
+        }
+      },
+    });
   };
+
+  const renderConfirmModal = () => (
+    <ArenaConfirmModal
+      open={confirmDialog.open}
+      title={confirmDialog.title}
+      description={confirmDialog.description}
+      confirmLabel={confirmDialog.confirmLabel}
+      cancelLabel={confirmDialog.cancelLabel}
+      variant={confirmDialog.variant}
+      itemName={confirmDialog.itemName}
+      isBusy={isLeaving}
+      onConfirm={confirmDialog.onConfirm}
+      onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+    />
+  );
 
   // Poll state every 1s
   const fetchPlayerState = useCallback(async () => {
@@ -156,7 +198,7 @@ export default function ArenaPlayerClient({
 
   useEffect(() => {
     fetchPlayerState();
-    const interval = setInterval(fetchPlayerState, 1000);
+    const interval = setInterval(fetchPlayerState, 1500);
     return () => clearInterval(interval);
   }, [fetchPlayerState]);
 
@@ -377,6 +419,7 @@ export default function ArenaPlayerClient({
         <div className="w-full pt-4 border-t border-white/5 text-xs text-slate-500">
           Status: Waiting for instructor to start...
         </div>
+        {renderConfirmModal()}
       </div>
     );
   }
@@ -586,23 +629,28 @@ export default function ArenaPlayerClient({
             <span>Answer locked in! Waiting for timer or instructor...</span>
           </div>
         )}
+        {renderConfirmModal()}
       </div>
     );
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 3. QUESTION RESULT SCREEN (Instant Correct / Incorrect Feedback)
+  // 3. QUESTION RESULT SCREEN (Instant Correct / Incorrect Feedback & Answer Reveal)
   // ─────────────────────────────────────────────────────────────
   if (status === "QUESTION_RESULT") {
+    const hasAnswered = myAnswer !== null;
     const isCorrect = myAnswer?.isCorrect ?? false;
     const pointsEarned = myAnswer?.pointsEarned ?? 0;
     const usedPowerUp = powerUpHistory[currentQuestionIndex];
+    const correctChoice = currentQuestion?.choices.find((c) => c.isCorrect);
 
     return (
       <div
         className={`min-h-[85vh] flex flex-col justify-between items-center p-6 text-center rounded-3xl border shadow-2xl relative overflow-hidden transition-all duration-300 ${
           isCorrect
             ? "bg-linear-to-br from-[#06331A] via-[#0D2115] to-[#0A0C13] border-emerald-500/30"
+            : !hasAnswered
+            ? "bg-linear-to-br from-[#2D1B08] via-[#1F140D] to-[#0A0C13] border-amber-500/30"
             : "bg-linear-to-br from-[#380E14] via-[#210D10] to-[#0A0C13] border-rose-500/30"
         }`}
       >
@@ -615,63 +663,151 @@ export default function ArenaPlayerClient({
             Dashboard
           </Link>
         </div>
-        <div
-          className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl mb-6 shadow-2xl ${
-            isCorrect
-              ? "bg-emerald-500 text-white shadow-emerald-500/30"
-              : "bg-rose-500 text-white shadow-rose-500/30"
-          }`}
-        >
-          {isCorrect ? "✓" : "✗"}
+
+        <div className="my-auto w-full flex flex-col items-center">
+          <div
+            className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 shadow-2xl ${
+              isCorrect
+                ? "bg-emerald-500 text-white shadow-emerald-500/30"
+                : !hasAnswered
+                ? "bg-amber-500 text-slate-950 shadow-amber-500/30"
+                : "bg-rose-500 text-white shadow-rose-500/30"
+            }`}
+          >
+            {isCorrect ? "✓" : !hasAnswered ? "⏰" : "✗"}
+          </div>
+
+          <h2 className="text-2xl sm:text-4xl font-black text-white mb-1">
+            {isCorrect
+              ? "Awesome! Correct!"
+              : !hasAnswered
+              ? "Time's Up!"
+              : "Incorrect"}
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-sm mb-3">
+            {isCorrect
+              ? "Great job! Keep the momentum going."
+              : !hasAnswered
+              ? "No answer was submitted before the timer expired."
+              : "Keep your focus! Points can be recovered on the next question."}
+          </p>
+
+          {/* Power-up result bonus banner */}
+          {usedPowerUp === "DOUBLE_POINTS" && isCorrect && (
+            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-200 text-xs font-black uppercase tracking-wider mb-2 animate-bounce">
+              <Zap className="w-3.5 h-3.5 text-purple-300" />
+              <span>2x Double Points Multiplier Applied!</span>
+            </div>
+          )}
+          {usedPowerUp === "FREEZE" && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 text-xs font-bold mb-2">
+              <Snowflake className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Freeze Power-Up Used (+5s)</span>
+            </div>
+          )}
+          {usedPowerUp === "ADD_TIME" && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-bold mb-2">
+              <Clock className="w-3.5 h-3.5 text-amber-300" />
+              <span>Time Extension Used (+10s)</span>
+            </div>
+          )}
+
+          {isCorrect ? (
+            <div className="space-y-1 mb-4">
+              <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono">
+                +{pointsEarned.toLocaleString()} pts
+              </span>
+              {myLeaderboardEntry && myLeaderboardEntry.currentStreak >= 2 && (
+                <p className="text-orange-400 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1">
+                  <Flame className="w-4 h-4 fill-current" /> {myLeaderboardEntry.currentStreak} Answer Streak!
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mb-4">
+              <span className="text-2xl sm:text-3xl font-black text-slate-400 font-mono">
+                0 pts
+              </span>
+            </div>
+          )}
+
+          {/* Choices Breakdown showing Correct Answer and Student's choice */}
+          {currentQuestion && (
+            <div className="w-full max-w-xl mx-auto my-3 space-y-2 text-left">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                  Question Review & Answer Key
+                </span>
+                {correctChoice && (
+                  <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Correct choice highlighted
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {currentQuestion.choices.map((choice, cIdx) => {
+                  const pal = ARENA_PALETTE[cIdx % 4];
+                  const isThisCorrect = choice.isCorrect;
+                  const isMyChoice = myAnswer?.choiceId === choice.id;
+
+                  return (
+                    <div
+                      key={choice.id || cIdx}
+                      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 text-xs sm:text-sm font-semibold transition ${
+                        isThisCorrect
+                          ? "border-emerald-500 bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-500/10"
+                          : isMyChoice
+                          ? "border-rose-500/50 bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/30"
+                          : "border-white/5 bg-white/3 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className="w-7 h-7 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-xs font-black shrink-0 text-white shadow-inner">
+                          {pal.symbol}
+                        </span>
+                        <span className="truncate">{choice.choiceText}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isThisCorrect && (
+                          <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 text-[11px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>Right Answer</span>
+                          </span>
+                        )}
+                        {isMyChoice && !isThisCorrect && (
+                          <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-400/30 text-rose-300 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            <XCircle className="w-3 h-3 text-rose-400" />
+                            <span>Your Pick</span>
+                          </span>
+                        )}
+                        {isMyChoice && isThisCorrect && (
+                          <span className="px-2 py-0.5 rounded bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+                            You Picked This!
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {currentQuestion?.explanation && (
+            <div className="mt-2 max-w-xl w-full p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 font-medium text-left">
+              <span className="font-bold text-white block mb-0.5">Explanation:</span>
+              {currentQuestion.explanation}
+            </div>
+          )}
         </div>
 
-        <h2 className="text-3xl sm:text-4xl font-black text-white mb-2">
-          {isCorrect ? "Awesome! Correct!" : "Incorrect"}
-        </h2>
-
-        {/* Power-up result bonus banner */}
-        {usedPowerUp === "DOUBLE_POINTS" && isCorrect && (
-          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-200 text-xs font-black uppercase tracking-wider mb-2 animate-bounce">
-            <Zap className="w-3.5 h-3.5 text-purple-300" />
-            <span>2x Double Points Multiplier Applied!</span>
-          </div>
-        )}
-        {usedPowerUp === "FREEZE" && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 text-xs font-bold mb-2">
-            <Snowflake className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Freeze Power-Up Used (+5s)</span>
-          </div>
-        )}
-        {usedPowerUp === "ADD_TIME" && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-bold mb-2">
-            <Clock className="w-3.5 h-3.5 text-amber-300" />
-            <span>Time Extension Used (+10s)</span>
-          </div>
-        )}
-
-        {isCorrect ? (
-          <div className="space-y-2 mt-2">
-            <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono">
-              +{pointsEarned.toLocaleString()} pts
-            </span>
-            {myLeaderboardEntry && myLeaderboardEntry.currentStreak >= 2 && (
-              <p className="text-orange-400 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1">
-                <Flame className="w-4 h-4 fill-current" /> {myLeaderboardEntry.currentStreak} Answer Streak!
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-slate-400 text-sm max-w-sm mt-2">
-            Keep your focus! Points can be recovered on the next question.
-          </p>
-        )}
-
-        {currentQuestion?.explanation && (
-          <div className="mt-8 max-w-md w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 font-medium">
-            <span className="font-bold text-white block mb-0.5">Explanation:</span>
-            {currentQuestion.explanation}
-          </div>
-        )}
+        <div className="w-full pt-4 border-t border-white/5 text-center text-xs text-slate-500">
+          Waiting for instructor to proceed to the next question...
+        </div>
+        {renderConfirmModal()}
       </div>
     );
   }
@@ -731,6 +867,7 @@ export default function ArenaPlayerClient({
         <p className="text-slate-400 text-xs">
           Get ready for the next question on the host screen...
         </p>
+        {renderConfirmModal()}
       </div>
     );
   }

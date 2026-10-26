@@ -25,6 +25,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import ArenaLobbyQr from "@/components/arena/ArenaLobbyQr";
+import ArenaConfirmModal from "@/components/arena/ArenaConfirmModal";
 import { ARENA_PALETTE, type ArenaSessionStatus, type ArenaQuestionType } from "@/types/arena";
 
 interface HostQuestionChoice {
@@ -45,6 +46,14 @@ interface HostQuestion {
   orderIndex: number;
   choices: HostQuestionChoice[];
   explanation?: string | null;
+}
+
+interface AnswerBreakdownItem {
+  participantId: string;
+  nickname: string;
+  choiceId: string | null;
+  isCorrect: boolean;
+  pointsEarned: number;
 }
 
 interface HostParticipant {
@@ -77,6 +86,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
   const [participants, setParticipants] = useState<HostParticipant[]>([]);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [distribution, setDistribution] = useState<Record<string, number>>({});
+  const [answerBreakdown, setAnswerBreakdown] = useState<AnswerBreakdownItem[]>([]);
   const [enableIntegrityMonitoring, setEnableIntegrityMonitoring] = useState(false);
   const [scoringMethod, setScoringMethod] = useState("SPEED_BASED");
 
@@ -85,9 +95,32 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
   const [loadingAction, setLoadingAction] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
 
-  const confettiTriggeredRef = useRef(false);
+  // In-App Confirmation Modal State (replaces ugly browser confirm() popup)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    itemName?: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
 
-  // Poll session state every 1.2s for real-time responsiveness
+  const confettiTriggeredRef = useRef(false);
+  const hasAutoEndedRef = useRef(false);
+
+  // Reset auto-ended flag when current question or status changes
+  useEffect(() => {
+    hasAutoEndedRef.current = false;
+  }, [currentQuestionIndex, status]);
+
+  // Poll session state every 1.5s for real-time responsiveness without overloading connection pool
   const fetchState = useCallback(async () => {
     try {
       const res = await fetch(`/api/arena/sessions/${sessionId}`);
@@ -105,6 +138,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
       setParticipants(data.leaderboard || []);
       setAnsweredCount(data.answeredCount || 0);
       setDistribution(data.distribution || {});
+      setAnswerBreakdown(data.answerBreakdown || []);
       setEnableIntegrityMonitoring(data.enableIntegrityMonitoring);
       setScoringMethod(data.scoringMethod);
     } catch (err) {
@@ -114,7 +148,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
 
   useEffect(() => {
     fetchState();
-    const interval = setInterval(fetchState, 1200);
+    const interval = setInterval(fetchState, 1500);
     return () => clearInterval(interval);
   }, [fetchState]);
 
@@ -131,8 +165,9 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
       const diffSec = Math.max(0, Math.ceil((deadline - now) / 1000));
       setSecondsRemaining(diffSec);
 
-      // Automatically end question if deadline passes
-      if (diffSec <= 0 && !loadingAction) {
+      // Automatically end question ONCE if deadline passes
+      if (diffSec <= 0 && !hasAutoEndedRef.current) {
+        hasAutoEndedRef.current = true;
         handleAction("END_QUESTION");
       }
     };
@@ -140,7 +175,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
     updateTimer();
     const timerInterval = setInterval(updateTimer, 500);
     return () => clearInterval(timerInterval);
-  }, [status, currentQuestionDeadline, loadingAction]);
+  }, [status, currentQuestionDeadline]);
 
   // Prevent accidental page navigation / tab close while game is active
   useEffect(() => {
@@ -199,11 +234,51 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
     }
   };
 
-  const handleKick = (participantId: string) => {
-    if (confirm("Remove this participant from the lobby?")) {
-      handleAction("KICK_PARTICIPANT", { participantIdToKick: participantId });
-    }
+  const requestKick = (participantId: string, nickname?: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Remove Participant?",
+      description: "Remove this student from the lobby? They will be disconnected from the match.",
+      itemName: nickname,
+      confirmLabel: "Remove",
+      variant: "danger",
+      onConfirm: () => {
+        handleAction("KICK_PARTICIPANT", { participantIdToKick: participantId });
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+      },
+    });
   };
+
+  const requestEndGame = (redirectToHub = false) => {
+    setConfirmDialog({
+      open: true,
+      title: "End Live Session?",
+      description: "Are you sure you want to end this live session now? All active gameplay will stop and final scores will be calculated.",
+      confirmLabel: "End Game Now",
+      variant: "warning",
+      onConfirm: () => {
+        handleAction("FINISH_GAME");
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+        if (redirectToHub) {
+          router.push(`/${instituteCode}/arena`);
+        }
+      },
+    });
+  };
+
+  const renderConfirmModal = () => (
+    <ArenaConfirmModal
+      open={confirmDialog.open}
+      title={confirmDialog.title}
+      description={confirmDialog.description}
+      confirmLabel={confirmDialog.confirmLabel}
+      cancelLabel={confirmDialog.cancelLabel}
+      variant={confirmDialog.variant}
+      itemName={confirmDialog.itemName}
+      onConfirm={confirmDialog.onConfirm}
+      onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+    />
+  );
 
   const joinUrl = typeof window !== "undefined"
     ? `${window.location.origin}/${instituteCode}/arena/join?pin=${pin}`
@@ -237,12 +312,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
               <span>Dashboard</span>
             </Link>
             <button
-              onClick={() => {
-                if (confirm("Cancel and end this live session now?")) {
-                  handleAction("FINISH_GAME");
-                  router.push(`/${instituteCode}/arena`);
-                }
-              }}
+              onClick={() => requestEndGame(true)}
               className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition flex items-center gap-1.5 text-xs font-bold"
               title="End Game Session"
             >
@@ -310,7 +380,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{p.nickname}</span>
                   <button
-                    onClick={() => handleKick(p.id)}
+                    onClick={() => requestKick(p.id, p.nickname)}
                     className="text-slate-400 hover:text-rose-400 ml-1"
                     title="Kick player"
                   >
@@ -366,6 +436,8 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
             </div>
           </div>
         )}
+
+        {renderConfirmModal()}
       </div>
     );
   }
@@ -399,11 +471,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
               <span>Dashboard</span>
             </Link>
             <button
-              onClick={() => {
-                if (confirm("End this live quiz session now?")) {
-                  handleAction("FINISH_GAME");
-                }
-              }}
+              onClick={() => requestEndGame(false)}
               className="px-3 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition text-xs font-bold flex items-center gap-1"
               title="End Game Session"
             >
@@ -465,6 +533,8 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
             );
           })}
         </div>
+
+        {renderConfirmModal()}
       </div>
     );
   }
@@ -495,11 +565,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
               <span>Dashboard</span>
             </Link>
             <button
-              onClick={() => {
-                if (confirm("End this live quiz session now?")) {
-                  handleAction("FINISH_GAME");
-                }
-              }}
+              onClick={() => requestEndGame(false)}
               className="px-3 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition text-xs font-bold flex items-center gap-1"
               title="End Game Session"
             >
@@ -509,9 +575,29 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
             <button
               onClick={() => handleAction("SHOW_LEADERBOARD")}
               disabled={loadingAction}
-              className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm flex items-center gap-2 transition shadow-lg shadow-indigo-600/30"
+              className="px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center gap-1.5 transition"
+              title="View current leaderboard standings"
             >
-              <span>Next: Leaderboard</span> <ChevronRight className="w-4 h-4" />
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Leaderboard</span>
+            </button>
+            <button
+              onClick={() => handleAction(currentQuestionIndex >= totalQuestions - 1 ? "FINISH_GAME" : "NEXT_QUESTION")}
+              disabled={loadingAction}
+              className="px-5 py-2.5 rounded-xl bg-linear-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 transition shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50"
+              title="Advance to next question"
+            >
+              {loadingAction ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <span>{currentQuestionIndex >= totalQuestions - 1 ? "Finish & Podium" : "Proceed to Next Question"}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -559,13 +645,50 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
 
         {/* Explanation Card */}
         {currentQuestion.explanation && (
-          <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 text-xs sm:text-sm font-semibold max-w-3xl mx-auto w-full">
+          <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 text-xs sm:text-sm font-semibold max-w-4xl mx-auto w-full mb-3">
             <span className="font-black uppercase tracking-wider block mb-0.5 text-emerald-400">
               Explanation
             </span>
             {currentQuestion.explanation}
           </div>
         )}
+
+        {/* Student Response Breakdown (Who answered correctly) */}
+        {answerBreakdown.length > 0 && (
+          <div className="p-4 rounded-2xl border border-white/10 bg-white/5 max-w-4xl mx-auto w-full">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-indigo-400" />
+                Student Submissions ({answerBreakdown.filter((a) => a.isCorrect).length} Correct / {answerBreakdown.length} Total)
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-3">
+              {answerBreakdown.map((a) => (
+                <div
+                  key={a.participantId}
+                  className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-semibold ${
+                    a.isCorrect
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                      : "border-rose-500/20 bg-rose-500/5 text-slate-400"
+                  }`}
+                >
+                  <span className="truncate">{a.nickname}</span>
+                  {a.isCorrect ? (
+                    <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
+                      +{a.pointsEarned}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-rose-400/70 bg-rose-500/10 px-1.5 py-0.5 rounded shrink-0">
+                      0 pts
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {renderConfirmModal()}
       </div>
     );
   }
@@ -594,11 +717,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
               <span>Dashboard</span>
             </Link>
             <button
-              onClick={() => {
-                if (confirm("End this live quiz session now?")) {
-                  handleAction("FINISH_GAME");
-                }
-              }}
+              onClick={() => requestEndGame(false)}
               className="px-3 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition text-xs font-bold flex items-center gap-1"
               title="End Game Session"
             >
@@ -669,6 +788,8 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
         <div className="text-center text-xs text-slate-500 font-bold">
           Question {currentQuestionIndex + 1} of {totalQuestions} completed
         </div>
+
+        {renderConfirmModal()}
       </div>
     );
   }
