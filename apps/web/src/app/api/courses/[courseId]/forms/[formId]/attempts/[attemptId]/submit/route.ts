@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { evaluateQuestionVisibility } from '@/lib/forms/conditional-logic';
 import { formIsOpen } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
@@ -35,6 +36,9 @@ export async function POST(request: Request, context: RouteContext) {
     const clientCopyPastes = typeof body.copyPasteCount === "number" ? body.copyPasteCount : 0;
 
     const result = await db.$transaction(async tx => {
+      const backing = await tx.form.findUniqueOrThrow({ where: { id: formId }, select: { syllabusItemId: true } });
+      await assertOrdinaryClasswork(tx, backing.syllabusItemId);
+      await markAcademicWorkStarted(tx, backing.syllabusItemId, session.user.id);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['form-attempt', attemptId])}, 0))`;
     const attempt = await tx.formAttempt.findUnique({
       where: { id: attemptId },

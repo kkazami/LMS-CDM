@@ -44,7 +44,7 @@ try {
   const pair = await generateKeyPair('RS256'); const publicKey = await exportJWK(pair.publicKey); publicKey.kid = 'test-key';
   globalThis.__studentAuthJwks = { keys: [publicKey] };
   const built = await build({
-    stdin: { contents: `export { POST as register } from '@/app/api/auth/register/route'; export { POST as login } from '@/app/api/auth/login/route'; export { POST as join } from '@/app/api/student/join-class/route'; export { GET as me } from '@/app/api/auth/me/route'; export { GET as courses } from '@/app/api/courses/route'; export { GET as announcements } from '@/app/api/announcements/route'; export { GET as callback } from '@/app/api/auth/callback/google/route'; export { getSession, createSession, deleteSession } from '@/lib/auth-session'; export { needsClassEnrollment } from '@/lib/student-access'; export * from '@/lib/google-auth'; export { db } from '@/lib/db';`, resolveDir: path.resolve('apps/web/src'), loader: 'ts' },
+    stdin: { contents: `export { POST as register } from '@/app/api/auth/register/route'; export { POST as login } from '@/app/api/auth/login/route'; export { POST as join } from '@/app/api/student/join-class/route'; export { GET as me } from '@/app/api/auth/me/route'; export { GET as courses } from '@/app/api/courses/route'; export { GET as announcements } from '@/app/api/announcements/route'; export { GET as callback } from '@/app/api/auth/callback/google/route'; export { getSession, createSession, deleteSession } from '@/lib/auth-session'; export { needsClassEnrollment } from '@/lib/student-access'; export { processLoginReward, getPHTMidnight } from '@/lib/gamification/login-rewards'; export * from '@/lib/google-auth'; export { db } from '@/lib/db';`, resolveDir: path.resolve('apps/web/src'), loader: 'ts' },
     bundle: true, write: false, platform: 'node', format: 'cjs', tsconfig: 'apps/web/tsconfig.json', nodePaths: [path.resolve('apps/web/node_modules')],
     external: ['@prisma/client', '@prisma/adapter-pg', 'pg'],
     plugins: [{ name: 'request-context-and-google-keys', setup(b) {
@@ -91,6 +91,22 @@ try {
     }
     assert.equal((await call(driver.login, { identifier: registration.email, password: registration.password, instituteCode: 'ics', acceptedPolicies: true }, jar(), '/api/auth/login')).status, 403);
   });
+  await check('account-lock contention returns retryable 503 without a cookie or extra session', async () => {
+    const before = await driver.db.session.count({ where: { userId: student.id } });
+    const blockedBrowser = jar();
+    await cluster.owner.query('BEGIN');
+    try {
+      await cluster.owner.query('SELECT id FROM "User" WHERE id=$1 FOR UPDATE', [student.id]);
+      const started = Date.now();
+      const response = await call(driver.login, { identifier: registration.email, password: registration.password, instituteCode: 'ite', acceptedPolicies: true }, blockedBrowser, '/api/auth/login');
+      assert.equal(response.status, 503, await response.clone().text());
+      assert.equal(response.headers.get('retry-after'), '5');
+      assert.match((await response.json()).message, /try again/i);
+      assert.ok(Date.now() - started < 12000, 'login must stop waiting for the locked account');
+      assert.equal(blockedBrowser.values.size, 0);
+    } finally { await cluster.owner.query('ROLLBACK'); }
+    assert.equal(await driver.db.session.count({ where: { userId: student.id } }), before);
+  });
   await check('foreign codes cannot enroll or unlock an ITE account, even with forged institute fields', async () => {
     assert.equal((await call(driver.join, { code: 'ICS123', instituteCode: 'ics', instituteId: 'ics' }, browser, '/api/student/join-class')).status, 400);
     assert.equal(await driver.db.enrollment.count({ where: { studentId: student.id } }), 0);
@@ -116,6 +132,21 @@ try {
     assert.equal(feed.status, 200); const content = await feed.text();
     assert.ok(content.includes('OWN-CLASS-CONTENT')); assert.ok(!content.includes('UNJOINED-CLASS-CONTENT')); assert.ok(!content.includes('FOREIGN-CLASS-CONTENT'));
 
+  });
+  await check('web login keeps due daily EXP for dashboard processing and persisted receipt without duplicate awards', async () => {
+    await driver.db.gamificationProfile.create({ data: { studentId: student.id } });
+    const loginBrowser = jar();
+    const response = await call(driver.login, { identifier: registration.email, password: registration.password, instituteCode: 'ite', acceptedPolicies: true }, loginBrowser, '/api/auth/login', { 'x-lms-login-rewards': 'dashboard' });
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.equal((await response.json()).rewardReceipt, null);
+    assert.equal((await driver.db.gamificationProfile.findUniqueOrThrow({ where: { studentId: student.id } })).lastDailyRewardAt, null);
+    const reward = await driver.processLoginReward(student.id);
+    assert.deepEqual(reward, { rewarded: true, streak: 1 });
+    const receipt = () => driver.db.expTransaction.aggregate({ where: { userId: student.id, source: 'daily_login', createdAt: { gte: driver.getPHTMidnight() } }, _sum: { amount: true } });
+    assert.equal((await receipt())._sum.amount, 10);
+    assert.deepEqual(await driver.processLoginReward(student.id), { rewarded: false, streak: 1 });
+    assert.equal((await receipt())._sum.amount, 10);
+    await inContext(loginBrowser, () => driver.deleteSession());
   });
   await check('archived, pending and removed enrollments do not grant access; logout still works', async () => {
     await driver.db.course.update({ where: { id: 'ite-class' }, data: { isArchived: true } });

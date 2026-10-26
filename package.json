@@ -33,7 +33,9 @@
     "harness:key": "tsx scripts/harness-key.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report playwright/report"
+    "test:e2e:report": "playwright show-report playwright/report",
+    "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/transport.test.cjs",
+    "test:labs:integration": "node tests/labs/integration.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

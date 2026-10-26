@@ -8,7 +8,203 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SubmissionWorkHistoryState {
+  UNKNOWN
+  UNTOUCHED
+  STARTED
+}
+
+enum LabVersionStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LabStepType {
+  INSTRUCTIONS
+  COMMAND
+  CHECKLIST
+  TEXT_RESPONSE
+  EVIDENCE_UPLOAD
+}
+
+enum LabAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  NEEDS_REVISION
+  GRADED
+}
+
+model LabTemplate {
+  id String @id @default(cuid())
+  instituteId String
+  authorId String
+  title String
+  category String
+  isShared Boolean @default(false)
+  sourceTemplateId String?
+  archivedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Restrict)
+  author User @relation("LabAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  versions LabTemplateVersion[]
+  @@index([instituteId, authorId])
+}
+
+model LabTemplateVersion {
+  id String @id @default(cuid())
+  templateId String
+  number Int
+  revision Int @default(0)
+  status LabVersionStatus @default(DRAFT)
+  title String
+  description String @default("")
+  objective String
+  prerequisites String @default("")
+  requiredTools String @default("")
+  estimatedMinutes Int
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  template LabTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  steps LabStep[]
+  assignments LabAssignment[]
+  @@unique([templateId, number])
+}
+
+model LabStep {
+  id String @id @default(cuid())
+  versionId String
+  key String
+  position Int
+  type LabStepType
+  title String
+  required Boolean @default(true)
+  config Json
+  version LabTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  responses LabStepResponse[]
+  reviews LabReview[]
+  @@unique([id, versionId])
+  @@unique([versionId, key])
+  @@unique([versionId, position])
+}
+
+model LabAssignment {
+  id String @id @default(cuid())
+  syllabusItemId String @unique
+  courseId String
+  versionId String
+  creatorId String
+  opensAt DateTime?
+  publishedAt DateTime?
+  archivedAt DateTime?
+  personalizeEvidence Boolean @default(true)
+  createdAt DateTime @default(now())
+  syllabusItem SyllabusItem @relation(fields: [syllabusItemId, courseId], references: [id, courseId], onDelete: Restrict)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  version LabTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  creator User @relation("LabAssignmentCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  attempts LabAttempt[]
+  @@unique([id, versionId])
+  @@unique([syllabusItemId, courseId])
+  @@index([courseId, publishedAt])
+}
+
+model LabAttempt {
+  id String @id @default(cuid())
+  assignmentId String
+  versionId String
+  studentId String
+  attemptNumber Int
+  status LabAttemptStatus @default(IN_PROGRESS)
+  revision Int @default(0)
+  currentStep Int @default(0)
+  score Decimal? @db.Decimal(10,2)
+  evidenceToken String
+  revisionDueAt DateTime?
+  startedAt DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  submittedAt DateTime?
+  gradedAt DateTime?
+  assignment LabAssignment @relation(fields: [assignmentId, versionId], references: [id, versionId], onDelete: Restrict)
+  student User @relation("LabStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  responses LabStepResponse[]
+  submissions LabSubmission[]
+  reviews LabReview[]
+  @@unique([assignmentId, studentId])
+  @@unique([assignmentId, studentId, attemptNumber])
+  @@unique([id, versionId])
+  @@index([assignmentId, status])
+}
+
+model LabStepResponse {
+  id String @id @default(cuid())
+  attemptId String
+  stepId String
+  versionId String
+  answer Json
+  revision Int @default(0)
+  completedAt DateTime?
+  updatedAt DateTime @updatedAt
+  attempt LabAttempt @relation(fields: [attemptId, versionId], references: [id, versionId], onDelete: Restrict)
+  step LabStep @relation(fields: [stepId, versionId], references: [id, versionId], onDelete: Restrict)
+  evidence LabEvidence[]
+  @@unique([attemptId, stepId])
+}
+
+model LabSubmission {
+  id String @id @default(cuid())
+  attemptId String
+  round Int
+  snapshot Json
+  createdAt DateTime @default(now())
+  attempt LabAttempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  reviews LabReview[]
+  evidence LabSubmissionEvidence[]
+  @@unique([attemptId, round])
+  @@unique([id, attemptId])
+}
+
+model LabEvidence {
+  id String @id @default(cuid())
+  responseId String
+  assetId String @unique
+  supersededAt DateTime?
+  createdAt DateTime @default(now())
+  response LabStepResponse @relation(fields: [responseId], references: [id], onDelete: Restrict)
+  asset PrivateAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  submissions LabSubmissionEvidence[]
+  @@index([responseId, supersededAt])
+}
+
+model LabSubmissionEvidence {
+  submissionId String
+  evidenceId String
+  submission LabSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  evidence LabEvidence @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
+  @@id([submissionId, evidenceId])
+}
+
+model LabReview {
+  id String @id @default(cuid())
+  attemptId String
+  versionId String
+  submissionId String
+  reviewerId String
+  stepId String?
+  decision String
+  comment String
+  score Decimal? @db.Decimal(10,2)
+  revisionDueAt DateTime?
+  createdAt DateTime @default(now())
+  attempt LabAttempt @relation(fields: [attemptId, versionId], references: [id, versionId], onDelete: Restrict)
+  submission LabSubmission @relation(fields: [submissionId, attemptId], references: [id, attemptId], onDelete: Restrict)
+  reviewer User @relation("LabReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  step LabStep? @relation(fields: [stepId, versionId], references: [id, versionId], onDelete: Restrict)
+  @@index([attemptId, createdAt])
+}
+
 model Institute {
+  labTemplates   LabTemplate[]
   id             String            @id @default(cuid())
   code           String            @unique
   name           String
@@ -27,6 +223,10 @@ model Institute {
 }
 
 model User {
+  labTemplates LabTemplate[] @relation("LabAuthor")
+  createdLabAssignments LabAssignment[] @relation("LabAssignmentCreator")
+  labAttempts LabAttempt[] @relation("LabStudent")
+  labReviews LabReview[] @relation("LabReviewer")
   id                String                  @id @default(cuid())
   name              String
   email             String                  @unique
@@ -160,6 +360,7 @@ model Session {
 }
 
 model Course {
+  labAssignments LabAssignment[]
   id                  String                     @id @default(cuid())
   code                String
   courseCode          String                     @unique @default("")
@@ -240,6 +441,8 @@ model Enrollment {
 }
 
 model SyllabusItem {
+  workHistoryState SubmissionWorkHistoryState @default(dbgenerated("'UNKNOWN'::\"SubmissionWorkHistoryState\""))
+  labAssignment LabAssignment?
   id                        String                @id @default(cuid())
   courseId                  String
   type                      String                @default("MATERIAL")
@@ -265,6 +468,7 @@ model SyllabusItem {
   form                      Form?
 
   @@index([courseId, type])
+  @@unique([id, courseId])
   @@index([courseId, orderIndex])
 }
 
@@ -375,6 +579,7 @@ model Attachment {
 }
 
 model StudentSubmission {
+  workHistoryState SubmissionWorkHistoryState @default(dbgenerated("'UNKNOWN'::\"SubmissionWorkHistoryState\""))
   id              String                 @id @default(cuid())
   syllabusItemId  String
   studentId       String
@@ -1723,6 +1928,7 @@ model ProgramChartNode {
 }
 
 model PrivateAsset {
+  labEvidence LabEvidence?
   id          String   @id @default(cuid())
   ownerId     String
   instituteId String

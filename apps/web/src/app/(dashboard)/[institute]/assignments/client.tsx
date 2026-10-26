@@ -15,6 +15,7 @@ import type { InstituteTheme } from "@/lib/theme";
 
 interface TodoItem {
   id: string;
+  labStatus?: string | null;
   title: string;
   type: "ASSIGNMENT" | "QUIZ" | string;
   dueDate: string | null;
@@ -217,6 +218,7 @@ function TodoSection({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8] truncate group-hover/item:text-[#F97316] transition-colors">
                       {item.title}
+                      {item.labStatus === 'NEEDS_REVISION' && <span className="ml-2 text-xs font-medium text-orange-700 dark:text-orange-300">Needs correction</span>}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-[#8B92A5] truncate mt-0.5">
                       {item.courseCode}

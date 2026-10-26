@@ -2,6 +2,7 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { exportGradebookSkill } from '@/lib/skills/gradebook-exporter';
 import { readGradebook } from '@/lib/gradebook-data';
 import { db } from "@/lib/db";
@@ -29,6 +30,7 @@ export interface GradebookStudent {
 
 export interface GradebookAssignment {
   id: string;
+  labAssignmentId?: string | null;
   title: string;
   maxPoints: number | null;
   type: string;
@@ -84,14 +86,15 @@ export async function clearGrade(syllabusItemId: string, studentId: string) {
   if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(role))) return { success: false, error: "Instructors only" };
 
   await db.$transaction(async tx => {
+    await assertOrdinaryClasswork(tx, syllabusItemId);
     await lockAcademicRecord(tx, studentId, syllabusItemId);
     const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId } });
     if (!item) throw new Error("Assignment not found");
     await requireCourseAccess(session.user, item.courseId, true, tx);
     const existing = await tx.studentSubmission.findUnique({ where: { syllabusItemId_studentId: { syllabusItemId, studentId } }, include: { attachments: true } });
     if (!existing) return;
-    if (existing.attachments.length === 0 && !existing.submittedAt) await tx.studentSubmission.delete({ where: { id: existing.id } });
-    else await tx.studentSubmission.update({ where: { id: existing.id }, data: { grade: null, status: "SUBMITTED", isReturned: false } });
+    await markAcademicWorkStarted(tx, syllabusItemId, studentId);
+    await tx.studentSubmission.update({ where: { id: existing.id }, data: { grade: null, status: existing.submittedAt ? "SUBMITTED" : "DRAFT", isReturned: false } });
   });
 
   return { success: true };

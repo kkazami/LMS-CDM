@@ -1,4 +1,5 @@
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { requireCourseAccess } from '@/lib/course-access';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -36,7 +37,7 @@ export async function GET(request: Request, context: RouteContext) {
           courseId,
           type: { not: 'MATERIAL' },
           maxPoints: { not: null },
-          ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}),
+          ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}),
         },
         select: {
           id: true,
@@ -45,6 +46,7 @@ export async function GET(request: Request, context: RouteContext) {
           maxPoints: true,
           dueDate: true,
           form: { select: { showScoreAfter: true } },
+          labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
         },
         orderBy: { dueDate: 'asc' },
       }),
@@ -90,10 +92,12 @@ export async function GET(request: Request, context: RouteContext) {
 
     const items = gradableItems.map((item) => {
       const sub = subMap.get(item.id);
+      const lab = currentLabAttempt(item.labAssignment);
       const maxPts = item.maxPoints || 100;
       const score = item.form?.showScoreAfter === false ? null : typeof sub?.grade === 'number' ? sub.grade : null;
       const isSubmitted = sub?.status === 'SUBMITTED' || sub?.status === 'GRADED';
-      const isPastDue = item.dueDate ? new Date(item.dueDate) < new Date() : false;
+      const effectiveDue = lab?.status === 'NEEDS_REVISION' ? lab.revisionDueAt : item.dueDate;
+      const isPastDue = effectiveDue ? new Date(effectiveDue) < new Date() : false;
 
       if (score !== null) {
         totalEarnedPoints += score;
@@ -108,12 +112,16 @@ export async function GET(request: Request, context: RouteContext) {
 
       return {
         id: item.id,
+        taskFormat: item.labAssignment ? 'GUIDED_LAB' : null,
+        labStatus: lab?.status ?? null,
+        revisionDueAt: lab?.revisionDueAt?.toISOString() ?? null,
+        labUrl: item.labAssignment ? `/ics/courses/${courseId}/labs/${item.labAssignment.id}` : null,
         title: item.title,
         type: item.type,
         maxPoints: maxPts,
         score,
         status: score !== null ? 'GRADED' : isSubmitted ? 'SUBMITTED' : isPastDue ? 'MISSING' : 'ASSIGNED',
-        dueDate: item.dueDate ? item.dueDate.toISOString() : null,
+        dueDate: effectiveDue ? effectiveDue.toISOString() : null,
       };
     });
 

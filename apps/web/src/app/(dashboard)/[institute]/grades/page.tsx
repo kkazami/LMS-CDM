@@ -116,7 +116,7 @@ export default async function GradesPage({
     id: sub.id,
     syllabusItemId: sub.syllabusItem.id,
     itemTitle: sub.syllabusItem.title,
-    itemType: sub.syllabusItem.type as "ASSIGNMENT" | "QUIZ",
+    itemType: sub.syllabusItem.type,
     courseId: sub.syllabusItem.courseId,
     courseTitle: sub.syllabusItem.course.title,
     courseCode: sub.syllabusItem.course.code,

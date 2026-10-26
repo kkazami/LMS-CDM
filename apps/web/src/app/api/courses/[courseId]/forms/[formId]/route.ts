@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork } from '@/lib/academic-task';
 import { parseFormSettings, checkFormSchedule } from '@/lib/forms/settings';
 import { publicForm, studentQuestionConfig } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
@@ -163,6 +164,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const updated = await db.$transaction(async (tx) => {
+      const current = await tx.form.findUniqueOrThrow({ where: { id: formId }, select: { syllabusItemId: true } });
+      await assertOrdinaryClasswork(tx, current.syllabusItemId);
       const form = await tx.form.update({
         where: { id: formId },
         data: updateData,
@@ -219,8 +222,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     // Delete backing syllabusItem (cascades to Form)
-    await db.syllabusItem.delete({
-      where: { id: form.syllabusItemId },
+    await db.$transaction(async tx => {
+      await assertOrdinaryClasswork(tx, form.syllabusItemId);
+      await tx.syllabusItem.delete({ where: { id: form.syllabusItemId } });
     });
 
     return NextResponse.json({ success: true });

@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { db } from '@/lib/db';
 import { requireCourseAccess, type CourseActor } from './course-access';
 import { AccessError } from './super-user-v1/actor';
@@ -10,7 +11,7 @@ export async function readGradebook(actor: CourseActor, courseId: string, page =
   const [enrollments, total, assignments, gradingPolicy] = await Promise.all([
     db.enrollment.findMany({ where: { courseId, status: 'APPROVED' }, select: { student: { select: { id: true, name: true, email: true, studentNumber: true } } }, orderBy: [{ student: { name: 'asc' } }, { id: 'asc' }], skip: (page - 1) * GRADEBOOK_PAGE_SIZE, take: GRADEBOOK_PAGE_SIZE }),
     db.enrollment.count({ where: { courseId, status: 'APPROVED' } }),
-    db.syllabusItem.findMany({ where: { courseId, type: { not: 'MATERIAL' }, maxPoints: { not: null } }, select: { id: true, title: true, maxPoints: true, type: true, dueDate: true }, orderBy: [{ orderIndex: 'asc' }, { id: 'asc' }], take: GRADEBOOK_ASSIGNMENT_LIMIT + 1 }),
+    db.syllabusItem.findMany({ where: { courseId, type: { not: 'MATERIAL' }, maxPoints: { not: null } }, select: { id: true, title: true, maxPoints: true, type: true, dueDate: true, labAssignment: await labsAvailable() ? ({ select: { id: true } } as const) : false as const }, orderBy: [{ orderIndex: 'asc' }, { id: 'asc' }], take: GRADEBOOK_ASSIGNMENT_LIMIT + 1 }),
     db.gradingPolicy.findUnique({ where: { courseId }, select: { weights: { select: { category: true, weightPercentage: true } } } }),
   ]);
   // Never silently calculate a final grade from a truncated assignment history.
@@ -30,6 +31,6 @@ export async function readGradebook(actor: CourseActor, courseId: string, page =
   if (submissions.some(sub => sub.attachments.length > 20)) throw new AccessError(422, 'A submission exceeds the interactive limit of 20 attachments. Open the assignment submissions page to review it.');
   for (const sub of submissions) grades[sub.studentId][sub.syllabusItemId] = { submissionId: sub.id, grade: sub.grade, status: sub.status, isReturned: sub.isReturned, submittedAt: sub.submittedAt?.toISOString() ?? null,
     attachments: sub.attachments.map(a => ({ ...a, url: `/api/submission-attachments/${a.id}` })) };
-  return { course: { id: course.id, title: course.title, code: course.code }, students, assignments: assignments.map(a => ({ ...a, dueDate: a.dueDate?.toISOString() ?? null })), grades, gradingPolicy,
+  return { course: { id: course.id, title: course.title, code: course.code }, students, assignments: assignments.map(a => ({ ...a, labAssignmentId: a.labAssignment?.id ?? null, dueDate: a.dueDate?.toISOString() ?? null })), grades, gradingPolicy,
     pagination: { page, pageSize: GRADEBOOK_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / GRADEBOOK_PAGE_SIZE)) } };
 }

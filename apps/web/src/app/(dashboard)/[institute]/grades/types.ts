@@ -7,7 +7,7 @@ export interface GradeRow {
   id: string;              // StudentSubmission.id
   syllabusItemId: string;  // SyllabusItem.id
   itemTitle: string;       // SyllabusItem.title
-  itemType: "ASSIGNMENT" | "QUIZ";
+  itemType: string;
   courseId: string;
   courseTitle: string;
   courseCode: string;

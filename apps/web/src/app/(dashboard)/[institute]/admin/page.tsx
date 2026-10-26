@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Library,
   FileText,
+  ShieldCheck,
   HardDrive,
   Sparkles,
   ArrowRight,
@@ -100,6 +101,14 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       icon: FileText,
       color: "#F59E0B",
       count: "System Activity",
+    },
+    {
+      title: "Security Tools",
+      description: "Review sessions, locked accounts, and security events",
+      href: `/${institute}/security`,
+      icon: ShieldCheck,
+      color: "#EF4444",
+      count: "Account Security",
     },
     {
       title: "Database Management",

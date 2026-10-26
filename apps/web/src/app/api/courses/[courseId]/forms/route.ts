@@ -1,5 +1,7 @@
+import { academicProvenance } from '@/lib/labs/readiness';
 import { parseFormSettings, checkFormSchedule } from '@/lib/forms/settings';
-import { publicForm, visibleForms, visibleSyllabusForms } from '@/lib/forms/availability';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
+import { publicForm, visibleForms } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
@@ -38,7 +40,7 @@ export async function GET(request: Request, context: RouteContext) {
       where: {
         courseId,
         // Students only see published or closed forms
-        ...(isInstructor ? {} : { ...visibleForms(), syllabusItem: visibleSyllabusForms(undefined, session.user.id) }),
+        ...(isInstructor ? {} : { ...visibleForms(), syllabusItem: await visibleSyllabusForms(undefined, session.user.id) }),
       },
       include: {
         _count: {
@@ -136,6 +138,7 @@ export async function POST(request: Request, context: RouteContext) {
         data: {
           courseId,
           type: syllabusType,
+          ...await academicProvenance('UNTOUCHED', tx),
           title: title.trim(),
           description: description.trim(),
           dueDate: body.closesAt,

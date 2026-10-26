@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork } from '@/lib/academic-task';
 import { formIsOpen, publicForm } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
@@ -82,6 +83,7 @@ export async function POST(request: Request, context: RouteContext) {
       .reduce((sum, q) => sum + (q.points || 0), 0);
 
     const updated = await db.$transaction(async (tx) => {
+      await assertOrdinaryClasswork(tx, form.syllabusItemId);
       const pubForm = await tx.form.update({
         where: { id: formId },
         data: {

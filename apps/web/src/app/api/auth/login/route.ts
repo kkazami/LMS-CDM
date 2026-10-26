@@ -28,9 +28,21 @@ export async function POST(request: Request) {
   const corsHeaders = getCorsHeaders(request);
   const clientIp = getClientIp(request);
   let stage = "rate-limit";
+  const startedAt = performance.now();
+  const durations: Record<string, number> = {};
+  const timed = async <T,>(name: string, operation: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    try { return await operation(); }
+    catch (error) { stage = name; throw error; }
+    finally { durations[name] = Math.round(performance.now() - start); }
+  };
+  const responseHeaders = () => ({
+    ...corsHeaders,
+    'Server-Timing': [...Object.entries(durations).map(([name, duration]) => `${name};dur=${duration}`), `total;dur=${Math.round(performance.now() - startedAt)}`].join(', '),
+  });
 
   try {
-    await persistentLimit('login-ip:' + clientIp, RATE_LIMIT_CONFIG.loginIp.maxRequests, RATE_LIMIT_CONFIG.loginIp.windowMs);
+    await timed('rate-limit', () => persistentLimit('login-ip:' + clientIp, RATE_LIMIT_CONFIG.loginIp.maxRequests, RATE_LIMIT_CONFIG.loginIp.windowMs));
     const body = await request.json();
 
     // 1. Dual Rate Limiting (IP-based and Account-based)
@@ -66,17 +78,17 @@ export async function POST(request: Request) {
 
     // 3. User lookup
     stage = "account-lookup";
-    const matches = await db.user.findMany({
+    const matches = await timed('account-lookup', () => db.user.findMany({
       where: identifier.includes('@') ? { email: { equals: identifier.toLowerCase(), mode: 'insensitive' } } : { studentNumber: identifier.toUpperCase(), role: { equals: 'STUDENT', mode: 'insensitive' } },
       include: {
         institute: true,
       },
       take: 2,
-    });
+    }));
     // Legacy rosters may contain duplicate IDs until reconciliation is complete.
     const user = matches.length === 1 ? matches[0] : null;
 
-    await persistentLimit('login-account:' + (user?.id ?? identifier.toLowerCase()), RATE_LIMIT_CONFIG.loginAccount.maxRequests, RATE_LIMIT_CONFIG.loginAccount.windowMs);
+    await timed('account-limit', () => persistentLimit('login-account:' + (user?.id ?? identifier.toLowerCase()), RATE_LIMIT_CONFIG.loginAccount.maxRequests, RATE_LIMIT_CONFIG.loginAccount.windowMs));
     if (user && user.activationStatus === undefined) {
       console.warn('LOGIN_DATABASE_CLIENT_SCHEMA_STALE');
       return NextResponse.json(
@@ -93,7 +105,7 @@ export async function POST(request: Request) {
 
     // 4. Verify password hash
     stage = "password-check";
-    const passwordMatches = await compare(password, user.password);
+    const passwordMatches = await timed('password-check', () => compare(password, user.password!));
     if (!passwordMatches) {
       return NextResponse.json(
         { message: "Invalid email, password, or institute." },
@@ -135,17 +147,28 @@ export async function POST(request: Request) {
     if (isSuperUser && !initialSuperInstitute) return NextResponse.json({ message: 'Institute not found.' }, { status: 404, headers: corsHeaders });
     const userAgent = request.headers.get("user-agent") || undefined;
     stage = "session-creation";
-    const { token, expiresAt } = await createSession(user.id, {
-      userAgent,
-      ipAddress: clientIp,
-    }, user.password, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState });
-
-    const requiresEnrollment = await needsClassEnrollment(user);
+    // Enrollment only chooses the next screen; every protected request checks it
+    // again. Its read can overlap session creation after credentials are verified.
+    const [sessionResult, enrollmentResult] = await Promise.allSettled([
+      timed('session-creation', () => createSession(user.id, {
+        userAgent,
+        ipAddress: clientIp,
+      }, user.password!, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState })),
+      timed('enrollment-check', () => needsClassEnrollment(user)),
+    ]);
+    // Drain both operations before responding, including failures, so session
+    // creation cannot finish and try to write a cookie after the response closes.
+    if (sessionResult.status === 'rejected') { stage = 'session-creation'; throw sessionResult.reason; }
+    if (enrollmentResult.status === 'rejected') { stage = 'enrollment-check'; throw enrollmentResult.reason; }
+    const { token, expiresAt } = sessionResult.value;
+    const requiresEnrollment = enrollmentResult.value;
     // 8. Daily login rewards (for enrolled students)
     let loginRewardResult: { rewarded: boolean; streak: number } | null = null;
     try {
-      if (user.role === "STUDENT" && !requiresEnrollment) {
-        loginRewardResult = await processLoginReward(user.id);
+      // Web renders daily EXP and its receipt in the dashboard, which processes
+      // any due reward before display. API/mobile callers keep an immediate receipt.
+      if (user.role === "STUDENT" && !requiresEnrollment && request.headers.get('x-lms-login-rewards') !== 'dashboard') {
+        loginRewardResult = await timed('login-reward', () => processLoginReward(user.id));
       }
     } catch (rewardErr) {
       console.error("LOGIN_REWARD_ERROR", rewardErr);
@@ -193,11 +216,14 @@ export async function POST(request: Request) {
             }
           : null,
       },
-      { status: 200, headers: corsHeaders }
+      { status: 200, headers: responseHeaders() }
     );
   } catch (error: unknown) {
     if (error instanceof AccessError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
-    if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
+    if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, {
+      status: error.status,
+      headers: { ...responseHeaders(), ...(error.retryAfterSeconds ? { 'Retry-After': String(error.retryAfterSeconds) } : {}) },
+    });
     const code = error && typeof error === "object" && "code" in error ? String(error.code) : error instanceof Error ? error.name : "UNKNOWN";
     console.error('LOGIN_OPERATION_UNAVAILABLE', { stage, code: /^[A-Za-z0-9_]{1,40}$/.test(code) ? code : "UNKNOWN" });
 
@@ -205,7 +231,7 @@ export async function POST(request: Request) {
       {
         message: "Something went wrong during login.",
       },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: responseHeaders() }
     );
   }
 }

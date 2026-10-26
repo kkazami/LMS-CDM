@@ -14,10 +14,12 @@ import {
   Edit2,
   Trash2,
   GripVertical,
+  FlaskConical,
 } from "lucide-react";
 
 interface SyllabusItemData {
   id: string;
+  labAssignmentId?: string | null;
   type: string;
   title: string;
   description: string;
@@ -188,6 +190,7 @@ export default function SyllabusAccordion({
                           </p>
                         )}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          {item.labAssignmentId && <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Guided practical lab</span>}
                           {item.dueDate && (
                             <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-[#8B92A5]">
                               <Calendar className="h-3 w-3" />
@@ -209,8 +212,9 @@ export default function SyllabusAccordion({
                         </div>
                       </div>
 
-                      {canEdit && (
+                      {canEdit && !item.labAssignmentId && (
                         <div className="flex shrink-0 items-center gap-1">
+                          {instituteCode.toLowerCase() === 'ics' && item.type !== 'MATERIAL' && <button type="button" onClick={e => { e.preventDefault(); window.location.assign(`/ics/courses/${courseId}/labs?itemId=${encodeURIComponent(item.id)}`); }} aria-label={`Link practical lab to ${item.title}`} title="Link practical lab" className="rounded-lg p-2 text-orange-600 hover:bg-orange-50"><FlaskConical className="h-4 w-4" /></button>}
                           <button
                             onClick={(e) => { e.preventDefault(); onEdit?.(item); }}
                             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center active:scale-95"

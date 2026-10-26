@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Gradebook Exporter Skill
@@ -37,7 +38,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       orderBy: { student: { name: "asc" } },
     }),
     db.syllabusItem.findMany({
-      where: { courseId, type: { in: ["ASSIGNMENT", "QUIZ"] } },
+      where: { courseId, OR: [{ type: { in: ["ASSIGNMENT", "QUIZ"] } }, ...await labsAvailable() ? [{ labAssignment: { isNot: null } }] : []] },
       select: { id: true, title: true, maxPoints: true, type: true, orderIndex: true },
       orderBy: { orderIndex: "asc" },
     }),

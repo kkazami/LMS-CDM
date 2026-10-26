@@ -29,6 +29,7 @@ interface SyllabusItemAttachment {
 
 interface SyllabusItemData {
   id: string;
+  labAssignmentId?: string | null;
   type: string;
   title: string;
   description: string;
@@ -74,6 +75,7 @@ export default function ClassworkClient({
   instituteCode,
   theme,
   canEdit,
+  labsReady = true,
   studentGroups,
 }: {
   items: SyllabusItemData[];
@@ -81,6 +83,7 @@ export default function ClassworkClient({
   instituteCode: string;
   theme: InstituteTheme;
   canEdit: boolean;
+  labsReady?: boolean;
   studentGroups: StudentGroup[];
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -192,6 +195,7 @@ export default function ClassworkClient({
             title="Classwork Study"
           />
         </div>
+        {canEdit && instituteCode.toLowerCase() === 'ics' && !labsReady && <p role="status" className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950">Guided practical labs need a database upgrade before they can be used. Existing Classwork is available.</p>}
         {canEdit && (
           <div className="flex items-center justify-end gap-3">
             <Link
@@ -207,6 +211,7 @@ export default function ClassworkClient({
               <Plus className="mr-1.5 h-4 w-4" />
               Add Material / Task
             </Button>
+            {instituteCode.toLowerCase() === 'ics' && <Link href={`/${instituteCode}/courses/${courseId}/labs`} className="inline-flex min-h-11 items-center rounded-xl border border-orange-200 px-4 py-2 text-sm font-medium text-orange-800 dark:border-orange-800 dark:text-orange-200">Guided practical labs</Link>}
           </div>
         )}
       </div>

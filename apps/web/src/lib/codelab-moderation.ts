@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { z } from 'zod';
 import { db } from './db';
 import { requireCourseAccess, type CourseActor } from './course-access';
@@ -16,10 +17,12 @@ export async function moderateCodeLab(actor: CourseActor, raw: unknown) {
   return db.$transaction(async tx => {
     const first = await tx.activitySubmission.findUnique({ where: { id: input.data.submissionId }, include: { template: true } });
     if (!first) throw new AccessError(404, 'Submission not found.');
+    if (first.template.syllabusItemId) await assertOrdinaryClasswork(tx, first.template.syllabusItemId);
     await lockAcademicRecord(tx, first.studentId, first.template.syllabusItemId || first.templateId);
     const submission = await tx.activitySubmission.findUniqueOrThrow({ where: { id: first.id }, include: { student: true, template: { include: { course: { include: { institute: true } } } } } });
     const institute = await tx.institute.findUnique({ where: { id: actor.instituteId } });
     if (institute?.code !== 'ics' || input.data.instituteCode && input.data.instituteCode !== institute.code || submission.student.instituteId !== actor.instituteId || canonicalRole(submission.student.role) !== 'STUDENT') throw new AccessError(404, 'Submission not found.');
+    if (submission.template.syllabusItemId !== first.template.syllabusItemId) throw new AccessError(409, 'Activity linkage changed. Retry.');
     if (submission.template.syllabusItemId) {
       const item = await tx.syllabusItem.findUnique({ where: { id: submission.template.syllabusItemId } });
       if (!item || item.courseId !== submission.template.courseId) throw new AccessError(404, 'Activity course does not match.');
@@ -42,6 +45,7 @@ export async function moderateCodeLab(actor: CourseActor, raw: unknown) {
       Object.assign(state, { isRejected: true, rejectionReason: input.data.reason || 'Submission rejected by instructor.', rejectedAt: new Date().toISOString(), rejectedBy: actor.id });
       score = 0;
     }
+    if (submission.template.syllabusItemId) await markAcademicWorkStarted(tx, submission.template.syllabusItemId, submission.studentId);
     if (action === 'delete') await tx.activitySubmission.delete({ where: { id: submission.id } });
     else await tx.activitySubmission.update({ where: { id: submission.id }, data: { score, passed: score >= 60, stateCheck: JSON.stringify(state) } });
     if (submission.template.syllabusItemId) await tx.studentSubmission.updateMany({ where: { syllabusItemId: submission.template.syllabusItemId, studentId: submission.studentId },

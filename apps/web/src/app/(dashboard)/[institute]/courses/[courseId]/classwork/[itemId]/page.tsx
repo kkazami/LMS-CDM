@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { requireCourseAccess } from '@/lib/course-access';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { formIsVisible } from '@/lib/forms/availability';
@@ -35,6 +36,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
   const item = await db.syllabusItem.findUnique({
     where: { id: itemId },
     include: {
+      labAssignment: await labsAvailable() ? ({ select: { id: true } } as const) : false as const,
       attachments: { orderBy: { createdAt: "asc" } },
       course: { select: { id: true, title: true, code: true } },
       form: {
@@ -53,6 +55,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
   });
 
   if (!item || item.courseId !== courseId || isStudent && item.form && !formIsVisible(item.form)) notFound();
+  if (item.labAssignment) redirect(`/${institute}/courses/${courseId}/labs/${item.labAssignment.id}`);
 
   // Access control: student must be enrolled
   if (isStudent) {

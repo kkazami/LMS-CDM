@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { formIsOpen } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
@@ -72,6 +73,9 @@ export async function PUT(request: Request, context: RouteContext) {
     const parsedDate = answerDate ? new Date(answerDate) : null;
 
     const answer = await db.$transaction(async tx => {
+      const backing = await tx.form.findUniqueOrThrow({ where: { id: formId }, select: { syllabusItemId: true } });
+      await assertOrdinaryClasswork(tx, backing.syllabusItemId);
+      await markAcademicWorkStarted(tx, backing.syllabusItemId, session.user.id);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['form-attempt', attemptId])}, 0))`;
       const current = await tx.formAttempt.findUniqueOrThrow({ where: { id: attemptId }, include: { form: true } });
       if (current.status !== 'IN_PROGRESS' || !formIsOpen(current.form) || current.deadlineAt && new Date() >= current.deadlineAt) throw new AccessError(403, 'This attempt is closed for answers.');

@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork } from '@/lib/academic-task';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -49,7 +50,9 @@ export async function PATCH(request: Request) {
     }
 
     // A nested update saves publication and rewards atomically.
-    const updated = await db.syllabusItem.update({
+    const updated = await db.$transaction(async tx => {
+      await assertOrdinaryClasswork(tx, syllabusItemId);
+      return tx.syllabusItem.update({
       where: { id: syllabusItemId },
       data: {
         ...(typeof leaderboardEnabled === "boolean" ? { leaderboardEnabled } : {}),
@@ -60,6 +63,8 @@ export async function PATCH(request: Request) {
       include: {
         leaderboardRewards: { orderBy: { placement: "asc" } },
       },
+    });
+
     });
 
     return NextResponse.json({

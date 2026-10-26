@@ -1,6 +1,7 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { requireCourseAccess } from '@/lib/course-access';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
@@ -40,8 +41,9 @@ export default async function ClassworkPage({ params }: PageProps) {
 
   // Get all syllabus items
   let syllabusItems = await db.syllabusItem.findMany({
-    where: { courseId, ...(!canEdit ? visibleSyllabusForms() : {}) },
+    where: { courseId, ...(!canEdit ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
     include: {
+      labAssignment: await labsAvailable() ? ({ select: { id: true } } as const) : false as const,
       targetGroups: {
         include: {
           group: { select: { groupName: true } },
@@ -79,6 +81,7 @@ export default async function ClassworkPage({ params }: PageProps) {
   // Serialize dates
   const serialized = syllabusItems.map((item) => ({
     id: item.id,
+    labAssignmentId: item.labAssignment?.id ?? null,
     type: item.type,
     title: item.title,
     description: item.description,
@@ -107,6 +110,7 @@ export default async function ClassworkPage({ params }: PageProps) {
 
   return (
     <ClassworkClient
+      labsReady={await labsAvailable()}
       items={serialized}
       courseId={courseId}
       instituteCode={institute}

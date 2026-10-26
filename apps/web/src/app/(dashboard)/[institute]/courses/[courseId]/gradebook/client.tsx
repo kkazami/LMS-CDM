@@ -120,6 +120,8 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
         if (aIdx < data.assignments.length - 1) setSelectedCell({ studentId: selectedCell.studentId, assignmentId: data.assignments[aIdx + 1].id });
       } else if (e.key === "Enter") {
         e.preventDefault();
+        const lab = data.assignments.find(a => a.id === selectedCell.assignmentId)?.labAssignmentId;
+        if (lab) { window.location.assign(`/${instituteCode}/courses/${courseId}/labs/${lab}?studentId=${encodeURIComponent(selectedCell.studentId)}`); return; }
         setEditingCell(selectedCell);
       }
     }
@@ -420,13 +422,14 @@ export default function GradebookClient({ data, courseId, courseTitle, institute
                       }`}
                       style={isSelected ? { outlineColor: theme?.colors.primary ?? "#3B82F6" } : undefined}
                       onClick={() => {
+                        if (assignment.labAssignmentId) return;
                         setSelectedCell({ studentId: student.id, assignmentId: assignment.id });
                         if (!isMobileView) {
                           setEditingCell({ studentId: student.id, assignmentId: assignment.id });
                         }
                       }}
                     >
-                      {isEditing && !isMobileView ? (
+                      {assignment.labAssignmentId ? <Link href={`/${instituteCode}/courses/${courseId}/labs/${assignment.labAssignmentId}?studentId=${encodeURIComponent(student.id)}`} className="inline-flex min-h-10 flex-col justify-center gap-1 text-sm text-orange-700 dark:text-orange-300"><span>{displayGrade ?? 'Review lab'}</span><span className="text-[10px]">Open practical lab</span></Link> : isEditing && !isMobileView ? (
                         <div className="flex items-center justify-between gap-1.5 min-w-[75px]">
                           <input
                             autoFocus
