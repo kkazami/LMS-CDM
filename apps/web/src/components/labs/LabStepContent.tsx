@@ -3,11 +3,16 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import type { LabStep, LabResponse } from './types';
+import LabStepResources from './LabStepResources';
 
-export default function LabStepContent({ step, response, disabled, onChange }: {
+type Props = {
   step: LabStep; response?: LabResponse; disabled: boolean;
   onChange: (answer: LabResponse['answer']) => void;
-}) {
+};
+export default function LabStepContent(props: Props) {
+  return <div className="space-y-5"><StepBody {...props} /><LabStepResources key={props.step.key} resources={props.step.config.resources} /></div>;
+}
+function StepBody({ step, response, disabled, onChange }: Props) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
   const answer = response?.answer ?? {};
@@ -26,7 +31,7 @@ export default function LabStepContent({ step, response, disabled, onChange }: {
     </div>}
     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
       <input type="checkbox" className="mt-1 h-4 w-4 accent-orange-600" disabled={disabled} checked={answer.acknowledged ?? false} onChange={e => onChange({ acknowledged: e.target.checked })} />
-      <span className="text-sm">{step.type === 'COMMAND' ? 'I completed these commands in my approved environment.' : 'I have read these instructions.'}</span>
+      <span className="text-sm">I completed this step.</span>
     </label>
   </div>;
   if (step.type === 'CHECKLIST') return <div className="space-y-3">{step.config.items?.map(item => <label key={item.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">

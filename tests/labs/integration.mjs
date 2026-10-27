@@ -165,6 +165,63 @@ try {
     await rejects(() => api.saveTemplate(teacher, template.id, { ...api.MYSQL_LAB, expectedRevision: published.versions[0].revision }), 409);
   });
 
+  await check('new ICS starters create private editable drafts through the normal template service', async () => {
+    for (const { key: preset, title } of api.LAB_PRESET_OPTIONS.filter(option => option.key !== 'MYSQL')) {
+      const draft = await api.createTemplate(teacher, { preset });
+      assert.equal(draft.title, title);
+      assert.equal(draft.isShared, false);
+      assert.equal(draft.versions[0].status, 'DRAFT');
+      assert.ok(draft.versions[0].steps.some(step => step.type === 'EVIDENCE_UPLOAD'));
+      await rejects(() => api.getTemplate(student, draft.id), 403);
+      await rejects(() => api.getTemplate(foreign, draft.id), 403);
+    }
+    assert.equal((await api.listTemplates(teacher)).length, api.LAB_PRESET_OPTIONS.length);
+  });
+
+  await check('instructional screenshots require scanning, ownership, exact-version publication and current student access', async () => {
+    await rejects(() => api.uploadTemplateScreenshot(student, image()), 403);
+    await rejects(() => api.uploadTemplateScreenshot(foreign, image()), 403);
+    await rejects(() => api.uploadTemplateScreenshot(teacher, new File(['plain text'], 'not-image.png', { type: 'image/png' })), 400);
+    await rejects(() => api.uploadTemplateScreenshot(teacher, new File([new Uint8Array(api.LAB_MAX_BYTES + 1)], 'large.png', { type: 'image/png' })), 413);
+    const before = await db.privateAsset.count();
+    scanner.setMode('infected'); await rejects(() => api.uploadTemplateScreenshot(teacher, image()), 400);
+    scanner.setMode('unavailable'); await rejects(() => api.uploadTemplateScreenshot(teacher, image()), 503);
+    assert.equal(await db.privateAsset.count(), before); scanner.setMode('clean');
+    as(teacher);
+    const body = new FormData(); body.set('file', image('setup.png'));
+    const uploaded = await api.handleLabRequest(new Request('https://lms.example.invalid/api/labs/templates/media', { method: 'POST', body }), { path: ['templates', 'media'] });
+    assert.equal(uploaded.status, 200); as(null);
+    const file = (await uploaded.json()).data; const assetId = file.url.split('/').at(-1);
+    const definition = { ...api.MYSQL_LAB, title: 'Synthetic visual instructions', steps: api.MYSQL_LAB.steps.map((step, index) => index ? step : { ...step, config: { ...step.config, resources: [
+      { type: 'IMAGE', title: 'Synthetic setup', url: file.url },
+      { type: 'YOUTUBE', title: 'Optional video', url: 'https://youtu.be/IyumH8CiUPQ?t=30' },
+    ] } }) };
+    await rejects(() => api.createTemplate(unrelated, definition), 403);
+    const visual = await api.createTemplate(teacher, definition);
+    assert.equal(visual.versions[0].steps[0].config.resources[1].url, 'https://www.youtube.com/watch?v=IyumH8CiUPQ&t=30');
+    assert.deepEqual((await api.readPrivateUpload(teacher, assetId)).bytes, png);
+    await rejects(() => api.readPrivateUpload(student, assetId), 404);
+    await rejects(() => api.readPrivateUpload(unrelated, assetId), 404);
+    await rejects(() => api.readPrivateUpload(foreign, assetId), 403);
+    const version = await api.publishTemplate(teacher, visual.id, { expectedRevision: 0 });
+    const group = await db.studentGroup.create({ data: { courseId: 'course', groupName: 'Visual lab group', members: { create: { studentId: student.id } } } });
+    const linked = await api.createAssignment(teacher, 'course', { versionId: version.versions[0].id, category: 'ACTIVITY', maxPoints: 10, opensAt: new Date(Date.now() + 86400000).toISOString(), targetGroupIds: [group.id] });
+    await rejects(() => api.readPrivateUpload(student, assetId), 404);
+    await api.patchAssignment(teacher, 'course', linked.id, { published: true });
+    await rejects(() => api.readPrivateUpload(student, assetId), 404);
+    await api.patchAssignment(teacher, 'course', linked.id, { opensAt: new Date(Date.now() - 60000).toISOString() });
+    assert.deepEqual((await api.readPrivateUpload(student, assetId)).bytes, png);
+    await rejects(() => api.readPrivateUpload(other, assetId), 404);
+    await db.enrollment.update({ where: { id: 'student-enrollment' }, data: { status: 'PENDING' } });
+    try { await rejects(() => api.readPrivateUpload(student, assetId), 404); }
+    finally { await db.enrollment.update({ where: { id: 'student-enrollment' }, data: { status: 'APPROVED' } }); }
+    const next = await api.draftTemplate(teacher, visual.id);
+    await api.saveTemplate(teacher, visual.id, { ...api.MYSQL_LAB, expectedRevision: next.versions[0].revision });
+    assert.deepEqual((await api.readPrivateUpload(student, assetId)).bytes, png, 'Removing a screenshot from a newer draft keeps the published version readable.');
+    await api.patchAssignment(teacher, 'course', linked.id, { archived: true });
+    await rejects(() => api.readPrivateUpload(student, assetId), 404);
+  });
+
   await check('legacy UNKNOWN placeholders cannot link and retain their IDs', async () => {
     await rejects(() => api.createAssignment(teacher, 'course', { versionId: published.versions[0].id, syllabusItemId: 'legacy' }), 409);
     assert.equal((await db.studentSubmission.findUniqueOrThrow({ where: { id: 'legacy-placeholder' } })).id, 'legacy-placeholder');
@@ -197,10 +254,26 @@ try {
   await check('publishing and opening resume one attempt; course and student isolation hold', async () => {
     assignment = await api.createAssignment(teacher, 'course', { versionId: published.versions[0].id, category: 'ACTIVITY', maxPoints: 100, dueDate: deadline() });
     await rejects(() => api.openAttempt(student, 'course', assignment.id), 404);
+    assert.equal(await api.scheduledAssignment(student, 'course', assignment.id), null);
+    assert.equal(await db.syllabusItem.count({ where: { id: assignment.syllabusItem.id, ...await api.visibleSyllabusForms(undefined, student.id, { scheduledLabMetadata: true }) } }), 0);
     let views = await academicViews();
     assert.equal(views.assignments.some(item => item.id === assignment.syllabusItem.id), false);
     assert.equal(views.todo.some(item => item.id === assignment.syllabusItem.id), false);
     await api.patchAssignment(teacher, 'course', assignment.id, { published: true, opensAt: new Date(Date.now() + 86400000).toISOString() });
+    assert.equal(await db.syllabusItem.count({ where: { id: assignment.syllabusItem.id, ...await api.visibleSyllabusForms(undefined, student.id, { scheduledLabMetadata: true }) } }), 1);
+    await rejects(() => api.getAssignment(student, 'course', assignment.id), 404);
+    const notice = await api.scheduledAssignment(student, 'course', assignment.id);
+    assert.equal(notice.syllabusItem.title, assignment.syllabusItem.title);
+    assert.equal('version' in notice, false);
+    assert.equal(await api.scheduledAssignment(unrelated, 'course', assignment.id), null);
+    await rejects(() => api.scheduledAssignment(foreign, 'course', assignment.id), 403);
+    await db.enrollment.update({ where: { courseId_studentId: { courseId: 'course', studentId: other.id } }, data: { status: 'PENDING' } });
+    await rejects(() => api.scheduledAssignment(other, 'course', assignment.id), 403);
+    await db.enrollment.update({ where: { courseId_studentId: { courseId: 'course', studentId: other.id } }, data: { status: 'APPROVED' } });
+    await db.studentGroup.create({ data: { id: 'scheduled-group', courseId: 'course', groupName: 'Scheduled target' } });
+    await db.syllabusTargetGroup.create({ data: { syllabusItemId: assignment.syllabusItem.id, groupId: 'scheduled-group' } });
+    assert.equal(await api.scheduledAssignment(student, 'course', assignment.id), null);
+    await db.syllabusTargetGroup.deleteMany({ where: { syllabusItemId: assignment.syllabusItem.id } });
     views = await academicViews();
     assert.equal(views.assignments.some(item => item.id === assignment.syllabusItem.id), false);
     assert.equal(views.todo.some(item => item.id === assignment.syllabusItem.id), false);

@@ -342,7 +342,8 @@ export async function deleteSyllabusItem(
 
     await db.$transaction(async tx => {
       await assertOrdinaryClasswork(tx, itemId);
-      await tx.syllabusItem.delete({ where: { id: itemId } });
+      if (await tx.formAttempt.count({ where: { form: { syllabusItemId: itemId, courseId } } })) throw new Error('Students have started this assessment. Close the form instead to preserve their work and grades.');
+      await tx.syllabusItem.delete({ where: { id: itemId, courseId } });
     });
 
     revalidatePath(

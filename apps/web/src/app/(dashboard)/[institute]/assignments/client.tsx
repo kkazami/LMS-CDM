@@ -5,11 +5,10 @@ import Link from "next/link";
 import {
   ChevronDown,
   ChevronUp,
-  ClipboardList,
-  BookOpenCheck,
   ClipboardCheck,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
 
 // ─── Interfaces ───
 
@@ -90,17 +89,6 @@ function getDueBadgeVariant(
   return "default";
 }
 
-/**
- * Generates a soft tint background and text color from a hex primary color.
- * E.g. #2563EB → bg with 15% opacity, text at full opacity.
- */
-function getIconColors(primaryHex: string): { bg: string; text: string } {
-  return {
-    bg: `${primaryHex}1A`, // ~10% opacity
-    text: primaryHex,
-  };
-}
-
 // ─── Section Component ───
 
 interface SectionProps {
@@ -123,7 +111,6 @@ function TodoSection({
   defaultOpen,
 }: SectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const iconColors = getIconColors(theme.colors.primary);
 
   const handleToggle = () => setIsOpen((prev) => !prev);
 
@@ -180,8 +167,8 @@ function TodoSection({
             </p>
           ) : (
             items.map((item) => {
-              const isAssignment = item.type === "ASSIGNMENT";
-              const IconComponent = isAssignment ? ClipboardList : BookOpenCheck;
+              const appearance = getClassworkAppearance(item.type);
+              const IconComponent = appearance.icon;
 
               const dueBadgeVariant = item.dueDate
                 ? getDueBadgeVariant(item.dueDate, serverNow)
@@ -207,11 +194,12 @@ function TodoSection({
                   <div
                     className="flex items-center justify-center h-10 w-10 rounded-xl shrink-0"
                     style={{
-                      backgroundColor: iconColors.bg,
-                      color: iconColors.text,
+                      backgroundColor: `${appearance.color}15`,
+                      color: appearance.color,
                     }}
                   >
-                    <IconComponent className="h-5 w-5" />
+                    <IconComponent className="h-5 w-5" aria-hidden="true"/>
+                    <span className="sr-only">{appearance.label}</span>
                   </div>
 
                   {/* Content */}

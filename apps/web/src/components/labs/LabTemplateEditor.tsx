@@ -5,6 +5,7 @@ import { ArrowUp, ArrowDown, Plus, Trash2, Save, Eye } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { getInstituteTheme } from '@/lib/get-institute-theme';
 import LabStepContent from './LabStepContent';
+import LabStepResourceEditor from './LabStepResourceEditor';
 import { focusLabControl, useLabDialogs } from './LabDialogs';
 import { draftProblems } from './authoring';
 import type { LabDefinition, LabStep, LabStepType } from './types';
@@ -23,8 +24,8 @@ function newStep(type: LabStepType): LabStep {
     type === 'TEXT_RESPONSE' ? { prompt: '', maxLength: 2000 } : { instructions: '', minFiles: 1, maxFiles: 1 } };
 }
 
-export default function LabTemplateEditor({ initial, busy, onSave, onClose }: {
-  initial: LabDefinition; busy: boolean; onSave: (definition: LabDefinition) => Promise<boolean>; onClose: () => void;
+export default function LabTemplateEditor({ initial, busy, onSave, onClose, onUploadBusy }: {
+  initial: LabDefinition; busy: boolean; onSave: (definition: LabDefinition) => Promise<boolean>; onClose: () => void; onUploadBusy?: (busy: boolean) => void;
 }) {
   const { confirm, announce, dialog } = useLabDialogs();
   const [problems, setProblems] = useState<ReturnType<typeof draftProblems>>([]);
@@ -32,12 +33,13 @@ export default function LabTemplateEditor({ initial, busy, onSave, onClose }: {
   const [dirty, setDirty] = useState(false);
   const [preview, setPreview] = useState(false);
   const [addType, setAddType] = useState<LabStepType>('INSTRUCTIONS');
+  const [uploading, setUploading] = useState(false);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !uploading) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+  }, [dirty, uploading]);
   function update(next: LabDefinition) { setDraft(next); setDirty(true); if (problems.length) setProblems(draftProblems(next)); }
   function stepAt(index: number, next: LabStep) { update({ ...draft, steps: draft.steps.map((s, i) => i === index ? next : s) }); }
   function move(index: number, direction: number) {
@@ -45,6 +47,7 @@ export default function LabTemplateEditor({ initial, busy, onSave, onClose }: {
     update({ ...draft, steps });
   }
   async function save() {
+    if (busy || uploading) return;
     const missing = draftProblems(draft); setProblems(missing);
     if (missing.length) {
       setPreview(false);
@@ -53,8 +56,8 @@ export default function LabTemplateEditor({ initial, busy, onSave, onClose }: {
     }
     if (await onSave(draft)) setDirty(false);
   }
-  return <section id="lab-editor" tabIndex={-1} aria-label="Practical lab editor" className="space-y-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-7 dark:border-slate-700 dark:bg-slate-900">
-    <fieldset disabled={busy} aria-label="Lab draft fields" className="min-w-0 space-y-6 border-0 p-0">
+  return <section id="lab-editor" tabIndex={-1} aria-label="Practical lab editor" className="scroll-mt-64 space-y-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-7 dark:border-slate-700 dark:bg-slate-900">
+    <fieldset disabled={busy || uploading} aria-label="Lab draft fields" className="min-w-0 space-y-6 border-0 p-0">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-xl font-semibold">Edit lab instructions</h2><p className="mt-1 text-xs text-slate-500">{dirty ? 'Unsaved changes' : 'Draft editor'} · published instructions stay unchanged</p></div>
       <div className="flex gap-2"><Button theme={theme} variant="secondary" onClick={() => setPreview(!preview)}><Eye size={16} className="mr-2" />{preview ? 'Edit' : 'Preview'}</Button><Button theme={theme} variant="ghost" onClick={async () => { if (!dirty || await confirm('Discard unsaved changes?', 'Your latest edits have not been saved. You can keep editing or close this draft.', 'Discard changes')) onClose(); }}>Close editor</Button></div>
@@ -80,7 +83,8 @@ export default function LabTemplateEditor({ initial, busy, onSave, onClose }: {
         {step.type === 'COMMAND' && <label className="block space-y-1 text-sm">Commands to display<textarea className={input + ' font-mono'} rows={5} maxLength={10000} value={step.config.command ?? ''} onChange={e => stepAt(index, { ...step, config: { ...step.config, command: e.target.value } })} /></label>}
         {step.type === 'TEXT_RESPONSE' && <><label className="block space-y-1 text-sm">Question<textarea className={input} rows={3} maxLength={10000} value={step.config.prompt ?? ''} onChange={e => stepAt(index, { ...step, config: { ...step.config, prompt: e.target.value } })} /></label><label className="block space-y-1 text-sm">Maximum answer length<input className={input} type="number" min={1} max={5000} value={step.config.maxLength} onChange={e => stepAt(index, { ...step, config: { ...step.config, maxLength: Number(e.target.value) } })} /></label></>}
         {step.type === 'EVIDENCE_UPLOAD' && <><label className="block space-y-1 text-sm">Evidence instructions<textarea className={input} rows={3} maxLength={10000} value={step.config.instructions ?? ''} onChange={e => stepAt(index, { ...step, config: { ...step.config, instructions: e.target.value } })} /></label><div className="flex gap-4">{(['minFiles', 'maxFiles'] as const).map(field => <label key={field} className="space-y-1 text-sm">{field === 'minFiles' ? 'Minimum files' : 'Maximum files'}<input className={input} type="number" min={field === 'minFiles' ? 0 : 1} max={3} value={step.config[field]} onChange={e => stepAt(index, { ...step, config: { ...step.config, [field]: Number(e.target.value) } })} /></label>)}</div></>}
-        {step.type === 'CHECKLIST' && <div className="space-y-2">{step.config.items?.map((item, i) => <div key={item.id} className="flex items-center gap-2"><input aria-label={'Checklist item ' + (i + 1)} className={input} maxLength={300} value={item.label} onChange={e => stepAt(index, { ...step, config: { items: step.config.items?.map((v, n) => n === i ? { ...v, label: e.target.value } : v) } })} /><label className="flex shrink-0 items-center gap-1 text-xs"><input type="checkbox" checked={item.required} onChange={e => stepAt(index, { ...step, config: { items: step.config.items?.map((v, n) => n === i ? { ...v, required: e.target.checked } : v) } })} />Required</label><button type="button" aria-label={'Remove checklist item ' + (i + 1)} disabled={(step.config.items?.length ?? 0) <= 1} onClick={() => stepAt(index, { ...step, config: { items: step.config.items?.filter((_, n) => n !== i) } })} className="p-2 text-red-600 disabled:opacity-30"><Trash2 size={14} /></button></div>)}<button type="button" className="min-h-10 text-sm font-medium text-orange-700" onClick={() => stepAt(index, { ...step, config: { items: [...(step.config.items ?? []), { id: crypto.randomUUID(), label: '', required: true }] } })}>+ Add checklist item</button></div>}
+        {step.type === 'CHECKLIST' && <div className="space-y-2">{step.config.items?.map((item, i) => <div key={item.id} className="flex items-center gap-2"><input aria-label={'Checklist item ' + (i + 1)} className={input} maxLength={300} value={item.label} onChange={e => stepAt(index, { ...step, config: { ...step.config, items: step.config.items?.map((v, n) => n === i ? { ...v, label: e.target.value } : v) } })} /><label className="flex shrink-0 items-center gap-1 text-xs"><input type="checkbox" checked={item.required} onChange={e => stepAt(index, { ...step, config: { ...step.config, items: step.config.items?.map((v, n) => n === i ? { ...v, required: e.target.checked } : v) } })} />Required</label><button type="button" aria-label={'Remove checklist item ' + (i + 1)} disabled={(step.config.items?.length ?? 0) <= 1} onClick={() => stepAt(index, { ...step, config: { ...step.config, items: step.config.items?.filter((_, n) => n !== i) } })} className="p-2 text-red-600 disabled:opacity-30"><Trash2 size={14} /></button></div>)}<button type="button" className="min-h-10 text-sm font-medium text-orange-700" onClick={() => stepAt(index, { ...step, config: { ...step.config, items: [...(step.config.items ?? []), { id: crypto.randomUUID(), label: '', required: true }] } })}>+ Add checklist item</button></div>}
+        <LabStepResourceEditor stepNumber={index + 1} resources={step.config.resources} onChange={resources => stepAt(index, { ...step, config: { ...step.config, resources } })} onUploadBusy={pending => { setUploading(pending); onUploadBusy?.(pending); }} />
       </div>}
     </li>)}</ol>
     {!preview && <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-orange-200 bg-white p-4 shadow-lg dark:border-orange-900 dark:bg-slate-900"><select aria-label="New step type" className={input + ' sm:w-auto'} value={addType} onChange={e => setAddType(e.target.value as LabStepType)}>{Object.entries(stepNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><Button theme={theme} variant="secondary" disabled={draft.steps.length >= 30} onClick={() => update({ ...draft, steps: [...draft.steps, newStep(addType)] })}><Plus size={16} className="mr-2" />Add step</Button><Button id="lab-save-draft" className="ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-slate-900" theme={theme} loading={busy} onClick={() => void save()}><Save size={16} className="mr-2" />Save draft</Button></div>}

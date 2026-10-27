@@ -48,6 +48,16 @@ export async function handleLabRequest(request: Request, route: { courseId?: str
       if (parts[0] !== 'templates') throw new AccessError(404, 'Not found.');
       if (parts.length === 1 && method === 'GET') result = await service.listTemplates(actor);
       else if (parts.length === 1 && method === 'POST') result = await service.createTemplate(actor, await jsonBody(request));
+      else if (parts.length === 2 && parts[1] === 'media' && method === 'POST') {
+        await requireIcs(actor, true);
+        await persistentLimit(`upload:${actor.id}`, 20, 60000);
+        result = await withUploadSlot(async () => {
+          const data = await boundedUploadBody(request, LAB_MAX_BYTES);
+          const file = data.get('file');
+          if (!(file instanceof File) || [...data.keys()].length !== 1 || data.getAll('file').length !== 1) throw new AccessError(400, 'Provide exactly one screenshot.');
+          return service.uploadTemplateScreenshot(actor, file);
+        });
+      }
       else if (parts.length === 2 && method === 'GET') result = await service.getTemplate(actor, parts[1]);
       else if (parts.length === 2 && method === 'PATCH') result = await service.saveTemplate(actor, parts[1], await jsonBody(request));
       else if (parts.length === 3 && parts[2] === 'publish' && method === 'POST') result = await service.publishTemplate(actor, parts[1], await jsonBody(request));

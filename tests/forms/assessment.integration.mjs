@@ -23,7 +23,7 @@ try{
  const context=new AsyncLocalStorage();globalThis.__formActor=context;
  const root='@/app/api/courses/[courseId]/';
  const routes={list:['forms/route','GET'],create:['forms/route','POST'],detail:['forms/[formId]/route','GET'],settings:['forms/[formId]/route','PATCH'],remove:['forms/[formId]/route','DELETE'],publish:['forms/[formId]/publish/route','POST'],close:['forms/[formId]/close/route','POST'],start:['forms/[formId]/attempts/route','POST'],history:['forms/[formId]/attempts/route','GET'],attempt:['forms/[formId]/attempts/[attemptId]/route','GET'],answer:['forms/[formId]/attempts/[attemptId]/answers/route','PUT'],submit:['forms/[formId]/attempts/[attemptId]/submit/route','POST'],question:['forms/[formId]/questions/route','POST'],editQuestion:['forms/[formId]/questions/[questionId]/route','PATCH'],deleteQuestion:['forms/[formId]/questions/[questionId]/route','DELETE'],reorder:['forms/[formId]/questions/reorder/route','POST'],section:['forms/[formId]/sections/route','POST'],fromBank:['forms/[formId]/questions/from-bank/route','POST'],responses:['forms/[formId]/responses/route','GET'],response:['forms/[formId]/responses/[attemptId]/route','GET'],grade:['forms/[formId]/responses/[attemptId]/route','PATCH'],analytics:['forms/[formId]/analytics/route','GET'],export:['forms/[formId]/responses/export/route','GET'],classwork:['classwork/route','GET'],course:['route','GET'],studentGrades:['grades/route','GET']};
- const entry=Object.entries(routes).map(([name,[route,method]])=>`export {${method} as ${name}} from '${root+route}';`).join('\n')+"\nexport {GET as bankList,POST as bankCreate} from '@/app/api/question-bank/route';export {POST as bankCopy} from '@/app/api/question-bank/from-question/[questionId]/route';export {db} from '@/lib/db';export * from '@/lib/forms/availability';export {syncAttemptScoreToGradebook} from '@/lib/forms/gradebook-sync';";
+ const entry=Object.entries(routes).map(([name,[route,method]])=>`export {${method} as ${name}} from '${root+route}';`).join('\n')+"\nexport {GET as bankList,POST as bankCreate} from '@/app/api/question-bank/route';export {POST as bankCopy} from '@/app/api/question-bank/from-question/[questionId]/route';export {db} from '@/lib/db';export * from '@/lib/forms/availability';export {scheduledForm} from '@/lib/forms/access';export {visibleSyllabusForms} from '@/lib/forms/visibility';export {syncAttemptScoreToGradebook} from '@/lib/forms/gradebook-sync';";
  const bundle=await build({stdin:{contents:entry,resolveDir:path.resolve('apps/web/src'),loader:'ts'},bundle:true,write:false,platform:'node',format:'cjs',tsconfig:'apps/web/tsconfig.json',nodePaths:[path.resolve('apps/web/node_modules')],external:['@prisma/client','@prisma/adapter-pg','pg'],plugins:[{name:'isolated-actor',setup(b){
   b.onResolve({filter:/^@\/lib\/(api-auth|auth-session)$/},()=>({path:'actor',namespace:'fixture'}));
   b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:'export async function getSessionFromRequest(){ const user=globalThis.__formActor.getStore();return user?{user}:null; } export const getSession=getSessionFromRequest;'}));
@@ -57,12 +57,13 @@ try{
   assert.equal((await call('settings',{closesAt:new Date().toISOString()})).status,400);
   const form=await driver.db.form.findUniqueOrThrow({where:{id:future},include:{syllabusItem:true}});assert.equal(form.syllabusItem.dueDate.toISOString(),futureCloses.toISOString());
  });
- await check('future publication sends no premature or duplicate notification',async()=>{
+ await check('scheduled publication sends one accurate schedule notice and immediate publication deduplicates',async()=>{
   assert.equal((await call('publish')).status,200);assert.equal((await call('publish')).status,200);
-  assert.equal(await driver.db.notification.count({where:{type:'CLASSWORK'}}),0);
-  assert.equal((await call('publish',undefined,actors.teacher,{formId:open})).status,200);
-  assert.equal((await call('publish',undefined,actors.teacher,{formId:open})).status,200);
   assert.equal(await driver.db.notification.count({where:{type:'CLASSWORK'}}),1);
+  const notice=await driver.db.notification.findFirstOrThrow();assert.match(notice.message,/opens on/);
+  assert.equal((await call('publish',undefined,actors.teacher,{formId:open})).status,200);
+  assert.equal((await call('publish',undefined,actors.teacher,{formId:open})).status,200);
+  assert.equal(await driver.db.notification.count({where:{type:'CLASSWORK'}}),2);
  });
  await check('students cannot see scheduled/draft forms through lists, course details or classwork',async()=>{
   for(const name of ['list','classwork','course','studentGrades']){
@@ -73,6 +74,14 @@ try{
   assert.equal((await call('detail',undefined,actors.student,{formId:draft})).status,404);
   assert.equal(await driver.db.formAttempt.count(),0);
   assert.equal((await call('detail')).status,200);
+ });
+ await check('web metadata discovery exposes a scheduled notice without questions or starting an attempt',async()=>{
+  const notice=await driver.scheduledForm(actors.student,'course',future);assert.equal(notice.title,'Future Assessment');assert.deepEqual(Object.keys(notice).sort(),['closesAt','formType','opensAt','title']);
+  assert.equal(await driver.scheduledForm(actors.outsider,'course',future),null);
+  assert.equal(await driver.scheduledForm(actors.foreign,'course',future),null);
+  const items=await driver.db.syllabusItem.findMany({where:{courseId:'course',...await driver.visibleSyllabusForms(new Date(),'student',{scheduledFormMetadata:true})},select:{title:true}});
+  assert.ok(items.some(item=>item.title==='Future Assessment'));assert.ok(!items.some(item=>item.title==='Draft Assessment'));
+  assert.equal((await call('detail',undefined,actors.student)).status,404);assert.equal(await driver.db.formAttempt.count(),0);
  });
  await check('forms appear automatically at opening and answer keys/password hashes stay private',async()=>{
   await driver.db.form.update({where:{id:future},data:{opensAt:new Date(Date.now()-1000),passwordHash:await hash('room-secret',4)}});
@@ -96,6 +105,15 @@ try{
   params.attemptId=values[0].attemptId;assert.equal(await driver.db.formAttempt.count({where:{formId:future}}),1);assert.equal(new Date(values[0].deadlineAt).toISOString(),futureCloses.toISOString());
   const question=await driver.db.formQuestion.findFirstOrThrow({where:{formId:future}});params.questionId=question.id;
   const detail=await (await call('detail',undefined,actors.student)).json();assert.equal(detail.form.questions[0].config.options[0].isCorrect,undefined);
+ });
+ await check('started assessments preserve question content, category, history and visibility',async()=>{
+  assert.equal((await call('editQuestion',{prompt:'Changed while a student works'})).status,409);
+  assert.equal((await call('deleteQuestion')).status,409);
+  assert.equal((await call('question',{questionType:'SHORT_ANSWER',prompt:'New question',points:1,config:{}})).status,409);
+  assert.equal((await call('remove')).status,409);
+  assert.equal((await call('settings',{formType:'FINAL_EXAM'})).status,409);
+  assert.equal((await call('settings',{opensAt:new Date(Date.now()+3600000).toISOString()})).status,409);
+  assert.equal(await driver.db.formAttempt.count({where:{formId:future}}),1);
  });
  await check('autosave rejects cross-form questions and saves legitimate answers',async()=>{
   const foreignQuestion=await driver.db.formQuestion.findFirstOrThrow({where:{formId:open}});
@@ -127,12 +145,13 @@ try{
   await call('settings',{scoreToKeep:'LATEST'});await driver.syncAttemptScoreToGradebook({formId:future,userId:'student',attemptId:params.attemptId,earnedScore:0,totalPoints:1});
   const form=await driver.db.form.findUniqueOrThrow({where:{id:future}});const where={syllabusItemId_studentId:{syllabusItemId:form.syllabusItemId,studentId:'student'}};
   assert.equal((await driver.db.studentSubmission.findUniqueOrThrow({where})).grade,0);
-  await call('settings',{scoreToKeep:'AVERAGE'});await driver.syncAttemptScoreToGradebook({formId:future,userId:'student',attemptId:params.attemptId,earnedScore:0,totalPoints:1});assert.equal((await driver.db.studentSubmission.findUniqueOrThrow({where})).grade,0.5);
+  await call('settings',{scoreToKeep:'AVERAGE'});assert.equal((await driver.db.studentSubmission.findUniqueOrThrow({where})).grade,0.5);await driver.syncAttemptScoreToGradebook({formId:future,userId:'student',attemptId:params.attemptId,earnedScore:0,totalPoints:1});assert.equal((await driver.db.studentSubmission.findUniqueOrThrow({where})).grade,0.5);
  });
  await check('closing a form blocks new attempts and cross-form authoring references',async()=>{
   const foreign=await driver.db.formQuestion.findFirstOrThrow({where:{formId:open}});
   assert.equal((await call('question',{showIfQuestionId:foreign.id})).status,400);
-  assert.equal((await call('reorder',{orderedIds:[foreign.id]})).status,400);
+  assert.equal((await call('reorder',{orderedIds:[foreign.id]})).status,409);
+  assert.equal((await call('reorder',{orderedIds:[params.questionId]},actors.teacher,{formId:open})).status,400);
   await call('close');assert.equal((await call('start',{password:'room-secret'},actors.student)).status,403);
  });
  await check('conditional questions which were not shown do not reduce the submitted score',async()=>{
@@ -160,6 +179,38 @@ try{
   process.env.TZ='Asia/Manila';assert.equal(driver.localDateTimeValue('2027-01-02T02:30:00Z'),'2027-01-02T10:30');
   assert.equal(new Date(driver.localDateTimeValue('2027-01-02T02:30:00Z')).toISOString(),'2027-01-02T02:30:00.000Z');
  });
+ await check('question edits before attempts return to draft and category changes sync Classwork',async()=>{
+  const q=await driver.db.formQuestion.findFirstOrThrow({where:{formId:open}});
+  assert.equal((await call('editQuestion',{prompt:'Updated draft question'},actors.teacher,{formId:open,questionId:q.id})).status,200);
+  assert.equal((await driver.db.form.findUniqueOrThrow({where:{id:open}})).status,'DRAFT');
+  assert.equal((await call('start',{},actors.student,{formId:open})).status,404);
+  assert.equal((await call('settings',{formType:'ACTIVITY'},actors.teacher,{formId:open})).status,200);
+  const item=await driver.db.syllabusItem.findFirstOrThrow({where:{form:{id:open}}});assert.equal(item.type,'ACTIVITY');
+ });
+ await check('publish validates an answer key and notification failure rolls back publication',async()=>{
+  const created=await (await call('create',{title:'Atomic Publish Check'})).json();const formId=created.formId;
+  const q=await driver.db.formQuestion.findFirstOrThrow({where:{formId}});
+  await call('editQuestion',{config:{options:[{id:'a',text:'A'},{id:'b',text:'B'}]}},actors.teacher,{formId,questionId:q.id});
+  assert.equal((await call('publish',undefined,actors.teacher,{formId})).status,400);
+  await call('editQuestion',{config:{options:[{id:'a',text:'A',isCorrect:true},{id:'b',text:'B'}]}},actors.teacher,{formId,questionId:q.id});
+  await cluster.owner.query(`CREATE FUNCTION forms_notification_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.title LIKE '%Atomic Publish Check%' THEN RAISE EXCEPTION 'Synthetic notification failure'; END IF; RETURN NEW; END $$`);
+  await cluster.owner.query('CREATE TRIGGER forms_notification_failure BEFORE INSERT ON "Notification" FOR EACH ROW EXECUTE FUNCTION forms_notification_failure()');
+  try {
+   assert.equal((await call('publish',undefined,actors.teacher,{formId})).status,500);
+   assert.equal((await driver.db.form.findUniqueOrThrow({where:{id:formId}})).status,'DRAFT');
+   assert.equal(await driver.db.notification.count({where:{title:{contains:'Atomic Publish Check'}}}),0);
+  } finally {await cluster.owner.query('DROP TRIGGER forms_notification_failure ON "Notification"');await cluster.owner.query('DROP FUNCTION forms_notification_failure()');}
+  assert.equal((await call('publish',undefined,actors.teacher,{formId})).status,200);
+ });
+ await check('student start and question edit serialize without exposing changed questions to an active attempt',async()=>{
+  const created=await (await call('create',{title:'Concurrent Form Check'})).json();const formId=created.formId;
+  const q=await driver.db.formQuestion.findFirstOrThrow({where:{formId}});
+  await call('publish',undefined,actors.teacher,{formId});
+  const [start,edit]=await Promise.all([call('start',{},actors.student,{formId}),call('editQuestion',{prompt:'New question draft'},actors.teacher,{formId,questionId:q.id})]);
+  const form=await driver.db.form.findUniqueOrThrow({where:{id:formId}});
+  if(start.status===200){assert.equal(edit.status,409);assert.equal(form.status,'PUBLISHED');assert.equal((await driver.db.formQuestion.findUniqueOrThrow({where:{id:q.id}})).prompt,q.prompt);}
+  else{assert.equal(start.status,404);assert.equal(edit.status,200);assert.equal(form.status,'DRAFT');assert.equal(await driver.db.formAttempt.count({where:{formId}}),0);}
+ });
  if(process.argv.includes('--browser')){const {browserChecks}=await import('./assessment.browser.mjs');await browserChecks({cluster,output,check,driver,actors});}
  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log('Evidence: '+output);
-}finally{await driver?.db.$disconnect();await cluster?.stop();}
+}catch(error){report.error=String(error.message).replace(/postgres(?:ql)?:\/\/[^\s]+/g,'[redacted local connection]');fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));throw error;}finally{await driver?.db.$disconnect();await cluster?.stop();}

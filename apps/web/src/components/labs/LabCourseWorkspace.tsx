@@ -11,6 +11,7 @@ import LabTemplateEditor, { blankLab } from './LabTemplateEditor';
 import LabAuthoringTour from './LabAuthoringTour';
 import { focusLabControl, useLabDialogs } from './LabDialogs';
 import { scheduleProblem } from './authoring';
+import { LAB_PRESET_COLLECTIONS, LAB_PRESET_OPTIONS, type LabPresetKey } from '@/lib/labs/preset-catalog';
 import { labRequest, labStatusLabel, type LabAssignment, type LabDefinition, type LabTemplate, type LabVersion } from './types';
 
 const theme = getInstituteTheme('ics');
@@ -77,6 +78,15 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
     setSelectedTemplate(id); setEditor({ templateId: id, revision: draft.revision, value: { ...definition(draft), category: template.category } });
     focusLabControl('lab-editor');
   }
+  async function startPreset(preset: LabPresetKey) {
+    await action(async () => {
+      const template = await labRequest<{ id: string }>('/api/labs/templates', {
+        method: 'POST', body: JSON.stringify({ preset }),
+      });
+      await load();
+      await edit(template.id);
+    }, 'Starter lab could not be created');
+  }
   async function leave(href: string) {
     if (busyRef.current || createdAssignment) return;
     if (!editor || await confirm('Leave the lab editor?', 'Unsaved changes will be lost. Saved drafts remain in your lab instructions.', 'Leave editor')) router.push(href);
@@ -134,10 +144,24 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
     </section>}
     {canEdit && <>
       <section className="space-y-4 border-t border-slate-200 pt-7 dark:border-slate-700" aria-labelledby="lab-templates">
-        <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 id="lab-templates" className="text-lg font-semibold">1. Write and save the instructions</h2><p className="mt-1 text-sm text-slate-500">Use an example or build the steps yourself.</p></div><div className="flex flex-wrap gap-3"><Button theme={theme} variant="secondary" disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => { setEditor({ value: structuredClone(blankLab) }); focusLabControl('lab-editor'); }}><Plus size={16} className="mr-2" />Create lab</Button><Button id="lab-start-mysql" className={phase === 0 && !editor ? highlight : ''} theme={theme} loading={busy} disabled={loading || Boolean(createdAssignment) || Boolean(editor)} onClick={() => void action(async () => { const t = await labRequest<{ id: string }>('/api/labs/templates', { method: 'POST', body: JSON.stringify({ preset: 'MYSQL' }) }); await load(); await edit(t.id); })}><Database size={16} className="mr-2" />Start with MySQL</Button></div></div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div><h2 id="lab-templates" className="text-lg font-semibold">1. Write and save the instructions</h2><p className="mt-1 text-sm text-slate-500">Choose a starter or build the steps yourself. Every starter opens as your editable draft.</p></div>
+          <Button theme={theme} variant="secondary" disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => { setEditor({ value: structuredClone(blankLab) }); focusLabControl('lab-editor'); }}><Plus size={16} className="mr-2" />Create lab</Button>
+        </div>
+        <div aria-label="Practical lab starters" className="space-y-6">
+          {LAB_PRESET_COLLECTIONS.map(collection => <section key={collection.key} aria-labelledby={'lab-collection-' + collection.key} className="space-y-3">
+            <div><h3 id={'lab-collection-' + collection.key} className="font-semibold">{collection.title}</h3><p className="mt-1 text-sm text-slate-500">{collection.description}</p></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {LAB_PRESET_OPTIONS.filter(option => option.collection === collection.key).map(option => <div key={option.key} className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                <div><p className="text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">{option.category} · {option.minutes} min</p><h4 className="mt-1 font-semibold">{option.title}</h4><p className="mt-1 text-sm text-slate-500">{option.summary}</p></div>
+                <Button id={'lab-start-' + option.key.toLowerCase()} className={'self-start ' + (phase === 0 && !editor && option.key === 'MYSQL' ? highlight : '')} theme={theme} variant="secondary" loading={busy} disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => void startPreset(option.key)}>{option.key === 'MYSQL' ? <Database size={16} className="mr-2" /> : <FlaskConical size={16} className="mr-2" />}Start with {option.startLabel}</Button>
+              </div>)}
+            </div>
+          </section>)}
+        </div>
         {templates.map(t => <div key={t.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700"><div><h3 className="font-medium">{t.title}</h3><p className="mt-1 text-xs text-slate-500">{t.versions.map(v => 'v' + v.number + ' · ' + (labStatusLabel[v.status] ?? v.status)).join(' / ')}</p></div><div className="flex flex-wrap gap-3">{t.versions.some(v => v.status === 'DRAFT') ? <><Button theme={theme} variant="secondary" disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => void action(() => edit(t.id))}>Edit draft</Button><Button id={'lab-publish-' + t.id} theme={theme} className={phase === 1 && draftTemplate?.id === t.id ? highlight : ''} disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => void publish(t)}>Publish instructions</Button></> : <Button theme={theme} variant="secondary" disabled={loading || busy || Boolean(createdAssignment) || Boolean(editor)} onClick={() => { const v = t.versions.find(v => v.status === 'PUBLISHED'); if (v) { setVersionId(v.id); setTitle(t.title); setSelectedTemplate(t.id); focusLabControl('lab-version'); } }}>Use these instructions</Button>}</div></div>)}
       </section>
-      {editor && <LabTemplateEditor key={(editor.templateId ?? 'new') + ':' + editor.revision} initial={editor.value} busy={busy} onClose={() => { setEditor(null); focusLabControl(editor.templateId ? 'lab-publish-' + editor.templateId : 'lab-start-mysql'); }} onSave={async value => {
+      {editor && <LabTemplateEditor key={(editor.templateId ?? 'new') + ':' + editor.revision} initial={editor.value} busy={busy} onUploadBusy={pending => { busyRef.current = pending; setBusy(pending); }} onClose={() => { setEditor(null); focusLabControl(editor.templateId ? 'lab-publish-' + editor.templateId : 'lab-start-mysql'); }} onSave={async value => {
         const saved = await action(async () => {
           let id = editor.templateId;
           if (id) await labRequest('/api/labs/templates/' + id, { method: 'PATCH', body: JSON.stringify({ ...value, expectedRevision: editor.revision }) });

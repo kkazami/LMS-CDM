@@ -12,6 +12,8 @@ import { createNotification } from "@/lib/notifications";
 import { gradeSubmission, gradeStudent, lockAcademicRecord } from "@/lib/academic-records";
 import { requireCourseAccess } from "@/lib/course-access";
 import { canonicalRole } from "@/lib/super-user-v1/capabilities";
+import { savePeriodAssignments, savePeriodPolicy } from '@/lib/grading/period-service';
+import type { ItemPeriod, PeriodPolicy } from '@/lib/grading/periods';
 
 async function ensureInstructor(courseId: string) {
   const session = await getSession();
@@ -29,6 +31,7 @@ export interface GradebookStudent {
 }
 
 export interface GradebookAssignment {
+  gradingPeriod: ItemPeriod;
   id: string;
   labAssignmentId?: string | null;
   title: string;
@@ -53,6 +56,8 @@ export interface GradebookCell {
 }
 
 export interface GradebookData {
+  periodPolicy: PeriodPolicy;
+  periodsAvailable: boolean;
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
   students: GradebookStudent[];
   assignments: GradebookAssignment[];
@@ -65,6 +70,16 @@ export interface GradebookData {
 export async function getGradebookData(courseId: string, page = 1): Promise<GradebookData> {
   const actor = await requireLegacyActor('gradebook/actions.ts#getGradebookData', { courseId });
   return readGradebook(actor, courseId, page);
+}
+export async function saveGradebookPeriodPolicy(courseId: string, input: unknown) {
+  const actor = await requireLegacyActor('gradebook/actions.ts#saveGradebookPeriodPolicy', { courseId });
+  await savePeriodPolicy(actor, courseId, input);
+  return { success: true };
+}
+export async function assignGradebookPeriods(courseId: string, input: unknown) {
+  const actor = await requireLegacyActor('gradebook/actions.ts#assignGradebookPeriods', { courseId });
+  await savePeriodAssignments(actor, courseId, input);
+  return { success: true };
 }
 export async function updateGrade(submissionId: string, rawGrade: number) {
   const user = await requireLegacyActor("gradebook/actions.ts#updateGrade", () => ({ submissionId }));

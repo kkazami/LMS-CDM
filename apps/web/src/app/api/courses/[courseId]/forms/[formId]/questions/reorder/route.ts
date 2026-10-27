@@ -1,4 +1,5 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { editFormDefinition } from '@/lib/forms/mutations';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -36,16 +37,18 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "orderedIds array is required." }, { status: 400 });
     }
 
-    const ids = await db.formQuestion.findMany({ where: { formId }, select: { id: true } });
+    await editFormDefinition(session.user, courseId, formId, async tx => {
+    const ids = await tx.formQuestion.findMany({ where: { formId }, select: { id: true } });
     if (new Set(orderedIds).size !== orderedIds.length || orderedIds.length !== ids.length || ids.some(question => !orderedIds.includes(question.id))) throw new AccessError(400, 'Provide each question in this form exactly once.');
-    await db.$transaction(
+    await Promise.all(
       orderedIds.map((id, index) =>
-        db.formQuestion.update({
+        tx.formQuestion.update({
           where: { id, formId },
           data: { position: index },
         })
       )
     );
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

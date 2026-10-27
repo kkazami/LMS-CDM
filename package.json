@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "check:setup": "node scripts/check-local-setup.mjs",
-    "dev:web": "node scripts/check-local-setup.mjs web && pnpm --filter web dev",
+    "dev:web": "node scripts/check-local-setup.mjs web && node scripts/start-local-scanner.mjs --if-configured && pnpm --filter web dev",
+    "scanner:start": "node scripts/start-local-scanner.mjs",
     "dev:mobile": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile start",
     "dev:mobile:clear": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile start --clear",
     "dev:mobile:tunnel": "node scripts/check-local-setup.mjs mobile && pnpm --filter mobile tunnel",
@@ -34,8 +35,10 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report playwright/report",
-    "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/transport.test.cjs",
-    "test:labs:integration": "node tests/labs/integration.mjs"
+    "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/presets.test.ts tests/labs/resources.test.ts tests/labs/transport.test.cjs",
+    "test:labs:integration": "node tests/labs/integration.mjs",
+    "test:gradebook": "node --import tsx --test tests/gradebook/periods.test.ts",
+    "test:gradebook:integration": "node tests/gradebook/integration.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -8,7 +8,7 @@ import { getInstituteTheme } from '@/lib/get-institute-theme';
 
 const theme = getInstituteTheme('ics');
 const steps = [
-  { title: 'Write the instructions', text: 'Start with the MySQL example or create a lab. Add the objective and the steps students will follow on their own computers. Preview your instructions, then save the draft.' },
+  { title: 'Write the instructions', text: 'Choose a starter from the core practical labs or Microsoft Windows Server section, or create a lab from scratch. Each starter becomes your editable draft. Check the prerequisites, tools, objective, and evidence steps for your class before saving.' },
   { title: 'Publish the instructions', text: 'Publish the saved draft when the instructions are ready. This locks that version so every student receives the same steps. Students cannot see the lab yet.' },
   { title: 'Assign it to your class', text: 'Choose the published instructions, grading category, points and groups. Set the start date first, then the due date. Leaving the start date empty lets students begin as soon as you publish the classwork.' },
   { title: 'Publish the classwork', text: 'Check the classwork draft, then choose Publish classwork. Eligible students can now find it in Classwork. Their scores will use the category and points you selected.' },

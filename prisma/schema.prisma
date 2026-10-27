@@ -394,6 +394,7 @@ model Course {
   enrollments         Enrollment[]
   flashcardDecks      FlashcardDeck[]
   gradingPolicy       GradingPolicy?
+  periodGradingPolicy CourseGradebookPolicy?
   privateComments     PrivateComment[]
   studentGroups       StudentGroup[]
   studySessions       StudySessionLog[]
@@ -443,6 +444,7 @@ model Enrollment {
 }
 
 model SyllabusItem {
+  gradingPeriodAssignment ClassworkGradingPeriod?
   workHistoryState SubmissionWorkHistoryState @default(dbgenerated("'UNKNOWN'::\"SubmissionWorkHistoryState\""))
   labAssignment LabAssignment?
   id                        String                @id @default(cuid())
@@ -721,6 +723,23 @@ model CategoryWeight {
   gradingPolicy    GradingPolicy @relation(fields: [gradingPolicyId], references: [id], onDelete: Cascade)
 
   @@unique([gradingPolicyId, category])
+}
+
+// Period configuration is additive; existing scores and category policies remain intact.
+model CourseGradebookPolicy {
+  courseId                 String   @id
+  midtermWeightPercentage  Float    @default(40)
+  finalsWeightPercentage   Float    @default(60)
+  categoryWeights          Json     @default("{}")
+  updatedAt                DateTime @updatedAt
+  course                   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model ClassworkGradingPeriod {
+  syllabusItemId String       @id
+  period         String
+  updatedAt      DateTime     @updatedAt
+  syllabusItem   SyllabusItem @relation(fields: [syllabusItemId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {

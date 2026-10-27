@@ -12,6 +12,7 @@ async function load(db = {}) {
       export * from './apps/web/src/lib/labs/service';
       export * from './apps/web/src/lib/labs/schema';
       export * from './apps/web/src/lib/labs/readiness';
+      export { visibleSyllabusForms } from './apps/web/src/lib/forms/visibility';
       export { readGradebook } from './apps/web/src/lib/gradebook-data';
       export * from './apps/web/src/lib/labs/access';
       export { handleLabRequest } from './apps/web/src/lib/labs/http';
@@ -19,6 +20,7 @@ async function load(db = {}) {
       export { GET as readAssignments } from './apps/web/src/app/api/assignments/route';
       export { getDashboardCalendar } from './apps/web/src/lib/student-calendar-data';
       export * from './apps/web/src/lib/labs/mysql';
+      export { LAB_PRESET_OPTIONS } from './apps/web/src/lib/labs/preset-catalog';
       export * from './apps/web/src/lib/academic-task';
       export * from './apps/web/src/lib/academic-records';
       export { boundedUploadBody, verifiedFileType, scanUpload, readPrivateUpload, requireOwnedUpload } from './apps/web/src/lib/private-upload';

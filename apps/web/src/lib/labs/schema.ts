@@ -1,15 +1,22 @@
 import { z } from 'zod';
+import { LAB_BUILTIN_IMAGES, labAssetId, publicReferenceLink, youtubeLink } from './resources';
 
 export const LAB_MAX_BYTES = 3 * 1024 * 1024;
 export const LAB_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'text/plain'] as const;
 const text = z.string().trim();
+export const resourceSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('YOUTUBE'), title: text.min(1).max(120), url: text.max(2000).refine(value => Boolean(youtubeLink(value)), 'Use a valid HTTPS YouTube video link.').transform(value => youtubeLink(value)!), caption: text.max(500).optional() }).strict(),
+  z.object({ type: z.literal('IMAGE'), title: text.min(1).max(120), url: text.max(300).refine(value => Boolean(labAssetId(value)) || LAB_BUILTIN_IMAGES.some(url => url === value), 'Upload a screenshot using Add screenshot.'), caption: text.max(500).optional() }).strict(),
+  z.object({ type: z.literal('LINK'), title: text.min(1).max(120), url: text.max(2000).refine(publicReferenceLink, 'Use a public HTTPS reference link.'), caption: text.max(500).optional() }).strict(),
+]);
+const resources = z.array(resourceSchema).max(4, 'Use at most four help resources per step.').optional();
 const stepBase = { key: text.min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/), title: text.min(1).max(160), required: z.boolean() };
 export const stepSchema = z.discriminatedUnion('type', [
-  z.object({ ...stepBase, type: z.literal('INSTRUCTIONS'), config: z.object({ body: text.min(1).max(10000) }).strict() }).strict(),
-  z.object({ ...stepBase, type: z.literal('COMMAND'), config: z.object({ body: text.max(10000), command: z.string().min(1).max(10000), language: text.max(30).optional() }).strict() }).strict(),
-  z.object({ ...stepBase, type: z.literal('CHECKLIST'), config: z.object({ items: z.array(z.object({ id: text.min(1).max(80), label: text.min(1).max(300), required: z.boolean() }).strict()).min(1).max(50).refine(items => new Set(items.map(i => i.id)).size === items.length, 'Checklist IDs must be unique.') }).strict() }).strict(),
-  z.object({ ...stepBase, type: z.literal('TEXT_RESPONSE'), config: z.object({ prompt: text.min(1).max(10000), maxLength: z.number().int().min(1).max(5000) }).strict() }).strict(),
-  z.object({ ...stepBase, type: z.literal('EVIDENCE_UPLOAD'), config: z.object({ instructions: text.min(1).max(10000), minFiles: z.number().int().min(0).max(3), maxFiles: z.number().int().min(1).max(3) }).strict().refine(c => c.minFiles <= c.maxFiles, 'Invalid file count.') }).strict(),
+  z.object({ ...stepBase, type: z.literal('INSTRUCTIONS'), config: z.object({ body: text.min(1).max(10000), resources }).strict() }).strict(),
+  z.object({ ...stepBase, type: z.literal('COMMAND'), config: z.object({ body: text.max(10000), command: z.string().min(1).max(10000), language: text.max(30).optional(), resources }).strict() }).strict(),
+  z.object({ ...stepBase, type: z.literal('CHECKLIST'), config: z.object({ resources, items: z.array(z.object({ id: text.min(1).max(80), label: text.min(1).max(300), required: z.boolean() }).strict()).min(1).max(50).refine(items => new Set(items.map(i => i.id)).size === items.length, 'Checklist IDs must be unique.') }).strict() }).strict(),
+  z.object({ ...stepBase, type: z.literal('TEXT_RESPONSE'), config: z.object({ prompt: text.min(1).max(10000), maxLength: z.number().int().min(1).max(5000), resources }).strict() }).strict(),
+  z.object({ ...stepBase, type: z.literal('EVIDENCE_UPLOAD'), config: z.object({ instructions: text.min(1).max(10000), minFiles: z.number().int().min(0).max(3), maxFiles: z.number().int().min(1).max(3), resources }).strict().refine(c => c.minFiles <= c.maxFiles, 'Invalid file count.') }).strict(),
 ]);
 export const templateDefinition = z.object({
   title: text.min(1).max(160), description: text.max(5000), category: z.enum(['DATABASE', 'OPERATING_SYSTEMS', 'NETWORKING', 'HARDWARE', 'OTHER']),

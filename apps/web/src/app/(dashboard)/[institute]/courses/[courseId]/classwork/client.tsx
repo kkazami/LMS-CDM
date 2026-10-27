@@ -10,6 +10,8 @@ import type { AttachmentItem } from "@/components/courses/AttachmentModal";
 import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import Modal from "@/components/common/Modal";
+import DeleteClassworkDialog from '@/components/courses/DeleteClassworkDialog';
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import FocusButton from "@/components/focus/FocusButton";
 import { Plus, Loader2, Paperclip, FileText, Link2, Shield, Trophy, X, Sparkles, Calendar, Clock } from "lucide-react";
@@ -30,6 +32,9 @@ interface SyllabusItemAttachment {
 interface SyllabusItemData {
   id: string;
   labAssignmentId?: string | null;
+  labStartsAt?: string | null;
+  formId?: string | null;
+  formStartsAt?: string | null;
   type: string;
   title: string;
   description: string;
@@ -86,6 +91,9 @@ export default function ClassworkClient({
   labsReady?: boolean;
   studentGroups: StudentGroup[];
 }) {
+  const router = useRouter();
+  const [deletingItem, setDeletingItem] = useState<SyllabusItemData | null>(null);
+  const [deleteNotice, setDeleteNotice] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SyllabusItemData | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -164,13 +172,9 @@ export default function ClassworkClient({
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (confirm("Delete this item? This cannot be undone.")) {
-      const res = await deleteSyllabusItem(itemId, courseId, instituteCode);
-      if (res && !res.success) {
-        alert(res.error || "Failed to delete item");
-      }
-    }
+  const handleDelete = (itemId: string) => {
+    const item = items.find(row => row.id === itemId);
+    if (item && canEdit) { setDeleteNotice(''); setDeletingItem(item); }
   };
 
   const toggleGroup = (groupId: string) => {
@@ -241,6 +245,12 @@ export default function ClassworkClient({
           onDelete={handleDelete}
         />
       )}
+
+      {deleteNotice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">{deleteNotice}</p>}
+      {deletingItem && <DeleteClassworkDialog title={deletingItem.title} theme={theme} onClose={() => setDeletingItem(null)} onDelete={async () => {
+        const result = await deleteSyllabusItem(deletingItem.id, courseId, instituteCode);
+        if (!result?.success) throw new Error(result?.error || 'Classwork could not be deleted. Please try again.');
+      }} onDeleted={() => { setDeleteNotice(`“${deletingItem.title}” was deleted.`); setDeletingItem(null); router.refresh(); }}/>}
 
       {/* Create/Edit Modal */}
       <Modal

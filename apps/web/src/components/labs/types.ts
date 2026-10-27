@@ -1,4 +1,5 @@
 export type LabStepType = 'INSTRUCTIONS' | 'COMMAND' | 'CHECKLIST' | 'TEXT_RESPONSE' | 'EVIDENCE_UPLOAD';
+import type { LabResource } from '@/lib/labs/resources';
 export interface LabStep {
   id?: string;
   key: string;
@@ -6,6 +7,7 @@ export interface LabStep {
   title: string;
   required: boolean;
   config: {
+    resources?: LabResource[];
     body?: string; command?: string; language?: string;
     items?: { id: string; label: string; required: boolean }[];
     prompt?: string; maxLength?: number;

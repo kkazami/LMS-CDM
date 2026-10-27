@@ -29,7 +29,7 @@ interface QuestionCardProps {
   onUpdate: (id: string, updates: Partial<FormQuestionData>) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
-  onSaveToBank: (id: string) => void;
+  onSaveToBank: (id: string) => Promise<boolean>;
   theme?: InstituteTheme;
   showValidation?: boolean;
 }
@@ -79,6 +79,7 @@ export default function QuestionCard({
 
   return (
     <div
+      id={`form-question-${question.id}`} tabIndex={-1}
       ref={setNodeRef}
       style={style}
       className={`relative group rounded-2xl bg-white dark:bg-[#12151E] border transition-all duration-200 ${
@@ -93,6 +94,8 @@ export default function QuestionCard({
       </div>
 
       <div className="p-5 sm:p-6 space-y-4">
+        {['PARAGRAPH', 'CODE_ANSWER', 'FILE_UPLOAD'].includes(question.questionType) && <p className="text-xs text-slate-600 dark:text-slate-300">Requires instructor grading after submission.</p>}
+        {question.questionType === 'SHORT_ANSWER' && <p className="text-xs text-slate-600 dark:text-slate-300">Add accepted answers below for automatic grading. Without an answer key, any non-empty response earns full points. Use Paragraph for manual review.</p>}
         {/* Header: Prompt input + Type selector */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="flex-1 w-full space-y-1">
@@ -103,6 +106,7 @@ export default function QuestionCard({
               <div className="flex-1">
                 <input
                   type="text"
+                  aria-label={`Question ${index + 1} title`}
                   value={question.prompt}
                   onChange={(e) => onUpdate(question.id, { prompt: e.target.value })}
                   placeholder={isHeader ? "Section Title" : "Untitled Question"}
@@ -517,9 +521,8 @@ export default function QuestionCard({
             {/* Save to Bank */}
             <button
               type="button"
-              onClick={() => {
-                onSaveToBank(question.id);
-                setIsSavedToBank(true);
+              onClick={async () => {
+                if (await onSaveToBank(question.id)) setIsSavedToBank(true);
               }}
               title="Save to Question Bank"
               className={`p-1.5 rounded-lg transition-colors ${

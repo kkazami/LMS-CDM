@@ -1,7 +1,8 @@
 import { labsAvailable } from '@/lib/labs/readiness';
 import { requireCourseAccess } from '@/lib/course-access';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
-import { formIsVisible } from '@/lib/forms/availability';
+import { requireFormAccess, scheduledForm } from '@/lib/forms/access';
+import ScheduledFormNotice from '@/components/forms/renderer/ScheduledFormNotice';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { notFound, redirect } from "next/navigation";
 import { after } from "next/server";
@@ -54,7 +55,12 @@ export default async function AssignmentDetailPage({ params }: Props) {
     },
   });
 
-  if (!item || item.courseId !== courseId || isStudent && item.form && !formIsVisible(item.form)) notFound();
+  if (!item || item.courseId !== courseId) notFound();
+  if (isStudent && item.form) {
+    const scheduled = await scheduledForm(session.user, courseId, item.form.id);
+    if (scheduled?.opensAt) return <ScheduledFormNotice institute={institute} courseId={courseId} title={scheduled.title} formType={scheduled.formType} opensAt={scheduled.opensAt.toISOString()} closesAt={scheduled.closesAt?.toISOString() ?? null} />;
+    try { await requireFormAccess(session.user, courseId, item.form.id); } catch { notFound(); }
+  }
   if (item.labAssignment) redirect(`/${institute}/courses/${courseId}/labs/${item.labAssignment.id}`);
 
   // Access control: student must be enrolled

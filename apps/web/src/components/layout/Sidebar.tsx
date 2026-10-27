@@ -118,6 +118,7 @@ export function getIteStudentNavLinks(
 const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
+  { label: "Gradebooks", href: `/${code}/gradebooks`, icon: FileSpreadsheet },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
   ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 

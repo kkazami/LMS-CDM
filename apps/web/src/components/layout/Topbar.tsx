@@ -130,6 +130,7 @@ export default function Topbar({
     teachers: "Teacher Dashboard",
     classes: "My Classes",
     analytics: "Student Analytics",
+    gradebooks: "Gradebooks",
     "create-tasks": "Create Tasks",
     "manage-leaderboard": "Manage Leaderboard",
     // Admin

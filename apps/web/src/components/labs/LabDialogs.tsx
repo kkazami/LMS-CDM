@@ -13,7 +13,8 @@ export function focusLabControl(id: string) {
   requestAnimationFrame(() => {
     const target = document.getElementById(id);
     if (!target) return;
-    target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' });
+    const tall = target.getBoundingClientRect().height > window.innerHeight * 0.7;
+    target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: tall ? 'start' : 'center' });
     target.focus({ preventScroll: true });
   });
 }

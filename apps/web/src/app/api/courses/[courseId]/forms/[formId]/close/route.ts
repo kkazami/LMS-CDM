@@ -1,3 +1,4 @@
+import { lockFormForWrite } from '@/lib/forms/mutations';
 import { publicForm } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
@@ -38,9 +39,9 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Form not found." }, { status: 404 });
     }
 
-    const updated = await db.form.update({
-      where: { id: formId },
-      data: { status: "CLOSED" },
+    const updated = await db.$transaction(async tx => {
+      await lockFormForWrite(tx, session.user, courseId, formId);
+      return tx.form.update({ where: { id: formId }, data: { status: 'CLOSED' } });
     });
 
     return NextResponse.json({ success: true, status: "CLOSED", form: publicForm(updated) });

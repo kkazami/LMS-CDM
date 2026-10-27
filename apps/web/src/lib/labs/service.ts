@@ -7,10 +7,12 @@ import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { AccessError } from '@/lib/super-user-v1/actor';
 import { lockAcademicRecord } from '@/lib/academic-records';
 import { lockSyllabusItem, markAcademicWorkStarted } from '@/lib/academic-task';
-import { scanUpload, verifiedFileType, withUploadSlot } from '@/lib/private-upload';
+import { scanUpload, verifiedFileType, withUploadSlot, savePrivateUpload } from '@/lib/private-upload';
 import { requireIcs, requireLabCourse, assignmentAccess, attemptAccess, ensureWritable, requireStudent, type LabActor, type LabTx } from './access';
 import { assignmentInput, assignmentPatch, templateDefinition, reviewInput, reopenInput, submitInput, parseAnswer, responseComplete, stepSchema, LAB_MAX_BYTES, LAB_MIME_TYPES, type LabDefinition } from './schema';
-import { MYSQL_LAB } from './mysql';
+import { LAB_PRESET_KEYS } from './preset-catalog';
+import { LAB_PRESETS } from './presets';
+import { LAB_IMAGE_TYPES, labAssetId } from './resources';
 
 const inputJson = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 const dto = <T>(value: T) => JSON.parse(JSON.stringify(value, (_key, v: unknown) => typeof v === 'bigint' ? Number(v) : v)) as T;
@@ -18,6 +20,34 @@ const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(va
 const definitionFields = (definition: Pick<LabDefinition, 'title' | 'description' | 'objective' | 'prerequisites' | 'requiredTools' | 'estimatedMinutes'>) => ({ title: definition.title, description: definition.description, objective: definition.objective, prerequisites: definition.prerequisites, requiredTools: definition.requiredTools, estimatedMinutes: definition.estimatedMinutes });
 const stepsData = (definition: LabDefinition) => definition.steps.map((step, position) => ({ key: step.key, type: step.type, title: step.title, required: step.required, config: inputJson(step.config), position }));
 const templateInclude = { versions: { orderBy: { number: 'desc' as const }, include: { steps: { orderBy: { position: 'asc' as const } } } } };
+
+function imageUrls(steps: { config: unknown }[]): string[] {
+  return steps.flatMap(step => {
+    const config = step.config as { resources?: { type?: string; url?: string }[] } | null;
+    return Array.isArray(config?.resources) ? config.resources.flatMap(resource => resource.type === 'IMAGE' && typeof resource.url === 'string' && labAssetId(resource.url) ? [resource.url] : []) : [];
+  });
+}
+
+async function validateTemplateImages(actor: LabActor, definition: LabDefinition, tx: LabTx, retained: string[] = []) {
+  const urls = [...new Set(imageUrls(definition.steps))];
+  if (!urls.length) return;
+  const ids = urls.map(url => labAssetId(url)!);
+  const [assets, evidence] = await Promise.all([
+    tx.privateAsset.findMany({ where: { id: { in: ids }, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } }, select: { id: true, ownerId: true } }),
+    tx.labEvidence.count({ where: { assetId: { in: ids } } }),
+  ]);
+  const permitted = new Set(retained);
+  if (evidence || urls.some(url => !assets.some(asset => asset.id === labAssetId(url) && (asset.ownerId === actor.id || permitted.has(url))))) {
+    throw new AccessError(403, 'Use your own scanned screenshots. Student evidence cannot be used as instructional media.');
+  }
+}
+
+export async function uploadTemplateScreenshot(actor: LabActor, file: File) {
+  await requireIcs(actor, true);
+  if (!file.size || file.size > LAB_MAX_BYTES) throw new AccessError(413, 'Choose a screenshot up to 3 MiB.');
+  if (!LAB_IMAGE_TYPES.some(type => type === file.type)) throw new AccessError(400, 'Choose a PNG, JPEG, or WebP screenshot.');
+  return savePrivateUpload(actor, file);
+}
 
 export async function listTemplates(actor: LabActor) {
   await requireIcs(actor, true);
@@ -34,10 +64,11 @@ async function ownedTemplate(actor: LabActor, id: string, tx: LabTx = db) {
 export async function getTemplate(actor: LabActor, id: string) { return dto(await ownedTemplate(actor, id)); }
 
 export async function createTemplate(actor: LabActor, raw: unknown) {
-  const preset = z.object({ preset: z.literal('MYSQL') }).strict().safeParse(raw);
-  const definition = templateDefinition.parse(preset.success ? MYSQL_LAB : raw);
+  const preset = z.object({ preset: z.enum(LAB_PRESET_KEYS) }).strict().safeParse(raw);
+  const definition = templateDefinition.parse(preset.success ? LAB_PRESETS[preset.data.preset] : raw);
   return db.$transaction(async tx => {
     await requireIcs(actor, true, tx);
+    await validateTemplateImages(actor, definition, tx);
     return dto(await tx.labTemplate.create({ data: { instituteId: actor.instituteId, authorId: actor.id, title: definition.title, category: definition.category, versions: { create: { ...definitionFields(definition), number: 1, steps: { create: stepsData(definition) } } } }, include: templateInclude }));
   });
 }
@@ -51,6 +82,7 @@ export async function saveTemplate(actor: LabActor, id: string, raw: unknown) {
     const version = template.versions.find(v => v.status === 'DRAFT');
     if (!version) throw new AccessError(409, 'Published instructions are immutable. Create a new draft first.');
     if (version.revision !== parsed.expectedRevision) throw new AccessError(409, 'This draft changed in another window. Reload before saving.');
+    await validateTemplateImages(actor, parsed, tx, imageUrls(template.versions.flatMap(v => v.steps)));
     await tx.labStep.deleteMany({ where: { versionId: version.id } });
     await tx.labTemplateVersion.update({ where: { id: version.id }, data: { ...definitionFields(parsed), revision: { increment: 1 }, steps: { create: stepsData(parsed) } } });
     await tx.labTemplate.update({ where: { id }, data: { title: parsed.title, category: parsed.category } });
@@ -77,7 +109,8 @@ export async function publishTemplate(actor: LabActor, id: string, raw: unknown)
     const template = await ownedTemplate(actor, id, tx);
     const version = template.versions.find(v => v.status === 'DRAFT');
     if (!version || template.archivedAt || version.revision !== expectedRevision) throw new AccessError(409, 'Draft changed or has already been published.');
-    templateDefinition.parse({ ...definitionFields(version), category: template.category, steps: version.steps.map(s => ({ key: s.key, title: s.title, type: s.type, required: s.required, config: s.config })) });
+    const definition = templateDefinition.parse({ ...definitionFields(version), category: template.category, steps: version.steps.map(s => ({ key: s.key, title: s.title, type: s.type, required: s.required, config: s.config })) });
+    await validateTemplateImages(actor, definition, tx, imageUrls(template.versions.flatMap(v => v.steps)));
     await tx.labTemplateVersion.update({ where: { id: version.id }, data: { status: 'PUBLISHED', publishedAt: new Date() } });
     return dto(await ownedTemplate(actor, id, tx));
   });
@@ -360,5 +393,24 @@ async function evidenceAsset(actor: LabActor, evidenceId: string) {
 export async function readLabEvidence(actor: LabActor, evidenceId: string) { return evidenceAsset(actor, evidenceId); }
 export async function authorizeLabAsset(actor: LabActor, assetId: string) {
   const evidence = await db.labEvidence.findUnique({ where: { assetId }, select: { id: true } });
-  return evidence ? evidenceAsset(actor, evidence.id) : null;
+  if (evidence) return evidenceAsset(actor, evidence.id);
+  const refs = await db.labStep.findMany({ where: { config: { path: ['resources'], array_contains: [{ type: 'IMAGE', url: '/api/assets/' + assetId }] } },
+    select: { versionId: true, version: { select: { template: { select: { instituteId: true, authorId: true } } } } }, take: 101 });
+  if (!refs.length) return null;
+  if (refs.length > 100) throw new AccessError(503, 'Screenshot references require reconciliation.');
+  await requireIcs(actor);
+  const role = canonicalRole(actor.role);
+  let allowed = refs.some(ref => ref.version.template.instituteId === actor.instituteId && (ref.version.template.authorId === actor.id || role === 'ADMIN'));
+  if (!allowed) {
+    const assignments = await db.labAssignment.findMany({ where: { versionId: { in: refs.filter(ref => ref.version.template.instituteId === actor.instituteId).map(ref => ref.versionId) } }, select: { id: true, courseId: true }, take: 101 });
+    if (assignments.length > 100) throw new AccessError(503, 'Screenshot assignments require reconciliation.');
+    for (const assignment of assignments) {
+      try { await assignmentAccess(actor, assignment.courseId, assignment.id); allowed = true; break; }
+      catch (error) { if (!(error instanceof AccessError) || ![403, 404].includes(error.status)) throw error; }
+    }
+  }
+  if (!allowed) throw new AccessError(404, 'Screenshot not found.');
+  const file = await db.privateAsset.findFirst({ where: { id: assetId, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } } });
+  if (!file) throw new AccessError(404, 'Screenshot not found.');
+  return { bytes: Buffer.from(file.content), mime: file.mimeType, name: file.fileName };
 }

@@ -8,7 +8,7 @@ const state = JSON.parse(fs.readFileSync(file, 'utf8'));
 if (!state.owned || state.runId !== process.env.LAB_E2E_RUN || new URL(state.origin).hostname !== '127.0.0.1') throw Error('Owned loopback browser target required.');
 
 export default defineConfig({
-  testDir: '.', testMatch: 'pilot.spec.ts', workers: 1, fullyParallel: false, retries: 0, timeout: 300000,
+  testDir: '..', testMatch: ['**/labs/pilot.spec.ts', '**/gradebook/workspace.spec.ts'], workers: 1, fullyParallel: false, retries: 0, timeout: 300000,
   expect: { timeout: 20000 }, outputDir: path.join(state.output, 'browser-artifacts'),
   reporter: [['list'], ['json', { outputFile: path.join(state.output, 'playwright.json') }]],
   use: { baseURL: state.origin, ignoreHTTPSErrors: true, actionTimeout: 15000, navigationTimeout: 30000, trace: 'retain-on-failure', screenshot: 'only-on-failure' },

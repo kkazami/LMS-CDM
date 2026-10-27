@@ -8,6 +8,7 @@ export function draftProblems(value: unknown): { message: string; target: string
     const step = issue.path[0] === 'steps' && typeof issue.path[1] === 'number' ? issue.path[1] : null;
     const field = String(issue.path.at(-1) ?? 'steps');
     const label = labels[field] ?? field;
+    if (step !== null && issue.path.includes('resources')) return { target: 'lab-step-' + step, message: 'Step ' + (step + 1) + ': check the optional help title/link, or remove the unused help item.' };
     return { target: step === null ? 'lab-' + String(issue.path[0]) : 'lab-step-' + step,
       message: step === null ? 'Check the ' + label + '.' : 'Step ' + (step + 1) + ': add or correct the ' + label + '.' };
   });

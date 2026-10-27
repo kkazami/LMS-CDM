@@ -1,4 +1,5 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { editFormDefinition } from '@/lib/forms/mutations';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -45,14 +46,14 @@ export async function POST(request: Request, context: RouteContext) {
     });
 
     if (bankItems.length !== new Set(bankItemIds).size) throw new AccessError(403, 'Question bank items are unavailable.');
-    const lastQ = await db.formQuestion.findFirst({
+    const created = await editFormDefinition(session.user, courseId, formId, async tx => {
+    const lastQ = await tx.formQuestion.findFirst({
       where: { formId },
       orderBy: { position: "desc" },
       select: { position: true },
     });
     let startPos = (lastQ?.position ?? -1) + 1;
 
-    const created = await db.$transaction(async (tx) => {
       const results = [];
       for (const item of bankItems) {
         const q = await tx.formQuestion.create({

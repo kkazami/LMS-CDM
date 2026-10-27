@@ -41,9 +41,10 @@ export default async function ClassworkPage({ params }: PageProps) {
 
   // Get all syllabus items
   let syllabusItems = await db.syllabusItem.findMany({
-    where: { courseId, ...(!canEdit ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
+    where: { courseId, ...(!canEdit ? await visibleSyllabusForms(undefined, session.user.id, { scheduledLabMetadata: true, scheduledFormMetadata: true }) : {}) },
     include: {
-      labAssignment: await labsAvailable() ? ({ select: { id: true } } as const) : false as const,
+      labAssignment: await labsAvailable() ? ({ select: { id: true, opensAt: true } } as const) : false as const,
+      form: { select: { id: true, opensAt: true } },
       targetGroups: {
         include: {
           group: { select: { groupName: true } },
@@ -82,9 +83,12 @@ export default async function ClassworkPage({ params }: PageProps) {
   const serialized = syllabusItems.map((item) => ({
     id: item.id,
     labAssignmentId: item.labAssignment?.id ?? null,
+    labStartsAt: item.labAssignment?.opensAt?.toISOString() ?? null,
+    formId: item.form?.id ?? null,
+    formStartsAt: item.form?.opensAt?.toISOString() ?? null,
     type: item.type,
     title: item.title,
-    description: item.description,
+    description: !canEdit && [item.labAssignment?.opensAt, item.form?.opensAt].some(date => date && date > new Date()) ? '' : item.description,
     dueDate: item.dueDate ? item.dueDate.toISOString() : null,
     maxPoints: item.maxPoints,
     enableIntegrityMonitoring: Boolean(item.enableIntegrityMonitoring),
@@ -99,7 +103,7 @@ export default async function ClassworkPage({ params }: PageProps) {
       groupId: tg.groupId,
       group: tg.group,
     })),
-    attachments: item.attachments.map((a) => ({
+    attachments: (!canEdit && [item.labAssignment?.opensAt, item.form?.opensAt].some(date => date && date > new Date()) ? [] : item.attachments).map((a) => ({
       id: a.id,
       type: a.type,
       url: a.url,

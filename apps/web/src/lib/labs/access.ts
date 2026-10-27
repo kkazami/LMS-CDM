@@ -24,6 +24,17 @@ export async function requireLabCourse(actor: LabActor, courseId: string, teachi
   return course;
 }
 
+/** Scheduled students may read the opening notice, never the instructions or attempts. */
+export async function scheduledAssignment(actor: LabActor, courseId: string, assignmentId: string) {
+  if (canonicalRole(actor.role) !== 'STUDENT') return null;
+  await requireLabCourse(actor, courseId);
+  return db.labAssignment.findFirst({
+    where: { id: assignmentId, courseId, publishedAt: { not: null }, archivedAt: null, opensAt: { gt: new Date() },
+      syllabusItem: { OR: [{ targetGroups: { none: {} } }, { targetGroups: { some: { group: { members: { some: { studentId: actor.id } } } } } }] } },
+    select: { opensAt: true, syllabusItem: { select: { title: true, dueDate: true } } },
+  });
+}
+
 export async function assignmentAccess(actor: LabActor, courseId: string, assignmentId: string, writing = false, teaching = false, tx: LabTx = db) {
   const course = await requireLabCourse(actor, courseId, teaching, writing, tx);
   const assignment = await tx.labAssignment.findFirst({ where: { id: assignmentId, courseId }, include: {

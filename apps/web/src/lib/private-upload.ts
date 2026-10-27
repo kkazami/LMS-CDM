@@ -101,16 +101,7 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
   if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Forbidden.');
   const bytes = Buffer.from(await file.arrayBuffer());
   const mimeType = await verifiedFileType(bytes, file.name, file.type);
-  try {
-    await scanUpload(bytes);
-  } catch (error) {
-    if (error instanceof AccessError && error.status === 503 && !process.env.CLAMAV_HOST) {
-      // In serverless deployments (e.g. Vercel) where a ClamAV daemon is not deployed,
-      // allow verified MIME-type files after strict verifiedFileType inspection.
-    } else {
-      throw error;
-    }
-  }
+  await scanUpload(bytes);
   const id = randomUUID();
   const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'attachment';
   await db.$transaction(async tx => {

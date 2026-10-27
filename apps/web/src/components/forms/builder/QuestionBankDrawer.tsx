@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useDialogA11y } from '@/hooks/useDialogA11y';
 import { X, Search, Bookmark, Plus, Check } from "lucide-react";
 import type { QuestionBankItemData } from "@/types/forms";
 import type { InstituteTheme } from "@/lib/theme";
@@ -26,25 +27,32 @@ export default function QuestionBankDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
+  const [error, setError] = useState('');
+  const panel = useRef<HTMLDivElement>(null);
+  const close = () => { if (!isImporting) onClose(); };
+  useDialogA11y(isOpen, close, panel);
   useEffect(() => {
     if (!isOpen) return;
 
+    const controller = new AbortController();
     async function fetchBank() {
-      setIsLoading(true);
+      setIsLoading(true); setError('');
       try {
-        const res = await fetch(`/api/question-bank?courseId=${courseId}&q=${encodeURIComponent(search)}`);
+        const res = await fetch(`/api/question-bank?courseId=${courseId}&q=${encodeURIComponent(search)}`, { signal: controller.signal });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Unable to load the question bank.');
         if (data.items) {
           setItems(data.items);
         }
       } catch (err) {
-        console.error(err);
+        if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Unable to load questions.');
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
-    fetchBank();
+    const timer = setTimeout(() => { void fetchBank(); }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [isOpen, courseId, search]);
 
   if (!isOpen) return null;
@@ -59,13 +67,15 @@ export default function QuestionBankDrawer({
 
   const handleImport = async () => {
     if (selectedIds.length === 0) return;
+    if (isImporting) return;
+    setError('');
     setIsImporting(true);
     try {
       await onImport(selectedIds);
       setSelectedIds([]);
       onClose();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Unable to import questions. Your selection is kept.');
     } finally {
       setIsImporting(false);
     }
@@ -73,7 +83,7 @@ export default function QuestionBankDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
-      <div className="w-full max-w-md bg-white dark:bg-[#12151E] h-full shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
+      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby="question-bank-title" tabIndex={-1} className="w-full max-w-md bg-white dark:bg-[#12151E] h-full shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
@@ -81,7 +91,7 @@ export default function QuestionBankDrawer({
               <Bookmark className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 id="question-bank-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Question Bank
               </h3>
               <p className="text-xs text-slate-500">Reuse saved questions</p>
@@ -89,13 +99,14 @@ export default function QuestionBankDrawer({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            disabled={isImporting} aria-label="Close question bank" onClick={close}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {error && <p role="alert" className="p-4 text-sm text-red-700 dark:text-red-300">{error}</p>}
         {/* Search */}
         <div className="p-4 border-b border-slate-100 dark:border-white/5">
           <div className="relative">
