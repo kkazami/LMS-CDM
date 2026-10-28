@@ -158,7 +158,7 @@ export default function ArenaReportClient({
   };
 
   const handleExportCsv = () => {
-    const headers = ["Rank", "Student Name", "Nickname", "Email", "Total Score", "Correct", "Incorrect", "Accuracy (%)", "Avg Time (s)", "Integrity Flags"];
+    const headers = ["Rank", "Student Name", "Nickname", "Email", "Total Score", "Correct", "Incorrect", "Accuracy (%)", "Avg Time (s)"];
     const rows = students.map((s) => [
       s.rank,
       `"${s.name.replace(/"/g, '""')}"`,
@@ -169,7 +169,6 @@ export default function ArenaReportClient({
       s.incorrectCount,
       `${s.accuracy}%`,
       s.avgResponseTimeSec,
-      s.integrityFlags,
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -307,7 +306,7 @@ export default function ArenaReportClient({
                 <th className="py-3 px-3 text-center">Correct / Total</th>
                 <th className="py-3 px-3 text-center">Accuracy</th>
                 <th className="py-3 px-3 text-center">Avg Response</th>
-                {session.enableIntegrityMonitoring && (
+                {false && session.enableIntegrityMonitoring && (
                   <th className="py-3 px-3 text-center">Integrity</th>
                 )}
               </tr>
@@ -359,7 +358,7 @@ export default function ArenaReportClient({
                   <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-500 dark:text-slate-400">
                     {s.avgResponseTimeSec}s
                   </td>
-                  {session.enableIntegrityMonitoring && (
+                  {false && session.enableIntegrityMonitoring && (
                     <td className="py-3.5 px-3 text-center">
                       {s.integrityFlags === 0 ? (
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">

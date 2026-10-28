@@ -37,7 +37,10 @@ export function sameOriginViolation(request: Request): NextResponse | null {
   if (!origin) return null;
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   try {
-    if (new URL(origin).host === host) return null;
+    const originHost = new URL(origin).host;
+    if (originHost === host) return null;
+    const normalizeLocal = (h: string) => h.replace(/^127\.0\.0\.1(?=:|$)/, "localhost");
+    if (host && normalizeLocal(originHost) === normalizeLocal(host)) return null;
   } catch {
     /* fall through */
   }
@@ -52,4 +55,53 @@ export function denied(access: Extract<StudentAccess, { ok: false }>): NextRespo
 export async function loadOwnedStatement(id: string, studentId: string) {
   if (!STATEMENT_ID.test(id)) return null;
   return db.financialStatement.findFirst({ where: { id, studentId } });
+}
+
+let financialTableVerified = false;
+
+export async function ensureFinancialStatementTable(): Promise<void> {
+  if (financialTableVerified) return;
+  try {
+    await db.financialStatement.count({ take: 1 });
+    financialTableVerified = true;
+    return;
+  } catch {
+    // Table may not exist yet on Vercel if migrations weren't run manually
+  }
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS "FinancialStatement" (
+      "id" TEXT NOT NULL,
+      "studentId" TEXT NOT NULL,
+      "instituteId" TEXT NOT NULL,
+      "statementType" TEXT NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'DRAFT',
+      "businessName" TEXT NOT NULL DEFAULT '',
+      "periodStart" DATE,
+      "periodEnd" DATE,
+      "data" JSONB NOT NULL,
+      "results" JSONB,
+      "generatedAt" TIMESTAMP(3),
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "FinancialStatement_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE INDEX IF NOT EXISTS "FinancialStatement_studentId_status_idx" ON "FinancialStatement"("studentId", "status")`,
+    `CREATE INDEX IF NOT EXISTS "FinancialStatement_studentId_updatedAt_idx" ON "FinancialStatement"("studentId", "updatedAt")`,
+    `CREATE INDEX IF NOT EXISTS "FinancialStatement_instituteId_idx" ON "FinancialStatement"("instituteId")`,
+    `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FinancialStatement_studentId_fkey') THEN
+        ALTER TABLE "FinancialStatement" ADD CONSTRAINT "FinancialStatement_studentId_fkey"
+          FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FinancialStatement_instituteId_fkey') THEN
+        ALTER TABLE "FinancialStatement" ADD CONSTRAINT "FinancialStatement_instituteId_fkey"
+          FOREIGN KEY ("instituteId") REFERENCES "Institute"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+    END $$`,
+  ];
+  for (const sql of statements) {
+    await db.$executeRawUnsafe(sql);
+  }
+  financialTableVerified = true;
 }

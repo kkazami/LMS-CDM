@@ -96,6 +96,7 @@ export default function ArenaPlayerClient({
   const [integrityWarning, setIntegrityWarning] = useState<string | null>(null);
 
   const confettiFiredRef = useRef(false);
+  const isFetchingRef = useRef(false);
   const lastQuestionIndexRef = useRef(currentQuestionIndex);
 
   // Reset active power-up effects when advancing to next question (usedPowerUps remains locked)
@@ -164,6 +165,8 @@ export default function ArenaPlayerClient({
 
   // Poll state every 1s
   const fetchPlayerState = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       const res = await fetch(`/api/arena/sessions/${sessionId}`);
       if (!res.ok) {
@@ -193,14 +196,17 @@ export default function ArenaPlayerClient({
       }
     } catch (err) {
       console.warn("Poll player state error:", err);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, [sessionId]);
 
   useEffect(() => {
     fetchPlayerState();
+    if (status === "FINISHED" || sessionDeleted) return;
     const interval = setInterval(fetchPlayerState, 1500);
     return () => clearInterval(interval);
-  }, [fetchPlayerState]);
+  }, [fetchPlayerState, status, sessionDeleted]);
 
   // Countdown timer with Freeze and Add Time integration
   useEffect(() => {
@@ -252,7 +258,7 @@ export default function ArenaPlayerClient({
 
   // Anti-cheating tab switch listener
   useEffect(() => {
-    if (!enableIntegrityMonitoring || status !== "QUESTION_ACTIVE") return;
+    if (true) return;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -315,7 +321,20 @@ export default function ArenaPlayerClient({
           choiceId,
           isCorrect: data.isCorrect,
           pointsEarned: data.pointsEarned,
-          responseTimeMs: 0,
+          responseTimeMs: data.responseTimeMs || 0,
+        });
+        setLeaderboard((prev) =>
+          prev.map((entry) =>
+            entry.studentId === currentUserId
+              ? {
+                  ...entry,
+                  score: entry.score + (data.pointsEarned || 0),
+                  currentStreak: typeof data.streak === "number" ? data.streak : entry.currentStreak,
+                }
+              : entry
+          )
+        );
+        if (false) setMyAnswer({ id: "unused", choiceId: null, isCorrect: false, pointsEarned: 0, responseTimeMs: 0,
         });
 
         if (data.isCorrect) {
@@ -330,7 +349,7 @@ export default function ArenaPlayerClient({
       console.error("Answer submission error:", err);
     } finally {
       setIsSubmittingAnswer(false);
-      fetchPlayerState();
+      // State already updated optimistically from POST /answer response
     }
   };
 
@@ -408,7 +427,7 @@ export default function ArenaPlayerClient({
             Look up at the host screen! The quiz will begin as soon as the instructor starts the session.
           </p>
 
-          {enableIntegrityMonitoring && (
+          {false && enableIntegrityMonitoring && (
             <div className="mt-8 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold flex items-center gap-2">
               <Shield className="w-4 h-4" />
               <span>Integrity Monitoring Active</span>
@@ -571,7 +590,7 @@ export default function ArenaPlayerClient({
           </div>
         )}
 
-        {integrityWarning && (
+        {false && integrityWarning && (
           <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs flex items-center gap-2 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{integrityWarning}</span>

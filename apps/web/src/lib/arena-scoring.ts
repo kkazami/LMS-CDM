@@ -79,3 +79,55 @@ export function generateArenaPin(): string {
   const pin = Math.floor(100000 + Math.random() * 900000);
   return pin.toString();
 }
+
+export interface CachedArenaChoice {
+  id: string;
+  choiceText: string;
+  isCorrect: boolean;
+  colorIndex: number;
+  orderIndex: number;
+}
+
+export interface CachedArenaQuestion {
+  id: string;
+  questionText: string;
+  questionType: string;
+  mediaUrl: string | null;
+  timeLimitSeconds: number;
+  basePoints: number;
+  speedBonusEnabled: boolean;
+  explanation: string | null;
+  orderIndex: number;
+  choices: CachedArenaChoice[];
+}
+
+export interface CachedArenaQuiz {
+  id: string;
+  title: string;
+  questions: CachedArenaQuestion[];
+}
+
+const QUIZ_CACHE_TTL_MS = 60_000;
+const arenaQuizCache = new Map<string, { expiresAt: number; quiz: CachedArenaQuiz }>();
+
+export function getArenaQuizFromCache(quizId: string): CachedArenaQuiz | null {
+  const entry = arenaQuizCache.get(quizId);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    arenaQuizCache.delete(quizId);
+    return null;
+  }
+  return entry.quiz;
+}
+
+export function setArenaQuizInCache(quiz: CachedArenaQuiz): void {
+  arenaQuizCache.set(quiz.id, {
+    expiresAt: Date.now() + QUIZ_CACHE_TTL_MS,
+    quiz,
+  });
+}
+
+export function invalidateArenaQuizCache(quizId: string): void {
+  arenaQuizCache.delete(quizId);
+
+}

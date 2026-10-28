@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       status,
       defaultTimeLimitSeconds: Number(defaultTimeLimitSeconds) || 20,
       scoringMethod,
-      enableIntegrityMonitoring: Boolean(enableIntegrityMonitoring),
+      enableIntegrityMonitoring: false,
       shuffleQuestions: Boolean(shuffleQuestions),
       shuffleAnswers: Boolean(shuffleAnswers),
       showLeaderboardAfterEach: Boolean(showLeaderboardAfterEach),

@@ -70,7 +70,8 @@ export async function GET(
       const incorrectCount = totalQuestions - correctCount;
       const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
       const totalResponseTimeMs = answers.reduce((acc, a) => acc + a.responseTimeMs, 0);
-      const avgResponseTimeSec = answers.length > 0 ? (totalResponseTimeMs / answers.length / 1000).toFixed(1) : "0.0";
+      const avgResponseTimeSec =
+        answers.length > 0 ? (totalResponseTimeMs / answers.length / 1000).toFixed(1) : "0.0";
       const totalIntegrityFlags = answers.reduce((acc, a) => acc + a.integrityFlags, 0);
 
       return {
@@ -99,7 +100,10 @@ export async function GET(
       const totalAnswered = allAnswersForQ.length;
       const totalCorrect = allAnswersForQ.filter((a) => a.isCorrect).length;
       const successRate = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
-      const avgTimeMs = totalAnswered > 0 ? Math.round(allAnswersForQ.reduce((acc, a) => acc + a.responseTimeMs, 0) / totalAnswered) : 0;
+      const avgTimeMs =
+        totalAnswered > 0
+          ? Math.round(allAnswersForQ.reduce((acc, a) => acc + a.responseTimeMs, 0) / totalAnswered)
+          : 0;
 
       // Choice distribution
       const choiceStats = q.choices.map((c) => {
@@ -130,8 +134,14 @@ export async function GET(
 
     // Class overall averages
     const totalStudents = studentReports.length;
-    const classAvgScore = totalStudents > 0 ? Math.round(studentReports.reduce((acc, s) => acc + s.totalScore, 0) / totalStudents) : 0;
-    const classAvgAccuracy = totalStudents > 0 ? Math.round(studentReports.reduce((acc, s) => acc + s.accuracy, 0) / totalStudents) : 0;
+    const classAvgScore =
+      totalStudents > 0
+        ? Math.round(studentReports.reduce((acc, s) => acc + s.totalScore, 0) / totalStudents)
+        : 0;
+    const classAvgAccuracy =
+      totalStudents > 0
+        ? Math.round(studentReports.reduce((acc, s) => acc + s.accuracy, 0) / totalStudents)
+        : 0;
 
     return NextResponse.json({
       session: {
@@ -143,7 +153,7 @@ export async function GET(
         startedAt: gameSession.startedAt,
         endedAt: gameSession.endedAt,
         scoringMethod: gameSession.scoringMethod,
-        enableIntegrityMonitoring: gameSession.enableIntegrityMonitoring,
+        enableIntegrityMonitoring: false,
         status: gameSession.status,
       },
       stats: {
@@ -180,7 +190,13 @@ export async function POST(
     const gameSession = await db.arenaGameSession.findUnique({
       where: { id: sessionId },
       include: {
-        quiz: true,
+        quiz: {
+          include: {
+            _count: {
+              select: { questions: true },
+            },
+          },
+        },
         participants: {
           include: {
             playerAnswers: true,
@@ -208,32 +224,50 @@ export async function POST(
     }
 
     const courseId = gameSession.quiz.courseId;
+    const itemTitle = `[Arena] ${gameSession.quiz.title} (Game #${gameSession.pin})`;
+    const totalQuestions = Math.max(1, gameSession.quiz._count.questions);
 
-    // Create a SyllabusItem for this Arena Quiz attempt
-    const syllabusItem = await db.syllabusItem.create({
-      data: {
+    // Reuse existing SyllabusItem if already synced for this game PIN, or create a new one
+    let syllabusItem = await db.syllabusItem.findFirst({
+      where: {
         courseId,
-        title: `[Arena] ${gameSession.quiz.title} (Game #${gameSession.pin})`,
-        type: "QUIZ",
-        maxPoints: 100,
-        enableIntegrityMonitoring: gameSession.enableIntegrityMonitoring,
+        title: itemTitle,
       },
+      select: { id: true },
     });
 
-    // Record submissions and grades for each participating student
-    for (const participant of gameSession.participants) {
-      const answers = participant.playerAnswers;
-      const correct = answers.filter((a) => a.isCorrect).length;
-      const gradeScore = answers.length > 0 ? (correct / answers.length) * 100 : 0;
-
-      await db.studentSubmission.create({
+    if (!syllabusItem) {
+      syllabusItem = await db.syllabusItem.create({
         data: {
-          syllabusItemId: syllabusItem.id,
-          studentId: participant.studentId,
-          grade: gradeScore,
-          status: "GRADED",
-          submittedAt: new Date(),
+          courseId,
+          title: itemTitle,
+          type: "QUIZ",
+          maxPoints: 100,
+          enableIntegrityMonitoring: false,
         },
+        select: { id: true },
+      });
+    } else {
+      await db.studentSubmission.deleteMany({
+        where: { syllabusItemId: syllabusItem.id },
+      });
+    }
+
+    const now = new Date();
+    if (gameSession.participants.length > 0) {
+      await db.studentSubmission.createMany({
+        data: gameSession.participants.map((participant) => {
+          const answers = participant.playerAnswers;
+          const correct = answers.filter((a) => a.isCorrect).length;
+          const gradeScore = Math.round((correct / totalQuestions) * 100);
+          return {
+            syllabusItemId: syllabusItem.id,
+            studentId: participant.studentId,
+            grade: gradeScore,
+            status: "GRADED",
+            submittedAt: now,
+          };
+        }),
       });
     }
 
