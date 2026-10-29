@@ -1,12 +1,15 @@
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 
 // ─── Types ───
 
 interface TodoItem {
   id: string;
+  labStatus?: string | null;
   title: string;
   type: string;
   dueDate: string | null;
@@ -39,6 +42,7 @@ function getWeekStart(now: Date): Date {
 function bucketItems(
   items: {
     id: string;
+    labStatus?: string | null;
     title: string;
     type: string;
     dueDate: Date | null;
@@ -69,6 +73,7 @@ function bucketItems(
   for (const item of items) {
     const serialized: TodoItem = {
       id: item.id,
+      labStatus: item.labStatus,
       title: item.title,
       type: item.type,
       dueDate: item.dueDate ? item.dueDate.toISOString() : null,
@@ -190,8 +195,10 @@ export async function GET(request: NextRequest) {
       courseId: { in: courseIds },
       type: { not: "MATERIAL" },
       id: { notIn: [...submittedIds] },
+      AND: [await visibleSyllabusForms(undefined, studentId)],
     },
     include: {
+      labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
       course: {
         select: {
           id: true,
@@ -205,7 +212,10 @@ export async function GET(request: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  const buckets = bucketItems(rawItems);
+  const buckets = bucketItems(rawItems.map(item => ({ ...item,
+    labStatus: currentLabAttempt(item.labAssignment)?.status ?? null,
+    dueDate: currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? (currentLabAttempt(item.labAssignment)?.revisionDueAt ?? item.dueDate) : item.dueDate,
+  })));
 
   const enrolledCourses = enrollments.map((e) => ({
     id: e.course.id,

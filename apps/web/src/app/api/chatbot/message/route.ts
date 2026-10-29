@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
 import { db } from "@/lib/db";
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { getCorsHeaders, handleCorsPreflight } from "@/lib/cors";
 
@@ -261,6 +262,7 @@ export async function POST(request: Request) {
         where: {
           courseId: { in: enrolledCourseIds },
           type: { in: ["ASSIGNMENT", "QUIZ", "EXAM"] },
+          AND: [await visibleSyllabusForms(undefined, userId)],
         },
         include: {
           course: { select: { code: true, title: true } },

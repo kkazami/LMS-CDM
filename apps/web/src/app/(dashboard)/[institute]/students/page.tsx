@@ -1,4 +1,5 @@
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { getInstituteName } from "@lms/types";
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
@@ -92,11 +93,10 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       where: {
         courseId: { in: courseIds },
         type: { not: "MATERIAL" },
-        AND: [visibleSyllabusForms(now)],
-        dueDate: {
-          not: null,
-          lte: sevenDaysFromNow,
-        },
+        AND: [await visibleSyllabusForms(now), { OR: [
+          { dueDate: { not: null, lte: sevenDaysFromNow }, ...await labsAvailable() ? { NOT: { labAssignment: { attempts: { some: { studentId, status: 'NEEDS_REVISION' as const } } } } } : {} },
+          ...await labsAvailable() ? [{ labAssignment: { attempts: { some: { studentId, status: 'NEEDS_REVISION' as const, revisionDueAt: { lte: sevenDaysFromNow } } } } }] : [],
+        ] }],
         // An item with no target groups is for everyone; otherwise only members of a
         // targeted group see it (same rule as lib/skills/group-permission-resolver.ts).
         OR: [
@@ -105,6 +105,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
         ],
       },
       include: {
+        labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
         course: {
           select: {
             id: true,
@@ -132,7 +133,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       id: item.id,
       title: item.title,
       type: item.type,
-      dueDate: item.dueDate!.toISOString(),
+      dueDate: (currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? currentLabAttempt(item.labAssignment)?.revisionDueAt! : item.dueDate!).toISOString(),
       courseId: item.course.id,
       courseTitle: item.course.title,
       courseCode: item.course.code,

@@ -1,4 +1,6 @@
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { academicProvenance } from '@/lib/labs/readiness';
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { z } from 'zod';
 import { requireCourseAccess } from '@/lib/course-access';
 import { attachmentLocation } from '@/lib/academic-records';
@@ -43,8 +45,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     const [syllabusItems, studentSubmissions] = await Promise.all([
       db.syllabusItem.findMany({
-        where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}) },
+        where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
         include: {
+          labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
           attachments: {
             select: {
               id: true,
@@ -91,6 +94,11 @@ export async function GET(request: Request, context: RouteContext) {
       const submission = submissionMap.get(item.id) || null;
       return {
         id: item.id,
+        taskFormat: item.labAssignment ? 'GUIDED_LAB' : null,
+        labAssignmentId: item.labAssignment?.id ?? null,
+        labStatus: currentLabAttempt(item.labAssignment)?.status ?? null,
+        revisionDueAt: currentLabAttempt(item.labAssignment)?.revisionDueAt?.toISOString() ?? null,
+        labUrl: item.labAssignment ? `/ics/courses/${courseId}/labs/${item.labAssignment.id}` : null,
         type: item.type, // "ASSIGNMENT" | "QUIZ" | "MATERIAL" | "EXAM"
         title: item.title,
         description: item.description,
@@ -165,7 +173,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const lastItem = await db.syllabusItem.findFirst({
-      where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {}) },
+      where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
       orderBy: { orderIndex: 'desc' },
       select: { orderIndex: true },
     });
@@ -183,6 +191,7 @@ export async function POST(request: Request, context: RouteContext) {
       data: {
         courseId,
         type: type.toUpperCase(),
+        ...await academicProvenance('UNTOUCHED', tx),
         title: title.trim(),
         description: description ? description.trim() : '',
         maxPoints: parsedMaxPoints,

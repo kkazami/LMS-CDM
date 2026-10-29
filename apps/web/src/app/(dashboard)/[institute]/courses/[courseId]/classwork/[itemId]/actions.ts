@@ -1,4 +1,6 @@
 "use server";
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { requireOwnedUpload } from '@/lib/private-upload';
 import { formIsVisible } from '@/lib/forms/availability';
 import { db } from '@/lib/db';
@@ -18,12 +20,14 @@ async function student() {
 }
 async function mutable<T>(actor: CourseActor, submissionId: string, courseId: string, itemId: string, write: (tx: Prisma.TransactionClient) => Promise<T>) {
   return db.$transaction(async tx => {
+    await assertOrdinaryClasswork(tx, itemId);
     await lockAcademicRecord(tx, actor.id, itemId);
     await requireCourseAccess(actor, courseId, false, tx);
     const submission = await tx.studentSubmission.findFirst({ where: { id: submissionId, studentId: actor.id, syllabusItemId: itemId, syllabusItem: { courseId } }, include: { syllabusItem: true } });
     if (!submission) throw new Error('Submission not found.');
     if (submission.isReturned || submission.grade !== null) throw new Error('Submission has already been graded.');
     if (submission.syllabusItem.dueDate && submission.syllabusItem.dueDate < new Date()) throw new Error('The deadline has passed.');
+    await markAcademicWorkStarted(tx, itemId, actor.id);
     return write(tx);
   });
 }
@@ -31,11 +35,12 @@ export async function getOrCreateSubmission(syllabusItemId: string) {
   await requireLegacyActor('classwork/actions.ts#getOrCreateSubmission', () => ({ syllabusItemId }));
   const actor = await student();
   return db.$transaction(async tx => {
+    await assertOrdinaryClasswork(tx, syllabusItemId);
     await lockAcademicRecord(tx, actor.id, syllabusItemId);
     const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId }, include: { form: true } });
     if (!item || item.form && !formIsVisible(item.form)) throw new Error('Assignment not found.');
     await requireCourseAccess(actor, item.courseId, false, tx);
-    return tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId, studentId: actor.id } }, create: { syllabusItemId, studentId: actor.id }, update: {}, include: { attachments: true } });
+    return tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId, studentId: actor.id } }, create: { syllabusItemId, studentId: actor.id, ...await academicProvenance('UNTOUCHED', tx) }, update: {}, include: { attachments: true } });
   });
 }
 export async function submitWork(submissionId: string, instituteCode: string, courseId: string, itemId: string) {

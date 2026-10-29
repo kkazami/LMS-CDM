@@ -1,4 +1,5 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { editFormDefinition } from '@/lib/forms/mutations';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -77,10 +78,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       updateData.points = 0;
     }
 
-    const updated = await db.formQuestion.update({
+    const updated = await editFormDefinition(session.user, courseId, formId, tx => tx.formQuestion.update({
       where: { id: questionId },
       data: updateData,
-    });
+    }));
 
     let parsedConfig = {};
     try {
@@ -129,9 +130,9 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Question not found." }, { status: 404 });
     }
 
-    await db.formQuestion.delete({
+    await editFormDefinition(session.user, courseId, formId, tx => tx.formQuestion.delete({
       where: { id: questionId },
-    });
+    }));
 
     return NextResponse.json({ success: true });
   } catch (error) {

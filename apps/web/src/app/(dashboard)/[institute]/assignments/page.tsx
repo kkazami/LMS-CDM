@@ -1,4 +1,5 @@
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 interface TodoItem {
   id: string;
+  labStatus?: string | null;
   title: string;
   type: string;
   dueDate: string | null;
@@ -60,6 +62,7 @@ function bucketItems(
       instructor: { name: string } | null;
     };
     isDone?: boolean;
+    labStatus?: string | null;
   }[]
 ): BucketedItems {
   const now = new Date(Date.now());
@@ -80,6 +83,7 @@ function bucketItems(
   for (const item of items) {
     const serialized: TodoItem = {
       id: item.id,
+      labStatus: item.labStatus,
       title: item.title,
       type: item.type,
       dueDate: item.dueDate ? item.dueDate.toISOString() : null,
@@ -181,9 +185,10 @@ export default async function TodoPage({
     where: {
       courseId: { in: courseIds },
       type: { not: "MATERIAL" },
-      AND: [visibleSyllabusForms(undefined, studentId)],
+      AND: [await visibleSyllabusForms(undefined, studentId)],
     },
     include: {
+      labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
       course: {
         select: {
           id: true,
@@ -200,6 +205,8 @@ export default async function TodoPage({
   // Map isDone flag to items
   const itemsWithStatus = rawItems.map((item) => ({
     ...item,
+    labStatus: currentLabAttempt(item.labAssignment)?.status ?? null,
+    dueDate: currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? (currentLabAttempt(item.labAssignment)?.revisionDueAt ?? item.dueDate) : item.dueDate,
     isDone: submittedIds.has(item.id),
   }));
 

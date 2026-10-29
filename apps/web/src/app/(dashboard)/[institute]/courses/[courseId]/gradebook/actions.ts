@@ -2,6 +2,7 @@
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { exportGradebookSkill } from '@/lib/skills/gradebook-exporter';
 import { readGradebook } from '@/lib/gradebook-data';
 import { db } from "@/lib/db";
@@ -11,6 +12,8 @@ import { createNotification } from "@/lib/notifications";
 import { gradeSubmission, gradeStudent, lockAcademicRecord } from "@/lib/academic-records";
 import { requireCourseAccess } from "@/lib/course-access";
 import { canonicalRole } from "@/lib/super-user-v1/capabilities";
+import { savePeriodAssignments, savePeriodPolicy } from '@/lib/grading/period-service';
+import type { ItemPeriod, PeriodPolicy } from '@/lib/grading/periods';
 
 async function ensureInstructor(courseId: string) {
   const session = await getSession();
@@ -28,7 +31,9 @@ export interface GradebookStudent {
 }
 
 export interface GradebookAssignment {
+  gradingPeriod: ItemPeriod;
   id: string;
+  labAssignmentId?: string | null;
   title: string;
   maxPoints: number | null;
   type: string;
@@ -51,6 +56,8 @@ export interface GradebookCell {
 }
 
 export interface GradebookData {
+  periodPolicy: PeriodPolicy;
+  periodsAvailable: boolean;
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
   students: GradebookStudent[];
   assignments: GradebookAssignment[];
@@ -63,6 +70,16 @@ export interface GradebookData {
 export async function getGradebookData(courseId: string, page = 1): Promise<GradebookData> {
   const actor = await requireLegacyActor('gradebook/actions.ts#getGradebookData', { courseId });
   return readGradebook(actor, courseId, page);
+}
+export async function saveGradebookPeriodPolicy(courseId: string, input: unknown) {
+  const actor = await requireLegacyActor('gradebook/actions.ts#saveGradebookPeriodPolicy', { courseId });
+  await savePeriodPolicy(actor, courseId, input);
+  return { success: true };
+}
+export async function assignGradebookPeriods(courseId: string, input: unknown) {
+  const actor = await requireLegacyActor('gradebook/actions.ts#assignGradebookPeriods', { courseId });
+  await savePeriodAssignments(actor, courseId, input);
+  return { success: true };
 }
 export async function updateGrade(submissionId: string, rawGrade: number) {
   const user = await requireLegacyActor("gradebook/actions.ts#updateGrade", () => ({ submissionId }));
@@ -84,14 +101,15 @@ export async function clearGrade(syllabusItemId: string, studentId: string) {
   if (!['ADMIN', 'INSTRUCTOR'].includes(canonicalRole(role))) return { success: false, error: "Instructors only" };
 
   await db.$transaction(async tx => {
+    await assertOrdinaryClasswork(tx, syllabusItemId);
     await lockAcademicRecord(tx, studentId, syllabusItemId);
     const item = await tx.syllabusItem.findUnique({ where: { id: syllabusItemId } });
     if (!item) throw new Error("Assignment not found");
     await requireCourseAccess(session.user, item.courseId, true, tx);
     const existing = await tx.studentSubmission.findUnique({ where: { syllabusItemId_studentId: { syllabusItemId, studentId } }, include: { attachments: true } });
     if (!existing) return;
-    if (existing.attachments.length === 0 && !existing.submittedAt) await tx.studentSubmission.delete({ where: { id: existing.id } });
-    else await tx.studentSubmission.update({ where: { id: existing.id }, data: { grade: null, status: "SUBMITTED", isReturned: false } });
+    await markAcademicWorkStarted(tx, syllabusItemId, studentId);
+    await tx.studentSubmission.update({ where: { id: existing.id }, data: { grade: null, status: existing.submittedAt ? "SUBMITTED" : "DRAFT", isReturned: false } });
   });
 
   return { success: true };

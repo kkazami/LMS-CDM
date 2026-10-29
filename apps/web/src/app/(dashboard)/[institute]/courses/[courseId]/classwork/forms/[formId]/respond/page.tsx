@@ -1,5 +1,6 @@
 import { formIsVisible, formIsOpen, publicForm, studentQuestionConfig } from '@/lib/forms/availability';
-import { requireFormAccess } from '@/lib/forms/access';
+import { requireFormAccess, scheduledForm } from '@/lib/forms/access';
+import ScheduledFormNotice from '@/components/forms/renderer/ScheduledFormNotice';
 import StartForm from '@/components/forms/renderer/StartForm';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect, notFound } from "next/navigation";
@@ -37,6 +38,8 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
   const role = (session.user.role as string).toUpperCase();
   const isStudent = role === "STUDENT";
 
+  const scheduled = await scheduledForm(session.user, courseId, formId);
+  if (scheduled?.opensAt) return <ScheduledFormNotice institute={institute} courseId={courseId} title={scheduled.title} formType={scheduled.formType} opensAt={scheduled.opensAt.toISOString()} closesAt={scheduled.closesAt?.toISOString() ?? null} />;
   try { await requireFormAccess(session.user, courseId, formId); } catch { notFound(); }
 
   // Concurrently fetch enrollment, form details, and all user attempts in parallel

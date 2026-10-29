@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Gradebook Exporter Skill
@@ -13,6 +14,8 @@ import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { administratorCourse } from '@/lib/administrator-scope';
 import { requireCourseRelationship } from '@/lib/super-user-v1/actor';
 import { db } from "@/lib/db";
+import { readPeriodConfiguration } from '@/lib/grading/period-service';
+import { calculatePeriodGrades, resolveItemPeriod } from '@/lib/grading/periods';
 
 export interface GradebookExportResult {
   csvContent: string;
@@ -26,7 +29,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
 
   if (canonicalRole(actor.role) === 'ADMIN') await administratorCourse(actor, courseId);
   else await requireCourseRelationship(actor, courseId, true);
-  const [course, enrollments, syllabusItems, submissions] = await Promise.all([
+  const [course, enrollments, syllabusItems, submissions, periodConfiguration, legacyPolicy] = await Promise.all([
     db.course.findUnique({
       where: { id: courseId },
       select: { title: true, code: true },
@@ -37,7 +40,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       orderBy: { student: { name: "asc" } },
     }),
     db.syllabusItem.findMany({
-      where: { courseId, type: { in: ["ASSIGNMENT", "QUIZ"] } },
+      where: { courseId, type: { not: 'MATERIAL' }, maxPoints: { gt: 0 } },
       select: { id: true, title: true, maxPoints: true, type: true, orderIndex: true },
       orderBy: { orderIndex: "asc" },
     }),
@@ -45,6 +48,8 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       where: { syllabusItem: { courseId } },
       select: { syllabusItemId: true, studentId: true, grade: true, status: true },
     }),
+    readPeriodConfiguration(courseId),
+    db.gradingPolicy.findUnique({ where: { courseId }, select: { weights: { select: { category: true, weightPercentage: true } } } }),
   ]);
 
   const students = enrollments.map((e) => e.student);
@@ -61,7 +66,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
 
   // Build CSV rows
   const assignmentHeaders = syllabusItems.map(
-    (a) => csvEscape(`${a.title} (${a.maxPoints ?? "—"} pts)`)
+    (a) => csvEscape(`[${resolveItemPeriod(a.type, periodConfiguration.assignments[a.id])}] ${a.title} (${a.maxPoints ?? "—"} pts)`)
   );
 
   const header = [
@@ -70,6 +75,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
     ...assignmentHeaders,
     csvEscape("Total Points"),
     csvEscape("Total Possible"),
+    csvEscape('Midterm (%)'), csvEscape('Finals (%)'), csvEscape(`Final Grade (%) — Midterm ${periodConfiguration.policy.midtermWeightPercentage}% + Finals ${periodConfiguration.policy.finalsWeightPercentage}%`),
   ].join(",");
 
   const rows = students.map((student) => {
@@ -87,12 +93,14 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       return "";
     });
 
+    const periodGrades = calculatePeriodGrades(syllabusItems.map(item => ({ ...item, gradingPeriod: resolveItemPeriod(item.type, periodConfiguration.assignments[item.id]) })), itemId => gradeMap.get(`${student.id}::${itemId}`), periodConfiguration.policy, legacyPolicy?.weights);
     return [
       csvEscape(student.name),
       csvEscape(student.email),
       ...gradeCells,
       String(totalEarned || ""),
       String(totalPossible || ""),
+      periodGrades.MIDTERM.percentage?.toFixed(2) ?? 'Pending', periodGrades.FINALS.percentage?.toFixed(2) ?? 'Pending', periodGrades.finalGrade?.toFixed(2) ?? 'Pending',
     ].join(",");
   });
 

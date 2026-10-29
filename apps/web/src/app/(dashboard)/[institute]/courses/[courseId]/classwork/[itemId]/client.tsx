@@ -8,6 +8,7 @@ import YourWorkPanel from "@/components/courses/YourWorkPanel";
 import OfflineDraftCard from "@/components/offline/OfflineDraftCard";
 import type { InstituteTheme } from "@/lib/theme";
 import FocusButton from "@/components/focus/FocusButton";
+import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
 
 const ConvertFlashcardsModal = dynamic(
   () => import("@/components/courses/ConvertFlashcardsModal"),
@@ -236,12 +237,6 @@ function AttachmentChip({
   );
 }
 
-const TYPE_META: Record<string, { label: string; color: string }> = {
-  ASSIGNMENT: { label: "Assignment", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/20" },
-  QUIZ: { label: "Quiz", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20" },
-  MATERIAL: { label: "Material", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20" },
-};
-
 export default function AssignmentDetailClient({
   item,
   submission,
@@ -257,7 +252,8 @@ export default function AssignmentDetailClient({
 }: AssignmentDetailClientProps) {
   const isPastDeadline = item.dueDate ? new Date() > item.dueDate : false;
   const isIte = instituteCode?.toLowerCase() === "ite";
-  const typeMeta = TYPE_META[item.type] ?? TYPE_META.MATERIAL;
+  const typeMeta = getClassworkAppearance(item.type);
+  const TypeIcon = typeMeta.icon;
 
   // ── Convert to Flashcards modal state ──
   const [convertModal, setConvertModal] = useState<{
@@ -295,7 +291,8 @@ export default function AssignmentDetailClient({
             {/* Header card */}
             <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
               <div className="flex items-center justify-between gap-3 mb-4">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.color}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${typeMeta.badgeClassName}`}>
+                  <TypeIcon size={14} aria-hidden="true"/>
                   {typeMeta.label}
                 </span>
                 {isStudent && (

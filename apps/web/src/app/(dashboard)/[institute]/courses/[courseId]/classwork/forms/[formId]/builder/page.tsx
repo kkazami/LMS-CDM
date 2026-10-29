@@ -36,6 +36,7 @@ export default async function FormBuilderPage({ params }: PageProps) {
   const form = await db.form.findUnique({
     where: { id: formId },
     include: {
+      _count: { select: { attempts: true } },
       sections: { orderBy: { position: "asc" } },
       questions: { orderBy: { position: "asc" } },
     },

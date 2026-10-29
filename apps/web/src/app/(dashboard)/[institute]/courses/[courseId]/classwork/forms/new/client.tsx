@@ -1,14 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  BookOpen,
-  HelpCircle,
-  FileCheck2,
-  Calendar,
   Sparkles,
   Loader2,
   Plus,
@@ -16,6 +12,7 @@ import {
 import MobileBlocker from "@/components/forms/builder/MobileBlocker";
 import type { FormType } from "@/types/forms";
 import type { InstituteTheme } from "@/lib/theme";
+import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
 
 interface NewFormClientProps {
   courseId: string;
@@ -29,11 +26,14 @@ export default function NewFormClient({
   theme,
 }: NewFormClientProps) {
   const router = useRouter();
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setReady(true); }, []);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [formType, setFormType] = useState<FormType>("QUIZ");
   const [timeLimitMins, setTimeLimitMins] = useState<number | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const primaryColor = theme.colors.primary;
@@ -43,35 +43,37 @@ export default function NewFormClient({
       type: "QUIZ",
       label: "Quiz",
       description: "Short assessments tied to a lesson or topic.",
-      icon: HelpCircle,
+      icon: getClassworkAppearance('QUIZ').icon,
     },
     {
       type: "MIDTERM_EXAM",
       label: "Midterm Exam",
-      description: "Major exam with timing and proctoring controls.",
-      icon: Calendar,
+      description: "Midterm assessment with optional timing and integrity monitoring.",
+      icon: getClassworkAppearance('MIDTERM_EXAM').icon,
     },
     {
       type: "FINAL_EXAM",
       label: "Final Exam",
       description: "Comprehensive end-of-term assessment.",
-      icon: FileCheck2,
+      icon: getClassworkAppearance('FINAL_EXAM').icon,
     },
     {
       type: "ACTIVITY",
       label: "Activity",
       description: "Interactive tasks with file uploads and open answers.",
-      icon: BookOpen,
+      icon: getClassworkAppearance('ACTIVITY').icon,
     },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
     if (!title.trim()) {
       setError("Please enter a title for this form.");
       return;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
     setError(null);
 
@@ -87,7 +89,7 @@ export default function NewFormClient({
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.message || "Failed to create form.");
       }
@@ -98,6 +100,7 @@ export default function NewFormClient({
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to create form.");
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };
@@ -122,17 +125,17 @@ export default function NewFormClient({
               Create New Assessment Form
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5]">
-              Build Google Forms-style quizzes, major exams, or interactive activities.
+              1. Create a draft. 2. Add questions and choose your schedule. 3. Preview and publish. Students cannot access a draft.
             </p>
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+            <div role="alert" className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 text-xs font-semibold">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit}><fieldset disabled={!ready || isSubmitting} className="space-y-5">
             {/* Form Type Selection */}
             <div className="space-y-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -144,10 +147,10 @@ export default function NewFormClient({
                   const Icon = t.icon;
 
                   return (
-                    <div
+                    <button type="button" aria-pressed={isSelected}
                       key={t.type}
                       onClick={() => setFormType(t.type as FormType)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                      className={`text-left p-4 rounded-2xl border cursor-pointer transition-all ${
                         isSelected
                           ? "border-primary bg-primary/5 dark:bg-primary/10 ring-1 ring-primary shadow-xs"
                           : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
@@ -168,7 +171,7 @@ export default function NewFormClient({
                       <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
                         {t.description}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -180,6 +183,7 @@ export default function NewFormClient({
                 Title:
               </label>
               <input
+                id="new-form-title" aria-label="Title" maxLength={300}
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -195,7 +199,7 @@ export default function NewFormClient({
                 Description & Instructions (optional):
               </label>
               <textarea
-                rows={3}
+                aria-label="Description and instructions" rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Provide instructions, topics covered, or expectations for students..."
@@ -210,9 +214,9 @@ export default function NewFormClient({
               </label>
               <div className="flex items-center gap-2">
                 <input
-                  type="number"
+                  aria-label="Time limit in minutes" type="number"
                   min={1}
-                  max={300}
+                  max={10080}
                   value={timeLimitMins}
                   onChange={(e) =>
                     setTimeLimitMins(e.target.value ? Number(e.target.value) : "")
@@ -237,10 +241,10 @@ export default function NewFormClient({
                 ) : (
                   <Plus className="w-4 h-4" />
                 )}
-                <span>{isSubmitting ? "Creating Form..." : "Open Form Builder"}</span>
+                <span>{isSubmitting ? "Creating Form..." : "Create draft and add questions"}</span>
               </button>
             </div>
-          </form>
+          </fieldset></form>
         </div>
       </div>
     </div>

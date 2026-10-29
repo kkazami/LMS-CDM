@@ -1,4 +1,5 @@
-import { requireFormAccess } from '@/lib/forms/access';
+import { requireFormAccess, scheduledForm } from '@/lib/forms/access';
+import ScheduledFormNotice from '@/components/forms/renderer/ScheduledFormNotice';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
@@ -22,6 +23,8 @@ export default async function FormHubPage({ params }: PageProps) {
     redirect(`/login?institute=${institute}`);
   }
 
+  const scheduled = await scheduledForm(session.user, courseId, formId);
+  if (scheduled?.opensAt) return <ScheduledFormNotice institute={institute} courseId={courseId} title={scheduled.title} formType={scheduled.formType} opensAt={scheduled.opensAt.toISOString()} closesAt={scheduled.closesAt?.toISOString() ?? null} />;
   try { await requireFormAccess(session.user, courseId, formId, false); } catch { redirect(`/${institute}/courses/${courseId}/classwork`); }
   const role = canonicalRole(session.user.role);
   const isInstructor = role === "INSTRUCTOR" || role === "ADMIN";

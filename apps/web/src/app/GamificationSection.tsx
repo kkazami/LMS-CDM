@@ -70,15 +70,20 @@ export default function GamificationSection({
   const [leaderboardEntries, setLeaderboardEntries] = useState<PublicLeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardError, setLeaderboardError] = useState(false);
+  const [leaderboardRequest, setLeaderboardRequest] = useState(0);
 
   // Fetch top 6 students from public leaderboard endpoint
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+    setLeaderboardLoading(true);
+    setLeaderboardError(false);
     async function fetchLeaderboard() {
       try {
-        const res = await fetch("/api/public/leaderboard");
+        const res = await fetch("/api/public/leaderboard", { signal: controller.signal });
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          if (isMounted) { setLeaderboardError(true); setLeaderboardEntries([]); setLeaderboardLoading(false); }
+          return;
         }
         const data = await res.json();
         if (isMounted) {
@@ -89,8 +94,7 @@ export default function GamificationSection({
           }
           setLeaderboardLoading(false);
         }
-      } catch (err) {
-        console.error("[LEADERBOARD_CLIENT_FETCH]", err);
+      } catch {
         if (isMounted) {
           setLeaderboardError(true);
           setLeaderboardLoading(false);
@@ -100,8 +104,9 @@ export default function GamificationSection({
     fetchLeaderboard();
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, []);
+  }, [leaderboardRequest]);
 
   // ─────────────────────────────────────────────────────────────
   // Pointer Collision Grid State & References
@@ -560,14 +565,14 @@ export default function GamificationSection({
                   ))}
                 </div>
               ) : leaderboardError || leaderboardEntries.length === 0 ? (
-                // Quiet unavailable state rather than throwing or zeros
-                <div className="py-10 text-center rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div role="status" className="py-10 text-center rounded-xl bg-white/[0.02] border border-white/[0.06]">
                   <p className="text-sm font-medium text-slate-400">
-                    Leaderboard unavailable
+                    {leaderboardError ? 'Leaderboard temporarily unavailable' : 'No rankings yet'}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Student rankings update hourly based on coursework activity.
+                    {leaderboardError ? 'Rankings could not be loaded. Please try again later.' : 'Student rankings will appear as coursework activity earns points.'}
                   </p>
+                  {leaderboardError && <button type="button" onClick={() => setLeaderboardRequest(value => value + 1)} className="mt-4 min-h-10 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400">Try again</button>}
                 </div>
               ) : (
                 // 6 Real Opted-In Rows

@@ -15,9 +15,6 @@ export function visibleForms(now = new Date()): Prisma.FormWhereInput {
   return { status: { in: ['PUBLISHED', 'CLOSED'] }, OR: [{ opensAt: null }, { opensAt: { lte: now } }] };
 }
 
-export function visibleSyllabusForms(now = new Date(), studentId?: string): Prisma.SyllabusItemWhereInput {
-  return { AND: [{ OR: [{ form: null }, { form: visibleForms(now) }] }, ...(studentId ? [{ OR: [{ targetGroups: { none: {} } }, { targetGroups: { some: { group: { members: { some: { studentId } } } } } }] }] : [])] };
-}
 
 export function studentQuestionConfig(raw: string | QuestionConfig): QuestionConfig {
   let config: QuestionConfig;

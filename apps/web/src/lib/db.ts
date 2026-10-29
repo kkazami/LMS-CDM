@@ -57,7 +57,8 @@ const createPrismaClient = () => {
   }
 
   const adapter = new PrismaPg(globalForPrisma.pgPool);
-  return new PrismaClient({
+  return new PrismaClient<Prisma.PrismaClientOptions>({
+    omit: { syllabusItem: { workHistoryState: true }, studentSubmission: { workHistoryState: true } },
     adapter,
     // ORM errors can include credential-bearing query arguments; callers report sanitized errors.
     log: process.env.NODE_ENV === "development" ? ["warn"] : [],
@@ -66,7 +67,7 @@ const createPrismaClient = () => {
 
 // Next.js retains globals across hot reloads, including clients generated for an older schema.
 const schemaVersion = createHash("sha256")
-  .update(JSON.stringify(Prisma.dmmf.datamodel))
+  .update(JSON.stringify(Prisma.dmmf.datamodel) + "lab-provenance-omit-v1")
   .digest("hex");
 const previous = globalForPrisma.prisma;
 export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion && "financialStatement" in (previous as object)

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useDialogA11y } from '@/hooks/useDialogA11y';
 import { X, Sparkles, Loader2, Check, Plus } from "lucide-react";
 import type { FormQuestionData, QuestionType } from "@/types/forms";
 import type { InstituteTheme } from "@/lib/theme";
@@ -36,13 +37,18 @@ export default function AiQuestionModal({
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isInserting, setIsInserting] = useState(false);
 
+  const [error, setError] = useState('');
+  const panel = useRef<HTMLDivElement>(null);
+  const close = () => { if (!isGenerating && !isInserting) onClose(); };
+  useDialogA11y(isOpen, close, panel);
   if (!isOpen) return null;
 
   const primaryColor = theme?.colors?.primary || "#3B82F6";
 
   const handleGenerate = async () => {
     if (!content.trim()) return;
-    setIsGenerating(true);
+    if (isGenerating || isInserting) return;
+    setError(''); setIsGenerating(true);
     try {
       const res = await fetch(`/api/courses/${courseId}/forms/generate-questions`, {
         method: "POST",
@@ -56,12 +62,13 @@ export default function AiQuestionModal({
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Unable to generate questions. Try again.');
       if (data.questions) {
         setGeneratedQuestions(data.questions);
         setSelectedIndices(data.questions.map((_: unknown, i: number) => i));
       }
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'The request could not be completed. Your draft is kept.');
     } finally {
       setIsGenerating(false);
     }
@@ -77,12 +84,13 @@ export default function AiQuestionModal({
     const toInsert = generatedQuestions.filter((_, idx) => selectedIndices.includes(idx));
     if (toInsert.length === 0) return;
 
-    setIsInserting(true);
+    if (isInserting) return;
+    setError(''); setIsInserting(true);
     try {
       await onInsertQuestions(toInsert);
       onClose();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'The request could not be completed. Your draft is kept.');
     } finally {
       setIsInserting(false);
     }
@@ -90,7 +98,8 @@ export default function AiQuestionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-[#12151E] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+      <div ref={panel} role="dialog" aria-modal="true" aria-label="AI Question Assistant" tabIndex={-1} className="relative w-full max-w-2xl bg-white dark:bg-[#12151E] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+        {error && <p role="alert" className="p-4 text-sm text-red-700 dark:text-red-300">{error}</p>}
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
@@ -108,7 +117,7 @@ export default function AiQuestionModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            aria-label="Close AI question assistant" disabled={isGenerating || isInserting} onClick={close}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
@@ -234,7 +243,7 @@ export default function AiQuestionModal({
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
           <button
             type="button"
-            onClick={onClose}
+            aria-label="Close AI question assistant" disabled={isGenerating || isInserting} onClick={close}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10"
           >
             Cancel

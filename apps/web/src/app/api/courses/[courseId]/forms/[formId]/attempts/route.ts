@@ -1,3 +1,4 @@
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { formIsOpen, formDeadline, studentQuestionConfig } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
@@ -58,6 +59,9 @@ export async function POST(request: Request, context: RouteContext) {
     await requireFormAccess(session.user, courseId, formId);
     const body = await request.json().catch(() => ({}));
     const result = await db.$transaction(async tx => {
+      const backing = await tx.form.findUniqueOrThrow({ where: { id: formId }, select: { syllabusItemId: true } });
+      await assertOrdinaryClasswork(tx, backing.syllabusItemId);
+      await markAcademicWorkStarted(tx, backing.syllabusItemId, session.user.id);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['form-start', formId, session.user.id])}, 0))`;
       await requireFormAccess(session.user, courseId, formId, false, tx);
       const form = await tx.form.findUniqueOrThrow({ where: { id: formId }, include: { sections: { orderBy: { position: 'asc' } }, questions: { orderBy: { position: 'asc' } } } });

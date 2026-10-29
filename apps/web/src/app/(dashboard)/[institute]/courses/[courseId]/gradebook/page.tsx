@@ -9,7 +9,7 @@ import { AccessError } from '@/lib/super-user-v1/actor';
 
 interface Props {
   params: Promise<{ institute: string; courseId: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; period?: string }>;
 }
 
 export default async function GradebookPage({ params, searchParams }: Props) {
@@ -52,6 +52,7 @@ export default async function GradebookPage({ params, searchParams }: Props) {
       courseTitle={course.title}
       instituteCode={institute}
       theme={theme}
+      initialPeriod={(await searchParams).period}
     />
   );
 }

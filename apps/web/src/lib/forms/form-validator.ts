@@ -27,12 +27,13 @@ export function validateFormForPublish(form: FormData): ValidationResult {
     const openTime = new Date(form.opensAt).getTime();
     const closeTime = new Date(form.closesAt).getTime();
     if (closeTime <= openTime) {
-      errors.push("Close date and time must be after open date and time.");
+      errors.push("Due date must be after the start date.");
     }
   }
 
   contentQuestions.forEach((q, idx) => {
     const num = idx + 1;
+    if (!Number.isFinite(q.points) || q.points < 0) errors.push(`Question #${num} needs a valid non-negative points value.`);
     if (!q.prompt || q.prompt.trim().length === 0) {
       errors.push(`Question #${num} cannot have a blank title.`);
     }
@@ -42,6 +43,9 @@ export function validateFormForPublish(form: FormData): ValidationResult {
       if (options.length < 2) {
         errors.push(`Question #${num} (${(q.prompt || "").slice(0, 30)}...) must have at least 2 options.`);
       }
+      const correctCount = options.filter(option => option.isCorrect).length;
+      if (q.points > 0 && (q.questionType === 'CHECKBOXES' ? correctCount < 1 : correctCount !== 1)) errors.push(`Question #${num} must have ${q.questionType === 'CHECKBOXES' ? 'at least one correct answer' : 'exactly one correct answer'}. Mark the answer key.`);
+      if (new Set(options.map(option => option.id)).size !== options.length) errors.push(`Question #${num} has duplicate answer identifiers. Recreate the duplicate option.`);
       const blankOptions = options.filter((opt) => !opt.text || opt.text.trim().length === 0);
       if (blankOptions.length > 0) {
         errors.push(`Question #${num} has ${blankOptions.length} blank option(s). All options must have text.`);

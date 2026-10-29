@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">T568B pin-to-color reference</title><desc id="desc">Pins 1 to 8: white orange, orange, white green, blue, white blue, green, white brown, brown. Match numbered pins to the manufacturer plug drawing.</desc>
+  <rect width="960" height="560" rx="20" fill="#f8fafc"/>
+  <g font-family="Arial,sans-serif" fill="#0f172a"><text x="40" y="52" font-size="28" font-weight="700">T568B straight-through cable</text><text x="40" y="86" font-size="18">Use the same scheme at both ends. Identify pin 1 from the plug drawing.</text></g>
+  <g stroke="#334155" stroke-width="2">
+    <rect x="40" y="140" width="95" height="185" rx="8" fill="#fff"/><path d="M48 304L127 153" stroke="#ea580c" stroke-width="14"/>
+    <rect x="150" y="140" width="95" height="185" rx="8" fill="#ea580c"/>
+    <rect x="260" y="140" width="95" height="185" rx="8" fill="#fff"/><path d="M268 304L347 153" stroke="#15803d" stroke-width="14"/>
+    <rect x="370" y="140" width="95" height="185" rx="8" fill="#2563eb"/>
+    <rect x="480" y="140" width="95" height="185" rx="8" fill="#fff"/><path d="M488 304L567 153" stroke="#2563eb" stroke-width="14"/>
+    <rect x="590" y="140" width="95" height="185" rx="8" fill="#15803d"/>
+    <rect x="700" y="140" width="95" height="185" rx="8" fill="#fff"/><path d="M708 304L787 153" stroke="#92400e" stroke-width="14"/>
+    <rect x="810" y="140" width="95" height="185" rx="8" fill="#92400e"/>
+  </g>
+  <g font-family="Arial,sans-serif" font-size="26" font-weight="700" text-anchor="middle" fill="#0f172a"><text x="87" y="123">1</text><text x="197" y="123">2</text><text x="307" y="123">3</text><text x="417" y="123">4</text><text x="527" y="123">5</text><text x="637" y="123">6</text><text x="747" y="123">7</text><text x="857" y="123">8</text></g>
+  <g font-family="Arial,sans-serif" font-size="18" text-anchor="middle" fill="#0f172a"><text x="87" y="359">White/</text><text x="87" y="384">orange</text><text x="197" y="359">Orange</text><text x="307" y="359">White/</text><text x="307" y="384">green</text><text x="417" y="359">Blue</text><text x="527" y="359">White/</text><text x="527" y="384">blue</text><text x="637" y="359">Green</text><text x="747" y="359">White/</text><text x="747" y="384">brown</text><text x="857" y="359">Brown</text></g>
+  <rect x="40" y="421" width="865" height="103" rx="12" fill="#ffedd5"/>
+  <g font-family="Arial,sans-serif" font-size="18" fill="#7c2d12"><text x="60" y="454">This is a numbered pin reference, not a plug orientation drawing.</text><text x="60" y="484">Keep pair twists close to contacts, seat the jacket, then test the wire map.</text><text x="60" y="511">If T568A is assigned, use its pinout instead of this T568B chart.</text></g>
+</svg>

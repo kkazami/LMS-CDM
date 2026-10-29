@@ -1,6 +1,6 @@
 import { requireCourseAccess } from '@/lib/course-access';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
@@ -52,7 +52,7 @@ export async function GET(request: Request, context: RouteContext) {
           },
         },
         syllabusItems: {
-          where: session.user.role.toUpperCase() === 'STUDENT' ? visibleSyllabusForms(undefined, session.user.id) : {},
+          where: session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {},
           select: {
             id: true,
             title: true,

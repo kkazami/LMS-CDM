@@ -1,3 +1,5 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
@@ -212,6 +214,8 @@ export async function POST(request: Request) {
         wasCreated = true;
       }
 
+      await assertOrdinaryClasswork(tx, syllabusItem.id);
+      await markAcademicWorkStarted(tx, syllabusItem.id);
       // 2. Upsert submissions for matched students
       for (const row of validRowsToCommit) {
         await tx.studentSubmission.upsert({
@@ -223,6 +227,7 @@ export async function POST(request: Request) {
           },
           update: {
             grade: row.score,
+            ...await academicProvenance('STARTED', tx),
             status: "RETURNED",
             isReturned: true,
             submittedAt: now,
@@ -232,6 +237,7 @@ export async function POST(request: Request) {
             syllabusItemId: syllabusItem.id,
             studentId: row.studentId,
             grade: row.score,
+            ...await academicProvenance('STARTED', tx),
             status: "RETURNED",
             isReturned: true,
             submittedAt: now,
