@@ -9,22 +9,23 @@ datasource db {
 }
 
 model Institute {
-  id             String            @id @default(cuid())
-  code           String            @unique
-  name           String
-  createdAt      DateTime          @default(now())
-  calendarEvents CalendarEvent[]
-  courses        Course[]
-  flashcardDecks FlashcardDeck[]
-  notes          Note[]
-  taskItems      TaskItem[]
-  users          User[]
-  kxPosts        KxPost[]
-  programs       AcademicProgram[]
-  terms          AcademicTerm[]
-  supportTickets SupportTicket[]
-  arenaQuizzes   ArenaQuiz[]
+  id                  String               @id @default(cuid())
+  code                String               @unique
+  name                String
+  createdAt           DateTime             @default(now())
+  calendarEvents      CalendarEvent[]
+  courses             Course[]
+  flashcardDecks      FlashcardDeck[]
+  notes               Note[]
+  taskItems           TaskItem[]
+  users               User[]
+  kxPosts             KxPost[]
+  programs            AcademicProgram[]
+  terms               AcademicTerm[]
+  supportTickets      SupportTicket[]
+  arenaQuizzes        ArenaQuiz[]
   financialStatements FinancialStatement[]
+  businessPlans       BusinessPlan[]
 }
 
 model User {
@@ -44,7 +45,7 @@ model User {
   role              String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
   isActive          Boolean                 @default(true)
   permissions       String                  @default("[]") // JSON array of permission strings
-  securityPin       String?                 // 6-digit hashed security PIN for step-up MFA
+  securityPin       String? // 6-digit hashed security PIN for step-up MFA
   instituteId       String
   createdAt         DateTime                @default(now())
 
@@ -57,24 +58,24 @@ model User {
   coverColor  String  @default("#1E88E5") // Profile page banner accent color (hex)
   preferences String  @default("{}") // JSON object storing notification/theme settings
 
-  institute           Institute               @relation(fields: [instituteId], references: [id])
-  sessions            Session[]
-  notes               Note[]
-  taskItems           TaskItem[]
-  calendarEvents      CalendarEvent[]
-  taughtCourses       Course[]                @relation("CourseInstructor")
-  enrollments         Enrollment[]
-  groupMemberships    StudentGroupMember[]
-  announcements       Announcement[]
-  sentComments        PrivateComment[]        @relation("CommentSender")
-  receivedComments    PrivateComment[]        @relation("CommentRecipient")
-  submissions         StudentSubmission[]
-  submissionRequests  SubmissionRequest[]
-  dashboardLayouts    DashboardLayout[]
-  auditLogsAsAdmin    AuditLog[]              @relation("AuditAdmin")
-  auditLogsAsTarget   AuditLog[]              @relation("AuditTarget")
-  passwordResetOtps   PasswordResetOtp[]
-  activationTokens    AccountActivationToken[]
+  institute              Institute                @relation(fields: [instituteId], references: [id])
+  sessions               Session[]
+  notes                  Note[]
+  taskItems              TaskItem[]
+  calendarEvents         CalendarEvent[]
+  taughtCourses          Course[]                 @relation("CourseInstructor")
+  enrollments            Enrollment[]
+  groupMemberships       StudentGroupMember[]
+  announcements          Announcement[]
+  sentComments           PrivateComment[]         @relation("CommentSender")
+  receivedComments       PrivateComment[]         @relation("CommentRecipient")
+  submissions            StudentSubmission[]
+  submissionRequests     SubmissionRequest[]
+  dashboardLayouts       DashboardLayout[]
+  auditLogsAsAdmin       AuditLog[]               @relation("AuditAdmin")
+  auditLogsAsTarget      AuditLog[]               @relation("AuditTarget")
+  passwordResetOtps      PasswordResetOtp[]
+  activationTokens       AccountActivationToken[]
   // â”€â”€â”€ Interactive Activities relations (Sprint 0) â”€â”€â”€
   activityTemplates      ActivityTemplate[]       @relation("ActivityTemplateCreator")
   activitySubmissions    ActivitySubmission[]     @relation("ActivitySubmissions")
@@ -111,19 +112,20 @@ model User {
   githubComments    GithubInlineComment[] @relation("UserGithubInlineComments")
 
   // ─── Forms Module relations ───
-  createdForms                Form[]                       @relation("FormCreator")
-  formAttempts                FormAttempt[]                @relation("FormAttempts")
-  questionBankItems           QuestionBankItem[]           @relation("QuestionBankCreator")
-  credentialProvisioningState CredentialProvisioningState?
-  programMemberships          ProgramMembership[]
-  programHeadAssignments      ProgramHeadAssignment[]
-  uploadedAssets              PrivateAsset[]
-  supportTickets              SupportTicket[]              @relation("UserSupportTickets")
-  arenaHostedSessions         ArenaGameSession[]           @relation("ArenaSessionHost")
-  arenaParticipations         ArenaParticipant[]           @relation("ArenaUserParticipants")
-  arenaAnswers                ArenaPlayerAnswer[]          @relation("ArenaUserAnswers")
-  arenaQuizzes                ArenaQuiz[]                  @relation("ArenaQuizAuthor")
-  financialStatements         FinancialStatement[]         @relation("StudentFinancialStatements")
+  createdForms                   Form[]                          @relation("FormCreator")
+  formAttempts                   FormAttempt[]                   @relation("FormAttempts")
+  questionBankItems              QuestionBankItem[]              @relation("QuestionBankCreator")
+  credentialProvisioningState    CredentialProvisioningState?
+  programMemberships             ProgramMembership[]
+  programHeadAssignments         ProgramHeadAssignment[]
+  uploadedAssets                 PrivateAsset[]
+  supportTickets                 SupportTicket[]                 @relation("UserSupportTickets")
+  arenaHostedSessions            ArenaGameSession[]              @relation("ArenaSessionHost")
+  arenaParticipations            ArenaParticipant[]              @relation("ArenaUserParticipants")
+  arenaAnswers                   ArenaPlayerAnswer[]             @relation("ArenaUserAnswers")
+  arenaQuizzes                   ArenaQuiz[]                     @relation("ArenaQuizAuthor")
+  financialStatements            FinancialStatement[]            @relation("StudentFinancialStatements")
+  businessPlans                  BusinessPlan[]                  @relation("StudentBusinessPlans")
   mockInterviewSavedQuestions    MockInterviewSavedQuestion[]
   mockInterviewApplicantAttempts MockInterviewApplicantAttempt[]
   mockInterviewRecruiterAttempts MockInterviewRecruiterAttempt[]
@@ -147,19 +149,20 @@ model User {
   // ─── ITE Meetings relations ───
   createdMeetings ClassMeeting[] @relation("ClassMeetingCreatedBy")
   meetingJoins    MeetingJoin[]
+
   @@unique([id, instituteId])
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique @default(cuid())
-  userId    String
-  userAgent String?
-  ipAddress String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique @default(cuid())
+  userId     String
+  userAgent  String?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([tokenHash])
@@ -688,9 +691,9 @@ model ExpTransaction {
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
   @@index([source])
-  @@unique([userId, idempotencyKey])
 }
 
 model GradeIncentiveRule {
@@ -1732,14 +1735,15 @@ model PrivateAsset {
   id          String   @id @default(cuid())
   ownerId     String
   instituteId String
-  fileName   String
-  mimeType   String
-  size       Int
-  content    Bytes
-  scanStatus String   @default("LEGACY")
-  sha256     String?
-  createdAt  DateTime @default(now())
-  owner      User     @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
+  fileName    String
+  mimeType    String
+  size        Int
+  content     Bytes
+  scanStatus  String   @default("LEGACY")
+  sha256      String?
+  createdAt   DateTime @default(now())
+  owner       User     @relation(fields: [ownerId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
   @@index([instituteId, ownerId])
 }
 
@@ -1760,24 +1764,24 @@ model LegacyAssetBinding {
 // ─────────────────────────────────────────────────────────────
 
 model SupportTicket {
-  id          String   @id @default(cuid())
-  subject     String
-  message     String   @db.Text
-  category    String   @default("GENERAL") // "TECHNICAL", "ACCOUNT", "COURSE", "OTHER"
-  status      String   @default("OPEN")    // "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"
-  priority    String   @default("NORMAL")  // "LOW", "NORMAL", "HIGH", "URGENT"
-  
+  id       String @id @default(cuid())
+  subject  String
+  message  String @db.Text
+  category String @default("GENERAL") // "TECHNICAL", "ACCOUNT", "COURSE", "OTHER"
+  status   String @default("OPEN") // "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"
+  priority String @default("NORMAL") // "LOW", "NORMAL", "HIGH", "URGENT"
+
   authorId    String
   instituteId String
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  resolvedAt  DateTime?
-  adminReply  String?  @db.Text
-  repliedAt   DateTime?
 
-  author      User      @relation("UserSupportTickets", fields: [authorId], references: [id], onDelete: Cascade)
-  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+  adminReply String?   @db.Text
+  repliedAt  DateTime?
+
+  author    User      @relation("UserSupportTickets", fields: [authorId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
 
   @@index([authorId])
   @@index([instituteId])
@@ -1789,33 +1793,33 @@ model SupportTicket {
 // ─────────────────────────────────────────────────────────────
 
 model ArenaQuiz {
-  id                        String              @id @default(cuid())
-  title                     String
-  description               String?             @db.Text
-  coverImage                String?
-  courseId                  String?
-  instituteId               String
-  authorId                  String
-  status                    String              @default("DRAFT") // "DRAFT" | "PUBLISHED" | "ARCHIVED"
-  
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
+  coverImage  String?
+  courseId    String?
+  instituteId String
+  authorId    String
+  status      String  @default("DRAFT") // "DRAFT" | "PUBLISHED" | "ARCHIVED"
+
   // Game Configuration & Default Rules
-  defaultTimeLimitSeconds   Int                 @default(20) // 10, 20, 30, 60, 120
-  scoringMethod             String              @default("SPEED_BASED") // "SPEED_BASED" | "ACCURACY_BASED"
-  enableIntegrityMonitoring Boolean             @default(false)
-  shuffleQuestions          Boolean             @default(false)
-  shuffleAnswers            Boolean             @default(false)
-  showLeaderboardAfterEach  Boolean             @default(true)
-  showAnswerFeedback        String              @default("IMMEDIATE") // "IMMEDIATE" | "END_OF_GAME"
-  allowReconnection         Boolean             @default(true)
-  
-  createdAt                 DateTime            @default(now())
-  updatedAt                 DateTime            @updatedAt
-  
-  institute                 Institute           @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-  author                    User                @relation("ArenaQuizAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  course                    Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  questions                 ArenaQuestion[]
-  sessions                  ArenaGameSession[]
+  defaultTimeLimitSeconds   Int     @default(20) // 10, 20, 30, 60, 120
+  scoringMethod             String  @default("SPEED_BASED") // "SPEED_BASED" | "ACCURACY_BASED"
+  enableIntegrityMonitoring Boolean @default(false)
+  shuffleQuestions          Boolean @default(false)
+  shuffleAnswers            Boolean @default(false)
+  showLeaderboardAfterEach  Boolean @default(true)
+  showAnswerFeedback        String  @default("IMMEDIATE") // "IMMEDIATE" | "END_OF_GAME"
+  allowReconnection         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  institute Institute          @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  author    User               @relation("ArenaQuizAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  course    Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  questions ArenaQuestion[]
+  sessions  ArenaGameSession[]
 
   @@index([instituteId])
   @@index([authorId])
@@ -1824,35 +1828,35 @@ model ArenaQuiz {
 }
 
 model ArenaQuestion {
-  id                  String              @id @default(cuid())
-  quizId              String
-  questionText        String              @db.Text
-  questionType        String              @default("MULTIPLE_CHOICE") // "MULTIPLE_CHOICE" | "TRUE_FALSE"
-  mediaUrl            String?
-  timeLimitSeconds    Int                 @default(20)
-  basePoints          Int                 @default(1000)
-  speedBonusEnabled   Boolean             @default(true)
-  explanation         String?             @db.Text
-  orderIndex          Int                 @default(0)
-  
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  
-  quiz                ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  choices             ArenaAnswerChoice[]
-  playerAnswers       ArenaPlayerAnswer[]
+  id                String  @id @default(cuid())
+  quizId            String
+  questionText      String  @db.Text
+  questionType      String  @default("MULTIPLE_CHOICE") // "MULTIPLE_CHOICE" | "TRUE_FALSE"
+  mediaUrl          String?
+  timeLimitSeconds  Int     @default(20)
+  basePoints        Int     @default(1000)
+  speedBonusEnabled Boolean @default(true)
+  explanation       String? @db.Text
+  orderIndex        Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quiz          ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  choices       ArenaAnswerChoice[]
+  playerAnswers ArenaPlayerAnswer[]
 
   @@index([quizId, orderIndex])
 }
 
 model ArenaAnswerChoice {
-  id            String              @id @default(cuid())
-  questionId    String
-  choiceText    String
-  isCorrect     Boolean             @default(false)
-  colorIndex    Int                 @default(0) // 0: Red/Triangle, 1: Blue/Diamond, 2: Yellow/Circle, 3: Green/Square
-  orderIndex    Int                 @default(0)
-  
+  id         String  @id @default(cuid())
+  questionId String
+  choiceText String
+  isCorrect  Boolean @default(false)
+  colorIndex Int     @default(0) // 0: Red/Triangle, 1: Blue/Diamond, 2: Yellow/Circle, 3: Green/Square
+  orderIndex Int     @default(0)
+
   question      ArenaQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
   playerAnswers ArenaPlayerAnswer[]
 
@@ -1860,32 +1864,32 @@ model ArenaAnswerChoice {
 }
 
 model ArenaGameSession {
-  id                      String              @id @default(cuid())
-  quizId                  String
-  hostId                  String
-  pin                     String              @unique // 6-digit unique join PIN
-  mode                    String              @default("LIVE") // "LIVE" | "SELF_PACED"
-  status                  String              @default("LOBBY") // "LOBBY" | "QUESTION_ACTIVE" | "QUESTION_RESULT" | "LEADERBOARD" | "FINISHED"
-  
-  currentQuestionIndex    Int                 @default(0)
+  id     String @id @default(cuid())
+  quizId String
+  hostId String
+  pin    String @unique // 6-digit unique join PIN
+  mode   String @default("LIVE") // "LIVE" | "SELF_PACED"
+  status String @default("LOBBY") // "LOBBY" | "QUESTION_ACTIVE" | "QUESTION_RESULT" | "LEADERBOARD" | "FINISHED"
+
+  currentQuestionIndex     Int       @default(0)
   currentQuestionStartedAt DateTime?
-  currentQuestionDeadline DateTime?
-  
+  currentQuestionDeadline  DateTime?
+
   // Snapshot of game settings used for this session
-  scoringMethod           String              @default("SPEED_BASED")
-  enableIntegrityMonitoring Boolean           @default(false)
-  showLeaderboardAfterEach Boolean           @default(true)
-  showAnswerFeedback      String              @default("IMMEDIATE")
-  
-  startedAt               DateTime?
-  endedAt                 DateTime?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
-  
-  quiz                    ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  host                    User                @relation("ArenaSessionHost", fields: [hostId], references: [id], onDelete: Cascade)
-  participants            ArenaParticipant[]
-  playerAnswers           ArenaPlayerAnswer[]
+  scoringMethod             String  @default("SPEED_BASED")
+  enableIntegrityMonitoring Boolean @default(false)
+  showLeaderboardAfterEach  Boolean @default(true)
+  showAnswerFeedback        String  @default("IMMEDIATE")
+
+  startedAt DateTime?
+  endedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  quiz          ArenaQuiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  host          User                @relation("ArenaSessionHost", fields: [hostId], references: [id], onDelete: Cascade)
+  participants  ArenaParticipant[]
+  playerAnswers ArenaPlayerAnswer[]
 
   @@index([pin])
   @@index([quizId])
@@ -1894,21 +1898,21 @@ model ArenaGameSession {
 }
 
 model ArenaParticipant {
-  id              String              @id @default(cuid())
-  sessionId       String
-  studentId       String
-  nickname        String
-  avatar          String?
-  score           Int                 @default(0)
-  currentStreak   Int                 @default(0)
-  rank            Int                 @default(0)
-  isConnected     Boolean             @default(true)
-  joinedAt        DateTime            @default(now())
-  lastActiveAt    DateTime            @default(now())
-  
-  session         ArenaGameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student         User                @relation("ArenaUserParticipants", fields: [studentId], references: [id], onDelete: Cascade)
-  playerAnswers   ArenaPlayerAnswer[]
+  id            String   @id @default(cuid())
+  sessionId     String
+  studentId     String
+  nickname      String
+  avatar        String?
+  score         Int      @default(0)
+  currentStreak Int      @default(0)
+  rank          Int      @default(0)
+  isConnected   Boolean  @default(true)
+  joinedAt      DateTime @default(now())
+  lastActiveAt  DateTime @default(now())
+
+  session       ArenaGameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student       User                @relation("ArenaUserParticipants", fields: [studentId], references: [id], onDelete: Cascade)
+  playerAnswers ArenaPlayerAnswer[]
 
   @@unique([sessionId, studentId])
   @@index([sessionId, score])
@@ -1916,32 +1920,31 @@ model ArenaParticipant {
 }
 
 model ArenaPlayerAnswer {
-  id              String              @id @default(cuid())
-  sessionId       String
-  questionId      String
-  participantId   String
-  studentId       String
-  choiceId        String?
-  isCorrect       Boolean             @default(false)
-  responseTimeMs  Int                 @default(0) // Time taken in milliseconds
-  pointsEarned    Int                 @default(0)
-  submittedAt     DateTime            @default(now())
-  
+  id             String   @id @default(cuid())
+  sessionId      String
+  questionId     String
+  participantId  String
+  studentId      String
+  choiceId       String?
+  isCorrect      Boolean  @default(false)
+  responseTimeMs Int      @default(0) // Time taken in milliseconds
+  pointsEarned   Int      @default(0)
+  submittedAt    DateTime @default(now())
+
   // Anti-cheating flags accumulated during question attempt
-  integrityFlags  Int                 @default(0)
-  
-  session         ArenaGameSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question        ArenaQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  choice          ArenaAnswerChoice?  @relation(fields: [choiceId], references: [id], onDelete: SetNull)
-  participant     ArenaParticipant    @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  student         User                @relation("ArenaUserAnswers", fields: [studentId], references: [id], onDelete: Cascade)
+  integrityFlags Int @default(0)
+
+  session     ArenaGameSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question    ArenaQuestion      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  choice      ArenaAnswerChoice? @relation(fields: [choiceId], references: [id], onDelete: SetNull)
+  participant ArenaParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  student     User               @relation("ArenaUserAnswers", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId, studentId])
   @@index([sessionId, questionId])
   @@index([participantId])
   @@index([studentId])
 }
-
 
 enum AccountActivationStatus {
   PENDING_ACTIVATION
@@ -2082,13 +2085,13 @@ model FinancialStatement {
   id            String    @id @default(cuid())
   studentId     String
   instituteId   String
-  statementType String    // INCOME_STATEMENT | BALANCE_SHEET | ... (see lib/financial-statements/types.ts)
+  statementType String // INCOME_STATEMENT | BALANCE_SHEET | ... (see lib/financial-statements/types.ts)
   status        String    @default("DRAFT") // "DRAFT" | "GENERATED"
   businessName  String    @default("")
   periodStart   DateTime? @db.Date
   periodEnd     DateTime? @db.Date // reporting period end, or the statement date for point-in-time reports
-  data          Json      // editable entries (meta + sections/rows)
-  results       Json?     // last deterministic calculation summary
+  data          Json // editable entries (meta + sections/rows)
+  results       Json? // last deterministic calculation summary
   generatedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -2280,3 +2283,24 @@ model MockInterviewQuizAttempt {
   @@index([studentId, completedAt])
 }
 
+model BusinessPlan {
+  id               String    @id @default(cuid())
+  studentId        String
+  instituteId      String
+  title            String    @default("Untitled Business Plan")
+  documentType     String    @default("BUSINESS_PLAN")
+  status           String    @default("DRAFT")
+  businessCategory String    @default("FOOD_BEVERAGE")
+  data             Json
+  templateId       String?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  student   User      @relation("StudentBusinessPlans", fields: [studentId], references: [id], onDelete: Cascade)
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, status])
+  @@index([studentId, updatedAt])
+  @@index([instituteId])
+}

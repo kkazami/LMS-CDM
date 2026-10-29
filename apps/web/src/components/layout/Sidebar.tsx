@@ -228,6 +228,11 @@ export default function Sidebar({
         href: `/${instituteCode}/mock-interview`,
         icon: Briefcase,
       },
+      {
+        label: "Business Plan Guide",
+        href: `/${instituteCode}/business-plan`,
+        icon: NotebookPen,
+      },
     ];
   }
 

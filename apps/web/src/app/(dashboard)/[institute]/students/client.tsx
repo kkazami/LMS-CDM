@@ -443,6 +443,17 @@ export default function StudentDashboardClient({
               color={theme.colors.primary}
             />
           </StaggerItem>
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Briefcase}
+                label="Business Plan Guide"
+                href={`/${instituteCode}/business-plan`}
+                sublabel="Guided Venture Builder"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
         </StaggerGroup>
 
         <div id="calendar" className="min-w-0 scroll-mt-20">
