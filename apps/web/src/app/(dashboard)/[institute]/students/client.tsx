@@ -286,6 +286,16 @@ export default function StudentDashboardClient({
             icon: Briefcase,
             href: `/${instituteCode}/mock-interview`,
           },
+          {
+            label: "IBE Learning Hub",
+            icon: GraduationCap,
+            href: `/${instituteCode}/learning-hub`,
+          },
+          {
+            label: "Hall of Fame",
+            icon: Sparkles,
+            href: `/${instituteCode}/hall-of-fame`,
+          },
         ]
       : []),
     {

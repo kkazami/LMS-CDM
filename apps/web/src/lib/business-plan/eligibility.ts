@@ -10,6 +10,7 @@ export function isBusinessPlanEligible(
   user?: {
     role?: string | null;
     institute?: { code?: string | null } | null;
+    instituteCode?: string | null;
     isActive?: boolean | null;
     activationStatus?: string | null;
   } | null
@@ -17,8 +18,8 @@ export function isBusinessPlanEligible(
   if (!user) return false;
   if (user.isActive === false) return false;
   if (user.activationStatus && user.activationStatus !== "ACTIVE") return false;
-  const role = (user.role ?? "").toUpperCase();
-  const institute = (user.institute?.code ?? "").toLowerCase();
+  const role = (user.role ?? "").trim().toUpperCase();
+  const institute = (user.institute?.code ?? user.instituteCode ?? "").trim().toLowerCase();
   return role === "STUDENT" && institute === BUSINESS_PLAN_INSTITUTE_CODE;
 }
 

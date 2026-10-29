@@ -233,6 +233,16 @@ export default function Sidebar({
         href: `/${instituteCode}/business-plan`,
         icon: NotebookPen,
       },
+      {
+        label: "IBE Learning Hub",
+        href: `/${instituteCode}/learning-hub`,
+        icon: Library,
+      },
+      {
+        label: "Hall of Fame",
+        href: `/${instituteCode}/hall-of-fame`,
+        icon: GraduationCap,
+      },
     ];
   }
 
