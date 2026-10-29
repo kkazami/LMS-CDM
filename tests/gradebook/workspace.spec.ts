@@ -1,0 +1,72 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { test, expect, type Page } from '@playwright/test';
+const state = JSON.parse(fs.readFileSync(process.env.LAB_E2E_STATE!, 'utf8'));
+async function login(page: Page, account = 'teacher') {
+  await page.goto('/login?institute=ics');
+  await page.getByLabel('Email or student ID', { exact: true }).fill(state.accounts[account].email);
+  await page.getByLabel('Password', { exact: true }).fill(state.password);
+  await page.getByRole('checkbox', { name: /I agree to the Terms and Conditions/ }).check();
+  await page.getByRole('button', { name: /sign in/i }).click(); await expect(page).toHaveURL(/\/ics(?:\/|$)/);
+}
+test('instructors organize periods, edit scores, customize 40/60, export and switch class in the wide workspace', async ({ page, browser }) => {
+  await login(page);
+  await page.goto('/ics/gradebooks?course=grade-course');
+  await expect(page.getByRole('main').getByRole('heading', { name: 'Gradebooks', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Gradebooks', exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('option', { name: /Forbidden Gradebook/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Assign periods', exact: true }).click();
+  const organize = page.getByRole('dialog', { name: 'Assign classwork to grading periods' });
+  for (let index = 1; index <= 7; index++) await organize.getByLabel('Select Database quiz ' + index, { exact: true }).check();
+  await organize.getByLabel('Move selected classwork to period').selectOption('MIDTERM');
+  await organize.getByRole('button', { name: 'Save period assignments', exact: true }).click();
+  await expect(organize).toHaveCount(0);
+  await expect(page.getByText(/7 classwork items need/)).toHaveCount(0);
+  await expect(page.getByRole('columnheader', { name: 'Final database exam', exact: false })).toHaveCount(0);
+  const scroll = page.getByLabel('Gradebook table scroll area');
+  const assertNoOverlap = async () => {
+    const bounds = await page.locator('thead tr').evaluate(row => { const cells = [...row.children]; const result = cells.at(-1)!.getBoundingClientRect(); const previous = cells.at(-2)!.getBoundingClientRect(); return { resultLeft: result.left, activityRight: previous.right }; });
+    expect(bounds.resultLeft).toBeGreaterThanOrEqual(bounds.activityRight - 1);
+  };
+  await assertNoOverlap(); await scroll.evaluate(element => { element.scrollLeft = element.scrollWidth; }); await assertNoOverlap();
+  await scroll.evaluate(element => { element.scrollLeft = 0; });
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  await page.screenshot({ path: path.join(state.output, 'gradebook-dark-wide.png'), fullPage: true });
+  const otherMid = page.locator('#grade-cell-other-grade-mid'); await otherMid.click();
+  const input = page.getByRole('spinbutton', { name: 'Score for Synthetic Other Student in Midterm database exam', exact: true });
+  await input.fill('70'); await input.press('Enter');
+  await expect(page.getByRole('status').filter({ hasText: 'Score saved.' })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Score for Synthetic Student in Midterm database exam', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Cancel edit', exact: true }).click();
+  let rejectNextSave = true;
+  await page.route('**/ics/gradebooks**', async route => { if (rejectNextSave && route.request().method() === 'POST' && route.request().headers()['next-action']) { rejectNextSave = false; await route.abort('failed'); } else await route.continue(); });
+  await otherMid.click(); await input.fill('72'); await input.press('Enter');
+  await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
+  await expect(input).toHaveValue('72');
+  const unchanged = await (await page.request.get('/api/courses/grade-course/gradebook')).json();
+  expect(unchanged.grades.other['grade-mid'].grade).toBe(70);
+  await page.unroute('**/ics/gradebooks**');
+  await page.getByRole('button', { name: 'Retry / save score', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Score saved.' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('alert')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Final Grades', exact: true }).click();
+  const row = page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /Synthetic Student.*student@example.invalid/ }) });
+  await expect(row.getByText('80.00%', { exact: true })).toBeVisible(); await expect(row.getByText('90.00%', { exact: true })).toBeVisible(); await expect(row.getByText('86.00%', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Grading policy', exact: true }).click();
+  const policy = page.getByRole('dialog', { name: 'Grading policy', exact: true });
+  await policy.getByLabel('Midterm weight (%)', { exact: true }).fill('30');
+  await expect(policy.getByRole('button', { name: 'Save grading policy', exact: true })).toBeDisabled();
+  await policy.getByLabel('Finals weight (%)', { exact: true }).fill('70');
+  await policy.getByRole('button', { name: 'Save grading policy', exact: true }).click();
+  await expect(policy).toHaveCount(0); await expect(row.getByText('87.00%', { exact: true })).toBeVisible();
+  await page.reload(); await expect(row.getByText('87.00%', { exact: true })).toBeVisible();
+  const csv = await page.request.get('/api/courses/grade-course/gradebook/export'); expect(csv.ok()).toBe(true);
+  const content = await csv.text(); expect(content).toContain('87.00'); expect(content).toContain('Database quiz 7'); expect(content).toContain('Final database exam');
+  await page.getByRole('button', { name: 'Expand gradebook', exact: true }).click(); await expect(page.getByRole('button', { name: 'Exit expanded view', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Exit expanded view', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Class', exact: true }).selectOption('grade-second'); await expect(page.getByRole('heading', { name: 'Second Gradebook Class', exact: true })).toBeVisible();
+  expect((await page.request.get('/api/courses/grade-foreign/gradebook')).status()).toBe(403);
+  const context = await browser.newContext({ ignoreHTTPSErrors: true, baseURL: state.origin });
+  try { const student = await context.newPage(); await login(student, 'student'); await student.goto('/ics/gradebooks?course=grade-course'); await expect(student).not.toHaveURL(/\/gradebooks/); }
+  finally { await context.close(); }
+});

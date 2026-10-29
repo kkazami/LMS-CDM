@@ -57,9 +57,25 @@ test('ClamAV protocol sends exact bounded bytes and publishes only an explicit c
     verdict = 'stream: ERROR'; await assert.rejects(api.scanUpload(Buffer.from('synthetic')), error => error.status === 503);
   } finally { for (const socket of sockets) socket.destroy(); await new Promise(resolve => server.close(resolve)); if (oldHost === undefined) delete process.env.CLAMAV_HOST; else process.env.CLAMAV_HOST = oldHost; if (oldPort === undefined) delete process.env.CLAMAV_PORT; else process.env.CLAMAV_PORT = oldPort; }
 });
+test('uploads never persist a clean asset while the mandatory scanner is unconfigured', async () => {
+  const oldHost = process.env.CLAMAV_HOST, oldPort = process.env.CLAMAV_PORT;
+  delete process.env.CLAMAV_HOST; delete process.env.CLAMAV_PORT;
+  let writes = 0;
+  try {
+    const api = await compile(sources, { db: { $transaction: async () => { writes++; throw new Error('Unexpected persistence'); } } });
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
+    await assert.rejects(api.savePrivateUpload(student, new File([png], 'clean.png', { type: 'image/png' })), error => error.status === 503);
+    assert.equal(writes, 0);
+  } finally {
+    if (oldHost === undefined) delete process.env.CLAMAV_HOST; else process.env.CLAMAV_HOST = oldHost;
+    if (oldPort === undefined) delete process.env.CLAMAV_PORT; else process.env.CLAMAV_PORT = oldPort;
+  }
+});
+
 test('private files require ownership or persisted resource access, including target groups and draft privacy', async () => {
   let attachment = [], submitted = [], enrollment = { status: 'APPROVED' }, ownerId = 'teacher';
-  const state = { db: { privateAsset: { findFirst: async () => ({ id: 'file', ownerId }), findUniqueOrThrow: async () => ({ content: Buffer.from('safe'), mimeType: 'text/plain', fileName: 'notes.txt' }) }, attachment: { findMany: async () => attachment }, submissionAttachment: { findMany: async () => submitted }, user: { findFirst: async () => null }, course: { findMany: async () => [], findUnique: async () => ({ id: 'c', instituteId: 'ics', instructorId: 'teacher' }) }, formAttemptAnswer: { findMany: async () => [] }, enrollment: { findUnique: async () => enrollment } } };
+  const state = { db: { $queryRaw: async () => [{ tables: 10, columns: 2 }], labEvidence: { findUnique: async () => null }, privateAsset: { findFirst: async () => ({ id: 'file', ownerId }), findUniqueOrThrow: async () => ({ content: Buffer.from('safe'), mimeType: 'text/plain', fileName: 'notes.txt' }) }, attachment: { findMany: async () => attachment }, submissionAttachment: { findMany: async () => submitted }, user: { findFirst: async () => null }, course: { findMany: async () => [], findUnique: async () => ({ id: 'c', instituteId: 'ics', instructorId: 'teacher' }) }, formAttemptAnswer: { findMany: async () => [] }, enrollment: { findUnique: async () => enrollment } } };
+  state.db.labStep = { findMany: async () => [] };
   const api = await compile(sources, state);
   await assert.rejects(api.readPrivateUpload(student, 'file'), error => error.status === 404);
   attachment = [{ syllabusItem: { courseId: 'c', targetGroups: [{ group: { members: [] } }] } }];
@@ -72,7 +88,8 @@ test('private files require ownership or persisted resource access, including ta
 });
 test('gradebook reads only the requested students, preserves every assignment and avoids inline file content', async () => {
   let enrollmentQuery, submissionQuery, assignmentCount = 100;
-  const db = { course: { findUnique: async () => ({ id: 'c', title: 'Synthetic', code: 'TEST', instituteId: 'ics', instructorId: 't' }) }, enrollment: { count: async () => 400, findMany: async query => { enrollmentQuery = query; return Array.from({ length: 50 }, (_, i) => ({ student: { id: `s${query.skip + i}`, name: `Student ${i}`, email: 'synthetic@example.invalid' } })); } }, syllabusItem: { findMany: async query => Array.from({ length: Math.min(assignmentCount, query.take) }, (_, i) => ({ id: 'a' + i, title: 'Assignment ' + i, type: 'ASSIGNMENT', maxPoints: 100, dueDate: null })) }, gradingPolicy: { findUnique: async () => ({ weights: [{ category: 'ASSIGNMENT', weightPercentage: 100 }] }) }, studentSubmission: { findMany: async query => { submissionQuery = query; return [{ id: 'sub', studentId: query.where.studentId.in[0], syllabusItemId: 'a0', grade: 90, status: 'RETURNED', isReturned: true, submittedAt: new Date(), attachments: [{ id: 'f', type: 'FILE', fileName: 'answer.txt' }] }]; } } };
+  const db = { $queryRaw: async () => [{ tables: 10, columns: 2 }], course: { findUnique: async () => ({ id: 'c', title: 'Synthetic', code: 'TEST', instituteId: 'ics', instructorId: 't' }) }, enrollment: { count: async () => 400, findMany: async query => { enrollmentQuery = query; return Array.from({ length: 50 }, (_, i) => ({ student: { id: `s${query.skip + i}`, name: `Student ${i}`, email: 'synthetic@example.invalid' } })); } }, syllabusItem: { findMany: async query => Array.from({ length: Math.min(assignmentCount, query.take) }, (_, i) => ({ id: 'a' + i, title: 'Assignment ' + i, type: 'ASSIGNMENT', maxPoints: 100, dueDate: null })) }, gradingPolicy: { findUnique: async () => ({ weights: [{ category: 'ASSIGNMENT', weightPercentage: 100 }] }) }, studentSubmission: { findMany: async query => { submissionQuery = query; return [{ id: 'sub', studentId: query.where.studentId.in[0], syllabusItemId: 'a0', grade: 90, status: 'RETURNED', isReturned: true, submittedAt: new Date(), attachments: [{ id: 'f', type: 'FILE', fileName: 'answer.txt' }] }]; } } };
+  db.courseGradebookPolicy = { findUnique: async () => null }; db.classworkGradingPeriod = { findMany: async () => [] };
   const api = await compile(sources, { db }); const data = await api.readGradebook({ id: 't', role: 'PROFESSOR', instituteId: 'ics' }, 'c', 2);
   assert.equal(data.students.length, 50); assert.equal(data.assignments.length, 100); assert.equal(data.pagination.total, 400); assert.equal(data.pagination.totalPages, 8);
   assert.equal(enrollmentQuery.skip, 50); assert.equal(enrollmentQuery.take, 50); assert.equal(submissionQuery.where.studentId.in.length, 50); assert.equal(submissionQuery.where.syllabusItemId.in.length, 100);

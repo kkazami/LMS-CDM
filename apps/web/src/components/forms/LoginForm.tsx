@@ -82,6 +82,7 @@ export default function LoginForm({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-LMS-Login-Rewards": "dashboard",
         },
         body: JSON.stringify({
           ...values,

@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -30,10 +31,12 @@ export default async function SubmissionsPage({ params }: Props) {
       maxPoints: true,
       courseId: true,
       enableIntegrityMonitoring: true,
+      labAssignment: await labsAvailable() ? ({ select: { id: true } } as const) : false as const,
     },
   });
 
   if (!item || item.courseId !== courseId) notFound();
+  if (item.labAssignment) redirect(`/${institute}/courses/${courseId}/labs/${item.labAssignment.id}`);
 
   // Get all approved enrolled students
   const enrollments = await db.enrollment.findMany({

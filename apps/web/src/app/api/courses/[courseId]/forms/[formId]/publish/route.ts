@@ -1,4 +1,6 @@
-import { formIsOpen, publicForm } from '@/lib/forms/availability';
+import { createHash } from 'node:crypto';
+import { lockFormForWrite } from '@/lib/forms/mutations';
+import { publicForm } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
@@ -7,7 +9,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { validateFormForPublish } from "@/lib/forms/form-validator";
-import { createNotificationsForCourseStudents } from "@/lib/notifications";
+
 import type { FormData, FormQuestionData } from "@/types/forms";
 
 export const dynamic = "force-dynamic";
@@ -33,89 +35,40 @@ export async function POST(request: Request, context: RouteContext) {
 
     const { courseId, formId } = await context.params;
     await requireFormAccess(session.user, courseId, formId, true);
-    const form = await db.form.findUnique({
-      where: { id: formId },
-      include: {
-        questions: { orderBy: { position: "asc" } },
-        course: { select: { id: true, title: true } },
-      },
-    });
-
-    if (!form || form.courseId !== courseId) {
-      return NextResponse.json({ message: "Form not found." }, { status: 404 });
-    }
-
-    const parsedQuestions: FormQuestionData[] = form.questions.map((q) => {
-      let cfg = {};
-      try {
-        cfg = JSON.parse(q.config || "{}");
-      } catch {
-        cfg = {};
+    const updated = await db.$transaction(async tx => {
+      await lockFormForWrite(tx, session.user, courseId, formId);
+      const form = await tx.form.findUniqueOrThrow({ where: { id: formId }, include: { questions: { orderBy: { position: 'asc' } } } });
+      const questions = form.questions.map(q => {
+        let config = {}; try { config = JSON.parse(q.config || '{}'); } catch {}
+        return { ...q, questionType: q.questionType as FormQuestionData['questionType'], config };
+      });
+      const validation = validateFormForPublish({ ...form, questions } as FormData);
+      if (!validation.isValid) throw new AccessError(400, validation.errors.join('\n'));
+      if (form.closesAt && form.closesAt <= new Date()) throw new AccessError(400, 'The due date has passed. Choose a future due date in Settings before publishing.');
+      const totalPoints = form.questions.filter(q => q.questionType !== 'SECTION_HEADER').reduce((sum, q) => sum + q.points, 0);
+      const saved = await tx.form.update({ where: { id: formId }, data: { status: 'PUBLISHED', totalPoints } });
+      await tx.syllabusItem.update({ where: { id: form.syllabusItemId }, data: { maxPoints: Math.round(totalPoints), type: form.formType } });
+      if (form.status !== 'PUBLISHED') {
+        const item = await tx.syllabusItem.findUniqueOrThrow({ where: { id: form.syllabusItemId }, select: { targetGroups: { select: { group: { select: { members: { select: { studentId: true } } } } } } } });
+        const targeted = new Set(item.targetGroups.flatMap(target => target.group.members.map(member => member.studentId)));
+        const enrollments = await tx.enrollment.findMany({ where: { courseId, status: 'APPROVED', ...(item.targetGroups.length ? { studentId: { in: [...targeted] } } : {}) }, select: { studentId: true } });
+        const scheduled = form.opensAt && form.opensAt > new Date();
+        const kind = form.formType.toLowerCase().replaceAll('_', ' ');
+        const start = scheduled ? form.opensAt!.toLocaleString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }) + ' (PH time)' : '';
+        await tx.notification.createMany({ data: enrollments.map(({ studentId }) => ({
+          id: 'form-published-' + createHash('sha256').update(JSON.stringify([formId, studentId])).digest('hex'),
+          userId: studentId, type: 'CLASSWORK', title: `${scheduled ? 'Scheduled' : 'New'} assessment: ${form.title}`,
+          message: scheduled ? `This ${kind} opens on ${start}. Questions stay locked until then.` : `Your instructor published a ${kind}: ${form.title}.`,
+          link: `/${session.user.institute.code.toLowerCase()}/courses/${courseId}/classwork/forms/${formId}`,
+        })), skipDuplicates: true });
       }
-      return {
-        ...q,
-        questionType: q.questionType as FormQuestionData["questionType"],
-        config: cfg,
-      };
+      return saved;
     });
-
-    const parsedForm: FormData = {
-      ...form,
-      formType: form.formType as FormData["formType"],
-      status: form.status as FormData["status"],
-      scoreToKeep: form.scoreToKeep as FormData["scoreToKeep"],
-      questions: parsedQuestions,
-    };
-
-    // Validation
-    const validation = validateFormForPublish(parsedForm);
-    if (!validation.isValid) {
-      return NextResponse.json(
-        { message: "Form cannot be published yet.", errors: validation.errors },
-        { status: 400 }
-      );
-    }
-
-    // Compute total points
-    const totalPoints = form.questions
-      .filter((q) => q.questionType !== "SECTION_HEADER")
-      .reduce((sum, q) => sum + (q.points || 0), 0);
-
-    const updated = await db.$transaction(async (tx) => {
-      const pubForm = await tx.form.update({
-        where: { id: formId },
-        data: {
-          status: "PUBLISHED",
-          totalPoints,
-        },
-      });
-
-      await tx.syllabusItem.update({
-        where: { id: form.syllabusItemId },
-        data: {
-          maxPoints: Math.round(totalPoints),
-        },
-      });
-
-      return pubForm;
-    });
-
-    // Notify enrolled students
-    try {
-      if (form.status !== "PUBLISHED" && formIsOpen(updated)) await createNotificationsForCourseStudents(courseId, {
-        type: "CLASSWORK",
-        title: `New Assessment: ${form.title}`,
-        message: `Your instructor published a new ${form.formType.toLowerCase().replace("_", " ")}: ${form.title}.`,
-        link: `/${session.user.institute.code}/courses/${courseId}/classwork/${form.syllabusItemId}`,
-      });
-    } catch (notifErr) {
-      console.warn("NOTIFY_STUDENTS_FORM_ERROR", notifErr);
-    }
 
     return NextResponse.json({
       success: true,
       status: "PUBLISHED",
-      totalPoints,
+      totalPoints: updated.totalPoints,
       form: publicForm(updated),
     });
   } catch (error) {

@@ -1,4 +1,5 @@
-import { visibleSyllabusForms } from '@/lib/forms/availability';
+import { labsAvailable, currentLabAttempt } from '@/lib/labs/readiness';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -41,20 +42,20 @@ export async function getDashboardCalendar(user: { id: string; instituteId: stri
     }),
     isStudent ? db.syllabusItem.findMany({
       where: {
-        dueDate: { not: null }, type: { not: "MATERIAL" },
+        OR: [{ dueDate: { not: null } }, ...await labsAvailable() ? [{ labAssignment: { attempts: { some: { studentId: user.id, status: 'NEEDS_REVISION' as const, revisionDueAt: { not: null } } } } }] : []], type: { not: "MATERIAL" },
         course: courseScope,
         AND: [
           { OR: [{ targetGroups: { none: {} } }, { targetGroups: { some: { group: { members: { some: { studentId: user.id } } } } } }] },
-          visibleSyllabusForms(),
+          await visibleSyllabusForms(),
         ],
       },
-      include: { course: { select: { code: true, title: true, instructor: { select: { name: true } } } } },
+      include: { course: { select: { code: true, title: true, instructor: { select: { name: true } } } }, labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId: user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const },
     }) : Promise.resolve([]),
   ]);
   const assignmentEvents: CalendarEvent[] = assignments.map((item) => ({
     id: `syllabus_${item.id}`, title: item.title, description: item.description,
     professorName: item.course.instructor?.name ?? "", maxPoints: item.maxPoints,
-    eventDate: item.dueDate!.toISOString(), eventType: item.type === "EXAM" || item.type === "QUIZ" ? "exam" : "assignment",
+    eventDate: (currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? currentLabAttempt(item.labAssignment)?.revisionDueAt ?? item.dueDate! : item.dueDate!).toISOString(), eventType: ['EXAM', 'QUIZ', 'MIDTERM_EXAM', 'FINAL_EXAM'].includes(item.type) ? "exam" : "assignment",
     deepLink: `/${institute}/courses/${item.courseId}/classwork/${item.id}`,
     courseId: item.courseId, courseTitle: item.course.title, courseCode: item.course.code,
     source: "classwork", creatorId: "", instituteId: user.instituteId,

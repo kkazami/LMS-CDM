@@ -188,7 +188,7 @@ export default function GradesDashboard({
                           {row.itemTitle}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-[#8B92A5] font-mono truncate">
-                          {row.courseCode} · {row.itemType === "ASSIGNMENT" ? "Assignment" : "Quiz"}
+                          {row.courseCode} · {row.itemType.replaceAll("_", " ")}
                         </p>
                       </div>
                     </div>
@@ -299,7 +299,7 @@ export default function GradesDashboard({
                       {/* Type */}
                       <td className="px-5 py-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#8B92A5]">
-                          {row.itemType === "ASSIGNMENT" ? "Assignment" : "Quiz"}
+                          {row.itemType.replaceAll("_", " ")}
                         </span>
                       </td>
 

@@ -1,23 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { InstituteTheme } from "@/lib/theme";
-import Badge from "@/components/common/Badge";
+import { getClassworkAppearance } from './classwork-appearance';
 import {
   ChevronDown,
   ChevronRight,
-  FileText,
-  HelpCircle,
-  BookOpen,
   Calendar,
   Edit2,
   Trash2,
-  GripVertical,
+  FlaskConical,
+  Clock,
 } from "lucide-react";
 
 interface SyllabusItemData {
   id: string;
+  labAssignmentId?: string | null;
+  labStartsAt?: string | null;
+  formId?: string | null;
+  formStartsAt?: string | null;
   type: string;
   title: string;
   description: string;
@@ -35,28 +37,6 @@ interface SyllabusAccordionProps {
   onEdit?: (item: SyllabusItemData) => void;
   onDelete?: (itemId: string) => void;
 }
-
-const getTypeConfig = (type: string) => {
-  const configs: Record<string, { icon: any; label: string; color: string }> = {
-    ASSIGNMENT: { icon: FileText, label: "Assignments", color: "#3B82F6" },
-    QUIZ: { icon: HelpCircle, label: "Quizzes", color: "#8B5CF6" },
-    MATERIAL: { icon: BookOpen, label: "Materials", color: "#10B981" },
-    ACTIVITY: { icon: FileText, label: "Activities", color: "#F59E0B" },
-    RECITATION: { icon: BookOpen, label: "Recitations", color: "#EC4899" },
-    MIDTERM_EXAM: { icon: HelpCircle, label: "Midterm Exams", color: "#EF4444" },
-    FINAL_EXAM: { icon: HelpCircle, label: "Final Exams", color: "#EF4444" },
-  };
-
-  if (configs[type]) return configs[type];
-
-  // Custom types
-  const label = type
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ") + "s";
-    
-  return { icon: FileText, label, color: "#6B7280" };
-};
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -83,6 +63,15 @@ export default function SyllabusAccordion({
   onDelete,
 }: SyllabusAccordionProps) {
   const isIte = (instituteCode || theme?.code || "").toLowerCase() === "ite";
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const future = items.map(item => item.labStartsAt ?? item.formStartsAt).filter((date): date is string => Boolean(date)).map(date => new Date(date).getTime()).filter(time => time > now);
+    if (!future.length) return;
+    const update = () => setNow(Date.now());
+    const timer = setTimeout(update, Math.min(60000, Math.max(100, Math.min(...future) - now + 100)));
+    window.addEventListener('focus', update);
+    return () => { clearTimeout(timer); window.removeEventListener('focus', update); };
+  }, [items, now]);
   // Collect all unique types from items
   const itemTypes = Array.from(new Set(items.map((i) => i.type || "MATERIAL")));
   const baseTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL"];
@@ -111,7 +100,7 @@ export default function SyllabusAccordion({
       acc[key].push(item);
       return acc;
     },
-    {}
+    Object.create(null) as Record<string, SyllabusItemData[]>
   );
 
   const types = allTypes;
@@ -119,7 +108,7 @@ export default function SyllabusAccordion({
   return (
     <div className="space-y-3">
       {types.map((type) => {
-        const config = getTypeConfig(type);
+        const config = getClassworkAppearance(type);
         const typeItems = grouped[type] || [];
         const isExpanded = expandedSections.has(type);
         const Icon = config.icon;
@@ -144,9 +133,9 @@ export default function SyllabusAccordion({
               ) : (
                 <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
               )}
-              <Icon className="h-5 w-5" style={{ color: config.color }} />
+              <Icon className="h-5 w-5 shrink-0" style={{ color: config.color }} aria-hidden="true"/>
               <span className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-                {config.label}
+                {config.pluralLabel}
               </span>
               <span className="ml-auto rounded-full bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:text-[#8B92A5]">
                 {typeItems.length}
@@ -161,9 +150,17 @@ export default function SyllabusAccordion({
                     No {config.label.toLowerCase()} yet.
                   </p>
                 ) : (
-                  typeItems.map((item, index) => (
+                  typeItems.map((item, index) => {
+                    const startsAt = item.labStartsAt ?? item.formStartsAt;
+                    const upcoming = Boolean(startsAt && new Date(startsAt).getTime() > now);
+                    const locked = !canEdit && upcoming;
+                    const appearance = getClassworkAppearance(item.type, Boolean(item.labAssignmentId));
+                    const ItemIcon = appearance.icon;
+                    return (
                     <Link
-                      href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}`}
+                      href={item.formId ? `/${instituteCode}/courses/${courseId}/classwork/forms/${item.formId}` : `/${instituteCode}/courses/${courseId}/classwork/${item.id}`}
+                      title={locked ? 'View the opening schedule' : undefined}
+                      prefetch={locked ? false : undefined}
                       key={item.id}
                       className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-white/2 group"
                       style={{
@@ -174,11 +171,11 @@ export default function SyllabusAccordion({
                       <div
                         className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl"
                         style={{
-                          backgroundColor: `${config.color}15`,
-                          color: config.color,
+                          backgroundColor: `${appearance.color}15`,
+                          color: appearance.color,
                         }}
                       >
-                        <Icon className="h-4 w-4" />
+                        <ItemIcon className="h-4 w-4" aria-hidden="true"/>
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -193,6 +190,9 @@ export default function SyllabusAccordion({
                           </p>
                         )}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          {item.labAssignmentId && <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Guided practical lab</span>}
+                          {upcoming && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">Not started yet</span>}
+                          {startsAt && <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-[#8B92A5]"><Clock className="h-3 w-3"/>{upcoming ? 'Opens' : 'Start'} {formatDate(startsAt)}</span>}
                           {item.dueDate && (
                             <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-[#8B92A5]">
                               <Calendar className="h-3 w-3" />
@@ -214,10 +214,11 @@ export default function SyllabusAccordion({
                         </div>
                       </div>
 
-                      {canEdit && (
+                      {canEdit && !item.labAssignmentId && (
                         <div className="flex shrink-0 items-center gap-1">
+                          {instituteCode.toLowerCase() === 'ics' && item.type !== 'MATERIAL' && !item.formId && <button type="button" onClick={e => { e.preventDefault(); window.location.assign(`/ics/courses/${courseId}/labs?itemId=${encodeURIComponent(item.id)}`); }} aria-label={`Link practical lab to ${item.title}`} title="Link practical lab" className="rounded-lg p-2 text-orange-600 hover:bg-orange-50"><FlaskConical className="h-4 w-4" /></button>}
                           <button
-                            onClick={(e) => { e.preventDefault(); onEdit?.(item); }}
+                            onClick={(e) => { e.preventDefault(); if (item.formId) window.location.assign(`/${instituteCode}/courses/${courseId}/classwork/forms/${item.formId}/builder`); else onEdit?.(item); }}
                             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer min-h-9 min-w-9 flex items-center justify-center active:scale-95"
                             aria-label={`Edit ${item.title}`}
                           >
@@ -233,7 +234,7 @@ export default function SyllabusAccordion({
                         </div>
                       )}
                     </Link>
-                  ))
+                  ); })
                 )}
               </div>
             )}

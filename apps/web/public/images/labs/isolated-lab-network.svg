@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">Isolated router and client example</title><desc id="desc">A client at 192.0.2.2 with mask 255.255.255.0 connects to the router LAN interface at 192.0.2.1 with the same mask. Ping the router address from the client.</desc>
+  <rect width="960" height="420" rx="20" fill="#f8fafc"/>
+  <g font-family="Arial,sans-serif" fill="#0f172a"><text x="40" y="54" font-size="28" font-weight="700">One isolated LAN, two different addresses</text><text x="40" y="88" font-size="18">Documentation example — replace with the instructor-assigned plan.</text></g>
+  <rect x="50" y="132" width="310" height="172" rx="16" fill="#e0f2fe" stroke="#0369a1" stroke-width="2"/>
+  <rect x="600" y="132" width="310" height="172" rx="16" fill="#ffedd5" stroke="#c2410c" stroke-width="2"/>
+  <path d="M360 215H600" stroke="#334155" stroke-width="5"/><path d="M578 203L600 215L578 227" fill="none" stroke="#334155" stroke-width="4"/>
+  <g font-family="Arial,sans-serif" text-anchor="middle" fill="#0f172a"><text x="205" y="174" font-size="24" font-weight="700">Client lab adapter</text><text x="205" y="216" font-size="23">192.0.2.2</text><text x="205" y="250" font-size="18">Mask: 255.255.255.0</text><text x="755" y="174" font-size="24" font-weight="700">Router LAN interface</text><text x="755" y="216" font-size="23">192.0.2.1</text><text x="755" y="250" font-size="18">Mask: 255.255.255.0</text><text x="480" y="190" font-size="17">Lab connection</text></g>
+  <g font-family="Arial,sans-serif" fill="#334155" font-size="19"><text x="50" y="350">From the client: ping 192.0.2.1</text><text x="50" y="384">Expected: replies and router interface up/up. No internet or DNS is needed.</text></g>
+</svg>

@@ -1,4 +1,6 @@
 "use server";
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork } from '@/lib/academic-task';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
@@ -95,83 +97,88 @@ export async function createSyllabusItem(
   try {
     await validateUploads(await ensureCourseInstructor(data.courseId), data.attachments);
 
-    // Get the next order index
-    const lastItem = await db.syllabusItem.findFirst({
-      where: { courseId: data.courseId },
-      orderBy: { orderIndex: "desc" },
-      select: { orderIndex: true },
-    });
-
-    const item = await db.course.findUnique({
-      where: { id: data.courseId },
-      select: { id: true },
-    });
-
-    if (!item) return { message: "Course not found." };
-
-    const syllabusItem = await db.syllabusItem.create({
-      data: {
-        courseId: data.courseId,
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
-        enableIntegrityMonitoring: data.enableIntegrityMonitoring,
-        requireFullscreen: data.requireFullscreen,
-        orderIndex: (lastItem?.orderIndex ?? -1) + 1,
-        leaderboardEnabled,
-      },
-    });
-
-    if (rewardTiers.length > 0) {
-      await db.leaderboardReward.createMany({
-        data: rewardTiers.map((tier) => ({
-          syllabusItemId: syllabusItem.id,
-          placement: tier.placement,
-          rewardLabel: tier.rewardLabel,
-          bonusExp: tier.bonusExp || 0,
-        })),
+    const syllabusItem = await db.$transaction(async tx => {
+      // Get the next order index
+      const lastItem = await tx.syllabusItem.findFirst({
+        where: { courseId: data.courseId },
+        orderBy: { orderIndex: "desc" },
+        select: { orderIndex: true },
       });
-    }
 
-    // Handle target groups
-    if (data.targetGroupIds) {
-      const groupIds = data.targetGroupIds
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
+      const item = await tx.course.findUnique({
+        where: { id: data.courseId },
+        select: { id: true },
+      });
 
-      if (groupIds.length > 0) {
-        await db.syllabusTargetGroup.createMany({
-          data: groupIds.map((groupId) => ({
+      if (!item) throw new Error("Course not found.");
+
+      const syllabusItem = await tx.syllabusItem.create({
+        data: {
+          courseId: data.courseId,
+          ...await academicProvenance('UNTOUCHED', tx),
+          type: data.type,
+          title: data.title,
+          description: data.description,
+          dueDate: data.dueDate ? new Date(data.dueDate) : null,
+          maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
+          enableIntegrityMonitoring: data.enableIntegrityMonitoring,
+          requireFullscreen: data.requireFullscreen,
+          orderIndex: (lastItem?.orderIndex ?? -1) + 1,
+          leaderboardEnabled,
+        },
+      });
+
+      if (rewardTiers.length > 0) {
+        await tx.leaderboardReward.createMany({
+          data: rewardTiers.map((tier) => ({
             syllabusItemId: syllabusItem.id,
-            groupId,
+            placement: tier.placement,
+            rewardLabel: tier.rewardLabel,
+            bonusExp: tier.bonusExp || 0,
           })),
         });
       }
-    }
 
-    // Handle attachments
-    try {
-      const attachmentList = JSON.parse(data.attachments || "[]") as Array<{
-        type: string;
-        url: string;
-        fileName?: string;
-      }>;
-      if (attachmentList.length > 0) {
-        await db.attachment.createMany({
-          data: attachmentList.map((a) => ({
-            syllabusItemId: syllabusItem.id,
-            type: a.type || "FILE",
-            url: a.url,
-            fileName: a.fileName || "",
-          })),
-        });
+      // Handle target groups
+      if (data.targetGroupIds) {
+        const groupIds = data.targetGroupIds
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+
+        if (groupIds.length > 0) {
+          await tx.syllabusTargetGroup.createMany({
+            data: groupIds.map((groupId) => ({
+              syllabusItemId: syllabusItem.id,
+              groupId,
+            })),
+          });
+        }
       }
-    } catch {
-      // Invalid JSON — skip attachments silently
-    }
+
+      // Handle attachments
+      try {
+        const attachmentList = JSON.parse(data.attachments || "[]") as Array<{
+          type: string;
+          url: string;
+          fileName?: string;
+        }>;
+        if (attachmentList.length > 0) {
+          await tx.attachment.createMany({
+            data: attachmentList.map((a) => ({
+              syllabusItemId: syllabusItem.id,
+              type: a.type || "FILE",
+              url: a.url,
+              fileName: a.fileName || "",
+            })),
+          });
+        }
+      } catch {
+        // Invalid JSON — skip attachments silently
+      }
+
+      return syllabusItem;
+    });
 
     // ── Notify enrolled students about new classwork (ASSIGNMENT/QUIZ only) ──
     const itemType = data.type.toUpperCase();
@@ -240,74 +247,78 @@ export async function updateSyllabusItem(
   try {
     await validateUploads(await ensureCourseInstructor(data.courseId), data.attachments);
 
-    await db.syllabusItem.update({
-      where: { id: itemId },
-      data: {
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
-        enableIntegrityMonitoring: data.enableIntegrityMonitoring,
-        requireFullscreen: data.requireFullscreen,
-        leaderboardEnabled,
-      },
-    });
-
-    await db.leaderboardReward.deleteMany({ where: { syllabusItemId: itemId } });
-    if (rewardTiers.length > 0) {
-      await db.leaderboardReward.createMany({
-        data: rewardTiers.map((tier) => ({
-          syllabusItemId: itemId,
-          placement: tier.placement,
-          rewardLabel: tier.rewardLabel,
-          bonusExp: tier.bonusExp || 0,
-        })),
+    await db.$transaction(async tx => {
+      await assertOrdinaryClasswork(tx, itemId);
+      await tx.syllabusItem.update({
+        where: { id: itemId },
+        data: {
+          type: data.type,
+          title: data.title,
+          description: data.description,
+          dueDate: data.dueDate ? new Date(data.dueDate) : null,
+          maxPoints: data.maxPoints ? parseInt(data.maxPoints, 10) : null,
+          enableIntegrityMonitoring: data.enableIntegrityMonitoring,
+          requireFullscreen: data.requireFullscreen,
+          leaderboardEnabled,
+        },
       });
-    }
 
-    // Replace target groups
-    await db.syllabusTargetGroup.deleteMany({
-      where: { syllabusItemId: itemId },
+      await tx.leaderboardReward.deleteMany({ where: { syllabusItemId: itemId } });
+      if (rewardTiers.length > 0) {
+        await tx.leaderboardReward.createMany({
+          data: rewardTiers.map((tier) => ({
+            syllabusItemId: itemId,
+            placement: tier.placement,
+            rewardLabel: tier.rewardLabel,
+            bonusExp: tier.bonusExp || 0,
+          })),
+        });
+      }
+
+      // Replace target groups
+      await tx.syllabusTargetGroup.deleteMany({
+        where: { syllabusItemId: itemId },
+      });
+
+      if (data.targetGroupIds) {
+        const groupIds = data.targetGroupIds
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+
+        if (groupIds.length > 0) {
+          await tx.syllabusTargetGroup.createMany({
+            data: groupIds.map((groupId) => ({
+              syllabusItemId: itemId,
+              groupId,
+            })),
+          });
+        }
+      }
+
+      // Replace attachments
+      await tx.attachment.deleteMany({ where: { syllabusItemId: itemId } });
+      try {
+        const attachmentList = JSON.parse(data.attachments || "[]") as Array<{
+          type: string;
+          url: string;
+          fileName?: string;
+        }>;
+        if (attachmentList.length > 0) {
+          await tx.attachment.createMany({
+            data: attachmentList.map((a) => ({
+              syllabusItemId: itemId,
+              type: a.type || "FILE",
+              url: a.url,
+              fileName: a.fileName || "",
+            })),
+          });
+        }
+      } catch {
+        // Invalid JSON — skip
+      }
+
     });
-
-    if (data.targetGroupIds) {
-      const groupIds = data.targetGroupIds
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-
-      if (groupIds.length > 0) {
-        await db.syllabusTargetGroup.createMany({
-          data: groupIds.map((groupId) => ({
-            syllabusItemId: itemId,
-            groupId,
-          })),
-        });
-      }
-    }
-
-    // Replace attachments
-    await db.attachment.deleteMany({ where: { syllabusItemId: itemId } });
-    try {
-      const attachmentList = JSON.parse(data.attachments || "[]") as Array<{
-        type: string;
-        url: string;
-        fileName?: string;
-      }>;
-      if (attachmentList.length > 0) {
-        await db.attachment.createMany({
-          data: attachmentList.map((a) => ({
-            syllabusItemId: itemId,
-            type: a.type || "FILE",
-            url: a.url,
-            fileName: a.fileName || "",
-          })),
-        });
-      }
-    } catch {
-      // Invalid JSON — skip
-    }
 
     revalidatePath(
       `/(dashboard)/${data.instituteCode}/courses/${data.courseId}/classwork`
@@ -329,7 +340,11 @@ export async function deleteSyllabusItem(
   try {
     await ensureCourseInstructor(courseId);
 
-    await db.syllabusItem.delete({ where: { id: itemId } });
+    await db.$transaction(async tx => {
+      await assertOrdinaryClasswork(tx, itemId);
+      if (await tx.formAttempt.count({ where: { form: { syllabusItemId: itemId, courseId } } })) throw new Error('Students have started this assessment. Close the form instead to preserve their work and grades.');
+      await tx.syllabusItem.delete({ where: { id: itemId, courseId } });
+    });
 
     revalidatePath(
       `/(dashboard)/${instituteCode}/courses/${courseId}/classwork`

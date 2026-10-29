@@ -1,3 +1,4 @@
+import { lockFormForWrite } from '@/lib/forms/mutations';
 import { parseFormSettings, checkFormSchedule } from '@/lib/forms/settings';
 import { publicForm, studentQuestionConfig } from '@/lib/forms/availability';
 import { requireFormAccess } from '@/lib/forms/access';
@@ -163,6 +164,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const updated = await db.$transaction(async (tx) => {
+      const current = await lockFormForWrite(tx, session.user, courseId, formId);
+      checkFormSchedule({ opensAt: body.opensAt === undefined ? current.opensAt : body.opensAt, closesAt: body.closesAt === undefined ? current.closesAt : body.closesAt });
+      const started = await tx.formAttempt.count({ where: { formId } });
+      if (started && ((body.formType && body.formType !== current.formType) || (body.opensAt && body.opensAt > new Date()))) throw new AccessError(409, 'Students have started this assessment. Keep its category and start date; create a new assessment to change them.');
       const form = await tx.form.update({
         where: { id: formId },
         data: updateData,
@@ -173,6 +178,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         await tx.syllabusItem.update({
           where: { id: form.syllabusItemId },
           data: {
+            type: form.formType,
             title: form.title,
             description: form.description,
             dueDate: form.closesAt,
@@ -182,6 +188,21 @@ export async function PATCH(request: Request, context: RouteContext) {
         });
       }
 
+      // Re-project completed scores immediately when the retention or visibility policy changes.
+      if (started && (body.scoreToKeep !== undefined || body.maxAttempts !== undefined || body.showScoreAfter !== undefined)) {
+        const item = await tx.syllabusItem.findUniqueOrThrow({ where: { id: form.syllabusItemId }, select: { maxPoints: true } });
+        const attempts = await tx.formAttempt.findMany({ where: { formId, status: { in: ['SUBMITTED', 'TIMED_OUT'] }, rawScore: { not: null }, totalPoints: { not: null } }, select: { userId: true, rawScore: true, totalPoints: true }, orderBy: { attemptNumber: 'asc' } });
+        const byStudent = new Map<string, number[]>();
+        for (const attempt of attempts) {
+          const scores = byStudent.get(attempt.userId) ?? [];
+          scores.push(attempt.totalPoints! > 0 ? Math.max(0, Math.min(item.maxPoints ?? attempt.totalPoints!, attempt.rawScore! / attempt.totalPoints! * (item.maxPoints ?? attempt.totalPoints!))) : 0);
+          byStudent.set(attempt.userId, scores);
+        }
+        for (const [studentId, scores] of byStudent) {
+          const score = form.scoreToKeep === 'AVERAGE' ? scores.reduce((a, b) => a + b, 0) / scores.length : form.scoreToKeep === 'LATEST' ? scores[scores.length - 1] : Math.max(...scores);
+          await tx.studentSubmission.updateMany({ where: { syllabusItemId: form.syllabusItemId, studentId }, data: { grade: Math.round(score * 100) / 100, isReturned: form.showScoreAfter } });
+        }
+      }
       return form;
     });
 
@@ -219,8 +240,10 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     // Delete backing syllabusItem (cascades to Form)
-    await db.syllabusItem.delete({
-      where: { id: form.syllabusItemId },
+    await db.$transaction(async tx => {
+      await lockFormForWrite(tx, session.user, courseId, formId);
+      if (await tx.formAttempt.count({ where: { formId } })) throw new AccessError(409, 'Students have started this assessment. Close it instead to preserve their work and grades.');
+      await tx.syllabusItem.delete({ where: { id: form.syllabusItemId } });
     });
 
     return NextResponse.json({ success: true });

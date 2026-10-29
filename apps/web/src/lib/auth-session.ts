@@ -2,6 +2,7 @@ import { getInstituteName } from "@lms/types";
 import { db } from "./db";
 import { cookies, headers } from "next/headers";
 import crypto from "crypto";
+import type { User } from '@prisma/client';
 import { lockAccounts } from './super-user-v1/account-lock';
 import { canonicalRole, mayAdmitAccount, privilegedRole } from './super-user-v1/capabilities';
 import { applicationWriterQualified } from './super-user-v1/provisioning';
@@ -23,7 +24,15 @@ export interface CreateSessionResult {
 }
 
 export class SessionAdmissionError extends Error {
-  constructor(public readonly status: number, message: string) { super(message); }
+  constructor(public readonly status: number, message: string, public readonly retryAfterSeconds?: number) { super(message); }
+}
+
+function sessionTransactionUnavailable(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const failure = error as { code?: string; meta?: { code?: string; driverAdapterError?: { cause?: { originalCode?: string } } } };
+  const sqlCode = failure.meta?.driverAdapterError?.cause?.originalCode ?? failure.meta?.code ?? failure.code;
+  return ['P2024', 'P2028', 'P2034'].includes(failure.code ?? '')
+    || ['55P03', '57014', '40P01', '40001'].includes(sqlCode ?? '');
 }
 
 /**
@@ -44,8 +53,14 @@ export async function createSession(
   const tokenHash = hashToken(rawToken);
 
   const session = await db.$transaction(async tx => {
-    await lockAccounts(tx, [userId]);
-    const user = await tx.user.findUnique({ where: { id: userId } });
+    // Remote database round trips can exceed Prisma's default 5s transaction.
+    // Bound database waits too, so a competing account writer cannot hold login open.
+    await tx.$queryRaw`SELECT set_config('lock_timeout', '5s', true), set_config('statement_timeout', '10s', true)`;
+    // Lock and re-read the admission fields together; this is the same single-user
+    // lock used by account writers, without a second remote database round trip.
+    const [user] = await tx.$queryRaw<Array<Pick<User, 'password' | 'role' | 'instituteId' | 'credentialProvisioningState' | 'googleSubject' | 'isActive' | 'activationStatus'>>>`
+      SELECT password, role, "instituteId", "credentialProvisioningState", "googleSubject", "isActive", "activationStatus"
+      FROM public."User" WHERE id = ${userId} FOR UPDATE`;
     if (!user || (expectedPasswordHash !== undefined && user.password !== expectedPasswordHash)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
     if (expectedIdentity && (user.role !== expectedIdentity.role || user.instituteId !== expectedIdentity.instituteId || user.credentialProvisioningState !== expectedIdentity.credentialProvisioningState)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
     if (expectedIdentity && 'googleSubject' in expectedIdentity && user.googleSubject !== expectedIdentity.googleSubject) throw new SessionAdmissionError(401, 'Google account connection changed. Sign in again.');
@@ -58,6 +73,11 @@ export async function createSession(
       userAgent: metadata?.userAgent,
       ipAddress: metadata?.ipAddress,
     } });
+  }, { maxWait: 5000, timeout: 15000 }).catch((error: unknown) => {
+    if (sessionTransactionUnavailable(error)) {
+      throw new SessionAdmissionError(503, 'Sign-in is temporarily busy. Please try again in a few seconds.', 5);
+    }
+    throw error;
   });
 
   const cookieStore = await cookies();

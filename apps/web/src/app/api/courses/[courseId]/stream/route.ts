@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { createNotificationsForCourseStudents } from '@/lib/notifications';
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const { courseId } = await context.params;
+    await requireCourseAccess(session.user, courseId);
 
     const [announcements, broadcasts] = await Promise.all([
       db.announcement.findMany({
@@ -93,6 +96,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
     );
   } catch (error) {
+    if (error instanceof AccessError) return NextResponse.json({ message: error.message }, { status: error.status });
     console.error('COURSE_STREAM_GET_ERROR', error);
     return NextResponse.json({ message: 'Failed to fetch course stream.' }, { status: 500 });
   }

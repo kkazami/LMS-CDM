@@ -1,3 +1,4 @@
+import { labsAvailable } from '@/lib/labs/readiness';
 import { connect } from 'node:net';
 import { once } from 'node:events';
 import { createHash, randomUUID } from 'node:crypto';
@@ -23,9 +24,11 @@ export async function withUploadSlot<T>(work: () => Promise<T>): Promise<T> {
   inFlight++;
   try { return await work(); } finally { inFlight--; }
 }
-export async function boundedUploadBody(request: Request): Promise<FormData> {
-  const max = UPLOAD_MAX_BYTES + 64 * 1024;
-  if (Number(request.headers.get('content-length') || 0) > max) throw new AccessError(413, 'Maximum file size is 25 MB.');
+export async function boundedUploadBody(request: Request, fileLimit = UPLOAD_MAX_BYTES): Promise<FormData> {
+  if (!Number.isSafeInteger(fileLimit) || fileLimit < 1 || fileLimit > UPLOAD_MAX_BYTES) throw new AccessError(400, 'Invalid upload limit.');
+  const max = fileLimit + 64 * 1024;
+  const limitMessage = fileLimit === UPLOAD_MAX_BYTES ? 'Maximum file size is 25 MB.' : 'The upload exceeds the lab request limit.';
+  if (Number(request.headers.get('content-length') || 0) > max) throw new AccessError(413, limitMessage);
   if (!request.body || !request.headers.get('content-type')?.startsWith('multipart/form-data;')) throw new AccessError(400, 'Expected a file upload.');
   const reader = request.body.getReader();
   let timedOut = false;
@@ -37,7 +40,7 @@ export async function boundedUploadBody(request: Request): Promise<FormData> {
       if (timedOut) throw new AccessError(408, 'Upload timed out. Try again.');
       if (done) break;
       size += value.byteLength;
-      if (size > max) { await reader.cancel(); throw new AccessError(413, 'Maximum file size is 25 MB.'); }
+      if (size > max) { await reader.cancel(); throw new AccessError(413, limitMessage); }
       chunks.push(value);
     }
   } finally { clearTimeout(timeout); reader.releaseLock(); }
@@ -98,16 +101,7 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
   if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Forbidden.');
   const bytes = Buffer.from(await file.arrayBuffer());
   const mimeType = await verifiedFileType(bytes, file.name, file.type);
-  try {
-    await scanUpload(bytes);
-  } catch (error) {
-    if (error instanceof AccessError && error.status === 503 && !process.env.CLAMAV_HOST) {
-      // In serverless deployments (e.g. Vercel) where a ClamAV daemon is not deployed,
-      // allow verified MIME-type files after strict verifiedFileType inspection.
-    } else {
-      throw error;
-    }
-  }
+  await scanUpload(bytes);
   const id = randomUUID();
   const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'attachment';
   await db.$transaction(async tx => {
@@ -119,14 +113,19 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
   return { url: `/api/assets/${id}`, fileName, fileSize: bytes.length };
 }
 /** Existing public references stay compatible; new private references must belong to the writer. */
-export async function requireOwnedUpload(client: Pick<typeof db, 'privateAsset'>, actor: CourseActor, url: string) {
+export async function requireOwnedUpload(client: Pick<typeof db, 'privateAsset' | 'labEvidence' | '$queryRaw'>, actor: CourseActor, url: string) {
   const id = assetPattern.exec(url)?.[1];
   if (!id) return;
   if (!await client.privateAsset.findFirst({ where: { id, ownerId: actor.id, instituteId: actor.instituteId, scanStatus: 'CLEAN' }, select: { id: true } })) throw new AccessError(403, 'This upload does not belong to you.');
+  if (await labsAvailable(client) && await client.labEvidence.findUnique({ where: { assetId: id }, select: { id: true } })) throw new AccessError(409, 'Lab evidence must stay with its lab. Upload a separate file for this item.');
 }
 export async function readPrivateUpload(actor: CourseActor, id: string) {
   const role = canonicalRole(actor.role);
   if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(role)) throw new AccessError(403, 'Forbidden.');
+  // Lab files retain course/enrollment authorization even through the generic asset URL.
+  const { authorizeLabAsset } = await import('@/lib/labs/service');
+  const labFile = await labsAvailable() ? await authorizeLabAsset(actor, id) : null;
+  if (labFile) return labFile;
   const meta = await db.privateAsset.findFirst({ where: { id, instituteId: actor.instituteId, scanStatus: 'CLEAN' }, select: { id: true, ownerId: true } });
   if (!meta) throw new AccessError(404, 'File not found.');
   const url = `/api/assets/${id}`;

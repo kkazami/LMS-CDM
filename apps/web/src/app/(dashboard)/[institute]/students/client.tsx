@@ -2,10 +2,10 @@
 
 import { useState, useRef, useTransition, useEffect } from "react";
 import Link from "next/link";
+import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
 import {
   Clock,
   ClipboardList,
-  BookOpenCheck,
   ChevronRight,
   User,
   MapPin,
@@ -189,8 +189,8 @@ export default function StudentDashboardClient({
   };
 
   function renderDueItem(item: DueSoonItem, idx: number) {
-    const isAssignment = item.type === "ASSIGNMENT";
-    const Icon = isAssignment ? ClipboardList : BookOpenCheck;
+    const appearance = getClassworkAppearance(item.type);
+    const Icon = appearance.icon;
     const relative = classifyDueDate(item.dueDate, serverNow);
 
     return (
@@ -206,11 +206,12 @@ export default function StudentDashboardClient({
         <div
           className="p-2 rounded-lg shrink-0 mt-0.5"
           style={{
-            backgroundColor: `${theme.colors.primary}1A`,
-            color: theme.colors.primary,
+            backgroundColor: `${appearance.color}15`,
+            color: appearance.color,
           }}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-4 w-4" aria-hidden="true"/>
+          <span className="sr-only">{appearance.label}</span>
         </div>
 
         <div className="flex-1 min-w-0">

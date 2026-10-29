@@ -1,4 +1,5 @@
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     if (courseId) {
       const course = await requireCourseAccess(session.user, courseId);
       if (instituteCode && course.institute.code !== instituteCode.toLowerCase()) throw new AccessError(404, 'Course not found.');
-      const whereCondition = { courseId };
+      const whereCondition = { courseId, ...(canonicalRole(session.user.role) === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) };
       const [items, totalCount] = await Promise.all([
         db.syllabusItem.findMany({
           where: whereCondition,
@@ -113,7 +114,7 @@ export async function GET(request: Request) {
       courseIds = courses.map((c) => c.id);
     }
 
-    const whereCondition = { courseId: { in: courseIds } };
+    const whereCondition = { courseId: { in: courseIds }, ...(canonicalRole(session.user.role) === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) };
     const [items, totalCount] = await Promise.all([
       db.syllabusItem.findMany({
         where: whereCondition,

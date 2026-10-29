@@ -1,3 +1,6 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/activities/submit
@@ -102,78 +105,80 @@ export async function POST(request: Request) {
     }
     if (template.activityType !== payload.activityType) return NextResponse.json({ message: "Incorrect activity type." }, { status: 400 });
 
-    // 5. Write the submission to the database
-    const submission = await db.activitySubmission.create({
-      data: {
-        studentId: payload.studentId,
-        templateId: payload.assignmentId,
-        activityType: payload.activityType,
-        variantSeed: payload.variantSeed,
-        startedAt: new Date(payload.startedAt),
-        completionTimeSeconds: payload.completionTimeSeconds,
-        attempts: payload.attempts,
-        stateCheck: JSON.stringify(payload.stateCheck),
-        score: payload.score,
-        maxScore: payload.maxScore,
-        passed: payload.passed,
-        errorLog: JSON.stringify(payload.errorLog ?? []),
-      },
-      select: {
-        id: true,
-        score: true,
-        maxScore: true,
-        passed: true,
-        submittedAt: true,
-      },
-    });
+    const submission = await db.$transaction(async tx => {
+      if (template.syllabusItemId) {
+        await assertOrdinaryClasswork(tx, template.syllabusItemId);
+        await markAcademicWorkStarted(tx, template.syllabusItemId, payload.studentId);
+      }
+      const currentTemplate = await tx.activityTemplate.findUnique({ where: { id: template.id }, select: { syllabusItemId: true } });
+      if (!currentTemplate || currentTemplate.syllabusItemId !== template.syllabusItemId) throw new AccessError(409, 'Activity linkage changed. Retry.');
+      // 5. Write the submission to the database
+      const saved = await tx.activitySubmission.create({
+        data: {
+          studentId: payload.studentId,
+          templateId: payload.assignmentId,
+          activityType: payload.activityType,
+          variantSeed: payload.variantSeed,
+          startedAt: new Date(payload.startedAt),
+          completionTimeSeconds: payload.completionTimeSeconds,
+          attempts: payload.attempts,
+          stateCheck: JSON.stringify(payload.stateCheck),
+          score: payload.score,
+          maxScore: payload.maxScore,
+          passed: payload.passed,
+          errorLog: JSON.stringify(payload.errorLog ?? []),
+        },
+        select: {
+          id: true,
+          score: true,
+          maxScore: true,
+          passed: true,
+          submittedAt: true,
+        },
+      });
 
-    // 6. If there's an active session for this student+template, mark it as submitted
-    await db.activitySession.updateMany({
-      where: {
-        studentId: payload.studentId,
-        templateId: payload.assignmentId,
-        status: "in_progress",
-      },
-      data: {
-        status: "submitted",
-      },
-    });
+      // 6. If there's an active session for this student+template, mark it as submitted
+      await tx.activitySession.updateMany({
+        where: {
+          studentId: payload.studentId,
+          templateId: payload.assignmentId,
+          status: "in_progress",
+        },
+        data: {
+          status: "submitted",
+        },
+      });
 
-    // 7. Fire Gamification Hook
-    try {
-      await processGamificationEvent(payload, template.courseId);
-
-    } catch (gamiErr) {
-      console.error("GAMIFICATION_ERROR", gamiErr);
-    }
-
-    // 8. Grade Passback to LMS Gradebook (Sprint 8)
-    if (template.syllabusItemId) {
-      try {
-        await db.studentSubmission.upsert({
-          where: {
-            syllabusItemId_studentId: {
+      // 8. Grade Passback to LMS Gradebook (Sprint 8)
+      if (template.syllabusItemId) {
+        await tx.studentSubmission.upsert({
+            where: {
+              syllabusItemId_studentId: {
+                syllabusItemId: template.syllabusItemId,
+                studentId: payload.studentId,
+              },
+            },
+            update: {
+              grade: payload.score,
+              ...await academicProvenance('STARTED', tx),
+              status: "GRADED",
+              submittedAt: new Date(),
+            },
+            create: {
               syllabusItemId: template.syllabusItemId,
               studentId: payload.studentId,
+              grade: payload.score,
+              ...await academicProvenance('STARTED', tx),
+              status: "GRADED",
+              submittedAt: new Date(),
             },
-          },
-          update: {
-            grade: payload.score,
-            status: "GRADED",
-            submittedAt: new Date(),
-          },
-          create: {
-            syllabusItemId: template.syllabusItemId,
-            studentId: payload.studentId,
-            grade: payload.score,
-            status: "GRADED",
-            submittedAt: new Date(),
-          },
-        });
-      } catch (gradeErr) {
-        console.error("GRADE_PASSBACK_ERROR", gradeErr);
+          });
       }
-    }
+
+      return saved;
+    });
+    try { await processGamificationEvent(payload, template.courseId); }
+    catch { console.warn('GAMIFICATION_UNAVAILABLE'); }
 
     return NextResponse.json(
       {
@@ -189,6 +194,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     if (error instanceof CodeLabCompletionError) return NextResponse.json({ message: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("ACTIVITY_SUBMIT_ERROR", error);
 

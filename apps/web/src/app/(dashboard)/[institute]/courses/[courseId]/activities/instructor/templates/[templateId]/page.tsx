@@ -1,3 +1,6 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork } from '@/lib/academic-task';
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 import { db } from "@/lib/db";
@@ -31,6 +34,7 @@ export default async function TemplateEditorPage({
 
     const session = await getSession();
     if (!session) throw new Error("Unauthorized");
+    await requireCourseAccess(session.user, courseId, true);
 
     const title = formData.get("title") as string;
     const activityType = formData.get("activityType") as string;
@@ -48,58 +52,32 @@ export default async function TemplateEditorPage({
       throw new Error("Invalid JSON in configuration fields.");
     }
 
-    if (isNew) {
-      // 1. Create SyllabusItem
-      const syllabusItem = await db.syllabusItem.create({
-        data: {
-          courseId,
-          type: "ASSIGNMENT",
-          title: `Interactive Activity: ${title}`,
-          maxPoints: 100
-        }
-      });
-
-      // 2. Create Template
-      await db.activityTemplate.create({
-        data: {
-          title,
-          activityType,
-          courseId,
-          syllabusItemId: syllabusItem.id,
-          difficulty,
-          variables: variablesStr || "{}",
-          faultPool: faultPoolStr || "[]",
-          hiddenTestCases: hiddenTestCasesStr || "[]",
-          createdBy: session.user.id
-        }
-      });
-    } else {
-      await db.activityTemplate.update({
-        where: { id: templateId },
-        data: {
-          title,
-          activityType,
-          difficulty,
-          variables: variablesStr || "{}",
-          faultPool: faultPoolStr || "[]",
-          hiddenTestCases: hiddenTestCasesStr || "[]",
-        }
-      });
-
-      // Refetch to avoid closure serialization issues with the outer template object
-      const existingTemplate = await db.activityTemplate.findUnique({
-        where: { id: templateId },
-        select: { syllabusItemId: true }
-      });
-
-      // Optionally update the linked SyllabusItem title
-      if (existingTemplate?.syllabusItemId) {
-        await db.syllabusItem.update({
-          where: { id: existingTemplate.syllabusItemId },
-          data: { title: `Interactive Activity: ${title}` }
+    await db.$transaction(async tx => {
+      if (isNew) {
+        const syllabusItem = await tx.syllabusItem.create({ data: {
+          courseId, type: 'ASSIGNMENT', title: `Interactive Activity: ${title}`,
+          maxPoints: 100, ...await academicProvenance('UNTOUCHED', tx),
+        } });
+        await tx.activityTemplate.create({ data: {
+          title, activityType, courseId, syllabusItemId: syllabusItem.id, difficulty,
+          variables: variablesStr || '{}', faultPool: faultPoolStr || '[]',
+          hiddenTestCases: hiddenTestCasesStr || '[]', createdBy: session.user.id,
+        } });
+      } else {
+        const existing = await tx.activityTemplate.findFirst({ where: { id: templateId, courseId }, select: { syllabusItemId: true } });
+        if (!existing) throw new Error('Activity template not found.');
+        if (existing.syllabusItemId) await assertOrdinaryClasswork(tx, existing.syllabusItemId);
+        const current = await tx.activityTemplate.findUniqueOrThrow({ where: { id: templateId }, select: { syllabusItemId: true } });
+        if (current.syllabusItemId !== existing.syllabusItemId) throw new Error('Activity linkage changed. Retry.');
+        await tx.activityTemplate.update({ where: { id: templateId }, data: {
+          title, activityType, difficulty, variables: variablesStr || '{}',
+          faultPool: faultPoolStr || '[]', hiddenTestCases: hiddenTestCasesStr || '[]',
+        } });
+        if (existing.syllabusItemId) await tx.syllabusItem.update({
+          where: { id: existing.syllabusItemId }, data: { title: `Interactive Activity: ${title}` },
         });
       }
-    }
+    });
 
     revalidatePath(`/${institute}/courses/${courseId}/activities/instructor`);
     redirect(`/${institute}/courses/${courseId}/activities/instructor`);

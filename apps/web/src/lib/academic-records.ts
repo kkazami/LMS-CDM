@@ -1,3 +1,5 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
@@ -39,6 +41,7 @@ export async function saveSubmission(actor: CourseActor, courseId: string, raw: 
   return db.$transaction(async tx => {
     // A receipt key is scoped to the actor, including across different assignments.
     if (requestId) await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${requestId}, 0))`;
+    await assertOrdinaryClasswork(tx, input.syllabusItemId);
     await lockAcademicRecord(tx, actor.id, input.syllabusItemId);
     await requireCourseAccess(actor, courseId, false, tx);
     const item = await tx.syllabusItem.findFirst({ where: { id: input.syllabusItemId, courseId }, include: { form: { select: { id: true } } } });
@@ -54,10 +57,11 @@ export async function saveSubmission(actor: CourseActor, courseId: string, raw: 
     const existing = await tx.studentSubmission.findUnique({ where: { syllabusItemId_studentId: { syllabusItemId: item.id, studentId: actor.id } } });
     if (existing && (existing.isReturned || existing.grade !== null)) throw new AccessError(409, 'This assignment has already been graded or returned.');
     if (item.dueDate && item.dueDate < new Date()) throw new AccessError(409, 'The deadline has passed.');
+    await markAcademicWorkStarted(tx, item.id, actor.id);
     const submittedAt = input.status === 'SUBMITTED' ? (existing?.status === 'SUBMITTED' ? existing.submittedAt : new Date()) : existing?.submittedAt ?? null;
     const saved = await tx.studentSubmission.upsert({
       where: { syllabusItemId_studentId: { syllabusItemId: item.id, studentId: actor.id } },
-      update: { status: input.status, submittedAt }, create: { syllabusItemId: item.id, studentId: actor.id, status: input.status, submittedAt },
+      update: { status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) }, create: { syllabusItemId: item.id, studentId: actor.id, status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) },
     });
     const files = [...(input.attachments ?? []), ...(input.attachmentUrl ? [{ url: input.attachmentUrl, fileName: input.fileName || 'Submission Link', type: 'LINK' as const }] : [])];
     for (const file of files) {
@@ -81,10 +85,12 @@ export async function gradeSubmission(actor: CourseActor, submissionId: string, 
   const write = async (tx: Prisma.TransactionClient) => {
     const initial = await tx.studentSubmission.findUnique({ where: { id: submissionId }, include: { syllabusItem: true } });
     if (!initial || expectedCourseId && initial.syllabusItem.courseId !== expectedCourseId) throw new AccessError(404, 'Submission not found.');
+    await assertOrdinaryClasswork(tx, initial.syllabusItemId);
     await lockAcademicRecord(tx, initial.studentId, initial.syllabusItemId);
     const course = await requireCourseAccess(actor, initial.syllabusItem.courseId, true, tx);
     const existing = await tx.studentSubmission.findUniqueOrThrow({ where: { id: submissionId }, include: { syllabusItem: true, student: true } });
     if (existing.student.instituteId !== actor.instituteId || canonicalRole(existing.student.role) !== 'STUDENT') throw new AccessError(404, 'Student not found.');
+    await markAcademicWorkStarted(tx, existing.syllabusItemId, existing.studentId);
     const grade = Math.min(rawGrade, existing.syllabusItem.maxPoints ?? rawGrade);
     const changed = existing.grade !== grade || !existing.isReturned;
     const submission = await tx.studentSubmission.update({ where: { id: submissionId }, data: { grade, status: 'RETURNED', isReturned: true }, include: { student: { select: { id: true, name: true, email: true } }, attachments: true } });
@@ -113,6 +119,7 @@ export async function gradeSubmission(actor: CourseActor, submissionId: string, 
 export async function gradeStudent(actor: CourseActor, itemId: string, studentId: string, grade: number) {
   if (!id.safeParse(itemId).success || !id.safeParse(studentId).success || !Number.isFinite(grade) || grade < 0) throw new AccessError(400, 'Invalid grade.');
   return db.$transaction(async tx => {
+    await assertOrdinaryClasswork(tx, itemId);
     await lockAcademicRecord(tx, studentId, itemId);
     const item = await tx.syllabusItem.findUnique({ where: { id: itemId } });
     if (!item) throw new AccessError(404, 'Assignment not found.');
@@ -122,7 +129,7 @@ export async function gradeStudent(actor: CourseActor, itemId: string, studentId
     const enrollment = await tx.enrollment.findUnique({ where: { courseId_studentId: { courseId: item.courseId, studentId } } });
     if (enrollment?.status !== 'APPROVED') throw new AccessError(403, 'Student is not enrolled.');
     const submission = await tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId: itemId, studentId } },
-      create: { syllabusItemId: itemId, studentId }, update: {} });
+      create: { syllabusItemId: itemId, studentId, ...await academicProvenance('STARTED', tx) }, update: {} });
     return gradeSubmission(actor, submission.id, grade, undefined, item.courseId, tx);
   }, { timeout: 15000 });
 }

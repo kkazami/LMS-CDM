@@ -1,3 +1,6 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
+import { lockAcademicRecord } from '@/lib/academic-records';
 import { db } from "@/lib/db";
 import { getProblemById } from "@/features/interactive-activities/codelab/problems";
 import type { ActivitySubmissionPayload } from "@/features/interactive-activities/shared/schemas";
@@ -26,6 +29,11 @@ export class CodeLabCompletionError extends Error {
 /** The saved solution and its only completion reward commit together. */
 export async function saveCodeLabCompletion(payload: ActivitySubmissionPayload, instituteId: string) {
   const result = await db.$transaction(async tx => {
+    const originalTemplate = await tx.activityTemplate.findUnique({ where: { id: payload.assignmentId }, select: { syllabusItemId: true } });
+    if (originalTemplate?.syllabusItemId) {
+      await assertOrdinaryClasswork(tx, originalTemplate.syllabusItemId);
+      await lockAcademicRecord(tx, payload.studentId, originalTemplate.syllabusItemId);
+    }
     // Serialize different tabs, retries and both submission endpoints for this level.
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${JSON.stringify([payload.studentId, payload.assignmentId])}, 0))`;
     const existing = await tx.activitySubmission.findFirst({
@@ -58,6 +66,8 @@ export async function saveCodeLabCompletion(payload: ActivitySubmissionPayload, 
       });
     }
     if (!template || template.activityType !== "codelab") throw new CodeLabCompletionError(404, "CodeLab template not found.");
+    if (template.syllabusItemId !== (originalTemplate?.syllabusItemId ?? null)) throw new CodeLabCompletionError(409, 'Activity linkage changed. Retry the submission.');
+    if (template.syllabusItemId) await markAcademicWorkStarted(tx, template.syllabusItemId, payload.studentId);
     // Static tracks are shared problem definitions; course-specific templates retain course scope.
     if (!problem && (template.course.instituteId !== instituteId || template.course.isArchived ||
         (template.course.instructorId !== payload.studentId && !await tx.enrollment.findFirst({
@@ -85,8 +95,8 @@ export async function saveCodeLabCompletion(payload: ActivitySubmissionPayload, 
       await tx.activitySession.updateMany({ where: { studentId: payload.studentId, templateId: payload.assignmentId, status: "in_progress" }, data: { status: "submitted" } });
       if (!problem && template.syllabusItemId) await tx.studentSubmission.upsert({
         where: { syllabusItemId_studentId: { syllabusItemId: template.syllabusItemId, studentId: payload.studentId } },
-        update: { grade: payload.score, status: "GRADED", submittedAt: new Date() },
-        create: { syllabusItemId: template.syllabusItemId, studentId: payload.studentId, grade: payload.score, status: "GRADED", submittedAt: new Date() },
+        update: { grade: payload.score, status: "GRADED", submittedAt: new Date(), ...await academicProvenance('STARTED', tx) },
+        create: { syllabusItemId: template.syllabusItemId, studentId: payload.studentId, grade: payload.score, status: "GRADED", submittedAt: new Date(), ...await academicProvenance('STARTED', tx) },
       });
     }
     return { submission, alreadyCompleted: false, ...reward, courseId: template.course.instituteId === instituteId ? template.courseId : "" };

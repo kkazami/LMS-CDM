@@ -19,6 +19,7 @@ import {
   PlusSquare,
   Users,
   FileText,
+  ShieldCheck,
   HardDrive,
   Library,
   Archive,
@@ -118,6 +119,7 @@ export function getIteStudentNavLinks(
 const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/teachers`, icon: LayoutDashboard },
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
+  { label: "Gradebooks", href: `/${code}/gradebooks`, icon: FileSpreadsheet },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
   ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 
@@ -131,6 +133,7 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Account Management", href: `/${code}/accounts`, icon: Users },
   ...(code === "ics" ? [{ label: "Faculty & Program Heads", href: `/${code}/admin/faculty`, icon: Network }] : []),
   { label: "Audit Logs", href: `/${code}/logs`, icon: FileText },
+  { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
   { label: "Database Management", href: `/${code}/admin/database`, icon: HardDrive },
   { label: "Support Tickets", href: `/${code}/admin/support-tickets`, icon: LifeBuoy },
   { label: "Settings", href: `/${code}/settings`, icon: Settings },

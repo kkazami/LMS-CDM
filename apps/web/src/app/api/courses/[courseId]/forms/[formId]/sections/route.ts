@@ -1,4 +1,5 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { editFormDefinition } from '@/lib/forms/mutations';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -32,7 +33,8 @@ export async function POST(request: Request, context: RouteContext) {
     const body = await request.json();
     const { title = "Untitled Section", description = null } = body;
 
-    const lastSection = await db.formSection.findFirst({
+    const section = await editFormDefinition(session.user, courseId, formId, async tx => {
+    const lastSection = await tx.formSection.findFirst({
       where: { formId },
       orderBy: { pageNumber: "desc" },
     });
@@ -40,7 +42,7 @@ export async function POST(request: Request, context: RouteContext) {
     const pageNumber = (lastSection?.pageNumber ?? 1) + 1;
     const position = (lastSection?.position ?? 0) + 1;
 
-    const section = await db.formSection.create({
+    return tx.formSection.create({
       data: {
         formId,
         title,
@@ -48,6 +50,7 @@ export async function POST(request: Request, context: RouteContext) {
         position,
         pageNumber,
       },
+    });
     });
 
     return NextResponse.json({ success: true, section });

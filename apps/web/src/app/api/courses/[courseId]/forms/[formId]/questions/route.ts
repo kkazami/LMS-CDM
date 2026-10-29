@@ -1,4 +1,5 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { editFormDefinition } from '@/lib/forms/mutations';
 import { accountErrorResponse, AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
@@ -63,9 +64,10 @@ export async function POST(request: Request, context: RouteContext) {
     } = body;
 
     // Calculate position if not provided
+    const question = await editFormDefinition(session.user, courseId, formId, async tx => {
     let finalPos = position;
     if (finalPos === undefined || finalPos === null) {
-      const lastQ = await db.formQuestion.findFirst({
+      const lastQ = await tx.formQuestion.findFirst({
         where: { formId },
         orderBy: { position: "desc" },
         select: { position: true },
@@ -73,7 +75,7 @@ export async function POST(request: Request, context: RouteContext) {
       finalPos = (lastQ?.position ?? -1) + 1;
     }
 
-    const question = await db.formQuestion.create({
+    return tx.formQuestion.create({
       data: {
         formId,
         sectionId: sectionId || null,
@@ -93,6 +95,7 @@ export async function POST(request: Request, context: RouteContext) {
         minLength: minLength ? Number(minLength) : null,
         maxLength: maxLength ? Number(maxLength) : null,
       },
+    });
     });
 
     return NextResponse.json({

@@ -1,3 +1,5 @@
+import { academicProvenance } from '@/lib/labs/readiness';
+import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 
@@ -70,37 +72,45 @@ export async function syncAttemptScoreToGradebook({
     // Convert to percentage (0 - 100) or normalize to syllabusItem.maxPoints
     const finalGrade = Math.round(finalRawScore * 100) / 100;
 
-    // Upsert into StudentSubmission
-    const submission = await db.studentSubmission.upsert({
-      where: {
-        syllabusItemId_studentId: {
+    const submission = await db.$transaction(async tx => {
+      await assertOrdinaryClasswork(tx, form.syllabusItemId);
+      await markAcademicWorkStarted(tx, form.syllabusItemId, userId);
+      // Upsert into StudentSubmission
+      const saved = await tx.studentSubmission.upsert({
+        where: {
+          syllabusItemId_studentId: {
+            syllabusItemId: form.syllabusItemId,
+            studentId: userId,
+          },
+        },
+        create: {
           syllabusItemId: form.syllabusItemId,
           studentId: userId,
+          status: "SUBMITTED",
+          ...await academicProvenance('STARTED', tx),
+          grade: finalGrade,
+          submittedAt: new Date(),
+          isReturned: form.showScoreAfter,
         },
-      },
-      create: {
-        syllabusItemId: form.syllabusItemId,
-        studentId: userId,
-        status: "SUBMITTED",
-        grade: finalGrade,
-        submittedAt: new Date(),
-        isReturned: form.showScoreAfter,
-      },
-      update: {
-        grade: finalGrade,
-        status: "SUBMITTED",
-        submittedAt: new Date(),
-        isReturned: form.showScoreAfter,
-      },
-    });
+        update: {
+          grade: finalGrade,
+          status: "SUBMITTED",
+          ...await academicProvenance('STARTED', tx),
+          submittedAt: new Date(),
+          isReturned: form.showScoreAfter,
+        },
+      });
 
-    // Mark attempt as synced
-    await db.formAttempt.update({
-      where: { id: attemptId },
-      data: {
-        syncedToGradebook: true,
-        syncedAt: new Date(),
-      },
+      // Mark attempt as synced
+      await tx.formAttempt.update({
+        where: { id: attemptId },
+        data: {
+          syncedToGradebook: true,
+          syncedAt: new Date(),
+        },
+      });
+
+      return saved;
     });
 
     // Notify student if score visibility is enabled
