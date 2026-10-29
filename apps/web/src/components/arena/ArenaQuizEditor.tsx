@@ -74,7 +74,7 @@ export default function ArenaQuizEditor({
     initialQuiz?.scoringMethod || "SPEED_BASED"
   );
   const [enableIntegrityMonitoring, setEnableIntegrityMonitoring] = useState(
-    initialQuiz?.enableIntegrityMonitoring || false
+    false
   );
   const [shuffleQuestions, setShuffleQuestions] = useState(
     initialQuiz?.shuffleQuestions || false
@@ -469,7 +469,7 @@ export default function ArenaQuizEditor({
           >
             <Settings className="w-3.5 h-3.5 text-amber-500" />
             <span>Settings</span>
-            {enableIntegrityMonitoring && (
+            {false && enableIntegrityMonitoring && (
               <span className="w-2 h-2 rounded-full bg-orange-500" />
             )}
           </button>
@@ -979,8 +979,8 @@ export default function ArenaQuizEditor({
               </select>
             </div>
 
-            {/* Anti-Cheating Integrity Monitoring */}
-            <div className="p-4 rounded-2xl border border-orange-500/30 bg-orange-500/10 space-y-2">
+            {/* Anti-Cheating Integrity Monitoring removed */}
+            <div className="hidden">
               <label className="flex items-start justify-between gap-3 cursor-pointer">
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-black text-orange-600 dark:text-orange-400">

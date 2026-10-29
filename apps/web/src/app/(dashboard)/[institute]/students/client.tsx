@@ -21,6 +21,7 @@ import {
   Trophy,
   Gamepad2,
   Sparkles,
+  Briefcase,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -276,6 +277,15 @@ export default function StudentDashboardClient({
             label: "Quiz Arena",
             icon: Gamepad2,
             href: `/${instituteCode}/arena`,
+          },
+        ]
+      : []),
+    ...(instituteCode.toLowerCase() === "ibe"
+      ? [
+          {
+            label: "Mock Interview",
+            icon: Briefcase,
+            href: `/${instituteCode}/mock-interview`,
           },
         ]
       : []),

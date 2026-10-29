@@ -274,7 +274,7 @@ export default function FinancialStatementsHubClient({
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className={`text-base font-bold ${headingText}`}>
-              Explore All 10 Accounting Report Templates
+              Explore All {TEMPLATES.length} Accounting Report Templates
             </h2>
             <button
               type="button"

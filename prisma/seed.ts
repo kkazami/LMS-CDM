@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 
 import "dotenv/config";
 import { Pool, type PoolConfig } from "pg";
+import { seedMockInterviewContent } from "./seed-mock-interview";
 
 const connectionString =
   process.env.DATABASE_URL ||
@@ -362,6 +363,8 @@ async function main() {
     }
   }
 
+  await seedMockInterviewContent(prisma, pool);
+
   console.log("Seeding completed successfully!");
 }
 
@@ -372,4 +375,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

@@ -404,7 +404,7 @@ export default function ArenaHubClient({
             </h1>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
               Real-time interactive arena for competitive classroom assessments. Host live challenges,
-              track anti-cheating, test knowledge with strategic power-ups, and sync scores directly to LMS gradebooks.
+              test knowledge with strategic power-ups, and sync scores directly to LMS gradebooks.
             </p>
           </div>
 
@@ -564,7 +564,7 @@ export default function ArenaHubClient({
                         {quiz.status}
                       </span>
 
-                      {quiz.enableIntegrityMonitoring && (
+                      {false && quiz.enableIntegrityMonitoring && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-500/20">
                           <Shield className="w-3 h-3" /> Integrity
                         </span>

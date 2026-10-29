@@ -38,6 +38,7 @@ import {
   LifeBuoy,
   Gamepad2,
   FileSpreadsheet,
+  Briefcase,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -224,6 +225,11 @@ export default function Sidebar({
         label: "Financial Statement Generator",
         href: `/${instituteCode}/financial-statements`,
         icon: FileSpreadsheet,
+      },
+      {
+        label: "Mock Interview",
+        href: `/${instituteCode}/mock-interview`,
+        icon: Briefcase,
       },
     ];
   }

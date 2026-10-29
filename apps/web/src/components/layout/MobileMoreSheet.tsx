@@ -31,6 +31,7 @@ import {
   MessageSquareQuote,
   Gamepad2,
   FileSpreadsheet,
+  Briefcase,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -169,7 +170,10 @@ export default function MobileMoreSheet({
     ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"
       ? [{ label: "Quiz Arena", href: `/${instituteCode}/arena`, icon: Gamepad2, description: isProfessor ? "Host live interactive quizzes" : "Live interactive quiz battles" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
-      ? [{ label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" }] : []),
+      ? [
+          { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },
+          { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
+        ] : []),
     ...(isStudent
       ? [...studentItems, ...meetingsItems, ...practicumItems]
       : isProfessor
