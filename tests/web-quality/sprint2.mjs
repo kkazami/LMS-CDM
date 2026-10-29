@@ -139,7 +139,7 @@ try {
   // The matrix signs in repeatedly from one loopback IP. Keep account limits intact;
   // use an explicit test-only IP allowance, rather than weakening product defaults.
   report.functionalTestLoginIpAllowance = 100;
-  const env = { ...safeEnv, NODE_ENV: 'production', DATABASE_URL: url.href, NEXT_TELEMETRY_DISABLED: '1', APP_BASE_URL: origin, NEXT_PUBLIC_APP_URL: origin, CLAMAV_HOST: '127.0.0.1', CLAMAV_PORT: String(scanner.address().port), EMAIL_INVITATIONS_ENABLED: 'false', RATE_LIMIT_LOGIN_IP_MAX: '100', WEB_QUALITY_PORT: String(port), WEB_QUALITY_APP: workspace.appDir, WEB_QUALITY_OUTPUT: output };
+  const env = { ...safeEnv, NODE_ENV: 'production', DATABASE_URL: url.href, NEXT_TELEMETRY_DISABLED: '1', APP_BASE_URL: origin, NEXT_PUBLIC_APP_URL: origin, FILE_SCANNING_ENABLED: 'true', CLAMAV_HOST: '127.0.0.1', CLAMAV_PORT: String(scanner.address().port), EMAIL_INVITATIONS_ENABLED: 'false', RATE_LIMIT_LOGIN_IP_MAX: '100', WEB_QUALITY_PORT: String(port), WEB_QUALITY_APP: workspace.appDir, WEB_QUALITY_OUTPUT: output };
   console.log('Building owned production source copy…');
   await check('Next.js production build passes', () => run([webRequire.resolve('next/dist/bin/next'), 'build', '--webpack'], env, 'build.log', process.execPath, workspace.appDir));
   await run(['-NoProfile', '-File', 'tests/web-quality/certificate.ps1', '-Directory', output], safeEnv, 'certificate.log', 'pwsh');

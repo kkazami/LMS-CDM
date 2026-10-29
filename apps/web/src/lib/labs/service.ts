@@ -33,12 +33,12 @@ async function validateTemplateImages(actor: LabActor, definition: LabDefinition
   if (!urls.length) return;
   const ids = urls.map(url => labAssetId(url)!);
   const [assets, evidence] = await Promise.all([
-    tx.privateAsset.findMany({ where: { id: { in: ids }, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } }, select: { id: true, ownerId: true } }),
+    tx.privateAsset.findMany({ where: { id: { in: ids }, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] }, mimeType: { in: [...LAB_IMAGE_TYPES] } }, select: { id: true, ownerId: true } }),
     tx.labEvidence.count({ where: { assetId: { in: ids } } }),
   ]);
   const permitted = new Set(retained);
   if (evidence || urls.some(url => !assets.some(asset => asset.id === labAssetId(url) && (asset.ownerId === actor.id || permitted.has(url))))) {
-    throw new AccessError(403, 'Use your own scanned screenshots. Student evidence cannot be used as instructional media.');
+    throw new AccessError(403, 'Use your own uploaded screenshots. Student evidence cannot be used as instructional media.');
   }
 }
 
@@ -278,7 +278,7 @@ export async function uploadEvidence(actor: LabActor, courseId: string, assignme
     const bytes = Buffer.from(await file.arrayBuffer());
     const mimeType = await verifiedFileType(bytes, file.name, file.type);
     if (!(LAB_MIME_TYPES as readonly string[]).includes(mimeType)) throw new AccessError(400, 'Upload a PNG, JPEG, WebP, PDF or plain-text file.');
-    await scanUpload(bytes);
+    const scanStatus = await scanUpload(bytes);
     await db.$transaction(async tx => {
       const context = await lockedAttempt(actor, courseId, assignmentId, attemptId, tx);
       ensureWritable(context.attempt, context.assignment.syllabusItem.dueDate);
@@ -294,7 +294,7 @@ export async function uploadEvidence(actor: LabActor, courseId: string, assignme
       const saved = await tx.labStepResponse.upsert({ where: { attemptId_stepId: { attemptId, stepId } }, create: { attemptId, stepId, versionId: context.attempt.versionId, answer: {}, revision: 1, completedAt }, update: { revision: { increment: 1 }, completedAt } });
       if (replaceEvidenceId) await tx.labEvidence.update({ where: { id: replaceEvidenceId }, data: { supersededAt: new Date() } });
       const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'evidence';
-      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus: 'CLEAN', sha256: createHash('sha256').update(bytes).digest('hex') } });
+      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') } });
       await tx.labEvidence.create({ data: { responseId: saved.id, assetId: asset.id } });
       await tx.labAttempt.update({ where: { id: attemptId }, data: { revision: { increment: 1 }, lastActivityAt: new Date() } });
     });
@@ -331,7 +331,7 @@ export async function submitAttempt(actor: LabActor, courseId: string, assignmen
       const { definition } = exactStep(context, row.id);
       const response = context.attempt.responses.find(r => r.stepId === row.id);
       const active = response?.evidence.filter(e => !e.supersededAt) ?? [];
-      if (active.some(e => e.asset.scanStatus !== 'CLEAN') || definition.required && !responseComplete(definition, response?.answer, active.length)) throw new AccessError(400, `Complete the required step: ${row.title}`);
+      if (active.some(e => !['CLEAN', 'UNSCANNED'].includes(e.asset.scanStatus)) || definition.required && !responseComplete(definition, response?.answer, active.length)) throw new AccessError(400, `Complete the required step: ${row.title}`);
     }
     const round = (context.attempt.submissions.at(-1)?.round ?? 0) + 1;
     const evidence = context.attempt.responses.flatMap(r => r.evidence.filter(e => !e.supersededAt));
@@ -386,7 +386,7 @@ async function evidenceAsset(actor: LabActor, evidenceId: string) {
   if (!evidence) throw new AccessError(404, 'Evidence not found.');
   const context = await attemptAccess(actor, evidence.response.attempt.assignment.courseId, evidence.response.attempt.assignmentId, evidence.response.attempt.id);
   if (canonicalRole(actor.role) !== 'STUDENT' && !await db.labSubmissionEvidence.count({ where: { evidenceId } })) throw new AccessError(404, 'Evidence has not been submitted.');
-  const asset = await db.privateAsset.findFirst({ where: { id: evidence.assetId, ownerId: context.attempt.studentId, instituteId: actor.instituteId, scanStatus: 'CLEAN' } });
+  const asset = await db.privateAsset.findFirst({ where: { id: evidence.assetId, ownerId: context.attempt.studentId, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } } });
   if (!asset) throw new AccessError(404, 'Evidence unavailable.');
   return { bytes: Buffer.from(asset.content), mime: asset.mimeType, name: asset.fileName };
 }
@@ -410,7 +410,7 @@ export async function authorizeLabAsset(actor: LabActor, assetId: string) {
     }
   }
   if (!allowed) throw new AccessError(404, 'Screenshot not found.');
-  const file = await db.privateAsset.findFirst({ where: { id: assetId, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } } });
+  const file = await db.privateAsset.findFirst({ where: { id: assetId, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] }, mimeType: { in: [...LAB_IMAGE_TYPES] } } });
   if (!file) throw new AccessError(404, 'Screenshot not found.');
   return { bytes: Buffer.from(file.content), mime: file.mimeType, name: file.fileName };
 }
