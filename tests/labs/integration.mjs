@@ -122,7 +122,7 @@ try {
   db = new PrismaClient({ adapter: new PrismaPg({ connectionString: cluster.url, max: 8 }), log: [] });
   const api = await load(db);
   scanner = await scannerFixture();
-  process.env.CLAMAV_HOST = scanner.host; process.env.CLAMAV_PORT = String(scanner.port);
+  process.env.FILE_SCANNING_ENABLED = 'true'; process.env.CLAMAV_HOST = scanner.host; process.env.CLAMAV_PORT = String(scanner.port);
   let template, published, assignment, attempt;
   const context = () => ['course', assignment.id, attempt.id];
   const response = stepId => attempt.responses.find(row => row.stepId === stepId);

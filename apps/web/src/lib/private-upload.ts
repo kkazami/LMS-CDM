@@ -60,8 +60,9 @@ export async function verifiedFileType(bytes: Buffer, name: string, declared: st
   }
   throw new AccessError(400, 'The file contents, extension and type must match a supported document, image, ZIP, TXT or CSV.');
 }
-/** A failed or unavailable scanner never publishes the file. No bypass setting. */
-export async function scanUpload(bytes: Buffer): Promise<void> {
+/** Scanning is opt-in. When enabled, scanner failures still block uploads. */
+export async function scanUpload(bytes: Buffer): Promise<'CLEAN' | 'UNSCANNED'> {
+  if (process.env.FILE_SCANNING_ENABLED !== 'true') return 'UNSCANNED';
   const host = process.env.CLAMAV_HOST;
   const port = Number(process.env.CLAMAV_PORT);
   if (!host || !Number.isInteger(port) || port < 1 || port > 65535) throw new AccessError(503, 'File scanning is unavailable. Contact your administrator.');
@@ -92,6 +93,7 @@ export async function scanUpload(bytes: Buffer): Promise<void> {
     const answer = await response;
     if (/ FOUND$/.test(answer)) throw new AccessError(400, 'The file was rejected by the malware scanner.');
     if (answer !== 'stream: OK') throw new Error('Scanner did not confirm clean content');
+    return 'CLEAN';
   } catch (error) {
     if (error instanceof AccessError) throw error;
     throw new AccessError(503, 'File scanning is unavailable. Try again later.');
@@ -101,14 +103,14 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
   if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(actor.role))) throw new AccessError(403, 'Forbidden.');
   const bytes = Buffer.from(await file.arrayBuffer());
   const mimeType = await verifiedFileType(bytes, file.name, file.type);
-  await scanUpload(bytes);
+  const scanStatus = await scanUpload(bytes);
   const id = randomUUID();
   const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'attachment';
   await db.$transaction(async tx => {
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${`uploads:${actor.id}`}, 0))`;
     const used = await tx.privateAsset.aggregate({ where: { ownerId: actor.id, instituteId: actor.instituteId }, _sum: { size: true } });
     if ((used._sum.size || 0) + bytes.length > 250 * 1024 * 1024) throw new AccessError(413, 'Your 250 MB upload allowance is full. Contact your administrator.');
-    await tx.privateAsset.create({ data: { id, ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus: 'CLEAN', sha256: createHash('sha256').update(bytes).digest('hex') } });
+    await tx.privateAsset.create({ data: { id, ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') } });
   });
   return { url: `/api/assets/${id}`, fileName, fileSize: bytes.length };
 }
@@ -116,7 +118,7 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
 export async function requireOwnedUpload(client: Pick<typeof db, 'privateAsset' | 'labEvidence' | '$queryRaw'>, actor: CourseActor, url: string) {
   const id = assetPattern.exec(url)?.[1];
   if (!id) return;
-  if (!await client.privateAsset.findFirst({ where: { id, ownerId: actor.id, instituteId: actor.instituteId, scanStatus: 'CLEAN' }, select: { id: true } })) throw new AccessError(403, 'This upload does not belong to you.');
+  if (!await client.privateAsset.findFirst({ where: { id, ownerId: actor.id, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } }, select: { id: true } })) throw new AccessError(403, 'This upload does not belong to you.');
   if (await labsAvailable(client) && await client.labEvidence.findUnique({ where: { assetId: id }, select: { id: true } })) throw new AccessError(409, 'Lab evidence must stay with its lab. Upload a separate file for this item.');
 }
 export async function readPrivateUpload(actor: CourseActor, id: string) {
@@ -126,7 +128,7 @@ export async function readPrivateUpload(actor: CourseActor, id: string) {
   const { authorizeLabAsset } = await import('@/lib/labs/service');
   const labFile = await labsAvailable() ? await authorizeLabAsset(actor, id) : null;
   if (labFile) return labFile;
-  const meta = await db.privateAsset.findFirst({ where: { id, instituteId: actor.instituteId, scanStatus: 'CLEAN' }, select: { id: true, ownerId: true } });
+  const meta = await db.privateAsset.findFirst({ where: { id, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } }, select: { id: true, ownerId: true } });
   if (!meta) throw new AccessError(404, 'File not found.');
   const url = `/api/assets/${id}`;
   let allowed = meta.ownerId === actor.id;
