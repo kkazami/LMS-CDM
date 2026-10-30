@@ -35,6 +35,7 @@ async function main() {
   const calendar = { events: [], schedules: [{ ...course, scheduleDays: [0, 1, 2, 3, 4, 5, 6], scheduleStart: '09:00', scheduleEnd: '10:30', scheduleStartDate: `${today.slice(0, 7)}-01`, scheduleEndDate: `${today.slice(0, 4)}-12-31`, createdAt: '2026-01-01T00:00:00Z' }] };
   const items = Array.from({ length: 45 }, (_, index) => ({ id: `work-${index}`, title: `Practice ${index + 1}`, type: index === 0 ? 'QUIZ' : 'ASSIGNMENT', formId: index === 0 ? 'form-1' : null, description: 'Synthetic instructions for this activity.', orderIndex: index, attachments: [], submission: null }));
   const decks = [];
+  const tasks = [{ id: 'fixture-task', title: 'Reading practice', description: 'Read chapter one', priority: 'low', dueDate: null, completed: false }];
   await page.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
     if (url.pathname.startsWith('/api/')) {
@@ -54,6 +55,10 @@ async function main() {
           body = { ...request.postDataJSON(), id: 'fixture-deck', courseId: null, courseTitle: null, creatorId: user.id, instituteId: user.instituteId, isArchived: false, cardCount: 0, correctCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
           decks.unshift(body);
         } else body = decks;
+      }
+      else if (url.pathname === '/api/workspace/tasks') {
+        if (request.method() === 'PATCH') { Object.assign(tasks[0], request.postDataJSON()); body = tasks[0]; }
+        else body = tasks;
       }
       else if (url.pathname === '/api/courses') body = { courses: [course] };
       else if (url.pathname === '/api/courses/course-1') body = { course };
@@ -124,6 +129,16 @@ async function main() {
     await page.reload();
     await page.getByText('Synthetic saved deck', { exact: true }).waitFor();
     await page.screenshot({ path: path.join(output, 'flashcards-created-390.png') });
+    await page.goBack();
+    await page.getByRole('tab', { name: 'More tab', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Study tasks', exact: true }).click();
+    await page.getByRole('button', { name: 'Open task Reading practice', exact: true }).click();
+    await page.getByLabel('Task Title', { exact: true }).fill('Updated study plan');
+    await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+    await page.getByRole('button', { name: 'Open task Updated study plan', exact: true }).waitFor();
+    await page.reload();
+    await page.getByRole('button', { name: 'Open task Updated study plan', exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, 'planner-edited-390.png') });
     await page.goBack();
     await page.getByRole('button', { name: 'Use dark appearance', exact: true }).click();
     await page.getByRole('tab', { name: 'Dashboard tab', exact: true }).click();

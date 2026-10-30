@@ -20,7 +20,7 @@ export function IcsHeader({ teacher, title }: { teacher: boolean; title?: string
     <View style={styles.content}>
       <View style={[styles.tag, { backgroundColor: theme.isDark ? '#3F281A' : '#FFF3EB' }]}><Text style={{ color: theme.isDark ? '#FFAE79' : '#B84400', fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>ICS</Text></View>
       <Text numberOfLines={2} style={[styles.title, { color: theme.colors.text }]}>{title || `${teacher ? 'Teacher' : 'Student'} Dashboard`}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Use ${theme.isDark ? 'light' : 'dark'} appearance`} style={styles.icon} onPress={() => { void toggleTheme(); }}>{theme.isDark ? <Sun size={18} color={theme.colors.textSecondary} /> : <Moon size={18} color={theme.colors.textSecondary} />}</Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Use ${theme.isDark ? 'light' : 'dark'} appearance`} style={styles.icon} onPress={event => { void toggleTheme({ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }); }}>{theme.isDark ? <Sun size={18} color={theme.colors.textSecondary} /> : <Moon size={18} color={theme.colors.textSecondary} />}</Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`Notifications, ${unread} unread`} style={styles.icon} onPress={() => router.push(`/${teacher ? 'teacher' : 'student'}/(tabs)/alerts` as never)}>
         <Bell size={18} color={theme.colors.textSecondary} />{unread > 0 && <View style={styles.dot} />}
       </Pressable>

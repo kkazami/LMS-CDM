@@ -334,7 +334,7 @@ export default function StudentMoreScreen() {
               </View>
               <Switch
                 value={isDark}
-                onValueChange={toggleTheme}
+                onValueChange={() => { void toggleTheme(); }}
                 trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
                 thumbColor={theme.colors.card}
               />

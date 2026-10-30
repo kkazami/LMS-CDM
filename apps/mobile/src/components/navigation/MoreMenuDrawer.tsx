@@ -693,7 +693,7 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                 </View>
                 <Switch
                   value={isDark}
-                  onValueChange={toggleTheme}
+                  onValueChange={() => { void toggleTheme(); }}
                   trackColor={{ false: 'rgba(255, 255, 255, 0.2)', true: theme.colors.primary }}
                   thumbColor="#FFFFFF"
                 />
