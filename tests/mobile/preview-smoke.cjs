@@ -56,6 +56,9 @@ async function main() {
           decks.unshift(body);
         } else body = decks;
       }
+      else if (url.pathname === '/api/flashcards/cards') body = [{ id: 'study-card-1', front: 'Why use active recall?', back: 'Retrieving information strengthens memory.', hint: 'Think about retrieval.', attachments: [] }, { id: 'study-card-2', front: 'What comes next?', back: 'Review again over time.', attachments: [] }];
+      else if (url.pathname === '/api/flashcards/progress') body = { correct: true };
+      else if (url.pathname === '/api/flashcards/complete-session') body = { success: true, grantedExp: 0 };
       else if (url.pathname === '/api/workspace/tasks') {
         if (request.method() === 'PATCH') { Object.assign(tasks[0], request.postDataJSON()); body = tasks[0]; }
         else body = tasks;
@@ -77,9 +80,18 @@ async function main() {
     await page.goto(origin);
     await page.getByLabel('Email or Student ID').fill(user.email);
     await page.getByLabel('Password', { exact: true }).fill('SyntheticPassword1');
+    await page.getByRole('button', { name: 'Continue with Google', exact: true }).click();
+    await page.getByText('Agree to the Terms and Conditions and acknowledge the Privacy Policy to continue with Google.', { exact: true }).waitFor();
     await page.getByRole('checkbox').click();
-    await page.screenshot({ path: path.join(output, 'login-390.png') });
+    for (const width of [320, 390, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.getByText('Your next chapter', { exact: true }).scrollIntoViewIfNeeded();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Login overflows at ${width}`);
+      await page.screenshot({ path: path.join(output, `login-${width}.png`) });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await page.mouse.move(0, 0);
     await page.getByText('A fresh day, a fresh idea, Jamie.', { exact: true }).waitFor();
     await page.getByText(course.title, { exact: true }).first().waitFor();
     await page.getByText('Signed in as Jamie Student', { exact: true }).waitFor({ state: 'hidden' });
@@ -129,6 +141,21 @@ async function main() {
     await page.reload();
     await page.getByText('Synthetic saved deck', { exact: true }).waitFor();
     await page.screenshot({ path: path.join(output, 'flashcards-created-390.png') });
+    await page.getByText('Synthetic saved deck', { exact: true }).click();
+    const reveal = page.getByRole('button', { name: 'Show answer', exact: true });
+    await reveal.waitFor();
+    const studyBounds = await reveal.boundingBox();
+    assert.ok(studyBounds && studyBounds.height > 400, 'Study card must fill the available screen');
+    assert.ok(await page.getByRole('button', { name: 'Mark correct and confident', exact: true }).isDisabled(), 'Reveal the answer before rating');
+    await page.screenshot({ path: path.join(output, 'study-question-390.png') });
+    await reveal.click();
+    await page.getByRole('button', { name: 'Show question', exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, 'study-answer-390.png') });
+    await page.getByRole('button', { name: 'Mark correct and confident', exact: true }).click();
+    // Durable review storage is native-only; the browser must not silently advance.
+    await page.getByText('This review could not save on this device. Reconnect to verify your sign-in, then tap your answer again.', { exact: true }).waitFor();
+    await page.getByText('Card 1 of 2', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Close flashcard session', exact: true }).click();
     await page.goBack();
     await page.getByRole('tab', { name: 'More tab', exact: true }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Study tasks', exact: true }).click();
@@ -143,6 +170,16 @@ async function main() {
     await page.getByRole('button', { name: 'Use dark appearance', exact: true }).click();
     await page.getByRole('tab', { name: 'Dashboard tab', exact: true }).click();
     await page.screenshot({ path: path.join(output, 'home-dark-390.png') });
+    await page.getByRole('tab', { name: 'More tab', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Flashcards', exact: true }).click();
+    await page.getByText('Synthetic saved deck', { exact: true }).click();
+    await page.getByRole('button', { name: 'Show answer', exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, 'study-question-dark-390.png') });
+    await page.getByRole('button', { name: 'Show answer', exact: true }).click();
+    await page.getByRole('button', { name: 'Show question', exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, 'study-answer-dark-390.png') });
+    await page.getByRole('button', { name: 'Close flashcard session', exact: true }).click();
+    await page.goBack();
     await page.getByRole('tab', { name: 'Courses tab', exact: true }).click();
     const moved = page.waitForResponse(response => response.url().includes('/api/mobile/dashboard') && response.request().method() === 'PATCH');
     await page.getByRole('button', { name: `Move ${course.title} down`, exact: true }).click();
@@ -165,6 +202,7 @@ async function main() {
     await page.getByLabel('Password', { exact: true }).fill('SyntheticPassword1');
     await page.getByRole('checkbox').click();
     await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await page.mouse.move(0, 0);
     const facultyGreeting = page.getByText(/^Good (morning|afternoon|evening), Professor\.$/);
     await facultyGreeting.waitFor();
     await page.getByRole('button', { name: `Open course ${course.title}`, exact: true }).waitFor();

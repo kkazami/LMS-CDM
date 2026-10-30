@@ -257,7 +257,7 @@ export default function StudentFlashcardsListScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/student/flashcards/[deckId]' as any,
-                      params: { deckId: item.id },
+                      params: { deckId: item.id, deckTitle: item.title },
                     })
                   }
                   activeOpacity={0.85}

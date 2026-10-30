@@ -94,7 +94,7 @@ export default function KxVoteButton({
     <div
       className={`flex items-center select-none ${
         isVertical
-          ? "flex-row sm:flex-col self-start justify-center rounded-xl bg-slate-100/70 dark:bg-white/5 p-1 border border-slate-200/60 dark:border-white/5"
+          ? "flex-col self-start shrink-0 justify-center rounded-xl bg-slate-100/70 dark:bg-white/5 p-1 border border-slate-200/60 dark:border-white/5"
           : "flex-row gap-1 bg-slate-100/70 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200/60 dark:border-white/5"
       }`}
     >
@@ -102,7 +102,7 @@ export default function KxVoteButton({
       <button
         type="button"
         onClick={() => handleVote(1)}
-        disabled={disabled || isSelf}
+        disabled={disabled || isSelf || isLoading}
         title={isSelf ? "You cannot vote on your own post" : "Upvote"}
         aria-label="Upvote"
         className={`${btnClasses} rounded-lg transition-colors ${
@@ -133,7 +133,7 @@ export default function KxVoteButton({
       <button
         type="button"
         onClick={() => handleVote(-1)}
-        disabled={disabled || isSelf}
+        disabled={disabled || isSelf || isLoading}
         title={isSelf ? "You cannot vote on your own post" : "Downvote"}
         aria-label="Downvote"
         className={`${btnClasses} rounded-lg transition-colors ${

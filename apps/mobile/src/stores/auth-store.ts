@@ -24,6 +24,7 @@ interface AuthState {
   validateSession: () => Promise<void>;
   expireSession: () => void;
   login: (email: string, password: string, instituteCode: string, acceptedPolicies: boolean) => Promise<LoginResponse>;
+  loginWithGoogle: (authorize: () => Promise<{ ticket: string; verifier: string } | null>) => Promise<LoginResponse | null>;
   register: (data: Parameters<ApiClient['auth']['register']>[0]) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
@@ -125,6 +126,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const attempt = ++authAttempt;
       const response = await api.auth.login({ identifier: email, password, instituteCode, acceptedPolicies });
       if (attempt !== authAttempt) throw new Error('Sign-in was cancelled. Try again.');
+      await establish(response);
+      return response;
+    },
+    loginWithGoogle: async authorize => {
+      const attempt = ++authAttempt;
+      const proof = await authorize();
+      if (!proof) return null;
+      if (attempt !== authAttempt) throw new Error('Sign-in was cancelled. Please try again.');
+      const exchanged = await api.auth.exchangeGoogle(proof.ticket, proof.verifier);
+      const authorized = createApiClient({ baseUrl: API_BASE_URL, getToken: async () => exchanged.token });
+      const profile = await authorized.auth.me();
+      if (attempt !== authAttempt) throw new Error('Sign-in was cancelled. Please try again.');
+      const response: LoginResponse = { ...profile, token: exchanged.token, message: 'Signed in with Google.' };
       await establish(response);
       return response;
     },

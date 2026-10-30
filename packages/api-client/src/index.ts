@@ -160,6 +160,8 @@ export function createApiClient(config: ApiClientConfig) {
 
   return {
     auth: {
+      googleAvailable: () => request<{ available: boolean }>('/api/auth/google/mobile?status=1'),
+      exchangeGoogle: (ticket: string, verifier: string) => request<{ token: string }>('/api/auth/google/mobile/exchange', { method: 'POST', body: JSON.stringify({ ticket, verifier }) }),
       forgotPassword: (email: string) => request<{ message: string }>('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
       resetPassword: (email: string, otp: string, newPassword: string) => request<{ message: string }>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) }),
       register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>

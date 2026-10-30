@@ -115,3 +115,27 @@ test('web registration uses browser storage rather than unavailable native Secur
   assert.equal(store.getState().isAuthenticated,true);
   assert.equal(JSON.parse(items.get('lumina_auth_session_v2')!).token,'synthetic-new-token');
 });
+
+
+test('Google sign-in verifies the exchanged bearer before storing a native session', async () => {
+  const calls: string[] = [];
+  const user = { id: 'google-student', name: 'Google Student', role: 'STUDENT', instituteId: 'ics-id', institute: { code: 'ics', name: 'ICS' } };
+  const fixture = await authStore(async (input: RequestInfo | URL, options?: RequestInit) => {
+    const pathname = new URL(String(input)).pathname;
+    calls.push(pathname);
+    if (pathname.endsWith('/exchange')) return Response.json({ token: 'synthetic-google-token-123456789' });
+    if (pathname.endsWith('/me')) {
+      assert.equal((options?.headers as Record<string, string>).Authorization, 'Bearer synthetic-google-token-123456789');
+      return Response.json({ user, mobileCapabilities: { studentReceipts: 1, hybridDrafts: 1, agenda: 1 } });
+    }
+    return Response.json({ success: true });
+  }, false);
+  await fixture.store.getState().loginWithGoogle(async () => ({ ticket: 'synthetic-handoff', verifier: 'proof' }));
+  assert.equal(fixture.store.getState().user.id, user.id);
+  assert.equal(fixture.store.getState().isSessionVerified, true);
+  assert.equal(JSON.parse(fixture.items.get('lumina_auth_session_v2')!).token, 'synthetic-google-token-123456789');
+  assert.deepEqual(calls, ['/api/auth/google/mobile/exchange', '/api/auth/me']);
+  const before = fixture.store.getState().token;
+  assert.equal(await fixture.store.getState().loginWithGoogle(async () => null), null);
+  assert.equal(fixture.store.getState().token, before);
+});

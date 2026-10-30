@@ -1,35 +1,23 @@
-import { getCachedData } from '../../src/lib/offline-storage';
-import { restoreStudentReturn } from '../../src/lib/student-navigation';
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-  SafeAreaView,
-  Alert,
-  Animated,
-  Linking,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, TextInput, ActivityIndicator, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Linking } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { LogIn, GraduationCap, Building2, BookOpen, ShieldCheck, Sparkles, Sun, Moon } from 'lucide-react-native';
+import { LogIn, Mail, LockKeyhole, Eye, EyeOff, Check, Sun, Moon } from 'lucide-react-native';
 import * as Burnt from 'burnt';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useThemeStore } from '../../src/stores/theme-store';
 import { getInstituteTheme, INSTITUTE_LIST, type InstituteCode } from '../../src/lib/theme';
-import { getOnPrimaryColor } from '../../src/lib/design-system';
-import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
-import { TOUCH_TARGET } from '../../src/lib/typography';
 import { API_BASE_URL } from '../../src/lib/constants';
+import { getCachedData } from '../../src/lib/offline-storage';
+import { restoreStudentReturn } from '../../src/lib/student-navigation';
+import { startGoogleLogin } from '../../src/lib/google-login';
 
 export default function LoginScreen() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
+  const loginWithGoogle = useAuthStore(s => s.loginWithGoogle);
   const isDark = useThemeStore((s) => s.isDark);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const initializeTheme = useThemeStore((s) => s.initializeTheme);
@@ -39,6 +27,8 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const busy = loading || googleBusy;
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -47,48 +37,19 @@ export default function LoginScreen() {
     initializeTheme();
   }, [initializeTheme]);
 
-  // Smooth rotation and fade animation for sun/moon toggle
-  const themeAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.timing(themeAnim, {
-      toValue: isDark ? 1 : 0,
-      duration: 260,
-      useNativeDriver: true,
-    }).start();
-  }, [isDark, themeAnim]);
-
-  const sunRotate = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '90deg'],
-  });
-  const sunOpacity = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 0],
-  });
-  const sunScale = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 0.5],
-  });
-
-  const moonRotate = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-90deg', '0deg'],
-  });
-  const moonOpacity = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-  const moonScale = themeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.5, 1],
-  });
-
   // Dynamic theme based on selected institute and active theme mode (light/dark)
   const currentTheme = getInstituteTheme(selectedInstitute, isDark);
-  const onPrimaryColor = getOnPrimaryColor(currentTheme);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const canvas = isDark ? '#0F131C' : '#FAF9F5';
+  const surface = isDark ? '#191F2A' : '#FFFFFF';
+  const ink = isDark ? '#F1F5F9' : '#101824';
+  const secondary = isDark ? '#B6C0D0' : '#52627A';
+  const border = isDark ? '#364051' : '#DFE4DB';
+  const field = isDark ? '#121823' : '#FAFBF8';
+  const openPolicy = (path: string) => { void Linking.openURL(`${API_BASE_URL}${path}`).catch(() => setErrorMessage('Unable to open the policy. Please try again.')); };
 
   const handleLogin = async () => {
+    if (busy) return;
     if (!email.trim() || !password.trim()) {
       setErrorMessage('Please enter both email and password.');
       return;
@@ -143,356 +104,109 @@ export default function LoginScreen() {
     }
   };
 
-  return (
-    <View style={[styles.safeArea, { backgroundColor: currentTheme.colors.background, paddingTop: Math.max(insets.top, 16) }]}>
-      {/* Floating Theme Toggle (Sun/Moon with animated rotation) */}
-      <TouchableOpacity
-        onPress={() => toggleTheme()}
-        style={[
-          styles.themeToggle,
-          {
-            top: Math.max(insets.top, 16) + 4,
-            backgroundColor: currentTheme.colors.card,
-            borderColor: currentTheme.colors.border,
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-        accessibilityHint="Toggles the color theme between light and dark mode"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        activeOpacity={0.7}
-      >
-        <Animated.View
-          style={[
-            styles.themeIconWrapper,
-            {
-              opacity: sunOpacity,
-              transform: [{ rotate: sunRotate }, { scale: sunScale }],
-            },
-          ]}
-        >
-          <Sun size={20} color="#F59E0B" />
-        </Animated.View>
-        <Animated.View
-          style={[
-            styles.themeIconWrapper,
-            {
-              opacity: moonOpacity,
-              transform: [{ rotate: moonRotate }, { scale: moonScale }],
-            },
-          ]}
-        >
-          <Moon size={20} color={isDark ? '#93C5FD' : '#60A5FA'} />
-        </Animated.View>
-      </TouchableOpacity>
+  const handleGoogle = async () => {
+    if (busy) return;
+    if (!acceptedPolicies) {
+      setErrorMessage('Agree to the Terms and Conditions and acknowledge the Privacy Policy to continue with Google.');
+      return;
+    }
+    setGoogleBusy(true);
+    setErrorMessage(null);
+    try {
+      const response = await loginWithGoogle(() => startGoogleLogin(selectedInstitute, acceptedPolicies));
+      if (!response) return;
+      // The gateway applies the same institute, role and enrollment routing as password sign-in.
+      const savedTarget = await getCachedData<string>('return_intent');
+      router.replace((response.user.requiresEnrollment ? '/join-class' : restoreStudentReturn(savedTarget) || '/') as never);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Google sign-in could not be completed. Please try again.');
+    } finally { setGoogleBusy(false); }
+  };
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header & Branding */}
-          <View style={styles.header}>
-            <View style={[styles.brandLogo, { backgroundColor: currentTheme.colors.primary }]}>
-              <GraduationCap size={36} color={onPrimaryColor} />
-            </View>
-            <Text style={[styles.appName, { color: currentTheme.colors.text }]}>CdM LMS</Text>
-            <Text style={[styles.instituteSubheading, { color: currentTheme.colors.primary }]}>
-              {currentTheme.name}
-            </Text>
-          </View>
-
-          {/* Institute Selector Tabs */}
-          <View style={[styles.instituteSelectorContainer, { backgroundColor: currentTheme.colors.card, borderColor: currentTheme.colors.border }]}>
-            <Text style={[styles.selectorLabel, { color: currentTheme.colors.textSecondary }]}>
-              SELECT YOUR INSTITUTE
-            </Text>
-            <View style={styles.instituteRow}>
-              {INSTITUTE_LIST.map((inst) => {
-                const isSelected = selectedInstitute === inst.code;
-                const instTheme = getInstituteTheme(inst.code, isDark);
-                const tabOnPrimary = getOnPrimaryColor(instTheme);
-                return (
-                  <TouchableOpacity
-                    key={inst.code}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={inst.name}
-                    style={[
-                      styles.instituteTab,
-                      {
-                        backgroundColor: isSelected ? instTheme.colors.primary : 'transparent',
-                        borderColor: isSelected ? instTheme.colors.primary : currentTheme.colors.border,
-                      },
-                    ]}
-                    onPress={() => setSelectedInstitute(inst.code)}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      style={[
-                        styles.instituteTabText,
-                        {
-                          color: isSelected ? tabOnPrimary : currentTheme.colors.textSecondary,
-                          fontWeight: isSelected ? '700' : '500',
-                        },
-                      ]}
-                    >
-                      {inst.short}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Login Card */}
-          <View style={[styles.card, { backgroundColor: currentTheme.colors.card, borderColor: currentTheme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: currentTheme.colors.text }]}>
-              Sign In
-            </Text>
-            <Text style={[styles.cardSubtitle, { color: currentTheme.colors.textSecondary }]}>
-              Access your courses, tasks, and campus resources
-            </Text>
-
-            {errorMessage && (
-              <View style={[styles.errorBox, { backgroundColor: `${currentTheme.colors.danger}15`, borderColor: currentTheme.colors.danger }]}>
-                <Text style={[styles.errorText, { color: currentTheme.colors.danger }]}>
-                  {errorMessage}
-                </Text>
-              </View>
-            )}
-
-            <Input
-              label="Email or Student ID"
-              placeholder="e.g. user@cdm.edu.ph"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="default"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              ringColor={currentTheme.colors.primary}
-              theme={currentTheme}
-            />
-
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="password"
-              ringColor={currentTheme.colors.primary}
-              theme={currentTheme}
-            />
-
-            <TouchableOpacity
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: acceptedPolicies, disabled: loading }}
-              accessibilityLabel="I agree to the Terms and Conditions and acknowledge the Privacy Policy"
-              disabled={loading}
-              onPress={() => setAcceptedPolicies(value => !value)}
-              style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 48, paddingVertical: 12 }}
-            >
-              <View style={{ width: 22, height: 22, borderWidth: 2, borderColor: currentTheme.colors.primary, borderRadius: 4, backgroundColor: acceptedPolicies ? currentTheme.colors.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {acceptedPolicies && <ShieldCheck size={16} color={onPrimaryColor} />}
-              </View>
-              <Text style={{ flex: 1, fontSize: 14, lineHeight: 21, color: currentTheme.colors.text }}>I agree to the Terms and Conditions and acknowledge the Privacy Policy.</Text>
-            </TouchableOpacity>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-              {([{ title: 'Terms and Conditions', path: '/terms' }, { title: 'Privacy Policy', path: '/privacy' }]).map(policy => (
-                <TouchableOpacity key={policy.path} accessibilityRole="link" accessibilityLabel={`${policy.title} (opens in browser)`} style={{ minHeight: 44, justifyContent: 'center' }} onPress={() => Linking.openURL(`${API_BASE_URL}${policy.path}`).catch(() => setErrorMessage('Unable to open the policy. Please try again.'))}>
-                  <Text style={{ color: currentTheme.colors.text, textDecorationLine: 'underline', fontSize: 13 }}>{policy.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Button
-              title="Sign In"
-              onPress={handleLogin}
-              loading={loading}
-              icon={LogIn}
-              textColor={onPrimaryColor}
-              style={[styles.loginButton, { backgroundColor: currentTheme.colors.primary, borderColor: currentTheme.colors.primary }]}
-            />
-            <Button title="Forgot password?" variant="ghost" onPress={() => router.push('/(auth)/forgot-password')} />
-            <Button title="Login help and support" variant="ghost" onPress={() => { void Linking.openURL(`${API_BASE_URL}/support`).catch(() => setErrorMessage('Unable to open support. Check your connection and try again.')); }} />
-          </View>
-
-          {/* Quick Registration Link */}
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: currentTheme.colors.textSecondary }]}>
-              Need an account?
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/(auth)/register')}
-              style={styles.registerLink}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={[styles.registerLinkText, { color: currentTheme.colors.primary }]}>
-                Create student account
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
-  );
+  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: canvas }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 24 }]}>
+      <View style={styles.intro}>
+        <Text style={[styles.headline, { color: ink }]}>Your next chapter</Text>
+        <View><Text style={[styles.serif, { color: ink }]}>starts here.</Text><View style={styles.underline} /></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Use ${isDark ? 'light' : 'dark'} appearance`} onPress={event => { void toggleTheme({ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }); }} style={styles.themeToggle}>
+          {isDark ? <Sun size={19} color={secondary} /> : <Moon size={19} color={secondary} />}
+        </TouchableOpacity>
+      </View>
+      <View style={[styles.card, { backgroundColor: surface }]}>
+        <Image source={require('../../assets/cdm-logo.png')} style={styles.crest} resizeMode="contain" accessibilityLabel="Colegio de Montalban crest" />
+        <Text style={[styles.welcome, { color: ink }]}>Welcome back.</Text>
+        <Text style={[styles.subtitle, { color: secondary }]}>Sign in to your CdM learning space.</Text>
+        <Text style={[styles.label, { color: ink }]}>Select your institute</Text>
+        <View style={[styles.institutes, { backgroundColor: field, borderColor: border }]}>
+          {(['ics', 'ite', 'ibe'] as const).map(code => {
+            const institute = INSTITUTE_LIST.find(item => item.code === code)!;
+            const selected = selectedInstitute === code;
+            return <TouchableOpacity key={code} accessibilityRole="tab" accessibilityLabel={institute.name} accessibilityState={{ selected }} disabled={busy} onPress={() => setSelectedInstitute(code)} style={[styles.institute, { backgroundColor: selected ? isDark ? '#2C3544' : '#EEF1F5' : 'transparent', borderColor: selected ? border : 'transparent' }]}>
+              <Text style={{ color: selected ? ink : secondary, fontSize: 13, fontWeight: selected ? '600' : '400' }}>{code.toUpperCase()}</Text>
+            </TouchableOpacity>;
+          })}
+        </View>
+        <View style={styles.instituteName}><View style={[styles.dot, { backgroundColor: currentTheme.colors.primary }]} /><Text style={[styles.helper, { color: secondary }]}>{currentTheme.name}</Text></View>
+        {!!errorMessage && <Text accessibilityRole="alert" style={[styles.error, { color: isDark ? '#FDA4AF' : '#B42318' }]}>{errorMessage}</Text>}
+        <Text style={[styles.label, { color: ink }]}>Email or student ID</Text>
+        <View style={[styles.field, { backgroundColor: field, borderColor: border }]}><Mail size={17} color={secondary} />
+          <TextInput accessibilityLabel="Email or Student ID" value={email} onChangeText={setEmail} placeholder="Enter your email or student ID" placeholderTextColor={secondary} style={[styles.input, { color: ink }]} autoCapitalize="none" autoCorrect={false} autoComplete="username" editable={!busy} returnKeyType="next" />
+        </View>
+        <Text style={[styles.label, { color: ink, marginTop: 18 }]}>Password</Text>
+        <View style={[styles.field, { backgroundColor: field, borderColor: border }]}><LockKeyhole size={17} color={secondary} />
+          <TextInput accessibilityLabel="Password" value={password} onChangeText={setPassword} placeholder="Enter your password" placeholderTextColor={secondary} style={[styles.input, { color: ink }]} secureTextEntry={!passwordVisible} autoCapitalize="none" autoCorrect={false} autoComplete="current-password" editable={!busy} returnKeyType="go" onSubmitEditing={() => { if (!busy) void handleLogin(); }} />
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'} style={styles.eye} onPress={() => setPasswordVisible(value => !value)}>{passwordVisible ? <EyeOff size={17} color={secondary} /> : <Eye size={17} color={secondary} />}</TouchableOpacity>
+        </View>
+        <TouchableOpacity accessibilityRole="button" style={styles.forgot} onPress={() => router.push('/(auth)/forgot-password')}><Text style={[styles.helper, { color: ink, textDecorationLine: 'underline' }]}>Forgot Password?</Text></TouchableOpacity>
+        <View style={styles.consent}>
+          <TouchableOpacity accessibilityRole="checkbox" accessibilityLabel="I agree to the Terms and Conditions and acknowledge the Privacy Policy" accessibilityState={{ checked: acceptedPolicies, disabled: busy }} disabled={busy} style={styles.checkTarget} onPress={() => setAcceptedPolicies(value => !value)}>
+            <View style={[styles.checkbox, { borderColor: secondary, backgroundColor: acceptedPolicies ? ink : 'transparent' }]}>{acceptedPolicies && <Check size={14} color={surface} />}</View>
+          </TouchableOpacity>
+          <Text style={[styles.helper, { flex: 1, color: secondary }]}>I agree to the <Text accessibilityRole="link" onPress={() => openPolicy('/terms')} style={{ color: ink, textDecorationLine: 'underline' }}>Terms and Conditions</Text> and acknowledge the <Text accessibilityRole="link" onPress={() => openPolicy('/privacy')} style={{ color: ink, textDecorationLine: 'underline' }}>Privacy Policy</Text>.</Text>
+        </View>
+        <View style={styles.register}><Text style={[styles.helper, { color: secondary }]}>Need an account?</Text><TouchableOpacity accessibilityRole="button" onPress={() => router.push('/(auth)/register')} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={[styles.helper, { color: ink, fontWeight: '600' }]}>Create student account</Text></TouchableOpacity></View>
+        <Button title="Sign In" icon={LogIn} loading={loading} disabled={googleBusy} onPress={handleLogin} textColor="#FFFFFF" style={{ backgroundColor: isDark ? '#334A69' : '#101824', borderColor: 'transparent', borderRadius: 9, marginTop: 12, minHeight: 48 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 14 }}><View style={{ flex: 1, height: 1, backgroundColor: border }} /><Text style={[styles.helper, { color: secondary }]}>or</Text><View style={{ flex: 1, height: 1, backgroundColor: border }} /></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Continue with Google" accessibilityState={{ disabled: busy, busy: googleBusy }} disabled={busy} onPress={() => { void handleGoogle(); }} style={{ minHeight: 48, borderWidth: 1, borderColor: border, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12, opacity: busy ? 0.6 : 1 }}>
+          {googleBusy ? <ActivityIndicator size="small" color={ink} /> : <Svg width={19} height={19} viewBox="0 0 48 48" accessible={false}>
+            <Path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.2h6.6c3.9-3.6 6.1-8.8 6.1-15.1Z" />
+            <Path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.2c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20.4 20.4 0 0 0 24 44Z" />
+            <Path fill="#FBBC05" d="M12.6 27.4a12.3 12.3 0 0 1 0-7.8v-5.3H5.8a20.2 20.2 0 0 0 0 18.4l6.8-5.3Z" />
+            <Path fill="#EA4335" d="M24 11.2c3 0 5.6 1 7.7 3l5.8-5.8A19.5 19.5 0 0 0 24 3 20.4 20.4 0 0 0 5.8 14.3l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z" />
+          </Svg>}
+          <Text style={{ color: ink, fontSize: 14, fontWeight: '600' }}>{googleBusy ? 'Connecting to Google…' : 'Continue with Google'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" style={styles.support} onPress={() => { void Linking.openURL(`${API_BASE_URL}/support`).catch(() => setErrorMessage('Unable to open support. Please try again.')); }}><Text style={[styles.helper, { color: secondary }]}>Login help and support</Text></TouchableOpacity>
+      </View>
+    </ScrollView>
+  </KeyboardAvoidingView>;
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  themeToggle: {
-    position: 'absolute',
-    right: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  themeIconWrapper: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 40,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  brandLogo: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  appName: {
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  instituteSubheading: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  instituteSelectorContainer: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 20,
-  },
-  selectorLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  instituteRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  instituteTab: {
-    flex: 1,
-    minHeight: TOUCH_TARGET,
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  instituteTabText: {
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-    marginBottom: 24,
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    marginBottom: 20,
-    lineHeight: 18,
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  loginButton: {
-    marginTop: 8,
-    minHeight: 50,
-    borderRadius: 12,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: TOUCH_TARGET,
-  },
-  footerText: {
-    fontSize: 14,
-  },
-  registerLink: {
-    paddingVertical: 4,
-  },
-  registerLinkText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
+  page: { flexGrow: 1, paddingHorizontal: 20, alignItems: 'center' },
+  intro: { alignItems: 'center', marginBottom: 28, width: '100%', maxWidth: 420, paddingTop: 4 },
+  headline: { fontSize: 27, lineHeight: 34, fontWeight: '700', letterSpacing: -0.8, textAlign: 'center' },
+  serif: { fontSize: 31, lineHeight: 38, fontStyle: 'italic', fontWeight: '600', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', textAlign: 'center' },
+  underline: { height: 4, backgroundColor: '#DDC46D', borderRadius: 4, marginTop: -1, transform: [{ rotate: '-2deg' }] },
+  themeToggle: { position: 'absolute', right: -12, top: -10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  card: { width: '100%', maxWidth: 380, borderRadius: 24, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12, shadowColor: '#172035', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 24, elevation: 3 },
+  crest: { width: 54, height: 54, alignSelf: 'center', marginBottom: 12 },
+  welcome: { fontSize: 23, lineHeight: 30, fontWeight: '700', textAlign: 'center', letterSpacing: -0.7 },
+  subtitle: { fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 4, marginBottom: 26 },
+  label: { fontSize: 14, lineHeight: 21, marginBottom: 7 },
+  institutes: { flexDirection: 'row', padding: 3, borderWidth: 1, borderRadius: 9 },
+  institute: { flex: 1, minHeight: 40, borderWidth: 1, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
+  instituteName: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, marginBottom: 22 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  helper: { fontSize: 13, lineHeight: 20 },
+  field: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 9, paddingLeft: 12, minHeight: 48 },
+  input: { flex: 1, minWidth: 0, fontSize: 16, paddingVertical: 12, paddingRight: 8 },
+  eye: { minWidth: 44, minHeight: 46, alignItems: 'center', justifyContent: 'center' },
+  forgot: { minHeight: 44, alignSelf: 'flex-end', justifyContent: 'center', marginTop: 2 },
+  consent: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8 },
+  checkTarget: { width: 44, minHeight: 44, alignItems: 'flex-start', paddingTop: 2 },
+  checkbox: { width: 18, height: 18, borderWidth: 1, borderRadius: 3, alignItems: 'center', justifyContent: 'center' },
+  register: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: 4, marginTop: 4 },
+  support: { minHeight: 44, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  error: { fontSize: 13, lineHeight: 20, marginBottom: 16 },
 });

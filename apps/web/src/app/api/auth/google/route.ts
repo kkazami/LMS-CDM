@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clearGoogleMobile } from '@/lib/google-mobile';
 import { beginGoogle } from '@/lib/google-auth';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { mutationOriginAllowed } from '@/lib/request-security';
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const institute = form.get('instituteCode');
     if (!['ics', 'ite', 'ibe'].includes(String(institute)) || form.get('acceptedPolicies') !== 'true') throw new AccessError(400, 'Select your institute and accept the policies to continue.');
+    await clearGoogleMobile();
     return NextResponse.json({ url: (await beginGoogle(institute as 'ics' | 'ite' | 'ibe')).toString() });
   } catch (error) { return accountErrorResponse(error); }
 }

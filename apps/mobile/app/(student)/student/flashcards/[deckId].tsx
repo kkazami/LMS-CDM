@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { FlashcardPractice } from '../../../../src/components/institute/FlashcardPractice';
 import {
   View,
   Text,
@@ -36,7 +37,7 @@ import type { FlashcardCard } from '@lms/types';
 import { queueCardReview, queueCardCompletion, syncCardQueue } from '../../../../src/lib/flashcard-queue';
 
 export default function StudentFlashcardStudyScreen() {
-  const { deckId } = useLocalSearchParams<{ deckId: string }>();
+  const { deckId, deckTitle } = useLocalSearchParams<{ deckId: string; deckTitle?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -89,7 +90,7 @@ export default function StudentFlashcardStudyScreen() {
       }
 
       const response = await api.flashcards.getCards(deckId);
-      if (response?.cards && response.cards.length > 0) {
+      if (response?.cards) {
         setCards(response.cards);
         await setCachedData(`deck_cards_${deckId}`, response.cards);
       }
@@ -109,7 +110,7 @@ export default function StudentFlashcardStudyScreen() {
   const currentCard = cards[currentIndex];
 
   const handleResponse = async (status: 'correct' | 'incorrect') => {
-    if (!currentCard || !deckId || savingRef.current) return;
+    if (!currentCard || !deckId || !isFlipped || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
     setErrorMessage(null);
@@ -154,13 +155,21 @@ export default function StudentFlashcardStudyScreen() {
     completionKey.current = `cards-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   };
 
+  if (!loading && currentCard && !sessionCompleted) return <FlashcardPractice
+    card={currentCard} title={deckTitle || 'Study flashcards'} index={currentIndex} count={cards.length}
+    flipped={isFlipped} saving={saving} showHint={showHint}
+    onHint={() => setShowHint(value => !value)} onFlip={() => setIsFlipped(value => !value)}
+    onClose={() => router.back()} onRate={rating => { void handleResponse(rating); }}
+    notice={errorMessage ? <ErrorBanner message={errorMessage} onDismiss={() => setErrorMessage(null)} /> : null}
+  />;
+
   const progressPercent = cards.length > 0 ? ((currentIndex + (sessionCompleted ? 1 : 0)) / cards.length) * 100 : 0;
 
   return (
     <Screen contentContainerStyle={styles.screenInner}>
       <AppHeader
         showBack
-        title={sessionCompleted ? 'Session Complete' : `Card ${currentIndex + 1} of ${cards.length}`}
+        title={sessionCompleted ? 'Session Complete' : loading ? 'Loading flashcards' : 'Study flashcards'}
         subtitle="Active Recall Practice Session"
       />
 
@@ -369,162 +378,7 @@ export default function StudentFlashcardStudyScreen() {
               />
             </View>
           </View>
-        ) : (
-          /* ==================== ACTIVE STUDY CARD ==================== */
-          <View style={styles.cardContainer}>
-            <TouchableOpacity
-              activeOpacity={0.92}
-              onPress={() => setIsFlipped((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel={`Flashcard: ${isFlipped ? 'showing answer' : 'showing question'}. Double tap to flip.`}
-              style={[
-                styles.flashcard,
-                {
-                  backgroundColor: theme.colors.card,
-                  borderColor: isFlipped ? theme.colors.primary : theme.colors.border,
-                  borderRadius: radius.xl,
-                  padding: s(spacing.xl),
-                  minHeight: s(280),
-                },
-              ]}
-            >
-              <View style={styles.cardSideBadge}>
-                <Badge
-                  label={isFlipped ? 'ANSWER (BACK)' : 'PROMPT (FRONT)'}
-                  variant={isFlipped ? 'primary' : 'default'}
-                  size="sm"
-                />
-                <View style={[styles.flipPromptRow, { gap: s(spacing.xs) }]}>
-                  <RotateCw size={s(13)} color={theme.colors.textSecondary} />
-                  <Text
-                    style={[styles.flipPromptText, { color: theme.colors.textSecondary, fontSize: font(12) }]}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    Tap to flip
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.cardContentBox}>
-                <Text
-                  style={[
-                    styles.cardMainText,
-                    {
-                      color: theme.colors.text,
-                      fontSize: font(19),
-                      lineHeight: font(27),
-                    },
-                  ]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  {isFlipped ? currentCard.back : currentCard.front}
-                </Text>
-              </View>
-
-              {/* Hint Section */}
-              {!isFlipped && Boolean(currentCard.hint) ? (
-                <View style={[styles.hintContainer, { marginTop: s(spacing.md) }]}>
-                  {showHint ? (
-                    <View
-                      style={[
-                        styles.hintBox,
-                        {
-                          backgroundColor: theme.colors.surfaceAlt,
-                          borderRadius: radius.md,
-                          padding: s(spacing.md),
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.hintText,
-                          { color: theme.colors.textSecondary, fontSize: font(12.5), lineHeight: font(18) },
-                        ]}
-                        maxFontSizeMultiplier={maxFontSizeMultiplier}
-                      >
-                        Hint: {currentCard.hint}
-                      </Text>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={[styles.revealHintBtn, { minHeight: TOUCH_TARGET }]}
-                      onPress={() => setShowHint(true)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Reveal flashcard hint"
-                    >
-                      <HelpCircle size={s(14)} color={theme.colors.primary} />
-                      <Text
-                        style={[
-                          styles.revealHintText,
-                          { color: theme.colors.primary, fontSize: font(13), marginLeft: s(spacing.xs) },
-                        ]}
-                        maxFontSizeMultiplier={maxFontSizeMultiplier}
-                      >
-                        Reveal Hint
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : null}
-            </TouchableOpacity>
-
-            {/* Spaced Repetition Response Buttons */}
-            <View style={[styles.responseButtonsRow, { marginTop: s(spacing.xl), gap: s(spacing.md) }]}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Mark incorrect or review needed"
-                style={[
-                  styles.respBtn,
-                  {
-                    backgroundColor: theme.colors.dangerBg,
-                    borderColor: theme.colors.danger,
-                    borderRadius: radius.md,
-                    paddingVertical: s(spacing.md),
-                  },
-                ]}
-                disabled={saving}
-                accessibilityState={{ disabled: saving, busy: saving }}
-                onPress={() => handleResponse('incorrect')}
-                activeOpacity={0.8}
-              >
-                <XCircle size={s(20)} color={theme.colors.danger} />
-                <Text
-                  style={[styles.respBtnText, { color: theme.colors.danger, fontSize: font(14), marginLeft: s(spacing.xs) }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Again
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Mark correct and confident"
-                style={[
-                  styles.respBtn,
-                  {
-                    backgroundColor: theme.colors.successBg,
-                    borderColor: theme.colors.success,
-                    borderRadius: radius.md,
-                    paddingVertical: s(spacing.md),
-                  },
-                ]}
-                disabled={saving}
-                accessibilityState={{ disabled: saving, busy: saving }}
-                onPress={() => handleResponse('correct')}
-                activeOpacity={0.8}
-              >
-                <CheckCircle2 size={s(20)} color={theme.colors.success} />
-                <Text
-                  style={[styles.respBtnText, { color: theme.colors.success, fontSize: font(14), marginLeft: s(spacing.xs) }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Got It
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        ) : null}
       </ScrollView>
     </Screen>
   );
