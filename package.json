@@ -37,7 +37,7 @@
     "test:e2e:report": "playwright show-report playwright/report",
     "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/presets.test.ts tests/labs/resources.test.ts tests/labs/transport.test.cjs",
     "test:labs:integration": "node tests/labs/integration.mjs",
-    "test:gradebook": "node --import tsx --test tests/gradebook/periods.test.ts",
+    "test:gradebook": "node --import tsx --test tests/gradebook/*.test.ts",
     "test:gradebook:integration": "node tests/gradebook/integration.mjs"
   },
   "devDependencies": {

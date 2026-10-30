@@ -16,6 +16,7 @@ import { requireCourseRelationship } from '@/lib/super-user-v1/actor';
 import { db } from "@/lib/db";
 import { readPeriodConfiguration } from '@/lib/grading/period-service';
 import { calculatePeriodGrades, resolveItemPeriod } from '@/lib/grading/periods';
+import { percentToGradePoint, formatGradePoint } from '@/lib/grading/ph-scale';
 
 export interface GradebookExportResult {
   csvContent: string;
@@ -75,7 +76,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
     ...assignmentHeaders,
     csvEscape("Total Points"),
     csvEscape("Total Possible"),
-    csvEscape('Midterm (%)'), csvEscape('Finals (%)'), csvEscape(`Final Grade (%) — Midterm ${periodConfiguration.policy.midtermWeightPercentage}% + Finals ${periodConfiguration.policy.finalsWeightPercentage}%`),
+    csvEscape('Midterm Grade'), csvEscape('Finals Grade'), csvEscape('Final Grade'),
   ].join(",");
 
   const rows = students.map((student) => {
@@ -100,7 +101,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       ...gradeCells,
       String(totalEarned || ""),
       String(totalPossible || ""),
-      periodGrades.MIDTERM.percentage?.toFixed(2) ?? 'Pending', periodGrades.FINALS.percentage?.toFixed(2) ?? 'Pending', periodGrades.finalGrade?.toFixed(2) ?? 'Pending',
+      ...[periodGrades.MIDTERM.percentage, periodGrades.FINALS.percentage, periodGrades.finalGrade].map(percentage => percentage == null ? 'Pending' : formatGradePoint(percentToGradePoint(percentage))),
     ].join(",");
   });
 
