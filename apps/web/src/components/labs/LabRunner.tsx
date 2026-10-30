@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileUp, Save, ShieldCheck } from 'lucide-react';
@@ -191,7 +191,7 @@ export default function LabRunner({ courseId, assignmentId, canReview, initialSt
     }}>Keep server answer</Button><Button theme={theme} variant="secondary" onClick={() => {
       conflictsRef.current = conflictsRef.current.filter(value => value.stepId !== draft.stepId); setDraftConflicts(conflictsRef.current); change(draft.stepId, draft.answer);
     }}>Use recovered answer</Button></div></section>)}
-    <Link href={'/ics/courses/' + courseId + '/classwork'} onClick={e => { if (pending.current.size || saving.current) { e.preventDefault(); void action(async () => { window.location.assign('/ics/courses/' + courseId + '/classwork'); }); } }} className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-500"><ArrowLeft size={16} />Back to Classwork</Link>
+    <Link href={'/ics/courses/' + courseId + '/classwork'} onClick={(e: MouseEvent<HTMLAnchorElement>) => { if (pending.current.size || saving.current) { e.preventDefault(); void action(async () => { window.location.assign('/ics/courses/' + courseId + '/classwork'); }); } }} className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-500"><ArrowLeft size={16} />Back to Classwork</Link>
     {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}<p className="mt-2">If another tab changed this work, copy your unsaved answer before reloading.</p></div>}
     {loading && <p role="status">Loading practical lab…</p>}
     {assignment && <header className="border-b border-slate-200 pb-6 dark:border-slate-700"><p className="text-xs font-semibold uppercase tracking-widest text-orange-700 dark:text-orange-300">{assignment.syllabusItem.type.replaceAll('_', ' ')} · Guided practical lab</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">{assignment.syllabusItem.title}</h1><div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500"><span>{assignment.syllabusItem.maxPoints} points</span><span>{assignment.version.estimatedMinutes} minutes</span>{due && <span>{attempt?.status === 'NEEDS_REVISION' ? 'Correction due' : 'Due'} {new Date(due).toLocaleString()}</span>}{attempt && <span className="font-medium text-orange-700 dark:text-orange-300">{labStatusLabel[attempt.status] ?? attempt.status}</span>}</div><p className="mt-3 text-xs leading-6 text-slate-500">Complete commands in your approved environment. This practical task does not lock or monitor your computer.</p></header>}

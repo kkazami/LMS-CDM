@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { denied, requireFinancialStudent, sameOriginViolation } from "@/lib/financial-statements/access";
+import { denied, ensureFinancialStatementTable, requireFinancialStudent, sameOriginViolation } from "@/lib/financial-statements/access";
 import { createStatementSchema } from "@/lib/financial-statements/schemas";
 import {
   MAX_STATEMENTS_PER_STUDENT,
@@ -10,6 +10,7 @@ import {
   toSummary,
 } from "@/lib/financial-statements/server";
 import { createDefaultData } from "@/lib/financial-statements/templates";
+import { isStatementType } from "@/lib/financial-statements/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +20,15 @@ export async function GET(request: Request) {
     const access = await requireFinancialStudent(request);
     if (!access.ok) return denied(access);
 
+    await ensureFinancialStatementTable().catch(() => {});
     const rows = await db.financialStatement.findMany({
       where: { studentId: access.userId },
       orderBy: { updatedAt: "desc" },
       take: MAX_STATEMENTS_PER_STUDENT,
     });
-    return NextResponse.json({ statements: rows.map(toSummary) });
+    return NextResponse.json({
+      statements: rows.filter((row) => isStatementType(row.statementType)).map(toSummary),
+    });
   } catch (error) {
     console.error("GET_FINANCIAL_STATEMENTS_ERROR", error);
     return NextResponse.json({ message: "Failed to load statements." }, { status: 500 });
@@ -44,6 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Choose a valid statement template." }, { status: 400 });
     }
 
+    await ensureFinancialStatementTable().catch(() => {});
     const existing = await db.financialStatement.count({ where: { studentId: access.userId } });
     if (existing >= MAX_STATEMENTS_PER_STUDENT) {
       return NextResponse.json(

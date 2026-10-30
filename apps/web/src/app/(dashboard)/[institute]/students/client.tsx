@@ -21,6 +21,7 @@ import {
   Trophy,
   Gamepad2,
   Sparkles,
+  Briefcase,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -279,6 +280,25 @@ export default function StudentDashboardClient({
           },
         ]
       : []),
+    ...(instituteCode.toLowerCase() === "ibe"
+      ? [
+          {
+            label: "Mock Interview",
+            icon: Briefcase,
+            href: `/${instituteCode}/mock-interview`,
+          },
+          {
+            label: "IBE Learning Hub",
+            icon: GraduationCap,
+            href: `/${instituteCode}/learning-hub`,
+          },
+          {
+            label: "Hall of Fame",
+            icon: Sparkles,
+            href: `/${instituteCode}/hall-of-fame`,
+          },
+        ]
+      : []),
     {
       label: "Leaderboard",
       icon: Trophy,
@@ -434,6 +454,17 @@ export default function StudentDashboardClient({
               color={theme.colors.primary}
             />
           </StaggerItem>
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Briefcase}
+                label="Business Plan Guide"
+                href={`/${instituteCode}/business-plan`}
+                sublabel="Guided Venture Builder"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
         </StaggerGroup>
 
         <div id="calendar" className="min-w-0 scroll-mt-20">

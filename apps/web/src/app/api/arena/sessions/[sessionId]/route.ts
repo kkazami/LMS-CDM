@@ -2,8 +2,55 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { normalizeRole } from "@/lib/admin-types";
+import {
+  getArenaQuizFromCache,
+  setArenaQuizInCache,
+  type CachedArenaQuiz,
+} from "@/lib/arena-scoring";
 
 export const dynamic = "force-dynamic";
+
+async function loadQuizWithQuestions(quizId: string): Promise<CachedArenaQuiz | null> {
+  const cached = getArenaQuizFromCache(quizId);
+  if (cached) return cached;
+
+  const quiz = await db.arenaQuiz.findUnique({
+    where: { id: quizId },
+    select: {
+      id: true,
+      title: true,
+      questions: {
+        select: {
+          id: true,
+          questionText: true,
+          questionType: true,
+          mediaUrl: true,
+          timeLimitSeconds: true,
+          basePoints: true,
+          speedBonusEnabled: true,
+          explanation: true,
+          orderIndex: true,
+          choices: {
+            select: {
+              id: true,
+              choiceText: true,
+              isCorrect: true,
+              colorIndex: true,
+              orderIndex: true,
+            },
+            orderBy: { orderIndex: "asc" },
+          },
+        },
+        orderBy: { orderIndex: "asc" },
+      },
+    },
+  });
+
+  if (quiz) {
+    setArenaQuizInCache(quiz);
+  }
+  return quiz;
+}
 
 /**
  * GET /api/arena/sessions/[sessionId]
@@ -24,18 +71,6 @@ export async function GET(
     const gameSession = await db.arenaGameSession.findUnique({
       where: { id: sessionId },
       include: {
-        quiz: {
-          include: {
-            questions: {
-              include: {
-                choices: {
-                  orderBy: { orderIndex: "asc" },
-                },
-              },
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
         participants: {
           select: {
             id: true,
@@ -46,6 +81,7 @@ export async function GET(
             rank: true,
             currentStreak: true,
             isConnected: true,
+            lastActiveAt: true,
           },
           orderBy: { score: "desc" },
         },
@@ -56,49 +92,36 @@ export async function GET(
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
     }
 
+    const quiz = await loadQuizWithQuestions(gameSession.quizId);
+    if (!quiz) {
+      return NextResponse.json({ message: "Quiz not found" }, { status: 404 });
+    }
+
     const role = normalizeRole(session.user.role as string);
     const isHost = gameSession.hostId === session.user.id || role === "ADMIN";
 
-    // Auto-update student heartbeat / connection timestamp (throttled to at most once per 15s to prevent Neon pool exhaustion)
+    // Non-blocking heartbeat update for students only if > 20s since lastActiveAt
     if (!isHost) {
-      const fifteenSecondsAgo = new Date(Date.now() - 15000);
-      await db.arenaParticipant.updateMany({
-        where: {
-          sessionId,
-          studentId: session.user.id,
-          lastActiveAt: { lt: fifteenSecondsAgo },
-        },
-        data: { isConnected: true, lastActiveAt: new Date() },
-      });
+      const me = gameSession.participants.find((p) => p.studentId === session.user.id);
+      if (me && (!me.isConnected || Date.now() - new Date(me.lastActiveAt).getTime() > 20_000)) {
+        void db.arenaParticipant
+          .update({
+            where: { id: me.id },
+            data: { isConnected: true, lastActiveAt: new Date() },
+          })
+          .catch(() => {});
+      }
     }
 
-    const currentQuestion = gameSession.quiz.questions[gameSession.currentQuestionIndex] || null;
+    const isQuestionStage =
+      gameSession.status === "QUESTION_ACTIVE" || gameSession.status === "QUESTION_RESULT";
+    const currentQuestion = isQuestionStage
+      ? quiz.questions[gameSession.currentQuestionIndex] || null
+      : null;
 
-    // Check if the current user has already answered this question
     let myAnswer = null;
-    if (currentQuestion) {
-      myAnswer = await db.arenaPlayerAnswer.findUnique({
-        where: {
-          sessionId_questionId_studentId: {
-            sessionId,
-            questionId: currentQuestion.id,
-            studentId: session.user.id,
-          },
-        },
-        select: {
-          id: true,
-          choiceId: true,
-          isCorrect: true,
-          pointsEarned: true,
-          responseTimeMs: true,
-          submittedAt: true,
-        },
-      });
-    }
-
-    // Tally number of answers submitted for current question
     let answeredCount = 0;
-    let distribution: Record<string, number> = {};
+    const distribution: Record<string, number> = {};
     let answerBreakdown: Array<{
       participantId: string;
       nickname: string;
@@ -108,32 +131,56 @@ export async function GET(
     }> = [];
 
     if (currentQuestion) {
-      const answers = await db.arenaPlayerAnswer.findMany({
-        where: { sessionId, questionId: currentQuestion.id },
-        select: {
-          participantId: true,
-          choiceId: true,
-          isCorrect: true,
-          pointsEarned: true,
-          participant: {
-            select: { nickname: true },
+      if (!isHost) {
+        // Student only needs their own answer record (and distribution only during QUESTION_RESULT)
+        myAnswer = await db.arenaPlayerAnswer.findUnique({
+          where: {
+            sessionId_questionId_studentId: {
+              sessionId,
+              questionId: currentQuestion.id,
+              studentId: session.user.id,
+            },
           },
-        },
-      });
+          select: {
+            id: true,
+            choiceId: true,
+            isCorrect: true,
+            pointsEarned: true,
+            responseTimeMs: true,
+            submittedAt: true,
+          },
+        });
+      } else if (gameSession.status === "QUESTION_ACTIVE") {
+        // Host during active question only needs total answered count
+        answeredCount = await db.arenaPlayerAnswer.count({
+          where: { sessionId, questionId: currentQuestion.id },
+        });
+      } else if (gameSession.status === "QUESTION_RESULT") {
+        // Host during result stage needs distribution and breakdown
+        const answers = await db.arenaPlayerAnswer.findMany({
+          where: { sessionId, questionId: currentQuestion.id },
+          select: {
+            participantId: true,
+            choiceId: true,
+            isCorrect: true,
+            pointsEarned: true,
+          },
+        });
 
-      answeredCount = answers.length;
+        answeredCount = answers.length;
+        const nicknameByParticipantId = new Map(
+          gameSession.participants.map((p) => [p.id, p.nickname])
+        );
 
-      // Group distribution by choice ID
-      for (const a of answers) {
-        if (a.choiceId) {
-          distribution[a.choiceId] = (distribution[a.choiceId] || 0) + 1;
+        for (const a of answers) {
+          if (a.choiceId) {
+            distribution[a.choiceId] = (distribution[a.choiceId] || 0) + 1;
+          }
         }
-      }
 
-      if (isHost && gameSession.status !== "QUESTION_ACTIVE") {
         answerBreakdown = answers.map((a) => ({
           participantId: a.participantId,
-          nickname: a.participant.nickname,
+          nickname: nicknameByParticipantId.get(a.participantId) || "Player",
           choiceId: a.choiceId,
           isCorrect: a.isCorrect,
           pointsEarned: a.pointsEarned,
@@ -167,20 +214,26 @@ export async function GET(
 
     // Rank participants dynamically based on current total scores
     const rankedLeaderboard = gameSession.participants.map((p, idx) => ({
-      ...p,
+      id: p.id,
+      studentId: p.studentId,
+      nickname: p.nickname,
+      avatar: p.avatar,
+      score: p.score,
       rank: idx + 1,
+      currentStreak: p.currentStreak,
+      isConnected: p.isConnected,
     }));
 
     return NextResponse.json({
       sessionId: gameSession.id,
       pin: gameSession.pin,
-      quizTitle: gameSession.quiz.title,
+      quizTitle: quiz.title,
       mode: gameSession.mode,
       status: gameSession.status,
       currentQuestionIndex: gameSession.currentQuestionIndex,
-      totalQuestions: gameSession.quiz.questions.length,
+      totalQuestions: quiz.questions.length,
       scoringMethod: gameSession.scoringMethod,
-      enableIntegrityMonitoring: gameSession.enableIntegrityMonitoring,
+      enableIntegrityMonitoring: false,
       showLeaderboardAfterEach: gameSession.showLeaderboardAfterEach,
       startedAt: gameSession.startedAt,
       currentQuestionStartedAt: gameSession.currentQuestionStartedAt,
@@ -188,8 +241,8 @@ export async function GET(
       currentQuestion: questionPayload,
       participantsCount: gameSession.participants.length,
       answeredCount,
-      distribution: isHost || gameSession.status !== "QUESTION_ACTIVE" ? distribution : {},
-      answerBreakdown: isHost && gameSession.status !== "QUESTION_ACTIVE" ? answerBreakdown : [],
+      distribution,
+      answerBreakdown,
       leaderboard: rankedLeaderboard,
       myAnswer,
       isHost,
@@ -217,14 +270,11 @@ export async function PATCH(
     const { sessionId } = await params;
     const gameSession = await db.arenaGameSession.findUnique({
       where: { id: sessionId },
-      include: {
-        quiz: {
-          include: {
-            questions: {
-              orderBy: { orderIndex: "asc" },
-            },
-          },
-        },
+      select: {
+        id: true,
+        quizId: true,
+        hostId: true,
+        currentQuestionIndex: true,
       },
     });
 
@@ -239,10 +289,15 @@ export async function PATCH(
       return NextResponse.json({ message: "Forbidden: Host controls only" }, { status: 403 });
     }
 
+    const quiz = await loadQuizWithQuestions(gameSession.quizId);
+    if (!quiz) {
+      return NextResponse.json({ message: "Quiz not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { action, participantIdToKick } = body;
 
-    const questions = gameSession.quiz.questions;
+    const questions = quiz.questions;
     const now = new Date();
 
     if (action === "KICK_PARTICIPANT" && participantIdToKick) {
@@ -271,7 +326,14 @@ export async function PATCH(
         },
       });
 
-      return NextResponse.json({ success: true, status: "QUESTION_ACTIVE" });
+      return NextResponse.json({
+        success: true,
+        status: "QUESTION_ACTIVE",
+        currentQuestionIndex: 0,
+        currentQuestionStartedAt: now.toISOString(),
+        currentQuestionDeadline: deadline.toISOString(),
+        currentQuestion: firstQ,
+      });
     }
 
     if (action === "END_QUESTION") {
@@ -284,7 +346,11 @@ export async function PATCH(
         },
       });
 
-      return NextResponse.json({ success: true, status: "QUESTION_RESULT" });
+      return NextResponse.json({
+        success: true,
+        status: "QUESTION_RESULT",
+        currentQuestionDeadline: now.toISOString(),
+      });
     }
 
     if (action === "SHOW_LEADERBOARD") {
@@ -325,7 +391,14 @@ export async function PATCH(
         },
       });
 
-      return NextResponse.json({ success: true, status: "QUESTION_ACTIVE", currentQuestionIndex: nextIdx });
+      return NextResponse.json({
+        success: true,
+        status: "QUESTION_ACTIVE",
+        currentQuestionIndex: nextIdx,
+        currentQuestionStartedAt: now.toISOString(),
+        currentQuestionDeadline: deadline.toISOString(),
+        currentQuestion: nextQ,
+      });
     }
 
     if (action === "FINISH_GAME") {

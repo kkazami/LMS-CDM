@@ -113,6 +113,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
   });
 
   const confettiTriggeredRef = useRef(false);
+  const isFetchingRef = useRef(false);
   const hasAutoEndedRef = useRef(false);
 
   // Reset auto-ended flag when current question or status changes
@@ -122,6 +123,8 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
 
   // Poll session state every 1.5s for real-time responsiveness without overloading connection pool
   const fetchState = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       const res = await fetch(`/api/arena/sessions/${sessionId}`);
       if (!res.ok) return;
@@ -143,14 +146,17 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
       setScoringMethod(data.scoringMethod);
     } catch (err) {
       console.warn("Poll host state error:", err);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, [sessionId]);
 
   useEffect(() => {
     fetchState();
+    if (status === "FINISHED") return;
     const interval = setInterval(fetchState, 1500);
     return () => clearInterval(interval);
-  }, [fetchState]);
+  }, [fetchState, status]);
 
   // Local countdown timer calculation
   useEffect(() => {
@@ -225,7 +231,21 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
         body: JSON.stringify({ action, ...extra }),
       });
       if (res.ok) {
-        await fetchState();
+        const data = await res.json();
+        if (data.status) setStatus(data.status);
+        if (typeof data.currentQuestionIndex === "number") {
+          setCurrentQuestionIndex(data.currentQuestionIndex);
+          setAnsweredCount(0);
+          setDistribution({});
+          setAnswerBreakdown([]);
+        }
+        if (data.currentQuestionStartedAt) setCurrentQuestionStartedAt(data.currentQuestionStartedAt);
+        if (data.currentQuestionDeadline) setCurrentQuestionDeadline(data.currentQuestionDeadline);
+        if (data.currentQuestion) setCurrentQuestion(data.currentQuestion);
+        if (action === "END_QUESTION" || action === "KICK_PARTICIPANT") {
+          isFetchingRef.current = false;
+          await fetchState();
+        }
       }
     } catch (err) {
       console.error("Action error:", err);
@@ -319,7 +339,7 @@ export default function ArenaHostClient({ sessionId, instituteCode }: ArenaHostC
               <XCircle className="w-4 h-4" />
               <span className="hidden sm:inline">End Session</span>
             </button>
-            {enableIntegrityMonitoring && (
+            {false && enableIntegrityMonitoring && (
               <span className="px-3 py-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-bold flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5" /> Integrity On
               </span>

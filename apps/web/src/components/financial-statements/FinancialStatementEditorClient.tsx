@@ -323,13 +323,43 @@ export default function FinancialStatementEditorClient({
   };
 
   // Download PDF
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (statement.status !== "GENERATED") {
       toast.info(
         "Generate Statement First",
         "Click 'Generate Statement' to finalize the document before downloading PDF."
       );
       return;
+    }
+    if (hasUnsavedChanges) {
+      if (blockingErrors.length > 0) {
+        toast.error(
+          "Cannot update PDF with validation errors",
+          `Please resolve the ${blockingErrors.length} required field issue(s) first.`
+        );
+        return;
+      }
+      setIsGenerating(true);
+      try {
+        const res = await callApi<{ statement: StatementDetailDto }>(
+          `/api/financial-statements/${statement.id}/generate`,
+          {
+            method: "POST",
+            body: JSON.stringify({ data }),
+          }
+        );
+        if (!res.ok) {
+          toast.error("Failed to sync latest changes", res.message);
+          return;
+        }
+        setStatement(res.data.statement);
+        setHasUnsavedChanges(false);
+      } catch {
+        toast.error("Error", "Could not sync latest changes before PDF download.");
+        return;
+      } finally {
+        setIsGenerating(false);
+      }
     }
     window.open(`/api/financial-statements/${statement.id}/pdf`, "_blank");
   };

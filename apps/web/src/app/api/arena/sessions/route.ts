@@ -75,7 +75,7 @@ export async function POST(request: Request) {
         currentQuestionIndex: 0,
         scoringMethod: customSettings.scoringMethod || quiz.scoringMethod,
         enableIntegrityMonitoring:
-          customSettings.enableIntegrityMonitoring ?? quiz.enableIntegrityMonitoring,
+          false,
         showLeaderboardAfterEach:
           customSettings.showLeaderboardAfterEach ?? quiz.showLeaderboardAfterEach,
         showAnswerFeedback: customSettings.showAnswerFeedback || quiz.showAnswerFeedback,

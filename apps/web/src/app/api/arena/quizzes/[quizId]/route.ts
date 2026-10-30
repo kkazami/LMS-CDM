@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { normalizeRole } from "@/lib/admin-types";
+import { invalidateArenaQuizCache } from "@/lib/arena-scoring";
 import type { ArenaQuestionType } from "@/types/arena";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +121,6 @@ export async function PUT(
       status = "DRAFT",
       defaultTimeLimitSeconds = 20,
       scoringMethod = "SPEED_BASED",
-      enableIntegrityMonitoring = false,
       shuffleQuestions = false,
       shuffleAnswers = false,
       showLeaderboardAfterEach = true,
@@ -164,39 +164,27 @@ export async function PUT(
       }
     }
 
-    // Replace questions atomically inside a transaction
-    await db.$transaction(async (tx) => {
-      const baseUpdateData: Record<string, unknown> = {
+    // Atomic nested update (avoids sequential loop latency on serverless)
+    await db.arenaQuiz.update({
+      where: { id: quizId },
+      data: {
         title: title.trim(),
         description: description?.trim() || null,
         courseId: courseId || null,
         status: status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
         defaultTimeLimitSeconds: Number(defaultTimeLimitSeconds) || 20,
         scoringMethod: scoringMethod === "ACCURACY_BASED" ? "ACCURACY_BASED" : "SPEED_BASED",
-        enableIntegrityMonitoring: Boolean(enableIntegrityMonitoring),
+        enableIntegrityMonitoring: false,
         shuffleQuestions: Boolean(shuffleQuestions),
         shuffleAnswers: Boolean(shuffleAnswers),
         showLeaderboardAfterEach: Boolean(showLeaderboardAfterEach),
-      };
-
-      await tx.arenaQuiz.update({
-        where: { id: quizId },
-        data: baseUpdateData as any,
-      });
-
-      // Clear existing questions and choices to replace with updated set
-      await tx.arenaQuestion.deleteMany({
-        where: { quizId },
-      });
-
-      if (Array.isArray(questions) && questions.length > 0) {
-        for (let qIdx = 0; qIdx < questions.length; qIdx++) {
-          const q = questions[qIdx] as QuestionInput;
-          await tx.arenaQuestion.create({
-            data: {
-              quizId,
+        questions: {
+          deleteMany: {},
+          create: (Array.isArray(questions) ? questions : []).map(
+            (q: QuestionInput, qIdx: number) => ({
               questionText: (q.questionText || "").trim(),
-              questionType: q.questionType === "TRUE_FALSE" ? "TRUE_FALSE" : "MULTIPLE_CHOICE",
+              questionType:
+                q.questionType === "TRUE_FALSE" ? "TRUE_FALSE" : "MULTIPLE_CHOICE",
               mediaUrl: q.mediaUrl || null,
               timeLimitSeconds: Number(q.timeLimitSeconds) || 20,
               basePoints: Number(q.basePoints) || 1000,
@@ -204,29 +192,34 @@ export async function PUT(
               explanation: q.explanation?.trim() || null,
               orderIndex: qIdx,
               choices: {
-                create: (Array.isArray(q.choices) ? q.choices : []).map((c: ChoiceInput, cIdx: number) => ({
-                  choiceText: (c.choiceText || "").trim(),
-                  isCorrect: Boolean(c.isCorrect),
-                  colorIndex: c.colorIndex !== undefined ? c.colorIndex : cIdx % 4,
-                  orderIndex: cIdx,
-                })),
+                create: (Array.isArray(q.choices) ? q.choices : []).map(
+                  (c: ChoiceInput, cIdx: number) => ({
+                    choiceText: (c.choiceText || "").trim(),
+                    isCorrect: Boolean(c.isCorrect),
+                    colorIndex: c.colorIndex !== undefined ? c.colorIndex : cIdx % 4,
+                    orderIndex: cIdx,
+                  })
+                ),
               },
-            },
-          });
-        }
-      }
-    }, {
-      timeout: 30000,
-      maxWait: 10000,
+            })
+          ),
+        },
+      },
+      select: { id: true },
     });
+
+    invalidateArenaQuizCache(quizId);
 
     return NextResponse.json({ success: true, quizId });
   } catch (error) {
     console.error("PUT_ARENA_QUIZ_ERROR", error);
-    return NextResponse.json({
-      message: "Failed to update quiz",
-      error: error instanceof Error ? error.message : String(error),
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: "Failed to update quiz",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -262,6 +255,8 @@ export async function DELETE(
     await db.arenaQuiz.delete({
       where: { id: quizId },
     });
+
+    invalidateArenaQuizCache(quizId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

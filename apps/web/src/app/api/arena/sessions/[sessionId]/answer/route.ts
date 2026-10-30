@@ -1,9 +1,56 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
-import { calculateQuestionScore } from "@/lib/arena-scoring";
+import {
+  calculateQuestionScore,
+  getArenaQuizFromCache,
+  setArenaQuizInCache,
+  type CachedArenaQuiz,
+} from "@/lib/arena-scoring";
 
 export const dynamic = "force-dynamic";
+
+async function loadQuizWithQuestions(quizId: string): Promise<CachedArenaQuiz | null> {
+  const cached = getArenaQuizFromCache(quizId);
+  if (cached) return cached;
+
+  const quiz = await db.arenaQuiz.findUnique({
+    where: { id: quizId },
+    select: {
+      id: true,
+      title: true,
+      questions: {
+        select: {
+          id: true,
+          questionText: true,
+          questionType: true,
+          mediaUrl: true,
+          timeLimitSeconds: true,
+          basePoints: true,
+          speedBonusEnabled: true,
+          explanation: true,
+          orderIndex: true,
+          choices: {
+            select: {
+              id: true,
+              choiceText: true,
+              isCorrect: true,
+              colorIndex: true,
+              orderIndex: true,
+            },
+            orderBy: { orderIndex: "asc" },
+          },
+        },
+        orderBy: { orderIndex: "asc" },
+      },
+    },
+  });
+
+  if (quiz) {
+    setArenaQuizInCache(quiz);
+  }
+  return quiz;
+}
 
 /**
  * POST /api/arena/sessions/[sessionId]/answer
@@ -15,30 +62,44 @@ export async function POST(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await getSession();
+    // Capture arrival timestamp immediately before any async DB calls so serverless latency never penalizes speed bonus
+    const now = Date.now();
+
+    const [session, { sessionId }, body] = await Promise.all([
+      getSession(),
+      params,
+      request.json(),
+    ]);
+
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { sessionId } = await params;
-    const body = await request.json();
-    const { choiceId, integrityFlags = 0, powerUp } = body;
+    const { choiceId, powerUp } = body;
 
-    const gameSession = await db.arenaGameSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        quiz: {
-          include: {
-            questions: {
-              include: {
-                choices: true,
-              },
-              orderBy: { orderIndex: "asc" },
-            },
+    // Fetch lightweight session row and participant row in parallel
+    const [gameSession, participant] = await Promise.all([
+      db.arenaGameSession.findUnique({
+        where: { id: sessionId },
+        select: {
+          id: true,
+          quizId: true,
+          status: true,
+          currentQuestionIndex: true,
+          currentQuestionStartedAt: true,
+          currentQuestionDeadline: true,
+          scoringMethod: true,
+        },
+      }),
+      db.arenaParticipant.findUnique({
+        where: {
+          sessionId_studentId: {
+            sessionId,
+            studentId: session.user.id,
           },
         },
-      },
-    });
+      }),
+    ]);
 
     if (!gameSession) {
       return NextResponse.json({ message: "Session not found" }, { status: 404 });
@@ -51,12 +112,16 @@ export async function POST(
       );
     }
 
-    const currentQuestion = gameSession.quiz.questions[gameSession.currentQuestionIndex];
+    if (!participant) {
+      return NextResponse.json({ message: "Participant record not found." }, { status: 403 });
+    }
+
+    const quiz = await loadQuizWithQuestions(gameSession.quizId);
+    const currentQuestion = quiz?.questions[gameSession.currentQuestionIndex];
     if (!currentQuestion) {
       return NextResponse.json({ message: "No active question found." }, { status: 400 });
     }
 
-    const now = Date.now();
     const startedAtMs = gameSession.currentQuestionStartedAt
       ? new Date(gameSession.currentQuestionStartedAt).getTime()
       : now;
@@ -76,20 +141,6 @@ export async function POST(
     // Response time in milliseconds
     const responseTimeMs = Math.max(50, now - startedAtMs);
 
-    // Verify participant record
-    const participant = await db.arenaParticipant.findUnique({
-      where: {
-        sessionId_studentId: {
-          sessionId,
-          studentId: session.user.id,
-        },
-      },
-    });
-
-    if (!participant) {
-      return NextResponse.json({ message: "Participant record not found." }, { status: 403 });
-    }
-
     // Check duplicate submission
     const existingAnswer = await db.arenaPlayerAnswer.findUnique({
       where: {
@@ -99,6 +150,7 @@ export async function POST(
           studentId: session.user.id,
         },
       },
+      select: { id: true },
     });
 
     if (existingAnswer) {
@@ -135,8 +187,8 @@ export async function POST(
     }
 
     // Save answer and update participant stats atomically in a transaction
-    await db.$transaction(async (tx) => {
-      await tx.arenaPlayerAnswer.create({
+    const [createdAnswer] = await db.$transaction([
+      db.arenaPlayerAnswer.create({
         data: {
           sessionId,
           questionId: currentQuestion.id,
@@ -146,24 +198,26 @@ export async function POST(
           isCorrect,
           responseTimeMs,
           pointsEarned: finalPoints,
-          integrityFlags: Number(integrityFlags) || 0,
+          integrityFlags: 0,
         },
-      });
-
-      await tx.arenaParticipant.update({
+        select: { id: true },
+      }),
+      db.arenaParticipant.update({
         where: { id: participant.id },
         data: {
           score: { increment: finalPoints },
           currentStreak: scoreResult.newStreak,
           lastActiveAt: new Date(),
         },
-      });
-    });
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
+      answerId: createdAnswer.id,
       isCorrect,
       pointsEarned: finalPoints,
+      responseTimeMs,
       powerUpApplied: powerUp ?? null,
       streak: scoreResult.newStreak,
       speedBonusEarned: scoreResult.speedBonusEarned,

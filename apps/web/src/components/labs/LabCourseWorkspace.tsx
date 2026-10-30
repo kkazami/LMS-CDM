@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, FlaskConical, Plus, Database, HelpCircle, X } from 'lucide-react';
@@ -127,7 +127,7 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
   }
   const invalid = (target: string) => formError?.target === target;
   return <div data-practical-lab className="mx-auto min-w-0 max-w-5xl space-y-7 pb-24 [overflow-wrap:anywhere] [&_input]:min-w-0 [&_textarea]:min-w-0 [&_select]:min-w-0">
-    <Link className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-500 hover:text-orange-700" href={'/ics/courses/' + courseId + '/classwork'} onClick={e => { if (busyRef.current || createdAssignment) { e.preventDefault(); return; } if (editor) { e.preventDefault(); void leave('/ics/courses/' + courseId + '/classwork'); } }}><ArrowLeft size={16} />Back to Classwork</Link>
+    <Link className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-500 hover:text-orange-700" href={'/ics/courses/' + courseId + '/classwork'} onClick={(e: MouseEvent<HTMLAnchorElement>) => { if (busyRef.current || createdAssignment) { e.preventDefault(); return; } if (editor) { e.preventDefault(); void leave('/ics/courses/' + courseId + '/classwork'); } }}><ArrowLeft size={16} />Back to Classwork</Link>
     <header className="flex flex-wrap items-start justify-between gap-5 border-b border-slate-200 pb-6 dark:border-slate-700">
       <div><p className="text-xs font-semibold uppercase tracking-widest text-orange-700 dark:text-orange-300">{courseTitle}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Guided practical labs</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">{canEdit ? 'Create the instructions, assign the lab, then publish it for your students.' : 'Follow the instructions on your own computer and submit your evidence for feedback.'}</p></div>
       <FlaskConical className="h-10 w-10 text-orange-600" aria-hidden="true" />
@@ -143,7 +143,7 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
     {loading ? <p role="status" className="py-10 text-sm text-slate-500">Loading practical labs…</p> : <section aria-labelledby="assigned-labs" className="space-y-3">
       <h2 id="assigned-labs" className="text-lg font-semibold">Assigned labs</h2>
       {!assignments.length && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">{canEdit ? 'Your classwork will appear here after you assign a lab. Start with the instructions below.' : 'No practical labs are available yet.'}</p>}
-      {assignments.map(a => <Link key={a.id} href={'/ics/courses/' + courseId + '/labs/' + a.id} onClick={e => { if (busyRef.current || createdAssignment) { e.preventDefault(); return; } if (editor) { e.preventDefault(); void leave('/ics/courses/' + courseId + '/labs/' + a.id); } }} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900">
+      {assignments.map(a => <Link key={a.id} href={'/ics/courses/' + courseId + '/labs/' + a.id} onClick={(e: MouseEvent<HTMLAnchorElement>) => { if (busyRef.current || createdAssignment) { e.preventDefault(); return; } if (editor) { e.preventDefault(); void leave('/ics/courses/' + courseId + '/labs/' + a.id); } }} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 hover:border-orange-400 dark:border-slate-700 dark:bg-slate-900">
         <div><p className="text-xs text-orange-700 dark:text-orange-300">{a.syllabusItem.type.replaceAll('_', ' ')} · {labStatusLabel[a.status] ?? a.status}</p><h3 className="mt-1 font-semibold">{a.syllabusItem.title}</h3><p className="mt-2 text-xs text-slate-500">{a.syllabusItem.maxPoints} points{a.syllabusItem.dueDate ? ' · Due ' + new Date(a.syllabusItem.dueDate).toLocaleString() : ''}</p></div><span className="text-sm font-medium text-orange-700 dark:text-orange-300">{canEdit ? a.status === 'DRAFT' ? 'Continue to publish →' : 'Review submissions →' : 'Open lab →'}</span>
       </Link>)}
     </section>}
