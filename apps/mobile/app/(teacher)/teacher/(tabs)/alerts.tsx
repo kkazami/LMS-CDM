@@ -1103,7 +1103,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 16,
-    paddingTop: 14,
     paddingBottom: 14,
     borderBottomWidth: 1,
   },

@@ -8,7 +8,7 @@ import { resolveDesktopWebUrl } from './web-url';
 const IS_DEV = !app.isPackaged;
 const WEB_URL = resolveDesktopWebUrl(process.env.LMS_WEB_URL, IS_DEV);
 
-// Admin-only entry point
+// Administrative console entry point (ADMIN and SUPER_USER).
 const ADMIN_LOGIN_URL = WEB_URL + '/login?institute=ics&desktop=admin';
 
 let mainWindow: BrowserWindow | null = null;
@@ -94,7 +94,7 @@ function createWindow() {
   // ─── Check existing session ───
   adminSession.cookies.get({ name: 'lumina_session' }).then((cookies) => {
     const hasSession = cookies.length > 0;
-    const targetURL = hasSession ? (WEB_URL + '/ics/admin') : ADMIN_LOGIN_URL;
+    const targetURL = hasSession ? (WEB_URL + '/ics') : ADMIN_LOGIN_URL;
 
     win.loadURL(targetURL).catch(() => {
       win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), { query: { server: WEB_URL } });
@@ -135,7 +135,7 @@ function createWindow() {
   win.webContents.on('did-navigate', (_event, url) => {
     try {
       const pathname = new URL(url).pathname;
-      const adminRoutes = ['admin', 'accounts', 'logs', 'backup', 'security', 'login', 'register', 'forgot-password', 'settings', 'help'];
+      const adminRoutes = ['academic-operations', 'admin', 'accounts', 'logs', 'backup', 'security', 'login', 'register', 'forgot-password', 'settings', 'help'];
       const segments = pathname.split('/').filter(Boolean);
 
       if (segments.length >= 2) {
@@ -143,7 +143,7 @@ function createWindow() {
         const isAdminRoute = adminRoutes.includes(route);
 
         if (!isAdminRoute) {
-          win.loadURL(WEB_URL + '/' + segments[0] + '/admin');
+          win.loadURL(WEB_URL + '/' + segments[0]);
         }
       }
     } catch {
