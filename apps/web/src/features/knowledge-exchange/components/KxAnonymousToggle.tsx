@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { UserCheck, Shield, HelpCircle } from "lucide-react";
+import React, { useId } from "react";
+import { UserCheck, Shield } from "lucide-react";
 
 interface KxAnonymousToggleProps {
   checked: boolean;
@@ -14,9 +14,11 @@ export default function KxAnonymousToggle({
   onChange,
   disabled = false,
 }: KxAnonymousToggleProps) {
+  const labelId = useId();
+  const descriptionId = useId();
   return (
-    <div className="flex items-start justify-between p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
-      <div className="flex items-start gap-3">
+    <div className="flex items-start justify-between gap-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
           className={`p-2 rounded-lg shrink-0 transition-colors ${
             checked
@@ -32,11 +34,11 @@ export default function KxAnonymousToggle({
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white">
+            <span id={labelId} className="text-sm font-semibold text-slate-900 dark:text-white">
               Post Anonymously
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+          <p id={descriptionId} className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
             Your name, avatar, and profile links will be hidden from peer
             students.
             <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
@@ -51,18 +53,16 @@ export default function KxAnonymousToggle({
       <button
         type="button"
         role="switch"
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
-          checked ? "bg-orange-500" : "bg-slate-300 dark:bg-slate-700"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
+        <span aria-hidden="true" className={`pointer-events-none relative inline-flex h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${checked ? "bg-orange-600" : "bg-slate-400 dark:bg-slate-600"}`}>
+          <span className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${checked ? "translate-x-5" : "translate-x-0"}`} />
+        </span>
       </button>
     </div>
   );

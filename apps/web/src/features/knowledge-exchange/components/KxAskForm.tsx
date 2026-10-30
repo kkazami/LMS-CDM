@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   HelpCircle,
   MessageSquare,
   Send,
@@ -90,8 +89,6 @@ export default function KxAskForm({
   }, [draftSaved, title, body]);
 
   // AI states
-  const [isImproving, setIsImproving] = useState(false);
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<
     Array<{ id: string; title: string; snippet: string }>
   >([]);
@@ -122,37 +119,6 @@ export default function KxAskForm({
 
     return () => clearTimeout(timer);
   }, [title]);
-
-  const handleImproveWithAi = async () => {
-    if (!title.trim() && !body.trim()) {
-      setAiMessage("Enter at least a draft title or problem description first.");
-      return;
-    }
-
-    setIsImproving(true);
-    setAiMessage(null);
-
-    try {
-      const res = await fetch("/api/knowledge-exchange/ai/improve-question", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAiMessage(data?.error || "AI features temporarily unavailable.");
-      } else {
-        if (data.suggestedTitle) setTitle(data.suggestedTitle);
-        if (data.improvedBody) setBody(data.improvedBody);
-        setAiMessage(data.explanation || "Question improved successfully!");
-      }
-    } catch {
-      setAiMessage("Could not connect to AI service.");
-    } finally {
-      setIsImproving(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,31 +236,12 @@ export default function KxAskForm({
         </button>
       </div>
 
-      {/* Title Input with AI Improvement Button */}
+      {/* Title Input */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-semibold text-slate-900 dark:text-white">
             Title <span className="text-red-500">*</span>
           </label>
-          <button
-            type="button"
-            onClick={handleImproveWithAi}
-            disabled={isImproving || (!title.trim() && !body.trim())}
-            title="Refine question title and format problem description with Gemini AI"
-            className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 disabled:opacity-40 transition-colors"
-          >
-            {isImproving ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Improving...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                <span>Improve with AI</span>
-              </>
-            )}
-          </button>
         </div>
 
         <input
@@ -308,12 +255,6 @@ export default function KxAskForm({
           }
           className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#151924] px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500/20"
         />
-
-        {aiMessage && (
-          <p className="text-xs text-purple-600 dark:text-purple-400 italic">
-            ✨ {aiMessage}
-          </p>
-        )}
 
         {/* Duplicate Suggestions Accordion / Cards */}
         {duplicates.length > 0 && (

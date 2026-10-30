@@ -34,6 +34,7 @@ async function main() {
   const deadline = { id: 'syllabus_work-1', title: 'Programming practice due', description: 'Synthetic assignment', eventDate: new Date(Date.now() - 86400000).toISOString(), source: 'classwork', courseId: course.id, courseTitle: course.title, courseCode: course.code, deepLink: '/ics/courses/course-1/classwork/work-1' };
   const calendar = { events: [], schedules: [{ ...course, scheduleDays: [0, 1, 2, 3, 4, 5, 6], scheduleStart: '09:00', scheduleEnd: '10:30', scheduleStartDate: `${today.slice(0, 7)}-01`, scheduleEndDate: `${today.slice(0, 4)}-12-31`, createdAt: '2026-01-01T00:00:00Z' }] };
   const items = Array.from({ length: 45 }, (_, index) => ({ id: `work-${index}`, title: `Practice ${index + 1}`, type: index === 0 ? 'QUIZ' : 'ASSIGNMENT', formId: index === 0 ? 'form-1' : null, description: 'Synthetic instructions for this activity.', orderIndex: index, attachments: [], submission: null }));
+  const decks = [];
   await page.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
     if (url.pathname.startsWith('/api/')) {
@@ -48,6 +49,12 @@ async function main() {
         } else body = { courses, calendar, overdue: 1, dueSoon: 0, pendingAssignments: user.role === 'STUDENT' ? [deadline] : [] };
       }
       else if (url.pathname === '/api/student/join-class') body = { courseId: course.id, redirectTo: '/ics/students' };
+      else if (url.pathname === '/api/flashcards/decks') {
+        if (request.method() === 'POST') {
+          body = { ...request.postDataJSON(), id: 'fixture-deck', courseId: null, courseTitle: null, creatorId: user.id, instituteId: user.instituteId, isArchived: false, cardCount: 0, correctCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+          decks.unshift(body);
+        } else body = decks;
+      }
       else if (url.pathname === '/api/courses') body = { courses: [course] };
       else if (url.pathname === '/api/courses/course-1') body = { course };
       else if (url.pathname.endsWith('/classwork')) body = { items, categories: [] };
@@ -107,6 +114,17 @@ async function main() {
     await page.getByRole('button', { name: `Open assignment ${deadline.title}`, exact: true }).waitFor();
     await page.goBack();
     await page.getByText('A fresh day, a fresh idea, Jamie.', { exact: true }).waitFor();
+    await page.getByRole('tab', { name: 'More tab', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Flashcards', exact: true }).click();
+    await page.getByRole('button', { name: 'Create flashcard deck', exact: true }).click();
+    assert.equal(await page.getByRole('button', { name: 'Select accent color #FF7517', exact: true }).count(), 1);
+    await page.getByLabel('Deck Title', { exact: true }).fill('Synthetic saved deck');
+    await page.getByRole('button', { name: 'Create Study Deck', exact: true }).click();
+    await page.getByText('Synthetic saved deck', { exact: true }).waitFor();
+    await page.reload();
+    await page.getByText('Synthetic saved deck', { exact: true }).waitFor();
+    await page.screenshot({ path: path.join(output, 'flashcards-created-390.png') });
+    await page.goBack();
     await page.getByRole('button', { name: 'Use dark appearance', exact: true }).click();
     await page.getByRole('tab', { name: 'Dashboard tab', exact: true }).click();
     await page.screenshot({ path: path.join(output, 'home-dark-390.png') });

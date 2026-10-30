@@ -102,12 +102,16 @@ export default function StudentFlashcardsListScreen() {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      await api.flashcards.createDeck({
+      const { deck } = await api.flashcards.createDeck({
         title: title.trim(),
         description: description.trim(),
         tags,
         color: selectedColor,
       });
+      const updatedDecks = [deck, ...decks.filter(item => item.id !== deck.id)];
+      setDecks(updatedDecks);
+      setErrorMessage(null);
+      await setCachedData('student_flashcard_decks', updatedDecks);
 
       try {
         Burnt.toast({
@@ -123,7 +127,6 @@ export default function StudentFlashcardsListScreen() {
       setTitle('');
       setDescription('');
       setTagsInput('');
-      loadDecks();
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'Could not create deck.');
     } finally {
@@ -131,7 +134,7 @@ export default function StudentFlashcardsListScreen() {
     }
   };
 
-  const colorOptions = [theme.colors.primary, '#FF7517', '#D4A017', '#10B981', '#8B5CF6', '#EC4899'];
+  const colorOptions = [...new Set([theme.colors.primary, '#FF7517', '#D4A017', '#10B981', '#8B5CF6', '#EC4899'])];
 
   return (
     <Screen contentContainerStyle={styles.screenInner}>
@@ -433,6 +436,7 @@ export default function StudentFlashcardsListScreen() {
               key={col}
               accessibilityRole="button"
               accessibilityLabel={`Select accent color ${col}`}
+              accessibilityState={{ selected: selectedColor === col }}
               style={[
                 styles.colorCircle,
                 {

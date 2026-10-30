@@ -368,10 +368,10 @@ export function createApiClient(config: ApiClientConfig) {
 
     flashcards: {
       listDecks: (instituteCode: string) =>
-        request<{ decks: FlashcardDeck[] }>(`/api/flashcards/decks?institute=${instituteCode}`),
+        request<FlashcardDeck[]>(`/api/flashcards/decks?institute=${instituteCode}`).then(decks => ({ decks })),
 
       getCards: (deckId: string) =>
-        request<{ cards: FlashcardCard[] }>(`/api/flashcards/cards?deckId=${deckId}`),
+        request<FlashcardCard[]>(`/api/flashcards/cards?deckId=${deckId}`).then(cards => ({ cards })),
 
       recordProgress: (cardId: string, selfRating: 'knew_it' | 'still_learning', idempotencyKey?: string) =>
         request<{ correct: boolean; correctAnswer: string }>('/api/flashcards/progress', {
@@ -387,10 +387,10 @@ export function createApiClient(config: ApiClientConfig) {
         }).then(result => ({ ...result, expEarned: result.grantedExp ?? 0 })),
 
       createDeck: (data: { title: string; description: string; tags: string[]; color: string; courseId?: string }) =>
-        request<{ deck: FlashcardDeck }>('/api/flashcards/decks', {
+        request<FlashcardDeck>('/api/flashcards/decks', {
           method: 'POST',
           body: JSON.stringify(data),
-        }),
+        }).then(deck => ({ deck })),
     },
 
     workspace: {

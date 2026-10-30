@@ -111,6 +111,8 @@ test('SDK sends server flashcard contracts, maps real reward amounts and wraps r
     if (path.endsWith('/complete-session')) return Response.json({ success: true, grantedExp: 7 });
     if (path.endsWith('/tasks')) return Response.json(options.method ? { id: 'task', ...body } : [{ id: 'task', completed: false }]);
     if (path.endsWith('/events')) return Response.json([{ id: 'event' }]);
+    if (path.endsWith('/decks')) return Response.json(options.method === 'POST' ? { id: 'deck', ...body, cardCount: 0, correctCount: 0 } : [{ id: 'deck', title: 'Saved deck' }]);
+    if (path.endsWith('/cards')) return Response.json([{ id: 'card', front: 'Question', back: 'Answer' }]);
     return Response.json({ correct: true, correctAnswer: 'synthetic' });
   } });
   const client = sdk.createApiClient({ baseUrl: 'https://fixture.invalid' });
@@ -125,6 +127,11 @@ test('SDK sends server flashcard contracts, maps real reward amounts and wraps r
   assert.deepEqual(calls.at(-1)!.body, { id: 'task', completed: true });
   assert.equal((await client.workspace.getEvents('ics')).events[0].id, 'event');
   await assert.rejects(client.workspace.getAgenda(), (error: any) => error.status === 426);
+  assert.equal((await client.flashcards.listDecks('ics')).decks[0].title, 'Saved deck');
+  const created = await client.flashcards.createDeck({ title: 'New deck', description: '', tags: [], color: '#FF7517' });
+  assert.equal(created.deck.title, 'New deck');
+  assert.equal(created.deck.cardCount, 0);
+  assert.equal((await client.flashcards.getCards('deck')).cards[0].front, 'Question');
 });
 
 test('actual task PATCH preserves omitted fields and enforces the current owner', async () => {
