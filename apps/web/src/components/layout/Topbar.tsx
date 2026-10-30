@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu, FileText } from "lucide-react";
+import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, FileText } from "lucide-react";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
 import { getInstituteName } from "@lms/types";
 import type { InstituteTheme } from "@/lib/theme";
@@ -26,7 +26,6 @@ type TopbarProps = {
   studentNumber?: string | null;
   avatarUrl?: string | null;
   exp?: number;
-  onOpenMobileMenu?: () => void;
   isEligibleForActivities?: boolean;
   isEligibleForPracticum?: boolean;
   isEligibleForMeetings?: boolean;
@@ -42,7 +41,6 @@ export default function Topbar({
   studentNumber,
   avatarUrl,
   exp = 0,
-  onOpenMobileMenu,
   isEligibleForActivities,
   isEligibleForPracticum,
   isEligibleForMeetings,
@@ -164,19 +162,8 @@ export default function Topbar({
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
-        {/* Left Side: Menu + Institute Badge + Dynamic Title */}
+        {/* Left Side: Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
-          {onOpenMobileMenu && (
-            <button
-              type="button"
-              onClick={onOpenMobileMenu}
-              className="rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
-              aria-label="Open menu"
-            >
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-          )}
-
           {/* Mobile Institute Badge & Title */}
           <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
 

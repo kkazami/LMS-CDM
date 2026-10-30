@@ -26,6 +26,7 @@ import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import { toast } from "@/components/common/Toast";
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
+import { useNativeDraftOwner } from '@/hooks/useNativeDraftOwner';
 import {
   Terminal,
   Play,
@@ -101,6 +102,7 @@ export default function CodeLabScene({
   executionMethod = "judge0",
   htmlTemplate = "",
 }: CodeLabSceneProps) {
+  const nativeOwner = useNativeDraftOwner();
   const initialize = useCodeLabStore((s) => s.initialize);
   const updateCode = useCodeLabStore((s) => s.updateCode);
   const {
@@ -175,9 +177,15 @@ export default function CodeLabScene({
 
   useEffect(() => {
     resetActivity();
-    initialize(fixedLanguage as CodeLabLanguage, signature, publicTestCases);
+    initialize(fixedLanguage as CodeLabLanguage, signature, publicTestCases, `codelab:${studentId}:${assignmentId}`);
     startTimer();
-  }, [assignmentId, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
+  }, [assignmentId, studentId, nativeOwner, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (useCodeLabStore.getState().draftSaveError) event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -199,7 +207,7 @@ export default function CodeLabScene({
         if (data.submission) {
           setSavedScore(data.submission.score);
           setScore(data.submission.score);
-          if (typeof data.submission.stateCheck?.sourceCode === "string") updateCode(data.submission.stateCheck.sourceCode);
+          if (typeof data.submission.stateCheck?.sourceCode === "string" && !useCodeLabStore.getState().hasLocalDraft) updateCode(data.submission.stateCheck.sourceCode);
         }
       } catch (error) {
         if (!controller.signal.aborted) setCompletionError(error instanceof Error ? error.message : "Unable to load progress. Reload this page.");
@@ -570,6 +578,7 @@ export default function CodeLabScene({
 
   return (
     <div className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+      {useCodeLabStore.getState().draftKey && <p role="status" className="px-4 py-2 text-sm text-slate-700 dark:text-slate-200">{useCodeLabStore.getState().draftSaveError ? 'Draft could not save on this device. Keep this screen open until you can submit.' : 'Code saved on this device · use Submit to send your work.'}</p>}
       {/* ──── Academic Integrity / Rejection Warning Modal ──── */}
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">

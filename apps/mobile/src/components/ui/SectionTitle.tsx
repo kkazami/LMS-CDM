@@ -86,7 +86,7 @@ export function SectionTitle({
             style={[
               styles.actionText,
               {
-                color: theme.colors.primary,
+                color: theme.isDark ? theme.colors.primary : theme.colors.text,
                 fontSize: font(13),
               },
             ]}

@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
+import type { OnMount } from "@monaco-editor/react";
+import dynamic from 'next/dynamic';
 import { useTheme } from "@/lib/theme-context";
 import { useCodeLabStore } from "../stores/codelab-store";
 import { Play, Eye, Code2 } from "lucide-react";
 import MonacoInit from "@/components/common/MonacoInit";
+import { CodeSymbolBar } from './CodeSymbolBar';
+
+const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 interface HTMLPreviewEditorProps {
   initialCode: string;
@@ -23,7 +27,17 @@ export default function HTMLPreviewEditor({
 }: HTMLPreviewEditorProps) {
   const [code, setCode] = useState<string>(initialCode);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const touchInput = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { setCode(initialCode); }, [initialCode]);
   const { themeMode } = useTheme();
+  const [touchEditor, setTouchEditor] = useState(true);
+  const [mobileView, setMobileView] = useState<'code' | 'preview'>('code');
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse), (max-width: 767px)');
+    const update = () => setTouchEditor(query.matches);
+    update(); query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   // Helper to compile srcdoc
   const buildSrcDoc = (currentCode: string): string => {
@@ -77,10 +91,14 @@ export default function HTMLPreviewEditor({
   };
 
   return (
-    <div className="flex h-full w-full flex-col md:flex-row overflow-hidden bg-white dark:bg-[#1e1e1e]">
-      <MonacoInit />
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white dark:bg-[#1e1e1e]">
+      {!touchEditor && <MonacoInit />}
+      <div className="flex shrink-0 border-b border-slate-200 dark:border-slate-800 md:hidden" aria-label="HTML and CSS workspace">
+        {(['code', 'preview'] as const).map(view => <button key={view} type="button" aria-pressed={mobileView === view} onClick={() => setMobileView(view)} className={`min-h-12 flex-1 text-sm font-semibold ${mobileView === view ? 'bg-orange-50 text-orange-950 dark:bg-orange-950 dark:text-orange-100' : 'text-slate-600 dark:text-slate-300'}`}>{view === 'code' ? 'Edit code' : 'Live preview'}</button>)}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Editor Panel — Left Half */}
-      <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 min-w-0">
+      <div className={`min-h-0 flex-1 ${mobileView === 'code' ? 'flex' : 'hidden md:flex'} flex-col border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 min-w-0`}>
         <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-[#161b22] border-b border-slate-200 dark:border-slate-800 flex-none">
           <div className="flex items-center gap-2">
             <Code2 className="w-3.5 h-3.5 text-orange-500" />
@@ -93,8 +111,20 @@ export default function HTMLPreviewEditor({
           </div>
         </div>
 
-        <div className="flex-1 min-h-[250px]">
-          <Editor
+        <div className="flex min-h-0 flex-1 flex-col">
+          {touchEditor ? <textarea ref={touchInput} aria-label={`${language.toUpperCase()} code editor`} value={code}
+            autoCapitalize="off" autoCorrect="off" spellCheck={false}
+            onChange={event => {
+              const value = event.target.value;
+              if (value.length > code.length) useCodeLabStore.getState().incrementTypedChars(value.length - code.length);
+              handleChange(value);
+            }}
+            onPaste={event => {
+              const store = useCodeLabStore.getState(); store.incrementPasteCount();
+              store.addPasteEvent({ timestamp: new Date().toISOString(), charCount: event.clipboardData.getData('text').length, language: store.language });
+            }}
+            className="block h-full min-h-32 w-full resize-none rounded-none border-0 bg-white p-4 font-mono text-base leading-7 text-slate-900 outline-offset-[-2px] dark:bg-[#1e1e1e] dark:text-slate-100"
+          /> : <Editor
             height="100%"
             language={language}
             value={code}
@@ -112,12 +142,13 @@ export default function HTMLPreviewEditor({
               tabSize: 2,
               insertSpaces: true,
             }}
-          />
+          />}
+          {touchEditor && <CodeSymbolBar editor={touchInput} value={code} onChange={handleChange} />}
         </div>
       </div>
 
       {/* Live Preview Panel — Right Half */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white">
+      <div className={`min-h-0 flex-1 ${mobileView === 'preview' ? 'flex' : 'hidden md:flex'} flex-col min-w-0 bg-white`}>
         <div className="flex items-center justify-between px-3.5 py-2 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-none">
           <div className="flex items-center gap-2">
             <Eye className="w-3.5 h-3.5 text-emerald-500" />
@@ -136,6 +167,7 @@ export default function HTMLPreviewEditor({
           className="flex-1 w-full h-full border-none bg-white"
           sandbox="allow-scripts"
         />
+      </div>
       </div>
     </div>
   );

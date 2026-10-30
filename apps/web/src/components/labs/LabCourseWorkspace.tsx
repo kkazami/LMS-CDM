@@ -59,6 +59,11 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
     if (!canEdit) return;
     try { if (localStorage.getItem(tourKey) !== 'seen') setTourOpen(true); } catch { setTourOpen(true); }
   }, [canEdit, tourKey]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (editor || busyRef.current) event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [editor]);
   const published = templates.flatMap(t => t.versions.filter(v => v.status === 'PUBLISHED').map(v => ({ ...v, templateTitle: t.title })));
   const draftTemplate = templates.find(t => t.id === selectedTemplate && t.versions.some(v => v.status === 'DRAFT')) ?? templates.find(t => t.versions.some(v => v.status === 'DRAFT'));
   const phase = editor ? 0 : versionId ? 2 : draftTemplate ? 1 : published.length ? 2 : 0;
@@ -121,7 +126,7 @@ export default function LabCourseWorkspace({ courseId, courseTitle, canEdit, lin
     }, 'Classwork could not be created');
   }
   const invalid = (target: string) => formError?.target === target;
-  return <div className="mx-auto max-w-5xl space-y-7 pb-24">
+  return <div data-practical-lab className="mx-auto min-w-0 max-w-5xl space-y-7 pb-24 [overflow-wrap:anywhere] [&_input]:min-w-0 [&_textarea]:min-w-0 [&_select]:min-w-0">
     <Link className="inline-flex min-h-10 items-center gap-2 text-sm text-slate-500 hover:text-orange-700" href={'/ics/courses/' + courseId + '/classwork'} onClick={e => { if (busyRef.current || createdAssignment) { e.preventDefault(); return; } if (editor) { e.preventDefault(); void leave('/ics/courses/' + courseId + '/classwork'); } }}><ArrowLeft size={16} />Back to Classwork</Link>
     <header className="flex flex-wrap items-start justify-between gap-5 border-b border-slate-200 pb-6 dark:border-slate-700">
       <div><p className="text-xs font-semibold uppercase tracking-widest text-orange-700 dark:text-orange-300">{courseTitle}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Guided practical labs</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">{canEdit ? 'Create the instructions, assign the lab, then publish it for your students.' : 'Follow the instructions on your own computer and submit your evidence for feedback.'}</p></div>

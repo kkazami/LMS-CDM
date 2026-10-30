@@ -1,43 +1,47 @@
-/**
- * Sentry Configuration with Education Data Privacy Policy
- * - Screenshots disabled (prevents capturing student grades/scores)
- * - Breadcrumbs stripped of PII
- * - Sensitive navigation routes sanitized
- */
+import * as Sentry from '@sentry/react-native';
+import { isRunningInExpoGo } from 'expo';
 
-interface SentryBreadcrumb {
-  category?: string;
-  data?: Record<string, unknown>;
-  [key: string]: unknown;
+export const navigationMonitoring = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+  useDispatchedActionData: false,
+});
+
+export function sanitizeMonitoringEvent<T extends Sentry.Event>(event: T): T {
+  delete event.user;
+  delete event.request;
+  delete event.extra;
+  delete event.breadcrumbs;
+  delete event.message;
+  delete event.logentry;
+  if (event.exception?.values) {
+    event.exception.values = event.exception.values.map(value => ({ ...value, value: 'Mobile application error' }));
+  }
+  if (event.contexts) {
+    event.contexts = Object.fromEntries(Object.entries(event.contexts).filter(([key]) => ['app', 'device', 'os', 'runtime', 'trace'].includes(key)));
+  }
+  return event;
 }
 
-interface SentryEvent {
-  breadcrumbs?: SentryBreadcrumb[];
-  [key: string]: unknown;
-}
-
-export const sentryConfig = {
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
-  tracesSampleRate: 0.2,
+export const sentryConfig: NonNullable<Parameters<typeof Sentry.init>[0]> = {
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN && !__DEV__,
+  enableNative: !isRunningInExpoGo(),
+  sendDefaultPii: false,
+  tracesSampleRate: 0.05,
+  profilesSampleRate: 0,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 0,
+  enableLogs: false,
   attachScreenshot: false,
   attachViewHierarchy: false,
-  beforeSend(event: SentryEvent) {
-    if (event.breadcrumbs) {
-      event.breadcrumbs = event.breadcrumbs.map((b) => ({
-        ...b,
-        data: undefined,
-      }));
-    }
+  integrations: [navigationMonitoring],
+  beforeBreadcrumb: () => null,
+  beforeSend: sanitizeMonitoringEvent,
+  beforeSendTransaction: event => {
+    sanitizeMonitoringEvent(event);
+    event.transaction = event.transaction?.replace(/\?.*$/, '').replace(/\/[a-z0-9_-]{16,}(?=\/|$)/gi, '/:id');
+    event.spans = event.spans?.map(span => ({ ...span, description: span.op, data: {} }));
     return event;
   },
-  beforeBreadcrumb(breadcrumb: SentryBreadcrumb) {
-    if (breadcrumb.category === 'navigation') {
-      const sensitiveRoutes = ['/grades', '/profile', '/users'];
-      const navData = breadcrumb.data as { to?: string } | undefined;
-      if (sensitiveRoutes.some((r) => navData?.to?.includes(r))) {
-        return null;
-      }
-    }
-    return breadcrumb;
-  },
 };
+Sentry.init(sentryConfig);

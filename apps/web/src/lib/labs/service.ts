@@ -9,7 +9,7 @@ import { lockAcademicRecord } from '@/lib/academic-records';
 import { lockSyllabusItem, markAcademicWorkStarted } from '@/lib/academic-task';
 import { scanUpload, verifiedFileType, withUploadSlot, savePrivateUpload } from '@/lib/private-upload';
 import { requireIcs, requireLabCourse, assignmentAccess, attemptAccess, ensureWritable, requireStudent, type LabActor, type LabTx } from './access';
-import { assignmentInput, assignmentPatch, templateDefinition, reviewInput, reopenInput, submitInput, parseAnswer, responseComplete, stepSchema, LAB_MAX_BYTES, LAB_MIME_TYPES, type LabDefinition } from './schema';
+import { assignmentInput, assignmentPatch, gradebookLabInput, templateDefinition, reviewInput, reopenInput, submitInput, parseAnswer, responseComplete, stepSchema, LAB_MAX_BYTES, LAB_MIME_TYPES, type LabDefinition } from './schema';
 import { LAB_PRESET_KEYS } from './preset-catalog';
 import { LAB_PRESETS } from './presets';
 import { LAB_IMAGE_TYPES, labAssetId } from './resources';
@@ -33,12 +33,12 @@ async function validateTemplateImages(actor: LabActor, definition: LabDefinition
   if (!urls.length) return;
   const ids = urls.map(url => labAssetId(url)!);
   const [assets, evidence] = await Promise.all([
-    tx.privateAsset.findMany({ where: { id: { in: ids }, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } }, select: { id: true, ownerId: true } }),
+    tx.privateAsset.findMany({ where: { id: { in: ids }, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] }, mimeType: { in: [...LAB_IMAGE_TYPES] } }, select: { id: true, ownerId: true } }),
     tx.labEvidence.count({ where: { assetId: { in: ids } } }),
   ]);
   const permitted = new Set(retained);
   if (evidence || urls.some(url => !assets.some(asset => asset.id === labAssetId(url) && (asset.ownerId === actor.id || permitted.has(url))))) {
-    throw new AccessError(403, 'Use your own scanned screenshots. Student evidence cannot be used as instructional media.');
+    throw new AccessError(403, 'Use your own uploaded screenshots. Student evidence cannot be used as instructional media.');
   }
 }
 
@@ -232,7 +232,18 @@ function attemptDto(context: AttemptContext) {
     reviews: attempt.reviews.map(r => ({ ...r, score: r.score === null ? null : Number(r.score) })),
   });
 }
-export async function getAttempt(actor: LabActor, courseId: string, assignmentId: string, attemptId: string) { return attemptDto(await attemptAccess(actor, courseId, assignmentId, attemptId)); }
+export async function getAttempt(actor: LabActor, courseId: string, assignmentId: string, attemptId: string) {
+  const context = await attemptAccess(actor, courseId, assignmentId, attemptId);
+  const events = await db.auditLog.findMany({ where: { targetId: context.attempt.studentId, action: { in: ['LAB_GRADEBOOK_GRADE', 'LAB_GRADEBOOK_REOPEN'] }, metadata: { contains: JSON.stringify({ attemptId }).slice(1, -1) } }, select: { id: true, action: true, metadata: true, createdAt: true, admin: { select: { name: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 100 });
+  const gradebookHistory = events.flatMap(event => {
+    try {
+      const detail = JSON.parse(event.metadata);
+      if (detail.attemptId !== attemptId || detail.assignmentId !== assignmentId || detail.courseId !== courseId) return [];
+      return [{ id: event.id, action: event.action, reason: String(detail.reason), score: detail.score ?? null, revisionDueAt: detail.revisionDueAt ?? null, createdAt: event.createdAt.toISOString(), instructor: event.admin.name }];
+    } catch { return []; }
+  });
+  return { ...attemptDto(context), gradebookHistory };
+}
 
 async function lockedAttempt(actor: LabActor, courseId: string, assignmentId: string, attemptId: string, tx: LabTx, teaching = false) {
   const initial = await attemptAccess(actor, courseId, assignmentId, attemptId, false, teaching, tx);
@@ -278,7 +289,7 @@ export async function uploadEvidence(actor: LabActor, courseId: string, assignme
     const bytes = Buffer.from(await file.arrayBuffer());
     const mimeType = await verifiedFileType(bytes, file.name, file.type);
     if (!(LAB_MIME_TYPES as readonly string[]).includes(mimeType)) throw new AccessError(400, 'Upload a PNG, JPEG, WebP, PDF or plain-text file.');
-    await scanUpload(bytes);
+    const scanStatus = await scanUpload(bytes);
     await db.$transaction(async tx => {
       const context = await lockedAttempt(actor, courseId, assignmentId, attemptId, tx);
       ensureWritable(context.attempt, context.assignment.syllabusItem.dueDate);
@@ -294,7 +305,7 @@ export async function uploadEvidence(actor: LabActor, courseId: string, assignme
       const saved = await tx.labStepResponse.upsert({ where: { attemptId_stepId: { attemptId, stepId } }, create: { attemptId, stepId, versionId: context.attempt.versionId, answer: {}, revision: 1, completedAt }, update: { revision: { increment: 1 }, completedAt } });
       if (replaceEvidenceId) await tx.labEvidence.update({ where: { id: replaceEvidenceId }, data: { supersededAt: new Date() } });
       const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'evidence';
-      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus: 'CLEAN', sha256: createHash('sha256').update(bytes).digest('hex') } });
+      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') } });
       await tx.labEvidence.create({ data: { responseId: saved.id, assetId: asset.id } });
       await tx.labAttempt.update({ where: { id: attemptId }, data: { revision: { increment: 1 }, lastActivityAt: new Date() } });
     });
@@ -321,6 +332,44 @@ async function replayable(actor: LabActor, operation: string, targets: string[],
   }, { timeout: 15000 });
 }
 
+/** Instructor grading/late-work path. Generic academic writers remain blocked for labs. */
+export async function gradeLabFromGradebook(actor: LabActor, courseId: string, assignmentId: string, raw: unknown) {
+  const input = gradebookLabInput.parse(raw);
+  const access = async (tx: LabTx, writing = false) => {
+    const context = await assignmentAccess(actor, courseId, assignmentId, writing, true, tx);
+    const student = await tx.user.findUnique({ where: { id: input.studentId }, select: { role: true, instituteId: true } });
+    const enrollment = await tx.enrollment.findUnique({ where: { courseId_studentId: { courseId, studentId: input.studentId } } });
+    if (!student || student.instituteId !== actor.instituteId || canonicalRole(student.role) !== 'STUDENT' || enrollment?.status !== 'APPROVED') throw new AccessError(403, 'Choose an approved student enrolled in this class.');
+    const targets = await tx.syllabusTargetGroup.findMany({ where: { syllabusItemId: context.assignment.syllabusItemId }, select: { group: { select: { members: { where: { studentId: input.studentId }, select: { studentId: true } } } } } });
+    if (targets.length && !targets.some(target => target.group.members.length)) throw new AccessError(403, 'This practical lab is not assigned to this student.');
+    return context;
+  };
+  return replayable(actor, 'gradebook', [courseId, assignmentId, input.studentId], input.idempotencyKey, input, async tx => {
+    const initial = await access(tx);
+    await lockSyllabusItem(tx, initial.assignment.syllabusItemId);
+    await lockAcademicRecord(tx, input.studentId, initial.assignment.syllabusItemId);
+    const { assignment } = await access(tx, true);
+    if (!assignment.publishedAt) throw new AccessError(409, 'Publish this practical lab before recording grades.');
+    const existing = await tx.labAttempt.findUnique({ where: { assignmentId_studentId: { assignmentId, studentId: input.studentId } } });
+    if ((existing?.revision ?? null) !== input.expectedRevision) throw new AccessError(409, 'The lab changed for this student. Refresh the gradebook before recording a decision.');
+    const max = assignment.syllabusItem.maxPoints;
+    if (input.action === 'GRADE' && (max === null || input.score > max)) throw new AccessError(400, 'Grade must be between zero and the maximum points.');
+    const due = input.action === 'REOPEN' ? new Date(input.revisionDueAt) : null;
+    if (due && (due <= new Date() || assignment.opensAt && due <= assignment.opensAt)) throw new AccessError(400, 'Choose a late-submission deadline after now and the lab start date.');
+    const score = input.action === 'GRADE' ? new Prisma.Decimal(input.score).toDecimalPlaces(2) : null;
+    const status = input.action === 'GRADE' ? 'GRADED' : 'NEEDS_REVISION';
+    const data = { status: status as 'GRADED' | 'NEEDS_REVISION', score, gradedAt: score === null ? null : new Date(), revisionDueAt: due };
+    const attempt = existing
+      ? await tx.labAttempt.update({ where: { id: existing.id }, data: { ...data, revision: { increment: 1 } } })
+      : await tx.labAttempt.create({ data: { ...data, assignmentId, versionId: assignment.versionId, studentId: input.studentId, attemptNumber: 1, revision: 1, evidenceToken: randomBytes(6).toString('hex') } });
+    const submission = await tx.studentSubmission.upsert({ where: { syllabusItemId_studentId: { syllabusItemId: assignment.syllabusItemId, studentId: input.studentId } }, create: { syllabusItemId: assignment.syllabusItemId, studentId: input.studentId, workHistoryState: 'STARTED', status: score === null ? 'DRAFT' : 'RETURNED', grade: score === null ? null : Number(score), isReturned: score !== null }, update: { workHistoryState: 'STARTED', status: score === null ? 'DRAFT' : 'RETURNED', grade: score === null ? null : Number(score), isReturned: score !== null } });
+    await markAcademicWorkStarted(tx, assignment.syllabusItemId, input.studentId);
+    const audit = await tx.auditLog.create({ data: { adminId: actor.id, targetId: input.studentId, action: input.action === 'GRADE' ? 'LAB_GRADEBOOK_GRADE' : 'LAB_GRADEBOOK_REOPEN', metadata: JSON.stringify({ attemptId: attempt.id, assignmentId, courseId, syllabusItemId: assignment.syllabusItemId, previousScore: existing?.score === null || !existing ? null : Number(existing.score), previousStatus: existing?.status ?? null, hadSubmission: Boolean(existing?.submittedAt), reason: input.reason, score: score === null ? null : Number(score), revisionDueAt: due?.toISOString() ?? null }) } });
+    await notify(tx, `gradebook:${audit.id}`, input.studentId, score === null ? 'ALERT' : 'GRADE', score === null ? 'Late practical-lab submission allowed' : 'Practical-lab grade recorded', `${assignment.syllabusItem.title}: ${input.reason}`, `/ics/courses/${courseId}/labs/${assignmentId}`);
+    return { attemptId: attempt.id, submissionId: submission.id, revision: attempt.revision, status, score: score === null ? null : Number(score), submittedAt: submission.submittedAt?.toISOString() ?? null, revisionDueAt: due?.toISOString() ?? null, auditId: audit.id };
+  }, tx => access(tx));
+}
+
 export async function submitAttempt(actor: LabActor, courseId: string, assignmentId: string, attemptId: string, raw: unknown) {
   requireStudent(actor);
   const input = submitInput.parse(raw);
@@ -331,7 +380,7 @@ export async function submitAttempt(actor: LabActor, courseId: string, assignmen
       const { definition } = exactStep(context, row.id);
       const response = context.attempt.responses.find(r => r.stepId === row.id);
       const active = response?.evidence.filter(e => !e.supersededAt) ?? [];
-      if (active.some(e => e.asset.scanStatus !== 'CLEAN') || definition.required && !responseComplete(definition, response?.answer, active.length)) throw new AccessError(400, `Complete the required step: ${row.title}`);
+      if (active.some(e => !['CLEAN', 'UNSCANNED'].includes(e.asset.scanStatus)) || definition.required && !responseComplete(definition, response?.answer, active.length)) throw new AccessError(400, `Complete the required step: ${row.title}`);
     }
     const round = (context.attempt.submissions.at(-1)?.round ?? 0) + 1;
     const evidence = context.attempt.responses.flatMap(r => r.evidence.filter(e => !e.supersededAt));
@@ -386,7 +435,7 @@ async function evidenceAsset(actor: LabActor, evidenceId: string) {
   if (!evidence) throw new AccessError(404, 'Evidence not found.');
   const context = await attemptAccess(actor, evidence.response.attempt.assignment.courseId, evidence.response.attempt.assignmentId, evidence.response.attempt.id);
   if (canonicalRole(actor.role) !== 'STUDENT' && !await db.labSubmissionEvidence.count({ where: { evidenceId } })) throw new AccessError(404, 'Evidence has not been submitted.');
-  const asset = await db.privateAsset.findFirst({ where: { id: evidence.assetId, ownerId: context.attempt.studentId, instituteId: actor.instituteId, scanStatus: 'CLEAN' } });
+  const asset = await db.privateAsset.findFirst({ where: { id: evidence.assetId, ownerId: context.attempt.studentId, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } } });
   if (!asset) throw new AccessError(404, 'Evidence unavailable.');
   return { bytes: Buffer.from(asset.content), mime: asset.mimeType, name: asset.fileName };
 }
@@ -410,7 +459,7 @@ export async function authorizeLabAsset(actor: LabActor, assetId: string) {
     }
   }
   if (!allowed) throw new AccessError(404, 'Screenshot not found.');
-  const file = await db.privateAsset.findFirst({ where: { id: assetId, instituteId: actor.instituteId, scanStatus: 'CLEAN', mimeType: { in: [...LAB_IMAGE_TYPES] } } });
+  const file = await db.privateAsset.findFirst({ where: { id: assetId, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] }, mimeType: { in: [...LAB_IMAGE_TYPES] } } });
   if (!file) throw new AccessError(404, 'Screenshot not found.');
   return { bytes: Buffer.from(file.content), mime: file.mimeType, name: file.fileName };
 }

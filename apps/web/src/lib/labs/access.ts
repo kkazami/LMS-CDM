@@ -44,9 +44,9 @@ export async function assignmentAccess(actor: LabActor, courseId: string, assign
   if (!assignment || assignment.syllabusItem.courseId !== courseId) throw new AccessError(404, 'Practical lab not found.');
   if (canonicalRole(actor.role) === 'STUDENT') {
     const targeted = !assignment.syllabusItem.targetGroups.length || assignment.syllabusItem.targetGroups.some(g => g.group.members.length > 0);
-    const started = await tx.labAttempt.findUnique({ where: { assignmentId_studentId: { assignmentId, studentId: actor.id } }, select: { submittedAt: true } });
+    const started = await tx.labAttempt.findUnique({ where: { assignmentId_studentId: { assignmentId, studentId: actor.id } }, select: { submittedAt: true, gradedAt: true } });
     const published = assignment.publishedAt && (!assignment.opensAt || assignment.opensAt <= new Date());
-    if (!targeted || !published || assignment.archivedAt && !started?.submittedAt) throw new AccessError(404, 'Practical lab not found.');
+    if (!targeted || !published || assignment.archivedAt && !started?.submittedAt && !started?.gradedAt) throw new AccessError(404, 'Practical lab not found.');
   }
   if (writing && assignment.archivedAt) throw new AccessError(409, 'This practical lab is archived.');
   return { assignment, course };

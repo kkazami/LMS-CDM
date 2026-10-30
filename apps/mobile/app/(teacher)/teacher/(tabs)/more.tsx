@@ -397,9 +397,9 @@ export default function TeacherMoreScreen() {
               <>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  accessibilityLabel="Open CodeLab Instructor Analytics on web"
+                  accessibilityLabel="Open CodeLab"
                   style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: s(10), paddingHorizontal: s(12), minHeight: s(40) }]}
-                  onPress={() => handleOpenWeb('/activities/codelab/instructor')}
+                  onPress={() => router.push('/teacher/codelab?view=instructor')}
                   activeOpacity={0.7}
                 >
                   <View
@@ -418,7 +418,7 @@ export default function TeacherMoreScreen() {
                   </View>
                   <View style={styles.menuItemText}>
                     <Text style={[styles.menuItemTitle, { color: theme.colors.text, fontSize: font(13.5) }]}>
-                      CodeLab & Instructor Analytics
+                      CodeLab
                     </Text>
                     <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary, fontSize: font(11) }]} numberOfLines={1}>
                       Interactive coding laboratory telemetry & student activity

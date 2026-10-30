@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession, getQueryId } from "../_shared";
 import { calendarEventSchema as eventSchema } from "@/lib/calendar-validation";
-import { visibleCalendarEvents } from "@/lib/student-calendar-data";
+import { visibleCalendarEvents, getDashboardCalendar } from "@/lib/student-calendar-data";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,12 @@ export async function GET(request: Request) {
   const { session, response } = await requireWorkspaceSession();
 
   if (response) return response;
+
+  if (new URL(request.url).searchParams.get('view') === 'agenda') {
+    return NextResponse.json(await getDashboardCalendar(session.user, session.user.institute.code.toLowerCase()), {
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
+  }
 
   const id = getQueryId(request);
 

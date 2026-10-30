@@ -257,16 +257,16 @@ export default function StudentMoreScreen() {
             {isIcsUser(user) && (
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="Open Interactive CodeLab on web"
+                accessibilityLabel="Open CodeLab"
                 style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
-                onPress={() => handleOpenWeb('/activities/codelab')}
+                onPress={() => router.push('/student/codelab')}
                 activeOpacity={0.7}
               >
                 <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}15` }]}>
                   <Code2 size={20} color={theme.colors.primary} />
                 </View>
                 <View style={styles.menuItemText}>
-                  <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Interactive CodeLab</Text>
+                  <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>CodeLab</Text>
                   <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
                     Monaco code editor with 3D scene execution (Desktop)
                   </Text>

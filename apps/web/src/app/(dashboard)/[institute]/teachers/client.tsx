@@ -119,6 +119,9 @@ export default function TeacherDashboardClient({
   const [approveError, setApproveError] = useState<string | null>(null);
   const [courses, setCourses] = useState<TaughtCourse[]>(initialCourses);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('mobileAction') === 'add-class') setCreateModalOpen(true);
+  }, []);
   const [editingCourse, setEditingCourse] = useState<TaughtCourse | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
   const [pendingWorkClasses, setPendingWorkClasses] = useState<PendingClassWork[]>(initialPendingWorkClasses);

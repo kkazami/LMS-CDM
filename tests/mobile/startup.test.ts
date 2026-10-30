@@ -57,7 +57,7 @@ async function authStore(fetcher:typeof fetch, saved = true) {
     plugins:[{name:'notification-boundary',setup(b:any){b.onResolve({filter:/^\.\.\/lib\/notifications$/},()=>({path:path.resolve('tmp/mobile-stability/notifications.cjs')}));}}],
   })).outputFiles[0].text;
   const user={id:'synthetic',name:'Test Student',role:'STUDENT',institute:{code:'ics',name:'ICS'}};
-  const items = new Map(saved?[['lumina_auth_token','synthetic-token'],['lumina_user',JSON.stringify(user)]]:[]);
+  const items = new Map(saved?[['lumina_auth_session_v2',JSON.stringify({ token: 'synthetic-token', user })]]:[]);
   const module={exports:{} as any};
   const context={module,exports:module.exports,require,URL,AbortController,TypeError,Error,console,setTimeout,clearTimeout,fetch:fetcher,process:{env:{}},
     window:{localStorage:{getItem:(k:string)=>items.get(k)||null,setItem:(k:string,v:string)=>items.set(k,v),removeItem:(k:string)=>items.delete(k)}}};
@@ -102,9 +102,10 @@ test('saved sessions survive network/server outages but are removed on a server 
   for(const status of [0,503,401,403]) {
     const {store,items}=await authStore((async()=>{if(status===0)throw new TypeError('offline');return new Response('{}',{status});}) as typeof fetch);
     await store.getState().initialize();
+    await store.getState().validateSession();
     assert.equal(store.getState().isLoading,false);
-    assert.equal(store.getState().isAuthenticated,status===0||status===503);
-    assert.equal(items.has('lumina_auth_token'),status===0||status===503);
+    assert.equal(store.getState().isAuthenticated,status!==401);
+    assert.equal(items.has('lumina_auth_session_v2'),status!==401);
   }
 });
 
@@ -112,5 +113,5 @@ test('web registration uses browser storage rather than unavailable native Secur
   const {store,items,user}=await authStore((async()=>new Response(JSON.stringify({token:'synthetic-new-token',user:{id:'synthetic',institute:{code:'ics',name:'ICS'}}}))) as typeof fetch,false);
   await store.getState().register({name:user.name,email:'synthetic@example.invalid',studentNumber:'SYNTHETIC',password:'synthetic-only',confirmPassword:'synthetic-only',instituteCode:'ics',acceptedPolicies:true});
   assert.equal(store.getState().isAuthenticated,true);
-  assert.equal(items.get('lumina_auth_token'),'synthetic-new-token');
+  assert.equal(JSON.parse(items.get('lumina_auth_session_v2')!).token,'synthetic-new-token');
 });

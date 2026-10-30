@@ -91,6 +91,9 @@ export default function TeacherCourseDetailScreen() {
   const [activeTab, setActiveTab] = useState<TeacherTab>(
     (initialTab as TeacherTab) || 'STREAM'
   );
+  useEffect(() => {
+    if (initialTab && ['STREAM', 'CLASSWORK', 'BROADCAST', 'FORMS', 'GRADEBOOK', 'PEOPLE', 'PARTICIPATION'].includes(initialTab)) setActiveTab(initialTab as TeacherTab);
+  }, [initialTab]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -837,6 +840,9 @@ export default function TeacherCourseDetailScreen() {
           )}
         </ScrollView>
       </ScreenHeaderContainer>
+      {user?.institute.code.toLowerCase() === 'ics' && course && (
+        <Button title="Practical Labs" variant="outline" style={{ marginHorizontal: 16, marginVertical: 8 }} onPress={() => router.push({ pathname: '/teacher/practical-labs', params: { courseId } })} />
+      )}
 
       {/* Main Tab Content */}
       <ScrollView
@@ -1048,11 +1054,13 @@ export default function TeacherCourseDetailScreen() {
 
                         {item.type !== 'MATERIAL' && (
                           <TouchableOpacity
-                            onPress={() => setActiveTab('GRADEBOOK')}
+                            onPress={() => item.labAssignmentId
+                              ? router.push({ pathname: '/teacher/practical-labs', params: { courseId, assignmentId: item.labAssignmentId } })
+                              : setActiveTab('GRADEBOOK')}
                             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                           >
                             <Text style={[styles.gradeActionLink, { color: theme.colors.primary }]}>
-                              View Submissions &rarr;
+                              {item.labAssignmentId ? 'Review Practical Lab' : 'View Submissions'} &rarr;
                             </Text>
                           </TouchableOpacity>
                         )}

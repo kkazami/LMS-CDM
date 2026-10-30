@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  cancelAnimation,
   useReducedMotion,
 } from "react-native-reanimated";
 
@@ -26,7 +27,7 @@ export function FadeInView({
   const ty = useSharedValue(reducedMotion ? 0 : translateY);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion) { cancelAnimation(opacity); cancelAnimation(ty); opacity.value = 1; ty.value = 0; return; }
     opacity.value = withDelay(delay, withTiming(1, { duration }));
     ty.value = withDelay(delay, withTiming(0, { duration }));
   }, [delay, duration, reducedMotion, opacity, ty]);

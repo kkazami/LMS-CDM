@@ -90,7 +90,7 @@ try {
   await installRosterActivation(cluster.owner);
   const url = new URL(cluster.url); url.username = 'labs_runtime'; url.password = runtimePassword;
   scanner = realScanner ? { host: '127.0.0.1', port: 3310, close: async () => {} } : await scannerFixture();
-  if (realScanner) await check('real ClamAV detects clean and antivirus-test content', () => run(['--test', 'tests/web-quality/real-scanner.test.cjs'], { ...safeEnv, LAB_TEST_REAL_SCANNER: '1', CLAMAV_HOST: scanner.host, CLAMAV_PORT: String(scanner.port) }, 'real-scanner.log'));
+  if (realScanner) await check('real ClamAV detects clean and antivirus-test content', () => run(['--test', 'tests/web-quality/real-scanner.test.cjs'], { ...safeEnv, LAB_TEST_REAL_SCANNER: '1', FILE_SCANNING_ENABLED: 'true', CLAMAV_HOST: scanner.host, CLAMAV_PORT: String(scanner.port) }, 'real-scanner.log'));
   const port = await freePort(), origin = `https://127.0.0.1:${port}`;
   if (process.env.LAB_E2E_BUILD === '1') workspace = createWebWorkspace(output);
   if (workspace && process.env.LAB_E2E_LOW_RESOURCE === '1') {
@@ -99,7 +99,7 @@ try {
     report.buildResourceSettings = 'Owned source copy only: webpack cache disabled, one worker, webpack memory optimizations.';
   }
   const env = { ...safeEnv, NODE_ENV: 'production', DATABASE_URL: url.href, NEXT_TELEMETRY_DISABLED: '1', APP_BASE_URL: origin, NEXT_PUBLIC_APP_URL: origin,
-    CLAMAV_HOST: scanner.host, CLAMAV_PORT: String(scanner.port), EMAIL_INVITATIONS_ENABLED: 'false', RATE_LIMIT_LOGIN_IP_MAX: '100',
+    FILE_SCANNING_ENABLED: 'true', CLAMAV_HOST: scanner.host, CLAMAV_PORT: String(scanner.port), EMAIL_INVITATIONS_ENABLED: 'false', RATE_LIMIT_LOGIN_IP_MAX: '100',
     WEB_QUALITY_PORT: String(port), WEB_QUALITY_APP: reusedApp ?? workspace?.appDir ?? path.resolve('apps/web'), WEB_QUALITY_OUTPUT: output };
   if (process.env.LAB_E2E_BUILD === '1') await check('production build on owned database', () => run([webRequire.resolve('next/dist/bin/next'), 'build', '--webpack'], env, 'build.log', process.execPath, workspace.appDir));
   if (workspace) fs.writeFileSync(path.join(workspace.appDir, 'owned-build.json'), JSON.stringify({ owned: true, sourceHash: sourceHash(workspace.appDir) }));

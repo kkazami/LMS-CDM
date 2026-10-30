@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Dimensions, Platform } from 'react-native';
+import { AccessibilityInfo, Dimensions, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { InstituteTheme } from './theme';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * Returns a high-contrast on-primary color.
@@ -127,13 +128,16 @@ export const FLOATING_TAB_BAR_MARGIN_HORIZONTAL = 18;
  */
 export function useFloatingTabBarHeight() {
   const insets = useSafeAreaInsets();
-  const bottomLift = Math.max(insets.bottom, 12) + 6;
-  const totalClearance = FLOATING_TAB_BAR_HEIGHT + bottomLift;
+  const ics = useTheme().code === 'ics';
+  const { fontScale } = useWindowDimensions();
+  const barHeight = ics ? Math.max(56, Math.ceil(32 + 24 * Math.min(fontScale, 2))) : Math.max(76, Math.ceil(40 + 36 * Math.min(fontScale, 2)));
+  const bottomLift = ics ? 0 : Math.max(insets.bottom, 12) + 6;
+  const totalClearance = barHeight + bottomLift + (ics ? insets.bottom : 0);
   const contentPaddingBottom = totalClearance + 20;
   const fabBottom = totalClearance + 12;
 
   return {
-    barHeight: FLOATING_TAB_BAR_HEIGHT,
+    barHeight,
     bottomLift,
     totalClearance,
     contentPaddingBottom,

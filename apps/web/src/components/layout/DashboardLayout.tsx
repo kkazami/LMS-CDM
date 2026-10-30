@@ -77,7 +77,8 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [nativeFeature, setNativeFeature] = useState<boolean | null>(null);
+  useEffect(() => { setNativeFeature(document.documentElement.dataset.nativeFeature === 'true'); }, []);
 
   useEffect(() => {
     const prev = document.body.getAttribute("data-institute");
@@ -122,41 +123,6 @@ export default function DashboardLayout({
           enrolledCourses={enrolledCourses}
         />
 
-        {/* Mobile Sidebar Drawer (Slides in on burger menu click) */}
-        <div
-          className={`fixed inset-0 z-60 lg:hidden transition-all duration-300 ${
-            mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          aria-hidden={!mobileOpen}
-        >
-          {/* Backdrop scrim */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setMobileOpen(false)}
-          />
-          {/* Drawer container */}
-          <div
-            className={`relative z-10 h-full max-w-70 w-[80vw] transition-transform duration-300 ease-in-out ${
-              mobileOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-          >
-            <Sidebar
-              instituteCode={instituteCode}
-              theme={theme}
-              userRole={userRole}
-              isCollapsed={false}
-              isMobileDrawer={true}
-              onCloseMobileDrawer={() => setMobileOpen(false)}
-              isEligibleForActivities={isEligibleForActivities}
-              isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-              isEligibleForArena={isEligibleForArena}
-              isEligibleForPracticum={isEligibleForPracticum}
-              isEligibleForMeetings={isEligibleForMeetings}
-              enrolledCourses={enrolledCourses}
-            />
-          </div>
-        </div>
-
         <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
         }`}>
@@ -169,7 +135,6 @@ export default function DashboardLayout({
             avatarUrl={avatarUrl ?? null}
             instituteCode={instituteCode}
             exp={exp}
-            onOpenMobileMenu={() => setMobileOpen(true)}
             isEligibleForActivities={isEligibleForActivities}
             isEligibleForPracticum={isEligibleForPracticum}
             isEligibleForMeetings={isEligibleForMeetings}
@@ -188,6 +153,7 @@ export default function DashboardLayout({
       <Toaster />
 
       {/* Mobile Bottom Navigation */}
+      <div data-native-chrome>
       <MobileBottomNav
         instituteCode={instituteCode}
         primaryColor={theme.colors.primary}
@@ -198,6 +164,7 @@ export default function DashboardLayout({
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
         isEligibleForArena={isEligibleForArena}
       />
+      </div>
 
       {/* Student Gamification Widgets */}
       {isStudent && (
@@ -212,12 +179,12 @@ export default function DashboardLayout({
               instituteCode={instituteCode}
             />
           )}
-          <FloatingStudyTimer />
+          {nativeFeature === false && <FloatingStudyTimer />}
         </>
       )}
 
       {/* CdM Assistant Chatbot Widget (Students & Faculty) */}
-      <ChatbotWidget theme={theme} />
+      {nativeFeature === false && <ChatbotWidget theme={theme} />}
     </div>
   );
 

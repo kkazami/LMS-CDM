@@ -22,6 +22,8 @@ export function Input({ label, error, ringColor, theme: propTheme, ...props }: I
     <View style={styles.container}>
       {label && <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>}
       <TextInput
+        accessibilityLabel={props.accessibilityLabel ?? label}
+        accessibilityHint={error ?? props.accessibilityHint}
         style={[
           styles.input,
           {
@@ -30,12 +32,12 @@ export function Input({ label, error, ringColor, theme: propTheme, ...props }: I
             backgroundColor: theme.isDark ? theme.colors.surfaceAlt : theme.colors.surface,
           },
         ]}
-        placeholderTextColor={theme.colors.textMuted || '#9CA3AF'}
+        placeholderTextColor={theme.colors.textSecondary}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         {...props}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text accessibilityRole="alert" style={[styles.error, { color: theme.isDark ? '#FCA5A5' : '#B42318' }]}>{error}</Text>}
     </View>
   );
 }

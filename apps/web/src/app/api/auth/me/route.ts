@@ -1,3 +1,4 @@
+import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { getCorsHeaders, handleCorsPreflight } from '@/lib/cors';
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       {
+        mobileCapabilities,
         user: {
           id: session.user.id,
           name: session.user.name,
@@ -36,6 +38,9 @@ export async function GET(request: Request) {
           role: session.user.role,
           requiresEnrollment: await needsClassEnrollment(session.user),
           studentNumber: (user.studentNumber as string) || null,
+          bio: (user.bio as string) || null, phone: (user.phone as string) || null,
+          department: (user.department as string) || null, yearLevel: (user.yearLevel as string) || null,
+          avatarUrl: (user.avatarUrl as string) || null, coverColor: (user.coverColor as string) || null,
           instituteId: session.user.instituteId,
           institute: {
             code: (institute?.code as string) || '',

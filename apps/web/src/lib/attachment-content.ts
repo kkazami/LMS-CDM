@@ -33,7 +33,7 @@ export function attachmentUrl(value: string): URL {
 export async function readAttachment(value: string): Promise<Buffer> {
   const privateId = /^\/api\/assets\/([a-zA-Z0-9-]{1,100})$/.exec(value)?.[1];
   if (privateId) {
-    const asset = await db.privateAsset.findFirst({ where: { id: privateId, scanStatus: 'CLEAN' } });
+    const asset = await db.privateAsset.findFirst({ where: { id: privateId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } } });
     if (!asset || asset.size > maxBytes) throw new AccessError(404, 'Attachment unavailable.');
     return Buffer.from(asset.content);
   }

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { studentScope, scopeIsCurrent } from '../lib/student-scope';
 
 interface AlertsStoreState {
   unreadCount: number;
@@ -12,12 +13,13 @@ export const useAlertsStore = create<AlertsStoreState>((set) => ({
   loading: false,
   setUnreadCount: (count: number) => set({ unreadCount: Math.max(0, count) }),
   fetchUnreadCount: async (api: any) => {
+    const scope = studentScope();
     if (!api?.notifications?.list) return;
     try {
       set({ loading: true });
       const res = await api.notifications.list();
-      if (res?.notifications && Array.isArray(res.notifications)) {
-        const count = res.notifications.filter((n: any) => !n.isRead).length;
+      if (scopeIsCurrent(scope) && res?.notifications && Array.isArray(res.notifications)) {
+        const count = res.unreadCount ?? res.notifications.filter((n: any) => !n.isRead).length;
         set({ unreadCount: count });
       }
     } catch {

@@ -1,3 +1,8 @@
+import { useAssignmentUploads } from '../../../../../../src/hooks/useAssignmentUploads';
+import { API_BASE_URL } from '../../../../../../src/lib/constants';
+import { openSafeUrl } from '../../../../../../src/lib/open-link';
+import { setCachedData, getCachedData } from '../../../../../../src/lib/offline-storage';
+import { useAssignmentDraft } from '../../../../../../src/hooks/useAssignmentDraft';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -19,8 +24,6 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../../src/hooks/useTheme';
@@ -51,7 +54,8 @@ export default function StudentAssignmentDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [localAttachments, setLocalAttachments] = useState<Array<{ url: string; fileName: string; type: string }>>([]);
+  const { attachments: localAttachments, setAttachments: setLocalAttachments, restoreServer, prepareSubmission, confirmReceipt, draftStatus, draftReady, retryDraft } = useAssignmentDraft(courseId, assignmentId);
+  const { pickDocument: handlePickDocument, pickImage: handlePickImage, retryUpload, cancelUpload, uploadProgress } = useAssignmentUploads(setLocalAttachments);
 
   const loadAssignment = async () => {
     if (!courseId || !assignmentId) return;
@@ -61,9 +65,13 @@ export default function StudentAssignmentDetailScreen() {
       const classworkRes = await api.courses.getClasswork(courseId);
       const match = (classworkRes?.items || []).find((i) => i.id === assignmentId);
       if (match) {
+        if (match.labAssignmentId) { router.replace({ pathname: '/student/practical-labs', params: { courseId, assignmentId: match.labAssignmentId } } as any); return; }
+        if (!Object.hasOwn(match, 'formId')) { setErrorMessage('The web backend needs an update before this work can open in the app. Continue through the web portal.'); return; }
+        if (match.formId) { router.replace({ pathname: '/student/assessment', params: { courseId, formId: match.formId } } as any); return; }
         setAssignment(match);
+        void setCachedData('continue_learning', { courseId, title: match.title, route: `/student/courses/${courseId}/assignment/${match.id}` });
         if (match.submission?.attachments) {
-          setLocalAttachments(
+          restoreServer(
             match.submission.attachments.map((a) => ({
               url: a.url,
               fileName: a.fileName,
@@ -91,66 +99,8 @@ export default function StudentAssignmentDetailScreen() {
     loadAssignment();
   };
 
-  const handlePickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
-        setSubmitting(true);
-        try {
-          const uploadRes = await api.upload.file(file.uri, file.name, file.mimeType || 'application/octet-stream');
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
-          ]);
-        } catch (uploadErr: any) {
-          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload file to the server.';
-          Alert.alert('Upload Failed', msg);
-        } finally {
-          setSubmitting(false);
-        }
-      }
-    } catch (err: any) {
-      Alert.alert('File Error', err?.message || 'Could not open file picker.');
-    }
-  };
-
-  const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const fileName = asset.fileName || `submission_${Date.now()}.jpg`;
-        setSubmitting(true);
-        try {
-          const uploadRes = await api.upload.file(asset.uri, fileName, asset.mimeType || 'image/jpeg');
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
-          ]);
-        } catch (uploadErr: any) {
-          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload image to the server.';
-          Alert.alert('Upload Failed', msg);
-        } finally {
-          setSubmitting(false);
-        }
-      }
-    } catch (err: any) {
-      Alert.alert('Image Error', err?.message || 'Could not open photo gallery.');
-    }
-  };
-
   const handleSubmitAssignment = async () => {
-    if (!assignment || !courseId) return;
+    if (!assignment || !courseId || submitting || uploadProgress !== null) return;
 
     // Reject unuploaded local device URIs before sending to server
     const invalidAttachment = localAttachments.find(
@@ -167,15 +117,18 @@ export default function StudentAssignmentDetailScreen() {
     setSubmitting(true);
     try {
       const primaryAtt = localAttachments[0];
-      await api.courses.submitAssignment(
+      const operationKey = await prepareSubmission();
+      const receipt = await api.courses.submitAssignment(
         courseId,
         assignment.id,
         'SUBMITTED',
-        primaryAtt?.url,
-        primaryAtt?.fileName,
         undefined,
-        localAttachments.length > 0 ? localAttachments : undefined
+        undefined,
+        operationKey,
+        localAttachments.map(({ url, fileName, type }) => ({ url, fileName, type })),
+        true
       );
+      await confirmReceipt(receipt.submission.id);
 
       try {
         Burnt.toast({
@@ -197,7 +150,7 @@ export default function StudentAssignmentDetailScreen() {
   };
 
   const handleUnsubmitAssignment = async () => {
-    if (!assignment || !courseId) return;
+    if (!assignment || !courseId || submitting || uploadProgress !== null) return;
 
     Alert.alert('Unsubmit Assignment?', 'Your submission will be reverted to draft so you can update files.', [
       { text: 'Cancel', style: 'cancel' },
@@ -207,7 +160,9 @@ export default function StudentAssignmentDetailScreen() {
         onPress: async () => {
           setSubmitting(true);
           try {
-            await api.courses.submitAssignment(courseId, assignment.id, 'DRAFT');
+            const operationKey = await prepareSubmission('DRAFT');
+            const receipt = await api.courses.submitAssignment(courseId, assignment.id, 'DRAFT', undefined, undefined, operationKey);
+            await confirmReceipt(receipt.submission.id, 'DRAFT');
             try {
               Burnt.toast({
                 title: 'Draft Restored',
@@ -252,6 +207,11 @@ export default function StudentAssignmentDetailScreen() {
       />
 
       <View style={[styles.mainContent, { padding: s(spacing.lg) }]}>
+        {!!draftStatus && <Text accessibilityLiveRegion="polite" style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21, marginBottom: 12 }}>{draftStatus}</Text>}
+        {!draftReady && <Button title="Retry draft storage" variant="outline" onPress={retryDraft} style={{ marginBottom: 12 }} />}
+        {(!draftReady || !!errorMessage) && <Button title="Continue in the web portal" variant="ghost" onPress={() => { void openSafeUrl(`${API_BASE_URL}/${useAuthStore.getState().user?.institute.code ?? 'ics'}/courses/${courseId}/classwork/${assignmentId}`); }} />}
+        {uploadProgress !== null && <View style={{ gap: 8, marginBottom: 16 }}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.text, fontSize: 16 }}>{uploadProgress >= 100 ? 'Checking attachment…' : `Uploading · ${uploadProgress}%`}</Text><Button title="Cancel upload" variant="outline" onPress={cancelUpload} /></View>}
+        {uploadProgress === null && localAttachments.filter(file => /^(file|content):/.test(file.url)).map(file => <Button key={file.url} title={`Retry upload: ${file.fileName}`} variant="outline" onPress={() => { void retryUpload(file); }} disabled={!draftReady || submitting} style={{ marginBottom: 12 }} />)}
         {errorMessage && (
           <ErrorBanner
             message={errorMessage}
@@ -507,6 +467,8 @@ export default function StudentAssignmentDetailScreen() {
             )}
 
             {/* Submission Section */}
+            {isGraded && <Button title="View grades and instructor feedback" variant="outline" onPress={() => router.push(`/student/courses/${courseId}?tab=GRADES` as any)} style={{ marginBottom: 16 }} />}
+            {!!submission?.submittedAt && <Text style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21, marginBottom: 16 }}>Submitted {new Date(submission.submittedAt).toLocaleString()}</Text>}
             {assignment.type !== 'MATERIAL' && (
               <View
                 style={[
@@ -579,10 +541,11 @@ export default function StudentAssignmentDetailScreen() {
                         numberOfLines={1}
                         maxFontSizeMultiplier={maxFontSizeMultiplier}
                       >
-                        {file.fileName}
+                        {file.fileName}{/^(file|content):/.test(file.url) ? ' · upload pending' : ''}
                       </Text>
                       {!submission?.isReturned && (
                         <TouchableOpacity
+                          disabled={submitting || uploadProgress !== null}
                           onPress={() => setLocalAttachments((prev) => prev.filter((_, i) => i !== idx))}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           accessibilityRole="button"

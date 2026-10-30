@@ -26,19 +26,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseNotificationLimit(searchParams.get("limit"));
 
-    const [notifications, unreadCount] = await Promise.all([
+    const community = searchParams.get("includeCommunity") === "1" && session.user.institute.code.toLowerCase() === "ics";
+    const [notifications, unreadCount, kxNotifications, kxUnread] = await Promise.all([
       db.notification.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
         take: limit,
       }),
-      db.notification.count({
-        where: { userId, isRead: false },
-      }),
+      db.notification.count({ where: { userId, isRead: false } }),
+      community ? db.kxNotification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: limit }) : Promise.resolve([]),
+      community ? db.kxNotification.count({ where: { userId, isRead: false } }) : Promise.resolve(0),
     ]);
 
     return NextResponse.json({
-      notifications: notifications.map((n) => ({
+      notifications: [...notifications, ...kxNotifications.map(n => ({ ...n, id: `kx:${n.id}` }))].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit).map((n) => ({
         id: n.id,
         type: n.type,
         title: n.title,
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
         isRead: n.isRead,
         createdAt: n.createdAt.toISOString(),
       })),
-      unreadCount,
+      unreadCount: unreadCount + kxUnread,
     });
   } catch (error) {
     console.error("NOTIFICATIONS_GET_ERROR", error);
@@ -76,7 +77,13 @@ export async function PATCH(request: Request) {
       ids?: string[];
     };
 
+    const community = new URL(request.url).searchParams.get('includeCommunity') === '1' && session.user.institute.code.toLowerCase() === 'ics';
+    if (community && typeof body.id === 'string' && body.id.startsWith('kx:')) {
+      const result = await db.kxNotification.updateMany({ where: { id: body.id.slice(3), userId }, data: { isRead: true } });
+      return NextResponse.json({ success: true, count: result.count });
+    }
     if (body.action === "markAllRead") {
+      if (community) await db.kxNotification.updateMany({ where: { userId, isRead: false }, data: { isRead: true } });
       const res = await db.notification.updateMany({
         where: { userId, isRead: false },
         data: { isRead: true },
@@ -123,6 +130,11 @@ export async function DELETE(request: Request) {
     const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const idParam = searchParams.get("id");
+    const community = searchParams.get('includeCommunity') === '1' && session.user.institute.code.toLowerCase() === 'ics';
+    if (community && idParam?.startsWith('kx:')) {
+      const result = await db.kxNotification.deleteMany({ where: { id: idParam.slice(3), userId } });
+      return NextResponse.json({ success: true, count: result.count });
+    }
     const allParam = searchParams.get("all") === "true";
 
     let bodyId: string | undefined;
@@ -139,6 +151,7 @@ export async function DELETE(request: Request) {
     }
 
     if (allParam || bodyAction === "deleteAll" || bodyAction === "clearAll") {
+      if (community) await db.kxNotification.deleteMany({ where: { userId } });
       const result = await db.notification.deleteMany({
         where: { userId },
       });

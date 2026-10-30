@@ -1,3 +1,4 @@
+import { PagedContent } from '../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -420,7 +421,7 @@ export default function StudentGradesScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  filteredGrades.map((grade) => {
+                  <PagedContent items={filteredGrades}>{(grade) => {
                     const pct = getPercent(grade);
                     const passing = isPassing(percentToGradePoint(pct));
                     const isAssignment =
@@ -518,7 +519,7 @@ export default function StudentGradesScreen() {
                         </View>
                       </View>
                     );
-                  })
+                  }}</PagedContent>
                 )}
               </View>
             )}

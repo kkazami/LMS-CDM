@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   Animated,
+  Easing,
   BackHandler,
   PanResponder,
   Switch,
@@ -30,6 +31,7 @@ import {
   MessageSquare,
   Award,
   Code2,
+  FlaskConical,
   Table,
   FileText,
   FolderDown,
@@ -50,8 +52,9 @@ import { getCanonicalInstituteName } from '../../lib/theme';
 import { isIteUser, isIcsUser } from '../../lib/ite-eligibility';
 import { getWebBaseUrl } from '../../lib/constants';
 import { ProfileEditModal } from '../profile/ProfileEditModal';
+import { IcsMoreMenu } from './IcsMoreMenu';
 
-interface MoreMenuContextType {
+export interface MoreMenuContextType {
   isOpen: boolean;
   openMenu: () => void;
   closeMenu: () => void;
@@ -73,6 +76,11 @@ interface MoreMenuDrawerProps {
 }
 
 export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
+  const theme = useTheme();
+  return theme.code === 'ics' ? <IcsMoreMenu role={role} context={MoreMenuContext}>{children}</IcsMoreMenu> : <LegacyMoreMenuDrawer role={role}>{children}</LegacyMoreMenuDrawer>;
+}
+
+function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const animProgress = useRef(new Animated.Value(0)).current;
@@ -88,10 +96,10 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
 
   const gradients = getInstituteGradients(theme.colors.primary, isDark, user?.institute?.code);
   const onPrimary = getOnPrimaryColor(theme);
-  const screenWidth = Dimensions.get('window').width;
+  const { width: screenWidth } = useWindowDimensions();
 
-  // Visible drawer width: constrained to 56% so all content stays within visible area
-  const visibleWidth = Math.round(screenWidth * 0.56);
+  // Keep labels readable on small phones and constrain the drawer on tablets.
+  const visibleWidth = Math.min(360, Math.round(screenWidth * 0.82));
 
   // Consistent icon treatment: translucent tint of on-menu text color
   const menuTextColor = isDark ? '#FFFFFF' : onPrimary;
@@ -144,10 +152,10 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
         useNativeDriver: true,
       }).start();
     } else {
-      Animated.spring(animProgress, {
+      Animated.timing(animProgress, {
         toValue: 1,
-        friction: 8,
-        tension: 45,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
     }
@@ -161,10 +169,10 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
         useNativeDriver: true,
       }).start(() => setIsOpen(false));
     } else {
-      Animated.spring(animProgress, {
+      Animated.timing(animProgress, {
         toValue: 0,
-        friction: 8,
-        tension: 45,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start(() => setIsOpen(false));
     }
@@ -192,7 +200,7 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
   }, [isOpen, closeMenu]);
 
   // PanResponder to handle swiping left on the shrunken canvas to close
-  const panResponder = useRef(
+  const panResponder = useMemo(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
         return isOpen && gestureState.dx < -15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
@@ -202,14 +210,13 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
           closeMenu();
         }
       },
-    })
-  ).current;
+    }), [isOpen, closeMenu]);
 
   const handleNavigate = (route: string) => {
     closeMenu();
     setTimeout(() => {
       router.push(route as any);
-    }, 280);
+    }, isReducedMotion ? 150 : 180);
   };
 
   const handleOpenWeb = async (subPath: string) => {
@@ -261,7 +268,7 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
     ? 1
     : animProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 0.82],
+        outputRange: [1, 0.96],
       });
 
   const canvasTranslateX = isReducedMotion
@@ -334,7 +341,7 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                 accessibilityRole="button"
                 accessibilityLabel="Close Menu"
               >
-                <X size={18} color="#FFFFFF" />
+                <X size={18} color={menuTextColor} />
               </TouchableOpacity>
             </View>
 
@@ -352,14 +359,14 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                 </Text>
               </View>
               <View style={styles.headerText}>
-                <Text style={styles.userName} numberOfLines={1}>
+                <Text style={[styles.userName, { color: menuTextColor }]} numberOfLines={1}>
                   {role === 'TEACHER' ? `Prof. ${user?.name || 'Faculty'}` : user?.name || 'Student Account'}
                 </Text>
-                <Text style={styles.userEmail} numberOfLines={1}>
+                <Text style={[styles.userEmail, { color: menuSecondaryTextColor }]} numberOfLines={1}>
                   {user?.email}
                 </Text>
                 <View style={styles.badgeWrapper}>
-                  <Text style={styles.instituteBadgeText} numberOfLines={2}>
+                  <Text style={[styles.instituteBadgeText, { color: menuTextColor }]} numberOfLines={2}>
                     {getCanonicalInstituteName(user?.institute?.code, user?.institute?.name || theme.name)}
                   </Text>
                 </View>
@@ -377,6 +384,7 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
 
               {role === 'STUDENT' ? (
                 <>
+                  <TouchableOpacity style={styles.menuRow} accessibilityRole="button" onPress={() => handleNavigate('/student/calendar')}><Text style={[styles.rowLabel, { color: menuTextColor }]}>Agenda and deadlines</Text><ChevronRight size={18} color={menuIconColor} /></TouchableOpacity>
                   {isIteUser(user) && (
                     <TouchableOpacity
                       style={styles.menuRow}
@@ -420,6 +428,22 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                     <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Workspace Planner</Text>
                     <ChevronRight size={14} color={menuSecondaryTextColor} />
                   </TouchableOpacity>
+
+                  {isIcsUser(user) && (
+                    <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/student/codelab')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="CodeLab">
+                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}><Code2 size={16} color={menuIconColor} /></View>
+                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>CodeLab</Text>
+                      <ChevronRight size={14} color={menuSecondaryTextColor} />
+                    </TouchableOpacity>
+                  )}
+
+                  {isIcsUser(user) && (
+                    <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/student/practical-labs')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Practical Labs">
+                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}><FlaskConical size={16} color={menuIconColor} /></View>
+                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Practical Labs</Text>
+                      <ChevronRight size={14} color={menuSecondaryTextColor} />
+                    </TouchableOpacity>
+                  )}
 
                   {isIcsUser(user) && (
                     <TouchableOpacity
@@ -498,6 +522,22 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                   </TouchableOpacity>
 
                   {isIcsUser(user) && (
+                    <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/teacher/codelab')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="CodeLab">
+                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}><Code2 size={16} color={menuIconColor} /></View>
+                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>CodeLab</Text>
+                      <ChevronRight size={14} color={menuSecondaryTextColor} />
+                    </TouchableOpacity>
+                  )}
+
+                  {isIcsUser(user) && (
+                    <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/teacher/practical-labs')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Practical Labs">
+                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}><FlaskConical size={16} color={menuIconColor} /></View>
+                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Practical Labs</Text>
+                      <ChevronRight size={14} color={menuSecondaryTextColor} />
+                    </TouchableOpacity>
+                  )}
+
+                  {isIcsUser(user) && (
                     <TouchableOpacity
                       style={styles.menuRow}
                       onPress={() => handleNavigate('/teacher/knowledge-exchange')}
@@ -515,26 +555,20 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                 </>
               )}
 
+              {role === 'TEACHER' && isIcsUser(user) && (
+                <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/teacher/codelab?view=instructor')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="CodeLab Analytics">
+                  <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}><BarChart2 size={16} color={menuIconColor} /></View>
+                  <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>CodeLab Analytics</Text>
+                  <ChevronRight size={14} color={menuSecondaryTextColor} />
+                </TouchableOpacity>
+              )}
+
               {/* More on the Web Section */}
               <Text style={[styles.sectionLabel, { color: menuSecondaryTextColor, marginTop: 14 }]}>MORE ON THE WEB</Text>
 
               {role === 'STUDENT' ? (
                 <>
-                  {isIcsUser(user) && (
-                    <TouchableOpacity
-                      style={styles.menuRow}
-                      onPress={() => handleOpenWeb('/activities/codelab')}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel="Open Interactive CodeLab on web"
-                    >
-                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
-                        <Code2 size={16} color={menuIconColor} />
-                      </View>
-                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Interactive CodeLab</Text>
-                      <ExternalLink size={12} color={menuSecondaryTextColor} />
-                    </TouchableOpacity>
-                  )}
+
 
                   <TouchableOpacity
                     style={styles.menuRow}
@@ -568,19 +602,7 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                 <>
                   {isIcsUser(user) && (
                     <>
-                      <TouchableOpacity
-                        style={styles.menuRow}
-                        onPress={() => handleOpenWeb('/activities/codelab/instructor')}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel="CodeLab Analytics on web"
-                      >
-                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
-                          <Code2 size={16} color={menuIconColor} />
-                        </View>
-                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>CodeLab Analytics</Text>
-                        <ExternalLink size={12} color={menuSecondaryTextColor} />
-                      </TouchableOpacity>
+
 
                       <TouchableOpacity
                         style={styles.menuRow}
@@ -721,8 +743,8 @@ export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
               borderRadius: canvasBorderRadius,
               opacity: canvasOpacity,
               transform: [
-                { scale: canvasScale },
                 { translateX: canvasTranslateX },
+                { scale: canvasScale },
               ],
             },
             isOpen && styles.canvasShadow,
@@ -839,6 +861,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   menuRow: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 7,
@@ -847,6 +870,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   compactThemeRow: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

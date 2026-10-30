@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { isIcsUser } from '../../../../src/lib/ite-eligibility';
 import {
   View,
   Text,
@@ -21,6 +23,11 @@ import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import type { Course } from '@lms/types';
 
 export default function TeacherCoursesScreen() {
+  const user = useAuthStore(s => s.user);
+  return isIcsUser(user) ? <IcsDashboardScreen teacher coursesOnly /> : <TeacherCourses />;
+}
+
+function TeacherCourses() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);

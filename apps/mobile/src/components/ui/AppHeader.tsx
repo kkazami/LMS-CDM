@@ -52,6 +52,7 @@ export function HeaderIconButton({
 
 export interface AppHeaderProps {
   title: string;
+  titleNumberOfLines?: number;
   subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
@@ -69,6 +70,7 @@ export interface AppHeaderProps {
  */
 export function AppHeader({
   title,
+  titleNumberOfLines = 1,
   subtitle,
   showBack = false,
   onBack,
@@ -122,7 +124,7 @@ export function AppHeader({
                 lineHeight: font(26),
               },
             ]}
-            numberOfLines={1}
+            numberOfLines={titleNumberOfLines}
             maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             {title}

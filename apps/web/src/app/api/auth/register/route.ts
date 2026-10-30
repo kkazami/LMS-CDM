@@ -1,3 +1,4 @@
+import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse } from 'next/server';
 import { hash, compare } from 'bcryptjs';
 import { db } from '@/lib/db';
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     const { token, expiresAt } = await createSession(user.id, { userAgent: request.headers.get('user-agent') || undefined, ipAddress: getClientIp(request) }, user.password!, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState, ...(profile ? { googleSubject: profile.sub } : {}) });
     await clearGoogleProfile();
     const requiresEnrollment = await needsClassEnrollment(user);
-    return NextResponse.json({ message: 'Account ready.', token, expiresAt: expiresAt.toISOString(), redirectTo: requiresEnrollment ? '/join-class' : `/${institute.code}/students`, user: { id: user.id, name: user.name, email: user.email, studentNumber: user.studentNumber, role: user.role, requiresEnrollment, instituteId: institute.id, institute: { code: institute.code, name: institute.name } } }, { status: 200, headers: getCorsHeaders(request) });
+    return NextResponse.json({ mobileCapabilities, message: 'Account ready.', token, expiresAt: expiresAt.toISOString(), redirectTo: requiresEnrollment ? '/join-class' : `/${institute.code}/students`, user: { id: user.id, name: user.name, email: user.email, studentNumber: user.studentNumber, role: user.role, requiresEnrollment, instituteId: institute.id, institute: { code: institute.code, name: institute.name } } }, { status: 200, headers: getCorsHeaders(request) });
   } catch (error) {
     if ((error as { code?: string })?.code === 'P2002') return Response.json({ message: 'An account already uses this email or student ID.' }, { status: 409 });
     return accountErrorResponse(error);

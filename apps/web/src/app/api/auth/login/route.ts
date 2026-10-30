@@ -1,3 +1,4 @@
+import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse, after } from "next/server";
 import { getInstituteName } from "@lms/types";
 import { compare } from "bcryptjs";
@@ -193,11 +194,13 @@ export async function POST(request: Request) {
     // 9. Return opaque token (NOT internal session.id)
     return NextResponse.json(
       {
+        mobileCapabilities,
         message: "Login successful.",
         token, // Opaque client-facing bearer token
         expiresAt: expiresAt.toISOString(),
         user: {
           id: user.id,
+          instituteId: user.instituteId,
           name: user.name,
           email: user.email,
           role: user.role,

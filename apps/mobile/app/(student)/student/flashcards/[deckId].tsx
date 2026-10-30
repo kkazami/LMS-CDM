@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { radius, spacing } from '../../../../src/lib/theme';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { FlashcardCard } from '@lms/types';
+import { queueCardReview, queueCardCompletion, syncCardQueue } from '../../../../src/lib/flashcard-queue';
 
 export default function StudentFlashcardStudyScreen() {
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
@@ -53,6 +54,28 @@ export default function StudentFlashcardStudyScreen() {
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [expAwarded, setExpAwarded] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const startedAt = useRef(Date.now());
+  const completionKey = useRef(`cards-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+  const finishSession = async () => {
+    const key = completionKey.current;
+    const durationSeconds = Math.floor((Date.now() - startedAt.current) / 1000);
+    if (durationSeconds < 5) {
+      setErrorMessage('Your reviews are saved. A session must last at least 5 seconds to receive a reward.');
+      return;
+    }
+    try {
+      await queueCardCompletion({ deckId: deckId!, cardsReviewed: cards.length, durationSeconds, idempotencyKey: completionKey.current });
+      const res = await syncCardQueue();
+      if (completionKey.current !== key) return;
+      setExpAwarded(previous => Math.max(previous, res.expEarned ?? 0));
+      setErrorMessage(null);
+    } catch {
+      setErrorMessage('Saved on this device · sync pending. Reconnect and retry to confirm your reviews and reward.');
+    }
+  };
 
   const loadCards = async () => {
     if (!deckId) return;
@@ -86,50 +109,40 @@ export default function StudentFlashcardStudyScreen() {
   const currentCard = cards[currentIndex];
 
   const handleResponse = async (status: 'correct' | 'incorrect') => {
-    if (!currentCard || !deckId) return;
+    if (!currentCard || !deckId || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setErrorMessage(null);
+    try {
+      await queueCardReview(currentCard.id, status === 'correct' ? 'knew_it' : 'still_learning');
+    } catch {
+      setErrorMessage('This review could not save on this device. Reconnect to verify your sign-in, then tap your answer again.');
+      savingRef.current = false;
+      setSaving(false);
+      return;
+    }
 
     const nextCorrect = status === 'correct' ? correctCount + 1 : correctCount;
     const nextIncorrect = status === 'incorrect' ? incorrectCount + 1 : incorrectCount;
 
     if (status === 'correct') setCorrectCount(nextCorrect);
     else setIncorrectCount(nextIncorrect);
-
-    // Record card progress in background
-    api.flashcards.recordProgress(currentCard.id, status).catch(() => {});
+    void syncCardQueue().catch(() => setErrorMessage('Saved on this device · sync pending. Your reviews will retry after you reconnect.'));
 
     if (currentIndex + 1 < cards.length) {
       setCurrentIndex((prev) => prev + 1);
       setIsFlipped(false);
       setShowHint(false);
     } else {
-      // Session finished! Complete session and award EXP
       setSessionCompleted(true);
-      try {
-        const stats = {
-          totalCards: cards.length,
-          correct: nextCorrect,
-          incorrect: nextIncorrect,
-          unseen: 0,
-        };
-        const res = await api.flashcards.completeSession(deckId, stats);
-        setExpAwarded(res?.expEarned || 50);
-
-        try {
-          Burnt.toast({
-            title: 'Study Session Finished!',
-            message: `+${res?.expEarned || 50} EXP granted`,
-            preset: 'done',
-          });
-        } catch {
-          // Fallback
-        }
-      } catch {
-        setExpAwarded(30);
-      }
+      await finishSession();
     }
+    savingRef.current = false;
+    setSaving(false);
   };
 
   const handleRestart = () => {
+    if (savingRef.current) return;
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowHint(false);
@@ -137,6 +150,8 @@ export default function StudentFlashcardStudyScreen() {
     setIncorrectCount(0);
     setSessionCompleted(false);
     setExpAwarded(0);
+    startedAt.current = Date.now();
+    completionKey.current = `cards-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   };
 
   const progressPercent = cards.length > 0 ? ((currentIndex + (sessionCompleted ? 1 : 0)) / cards.length) * 100 : 0;
@@ -163,7 +178,7 @@ export default function StudentFlashcardStudyScreen() {
         {errorMessage && (
           <ErrorBanner
             message={errorMessage}
-            onRetry={loadCards}
+            onRetry={sessionCompleted ? finishSession : loadCards}
             onDismiss={() => setErrorMessage(null)}
             retryAccessibilityLabel="Retry loading flashcards"
             style={{ marginBottom: s(spacing.md) }}
@@ -468,6 +483,8 @@ export default function StudentFlashcardStudyScreen() {
                     paddingVertical: s(spacing.md),
                   },
                 ]}
+                disabled={saving}
+                accessibilityState={{ disabled: saving, busy: saving }}
                 onPress={() => handleResponse('incorrect')}
                 activeOpacity={0.8}
               >
@@ -492,6 +509,8 @@ export default function StudentFlashcardStudyScreen() {
                     paddingVertical: s(spacing.md),
                   },
                 ]}
+                disabled={saving}
+                accessibilityState={{ disabled: saving, busy: saving }}
                 onPress={() => handleResponse('correct')}
                 activeOpacity={0.8}
               >

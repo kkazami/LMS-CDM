@@ -23,6 +23,7 @@ const attachment = z.object({ url: attachmentLocation, fileName: z.string().max(
 export const submissionInput = z.object({
   syllabusItemId: id, status: z.enum(['SUBMITTED', 'DRAFT']).default('SUBMITTED'),
   attachmentUrl: attachmentLocation.optional(), fileName: z.string().max(255).optional(), attachments: z.array(attachment).max(20).optional(),
+  replaceAttachments: z.boolean().optional(),
 }).strict();
 export const gradeInput = z.object({ submissionId: id, grade: z.number().finite().nonnegative(), feedback: z.string().max(10000).optional() }).strict();
 
@@ -64,8 +65,9 @@ export async function saveSubmission(actor: CourseActor, courseId: string, raw: 
       update: { status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) }, create: { syllabusItemId: item.id, studentId: actor.id, status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) },
     });
     const files = [...(input.attachments ?? []), ...(input.attachmentUrl ? [{ url: input.attachmentUrl, fileName: input.fileName || 'Submission Link', type: 'LINK' as const }] : [])];
+    for (const file of files) await requireOwnedUpload(tx, actor, file.url);
+    if (input.replaceAttachments) await tx.submissionAttachment.deleteMany({ where: { submissionId: saved.id } });
     for (const file of files) {
-      await requireOwnedUpload(tx, actor, file.url);
       const data = { submissionId: saved.id, url: file.url, fileName: file.fileName || 'Attachment', type: file.type || 'FILE' };
       if (!await tx.submissionAttachment.findFirst({ where: data })) await tx.submissionAttachment.create({ data });
     }

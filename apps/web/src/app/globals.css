@@ -358,6 +358,23 @@ html {
 }
 
 /* ─── Confetti Falling Animation ─── */
+/* Native feature screens already supply navigation and safe-area insets. */
+html[data-native-feature="true"] .dashboard-sidebar,
+html[data-native-feature="true"] .dashboard-workspace-shell > header,
+html[data-native-feature="true"] [data-native-chrome] { display: none !important; }
+html[data-native-feature="true"] .dashboard-workspace-shell { padding-left: 0 !important; }
+html[data-native-feature="true"] .dashboard-workspace-shell > main { padding: 16px 16px 24px; }
+html[data-native-feature="true"] .dashboard-workspace-shell > main:has([data-codelab-workspace]) { padding: 0; }
+html[data-native-feature="true"] [data-practical-lab] > .sticky { top: 0; }
+html[data-native-feature="true"] [data-practical-lab] :is(button, select, input:not([type="checkbox"])) { min-height: 48px; }
+html[data-native-reduced-motion="true"] *,
+html[data-native-reduced-motion="true"] *::before,
+html[data-native-reduced-motion="true"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+@media (max-width: 767px) {
+  html[data-native-feature="true"] input,
+  html[data-native-feature="true"] textarea,
+  html[data-native-feature="true"] select { font-size: 16px; }
+}
 .dashboard-workspace-shell:has([data-codelab-workspace]) {
   display: flex;
   flex-direction: column;

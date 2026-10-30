@@ -49,6 +49,7 @@ export interface LabAttempt {
   revisionDueAt: string | null; evidenceToken?: string | null;
   version: LabVersion; assignment: LabAssignment; responses: LabResponse[];
   submissions: LabSubmission[]; reviews: LabReview[];
+  gradebookHistory?: { id: string; action: string; reason: string; score: number | null; revisionDueAt: string | null; createdAt: string; instructor: string }[];
   student?: { id: string; name: string };
 }
 export const labStatusLabel: Record<string, string> = {

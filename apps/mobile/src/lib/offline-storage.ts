@@ -1,16 +1,17 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
+import { studentScope, scopeIsCurrent } from './student-scope';
 
 const CACHE_DIR = `${FileSystem.documentDirectory || ''}lms_offline_cache/`;
 
-async function ensureCacheDirectory(): Promise<boolean> {
+async function ensureCacheDirectory(directory: string): Promise<boolean> {
   if (Platform.OS === 'web' || !FileSystem.documentDirectory) {
     return false;
   }
   try {
-    const dirInfo = await FileSystem.getInfoAsync(CACHE_DIR);
+    const dirInfo = await FileSystem.getInfoAsync(directory);
     if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(CACHE_DIR, { intermediates: true });
+      await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
     }
     return true;
   } catch {
@@ -22,15 +23,18 @@ async function ensureCacheDirectory(): Promise<boolean> {
  * Persists data to local filesystem cache for offline viewing.
  */
 export async function setCachedData<T>(key: string, data: T): Promise<void> {
+  const scope = studentScope();
+  if (!scope.owner) return;
+  const directory = `${CACHE_DIR}v2/${encodeURIComponent(scope.owner)}/`;
   try {
-    const isReady = await ensureCacheDirectory();
-    if (!isReady) return;
+    const isReady = await ensureCacheDirectory(directory);
+    if (!isReady || !scopeIsCurrent(scope)) return;
 
     const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filePath = `${CACHE_DIR}${safeKey}.json`;
+    const filePath = `${directory}${safeKey}.json`;
     await FileSystem.writeAsStringAsync(filePath, JSON.stringify(data));
-  } catch (err) {
-    console.warn(`Failed to write offline cache for key: ${key}`, err);
+  } catch {
+    // Cache writes must never prevent the online view from working.
   }
 }
 
@@ -38,17 +42,20 @@ export async function setCachedData<T>(key: string, data: T): Promise<void> {
  * Retrieves cached data from local filesystem if available.
  */
 export async function getCachedData<T>(key: string): Promise<T | null> {
+  const scope = studentScope();
+  if (!scope.owner) return null;
+  const directory = `${CACHE_DIR}v2/${encodeURIComponent(scope.owner)}/`;
   try {
-    const isReady = await ensureCacheDirectory();
+    const isReady = await ensureCacheDirectory(directory);
     if (!isReady) return null;
 
     const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filePath = `${CACHE_DIR}${safeKey}.json`;
+    const filePath = `${directory}${safeKey}.json`;
     const fileInfo = await FileSystem.getInfoAsync(filePath);
     if (!fileInfo.exists) return null;
 
     const content = await FileSystem.readAsStringAsync(filePath);
-    return JSON.parse(content) as T;
+    return scopeIsCurrent(scope) ? JSON.parse(content) as T : null;
   } catch {
     return null;
   }
@@ -58,12 +65,14 @@ export async function getCachedData<T>(key: string): Promise<T | null> {
  * Clears specific key or all offline caches.
  */
 export async function clearCachedData(key?: string): Promise<void> {
+  const scope = studentScope();
   try {
     if (!FileSystem.documentDirectory) return;
 
     if (key) {
       const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filePath = `${CACHE_DIR}${safeKey}.json`;
+      if (!scope.owner) return;
+      const filePath = `${CACHE_DIR}v2/${encodeURIComponent(scope.owner)}/${safeKey}.json`;
       await FileSystem.deleteAsync(filePath, { idempotent: true });
     } else {
       await FileSystem.deleteAsync(CACHE_DIR, { idempotent: true });

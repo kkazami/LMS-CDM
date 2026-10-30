@@ -57,3 +57,9 @@ export function responseComplete(step: LabStepInput, raw: unknown, files = 0): b
     }
   } catch { return false; }
 }
+
+/** Explicit instructor decisions; never creates a student submission snapshot. */
+export const gradebookLabInput = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('GRADE'), studentId: idSchema, expectedRevision: z.number().int().nonnegative().nullable(), idempotencyKey: keySchema, reason: text.min(1).max(2000), score: z.number().finite().nonnegative().max(99999999).refine(value => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001, 'Use at most two decimal places.') }).strict(),
+  z.object({ action: z.literal('REOPEN'), studentId: idSchema, expectedRevision: z.number().int().nonnegative().nullable(), idempotencyKey: keySchema, reason: text.min(1).max(2000), revisionDueAt: z.string().datetime({ offset: true }) }).strict(),
+]);

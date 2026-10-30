@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { isIcsUser } from '../../../../src/lib/ite-eligibility';
 import {
   View,
   Text,
@@ -15,13 +17,18 @@ import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Card } from '../../../../src/components/common/Card';
-import { Screen, AppHeader, ErrorBanner } from '../../../../src/components/ui';
+import { Screen, AppHeader, ErrorBanner, SkeletonBlock } from '../../../../src/components/ui';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import type { Course } from '@lms/types';
 
 export default function StudentCoursesScreen() {
+  const user = useAuthStore(s => s.user);
+  return isIcsUser(user) ? <IcsDashboardScreen coursesOnly /> : <StudentCourses />;
+}
+
+function StudentCourses() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -112,7 +119,7 @@ export default function StudentCoursesScreen() {
       {/* Courses List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <View style={{ width: '100%', gap: 16, padding: 20 }}><SkeletonBlock height={100} width="100%" /><SkeletonBlock height={100} width="100%" /><SkeletonBlock height={100} width="100%" /></View>
         </View>
       ) : (
         <FlatList

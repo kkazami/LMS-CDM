@@ -74,11 +74,16 @@ export interface ClassworkSubmission {
 
 export interface ClassworkItem {
   id: string;
-  type: 'ASSIGNMENT' | 'QUIZ' | 'MATERIAL';
+  type: 'ASSIGNMENT' | 'QUIZ' | 'MATERIAL' | 'EXAM' | 'PROJECT' | 'ACTIVITY';
+  formId?: string | null;
+  opensAt?: string | null;
   title: string;
   description: string;
   maxPoints?: number | null;
   dueDate?: string | null;
+  labAssignmentId?: string | null;
+  labStatus?: string | null;
+  labUrl?: string | null;
   orderIndex: number;
   attachments?: ClassworkAttachment[];
   submission?: ClassworkSubmission | null;

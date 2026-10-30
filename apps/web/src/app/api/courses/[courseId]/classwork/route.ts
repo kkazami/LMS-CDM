@@ -47,6 +47,7 @@ export async function GET(request: Request, context: RouteContext) {
       db.syllabusItem.findMany({
         where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
         include: {
+          form: { select: { id: true, opensAt: true } },
           labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
           attachments: {
             select: {
@@ -100,6 +101,8 @@ export async function GET(request: Request, context: RouteContext) {
         revisionDueAt: currentLabAttempt(item.labAssignment)?.revisionDueAt?.toISOString() ?? null,
         labUrl: item.labAssignment ? `/ics/courses/${courseId}/labs/${item.labAssignment.id}` : null,
         type: item.type, // "ASSIGNMENT" | "QUIZ" | "MATERIAL" | "EXAM"
+        formId: item.form?.id ?? null,
+        opensAt: item.form?.opensAt?.toISOString() ?? null,
         title: item.title,
         description: item.description,
         maxPoints: item.maxPoints,

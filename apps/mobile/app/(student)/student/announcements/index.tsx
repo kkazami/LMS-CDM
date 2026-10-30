@@ -1,3 +1,4 @@
+import { PagedContent } from '../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -388,7 +389,7 @@ export default function StudentAnnouncementsScreen() {
             </Text>
           </Card>
         ) : (
-          filteredAnnouncements.map((item) => (
+          <PagedContent items={filteredAnnouncements}>{(item) => (
             <View
               key={item.id}
               style={[
@@ -506,7 +507,7 @@ export default function StudentAnnouncementsScreen() {
                 </View>
               )}
             </View>
-          ))
+          )}</PagedContent>
         )}
       </View>
     </Screen>

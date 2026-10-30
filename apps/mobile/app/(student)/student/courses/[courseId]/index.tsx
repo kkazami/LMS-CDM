@@ -1,3 +1,6 @@
+import { getOnPrimaryColor } from '../../../../../src/lib/design-system';
+import { markUsefulContent, beginUsefulContent } from '../../../../../src/lib/performance';
+import { PagedContent } from '../../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -22,9 +25,6 @@ import {
   Image as ImageIcon,
   Trash2,
 } from 'lucide-react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
-import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { useResponsive } from '../../../../../src/hooks/useResponsive';
@@ -54,13 +54,17 @@ import type {
 type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'GRADES';
 
 export default function StudentCourseHubScreen() {
-  const { courseId } = useLocalSearchParams<{ courseId: string }>();
+  const { courseId, tab } = useLocalSearchParams<{ courseId: string; tab?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
+  const user = useAuthStore((s) => s.user);
   const theme = useTheme();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<TabType>('STREAM');
+  const [activeTab, setActiveTab] = useState<TabType>(tab === 'GRADES' ? 'GRADES' : tab === 'STREAM' ? 'STREAM' : 'CLASSWORK');
+  useEffect(() => {
+    if (tab && ['STREAM', 'CLASSWORK', 'PEOPLE', 'GRADES'].includes(tab)) setActiveTab(tab as TabType);
+  }, [tab]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -75,11 +79,6 @@ export default function StudentCourseHubScreen() {
   // Classwork filter
   const [classworkFilter, setClassworkFilter] = useState<'ALL' | 'ASSIGNMENT' | 'QUIZ' | 'MATERIAL'>('ALL');
 
-  // Submission Drawer / Modal state
-  const [selectedAssignment, setSelectedAssignment] = useState<ClassworkItem | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [localAttachments, setLocalAttachments] = useState<Array<{ url: string; fileName: string; type: string }>>([]);
-
   const loadAllCourseData = async () => {
     if (!courseId) return;
 
@@ -87,30 +86,31 @@ export default function StudentCourseHubScreen() {
       setErrorMessage(null);
       const [courseRes, streamRes, classworkRes, peopleRes, gradesRes] = await Promise.allSettled([
         api.courses.get(courseId),
-        api.courses.getStream(courseId),
-        api.courses.getClasswork(courseId),
-        api.courses.getPeople(courseId),
-        api.courses.getGrades(courseId),
+        activeTab === 'STREAM' ? api.courses.getStream(courseId) : Promise.resolve(null),
+        activeTab === 'CLASSWORK' ? api.courses.getClasswork(courseId) : Promise.resolve(null),
+        activeTab === 'PEOPLE' ? api.courses.getPeople(courseId) : Promise.resolve(null),
+        activeTab === 'GRADES' ? api.courses.getGrades(courseId) : Promise.resolve(null),
       ]);
 
       let loadedSomething = false;
       if (courseRes.status === 'fulfilled' && courseRes.value?.course) {
         setCourse(courseRes.value.course as CourseDetail);
+        markUsefulContent('course');
         loadedSomething = true;
       }
-      if (streamRes.status === 'fulfilled') {
+      if (streamRes.status === 'fulfilled' && streamRes.value) {
         setStream(streamRes.value);
         loadedSomething = true;
       }
-      if (classworkRes.status === 'fulfilled') {
+      if (classworkRes.status === 'fulfilled' && classworkRes.value) {
         setClasswork(classworkRes.value);
         loadedSomething = true;
       }
-      if (peopleRes.status === 'fulfilled') {
+      if (peopleRes.status === 'fulfilled' && peopleRes.value) {
         setPeople(peopleRes.value);
         loadedSomething = true;
       }
-      if (gradesRes.status === 'fulfilled') {
+      if (gradesRes.status === 'fulfilled' && gradesRes.value) {
         setGrades(gradesRes.value);
         loadedSomething = true;
       }
@@ -127,157 +127,13 @@ export default function StudentCourseHubScreen() {
   };
 
   useEffect(() => {
+    beginUsefulContent('course');
     loadAllCourseData();
-  }, [courseId]);
+  }, [courseId, activeTab]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadAllCourseData();
-  };
-
-  // Document Picker
-  const handlePickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
-        setSubmitting(true);
-        try {
-          const uploadRes = await api.upload.file(file.uri, file.name, file.mimeType || 'application/octet-stream');
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
-          ]);
-        } catch (uploadErr: any) {
-          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload file to the server.';
-          Alert.alert('Upload Failed', msg);
-        } finally {
-          setSubmitting(false);
-        }
-      }
-    } catch (err: any) {
-      Alert.alert('File Error', err?.message || 'Could not open document picker.');
-    }
-  };
-
-  // Image Picker
-  const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const fileName = asset.fileName || `submission_${Date.now()}.jpg`;
-        setSubmitting(true);
-        try {
-          const uploadRes = await api.upload.file(asset.uri, fileName, asset.mimeType || 'image/jpeg');
-          setLocalAttachments((prev) => [
-            ...prev,
-            { url: uploadRes.url, fileName: uploadRes.fileName, type: 'FILE' },
-          ]);
-        } catch (uploadErr: any) {
-          const msg = uploadErr?.message || uploadErr?.bodyData?.error || 'Could not upload image to the server.';
-          Alert.alert('Upload Failed', msg);
-        } finally {
-          setSubmitting(false);
-        }
-      }
-    } catch (err: any) {
-      Alert.alert('Image Error', err?.message || 'Could not open photo gallery.');
-    }
-  };
-
-  // Submit Assignment
-  const handleSubmitAssignment = async () => {
-    if (!selectedAssignment || !courseId) return;
-
-    // Reject unuploaded local device URIs before sending to server
-    const invalidAttachment = localAttachments.find(
-      (att) => !att.url || att.url.startsWith('file:') || att.url.startsWith('content:')
-    );
-    if (invalidAttachment) {
-      Alert.alert(
-        'Upload Required',
-        `The file "${invalidAttachment.fileName}" has not been uploaded to the server yet. Please re-attach it or remove it before turning in.`
-      );
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const primaryAtt = localAttachments[0];
-      await api.courses.submitAssignment(
-        courseId,
-        selectedAssignment.id,
-        'SUBMITTED',
-        primaryAtt?.url,
-        primaryAtt?.fileName,
-        undefined,
-        localAttachments.length > 0 ? localAttachments : undefined
-      );
-
-      try {
-        Burnt.toast({
-          title: 'Assignment Submitted!',
-          message: 'Work turned in successfully.',
-          preset: 'done',
-        });
-      } catch {
-        // Fallback
-      }
-
-      setSelectedAssignment(null);
-      setLocalAttachments([]);
-      loadAllCourseData();
-    } catch (err: any) {
-      const serverMessage = err?.message || err?.error?.message || err?.bodyData?.message || err?.bodyData?.error;
-      Alert.alert('Submission Failed', serverMessage || 'Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Unsubmit Assignment
-  const handleUnsubmitAssignment = async () => {
-    if (!selectedAssignment || !courseId) return;
-
-    Alert.alert('Unsubmit Assignment?', 'You can make changes and resubmit your work before the deadline.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Unsubmit',
-        style: 'destructive',
-        onPress: async () => {
-          setSubmitting(true);
-          try {
-            await api.courses.submitAssignment(courseId, selectedAssignment.id, 'DRAFT');
-            try {
-              Burnt.toast({
-                title: 'Assignment Unsubmitted',
-                message: 'Draft status restored.',
-                preset: 'done',
-              });
-            } catch {
-              // Fallback
-            }
-            setSelectedAssignment(null);
-            setLocalAttachments([]);
-            loadAllCourseData();
-          } catch (err: any) {
-            Alert.alert('Error', err?.message || 'Could not unsubmit assignment.');
-          } finally {
-            setSubmitting(false);
-          }
-        },
-      },
-    ]);
   };
 
   const getInitials = (name?: string) => {
@@ -321,6 +177,10 @@ export default function StudentCourseHubScreen() {
           </View>
         }
       />
+
+      {user?.institute.code.toLowerCase() === 'ics' && course && (
+        <Button title="Practical Labs" variant="outline" style={{ margin: 16 }} onPress={() => router.push({ pathname: '/student/practical-labs', params: { courseId } })} />
+      )}
 
       {/* 4 Segmented Navigation Tabs */}
       <View
@@ -467,7 +327,7 @@ export default function StudentCourseHubScreen() {
                 {/* Pinned Broadcast Alerts */}
                 {Boolean(stream?.broadcasts && stream.broadcasts.length > 0) && (
                   <View style={[styles.broadcastSection, { marginBottom: s(spacing.md) }]}>
-                    {stream!.broadcasts.map((b) => (
+                    {<PagedContent items={stream!.broadcasts}>{(b) => (
                       <View
                         key={b.id}
                         style={[
@@ -513,7 +373,7 @@ export default function StudentCourseHubScreen() {
                           &bull; Broadcast by {b.senderName}
                         </Text>
                       </View>
-                    ))}
+                    )}</PagedContent>}
                   </View>
                 )}
 
@@ -560,7 +420,7 @@ export default function StudentCourseHubScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  stream.announcements.map((ann) => (
+                  <PagedContent items={stream.announcements}>{(ann) => (
                     <View
                       key={ann.id}
                       style={[
@@ -616,7 +476,7 @@ export default function StudentCourseHubScreen() {
                         {ann.content}
                       </Text>
                     </View>
-                  ))
+                  )}</PagedContent>
                 )}
               </View>
             )}
@@ -650,6 +510,8 @@ export default function StudentCourseHubScreen() {
                           styles.filterPill,
                           {
                             borderRadius: radius.full,
+                            minHeight: 48,
+                            justifyContent: 'center',
                             paddingHorizontal: s(spacing.md),
                             paddingVertical: s(spacing.xs),
                             backgroundColor: isSelected ? theme.colors.primary : theme.colors.surfaceAlt,
@@ -663,7 +525,7 @@ export default function StudentCourseHubScreen() {
                             styles.filterPillText,
                             {
                               fontSize: font(12),
-                              color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
+                              color: isSelected ? getOnPrimaryColor(theme) : theme.colors.textSecondary,
                               fontWeight: isSelected ? '700' : '500',
                             },
                           ]}
@@ -708,7 +570,7 @@ export default function StudentCourseHubScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  filteredClassworkItems.map((item) => {
+                  <PagedContent items={filteredClassworkItems}>{(item) => {
                     const submission = item.submission;
                     const isGraded = submission?.status === 'GRADED' || typeof submission?.grade === 'number';
                     const isSubmitted = submission?.status === 'SUBMITTED';
@@ -728,18 +590,23 @@ export default function StudentCourseHubScreen() {
                           },
                         ]}
                         onPress={() => {
+                          if (item.labAssignmentId) {
+                            router.push({ pathname: '/student/practical-labs', params: { courseId, assignmentId: item.labAssignmentId } });
+                            return;
+                          }
                           if (item.type === 'MATERIAL') {
                             router.push(`/student/courses/${courseId}/materials/${item.id}` as any);
                             return;
                           }
-                          setSelectedAssignment(item);
-                          setLocalAttachments(
-                            submission?.attachments?.map((a) => ({
-                              url: a.url,
-                              fileName: a.fileName,
-                              type: 'FILE',
-                            })) || []
-                          );
+                          if (!Object.hasOwn(item, 'formId')) {
+                            Alert.alert('Backend update needed', 'Update the web backend before opening this work in the app. You can continue in the web portal.');
+                            return;
+                          }
+                          if (item.formId) {
+                            router.push({ pathname: '/student/assessment', params: { courseId, formId: item.formId } } as any);
+                            return;
+                          }
+                          router.push(`/student/courses/${courseId}/assignment/${item.id}` as any);
                         }}
                         activeOpacity={0.8}
                         accessibilityRole="button"
@@ -824,12 +691,12 @@ export default function StudentCourseHubScreen() {
                             style={[styles.submissionActionPrompt, { color: theme.colors.primary, fontSize: font(12) }]}
                             maxFontSizeMultiplier={maxFontSizeMultiplier}
                           >
-                            {item.type === 'MATERIAL' ? 'View Details' : submission ? 'View Submission' : 'Turn In & Submit'} &rarr;
+                            {item.labAssignmentId ? 'Open Practical Lab' : item.type === 'MATERIAL' ? 'View Details' : submission ? 'View Submission' : 'Turn In & Submit'} &rarr;
                           </Text>
                         </View>
                       </TouchableOpacity>
                     );
-                  })
+                  }}</PagedContent>
                 )}
               </View>
             )}
@@ -935,7 +802,7 @@ export default function StudentCourseHubScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  people.students.map((student) => (
+                  <PagedContent items={people.students}>{(student) => (
                     <View
                       key={student.id}
                       style={[
@@ -983,7 +850,7 @@ export default function StudentCourseHubScreen() {
                         </Text>
                       </View>
                     </View>
-                  ))
+                  )}</PagedContent>
                 )}
               </View>
             )}
@@ -1178,7 +1045,7 @@ export default function StudentCourseHubScreen() {
                     </Text>
                   </Card>
                 ) : (
-                  grades.items.map((item) => (
+                  <PagedContent items={grades.items}>{(item) => (
                     <View
                       key={item.id}
                       style={[
@@ -1239,7 +1106,7 @@ export default function StudentCourseHubScreen() {
                         </Text>
                       </View>
                     </View>
-                  ))
+                  )}</PagedContent>
                 )}
               </View>
             )}
@@ -1247,277 +1114,7 @@ export default function StudentCourseHubScreen() {
         )}
       </View>
 
-      {/* ==================== SUBMISSION / ASSIGNMENT FORM MODAL ==================== */}
-      <FormModal
-        visible={!!selectedAssignment}
-        onClose={() => setSelectedAssignment(null)}
-        title={selectedAssignment?.title || 'Assignment Details'}
-        subtitle={
-          selectedAssignment
-            ? `${selectedAssignment.type} ${selectedAssignment.maxPoints ? `• ${selectedAssignment.maxPoints} pts` : ''}`
-            : undefined
-        }
-        closeAccessibilityLabel="Close assignment modal"
-        actions={
-          selectedAssignment?.type !== 'MATERIAL' ? (
-            <View style={{ width: '100%' }}>
-              {selectedAssignment?.submission?.status === 'SUBMITTED' && !selectedAssignment.submission.isReturned ? (
-                <Button
-                  title="Unsubmit Assignment"
-                  onPress={handleUnsubmitAssignment}
-                  loading={submitting}
-                  variant="outline"
-                  style={{ width: '100%' }}
-                />
-              ) : selectedAssignment?.submission?.isReturned ? (
-                <View style={[styles.gradedNoticeBox, { paddingVertical: s(spacing.sm) }]}>
-                  <Text
-                    style={[styles.gradedNoticeText, { color: theme.colors.success, fontSize: font(13) }]}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    Assignment has been officially finalized.
-                  </Text>
-                </View>
-              ) : (
-                <Button
-                  title={localAttachments.length > 0 ? 'Turn In Assignment' : 'Mark as Done'}
-                  onPress={handleSubmitAssignment}
-                  loading={submitting}
-                  icon={CheckCircle2}
-                  style={{ width: '100%' }}
-                />
-              )}
-            </View>
-          ) : undefined
-        }
-      >
-        {/* Assignment Prompt */}
-        {Boolean(selectedAssignment?.description) && (
-          <View style={[styles.modalSection, { marginBottom: s(spacing.md) }]}>
-            <Text
-              style={[
-                styles.modalSectionHeading,
-                { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.xs) },
-              ]}
-              maxFontSizeMultiplier={maxFontSizeMultiplier}
-            >
-              INSTRUCTIONS
-            </Text>
-            <ClassworkDescription
-              content={selectedAssignment!.description}
-              textStyle={[
-                styles.modalPrompt,
-                { color: theme.colors.text, fontSize: font(14), lineHeight: font(20) },
-              ]}
-            />
-          </View>
-        )}
-
-        {/* Assignment Metadata */}
-        <View style={[styles.modalMetaRow, { gap: s(spacing.md), marginBottom: s(spacing.md) }]}>
-          {selectedAssignment?.maxPoints && (
-            <View style={[styles.modalMetaItem, { gap: 6 }]}>
-              <Award size={s(16)} color={theme.colors.primary} />
-              <Text
-                style={[styles.modalMetaText, { color: theme.colors.text, fontSize: font(12) }]}
-                maxFontSizeMultiplier={maxFontSizeMultiplier}
-              >
-                {selectedAssignment.maxPoints} Points Possible
-              </Text>
-            </View>
-          )}
-          {selectedAssignment?.dueDate && (
-            <View style={[styles.modalMetaItem, { gap: 6 }]}>
-              <Clock size={s(16)} color={theme.colors.warning} />
-              <Text
-                style={[styles.modalMetaText, { color: theme.colors.text, fontSize: font(12) }]}
-                maxFontSizeMultiplier={maxFontSizeMultiplier}
-              >
-                Due: {new Date(selectedAssignment.dueDate).toLocaleString()}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Syllabus Attachments from Instructor */}
-        {Boolean(selectedAssignment?.attachments && selectedAssignment.attachments.length > 0) && (
-          <View style={[styles.modalSection, { marginBottom: s(spacing.md) }]}>
-            <ClassworkAttachments
-              attachments={selectedAssignment?.attachments}
-              title="ATTACHED REFERENCE MATERIALS"
-            />
-          </View>
-        )}
-
-        {/* Graded Feedback if already evaluated */}
-        {selectedAssignment?.submission?.grade !== null &&
-          selectedAssignment?.submission?.grade !== undefined && (
-            <View
-              style={[
-                styles.feedbackBox,
-                {
-                  backgroundColor: theme.colors.successBg,
-                  borderColor: theme.colors.success,
-                  borderRadius: radius.md,
-                  padding: s(spacing.md),
-                  marginBottom: s(spacing.md),
-                },
-              ]}
-            >
-              <CheckCircle2 size={s(24)} color={theme.colors.success} />
-              <View style={{ flex: 1, marginLeft: s(spacing.sm) }}>
-                <Text
-                  style={[styles.feedbackTitle, { color: theme.colors.success, fontSize: font(14) }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Submission Graded: {selectedAssignment.submission.grade} / {selectedAssignment.maxPoints}
-                </Text>
-                <Text
-                  style={[styles.feedbackSubtitle, { color: theme.colors.textSecondary, fontSize: font(11), marginTop: 2 }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Returned on {selectedAssignment.submission.submittedAt ? new Date(selectedAssignment.submission.submittedAt).toLocaleDateString() : 'Official Assessment'}
-                </Text>
-              </View>
-            </View>
-          )}
-
-        {/* Student Uploads Section */}
-        {selectedAssignment?.type !== 'MATERIAL' && (
-          <View style={styles.modalSection}>
-            <Text
-              style={[
-                styles.modalSectionHeading,
-                { color: theme.colors.textSecondary, fontSize: font(11), marginBottom: s(spacing.xs) },
-              ]}
-              maxFontSizeMultiplier={maxFontSizeMultiplier}
-            >
-              YOUR SUBMISSION FILES
-            </Text>
-
-            {localAttachments.length === 0 ? (
-              <View
-                style={[
-                  styles.dropZone,
-                  {
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.surfaceAlt,
-                    borderRadius: radius.md,
-                    paddingVertical: s(spacing.xl),
-                    marginBottom: s(spacing.md),
-                  },
-                ]}
-              >
-                <UploadCloud size={s(32)} color={theme.colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.dropZoneText,
-                    { color: theme.colors.textSecondary, fontSize: font(13), marginTop: s(spacing.xs) },
-                  ]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  No files attached yet
-                </Text>
-              </View>
-            ) : (
-              localAttachments.map((file, idx) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.uploadedFileRow,
-                    {
-                      backgroundColor: theme.colors.surfaceAlt,
-                      borderColor: theme.colors.border,
-                      borderRadius: radius.md,
-                      paddingHorizontal: s(spacing.md),
-                      paddingVertical: s(spacing.sm),
-                      marginBottom: s(spacing.xs),
-                    },
-                  ]}
-                >
-                  <Paperclip size={s(16)} color={theme.colors.primary} />
-                  <Text
-                    style={[styles.uploadedFileName, { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) }]}
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    {file.fileName}
-                  </Text>
-                  {!selectedAssignment?.submission?.isReturned && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setLocalAttachments((prev) => prev.filter((_, i) => i !== idx));
-                      }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Delete attached file ${file.fileName}`}
-                    >
-                      <Trash2 size={s(16)} color={theme.colors.danger} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))
-            )}
-
-            {/* File Pickers */}
-            {!selectedAssignment?.submission?.isReturned && (
-              <View style={[styles.pickerActionsRow, { gap: s(spacing.md), marginTop: s(spacing.xs) }]}>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Attach Document"
-                  style={[
-                    styles.pickerBtn,
-                    {
-                      backgroundColor: theme.colors.surfaceAlt,
-                      borderColor: theme.colors.border,
-                      borderRadius: radius.md,
-                    },
-                  ]}
-                  onPress={handlePickDocument}
-                  activeOpacity={0.8}
-                >
-                  <FileUp size={s(18)} color={theme.colors.primary} />
-                  <Text
-                    style={[
-                      styles.pickerBtnText,
-                      { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
-                    ]}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    Add Document
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Attach Photo"
-                  style={[
-                    styles.pickerBtn,
-                    {
-                      backgroundColor: theme.colors.surfaceAlt,
-                      borderColor: theme.colors.border,
-                      borderRadius: radius.md,
-                    },
-                  ]}
-                  onPress={handlePickImage}
-                  activeOpacity={0.8}
-                >
-                  <ImageIcon size={s(18)} color={theme.colors.primary} />
-                  <Text
-                    style={[
-                      styles.pickerBtnText,
-                      { color: theme.colors.text, fontSize: font(13), marginLeft: s(spacing.xs) },
-                    ]}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    Add Photo
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      </FormModal>
+      {activeTab === 'GRADES' && !!grades && <View style={{ padding: 20 }}><Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Instructor feedback</Text>{grades.feedback.length ? <PagedContent items={grades.feedback}>{feedback => <View key={feedback.id} style={{ marginBottom: 20 }}><Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600' }}>{feedback.senderName}</Text><Text style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21 }}>{new Date(feedback.createdAt).toLocaleString()}</Text><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24, marginTop: 8 }}>{feedback.content}</Text></View>}</PagedContent> : <Text style={{ color: theme.colors.textSecondary, fontSize: 16, lineHeight: 24 }}>No private feedback has been posted yet. Check back after your instructor reviews your work.</Text>}</View>}
     </Screen>
   );
 }

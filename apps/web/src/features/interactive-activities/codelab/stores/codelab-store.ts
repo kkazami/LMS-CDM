@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { CodeLabLanguage, generateStarterCode, FuncSignature } from "../utils/starter-code";
 import { CodeSubmissionResponse } from "../utils/judge0-client";
+import { nativeDraftKey, readNativeDraft, writeNativeDraft } from '@/lib/native-draft';
 
 export interface TestCase {
   input: string;
@@ -23,6 +24,9 @@ export interface PasteEvent {
 }
 
 interface CodeLabState {
+  draftKey: string | null;
+  hasLocalDraft: boolean;
+  draftSaveError: boolean;
   // Config
   language: CodeLabLanguage;
   signature: FuncSignature | null;
@@ -56,7 +60,7 @@ interface CodeLabState {
   startedAt: string;
 
   // Actions
-  initialize: (lang: CodeLabLanguage, sig: FuncSignature | null, tests: TestCase[]) => void;
+  initialize: (lang: CodeLabLanguage, sig: FuncSignature | null, tests: TestCase[], problemKey?: string) => void;
   setLanguage: (lang: CodeLabLanguage) => void;
   updateCode: (code: string) => void;
   setExecuting: (exec: boolean) => void;
@@ -101,6 +105,7 @@ function buildEmptyCodeMap(): Record<CodeLabLanguage, string> {
 }
 
 export const useCodeLabStore = create<CodeLabState>((set, get) => ({
+  draftKey: null, hasLocalDraft: false, draftSaveError: false,
   language: "python",
   signature: null,
   testCases: [],
@@ -120,8 +125,10 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
   submissionCount: 0,
   startedAt: "",
 
-  initialize: (lang, sig, tests) => {
-    const codes = { ...get().codeByLanguage };
+  initialize: (lang, sig, tests, problemKey) => {
+    const draftKey = problemKey && nativeDraftKey(problemKey) ? problemKey : null;
+    const draft = draftKey ? readNativeDraft<Record<CodeLabLanguage, string>>(draftKey) : null;
+    const codes = { ...buildEmptyCodeMap(), ...draft };
     
     ALL_LANGUAGES.forEach((l) => {
       if (!codes[l]) {
@@ -130,6 +137,7 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
     });
 
     set({
+      draftKey, hasLocalDraft: !!draft, draftSaveError: false,
       language: lang,
       signature: sig,
       testCases: tests,
@@ -152,13 +160,12 @@ export const useCodeLabStore = create<CodeLabState>((set, get) => ({
 
   setLanguage: (lang) => set({ language: lang }),
   
-  updateCode: (code) =>
-    set((state) => ({
-      codeByLanguage: {
-        ...state.codeByLanguage,
-        [state.language]: code,
-      },
-    })),
+  updateCode: (code) => {
+    const state = get();
+    const codes = { ...state.codeByLanguage, [state.language]: code };
+    const saved = !state.draftKey || writeNativeDraft(state.draftKey, codes);
+    set({ codeByLanguage: codes, hasLocalDraft: !!state.draftKey, draftSaveError: !saved });
+  },
 
   setExecuting: (exec) => set({ isExecuting: exec }),
   setConsoleOutput: (out) => set({ consoleOutput: out }),

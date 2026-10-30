@@ -18,6 +18,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { TOUCH_TARGET } from '../../lib/typography';
 import type { AuthUser } from '@lms/types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ProfileEditModalProps {
   visible: boolean;
@@ -30,6 +31,7 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
   const setUser = useAuthStore((s) => s.setUser);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
@@ -46,7 +48,8 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
       setDepartment(user.department || '');
       setYearLevel(user.yearLevel || '');
     }
-  }, [visible, user]);
+  // A foreground session refresh must not replace edits the student is typing.
+  }, [visible, user?.id]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -90,13 +93,13 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
       visible={visible}
       animationType="slide"
       transparent={true}
-      onRequestClose={onClose}
+      onRequestClose={() => { if (!saving) onClose(); }}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
       >
-        <View style={[styles.modalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+        <View style={[styles.modalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, paddingBottom: Math.max(16, insets.bottom) }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
             <View>
@@ -109,6 +112,7 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
               accessibilityRole="button"
               accessibilityLabel="Close"
               onPress={onClose}
+              disabled={saving}
               style={styles.closeBtn}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -117,9 +121,11 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
           </View>
 
           {/* Form Fields */}
-          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Input
               label="Full Name *"
+              maxLength={100}
+              editable={!saving}
               value={name}
               onChangeText={setName}
               placeholder="e.g. John Doe"
@@ -127,6 +133,8 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
 
             <Input
               label="Bio / Academic Intro"
+              maxLength={300}
+              editable={!saving}
               value={bio}
               onChangeText={setBio}
               placeholder="Tell your peers or instructors about yourself..."
@@ -161,6 +169,7 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
             <View style={styles.buttonRow}>
               <Button
                 title="Cancel"
+                disabled={saving}
                 onPress={onClose}
                 variant="outline"
                 style={styles.cancelBtn}

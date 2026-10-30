@@ -34,6 +34,7 @@ export interface GradebookAssignment {
   gradingPeriod: ItemPeriod;
   id: string;
   labAssignmentId?: string | null;
+  labCanManage?: boolean;
   title: string;
   maxPoints: number | null;
   type: string;
@@ -47,6 +48,9 @@ export interface GradebookCellAttachment {
 }
 
 export interface GradebookCell {
+  labAttemptId?: string | null;
+  labRevision?: number | null;
+  labStatus?: string | null;
   submissionId: string | null;
   grade: number | null;
   status: string | null;

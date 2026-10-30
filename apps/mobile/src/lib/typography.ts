@@ -1,6 +1,7 @@
-import { Platform, PixelRatio, TextStyle } from 'react-native';
+import { Platform, TextStyle } from 'react-native';
 
-const fontScale = PixelRatio.getFontScale();
+// React Native Text already applies the system font scale.
+const fontScale = 1;
 
 export const typography = {
   // Display Hero

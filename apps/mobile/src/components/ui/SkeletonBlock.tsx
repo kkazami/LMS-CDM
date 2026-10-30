@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { radius } from '../../lib/theme';
+import { useReducedMotion } from '../../lib/design-system';
 
 export interface SkeletonBlockProps {
   width?: number | string;
@@ -24,8 +25,10 @@ export function SkeletonBlock({
 }: SkeletonBlockProps) {
   const theme = useTheme();
   const opacity = useRef(new Animated.Value(0.35)).current;
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) { opacity.setValue(0.6); return; }
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
@@ -42,7 +45,7 @@ export function SkeletonBlock({
     );
     animation.start();
     return () => animation.stop();
-  }, [opacity]);
+  }, [opacity, reducedMotion]);
 
   const backgroundColor = theme.isDark
     ? theme.colors.surfaceAlt

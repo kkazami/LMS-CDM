@@ -3,6 +3,8 @@ import type {
   LoginResponse,
   AuthUser,
   Course,
+  MobileDashboard,
+  ClassSchedule,
   CourseAnnouncementItem,
   CourseStreamResponse,
   CourseClassworkResponse,
@@ -20,7 +22,6 @@ import type {
   FlashcardDeck,
   FlashcardCard,
   FlashcardCardProgress,
-  FlashcardStudyStats,
   GamificationProfile,
   StudentBadge,
   LoginRewardResult,
@@ -55,6 +56,8 @@ export interface ApiClientConfig {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
   timeoutMs?: number;
+  onUnauthorized?: (token: string) => void;
+  onRequestComplete?: (measurement: { path: string; durationMs: number; bytes: number; status: number }) => void;
 }
 
 interface GradebookPayload {
@@ -69,31 +72,36 @@ interface GradebookPayload {
 export function createApiClient(config: ApiClientConfig) {
   const { baseUrl, getToken } = config;
 
-  async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  async function request<T>(path: string, options: RequestInit = {}, timeoutMs = config.timeoutMs ?? 30000): Promise<T> {
+    const startedAt = Date.now();
+    const requestToken = getToken ? await getToken() : null;
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: Record<string, string> = {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    if (getToken) {
-      const token = await getToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    if (requestToken) headers['Authorization'] = `Bearer ${requestToken}`;
+    const assertCurrentSession = async () => {
+      if (requestToken && getToken && requestToken !== await getToken()) {
+        throw new ApiClientError(0, 'This response belongs to a previous sign-in.');
       }
-    }
+    };
 
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (options.signal?.aborted) abort();
     else options.signal?.addEventListener('abort', abort, { once: true });
-    const timer = setTimeout(abort, config.timeoutMs ?? 30000);
+    const timer = setTimeout(abort, timeoutMs);
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         ...options,
+        credentials: requestToken ? 'omit' : options.credentials,
         headers,
         signal: controller.signal,
       });
+      await assertCurrentSession();
+      if (response.status === 401 && requestToken) config.onUnauthorized?.(requestToken);
 
       if (!response.ok) {
         let message = `HTTP ${response.status}: ${response.statusText || 'Request failed'}`;
@@ -126,6 +134,8 @@ export function createApiClient(config: ApiClientConfig) {
       }
 
       const text = await response.text();
+      await assertCurrentSession();
+      config.onRequestComplete?.({ path: path.split('?')[0], durationMs: Date.now() - startedAt, bytes: text.length, status: response.status });
       try {
         return JSON.parse(text);
       } catch {
@@ -150,6 +160,8 @@ export function createApiClient(config: ApiClientConfig) {
 
   return {
     auth: {
+      forgotPassword: (email: string) => request<{ message: string }>('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+      resetPassword: (email: string, otp: string, newPassword: string) => request<{ message: string }>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) }),
       register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>
         request<LoginResponse>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
       login: (data: LoginRequest) =>
@@ -158,7 +170,7 @@ export function createApiClient(config: ApiClientConfig) {
           body: JSON.stringify(data),
         }),
 
-      me: () => request<{ user: AuthUser }>('/api/auth/me'),
+      me: () => request<{ user: AuthUser; mobileCapabilities?: LoginResponse['mobileCapabilities'] }>('/api/auth/me'),
 
       refresh: () =>
         request<{ success: boolean; expiresAt: string }>('/api/auth/refresh', {
@@ -167,6 +179,13 @@ export function createApiClient(config: ApiClientConfig) {
 
       logout: () =>
         request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
+    },
+
+    mobileDashboard: {
+      get: () => request<MobileDashboard>('/api/mobile/dashboard'),
+      reorder: (courseIds: string[]) => request<{ success: boolean }>('/api/mobile/dashboard', {
+        method: 'PATCH', body: JSON.stringify({ courseIds }),
+      }),
     },
 
     courses: {
@@ -245,12 +264,13 @@ export function createApiClient(config: ApiClientConfig) {
         attachmentUrl?: string,
         fileName?: string,
         idempotencyKey?: string,
-        attachments?: Array<{ url: string; fileName?: string; type?: string }>
+        attachments?: Array<{ url: string; fileName?: string; type?: string }>,
+        replaceAttachments = false
       ) =>
         request<CourseSubmissionResponse>(`/api/courses/${courseId}/submissions`, {
           method: 'POST',
           headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
-          body: JSON.stringify({ syllabusItemId, status, attachmentUrl, fileName, attachments }),
+          body: JSON.stringify({ syllabusItemId, status, attachmentUrl, fileName, attachments, ...(replaceAttachments ? { replaceAttachments: true } : {}) }),
         }),
 
       gradeSubmission: (courseId: string, data: GradeSubmissionInput) =>
@@ -353,17 +373,18 @@ export function createApiClient(config: ApiClientConfig) {
       getCards: (deckId: string) =>
         request<{ cards: FlashcardCard[] }>(`/api/flashcards/cards?deckId=${deckId}`),
 
-      recordProgress: (cardId: string, status: string) =>
-        request<{ progress: FlashcardCardProgress }>('/api/flashcards/progress', {
+      recordProgress: (cardId: string, selfRating: 'knew_it' | 'still_learning', idempotencyKey?: string) =>
+        request<{ correct: boolean; correctAnswer: string }>('/api/flashcards/progress', {
           method: 'POST',
-          body: JSON.stringify({ cardId, status }),
+          headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
+          body: JSON.stringify({ cardId, selfRating }),
         }),
 
-      completeSession: (deckId: string, stats: FlashcardStudyStats) =>
-        request<{ success: boolean; expEarned: number }>('/api/flashcards/complete-session', {
+      completeSession: (deckId: string, stats: { cardsReviewed: number; durationSeconds: number; idempotencyKey: string }) =>
+        request<{ success: boolean; grantedExp?: number; duplicate?: boolean }>('/api/flashcards/complete-session', {
           method: 'POST',
           body: JSON.stringify({ deckId, ...stats }),
-        }),
+        }).then(result => ({ ...result, expEarned: result.grantedExp ?? 0 })),
 
       createDeck: (data: { title: string; description: string; tags: string[]; color: string; courseId?: string }) =>
         request<{ deck: FlashcardDeck }>('/api/flashcards/decks', {
@@ -373,20 +394,24 @@ export function createApiClient(config: ApiClientConfig) {
     },
 
     workspace: {
-      getTasks: (instituteCode: string) =>
-        request<{ tasks: TaskItem[] }>(`/api/workspace/tasks?institute=${instituteCode}`),
+      getAgenda: async () => {
+        const data = await request<{ events?: LmsCalendarEvent[]; schedules?: ClassSchedule[] }>('/api/workspace/events?view=agenda');
+        if (!Array.isArray(data.events)) throw new ApiClientError(426, 'Update the web backend to use the mobile agenda.');
+        return { events: data.events, schedules: data.schedules || [] };
+      },
+      getTasks: async (instituteCode: string) => ({ tasks: await request<TaskItem[]>(`/api/workspace/tasks?institute=${instituteCode}`) }),
 
       createTask: (data: { title: string; description?: string; priority: 'LOW' | 'MEDIUM' | 'HIGH'; dueDate?: string; courseId?: string }) =>
-        request<{ task: TaskItem }>('/api/workspace/tasks', {
+        request<TaskItem>('/api/workspace/tasks', {
           method: 'POST',
-          body: JSON.stringify(data),
-        }),
+          body: JSON.stringify({ ...data, priority: data.priority.toLowerCase() }),
+        }).then(task => ({ task })),
 
       updateTask: (taskId: string, data: Partial<TaskItem>) =>
-        request<{ task: TaskItem }>(`/api/workspace/tasks?id=${taskId}`, {
+        request<TaskItem>('/api/workspace/tasks', {
           method: 'PATCH',
-          body: JSON.stringify(data),
-        }),
+          body: JSON.stringify({ ...data, id: taskId, ...(data.priority ? { priority: data.priority.toLowerCase() } : {}) }),
+        }).then(task => ({ task })),
 
       deleteTask: (taskId: string) =>
         request<{ success: boolean }>(`/api/workspace/tasks?id=${taskId}`, {
@@ -413,14 +438,13 @@ export function createApiClient(config: ApiClientConfig) {
           method: 'DELETE',
         }),
 
-      getEvents: (instituteCode: string) =>
-        request<{ events: LmsCalendarEvent[] }>(`/api/workspace/events?institute=${instituteCode}`),
+      getEvents: async (instituteCode: string) => ({ events: await request<LmsCalendarEvent[]>(`/api/workspace/events?institute=${instituteCode}`) }),
 
       createEvent: (data: { title: string; eventDate: string; eventType: string; description?: string; courseId?: string }) =>
-        request<{ event: LmsCalendarEvent }>('/api/workspace/events', {
+        request<LmsCalendarEvent>('/api/workspace/events', {
           method: 'POST',
           body: JSON.stringify(data),
-        }),
+        }).then(event => ({ event })),
     },
 
     gamification: {
@@ -458,27 +482,27 @@ export function createApiClient(config: ApiClientConfig) {
 
     notifications: {
       list: () =>
-        request<{ notifications: AppNotification[]; unreadCount?: number }>('/api/notifications'),
+        request<{ notifications: AppNotification[]; unreadCount?: number }>('/api/notifications?includeCommunity=1'),
 
       markRead: (notificationId: string) =>
-        request<{ success: boolean }>('/api/notifications', {
+        request<{ success: boolean }>('/api/notifications?includeCommunity=1', {
           method: 'PATCH',
           body: JSON.stringify({ id: notificationId }),
         }),
 
       markAllRead: () =>
-        request<{ success: boolean }>('/api/notifications', {
+        request<{ success: boolean }>('/api/notifications?includeCommunity=1', {
           method: 'PATCH',
           body: JSON.stringify({ action: 'markAllRead' }),
         }),
 
       delete: (notificationId: string) =>
-        request<{ success: boolean; count?: number }>(`/api/notifications?id=${encodeURIComponent(notificationId)}`, {
+        request<{ success: boolean; count?: number }>(`/api/notifications?includeCommunity=1&id=${encodeURIComponent(notificationId)}`, {
           method: 'DELETE',
         }),
 
       clearAll: () =>
-        request<{ success: boolean; count?: number }>('/api/notifications?all=true', {
+        request<{ success: boolean; count?: number }>('/api/notifications?includeCommunity=1&all=true', {
           method: 'DELETE',
         }),
 
@@ -501,7 +525,7 @@ export function createApiClient(config: ApiClientConfig) {
         return request<{ url: string; fileName: string; fileSize: number }>('/api/upload', {
           method: 'POST',
           body: formData,
-        });
+        }, 300000);
       },
     },
 

@@ -1,5 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFloatingTabBarHeight } from '../lib/design-system';
 
 /**
  * Standard baseline width for mobile design (typical modern phone e.g. iPhone 12/13/14)
@@ -17,6 +18,7 @@ const MAX_SCALE = 1.10;
 export function useResponsive() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { contentPaddingBottom } = useFloatingTabBarHeight();
 
   // Clamped horizontal scale factor
   const rawScale = width / BASELINE_WIDTH;
@@ -26,7 +28,7 @@ export function useResponsive() {
   const s = (size: number): number => Math.round(size * scale);
 
   /** Scale font size */
-  const font = (size: number): number => Math.round(size * scale);
+  const font = (size: number): number => Math.round(size * Math.max(1, scale));
 
   // Safe area values
   const topInset = insets.top;
@@ -36,7 +38,7 @@ export function useResponsive() {
   const headerPaddingTop = topInset + 8;
 
   // Bottom scroll clearance for tab bar + home indicator
-  const bottomClearance = Math.max(bottomInset, 10) + 24;
+  const bottomClearance = contentPaddingBottom;
 
   return {
     width,
@@ -49,20 +51,20 @@ export function useResponsive() {
     bottomInset,
     headerPaddingTop,
     bottomClearance,
-    maxFontSizeMultiplier: 1.2,
+    maxFontSizeMultiplier: 2,
     isSmallPhone: width < 375,
     isLargePhone: width >= 414,
     // Pre-calculated target size tokens
     tokens: {
       pageTitle: font(22),
       sectionTitle: font(16),
-      body: font(13.5),
-      caption: font(11.5),
-      micro: font(10.5),
+      body: font(16),
+      caption: font(14),
+      micro: font(12),
       cardPadding: s(13),
       cardGap: s(10),
       borderRadius: s(14),
-      btnHeight: s(40),
+      btnHeight: Math.max(48, s(48)),
     },
   };
 }

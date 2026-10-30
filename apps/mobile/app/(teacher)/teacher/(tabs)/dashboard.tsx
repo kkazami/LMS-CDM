@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
 import {
   View,
   Text,
@@ -26,6 +27,8 @@ import {
   BarChart2,
   Bell,
   MessageSquare,
+  Code2,
+  FlaskConical,
   AlertCircle,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
@@ -46,6 +49,11 @@ import type { Course } from '@lms/types';
 import type { ClassMeetingItem } from '@lms/api-client';
 
 export default function TeacherDashboardScreen() {
+  const user = useAuthStore(s => s.user);
+  return isIcsUser(user) ? <IcsDashboardScreen teacher /> : <TeacherDashboard />;
+}
+
+function TeacherDashboard() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -157,8 +165,14 @@ export default function TeacherDashboardScreen() {
       visible: isIteUser(user),
     },
     {
+      id: 'codelab', label: 'CodeLab', icon: Code2, route: '/teacher/codelab', visible: isIcsUser(user),
+    },
+    {
+      id: 'practical-labs', label: 'Practical Labs', icon: FlaskConical, route: '/teacher/practical-labs', visible: isIcsUser(user),
+    },
+    {
       id: 'knowledge-exchange',
-      label: 'Q&A Forum',
+      label: 'Knowledge Exchange',
       icon: MessageSquare,
       route: '/teacher/knowledge-exchange',
       visible: isIcsUser(user),

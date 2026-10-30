@@ -1,3 +1,5 @@
+import { getCachedData } from '../../src/lib/offline-storage';
+import { restoreStudentReturn } from '../../src/lib/student-navigation';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -114,7 +116,9 @@ export default function LoginScreen() {
 
       const role = (response.user.role || '').toUpperCase();
       if (role === 'STUDENT') {
-        router.replace(response.user.requiresEnrollment ? '/join-class' : '/student/dashboard');
+        const savedTarget = await getCachedData<string>('return_intent');
+        const target = restoreStudentReturn(savedTarget);
+        router.replace((response.user.requiresEnrollment ? '/join-class' : target || '/student/dashboard') as any);
       } else if (role === 'PROFESSOR' || role === 'TEACHER') {
         router.replace('/teacher/dashboard');
       } else if (role === 'ADMIN') {
@@ -297,7 +301,7 @@ export default function LoginScreen() {
               style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 48, paddingVertical: 12 }}
             >
               <View style={{ width: 22, height: 22, borderWidth: 2, borderColor: currentTheme.colors.primary, borderRadius: 4, backgroundColor: acceptedPolicies ? currentTheme.colors.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {acceptedPolicies && <ShieldCheck size={16} color="#FFFFFF" />}
+                {acceptedPolicies && <ShieldCheck size={16} color={onPrimaryColor} />}
               </View>
               <Text style={{ flex: 1, fontSize: 14, lineHeight: 21, color: currentTheme.colors.text }}>I agree to the Terms and Conditions and acknowledge the Privacy Policy.</Text>
             </TouchableOpacity>
@@ -317,6 +321,8 @@ export default function LoginScreen() {
               textColor={onPrimaryColor}
               style={[styles.loginButton, { backgroundColor: currentTheme.colors.primary, borderColor: currentTheme.colors.primary }]}
             />
+            <Button title="Forgot password?" variant="ghost" onPress={() => router.push('/(auth)/forgot-password')} />
+            <Button title="Login help and support" variant="ghost" onPress={() => { void Linking.openURL(`${API_BASE_URL}/support`).catch(() => setErrorMessage('Unable to open support. Check your connection and try again.')); }} />
           </View>
 
           {/* Quick Registration Link */}

@@ -43,7 +43,7 @@ export function Badge({ label, variant = 'default', size = 'md', style }: BadgeP
       case 'info':
         return { bg: '#DBEAFE', text: '#1E40AF' };
       case 'primary':
-        return { bg: theme.colors.primary + '18', text: theme.colors.primary };
+        return { bg: theme.colors.primary + '18', text: theme.code === 'ics' ? '#9A3412' : theme.colors.primary };
       case 'default':
       default:
         return { bg: '#F3F4F6', text: '#4B5563' };
@@ -53,7 +53,7 @@ export function Badge({ label, variant = 'default', size = 'md', style }: BadgeP
   const getSizeStyle = () => {
     switch (size) {
       case 'sm':
-        return { paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 };
+        return { paddingHorizontal: 6, paddingVertical: 2, fontSize: 12 };
       case 'lg':
         return { paddingHorizontal: 12, paddingVertical: 6, fontSize: 14 };
       case 'md':

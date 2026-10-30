@@ -16,3 +16,4 @@ export * from './material';
 export * from './notification';
 export * from './user-preferences';
 export * from './bridge';
+export * from './mobile-dashboard';

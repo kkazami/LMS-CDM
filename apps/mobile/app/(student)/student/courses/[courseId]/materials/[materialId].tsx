@@ -1,3 +1,5 @@
+import { studentScope, scopeIsCurrent } from '../../../../../../src/lib/student-scope';
+import { setCachedData, getCachedData } from '../../../../../../src/lib/offline-storage';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -158,6 +160,8 @@ export default function StudentMaterialReaderScreen() {
         const matched = allItems.find((item) => item.id === materialId);
         if (matched) {
           setMaterial(matched);
+          void setCachedData(`material_${courseId}_${materialId}`, matched);
+          void setCachedData('continue_learning', { courseId, title: matched.title, route: `/student/courses/${courseId}/materials/${matched.id}` });
         } else {
           setError('This learning material could not be found in the current course.');
         }
@@ -174,6 +178,7 @@ export default function StudentMaterialReaderScreen() {
   }, [api, courseId, materialId]);
 
   useEffect(() => {
+    void getCachedData<ClassworkItem>(`material_${courseId}_${materialId}`).then(value => { if (value) { setMaterial(value); setLoading(false); } });
     loadMaterialData();
   }, [loadMaterialData]);
 
@@ -186,6 +191,8 @@ export default function StudentMaterialReaderScreen() {
   const handleOpenAttachment = useCallback(
     async (att: ClassworkAttachment) => {
       const attId = att.id || att.url;
+      const scope = studentScope();
+      if (!scope.owner) return;
 
       setAttachmentStates((prev) => ({
         ...prev,
@@ -247,6 +254,7 @@ export default function StudentMaterialReaderScreen() {
             throw new Error(serverError);
           }
 
+          if (!scopeIsCurrent(scope)) return;
           const blob = await response.blob();
           const objectUrl = URL.createObjectURL(blob);
           window.open(objectUrl, '_blank');
@@ -262,13 +270,17 @@ export default function StudentMaterialReaderScreen() {
         const safeFileName = (att.fileName || 'attachment')
           .replace(/[^a-zA-Z0-9._-]/g, '_')
           .slice(-100);
-        const destinationUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory || ''}${Date.now()}_${safeFileName}`;
+        const directory = `${FileSystem.documentDirectory}lms_documents/${encodeURIComponent(scope.owner)}/${courseId}/${materialId}/`;
+        await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+        const destinationUri = `${directory}${encodeURIComponent(attId)}_${safeFileName}`;
 
         const downloadOptions: FileSystem.DownloadOptions = {
           headers: token && isSameOrigin && targetUrl.includes('/api/') ? { Authorization: `Bearer ${token}` } : {},
         };
 
-        const result = await FileSystem.downloadAsync(targetUrl, destinationUri, downloadOptions);
+        const existing = await FileSystem.getInfoAsync(destinationUri);
+        const result = existing.exists ? { status: 200, uri: destinationUri } : await FileSystem.downloadAsync(targetUrl, destinationUri + '.pending', downloadOptions);
+        if (!scopeIsCurrent(scope)) return;
 
         if (result.status >= 400) {
           let serverMessage = `Server returned HTTP ${result.status}`;
@@ -282,6 +294,7 @@ export default function StudentMaterialReaderScreen() {
           throw new Error(serverMessage);
         }
 
+        if (!existing.exists) { await FileSystem.moveAsync({ from: result.uri, to: destinationUri }); result.uri = destinationUri; }
         // Successful download — open with native share sheet / viewer
         setAttachmentStates((prev) => ({
           ...prev,
@@ -451,8 +464,8 @@ export default function StudentMaterialReaderScreen() {
                     styles.bodyText,
                     {
                       color: theme.colors.text,
-                      fontSize: font(14),
-                      lineHeight: font(22),
+                      fontSize: font(16),
+                      lineHeight: font(24),
                     },
                   ]}
                 />

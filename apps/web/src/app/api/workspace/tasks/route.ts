@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireWorkspaceSession, getQueryId } from "../_shared";
+import { requireCourseAccess } from '@/lib/course-access';
+import { accountErrorResponse } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,8 @@ export async function POST(request: Request) {
     );
   }
 
+  try { if (parsed.data.courseId) await requireCourseAccess(session.user, parsed.data.courseId); }
+  catch (error) { return accountErrorResponse(error); }
   const task = await db.taskItem.create({
     data: {
       title: parsed.data.title,
@@ -100,7 +104,7 @@ export async function PATCH(request: Request) {
   if (response) return response;
 
   const body = await request.json();
-  const payloadSchema = taskSchema.extend({ id: z.string().min(1) });
+  const payloadSchema = taskSchema.partial().extend({ id: z.string().min(1) });
   const parsed = payloadSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -122,17 +126,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Task not found." }, { status: 404 });
   }
 
+  try { if (parsed.data.courseId) await requireCourseAccess(session.user, parsed.data.courseId); }
+  catch (error) { return accountErrorResponse(error); }
   const task = await db.taskItem.update({
     where: { id: existing.id },
     data: {
-      title: parsed.data.title,
-      description: parsed.data.description,
-      priority: parsed.data.priority,
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-      courseId: parsed.data.courseId ?? null,
-      completed: parsed.data.completed,
-      archived: parsed.data.archived,
-      orderIndex: parsed.data.orderIndex,
+      ...Object.fromEntries(Object.entries(parsed.data).filter(([key]) => key !== 'id' && key !== 'dueDate' && Object.hasOwn(body, key))),
+      ...(Object.hasOwn(body, 'dueDate') ? { dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null } : {}),
     },
     include: { course: { select: { title: true } } },
   });
