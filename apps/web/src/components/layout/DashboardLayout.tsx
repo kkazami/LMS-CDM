@@ -19,6 +19,7 @@ const LoginRewardModal = dynamic(() => import("@/components/common/LoginRewardMo
 const FloatingStudyTimer = dynamic(() => import("@/components/common/FloatingStudyTimer"));
 import FocusModeProvider from "@/components/focus/FocusModeProvider";
 import OfflineBootstrap from "@/components/offline/OfflineBootstrap";
+import { DraftRecoveryProvider } from "@/features/interactive-activities/ohmward/components/DraftRecovery";
 
 interface DashboardLayoutProps {
   instituteCode: string;
@@ -30,6 +31,7 @@ interface DashboardLayoutProps {
   theme: InstituteTheme;
   /** Whether this user qualifies for ICS Interactive Activities. Controls sidebar entry visibility. */
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   /** Whether this user qualifies for Knowledge Exchange. Controls sidebar entry visibility. */
   isEligibleForKnowledgeExchange?: boolean;
   /** Whether this user qualifies for Quiz Arena (IBE). Controls sidebar entry visibility. */
@@ -63,6 +65,7 @@ export default function DashboardLayout({
   avatarUrl,
   theme,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   isEligibleForArena,
   isEligibleForPracticum,
@@ -116,6 +119,7 @@ export default function DashboardLayout({
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           isEligibleForActivities={isEligibleForActivities}
+          isEligibleForOhmward={isEligibleForOhmward}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
           isEligibleForArena={isEligibleForArena}
           isEligibleForPracticum={isEligibleForPracticum}
@@ -143,7 +147,7 @@ export default function DashboardLayout({
 
           <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
-              {children}
+              {isEligibleForOhmward && userId ? <DraftRecoveryProvider key={userId} ownerId={userId}>{children}</DraftRecoveryProvider> : children}
             </AvatarProvider>
           </main>
         </div>
@@ -155,6 +159,7 @@ export default function DashboardLayout({
       {/* Mobile Bottom Navigation */}
       <div data-native-chrome>
       <MobileBottomNav
+        isEligibleForOhmward={isEligibleForOhmward}
         instituteCode={instituteCode}
         primaryColor={theme.colors.primary}
         userRole={userRole}

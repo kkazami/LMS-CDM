@@ -159,6 +159,9 @@ export default function Topbar({
   if (segment && titleMap[segment]) {
     dynamicTitle = titleMap[segment];
   }
+  if (pathname === '/ics/activities/ohmward' || pathname.startsWith('/ics/activities/ohmward/')) {
+    dynamicTitle = 'Ohmward';
+  }
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
@@ -222,6 +225,7 @@ export default function Topbar({
             }`}
             style={{
               borderColor: undefined,
+              maxWidth: dynamicTitle === 'Ohmward' ? '14rem' : undefined,
             }}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -230,7 +234,7 @@ export default function Topbar({
                 Search courses, notes, or peers...
               </span>
             </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
+            <kbd className="hidden shrink-0 whitespace-nowrap sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
               {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
           </button>

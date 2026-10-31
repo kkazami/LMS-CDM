@@ -10,6 +10,11 @@
     "packages/*"
   ],
   "scripts": {
+    "test:ohmward": "node --import tsx --test tests/ohmward/*.test.ts",
+    "test:ohmward:integration": "node --import tsx tests/ohmward/integration.mjs",
+    "ohmward:dump-content": "tsx scripts/ohmward/dump-content.ts",
+    "ohmward:check-db": "node scripts/ohmward/check-database.mjs",
+    "ohmward:verify-db": "node tests/ohmward/database-runtime.mjs",
     "check:setup": "node scripts/check-local-setup.mjs",
     "dev:web": "node scripts/check-local-setup.mjs web && node scripts/start-local-scanner.mjs --if-configured && pnpm --filter web dev",
     "scanner:start": "node scripts/start-local-scanner.mjs",

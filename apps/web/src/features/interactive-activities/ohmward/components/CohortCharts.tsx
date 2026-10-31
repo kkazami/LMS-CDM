@@ -1,0 +1,12 @@
+'use client';
+import { BarChart,Bar,LineChart,Line,XAxis,YAxis,Tooltip,CartesianGrid,ResponsiveContainer } from 'recharts';
+import { useReducedMotion } from 'framer-motion';
+import type { CohortMetrics } from '../domain/analytics';
+export default function CohortCharts({data}:{data:CohortMetrics}){
+  const animate=useReducedMotion()===false;
+  return <div className="ohm-chart-grid" aria-label="Charts with equivalent tables below">
+    <figure><figcaption>Module completion · lifetime (%)</figcaption><div className="ohm-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={data.modules} accessibilityLayer><CartesianGrid vertical={false} stroke="var(--ohm-edge)"/><XAxis dataKey="module" tick={{fontSize:11}}/><YAxis domain={[0,100]} width={35}/><Tooltip contentStyle={{background:'var(--ohm-ground)',color:'var(--ohm-ink)',borderColor:'var(--ohm-edge)'}}/><Bar dataKey="percent" name="Completion (%)" fill="var(--ohm-accent)" isAnimationActive={animate} animationDuration={400}/></BarChart></ResponsiveContainer></div></figure>
+    <figure><figcaption>Cumulative first-pass trend</figcaption><div className="ohm-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={data.trend} accessibilityLayer><CartesianGrid vertical={false} stroke="var(--ohm-edge)"/><XAxis dataKey="date" minTickGap={50} tick={{fontSize:10}}/><YAxis allowDecimals={false} width={40}/><Tooltip contentStyle={{background:'var(--ohm-ground)',color:'var(--ohm-ink)',borderColor:'var(--ohm-edge)'}}/><Line type="stepAfter" dataKey="passed" name="Cumulative passed levels" stroke="var(--ohm-accent)" dot={false} strokeWidth={2} isAnimationActive={animate} animationDuration={400}/></LineChart></ResponsiveContainer></div></figure>
+    {data.misconceptions.length>0&&<figure className="ohm-chart-wide"><figcaption>Common misconceptions · selected dates (submission occurrences)</figcaption><div className="ohm-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={data.misconceptions} accessibilityLayer><CartesianGrid vertical={false} stroke="var(--ohm-edge)"/><XAxis dataKey="concept" hide/><YAxis allowDecimals={false} width={35}/><Tooltip contentStyle={{background:'var(--ohm-ground)',color:'var(--ohm-ink)',borderColor:'var(--ohm-edge)'}}/><Bar dataKey="count" name="Occurrences" fill="var(--ohm-accent)" isAnimationActive={animate} animationDuration={400}/></BarChart></ResponsiveContainer></div></figure>}
+  </div>;
+}

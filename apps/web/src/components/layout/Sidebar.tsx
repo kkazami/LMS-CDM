@@ -44,6 +44,7 @@ import {
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
 import { getNavigationPath } from "@/lib/navigation-path";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
 
 import type { ComponentType } from "react";
@@ -70,6 +71,7 @@ interface SidebarProps {
   onCloseMobileDrawer?: () => void;
   /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
   /** When true, renders the "Quiz Arena" nav entry for IBE. */
@@ -156,6 +158,7 @@ export default function Sidebar({
   isMobileDrawer = false,
   onCloseMobileDrawer,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   isEligibleForArena,
   isEligibleForPracticum,
@@ -170,6 +173,8 @@ export default function Sidebar({
 
   // Build link list identically on both server and client (avoids hydration mismatch)
   let links = getLinks(instituteCode, userRole);
+  const ohmwardHref = isEligibleForOhmward && ohmwardDestination(instituteCode, userRole);
+  if (ohmwardHref) links = [...links, { label: "Ohmward", href: ohmwardHref, icon: FlaskConical }];
 
   if (isEligibleForActivities) {
     if (isProfessor) {

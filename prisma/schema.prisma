@@ -226,6 +226,7 @@ model Institute {
 }
 
 model User {
+  ohmwardLearner OhmwardLearner?
   labTemplates LabTemplate[] @relation("LabAuthor")
   createdLabAssignments LabAssignment[] @relation("LabAssignmentCreator")
   labAttempts LabAttempt[] @relation("LabStudent")
@@ -2553,4 +2554,55 @@ model IbeLearningRecord {
   @@index([studentId, status])
   @@index([studentId, updatedAt])
   @@index([instituteId])
+}
+
+// Institute-wide self-study, separate from academic submissions.
+model OhmwardLearner {
+  studentId String @id
+  instituteId String
+  primerCompletedAt DateTime?
+  lastLevelId String?
+  sandbox Json?
+  sandboxRevision Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student User @relation(fields: [studentId, instituteId], references: [id, instituteId], onDelete: Cascade)
+  attempts OhmwardAttempt[]
+  progress OhmwardProgress[]
+  @@unique([studentId, instituteId])
+  @@index([instituteId])
+}
+
+model OhmwardAttempt {
+  id String @id @default(cuid())
+  studentId String
+  instituteId String
+  levelId String
+  contentVersion Int
+  variantId String
+  status String @default("IN_PROGRESS")
+  revision Int @default(0)
+  state Json
+  hintIds Json @default("[]")
+  result Json?
+  startedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  submittedAt DateTime?
+  learner OhmwardLearner @relation(fields: [studentId, instituteId], references: [studentId, instituteId], onDelete: Cascade)
+  @@index([studentId, levelId, startedAt])
+  @@index([instituteId, submittedAt])
+}
+
+model OhmwardProgress {
+  studentId String
+  instituteId String
+  levelId String
+  bestScore Float @default(0)
+  bestStars Int @default(0)
+  firstPassedAt DateTime?
+  lastSubmittedAt DateTime
+  submittedCount Int @default(0)
+  learner OhmwardLearner @relation(fields: [studentId, instituteId], references: [studentId, instituteId], onDelete: Cascade)
+  @@id([studentId, levelId])
+  @@index([instituteId, firstPassedAt])
 }

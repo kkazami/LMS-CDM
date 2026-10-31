@@ -58,7 +58,8 @@ export async function createSubmissionSnapshot(
 
   // 2. Local filesystem fallback
   const storageDir = process.env.SNAPSHOT_DIR || path.join(process.cwd(), 'storage', 'snapshots');
-  if (!fs.existsSync(storageDir)) {
+  // Runtime snapshots are outputs, never files to copy into a deployment bundle.
+  if (!fs.existsSync(/*turbopackIgnore: true*/ storageDir)) {
     fs.mkdirSync(storageDir, { recursive: true });
   }
 

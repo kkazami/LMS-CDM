@@ -38,6 +38,7 @@ import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 import { clearAllOfflineData } from "@/lib/ite/offline/idb";
 import { getNavigationPath } from "@/lib/navigation-path";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ interface MobileMoreSheetProps {
   userName?: string;
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
   isEligibleForArena?: boolean;
 }
@@ -68,6 +70,7 @@ export default function MobileMoreSheet({
   userName = "User",
   avatarUrl = null,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   isEligibleForArena,
 }: MobileMoreSheetProps) {
@@ -160,7 +163,9 @@ export default function MobileMoreSheet({
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
       : [];
 
+  const ohmwardHref = isEligibleForOhmward && ohmwardDestination(instituteCode, userRole);
   const items: NavItem[] = [
+    ...(ohmwardHref ? [{ label: "Ohmward", href: ohmwardHref, icon: Code2, description: "Every circuit starts a journey." }] : []),
     ...(isEligibleForActivities && (isStudent || isProfessor)
       ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2, description: "Coding practice" }] : []),
     ...(isEligibleForActivities && isProfessor
