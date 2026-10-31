@@ -1,4 +1,5 @@
 .ohmward { --ohm-ground: #eef0f3; --ohm-ink: #182332; --ohm-muted: #4b596b; --ohm-edge: #bdc5cf; --ohm-accent: #a83e00; --ohm-shadow: 7px 7px 20px #d4d8df, -7px -7px 20px #fff; color: var(--ohm-ink); max-width: 1280px; margin-inline: auto; }
+.ohm-atmosphere { position: relative; isolation: isolate; }
 [data-theme=dark] .ohmward, .dark .ohmward { --ohm-ground: #1c2230; --ohm-ink: #edf1f7; --ohm-muted: #bac5d5; --ohm-edge: #64748b; --ohm-accent: #ffb580; --ohm-shadow: 7px 7px 20px #0e1420, -5px -5px 18px #293144; }
 .ohmward * { box-sizing: border-box; }
 .ohmward :is(button,a,input,select):focus-visible { outline: 3px solid var(--ohm-accent); outline-offset: 4px; }
@@ -26,14 +27,14 @@
 /* Non-modal coachmarks leave the real target clickable and keyboard-accessible. */
 .ohm-tour-layer { position: fixed; inset: 0; max-width: none; margin: 0; z-index: 10000; pointer-events: none; }
 .ohm-tour-dimmer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
-.ohm-tour-spotlight { position: fixed; border: 2px solid var(--ohm-accent); border-radius: 12px; pointer-events: none; }
 .ohm-tour-callout { position: fixed; left: 12px; top: 12px; width: min(352px,calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 20px; border: 1px solid var(--ohm-edge); border-radius: 14px; background: var(--ohm-ground); color: var(--ohm-ink); box-shadow: 0 12px 32px #0003; pointer-events: auto; }
 .ohm-tour-callout h3 { margin: 8px 24px 10px 0; font-size: 1.1rem; }
 .ohm-tour-callout p { line-height: 1.6; }
 .ohm-tour-close { position: absolute; right: 4px; top: 4px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; }
 .ohm-tour-callout .ohm-tour-wait { margin-block: 16px; color: var(--ohm-accent); font-weight: 650; }
 .ohm-tour-callout button:focus-visible { outline: 3px solid var(--ohm-accent); outline-offset: 2px; }
-.ohmward [data-ohm-tour-current=true] { outline: 3px solid var(--ohm-accent); outline-offset: 5px; }
+.ohmward [data-ohm-tour-current=true]:focus { outline: none; }
+.ohmward [data-ohm-tour-current=true]:focus-visible { outline: 2px solid var(--ohm-muted); outline-offset: 3px; }
 .ohm-challenge-locked { border: 2px solid var(--ohm-accent); background: color-mix(in srgb,var(--ohm-accent) 8%,var(--ohm-ground)); }
 .ohm-challenge-locked h3 { display: flex; align-items: center; gap: 12px; font-size: 1.2rem; }
 .ohm-challenge-locked h3 svg { flex-shrink: 0; }

@@ -23,8 +23,8 @@ import {
   isLevelUnlocked,
 } from "@/features/interactive-activities/codelab/problems/types";
 import { getTrackLevels } from "@/features/interactive-activities/codelab/problems";
-import { LANGUAGE_LOGO_MAP } from "@/features/interactive-activities/codelab/components/LanguageLogos";
 import { TypingBanner } from "@/components/motion/TypingBanner";
+import CodeLabBackdrop from "@/features/interactive-activities/codelab/components/CodeLabBackdrop";
 import CodeLabAlertModal, {
   type CodeLabAlertItem,
 } from "@/features/interactive-activities/codelab/components/CodeLabAlertModal";
@@ -191,7 +191,6 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
   const problems = getTrackLevels(language);
   const langLabel = LANGUAGE_LABELS[language] || language;
   const langTheme = LANGUAGE_THEMES[language] || LANGUAGE_THEMES.python;
-  const LanguageLogo = LANGUAGE_LOGO_MAP[language];
 
   // Split into 3 stages
   const basics = problems.filter((p) => p.level <= 10);
@@ -209,7 +208,7 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
       return (
         <div
           key={problem.id}
-          className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-[#141721]/50 border border-slate-200/60 dark:border-white/5 text-slate-400 dark:text-[#555C72] opacity-75 cursor-not-allowed select-none"
+          className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/90 dark:bg-[#141721]/90 border border-slate-200/60 dark:border-white/5 text-slate-400 dark:text-[#555C72] opacity-75 cursor-not-allowed select-none"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-slate-200/80 dark:bg-[#1E2132] flex items-center justify-center text-slate-500 dark:text-[#8B92A5] font-mono text-xs font-bold">
@@ -235,8 +234,8 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
           isPassed
             ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/20 hover:border-emerald-400 dark:hover:border-emerald-500/40 shadow-xs"
             : isCurrent
-            ? "bg-white dark:bg-[#141721] border-[#F97316] ring-2 ring-orange-500/20 shadow-md hover:-translate-y-0.5"
-            : "bg-white dark:bg-[#141721] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 shadow-xs"
+            ? "bg-white/90 dark:bg-[#141721]/90 border-[#F97316] ring-2 ring-orange-500/20 shadow-md hover:-translate-y-0.5"
+            : "bg-white/90 dark:bg-[#141721]/90 border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 shadow-xs"
         }`}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -298,100 +297,93 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
   }));
 
   return (
-    <div className="space-y-8 pb-12 page-enter max-w-7xl mx-auto">
-      {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
-      <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
+    <div className="relative isolate">
+      <CodeLabBackdrop />
+      <div className="space-y-8 pb-12 page-enter max-w-7xl mx-auto">
+        {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
+        <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
 
-      {/* ─── 1. Top Breadcrumb & Stats ─── */}
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/${institute}/activities/codelab`}
-          className="group inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] hover:bg-slate-50 dark:hover:bg-[#181B26] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs transition-all cursor-pointer active:scale-95"
-        >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span>All Tracks</span>
-        </Link>
-
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs">
-          <Trophy className="w-4 h-4 text-[#F97316]" />
-          <span>{highestPassed} of 30 Completed</span>
-        </div>
-      </div>
-
-      {/* ─── 2. Track Header Banner (Dual-Theme Light & Dark) ─── */}
-      <div
-        className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 border-l-4 ${langTheme.borderColor} shadow-xs transition-colors`}
-      >
-        {/* Soft Ambient Language Glow */}
-        <div
-          className={`absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-gradient-to-br ${langTheme.ambientGlow} rounded-full blur-3xl pointer-events-none`}
-        />
-        <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-48 h-48 bg-gradient-to-tr from-slate-200/40 dark:from-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-        {/* Floating Language Watermark Logo in Corner */}
-        {LanguageLogo && (
-          <div
-            className="absolute right-6 sm:right-10 top-1/2 -translate-y-1/2 opacity-15 dark:opacity-10 pointer-events-none"
-            aria-hidden="true"
+        {/* ─── 1. Top Breadcrumb & Stats ─── */}
+        <div className="flex items-center justify-between">
+          <Link
+            href={`/${institute}/activities/codelab`}
+            className="group inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] hover:bg-slate-50 dark:hover:bg-[#181B26] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs transition-all cursor-pointer active:scale-95"
           >
-            <LanguageLogo size={120} />
-          </div>
-        )}
+            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            <span>All Tracks</span>
+          </Link>
 
-        <div className="relative z-10 space-y-3 max-w-2xl">
-          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold border ${langTheme.badgeClasses}`}>
-            <BookOpen className={`w-3.5 h-3.5 ${langTheme.iconColor}`} />
-            <span>{langLabel} Track</span>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs">
+            <Trophy className="w-4 h-4 text-[#F97316]" />
+            <span>{highestPassed} of 30 Completed</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-            <TypingBanner
-              text={`${langLabel} Curriculum — 30 Levels`}
-              speed={35}
-              cursorColor={langTheme.caretColor}
-              className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]"
-            />
-          </h1>
-          <p className="text-slate-600 dark:text-[#8B92A5] text-xs sm:text-sm font-normal leading-relaxed">
-            Pass each level with score ≥ 60% to unlock the next level in sequence. Practice real-world programming challenges with automated validation.
-          </p>
         </div>
+
+        {/* ─── 2. Track Header Banner (Dual-Theme Light & Dark) ─── */}
+        <div
+          className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 border-l-4 ${langTheme.borderColor} shadow-xs transition-colors`}
+        >
+          {/* Soft Ambient Language Glow */}
+          <div
+            className={`absolute top-0 right-0 -mt-10 -mr-10 w-72 h-72 bg-gradient-to-br ${langTheme.ambientGlow} rounded-full blur-3xl pointer-events-none`}
+          />
+          <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-48 h-48 bg-gradient-to-tr from-slate-200/40 dark:from-white/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-3 max-w-2xl">
+            <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold border ${langTheme.badgeClasses}`}>
+              <BookOpen className={`w-3.5 h-3.5 ${langTheme.iconColor}`} />
+              <span>{langLabel} Track</span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
+              <TypingBanner
+                text={`${langLabel} Curriculum — 30 Levels`}
+                speed={35}
+                cursorColor={langTheme.caretColor}
+                className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]"
+              />
+            </h1>
+            <p className="text-slate-600 dark:text-[#8B92A5] text-xs sm:text-sm font-normal leading-relaxed">
+              Pass each level with score ≥ 60% to unlock the next level in sequence. Practice real-world programming challenges with automated validation.
+            </p>
+          </div>
+        </div>
+
+        {/* ─── Stage 1: Basics (Levels 1–10) ─── */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+            <h2>Basics (Levels 1–10)</h2>
+            <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Core syntax and fundamentals</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {basics.map(renderLevelCard)}
+          </div>
+        </section>
+
+        {/* ─── Stage 2: Building Up (Levels 11–20) ─── */}
+        <section className="space-y-3 pt-2">
+          <div className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs" />
+            <h2>Building Up (Levels 11–20)</h2>
+            <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Data structures and methods</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {buildingUp.map(renderLevelCard)}
+          </div>
+        </section>
+
+        {/* ─── Stage 3: Getting Good (Levels 21–30) ─── */}
+        <section className="space-y-3 pt-2">
+          <div className="flex items-center gap-2 text-sm font-bold text-rose-700 dark:text-rose-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs" />
+            <h2>Getting Good (Levels 21–30)</h2>
+            <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Algorithms and advanced patterns</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {gettingGood.map(renderLevelCard)}
+          </div>
+        </section>
       </div>
-
-      {/* ─── Stage 1: Basics (Levels 1–10) ─── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
-          <h2>Basics (Levels 1–10)</h2>
-          <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Core syntax and fundamentals</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {basics.map(renderLevelCard)}
-        </div>
-      </section>
-
-      {/* ─── Stage 2: Building Up (Levels 11–20) ─── */}
-      <section className="space-y-3 pt-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs" />
-          <h2>Building Up (Levels 11–20)</h2>
-          <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Data structures and methods</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {buildingUp.map(renderLevelCard)}
-        </div>
-      </section>
-
-      {/* ─── Stage 3: Getting Good (Levels 21–30) ─── */}
-      <section className="space-y-3 pt-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-rose-700 dark:text-rose-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs" />
-          <h2>Getting Good (Levels 21–30)</h2>
-          <span className="text-xs text-slate-500 dark:text-[#8B92A5] font-normal">• Algorithms and advanced patterns</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {gettingGood.map(renderLevelCard)}
-        </div>
-      </section>
     </div>
   );
 }

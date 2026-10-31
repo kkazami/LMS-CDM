@@ -23,13 +23,27 @@ test('circular dimming starts beyond every viewport corner and leaves the entire
   }
 });
 
-test('the reported desktop case keeps its visible control in place and anchors instructions beside it', () => {
+test('desktop reveals center the control and keep adjacent instructions inside the usable screen', () => {
   const target = { left: 574, top: 91, width: 112, height: 60 };
-  const result = tourCallout(target, { height: 312 }, { left: 292, top: 68, width: 1604, height: 831 });
-  assert.equal(result.scrollBy, 0);
+  const area = { left: 292, top: 68, width: 1604, height: 831 };
+  const result = tourCallout(target, { height: 312 }, area);
+  assert.equal(target.top - result.scrollBy + target.height / 2, area.top + area.height / 2);
   assert.equal(result.side, 'right');
   assert.equal(result.left, 702);
-  assert.equal(result.top, 68);
+  assert.ok(result.top >= area.top && result.top + result.maxHeight <= area.top + area.height);
+});
+
+test('sandbox unlock reveals the entire card with the callout outside it and the bubble above the page edge', () => {
+  const target = { left: 498, top: 843, width: 230, height: 56 };
+  const context = { left: 482, top: 698, width: 1224, height: 228 };
+  const area = { left: 296, top: 12, width: 1600, height: 886 };
+  const result = tourCallout(target, { height: 338 }, area, 800, true, context);
+  const cardTop = context.top - result.scrollBy, cardBottom = cardTop + context.height;
+  const bubble = tourBubble({ ...target, top: target.top - result.scrollBy }, { width: 1916, height: 910 });
+  assert.ok(result.scrollBy > 0);
+  assert.ok(cardTop >= area.top && cardBottom <= area.top + area.height);
+  assert.ok(result.top + result.maxHeight + 16 <= cardTop);
+  assert.ok(bubble.y - bubble.focusRadius >= area.top && bubble.y + bubble.focusRadius <= area.top + area.height);
 });
 
 test('callouts fit beside or above/below targets without covering them, including short phones', () => {

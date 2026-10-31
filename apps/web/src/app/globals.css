@@ -284,46 +284,6 @@ html {
   }
 }
 
-/* ─── CodeLab Marquee Sideways Scrolling Animation ─── */
-@keyframes marqueeScrollLeft {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes marqueeScrollRight {
-  0% {
-    transform: translate3d(-50%, 0, 0);
-  }
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-marquee-left {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-  animation: marqueeScrollLeft 22s linear infinite;
-}
-
-.animate-marquee-right {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-  animation: marqueeScrollRight 26s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee-left,
-  .animate-marquee-right {
-    animation: none !important;
-  }
-}
-
 /* ─── Flashcard 3D Flip ─── */
 .flashcard-scene {
   perspective: 1000px;
@@ -374,6 +334,26 @@ html[data-native-reduced-motion="true"] *::after { animation: none !important; t
   html[data-native-feature="true"] input,
   html[data-native-feature="true"] textarea,
   html[data-native-feature="true"] select { font-size: 16px; }
+}
+.dashboard-workspace-shell:has([data-codelab-track-browser]) {
+  overflow-x: clip;
+}
+@media (min-width: 1024px) {
+  .dashboard-workspace-shell:has([data-codelab-track-browser]) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: clip;
+  }
+  .dashboard-workspace-shell:has([data-codelab-track-browser]) > header {
+    flex-shrink: 0;
+  }
+  .dashboard-workspace-shell > main:has([data-codelab-track-browser]) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 16px;
+  }
 }
 .dashboard-workspace-shell:has([data-codelab-workspace]) {
   display: flex;

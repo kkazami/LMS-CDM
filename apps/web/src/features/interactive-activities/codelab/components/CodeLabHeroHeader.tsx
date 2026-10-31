@@ -1,78 +1,52 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { TypingBanner } from "@/components/motion/TypingBanner";
-import {
-  PythonLogo,
-  CppLogo,
-  CSharpLogo,
-  JavaLogo,
-  JavaScriptLogo,
-  SqlLogo,
-  HtmlLogo,
-  CssLogo,
-} from "./LanguageLogos";
+import { LANGUAGE_LOGO_MAP } from "./LanguageLogos";
+import styles from "./CodeLabHeroHeader.module.css";
 
-const TRACK_LOGOS = [
-  PythonLogo,
-  CppLogo,
-  CSharpLogo,
-  JavaLogo,
-  JavaScriptLogo,
-  SqlLogo,
-  HtmlLogo,
-  CssLogo,
-];
-
-// Replicated arrays for seamless continuous horizontal ticker scrolling
-const MARQUEE_ROW_1 = [...TRACK_LOGOS, ...TRACK_LOGOS, ...TRACK_LOGOS, ...TRACK_LOGOS];
-const MARQUEE_ROW_2 = [
-  ...TRACK_LOGOS.slice(4),
-  ...TRACK_LOGOS.slice(0, 4),
-  ...TRACK_LOGOS.slice(4),
-  ...TRACK_LOGOS.slice(0, 4),
-  ...TRACK_LOGOS.slice(4),
-  ...TRACK_LOGOS.slice(0, 4),
-  ...TRACK_LOGOS.slice(4),
-  ...TRACK_LOGOS.slice(0, 4),
-];
+const LOGOS = Object.values(LANGUAGE_LOGO_MAP);
+const BANNER_LOGOS = [...LOGOS, ...LOGOS];
 
 interface CodeLabHeroHeaderProps {
   institute: string;
 }
 
 export default function CodeLabHeroHeader({ institute: _institute }: CodeLabHeroHeaderProps) {
-  return (
-    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs transition-colors">
-      {/* ── Continuous Horizontal Marquee Scrolling Icons ── */}
-      <div
-        className="absolute inset-0 pointer-events-none overflow-hidden flex flex-col justify-between py-2.5"
-        aria-hidden="true"
-      >
-        {/* Top row: smooth continuous scroll to the left */}
-        <div className="overflow-hidden w-full opacity-20 dark:opacity-15">
-          <div className="animate-marquee-left flex items-center gap-12 sm:gap-16">
-            {MARQUEE_ROW_1.map((Logo, i) => (
-              <div key={`top-${i}`} className="shrink-0">
-                <Logo size={28} />
-              </div>
-            ))}
-          </div>
-        </div>
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [running, setRunning] = useState(false);
 
-        {/* Bottom row: smooth continuous scroll to the right */}
-        <div className="overflow-hidden w-full opacity-15 dark:opacity-10">
-          <div className="animate-marquee-right flex items-center gap-14 sm:gap-20">
-            {MARQUEE_ROW_2.map((Logo, i) => (
-              <div key={`bot-${i}`} className="shrink-0">
-                <Logo size={34} />
-              </div>
-            ))}
-          </div>
+  useEffect(() => {
+    let inView = false;
+    const update = () => setRunning(inView && !document.hidden);
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      update();
+    });
+    if (bannerRef.current) observer.observe(bannerRef.current);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, []);
+
+  return (
+    <div ref={bannerRef} className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs transition-colors">
+      <div className={styles.wave} data-running={running} aria-hidden="true">
+        <div className={styles.row}>
+          {[0, 1].map((copy) => (
+            <div key={copy} className={styles.group}>
+              {BANNER_LOGOS.map((Logo, index) => (
+                <div key={index} className={styles.tile} style={{ animationDelay: `${index * -0.3375}s` }}>
+                  <Logo size={22} />
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
-
       {/* ── Foreground Text (Dual-Theme Light & Dark) ── */}
       <div className="relative z-10 space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-bold border border-orange-500/20 dark:border-orange-500/30">

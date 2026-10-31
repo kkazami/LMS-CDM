@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { PageTutorial } from './PageTutorial';
 import { CircuitBoard } from 'lucide-react';
+import { CircuitBackdrop } from './CircuitBackdrop';
 import type { ComponentKind, Question } from '../domain/types';
 
 export function Banner({ staff = false }: { staff?: boolean }) {
-  return <><header className="ohm-banner"><div className="ohm-mark"><div className="ohm-mark-icon"><CircuitBoard aria-hidden="true" size={28}/></div><div><h1>Ohmward</h1><p>Every circuit starts a journey.</p></div></div><nav className="ohm-actions" aria-label="Ohmward">{staff ? <Link className="ohm-button ohm-secondary" href="/ics/activities/ohmward/modules/circuitry">Preview curriculum</Link> : <><Link data-ohm-tour="journey" href="/ics/activities/ohmward" className="ohm-button ohm-secondary">Journey</Link><Link href="/ics/activities/ohmward/progress" className="ohm-button ohm-secondary">My progress</Link><Link href="/ics/activities/ohmward/sandbox" className="ohm-button ohm-secondary">Sandbox</Link></>}</nav></header><PageTutorial/></>;
+  return <><header className="ohm-banner"><div className="ohm-mark"><div className="ohm-mark-icon"><CircuitBoard aria-hidden="true" size={28}/></div><div><h1>Ohmward</h1><p>Every circuit starts a journey.</p></div></div><nav className="ohm-actions" aria-label="Ohmward">{staff ? <Link className="ohm-button ohm-secondary" href="/ics/activities/ohmward/modules/circuitry">Preview curriculum</Link> : <><Link data-ohm-tour="journey" href="/ics/activities/ohmward" className="ohm-button ohm-secondary">Journey</Link><Link href="/ics/activities/ohmward/progress" className="ohm-button ohm-secondary">My progress</Link><Link href="/ics/activities/ohmward/sandbox" className="ohm-button ohm-secondary">Sandbox</Link></>}<CircuitBackdrop/></nav></header><PageTutorial/></>;
 }
 export function AssessmentSymbol({ drawing }: { drawing: NonNullable<Question['drawing']> }) {
   return <svg width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label={drawing.description}>{drawing.paths.map((d,i)=><path key={i} d={d}/>)}</svg>;

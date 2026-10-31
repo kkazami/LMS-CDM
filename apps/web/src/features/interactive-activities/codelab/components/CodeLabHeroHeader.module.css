@@ -1,0 +1,68 @@
+.wave {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.65;
+  mask-image: linear-gradient(to right, rgb(0 0 0 / 5%) 50%, black 85%);
+}
+
+.row {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  transform: translateY(-50%);
+  animation: banner-logo-scroll 48s linear infinite;
+  animation-play-state: paused;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 16px;
+  padding-right: 16px;
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 64px;
+  height: 64px;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--bg-canvas);
+  animation: banner-logo-wave 4s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.wave[data-running="true"] .row,
+.wave[data-running="true"] .tile {
+  animation-play-state: running;
+}
+
+@keyframes banner-logo-scroll {
+  from { transform: translate3d(0, -50%, 0); }
+  to { transform: translate3d(-50%, -50%, 0); }
+}
+
+@keyframes banner-logo-wave {
+  0%, 100% { transform: translateY(-10px); }
+  50% { transform: translateY(10px); }
+}
+
+@media (max-width: 639px) {
+  .wave {
+    opacity: 0.16;
+    mask-image: linear-gradient(to right, transparent, black);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row, .tile { animation: none; }
+}

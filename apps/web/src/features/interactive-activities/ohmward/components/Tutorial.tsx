@@ -71,6 +71,8 @@ export function Tutorial({ guide }: { guide: Guide }) {
         return { left: rect.left - 5, top: rect.top - 5, width: rect.width + 10, height: rect.height + 10 };
       };
       const size = { height: Math.max(panel.current?.offsetHeight ?? 0, (panel.current?.scrollHeight ?? 300) + 2) };
+      const context = target.closest<HTMLElement>('.ohm-empty-workbench, .ohm-question, .ohm-inset, .ohm-field, .ohm-prerequisites, .ohm-level-row, .ohm-environment-control, .ohm-editor-tray, article, fieldset, section');
+      const contextBounds = () => context?.getBoundingClientRect();
       const parents: HTMLElement[] = [];
       for (let parent = target.parentElement; parent && parent !== document.body && parent !== document.documentElement; parent = parent.parentElement) {
         if (parent.scrollHeight > parent.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(parent).overflowY)) parents.push(parent);
@@ -86,14 +88,12 @@ export function Tutorial({ guide }: { guide: Guide }) {
         }
         return remaining;
       };
-      let bounds = measure(), callout = tourCallout(bounds, size, area, maxScrollUp(), revealTarget);
+      let bounds = measure(), callout = tourCallout(bounds, size, area, maxScrollUp(), revealTarget, contextBounds());
       if (revealTarget) {
         revealTarget = false;
-        // Nearest scrolling leaves already-visible controls and their surrounding lesson in place.
-        if (bounds.left < area.left || bounds.left + bounds.width > area.left + area.width) {
-          target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
-          bounds = measure(); callout = tourCallout(bounds, size, area, maxScrollUp());
-        }
+        // A control may be inside the viewport but clipped by a nested board/table scroller.
+        target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        bounds = measure(); callout = tourCallout(bounds, size, area, maxScrollUp(), true, contextBounds());
         if (Math.abs(callout.scrollBy) > 1) {
           const remaining = scrollTarget(callout.scrollBy);
           if (remaining > 1) {
@@ -102,7 +102,7 @@ export function Tutorial({ guide }: { guide: Guide }) {
             (root as HTMLElement).style.paddingBottom = `${basePadding + extraPadding}px`;
             scrollTarget(remaining);
           }
-          bounds = measure(); callout = tourCallout(bounds, size, area, maxScrollUp(), false);
+          bounds = measure(); callout = tourCallout(bounds, size, area, maxScrollUp(), false, contextBounds());
         }
       }
       setPlacement(old => {
@@ -140,11 +140,11 @@ export function Tutorial({ guide }: { guide: Guide }) {
       <button type="button" ref={trigger} className="ohm-button ohm-secondary" aria-expanded={open} onClick={() => { if (open) end(); else { setIndex(0); setPlacement(null); setOpen(true); } }}>{open ? 'End walkthrough' : finished ? 'Restart walkthrough' : 'Guide me'}</button>
     </div>
     {open && createPortal(<div className="ohmward ohm-tour-layer">
-      {placement && <><BubbleDimmer placement={placement} animate={animate}/><motion.div aria-hidden="true" className="ohm-tour-spotlight" initial={false} animate={placement.target} transition={{ duration: animate ? .2 : 0, ease: [.16, 1, .3, 1] }}/></>}
+      {placement && <BubbleDimmer placement={placement} animate={animate}/>}
       <div ref={panel} className="ohm-tour-callout" role="region" aria-label="Guided walkthrough" data-side={placement?.callout.side} style={placement ? { left: placement.callout.left, top: placement.callout.top, width: placement.callout.width, maxHeight: placement.callout.maxHeight } : undefined}>
         <button type="button" className="ohm-tour-close" aria-label="End walkthrough" onClick={end}><X size={18} aria-hidden="true"/></button>
         <div id={`${id}-instruction`} role="status" aria-live="polite" aria-atomic="true"><p className="ohm-status">Step {index + 1} of {guide.steps.length}</p><h3>{step.title}</h3><p>{step.body}</p></div>
-        <p className="ohm-tour-wait">{placement ? step.event === 'change' ? 'Change the outlined control to continue.' : 'Click the outlined control to continue.' : 'Waiting for this control to become available. You can end the walkthrough at any time.'}</p>
+        <p className="ohm-tour-wait">{placement ? step.event === 'change' ? 'Change the control in the spotlight to continue.' : 'Click the control in the spotlight to continue.' : 'Waiting for this control to become available. You can end the walkthrough at any time.'}</p>
         <button type="button" className="ohm-button ohm-secondary" onClick={end}>End walkthrough</button>
       </div>
     </div>, document.body)}

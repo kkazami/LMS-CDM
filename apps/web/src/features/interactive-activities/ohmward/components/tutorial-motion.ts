@@ -1,44 +1,39 @@
 export type TourBounds = { left: number; top: number; width: number; height: number };
 
-export function tourCallout(target: TourBounds, panel: { height: number }, area: TourBounds, maxScrollUp = Infinity, reveal = true) {
+export function tourCallout(target: TourBounds, panel: { height: number }, area: TourBounds, maxScrollUp = Infinity, reveal = true, context?: TourBounds) {
   const gap = 16, width = Math.min(352, area.width), right = area.left + area.width, bottom = area.top + area.height;
   const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(value, high));
-  if (area.width < 640) {
-    // Center the control and instructions together inside the space between the shell bars.
-    const focusHeight = Math.max(target.height, Math.min(Math.hypot(target.width, target.height) + 16, area.height - 112));
-    const height = Math.min(panel.height, Math.max(44, area.height - focusHeight - gap));
-    const groupHeight = focusHeight + gap + height;
-    const desiredTop = area.top + (area.height - groupHeight) / 2 + (focusHeight - target.height) / 2;
-    const scrollBy = reveal ? Math.max(-maxScrollUp, target.top - desiredTop) : 0;
-    const center = target.top - scrollBy + target.height / 2;
-    const below = bottom - center - focusHeight / 2 - gap;
-    const above = center - focusHeight / 2 - gap - area.top;
-    const side = below >= Math.min(height, 96) || below >= above ? 'below' : 'above';
-    const maxHeight = Math.min(height, Math.max(44, side === 'below' ? below : above));
-    return { left: area.left + (area.width - width) / 2,
-      top: clamp(side === 'below' ? center + focusHeight / 2 + gap : center - focusHeight / 2 - gap - maxHeight, area.top, bottom - maxHeight),
-      width, maxHeight, side, scrollBy };
+  const focusHeight = Math.max(target.height, Math.min(Math.hypot(target.width, target.height) + 16, area.height - 112));
+  const halo = (focusHeight - target.height) / 2;
+  // Keep compact cards intact; large editors get a bounded view of the current control.
+  const useContext = context && context.height <= area.height * .6;
+  const occupied = {
+    left: useContext ? Math.min(context.left, target.left) : target.left,
+    right: useContext ? Math.max(context.left + context.width, target.left + target.width) : target.left + target.width,
+    top: useContext ? Math.min(context.top, target.top - halo) : target.top - halo,
+    bottom: useContext ? Math.max(context.top + context.height, target.top + target.height + halo) : target.top + target.height + halo,
+  };
+  const occupiedHeight = occupied.bottom - occupied.top;
+  const onRight = occupied.right + gap, onLeft = occupied.left - gap - width;
+  if (area.width >= 640 && (onRight >= area.left && onRight + width <= right || onLeft >= area.left && onLeft + width <= right)) {
+    const scrollBy = reveal ? Math.max(-maxScrollUp, occupied.top + occupiedHeight / 2 - (area.top + area.height / 2)) : 0;
+    const height = Math.min(panel.height, area.height);
+    const side = onRight >= area.left && onRight + width <= right ? 'right' : 'left';
+    return { left: side === 'right' ? onRight : onLeft,
+      top: clamp(target.top - scrollBy + target.height / 2 - height / 2, area.top, bottom - height),
+      width, maxHeight: height, side, scrollBy };
   }
-  let scrollBy = reveal ? Math.max(-maxScrollUp, target.top < area.top ? target.top - area.top : target.top + target.height > bottom ? target.top + target.height - bottom : 0) : 0;
-  const top = target.top - scrollBy, targetBottom = top + target.height;
-  const sideHeight = Math.min(panel.height, area.height);
-  const sideTop = clamp(top + target.height / 2 - sideHeight / 2, area.top, bottom - sideHeight);
-  const onRight = target.left + target.width + gap, onLeft = target.left - gap - width;
-  if (onRight >= area.left && onRight + width <= right) return { left: onRight, top: sideTop, width, maxHeight: sideHeight, side: 'right', scrollBy };
-  if (onLeft >= area.left && onLeft + width <= right) return { left: onLeft, top: sideTop, width, maxHeight: sideHeight, side: 'left', scrollBy };
-  const below = bottom - targetBottom - gap, above = top - area.top - gap;
-  const height = Math.min(panel.height, Math.max(44, reveal ? area.height - target.height - gap : Math.min(area.height, Math.max(below, above))));
-  const left = clamp(target.left + target.width / 2 - width / 2, area.left, right - width);
-  if (height <= below) return { left, top: clamp(targetBottom + gap, area.top, bottom - height), width, maxHeight: height, side: 'below', scrollBy };
-  if (height <= above) return { left, top: clamp(top - height - gap, area.top, bottom - height), width, maxHeight: height, side: 'above', scrollBy };
-  if (!reveal) return { left, top: area.top, width, maxHeight: height, side: 'above', scrollBy };
-  // On short screens, move only as far as needed to fit the pair without covering the control.
-  if (height - below <= height - above || scrollBy - (height - above) < -maxScrollUp) {
-    const shift = height - below; scrollBy += shift;
-    return { left, top: targetBottom + gap - shift, width, maxHeight: height, side: 'below', scrollBy };
-  }
-  const shift = height - above; scrollBy -= shift;
-  return { left, top: top - height - gap + shift, width, maxHeight: height, side: 'above', scrollBy };
+  const height = Math.min(panel.height, Math.max(44, area.height - occupiedHeight - gap));
+  const preferredAbove = Boolean(useContext && target.top + target.height / 2 > context.top + context.height / 2);
+  const desiredTop = area.top + (area.height - occupiedHeight - gap - height) / 2 + (preferredAbove ? height + gap : 0);
+  const scrollBy = reveal ? Math.max(-maxScrollUp, occupied.top - desiredTop) : 0;
+  const movedTop = occupied.top - scrollBy, movedBottom = occupied.bottom - scrollBy;
+  const above = movedTop - area.top - gap, below = bottom - movedBottom - gap;
+  const side = preferredAbove && above >= height || below < Math.min(height, 96) && above > below ? 'above' : 'below';
+  const maxHeight = Math.min(height, Math.max(44, side === 'above' ? above : below));
+  return { left: area.left + (area.width - width) / 2,
+    top: clamp(side === 'above' ? movedTop - gap - maxHeight : movedBottom + gap, area.top, bottom - maxHeight),
+    width, maxHeight, side, scrollBy };
 }
 
 export function tourBubble(target: TourBounds, viewport: { width: number; height: number }) {
