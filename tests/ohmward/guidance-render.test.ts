@@ -13,6 +13,7 @@ test('walkthrough launches without sample answers, synthetic controls or automat
   const guide={title:'Matching walkthrough',steps:[{title:'Answer a question',body:'Choose your own answer using the lesson.',target:'[data-ohm-tour="answer"]',event:'change'}]};
   const markup=renderToStaticMarkup(React.createElement(Tutorial,{guide}));
   assert.match(markup,/aria-expanded="false"/);assert.match(markup,/Guide me/);
-  assert.match(markup,/use the real controls/);
+  assert.match(markup,/Use the real controls/);
+  assert.match(markup,/next stage starts without a walkthrough/);
   assert.doesNotMatch(markup,/<select|<option|Battery|Terminal A|Next tip|Check example match|type="submit"/);
 });

@@ -87,6 +87,8 @@ export default async function ClassworkPage({ params }: PageProps) {
     formId: item.form?.id ?? null,
     formStartsAt: item.form?.opensAt?.toISOString() ?? null,
     type: item.type,
+    isProgramming: item.isProgramming,
+    requireGithubRepo: item.requireGithubRepo,
     title: item.title,
     description: !canEdit && [item.labAssignment?.opensAt, item.form?.opensAt].some(date => date && date > new Date()) ? '' : item.description,
     dueDate: item.dueDate ? item.dueDate.toISOString() : null,

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "prisma generate --schema=../../prisma/schema.prisma && next dev -H 0.0.0.0",
-    "build": "prisma generate --schema=../../prisma/schema.prisma && next build",
+    "build": "prisma generate --schema=../../prisma/schema.prisma && node ../../scripts/programming-coursework-database.mjs --vercel-build && next build --webpack",
     "postinstall": "prisma generate --schema=../../prisma/schema.prisma",
     "start": "next start -H 0.0.0.0",
     "test:unit": "tsx --env-file=.env --test src/lib/ite/__tests__/*.test.ts src/lib/ite/focus/__tests__/*.test.ts src/lib/ite/guidance/__tests__/*.test.ts src/lib/ite/meetings/__tests__/*.test.ts src/lib/dashboard/__tests__/*.test.ts src/lib/practicum/__tests__/*.test.ts src/lib/__tests__/*.test.ts src/lib/ite/offline/__tests__/*.test.ts src/lib/ite/search/__tests__/*.test.ts"

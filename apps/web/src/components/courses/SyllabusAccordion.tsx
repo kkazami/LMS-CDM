@@ -21,6 +21,8 @@ interface SyllabusItemData {
   formId?: string | null;
   formStartsAt?: string | null;
   type: string;
+  isProgramming?: boolean;
+  requireGithubRepo?: boolean;
   title: string;
   description: string;
   dueDate: string | null;
@@ -191,6 +193,7 @@ export default function SyllabusAccordion({
                         )}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           {item.labAssignmentId && <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Guided practical lab</span>}
+                          {item.isProgramming && <span className="text-xs font-medium text-slate-600 dark:text-[#8B92A5]">{item.requireGithubRepo ? 'Programming · GitHub required' : 'Programming'}</span>}
                           {upcoming && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">Not started yet</span>}
                           {startsAt && <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-[#8B92A5]"><Clock className="h-3 w-3"/>{upcoming ? 'Opens' : 'Start'} {formatDate(startsAt)}</span>}
                           {item.dueDate && (

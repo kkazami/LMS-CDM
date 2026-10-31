@@ -460,6 +460,8 @@ model SyllabusItem {
   id                        String                @id @default(cuid())
   courseId                  String
   type                      String                @default("MATERIAL")
+  isProgramming             Boolean               @default(false)
+  requireGithubRepo         Boolean               @default(false)
   title                     String
   description               String                @default("")
   dueDate                   DateTime?

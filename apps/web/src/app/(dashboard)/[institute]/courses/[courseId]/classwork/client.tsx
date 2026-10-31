@@ -37,6 +37,8 @@ interface SyllabusItemData {
   formStartsAt?: string | null;
   type: string;
   title: string;
+  isProgramming?: boolean;
+  requireGithubRepo?: boolean;
   description: string;
   dueDate: string | null;
   maxPoints: number | null;
@@ -104,6 +106,8 @@ export default function ClassworkClient({
   const [isCustomType, setIsCustomType] = useState(false);
   const [enableIntegrity, setEnableIntegrity] = useState(false);
   const [requireFullscreen, setRequireFullscreen] = useState(false);
+  const [isProgramming, setIsProgramming] = useState(false);
+  const [requireGithubRepo, setRequireGithubRepo] = useState(false);
   const [leaderboardEnabled, setLeaderboardEnabled] = useState(false);
   const [rewardTiers, setRewardTiers] = useState<{placement: number; rewardLabel: string; bonusExp: number}[]>([]);
 
@@ -125,6 +129,8 @@ export default function ClassworkClient({
       setAttachments([]);
       setEnableIntegrity(false);
       setRequireFullscreen(false);
+      setIsProgramming(false);
+      setRequireGithubRepo(false);
       setLeaderboardEnabled(false);
       setRewardTiers([]);
     }
@@ -138,6 +144,8 @@ export default function ClassworkClient({
     setIsCustomType(false);
     setEnableIntegrity(false);
     setRequireFullscreen(false);
+    setIsProgramming(false);
+    setRequireGithubRepo(false);
     setLeaderboardEnabled(false);
     setRewardTiers([]);
     setIsModalOpen(true);
@@ -148,6 +156,8 @@ export default function ClassworkClient({
     setSelectedGroups(item.targetGroups.map((tg) => tg.groupId));
     setEnableIntegrity(Boolean(item.enableIntegrityMonitoring));
     setRequireFullscreen(Boolean(item.requireFullscreen));
+    setIsProgramming(Boolean(item.isProgramming));
+    setRequireGithubRepo(Boolean(item.requireGithubRepo));
     setLeaderboardEnabled(Boolean(item.leaderboardEnabled));
     setRewardTiers(item.leaderboardRewards || []);
     // Load existing attachments for this item
@@ -281,14 +291,17 @@ export default function ClassworkClient({
             )}
           />
           <input type="hidden" name="leaderboardEnabled" value={leaderboardEnabled ? "true" : "false"} />
+          <input type="hidden" name="isProgramming" value={selectedType.toUpperCase() !== 'MATERIAL' && isProgramming ? 'true' : 'false'} />
+          <input type="hidden" name="requireGithubRepo" value={selectedType.toUpperCase() !== 'MATERIAL' && isProgramming && requireGithubRepo ? 'true' : 'false'} />
           <input type="hidden" name="rewardTiers" value={JSON.stringify(rewardTiers)} />
           {editingItem && (
             <input type="hidden" name="id" value={editingItem.id} />
           )}
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">Type</label>
+            <label htmlFor="coursework-type" className="text-sm font-medium text-slate-700 dark:text-[#F0F2F8]">Type</label>
             <select
+              id="coursework-type"
               value={isCustomType ? "CUSTOM" : selectedType}
               onChange={(e) => {
                 if (e.target.value === "CUSTOM") {
@@ -325,7 +338,31 @@ export default function ClassworkClient({
             <input type="hidden" name="type" value={isCustomType && editingItem && !predefinedTypes.includes(editingItem.type) && !selectedType ? editingItem.type : selectedType} />
           </div>
 
+          {selectedType.toUpperCase() !== 'MATERIAL' && !editingItem?.formId && (
+            <fieldset className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+              <legend className="px-1 text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">Programming submission</legend>
+              <label className="flex min-h-11 cursor-pointer items-start gap-3">
+                <input type="checkbox" checked={isProgramming} onChange={e => { setIsProgramming(e.target.checked); if (!e.target.checked) setRequireGithubRepo(false); }} className="mt-1 h-4 w-4 shrink-0" style={{ accentColor: theme.colors.primary }} />
+                <span className="text-sm text-slate-700 dark:text-[#F0F2F8]">
+                  <span className="block font-medium">Programming coursework</span>
+                  <span className="mt-1 block text-xs text-slate-600 dark:text-[#8B92A5]">Mark this assignment, activity, quiz, or exam as programming work.</span>
+                </span>
+              </label>
+              {isProgramming && (
+                <label className="flex min-h-11 cursor-pointer items-start gap-3">
+                  <input type="checkbox" checked={requireGithubRepo} onChange={e => setRequireGithubRepo(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" style={{ accentColor: theme.colors.primary }} />
+                  <span className="text-sm text-slate-700 dark:text-[#F0F2F8]">
+                    <span className="block font-medium">Require GitHub repository</span>
+                    <span className="mt-1 block text-xs text-slate-600 dark:text-[#8B92A5]">Students must submit one GitHub repository URL. Files and other links are rejected. This requirement locks once students add work.</span>
+                  </span>
+                </label>
+              )}
+              {state.errors?.requireGithubRepo && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{state.errors.requireGithubRepo.join(' ')}</p>}
+            </fieldset>
+          )}
+
           <Input
+            id="coursework-title"
             name="title"
             label="Title"
             defaultValue={editingItem?.title}

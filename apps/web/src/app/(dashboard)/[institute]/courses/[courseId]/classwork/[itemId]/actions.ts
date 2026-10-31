@@ -12,13 +12,15 @@ import { requireCourseAccess, type CourseActor } from '@/lib/course-access';
 import { saveSubmission, gradeSubmission, lockAcademicRecord, submissionInput } from '@/lib/academic-records';
 import { awardBadgeIfEarned } from '@/lib/gamification/badge-checker';
 import type { Prisma } from '@prisma/client';
+import { AccessError } from '@/lib/super-user-v1/actor';
+import { githubSubmissionError, githubRepositoryMessage, parseGithubRepository } from '@/lib/coursework-submission';
 
 async function student() {
   const session = await getSession();
   if (!session || canonicalRole(session.user.role) !== 'STUDENT') throw new Error('Student authentication required.');
   return session.user;
 }
-async function mutable<T>(actor: CourseActor, submissionId: string, courseId: string, itemId: string, write: (tx: Prisma.TransactionClient) => Promise<T>) {
+async function mutable<T>(actor: CourseActor, submissionId: string, courseId: string, itemId: string, write: (tx: Prisma.TransactionClient, requireGithubRepo: boolean) => Promise<T>) {
   return db.$transaction(async tx => {
     await assertOrdinaryClasswork(tx, itemId);
     await lockAcademicRecord(tx, actor.id, itemId);
@@ -28,7 +30,7 @@ async function mutable<T>(actor: CourseActor, submissionId: string, courseId: st
     if (submission.isReturned || submission.grade !== null) throw new Error('Submission has already been graded.');
     if (submission.syllabusItem.dueDate && submission.syllabusItem.dueDate < new Date()) throw new Error('The deadline has passed.');
     await markAcademicWorkStarted(tx, itemId, actor.id);
-    return write(tx);
+    return write(tx, submission.syllabusItem.requireGithubRepo);
   });
 }
 export async function getOrCreateSubmission(syllabusItemId: string) {
@@ -48,7 +50,13 @@ export async function submitWork(submissionId: string, instituteCode: string, co
   const actor = await student();
   const submission = await db.studentSubmission.findFirst({ where: { id: submissionId, studentId: actor.id, syllabusItemId: itemId, syllabusItem: { courseId } } });
   if (!submission) throw new Error('Submission not found.');
-  await saveSubmission(actor, courseId, { syllabusItemId: itemId });
+  try {
+    await saveSubmission(actor, courseId, { syllabusItemId: itemId });
+  } catch (error) {
+    if (error instanceof AccessError) return { success: false, error: error.message };
+    console.warn('COURSEWORK_SUBMISSION_UNAVAILABLE');
+    return { success: false, error: 'Unable to turn in your work. Please try again.' };
+  }
   try { await awardBadgeIfEarned(actor.id, 'assignment-first'); } catch { console.warn('SUBMISSION_BADGE_UNAVAILABLE'); }
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
   return { success: true, error: undefined as string | undefined };
@@ -64,11 +72,17 @@ async function addAttachment(submissionId: string, url: string, fileName: string
   const actor = await student();
   const parsed = submissionInput.safeParse({ syllabusItemId: itemId, attachments: [{ url, fileName, type }] });
   if (!parsed.success) throw new Error('Invalid attachment.');
-  const attachment = await mutable(actor, submissionId, courseId, itemId, async tx => {
+  const attachment = await mutable(actor, submissionId, courseId, itemId, async (tx, requireGithubRepo) => {
+    if (requireGithubRepo) {
+      const existing = await tx.submissionAttachment.findMany({ where: { submissionId } });
+      const error = githubSubmissionError(true, [...existing.filter(file => file.url !== url || file.type !== type), { url, type }], false);
+      if (error) throw new AccessError(400, error);
+    }
     await requireOwnedUpload(tx, actor, url);
     const data = { submissionId, url, fileName, type };
     await tx.studentSubmission.update({ where: { id: submissionId }, data: { status: 'DRAFT' } });
-    return await tx.submissionAttachment.findFirst({ where: data }) ?? tx.submissionAttachment.create({ data });
+    const where = requireGithubRepo ? { submissionId, url, type } : data;
+    return await tx.submissionAttachment.findFirst({ where }) ?? tx.submissionAttachment.create({ data });
   });
   revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
   return { success: true, attachmentId: attachment.id, error: undefined as string | undefined };
@@ -80,6 +94,24 @@ export async function addSubmissionLink(submissionId: string, url: string, fileN
 export async function addSubmissionFile(submissionId: string, url: string, fileName: string, instituteCode: string, courseId: string, itemId: string) {
   await requireLegacyActor('classwork/actions.ts#addSubmissionFile', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
   return addAttachment(submissionId, url, fileName, instituteCode, courseId, itemId, 'FILE');
+}
+export async function saveGithubRepository(submissionId: string, url: string, instituteCode: string, courseId: string, itemId: string) {
+  try {
+    await requireLegacyActor('classwork/actions.ts#saveGithubRepository', () => ({ institute: instituteCode, courseId, submissionId, itemId }));
+    const actor = await student();
+    const repository = typeof url === 'string' ? parseGithubRepository(url) : null;
+    if (!repository) return { success: false, error: githubRepositoryMessage };
+    const submission = await db.studentSubmission.findFirst({ where: { id: submissionId, studentId: actor.id, syllabusItemId: itemId, syllabusItem: { courseId, requireGithubRepo: true } } });
+    if (!submission) return { success: false, error: 'Repository coursework not found.' };
+    await saveSubmission(actor, courseId, { syllabusItemId: itemId, status: 'DRAFT', replaceAttachments: true, attachments: [{ type: 'LINK', url: repository.url, fileName: repository.name }] });
+    const attachments = await db.submissionAttachment.findMany({ where: { submissionId }, orderBy: { createdAt: 'asc' } });
+    revalidatePath(`/${instituteCode}/courses/${courseId}/classwork/${itemId}`);
+    return { success: true, attachments };
+  } catch (error) {
+    if (error instanceof AccessError) return { success: false, error: error.message };
+    console.warn('COURSEWORK_REPOSITORY_SAVE_UNAVAILABLE');
+    return { success: false, error: 'Unable to save your repository. Please try again.' };
+  }
 }
 export async function removeSubmissionAttachment(attachmentId: string, submissionId: string, instituteCode: string, courseId: string, itemId: string) {
   await requireLegacyActor('classwork/actions.ts#removeSubmissionAttachment', () => ({ institute: instituteCode, courseId, submissionId, attachmentId, itemId }));

@@ -47,6 +47,8 @@ interface Submission {
 
 interface SyllabusItem {
   id: string;
+  isProgramming?: boolean;
+  requireGithubRepo?: boolean;
   type: string;
   title: string;
   description: string;
@@ -306,6 +308,7 @@ export default function AssignmentDetailClient({
               </div>
 
               <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>
+              {item.isProgramming && <p className="mb-4 text-sm font-medium text-slate-600 dark:text-[#8B92A5]">{item.requireGithubRepo ? 'Programming coursework · GitHub repository required' : 'Programming coursework'}</p>}
 
               <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-[#8B92A5]">
                 {item.dueDate && (
@@ -464,7 +467,7 @@ export default function AssignmentDetailClient({
               ) : (
                 submission && (
                   <>
-                    {isStudent && instituteCode.toLowerCase() === "ite" && (
+                    {isStudent && instituteCode.toLowerCase() === "ite" && !item.requireGithubRepo && (
                       <OfflineDraftCard
                         itemId={item.id}
                         courseId={courseId}
@@ -474,6 +477,7 @@ export default function AssignmentDetailClient({
                       />
                     )}
                     <YourWorkPanel
+                      requireGithubRepo={Boolean(item.requireGithubRepo)}
                       submission={submission}
                       isPastDeadline={isPastDeadline}
                       maxPoints={item.maxPoints}

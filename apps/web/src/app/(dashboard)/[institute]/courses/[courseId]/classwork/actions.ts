@@ -11,6 +11,9 @@ import { getSession } from "@/lib/auth-session";
 import { createNotificationsForCourseStudents } from "@/lib/notifications";
 import { requireOwnedUpload } from '@/lib/private-upload';
 import { attachmentLocation } from '@/lib/academic-records';
+import { courseworkSettingsError } from '@/lib/coursework-submission';
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError } from '@/lib/super-user-v1/actor';
 
 async function validateUploads(actor: Awaited<ReturnType<typeof ensureCourseInstructor>>, raw: string) {
   const files = z.array(z.object({ url: attachmentLocation })).max(20).parse(JSON.parse(raw));
@@ -21,20 +24,7 @@ async function ensureCourseInstructor(courseId: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  const role = session.user.role.toUpperCase();
-  const course = await db.course.findUnique({
-    where: { id: courseId },
-    select: { instructorId: true },
-  });
-
-  if (!course) throw new Error("Course not found");
-
-  const isInstructor = course.instructorId === session.user.id;
-  const isAdmin = role === "ADMIN";
-
-  if (!isInstructor && !isAdmin) {
-    throw new Error("You are not authorized to modify this course's classwork.");
-  }
+  await requireCourseAccess(session.user, courseId, true);
 
   return session.user;
 }
@@ -43,6 +33,8 @@ const syllabusItemSchema = z.object({
   id: z.string().optional(),
   courseId: z.string(),
   type: z.string().min(1, "Type is required."),
+  isProgramming: z.boolean().default(false),
+  requireGithubRepo: z.boolean().default(false),
   title: z.string().min(1, "Title is required."),
   description: z.string().optional().default(""),
   dueDate: z.string().optional().nullable(),
@@ -52,6 +44,9 @@ const syllabusItemSchema = z.object({
   targetGroupIds: z.string().optional().default(""),
   attachments: z.string().optional().default("[]"), // JSON array of {type, url, fileName}
   instituteCode: z.string(),
+}).superRefine((data, ctx) => {
+  const error = courseworkSettingsError(data);
+  if (error) ctx.addIssue({ code: 'custom', path: ['requireGithubRepo'], message: error });
 });
 
 function parseCombinedDueDateTime(dateVal: FormDataEntryValue | null, timeVal: FormDataEntryValue | null): string | null {
@@ -70,6 +65,8 @@ export async function createSyllabusItem(
   const parse = syllabusItemSchema.safeParse({
     courseId: formData.get("courseId"),
     type: formData.get("type"),
+    isProgramming: formData.get("isProgramming") === "true",
+    requireGithubRepo: formData.get("requireGithubRepo") === "true",
     title: formData.get("title"),
     description: formData.get("description") || "",
     dueDate: parseCombinedDueDateTime(formData.get("dueDate"), formData.get("dueTime")),
@@ -117,6 +114,8 @@ export async function createSyllabusItem(
           courseId: data.courseId,
           ...await academicProvenance('UNTOUCHED', tx),
           type: data.type,
+          isProgramming: data.isProgramming,
+          requireGithubRepo: data.requireGithubRepo,
           title: data.title,
           description: data.description,
           dueDate: data.dueDate ? new Date(data.dueDate) : null,
@@ -202,8 +201,8 @@ export async function createSyllabusItem(
     );
     return { message: "success" };
   } catch (error) {
-    console.error("createSyllabusItem error:", error);
-    return { message: error instanceof Error ? error.message : "Failed to create item." };
+    if (!(error instanceof AccessError)) console.warn('CLASSWORK_CREATE_UNAVAILABLE');
+    return { message: error instanceof AccessError ? error.message : "Failed to create item." };
   }
 }
 
@@ -217,6 +216,8 @@ export async function updateSyllabusItem(
     id: formData.get("id"),
     courseId: formData.get("courseId"),
     type: formData.get("type"),
+    isProgramming: formData.get("isProgramming") === "true",
+    requireGithubRepo: formData.get("requireGithubRepo") === "true",
     title: formData.get("title"),
     description: formData.get("description") || "",
     dueDate: parseCombinedDueDateTime(formData.get("dueDate"), formData.get("dueTime")),
@@ -249,10 +250,18 @@ export async function updateSyllabusItem(
 
     await db.$transaction(async tx => {
       await assertOrdinaryClasswork(tx, itemId);
+      const current = await tx.syllabusItem.findFirst({ where: { id: itemId, courseId: data.courseId }, include: { form: { select: { id: true } } } });
+      if (!current) throw new AccessError(404, 'Classwork not found.');
+      if (data.requireGithubRepo && (current.form || await tx.activityTemplate.count({ where: { syllabusItemId: itemId } }))) throw new AccessError(409, 'Interactive assessments use their own submission flow. Create separate coursework for a GitHub repository.');
+      if (current.requireGithubRepo !== data.requireGithubRepo && await tx.studentSubmission.count({ where: { syllabusItemId: itemId, OR: [{ attachments: { some: {} } }, { status: { not: 'DRAFT' } }, { grade: { not: null } }, { isReturned: true }] } })) {
+        throw new AccessError(409, 'The submission requirement cannot change after students have added work. Create new coursework for a different submission requirement.');
+      }
       await tx.syllabusItem.update({
-        where: { id: itemId },
+        where: { id: itemId, courseId: data.courseId },
         data: {
           type: data.type,
+          isProgramming: data.isProgramming,
+          requireGithubRepo: data.requireGithubRepo,
           title: data.title,
           description: data.description,
           dueDate: data.dueDate ? new Date(data.dueDate) : null,
@@ -325,8 +334,8 @@ export async function updateSyllabusItem(
     );
     return { message: "success" };
   } catch (error) {
-    console.error("updateSyllabusItem error:", error);
-    return { message: error instanceof Error ? error.message : "Failed to update item." };
+    if (!(error instanceof AccessError)) console.warn('CLASSWORK_UPDATE_UNAVAILABLE');
+    return { message: error instanceof AccessError ? error.message : "Failed to update item." };
   }
 }
 

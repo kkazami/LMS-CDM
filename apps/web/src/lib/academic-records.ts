@@ -3,6 +3,7 @@ import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
+import { githubSubmissionError, parseGithubRepository } from '@/lib/coursework-submission';
 import { db } from '@/lib/db';
 import { requireCourseAccess, type CourseActor } from './course-access';
 import { canonicalRole } from './super-user-v1/capabilities';
@@ -59,17 +60,29 @@ export async function saveSubmission(actor: CourseActor, courseId: string, raw: 
     if (existing && (existing.isReturned || existing.grade !== null)) throw new AccessError(409, 'This assignment has already been graded or returned.');
     if (item.dueDate && item.dueDate < new Date()) throw new AccessError(409, 'The deadline has passed.');
     await markAcademicWorkStarted(tx, item.id, actor.id);
+    const files = [...(input.attachments ?? []), ...(input.attachmentUrl ? [{ url: input.attachmentUrl, fileName: input.fileName || 'Submission Link', type: 'LINK' as const }] : [])];
+    if (item.requireGithubRepo) {
+      const retained = !input.replaceAttachments && existing ? await tx.submissionAttachment.findMany({ where: { submissionId: existing.id } }) : [];
+      const combined = [...retained, ...files.filter(file => !retained.some(saved => saved.type === (file.type || 'FILE') && saved.url === file.url))];
+      const error = githubSubmissionError(true, combined, input.status === 'SUBMITTED');
+      if (error) throw new AccessError(400, error);
+      for (const file of files) {
+        const repository = parseGithubRepository(file.url)!;
+        file.url = repository.url;
+        file.fileName = repository.name;
+      }
+    }
     const submittedAt = input.status === 'SUBMITTED' ? (existing?.status === 'SUBMITTED' ? existing.submittedAt : new Date()) : existing?.submittedAt ?? null;
     const saved = await tx.studentSubmission.upsert({
       where: { syllabusItemId_studentId: { syllabusItemId: item.id, studentId: actor.id } },
       update: { status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) }, create: { syllabusItemId: item.id, studentId: actor.id, status: input.status, submittedAt, ...await academicProvenance('STARTED', tx) },
     });
-    const files = [...(input.attachments ?? []), ...(input.attachmentUrl ? [{ url: input.attachmentUrl, fileName: input.fileName || 'Submission Link', type: 'LINK' as const }] : [])];
     for (const file of files) await requireOwnedUpload(tx, actor, file.url);
     if (input.replaceAttachments) await tx.submissionAttachment.deleteMany({ where: { submissionId: saved.id } });
     for (const file of files) {
       const data = { submissionId: saved.id, url: file.url, fileName: file.fileName || 'Attachment', type: file.type || 'FILE' };
-      if (!await tx.submissionAttachment.findFirst({ where: data })) await tx.submissionAttachment.create({ data });
+      const where = item.requireGithubRepo ? { submissionId: saved.id, url: file.url, type: 'LINK' } : data;
+      if (!await tx.submissionAttachment.findFirst({ where })) await tx.submissionAttachment.create({ data });
     }
     const result = await tx.studentSubmission.findUniqueOrThrow({ where: { id: saved.id }, include: { attachments: { select: { id: true, type: true, url: true, fileName: true } } } });
     if (input.status === 'SUBMITTED') await grantExp({ userId: actor.id, amount: EXP_VALUES.assignment_submitted,

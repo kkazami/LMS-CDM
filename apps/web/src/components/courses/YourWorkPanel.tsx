@@ -18,10 +18,12 @@ import {
   addSubmissionLink,
   addSubmissionFile,
   removeSubmissionAttachment,
+  saveGithubRepository,
 } from "@/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions";
 import AttachmentModal from "@/components/courses/AttachmentModal";
 import type { AttachmentItem } from "@/components/courses/AttachmentModal";
 import type { InstituteTheme } from "@/lib/theme";
+import { githubRepositoryMessage, githubSubmissionError, parseGithubRepository } from '@/lib/coursework-submission';
 
 interface SubmissionAttachment {
   id: string;
@@ -47,6 +49,7 @@ interface YourWorkPanelProps {
   courseId: string;
   itemId: string;
   theme?: InstituteTheme;
+  requireGithubRepo?: boolean;
 }
 
 // Fallback theme for when theme is not passed
@@ -74,17 +77,21 @@ export default function YourWorkPanel({
   courseId,
   itemId,
   theme = DEFAULT_THEME,
+  requireGithubRepo = false,
 }: YourWorkPanelProps) {
   const [submission, setSubmission] = useState(initialSubmission);
   const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [repositoryUrl, setRepositoryUrl] = useState(initialSubmission.attachments[0]?.url ?? '');
+  const [repositorySaved, setRepositorySaved] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isIte = instituteCode?.toLowerCase() === "ite";
 
   const isLocked = isPastDeadline && submission.status === "DRAFT";
   const isSubmitted = submission.status === "SUBMITTED";
   const isReturned = submission.status === "RETURNED" || submission.isReturned;
-  const canEdit = !isPastDeadline && !isSubmitted;
+  const canEdit = !isPastDeadline && !isSubmitted && !isReturned && submission.grade === null;
+  const repositoryDirty = requireGithubRepo && repositoryUrl.trim() !== (submission.attachments[0]?.url ?? '');
 
   const statusConfig = {
     DRAFT: { label: "Not submitted", color: "text-slate-500 dark:text-[#8B92A5]", bg: "bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5", Icon: FileText },
@@ -103,6 +110,11 @@ export default function YourWorkPanel({
   const status = statusConfig[submission.status as keyof typeof statusConfig] ?? statusConfig.DRAFT;
 
   async function handleSubmit() {
+    const validationError = githubSubmissionError(requireGithubRepo, submission.attachments, true);
+    if (validationError || repositoryDirty) {
+      setError(validationError || 'Save your repository URL before turning in your work.');
+      return;
+    }
     startTransition(async () => {
       const result = await submitWork(submission.id, instituteCode, courseId, itemId);
       if (!result.success) {
@@ -110,6 +122,25 @@ export default function YourWorkPanel({
       } else {
         setSubmission((s) => ({ ...s, status: "SUBMITTED", submittedAt: new Date() }));
         setError("");
+      }
+    });
+  }
+
+  function handleSaveRepository(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const repository = parseGithubRepository(repositoryUrl);
+    if (!repository) { setError(githubRepositoryMessage); return; }
+    setError('');
+    setRepositorySaved(false);
+    startTransition(async () => {
+      try {
+        const result = await saveGithubRepository(submission.id, repository.url, instituteCode, courseId, itemId);
+        if (!result.success || !result.attachments) { setError(result.error ?? 'Unable to save your repository.'); return; }
+        setSubmission(s => ({ ...s, status: 'DRAFT', attachments: result.attachments }));
+        setRepositoryUrl(repository.url);
+        setRepositorySaved(true);
+      } catch {
+        setError('Unable to save your repository. Please try again.');
       }
     });
   }
@@ -239,7 +270,7 @@ export default function YourWorkPanel({
       <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xs overflow-hidden w-full min-w-0 max-w-full">
         <div className="px-5 py-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">Your work</h3>
-          {canEdit && (
+          {canEdit && !requireGithubRepo && (
             <button
               onClick={() => setIsAttachModalOpen(true)}
               disabled={isPending}
@@ -256,10 +287,23 @@ export default function YourWorkPanel({
         </div>
 
         {/* Attachment list */}
+        {requireGithubRepo && (
+          <div className="px-4 pt-4 text-sm text-slate-700 dark:text-[#F0F2F8]">
+            <p id="repository-help" className="text-xs leading-relaxed text-slate-600 dark:text-[#8B92A5]">Submit one GitHub repository URL. Make sure your instructor can access it. Other links and file uploads are not accepted.</p>
+            {canEdit && (
+              <form onSubmit={handleSaveRepository} className="mt-3 space-y-3">
+                <label htmlFor="repository-url" className="block text-sm font-medium">GitHub repository URL</label>
+                <input id="repository-url" type="url" required maxLength={300} value={repositoryUrl} onChange={event => { setRepositoryUrl(event.target.value); setRepositorySaved(false); setError(''); }} placeholder="https://github.com/username/repository" aria-describedby="repository-help repository-error" aria-invalid={Boolean(error)} disabled={isPending} className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/20 dark:bg-[#1E2132] dark:text-[#F0F2F8] dark:placeholder:text-slate-400" />
+                <button type="submit" disabled={isPending || !repositoryUrl.trim()} className="min-h-11 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 dark:border-white/20 dark:text-[#F0F2F8] dark:hover:bg-white/5">{isPending ? 'Saving...' : 'Save repository'}</button>
+                {repositorySaved && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-400">Repository saved. Turn in your work when you are ready.</p>}
+              </form>
+            )}
+          </div>
+        )}
         <div className="p-3 min-h-[80px] space-y-1.5 w-full min-w-0">
           {submission.attachments.length === 0 && (
             <p className="text-xs text-slate-400 dark:text-[#8B92A5] text-center py-6">
-              {canEdit ? "Attach files or links to your work" : "No attachments"}
+              {requireGithubRepo ? 'No repository saved yet' : canEdit ? "Attach files or links to your work" : "No attachments"}
             </p>
           )}
 
@@ -285,7 +329,7 @@ export default function YourWorkPanel({
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">
                   {isLink ? "Link" : "File"}
                 </span>
-                {canEdit && (
+                {canEdit && !requireGithubRepo && (
                   <button
                     onClick={() => handleRemove(att.id)}
                     disabled={isPending}
@@ -301,7 +345,7 @@ export default function YourWorkPanel({
         </div>
 
         {error && (
-          <p className="px-4 pb-2 text-xs text-red-500">{error}</p>
+          <p id="repository-error" role="alert" className="px-4 pb-2 text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
 
         {/* Action buttons */}
@@ -319,7 +363,7 @@ export default function YourWorkPanel({
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={isPending}
+                disabled={isPending || (requireGithubRepo && (!submission.attachments.length || repositoryDirty))}
                 className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 transition-all shadow-xs cursor-pointer min-h-[44px] active:scale-[0.98] ${
                   isIte
                     ? "bg-blue-600 hover:bg-blue-700"
@@ -336,7 +380,7 @@ export default function YourWorkPanel({
       </div>
 
       {/* Attachment Modal for students */}
-      <AttachmentModal
+      {!requireGithubRepo && <AttachmentModal
         open={isAttachModalOpen}
         onClose={() => setIsAttachModalOpen(false)}
         onSave={handleAttachmentSave}
@@ -348,7 +392,7 @@ export default function YourWorkPanel({
         }))}
         theme={theme}
         title="Attach Your Work"
-      />
+      />}
     </div>
   );
 }

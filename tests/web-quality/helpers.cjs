@@ -26,6 +26,7 @@ async function load(db = {}, session = null, network = null) {
     export { POST as webhook } from './apps/web/src/app/api/github/webhooks/route';
     export * as gradebook from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions';
     export * as classwork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions';
+    export * as instructorClasswork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/actions';
   `, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', tsconfig: 'apps/web/tsconfig.json',
     plugins: [{ name: 'isolated-boundaries', setup(b) {
       b.onResolve({ filter: /(^|\/)db$|(^|\/)auth-session$|^next\/(server|navigation|cache)$|^@\/lib\/skills$|^node:(https|dns\/promises)$/ }, ({ path: name }) => name.startsWith('node:') && !network ? { path: name, external: true } : { path: name, namespace: 'boundary' });
