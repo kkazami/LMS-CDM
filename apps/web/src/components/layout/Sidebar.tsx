@@ -92,7 +92,7 @@ export const getStudentLinks = (code: string): (NavLink & { key?: string })[] =>
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: Library },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
-  { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
+  { label: "Tasks & Calendar", href: `/${code}/tasks`, icon: ListTodo },
   { label: "Flashcards", href: `/${code}/flashcards`, icon: FlashcardIcon },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];

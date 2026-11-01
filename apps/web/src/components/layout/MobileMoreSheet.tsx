@@ -114,7 +114,7 @@ export default function MobileMoreSheet({
   const studentItems: NavItem[] = [
     { label: "Flashcards", href: `/${instituteCode}/flashcards`, icon: Flame, description: "Daily review decks" },
     { label: "Materials", href: `/${instituteCode}/learning-materials`, icon: BookOpen, description: "Academic library" },
-    { label: "Tasks", href: `/${instituteCode}/tasks`, icon: CheckSquare, description: "Personal planner" },
+    { label: "Tasks & Calendar", href: `/${instituteCode}/tasks`, icon: CheckSquare, description: "Personal planner" },
     { label: "Leaderboards", href: `/${instituteCode}/leaderboards`, icon: Trophy, description: "Institute standings" },
     { label: "Achievements", href: `/${instituteCode}/achievements`, icon: Award, description: "Badges and EXP" },
   ];

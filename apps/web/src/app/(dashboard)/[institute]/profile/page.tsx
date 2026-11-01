@@ -1,3 +1,4 @@
+import { profileBanner } from '@/lib/profile-banner';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
@@ -36,6 +37,7 @@ export default async function ProfilePage({ params }: PageProps) {
       department: true,
       yearLevel: true,
       coverColor: true,
+      preferences: true,
       createdAt: true,
       institute: { select: { code: true, name: true } },
       taughtCourses: {
@@ -68,8 +70,10 @@ export default async function ProfilePage({ params }: PageProps) {
 
   if (!user) redirect(`/${institute}`);
 
+  const { preferences: _preferences, ...publicUser } = user;
   const serializedUser = {
-    ...user,
+    ...publicUser,
+    bannerImageUrl: profileBanner(user.preferences),
     createdAt: user.createdAt.toISOString(),
     gamificationProfile: user.gamificationProfile
       ? {

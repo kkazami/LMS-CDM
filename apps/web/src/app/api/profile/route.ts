@@ -1,3 +1,4 @@
+import { profileBanner, profilePreferences, bannerAssetId } from '@/lib/profile-banner';
 import { getInstituteName } from "@lms/types";
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
         department: user.department,
         yearLevel: user.yearLevel,
         coverColor: user.coverColor,
+        bannerImageUrl: profileBanner(user.preferences),
         instituteId: user.instituteId,
         institute: {
           code: user.institute.code,
@@ -62,18 +64,33 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, bio, phone, department, yearLevel, coverColor } = body as {
+    const { name, bio, phone, department, yearLevel, coverColor, bannerImageUrl } = body as {
       name?: string;
       bio?: string;
       phone?: string;
       department?: string;
       yearLevel?: string;
       coverColor?: string;
+      bannerImageUrl?: string;
     };
 
+    let bannerPreferences: string | undefined;
+    let previousPreferences: string | undefined;
+    if (bannerImageUrl !== undefined) {
+      if (bannerImageUrl !== '') {
+        const id = bannerAssetId(bannerImageUrl);
+        if (!id) return NextResponse.json({ message: 'Choose an uploaded banner image.' }, { status: 400 });
+        const asset = await db.privateAsset.findFirst({ where: { id, ownerId: session.user.id, instituteId: session.user.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] }, mimeType: { in: ['image/png', 'image/jpeg', 'image/webp'] }, size: { lte: 5 * 1024 * 1024 } }, select: { id: true } });
+        if (!asset) return NextResponse.json({ message: 'Choose your own PNG, JPEG or WebP image, up to 5 MB.' }, { status: 400 });
+      }
+      const current = await db.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { preferences: true } });
+      previousPreferences = current.preferences;
+      bannerPreferences = JSON.stringify({ ...profilePreferences(current.preferences), bannerImageUrl });
+    }
     const updated = await db.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user.id, ...(previousPreferences !== undefined ? { preferences: previousPreferences } : {}) },
       data: {
+        ...(bannerPreferences !== undefined ? { preferences: bannerPreferences } : {}),
         ...(name ? { name } : {}),
         ...(bio !== undefined ? { bio } : {}),
         ...(phone !== undefined ? { phone } : {}),
@@ -97,6 +114,7 @@ export async function PUT(request: Request) {
         department: updated.department,
         yearLevel: updated.yearLevel,
         coverColor: updated.coverColor,
+        bannerImageUrl: profileBanner(updated.preferences),
         instituteId: updated.instituteId,
         institute: {
           code: updated.institute.code,

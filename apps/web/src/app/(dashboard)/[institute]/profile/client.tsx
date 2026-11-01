@@ -24,6 +24,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import { useAvatar } from "@/lib/avatar-context";
 import { toast } from "@/components/common/Toast";
 import UserAvatar from "@/components/common/UserAvatar";
+import BannerCropModal from "@/components/common/BannerCropModal";
 import AvatarUploadModal from "@/components/common/AvatarUploadModal";
 import Button from "@/components/common/Button";
 import ExpProgressRing from "@/components/common/ExpProgressRing";
@@ -44,6 +45,7 @@ interface ProfileUser {
   department: string;
   yearLevel: string;
   coverColor: string;
+  bannerImageUrl: string;
   createdAt: string;
   institute: { code: string; name: string };
   taughtCourses: { id: string; title: string; code: string }[];
@@ -65,7 +67,7 @@ interface ProfileEditClientProps {
   theme: InstituteTheme;
 }
 
-const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduate", "N/A"];
+const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Irregular"];
 export const INSTITUTE_PROGRAMS: Record<string, string[]> = {
   ics: ["BSIT", "BSCPE"],
   ite: [
@@ -104,6 +106,9 @@ export default function ProfileEditClient({
   const [department, setDepartment] = useState(user.department);
   const [yearLevel, setYearLevel] = useState(user.yearLevel);
   const [coverColor, setCoverColor] = useState(user.coverColor);
+  const [bannerImageUrl, setBannerImageUrl] = useState(user.bannerImageUrl);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [customColor, setCustomColor] = useState("");
   const [saving, setSaving] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
@@ -131,6 +136,22 @@ export default function ProfileEditClient({
       ? [department, ...availablePrograms]
       : availablePrograms;
 
+  async function uploadBanner(file?: File) {
+    if (!file) return false;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error('Choose a PNG, JPEG or WebP image up to 5 MB.'); return false; }
+    setUploadingBanner(true);
+    try {
+      const form = new FormData(); form.append('file', file);
+      const response = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not upload banner.');
+      setBannerImageUrl(data.url);
+      toast.success('Banner ready. Save changes to keep it.');
+      return true;
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not upload banner.'); return false; }
+    finally { setUploadingBanner(false); }
+  }
+
   async function handleSave() {
     if (!name.trim()) {
       toast.error("Name is required.");
@@ -141,7 +162,7 @@ export default function ProfileEditClient({
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, phone, department, yearLevel, coverColor }),
+        body: JSON.stringify({ name, bio, phone, department, yearLevel, coverColor, bannerImageUrl }),
       });
       if (!res.ok) throw new Error("Failed to save");
       toast.success("Profile updated!");
@@ -155,11 +176,14 @@ export default function ProfileEditClient({
 
   return (
     <div className="mx-auto max-w-3xl">
+      {bannerFile && <BannerCropModal file={bannerFile} onClose={() => setBannerFile(null)} onSave={uploadBanner} />}
       {/* Cover Banner */}
       <div
-        className="relative h-36 rounded-t-2xl sm:h-44 transition-colors duration-300"
+        className="relative aspect-[4/1] rounded-t-2xl transition-colors duration-300"
         style={{
-          background: `linear-gradient(135deg, ${coverColor}, ${coverColor}99)`,
+          backgroundColor: coverColor,
+          backgroundImage: bannerImageUrl ? `url("${bannerImageUrl}")` : `linear-gradient(135deg, ${coverColor}, ${coverColor}99)`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
         }}
       />
 
@@ -206,9 +230,8 @@ export default function ProfileEditClient({
       {/* Edit Form */}
       <div className="mt-8 px-6 space-y-6">
         <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-            Edit Profile
-          </h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">Edit Profile</h2>
+
 
           {/* Name */}
           <div className="grid gap-1.5">
@@ -312,6 +335,17 @@ export default function ProfileEditClient({
           )}
 
 
+          <div className="space-y-2">
+            <label htmlFor="profile-banner" className="block text-sm font-semibold">Banner image</label>
+            <input id="profile-banner" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingBanner || saving} onChange={event => { const file = event.target.files?.[0];
+              if (file) {
+                if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) toast.error('Choose a PNG, JPEG or WebP image up to 5 MB.');
+                else setBannerFile(file);
+              } event.target.value = ''; }} className="block w-full text-sm file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-transparent file:px-3 file:py-2 file:text-inherit" />
+            <p role="status" className="text-xs text-slate-500">{uploadingBanner ? 'Uploading banner…' : 'PNG, JPEG or WebP, up to 5 MB. The image is cropped to fit the banner.'}</p>
+            {bannerImageUrl && <button type="button" disabled={uploadingBanner || saving} onClick={() => setBannerImageUrl('')} className="min-h-10 text-sm font-semibold underline">Remove banner image</button>}
+          </div>
+
           {/* Cover Color */}
           <div className="grid gap-2">
             <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
@@ -359,7 +393,7 @@ export default function ProfileEditClient({
 
           {/* Save */}
           <div className="pt-2">
-            <Button theme={theme} onClick={handleSave} loading={saving} className="w-full">
+            <Button theme={theme} onClick={handleSave} loading={saving} disabled={uploadingBanner} className="w-full">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>

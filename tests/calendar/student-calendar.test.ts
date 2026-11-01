@@ -11,12 +11,17 @@ function event(id: string, start: string, end?: string): CalendarEvent {
   return { id, title: "QUIZ1", courseCode: "ITELECT3", eventDate: new Date(`2026-10-16T${start}:00+08:00`).toISOString(), endDate: end ? new Date(`2026-10-16T${end}:00+08:00`).toISOString() : null, description: "", professorName: "", eventType: "exam", maxPoints: 30, courseId: "course", creatorId: "teacher", instituteId: "ics", createdAt: "", updatedAt: "", deepLink: "/ics/courses/course/classwork/quiz" };
 }
 
-test("dashboard renders the calendar before enrolled classes and Tasks no longer renders a calendar", () => {
+test("student dashboard places a compact calendar below deadlines and Tasks opens the full calendar", () => {
   const dashboard = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/students/client.tsx"), "utf8");
   const workspace = readFileSync(path.resolve("apps/web/src/components/workspace/WorkspaceDashboard.tsx"), "utf8");
   assert.ok(dashboard.indexOf("<StudentCalendar ") > 0);
   assert.ok(dashboard.indexOf("My Enrolled Classes") > 0);
-  assert.ok(dashboard.indexOf("<StudentCalendar ") < dashboard.indexOf("My Enrolled Classes"));
+  assert.ok(dashboard.indexOf("<StudentCalendar ") > dashboard.indexOf("Deadlines"));
+  assert.ok(dashboard.includes("compact userId={userId}"));
+  const tasksPage = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/tasks/page.tsx"), "utf8");
+  assert.ok(tasksPage.includes('view === "notes"'));
+  assert.ok(tasksPage.includes("<StudentCalendar"));
+  assert.ok(tasksPage.includes("See notes & tasks"));
   assert.ok(!workspace.includes("Monthly Calendar"));
   assert.ok(!workspace.includes("Assignment Details"));
 });

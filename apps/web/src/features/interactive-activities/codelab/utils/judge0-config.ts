@@ -51,19 +51,28 @@ async function executeJDoodle(sourceCode: string, languageId: number, stdin: str
   const clientId = process.env.JDOODLE_CLIENT_ID?.trim();
   const clientSecret = process.env.JDOODLE_CLIENT_SECRET?.trim();
   const language = JDOODLE_LANGUAGES[languageId];
-  if (!clientId || !clientSecret || !language) throw new CodeRunnerUnavailableError();
+  if (!clientId || !clientSecret) throw new CodeRunnerUnavailableError('JDoodle is not configured on this server. Ask the administrator to add its client ID and secret, then restart or redeploy the app.');
+  if (!language) throw new CodeRunnerUnavailableError('This language is not configured for JDoodle. Your progress has not changed.');
   const response = await fetch("https://api.jdoodle.com/v1/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     redirect: "error",
+    cache: "no-store",
     signal: AbortSignal.timeout(EXECUTION_TIMEOUT_MS),
     body: JSON.stringify({ clientId, clientSecret, script: sourceCode, stdin, ...language }),
+  }).catch((error: unknown) => {
+    const cause = error as { name?: string; cause?: { code?: string } };
+    console.error('JDOODLE_CONNECTION_ERROR', { name: cause.name, code: cause.cause?.code });
+    throw new CodeRunnerUnavailableError('The server could not reach JDoodle. Please try again shortly. Your progress has not changed.');
   });
   const data = await response.json().catch(() => null);
+  if ([401, 403].includes(response.status) || [401, 403].includes(data?.statusCode)) {
+    throw new CodeRunnerUnavailableError('JDoodle rejected this server’s API credentials. Ask the administrator to check the configured client ID and secret.');
+  }
   if (response.status === 429 || data?.statusCode === 429) {
     throw new CodeRunnerUnavailableError("The daily code-running limit has been reached. Try again after the daily reset. Your progress has not changed.");
   }
-  if (!response.ok || !data || data.statusCode !== 200 || data.error || typeof data.output !== "string") throw new CodeRunnerUnavailableError();
+  if (!response.ok || !data || data.statusCode !== 200 || data.error || typeof data.output !== "string") throw new CodeRunnerUnavailableError('JDoodle could not complete the request. Please try again shortly. Your progress has not changed.');
   // JDoodle combines output and compiler diagnostics. Grading still compares the
   // complete output with each expected result; HTTP success never awards credit.
   return {
@@ -85,7 +94,7 @@ export interface Judge0ExecutionResponse {
 }
 
 export async function executeJudge0Submission(sourceCode: string, languageId: number, stdin = ""): Promise<Judge0ExecutionResponse> {
-  if (pendingExecutions >= MAX_PENDING_EXECUTIONS) throw new CodeRunnerUnavailableError();
+  if (pendingExecutions >= MAX_PENDING_EXECUTIONS) throw new CodeRunnerUnavailableError('All code runners are busy. Try again in a few seconds. Your progress has not changed.');
   pendingExecutions++;
   const deadline = Date.now() + EXECUTION_TIMEOUT_MS;
   try {

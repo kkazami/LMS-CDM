@@ -640,3 +640,7 @@ Web TypeScript check passed (exit 0). Final source review confirmed default date
 
 ## Analytics filter alignment — 2026-11-01
 Scoped the filter form layout: bottom-align controls, remove field bottom margins within this form, and give status/help text its own full-width row. Fixes elevated Apply/Clear button without changing other Ohmward action rows. CSS-only layout change; diff check used, no runtime/browser test or deployment.
+
+## Full home preview and module return navigation — 2026-11-01
+Preview Ohmward now opens /ics/activities/ohmward?preview=1 with all four module choices and the interactive introduction. Staff retain the normal home-to-analytics redirect without the preview flag. Staff home preview bypasses personalProgress entirely, hides student progress/sandbox links and shows Back to analytics. Existing module/lesson preview authorization remains intact. Every module page now has Back to Ohmward, pointing to student home or staff home preview as appropriate. 141 unit tests passed; final typecheck below. No database operations or deployment; signed-in browser check unavailable.
+Web TypeScript check passed (exit 0); diff whitespace check passed. Module return uses existing Next Link with role-specific home destination.

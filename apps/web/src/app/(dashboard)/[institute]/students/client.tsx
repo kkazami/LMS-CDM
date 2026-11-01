@@ -467,10 +467,6 @@ export default function StudentDashboardClient({
           )}
         </StaggerGroup>
 
-        <div id="calendar" className="min-w-0 scroll-mt-20">
-          <StudentCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} />
-        </div>
-
         {/* ─── 2. Main Grid: Enrolled Courses & Due Soon ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left 2 Columns: Enrolled Classes */}
@@ -796,6 +792,10 @@ export default function StudentDashboardClient({
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
+            </div>
+            <div id="calendar" className="min-w-0 scroll-mt-20">
+              <Link href={`/${instituteCode}/tasks`} className="mb-2 inline-flex min-h-9 items-center text-sm font-semibold text-slate-600 dark:text-slate-300">Open full calendar <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              <StudentCalendar {...calendar} compact userId={userId} instituteCode={instituteCode} theme={theme} today={today} />
             </div>
           </div>
           </div>

@@ -1,3 +1,4 @@
+import { profileBanner } from '@/lib/profile-banner';
 import { labsAvailable } from '@/lib/labs/readiness';
 import { connect } from 'node:net';
 import { once } from 'node:events';
@@ -143,7 +144,8 @@ export async function readPrivateUpload(actor: CourseActor, id: string) {
       db.formAttemptAnswer.findMany({ where: { fileUrl: url, attempt: { userId: meta.ownerId, status: { not: 'IN_PROGRESS' }, form: { course: { instituteId: actor.instituteId } } } }, select: { attempt: { select: { form: { select: { courseId: true } } } } }, take: 101 }),
     ]);
     if ([content, submissions, covers, answers].some(rows => rows.length > 100)) throw new AccessError(503, 'File references require reconciliation.');
-    allowed = Boolean(avatar);
+    const bannerOwner = await db.user.findFirst({ where: { id: meta.ownerId, instituteId: actor.instituteId, isActive: true }, select: { preferences: true } });
+    allowed = Boolean(avatar) || Boolean(bannerOwner && profileBanner(bannerOwner.preferences) === url);
     const candidates = [...content.filter(a => role !== 'STUDENT' || !a.syllabusItem.targetGroups.length || a.syllabusItem.targetGroups.some(t => t.group.members.length)).map(a => a.syllabusItem.courseId), ...covers.map(c => c.id), ...(role === 'STUDENT' ? [] : [...submissions.map(a => a.submission.syllabusItem.courseId), ...answers.map(a => a.attempt.form.courseId)])];
     for (const courseId of new Set(candidates)) {
       try { await requireCourseAccess(actor, courseId); allowed = true; break; }

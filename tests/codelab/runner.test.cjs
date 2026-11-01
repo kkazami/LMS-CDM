@@ -128,3 +128,14 @@ test('JDoodle preserves complete compiler messages instead of treating HTTP succ
   assert.equal(result.stdout,'SyntaxError: invalid syntax\n');assert.equal(result.status.description,'Execution finished');
   assert.notEqual(result.stdout.trim(),'Hello, Python!');
 });
+
+test('JDoodle errors distinguish missing settings, rejected credentials and network failure without exposing secrets', async () => {
+  const missing = runner([], { CODELAB_RUNNER: 'jdoodle' });
+  await assert.rejects(missing.api.executeJudge0Submission('code', 71), /not configured on this server/);
+  for (const reply of [{http:401}, {body:{statusCode:403,error:'synthetic-secret'}}]) {
+    const r = runner([reply], jdoodleEnv);
+    await assert.rejects(r.api.executeJudge0Submission('code', 71), error => /rejected this server/.test(error.message) && !error.message.includes('synthetic-secret'));
+  }
+  const network = runner([new Error('synthetic-secret')], jdoodleEnv);
+  await assert.rejects(network.api.executeJudge0Submission('code', 71), /could not reach JDoodle/);
+});

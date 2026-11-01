@@ -16,6 +16,7 @@ type Props = {
   theme: InstituteTheme;
   today: string;
   showClasswork?: boolean;
+  compact?: boolean;
 };
 type View = "day" | "week" | "month";
 type Selection = { event: CalendarEvent; anchor: HTMLButtonElement };
@@ -124,7 +125,7 @@ function EventPopover({ selection, editable, onClose, onEdit, onDelete, busy, er
   );
 }
 
-export default function StudentCalendar({ events: initialEvents, schedules, userId, instituteCode, theme, today, showClasswork = true }: Props) {
+export default function StudentCalendar({ events: initialEvents, schedules, userId, instituteCode, theme, today, showClasswork = true, compact = false }: Props) {
   const [events, setEvents] = useState(initialEvents);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(today);
@@ -154,7 +155,7 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
       : dateLabel(date, { month: "long", year: "numeric" });
 
   const closePopover = useCallback(() => { setSelection(null); setError(""); }, []);
-  function showDay(day: string) { setDate(day); setView("day"); setEditor(null); closePopover(); }
+  function showDay(day: string) { if (compact) { window.location.assign(`/${instituteCode}/tasks`); return; } setDate(day); setView("day"); setEditor(null); closePopover(); }
   function changeView(next: View) { setView(next); setEditor(null); closePopover(); }
   function navigate(direction: number) {
     if (view === "month") {
@@ -192,7 +193,21 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
     } catch (err) { setError(err instanceof Error ? err.message : "Could not delete event."); }
     finally { setBusy(false); }
   }
+  function placeDotTooltip(button: HTMLButtonElement) {
+    const tooltip = button.querySelector<HTMLElement>(`.${styles.dotTooltip}`);
+    if (!tooltip) return;
+    const rect = button.getBoundingClientRect();
+    tooltip.style.left = `${Math.max(100, Math.min(window.innerWidth - 100, rect.left + rect.width / 2))}px`;
+    tooltip.style.top = `${rect.top - 6}px`;
+  }
   function eventButton(event: CalendarEvent, timed = false, showDetails = false) {
+    if (compact) return <button key={event.id} type="button" className={styles.eventDot}
+      onMouseEnter={e => placeDotTooltip(e.currentTarget)} onFocus={e => placeDotTooltip(e.currentTarget)}
+      data-kind={event.eventType} title={`${calendarLabel(event)} · ${schoolTime(event.eventDate)}`}
+      aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
+      onClick={e => openEvent(event, e.currentTarget)}>
+      <span className={styles.dotTooltip}>{calendarLabel(event)} · {schoolTime(event.eventDate)}</span>
+    </button>;
     return <button key={event.id} type="button" className={`${styles.event} ${timed ? styles.timedEvent : ""} ${selection?.event.id === event.id ? styles.selectedEvent : ""}`}
       data-kind={event.eventType} aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
       onClick={(e) => openEvent(event, e.currentTarget)}>
@@ -202,10 +217,10 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
   }
 
   const draft = editor && editor !== "new" ? editor : null;
-  return <section className={styles.calendar} aria-labelledby={headingId} style={{ "--calendar-accent": theme.colors.primary } as React.CSSProperties}>
+  return <section className={`${styles.calendar} ${compact ? styles.compact : ""}`} aria-labelledby={headingId} style={{ "--calendar-accent": theme.colors.primary } as React.CSSProperties}>
     <div className={styles.toolbar}>
       <h2 id={headingId}>Calendar</h2>
-      <div className={styles.viewControls} role="group" aria-label="Calendar view">
+      <div hidden={compact} className={compact ? "hidden" : styles.viewControls} role="group" aria-label="Calendar view">
         {(["day", "week", "month"] as const).map((mode) => <button key={mode} aria-pressed={view === mode} onClick={() => changeView(mode)}>{mode === "day" ? "Day" : mode === "week" ? "Week" : "Month"}</button>)}
       </div>
       {view === "day" && <button className={styles.addButton} onClick={() => { setEditor("new"); closePopover(); }}><Plus size={17} />Add event</button>}
@@ -228,8 +243,8 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
         {WEEKDAYS.map((name) => <div key={name} className={styles.weekday}>{name.slice(0, 3)}</div>)}
         {days.map((day) => { const dayEvents = eventsByDay.get(day) ?? []; return <div key={day} className={`${styles.monthDay} ${day.slice(0, 7) !== date.slice(0, 7) ? styles.outsideMonth : ""}`}>
           <button className={`${styles.dateButton} ${day === today ? styles.today : ""}`} aria-label={`View ${dateLabel(day, { month: "long", day: "numeric", year: "numeric" })}`} onClick={() => showDay(day)}>{Number(day.slice(8))}</button>
-          <div className={styles.monthEvents}>{dayEvents.slice(0, 3).map((event) => eventButton(event))}</div>
-          {dayEvents.length > 2 && <button className={`${styles.more} ${dayEvents.length === 3 ? styles.mobileOnly : ""}`} onClick={() => showDay(day)}><span className={styles.desktopOnly}>+{dayEvents.length - 3} more</span><span className={styles.mobileOnly}>+{dayEvents.length - 2} more</span></button>}
+          <div className={styles.monthEvents}>{(compact ? dayEvents : dayEvents.slice(0, 3)).map((event) => eventButton(event))}</div>
+          {!compact && dayEvents.length > 2 && <button className={`${styles.more} ${dayEvents.length === 3 ? styles.mobileOnly : ""}`} onClick={() => showDay(day)}><span className={styles.desktopOnly}>+{dayEvents.length - 3} more</span><span className={styles.mobileOnly}>+{dayEvents.length - 2} more</span></button>}
           <button className={styles.daySpace} aria-label={`Open day ${day}`} onClick={() => showDay(day)} />
         </div>; })}
       </div> : <div className={`${styles.timeGrid} ${view === "week" ? styles.weekGrid : ""}`} style={{ gridTemplateColumns: `var(--time-axis-width) repeat(${days.length}, minmax(0, 1fr))` }}>
