@@ -25,7 +25,6 @@ import {
   Archive,
   FlaskConical,
   Code2,
-  Terminal,
   ChevronDown,
   ChevronRight,
   PenTool,
@@ -180,8 +179,7 @@ export default function Sidebar({
     if (isProfessor) {
       links = [
         ...links,
-        { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
-        { label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal },
+        { label: "CodeLab", href: `/${instituteCode}/activities/codelab/instructor`, icon: Code2 },
       ];
     } else if (isStudent) {
       links = [
@@ -259,7 +257,10 @@ export default function Sidebar({
   const activeLink = [...links]
     .sort((a, b) => b.href.length - a.href.length)
     .find(
-      (link) => pathname === link.href || pathname.startsWith(link.href + "/")
+      (link) => pathname === link.href || pathname.startsWith(link.href + "/") || (
+        isProfessor && link.href === `/${instituteCode}/activities/codelab/instructor` &&
+        pathname.startsWith(`/${instituteCode}/activities/codelab/`)
+      )
     );
 
   const handleMyCoursesToggle = () => {

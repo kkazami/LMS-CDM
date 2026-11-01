@@ -25,7 +25,6 @@ import {
   Video,
   HardDrive,
   HelpCircle,
-  Terminal,
   ChevronRight,
   Code2,
   MessageSquareQuote,
@@ -167,9 +166,7 @@ export default function MobileMoreSheet({
   const items: NavItem[] = [
     ...(ohmwardHref ? [{ label: "Ohmward", href: ohmwardHref, icon: Code2, description: "Every circuit starts a journey." }] : []),
     ...(isEligibleForActivities && (isStudent || isProfessor)
-      ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2, description: "Coding practice" }] : []),
-    ...(isEligibleForActivities && isProfessor
-      ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
+      ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab${isProfessor ? '/instructor' : ''}`, icon: Code2, description: isProfessor ? "Coding practice and analytics" : "Coding practice" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
     ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"

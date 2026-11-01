@@ -63,7 +63,7 @@ export const SURFACE_GUIDES: Record<'journey' | 'module' | 'primer' | 'sandbox' 
   sandbox: { title: 'Walk through the sandbox', steps: [action('Add one earned part', 'Click an Add button to put a real component on your canvas. Changes here belong to your saved sandbox. End the walkthrough any time to leave your work as it is.', at('add-part')), inspect, run] },
   progress: { title: 'Read your progress', steps: [action('Return to your journey', 'Completion counts passed levels out of 30. Click Journey to choose what to learn next. Replays preserve your best results and do not repeat first-pass XP.', at('journey'))] },
   instructor: { title: 'Walk through analytics', steps: [
-    action('Apply your filters', 'Choose the dates and optional search, then apply the filters. Dates affect activity; lifetime completion stays earned.', 'button[type="submit"]'),
+    action('Find students or filter activity', 'Type a name or student number to update the list automatically. Change the class or dates, then click Apply filters. The same button becomes Clear filters after filters are applied. Dates filter activity; overall progress includes all dates.', 'input[name="search"]'),
   ] },
-  inspection: { title: 'Inspect submitted work', steps: [action('Open a saved attempt', 'Click Inspect saved attempt to view immutable submitted work and its feedback. If this learner has no submissions, use Back to authorized roster.', 'a[data-ohm-tour="inspect-attempt"], a[data-ohm-tour="roster"]')] },
+  inspection: { title: 'Review submitted work', steps: [action('Open a saved attempt', 'Click View submitted work to see the student’s saved submission and feedback. If this student has no submissions, use Back to student list.', 'a[data-ohm-tour="inspect-attempt"], a[data-ohm-tour="roster"]')] },
 };

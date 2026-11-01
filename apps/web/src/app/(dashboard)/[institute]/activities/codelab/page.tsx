@@ -9,6 +9,7 @@ import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
  */
 
 import { notFound, redirect } from "next/navigation";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 import { getSession } from "@/lib/auth-session";
 import { isEligibleForActivities, isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
@@ -213,7 +214,10 @@ export default async function CodeLabTrackBrowserPage({
         <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
 
         {/* ─── 1. Header Banner ─── */}
-        <CodeLabHeroHeader institute={institute} />
+        <CodeLabHeroHeader
+          institute={institute}
+          showAnalyticsLink={['INSTRUCTOR', 'ADMIN'].includes(canonicalRole(session.user.role))}
+        />
 
         {/* ─── 2. 8 Track Cards Grid with Dot Constellation Hover ─── */}
         <TrackCardGrid

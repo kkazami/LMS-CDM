@@ -159,6 +159,9 @@ export default function Topbar({
   if (segment && titleMap[segment]) {
     dynamicTitle = titleMap[segment];
   }
+  if (pathname.endsWith('/activities/codelab/instructor')) {
+    dynamicTitle = 'CodeLab';
+  }
   if (pathname === '/ics/activities/ohmward' || pathname.startsWith('/ics/activities/ohmward/')) {
     dynamicTitle = 'Ohmward';
   }
