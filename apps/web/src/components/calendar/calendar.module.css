@@ -142,5 +142,4 @@
 .eventDot[data-kind="class"]::before { background: var(--class-legend, #2563eb); }
 .eventDot[data-kind="personal"]::before, .eventDot[data-kind="event"]::before { background: var(--personal-legend, #15803d); }
 .eventDot:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-.dotTooltip { display: none; }
-.eventDot:hover .dotTooltip, .eventDot:focus-visible .dotTooltip { display: block; position: fixed; z-index: 80; transform: translate(-50%, -100%); width: max-content; max-width: 180px; white-space: normal; padding: 6px 8px; border-radius: 6px; background: var(--ink); color: var(--surface); font-size: 12px; text-align: left; pointer-events: none; }
+.dotTooltip { position: absolute; visibility: hidden; z-index: 80; width: max-content; max-width: min(180px, calc(100vw - 16px)); white-space: normal; overflow-wrap: anywhere; padding: 6px 8px; border-radius: 6px; background: #0f172a; color: #fff; font-size: 12px; line-height: 1.5; text-align: left; pointer-events: none; }

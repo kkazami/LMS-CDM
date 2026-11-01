@@ -12,7 +12,7 @@ test.beforeAll(async () => {
     stdin: { contents: `
       import React from 'react'; import {createRoot} from 'react-dom/client';
       import Work from '${root}/apps/web/src/components/courses/YourWorkPanel';
-      import Classwork from '${root}/apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/client';
+      import Classwork from '${root}/apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/client';
       const theme={code:'ics',colors:{primary:'#f97316'}};
       if(location.pathname!=='/instructor') document.getElementById('root').style.maxWidth='320px';
       const item={id:'item',type:'QUIZ',title:'Programming quiz',description:'Build a small program.',isProgramming:true,requireGithubRepo:true,dueDate:null,maxPoints:100,targetGroups:[]};
@@ -50,8 +50,25 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('instructor can mark any ordinary assessment as programming and require a repository', async ({ page }, info) => {
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 844 });
   await page.goto('http://coursework.test/instructor'); await page.addStyleTag({ content: css }); await page.addScriptTag({ content: script });
-  await page.getByRole('button', { name: 'Add Material / Task' }).click();
+  if (info.project.name === 'mobile') await page.locator('#root').evaluate(e => { e.style.width = 'calc(100% - 24px)'; });
+  const assessment = page.getByRole('link', { name: 'Create Form Assessment', exact: true });
+  await expect(assessment).toBeVisible();
+  await expect(assessment).toHaveAttribute('href', '/ics/courses/course/classwork/forms/new');
+  expect((await assessment.boundingBox())!.height).toBeLessThanOrEqual(48);
+  const labs = page.getByRole('link', { name: 'Practical Labs', exact: true });
+  await expect(labs).toHaveAttribute('href', '/ics/courses/course/labs');
+  const taskBox = await page.getByRole('button', { name: 'Add Task', exact: true }).boundingBox();
+  const labsBox = await labs.boundingBox();
+  const assessmentBox = await assessment.boundingBox();
+  expect(Math.abs(assessmentBox!.y - taskBox!.y)).toBeLessThan(2);
+  expect(Math.abs(assessmentBox!.height - taskBox!.height)).toBeLessThan(2);
+  expect(Math.abs(taskBox!.y - labsBox!.y)).toBeLessThan(2);
+  expect(taskBox!.height).toBeLessThanOrEqual(48); expect(labsBox!.height).toBeLessThanOrEqual(48);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: path.resolve(`tmp/programming-coursework/compact-actions-${info.project.name}.png`), fullPage: true });
+  await page.getByRole('button', { name: 'Add Task', exact: true }).click();
   await expect(page.getByRole('checkbox', { name: /Require GitHub repository/ })).toHaveCount(0);
   await page.getByRole('checkbox', { name: /Programming coursework/ }).check();
   await page.getByRole('checkbox', { name: /Require GitHub repository/ }).check();

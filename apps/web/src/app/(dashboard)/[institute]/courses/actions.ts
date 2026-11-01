@@ -1,5 +1,6 @@
 "use server";
 import { enrollWithClassCode } from '@/lib/student-enrollment';
+import { attendanceEnrollmentChanged, closeSession } from '@/lib/attendance/lifecycle';
 import { persistentLimit } from '@/lib/roster/rate-limit';
 import { requireOwnedUpload } from '@/lib/private-upload';
 import { requireCourseAccess } from '@/lib/course-access';
@@ -490,10 +491,13 @@ export async function unenrollFromCourse(courseId: string, instituteCode: string
   if (role !== "STUDENT") return { success: false, error: "Only students can unenroll." };
 
   try {
-    await db.enrollment.delete({
+    await db.$transaction(async tx => {
+    await attendanceEnrollmentChanged(tx, courseId, session.user.id, false);
+    await tx.enrollment.delete({
       where: {
         courseId_studentId: { courseId, studentId: session.user.id },
       },
+    });
     });
 
     // Clean up dashboard layout if it exists
@@ -522,7 +526,13 @@ export async function archiveCourse(courseId: string, instituteCode: string) {
   }
 
   try {
-    await db.course.update({ where: { id: courseId }, data: { isArchived: true } });
+    await db.$transaction(async tx => {
+      await requireCourseAccess(session.user, courseId, true, tx);
+      await tx.$queryRaw`SELECT id FROM "Course" WHERE id = ${courseId} FOR UPDATE`;
+      const open = await tx.attendanceSession.findMany({ where: { courseId, state: 'OPEN' }, orderBy: { id: 'asc' } });
+      for (const item of open) await closeSession(tx, courseId, item.id, new Date(), session.user.id);
+      await tx.course.update({ where: { id: courseId }, data: { isArchived: true } });
+    });
     revalidatePath(`/${instituteCode}/teachers`);
     revalidatePath(`/${instituteCode}/courses`);
     revalidatePath(`/${instituteCode}/courses/archived`);

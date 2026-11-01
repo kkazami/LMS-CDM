@@ -1,3 +1,4 @@
+import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
 import { getOnPrimaryColor } from '../../../../../src/lib/design-system';
 import { markUsefulContent, beginUsefulContent } from '../../../../../src/lib/performance';
 import { PagedContent } from '../../../../../src/components/ui/PagedContent';
@@ -51,7 +52,7 @@ import type {
   CoursePeopleResponse,
 } from '@lms/types';
 
-type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'GRADES';
+type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'ATTENDANCE' | 'GRADES';
 
 export default function StudentCourseHubScreen() {
   const { courseId, tab } = useLocalSearchParams<{ courseId: string; tab?: string }>();
@@ -61,9 +62,9 @@ export default function StudentCourseHubScreen() {
   const theme = useTheme();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<TabType>(tab === 'GRADES' ? 'GRADES' : tab === 'STREAM' ? 'STREAM' : 'CLASSWORK');
+  const [activeTab, setActiveTab] = useState<TabType>(tab === 'ATTENDANCE' ? 'ATTENDANCE' : tab === 'GRADES' ? 'GRADES' : tab === 'STREAM' ? 'STREAM' : 'CLASSWORK');
   useEffect(() => {
-    if (tab && ['STREAM', 'CLASSWORK', 'PEOPLE', 'GRADES'].includes(tab)) setActiveTab(tab as TabType);
+    if (tab && ['STREAM', 'CLASSWORK', 'PEOPLE', 'ATTENDANCE', 'GRADES'].includes(tab)) setActiveTab(tab as TabType);
   }, [tab]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -182,7 +183,8 @@ export default function StudentCourseHubScreen() {
         <Button title="Practical Labs" variant="outline" style={{ margin: 16 }} onPress={() => router.push({ pathname: '/student/practical-labs', params: { courseId } })} />
       )}
 
-      {/* 4 Segmented Navigation Tabs */}
+      {/* Course navigation */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View
         style={[
           styles.tabBar,
@@ -273,6 +275,8 @@ export default function StudentCourseHubScreen() {
           </Text>
         </TouchableOpacity>
 
+        <TouchableOpacity accessibilityRole="tab" accessibilityState={{ selected: activeTab === 'ATTENDANCE' }} accessibilityLabel="Attendance tab" style={[styles.tabBtn, { paddingVertical: s(spacing.md), minWidth: 110 }, activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 }]} onPress={() => setActiveTab('ATTENDANCE')}><CheckCircle2 size={s(16)} color={theme.colors.text} /><Text style={{ color: theme.colors.text, fontSize: font(13) }}>Attendance</Text></TouchableOpacity>
+
         <TouchableOpacity
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === 'GRADES' }}
@@ -301,6 +305,7 @@ export default function StudentCourseHubScreen() {
         </TouchableOpacity>
       </View>
 
+      </ScrollView>
       {/* Main Tab Content */}
       <View style={[styles.mainTabContent, { padding: s(spacing.lg) }]}>
         {errorMessage && (
@@ -313,6 +318,7 @@ export default function StudentCourseHubScreen() {
           />
         )}
 
+        {activeTab === 'ATTENDANCE' && <AttendancePanel courseId={courseId} />}
         {loading ? (
           <View style={styles.loadingContainer}>
             <SkeletonBlock width="100%" height={s(84)} borderRadius={radius.lg} style={{ marginBottom: s(spacing.md) }} />

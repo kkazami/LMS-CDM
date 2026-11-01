@@ -5,7 +5,7 @@ export function studentReturnRoute(path: string, params: Record<string, unknown>
   for (const key of ['courseId', 'formId', 'assignmentId', 'postId']) {
     if (typeof params[key] === 'string' && /^[A-Za-z0-9_-]+$/.test(params[key] as string)) query.set(key, params[key] as string);
   }
-  if (typeof params.tab === 'string' && ['STREAM', 'CLASSWORK', 'PEOPLE', 'GRADES'].includes(params.tab)) query.set('tab', params.tab);
+  if (typeof params.tab === 'string' && ['STREAM', 'CLASSWORK', 'PEOPLE', 'ATTENDANCE', 'GRADES'].includes(params.tab)) query.set('tab', params.tab);
   return path + (query.size ? `?${query}` : '');
 }
 export function restoreStudentReturn(value: unknown): string | null {
@@ -30,6 +30,8 @@ export function studentNotificationRoute(link: string | null | undefined, instit
   if (assignment) return `/student/courses/${assignment[1]}/assignment/${assignment[2]}`;
   const material = new RegExp(`^${prefix}/courses/(${id})/materials/(${id})$`).exec(path);
   if (material) return `/student/courses/${material[1]}/materials/${material[2]}`;
+  const attendance = new RegExp(`^${prefix}/courses/(${id})/attendance$`).exec(path);
+  if (attendance) return `/student/courses/${attendance[1]}?tab=ATTENDANCE`;
   const course = new RegExp(`^${prefix}/courses/(${id})(?:/(?:classwork|grades|stream))?$`).exec(path);
   if (course) return `/student/courses/${course[1]}${path.endsWith('/grades') ? '?tab=GRADES' : path.endsWith('/stream') ? '?tab=STREAM' : ''}`;
   if (path === `${prefix}/activities/codelab` && institute === 'ics') return '/student/codelab';

@@ -43,7 +43,10 @@
     "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/presets.test.ts tests/labs/resources.test.ts tests/labs/transport.test.cjs",
     "test:labs:integration": "node tests/labs/integration.mjs",
     "test:gradebook": "node --import tsx --test tests/gradebook/*.test.ts",
-    "test:gradebook:integration": "node tests/gradebook/integration.mjs"
+    "test:gradebook:integration": "node tests/gradebook/integration.mjs",
+    "test:attendance": "node --test tests/attendance/*.test.cjs",
+    "test:attendance:integration": "node tests/attendance/integration.mjs",
+    "test:attendance:browser": "playwright test --config tests/attendance/playwright.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

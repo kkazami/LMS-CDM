@@ -29,6 +29,7 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
   }
 
   const showNotes = (await searchParams).view === "notes";
+  const isInstructor = ["PROFESSOR", "TEACHER"].includes(session.user.role);
   const calendar = showNotes ? null : await getDashboardCalendar(session.user, institute);
 
   const [notes, tasks, courses] = await Promise.all([
@@ -52,8 +53,8 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">Tasks & Calendar</h1><Link className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700" href={`/${institute}/tasks${showNotes ? '' : '?view=notes'}`}>{showNotes ? 'See calendar' : 'See notes & tasks'}</Link></div>
-    {calendar ? <StudentCalendar {...calendar} userId={session.user.id} instituteCode={institute} theme={theme} today={schoolDateKey(new Date())} /> : <WorkspaceDashboard
+    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">{isInstructor ? "Calendar" : "Tasks & Calendar"}</h1><Link className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700" href={`/${institute}/tasks${showNotes ? '' : '?view=notes'}`}>{showNotes ? 'See calendar' : 'See notes & tasks'}</Link></div>
+    {calendar ? <StudentCalendar {...calendar} showClasswork={!isInstructor} userId={session.user.id} instituteCode={institute} theme={theme} today={schoolDateKey(new Date())} /> : <WorkspaceDashboard
       instituteCode={institute}
       notes={notes.map(note => serializeNote({ ...note, content: safeRichText(note.content) }))}
       tasks={tasks.map(serializeTask)}

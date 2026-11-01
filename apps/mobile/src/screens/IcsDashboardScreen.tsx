@@ -89,6 +89,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
   ];
   return <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
     <IcsHeader teacher={teacher} title={coursesOnly ? teacher ? 'My Classes' : 'My Courses' : undefined} />
+    {teacher && coursesOnly && <Button title="Attendance helper assignments" variant="outline" onPress={() => router.push('/teacher/attendance')} style={{ marginHorizontal: 16, marginVertical: 8 }} />}
     <Screen scroll contentContainerStyle={[styles.content, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
       {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}
       {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="Dismiss class request confirmation" onPress={() => setNotice('')} style={[styles.notice, { backgroundColor: theme.colors.successBg }]}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.success }}>{notice}</Text></Pressable>}

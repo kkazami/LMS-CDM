@@ -10,6 +10,7 @@ import {
   Award,
   BarChart2,
   Archive,
+  CalendarDays,
   PlusSquare,
   Network,
   ShieldCheck,
@@ -121,6 +122,7 @@ export default function MobileMoreSheet({
 
   const teacherItems: NavItem[] = [
     { label: "Archived Classes", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Review previous classes" },
+    { label: "Calendar", href: `/${instituteCode}/tasks`, icon: CalendarDays, description: "Class schedule and personal events" },
     ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
     { label: "Student Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Class progress and performance" },
     { label: "Manage Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage institute rankings" },

@@ -1,3 +1,4 @@
+import { attendanceClient } from './attendance';
 import type {
   LoginRequest,
   LoginResponse,
@@ -72,7 +73,7 @@ interface GradebookPayload {
 export function createApiClient(config: ApiClientConfig) {
   const { baseUrl, getToken } = config;
 
-  async function request<T>(path: string, options: RequestInit = {}, timeoutMs = config.timeoutMs ?? 30000): Promise<T> {
+  async function request<T>(path: string, options: RequestInit = {}, timeoutMs = config.timeoutMs ?? 30000, rawText = false): Promise<T> {
     const startedAt = Date.now();
     const requestToken = getToken ? await getToken() : null;
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -136,6 +137,7 @@ export function createApiClient(config: ApiClientConfig) {
       const text = await response.text();
       await assertCurrentSession();
       config.onRequestComplete?.({ path: path.split('?')[0], durationMs: Date.now() - startedAt, bytes: text.length, status: response.status });
+      if (rawText) return text as T;
       try {
         return JSON.parse(text);
       } catch {
@@ -159,6 +161,7 @@ export function createApiClient(config: ApiClientConfig) {
   }
 
   return {
+    attendance: attendanceClient(request, path => request<string>(path, {}, config.timeoutMs ?? 30000, true)),
     auth: {
       googleAvailable: () => request<{ available: boolean }>('/api/auth/google/mobile?status=1'),
       exchangeGoogle: (ticket: string, verifier: string) => request<{ token: string }>('/api/auth/google/mobile/exchange', { method: 'POST', body: JSON.stringify({ ticket, verifier }) }),

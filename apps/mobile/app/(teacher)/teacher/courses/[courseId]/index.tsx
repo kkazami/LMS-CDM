@@ -1,3 +1,4 @@
+import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -71,7 +72,7 @@ import type {
   CourseParticipationDetailResponse,
 } from '@lms/api-client';
 
-type TeacherTab = 'STREAM' | 'CLASSWORK' | 'BROADCAST' | 'FORMS' | 'GRADEBOOK' | 'PEOPLE' | 'PARTICIPATION';
+type TeacherTab = 'STREAM' | 'CLASSWORK' | 'BROADCAST' | 'FORMS' | 'GRADEBOOK' | 'PEOPLE' | 'ATTENDANCE' | 'PARTICIPATION';
 
 interface GradebookData {
   course: { id: string; title: string; code: string };
@@ -92,7 +93,7 @@ export default function TeacherCourseDetailScreen() {
     (initialTab as TeacherTab) || 'STREAM'
   );
   useEffect(() => {
-    if (initialTab && ['STREAM', 'CLASSWORK', 'BROADCAST', 'FORMS', 'GRADEBOOK', 'PEOPLE', 'PARTICIPATION'].includes(initialTab)) setActiveTab(initialTab as TeacherTab);
+    if (initialTab && ['STREAM', 'CLASSWORK', 'BROADCAST', 'FORMS', 'GRADEBOOK', 'PEOPLE', 'ATTENDANCE', 'PARTICIPATION'].includes(initialTab)) setActiveTab(initialTab as TeacherTab);
   }, [initialTab]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -811,6 +812,7 @@ export default function TeacherCourseDetailScreen() {
             </Text>
           </TouchableOpacity>
 
+          <TouchableOpacity accessibilityRole="tab" accessibilityState={{ selected: activeTab === 'ATTENDANCE' }} accessibilityLabel="Attendance tab" style={[styles.tabBtn, { padding: 12, minHeight: 48 }, activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 }]} onPress={() => setActiveTab('ATTENDANCE')}><UserCheck size={16} color={theme.colors.text} /><Text style={{ color: theme.colors.text, fontSize: 13 }}>Attendance</Text></TouchableOpacity>
           {isIte && (
             <TouchableOpacity
               accessibilityRole="tab"
@@ -870,6 +872,7 @@ export default function TeacherCourseDetailScreen() {
         ) : (
           <>
             {/* ==================== TAB 1: STREAM ==================== */}
+            {activeTab === 'ATTENDANCE' && <AttendancePanel courseId={courseId} />}
             {activeTab === 'STREAM' && (
               <View>
                 {/* Post Announcement Card */}

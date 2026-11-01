@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Download, ExternalLink, Settings, Layers, Maximize2, Minimize2 } from 'lucide-react';
-import { upsertGrade, clearGrade, saveGradebookPeriodPolicy, assignGradebookPeriods, type GradebookData, type GradebookCell } from '@/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions';
+import { upsertGrade, clearGrade, saveGradebookPeriodPolicy, assignGradebookPeriods, type GradebookData, type GradebookCell } from '@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
 import LabGradeDialog from './LabGradeDialog';
 import GradeEvaluationModal from '@/components/courses/GradeEvaluationModal';
 import { calculatePeriodGrades, type ItemPeriod, type PeriodResult } from '@/lib/grading/periods';

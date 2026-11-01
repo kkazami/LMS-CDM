@@ -19,7 +19,7 @@ import {
   addSubmissionFile,
   removeSubmissionAttachment,
   saveGithubRepository,
-} from "@/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions";
+} from "@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/[itemId]/actions";
 import AttachmentModal from "@/components/courses/AttachmentModal";
 import type { AttachmentItem } from "@/components/courses/AttachmentModal";
 import type { InstituteTheme } from "@/lib/theme";

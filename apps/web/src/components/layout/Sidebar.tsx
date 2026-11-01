@@ -23,6 +23,7 @@ import {
   HardDrive,
   Library,
   Archive,
+  CalendarDays,
   FlaskConical,
   Code2,
   ChevronDown,
@@ -122,6 +123,7 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Gradebooks", href: `/${code}/gradebooks`, icon: FileSpreadsheet },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
+  { label: "Calendar", href: `/${code}/tasks`, icon: CalendarDays },
   ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },

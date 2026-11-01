@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { requireCourseAccess } from '@/lib/course-access';
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { getSession } from "@/lib/auth-session";
 import { redirect } from "next/navigation";
@@ -25,6 +26,7 @@ export default async function CourseInteriorLayout({
   }
 
   const theme = getInstituteTheme(institute);
+  await requireCourseAccess(session.user, courseId);
 
   const course = await db.course.findUnique({
     where: { id: courseId },

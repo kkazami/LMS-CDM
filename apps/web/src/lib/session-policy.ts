@@ -16,5 +16,6 @@ export function passiveSessionPath(pathname: string) {
 
 export function sessionActivity(pathname: string, method: string, foreground: boolean) {
   if (pathname === '/api/gamification/heartbeat') return method === 'POST' && foreground;
+  if (method === 'GET' && /^\/api\/(?:attendance\/assignments(?:\/|$)|courses\/[^/]+\/attendance(?:\/|$))/.test(pathname)) return false;
   return !passiveSessionPath(pathname);
 }

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { X, Star, CheckCircle2, FileText, Link2, Send, ExternalLink } from "lucide-react";
-import { returnGrade } from "@/app/(dashboard)/[institute]/courses/[courseId]/classwork/[itemId]/actions";
+import { returnGrade } from "@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/[itemId]/actions";
 
 interface SubmissionAttachment {
   id: string;

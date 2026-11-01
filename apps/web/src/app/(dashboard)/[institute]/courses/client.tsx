@@ -8,6 +8,7 @@ import JoinCourseModal from "@/components/courses/JoinCourseModal";
 import InstructorCreateCourseModal from "@/components/courses/InstructorCreateCourseModal";
 import CustomizeCourseModal from "@/components/courses/CustomizeCourseModal";
 import CourseCardMenu from "@/components/courses/CourseCardMenu";
+import AttendanceAssignments from '@/components/attendance/AttendanceAssignments';
 import {
   Plus,
   BookOpen,
@@ -138,6 +139,7 @@ export default function CoursesClient({
   return (
     <>
       <div className="page-enter">
+      {!isStudent && <AttendanceAssignments institute={instituteCode} />}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

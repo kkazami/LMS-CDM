@@ -83,7 +83,7 @@ async function main() {
       await client.query('ROLLBACK');
       console.log(JSON.stringify({ ...result, missingPrismaColumns, checkedAt: new Date().toISOString() }));
       if (!result.ready || !result.runtimeAccess || missingPrismaColumns.length) {
-        console.error('Apply the programming coursework migration with the database owner before deploying. See docs/deployment/programming-coursework.md.');
+        console.error('Apply the missing reviewed database migrations with the database owner before deploying. See docs/deployment/programming-coursework.md and docs/quality/attendance.md.');
         process.exitCode = 1;
       }
     } finally { client.release(); }

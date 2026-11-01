@@ -201,8 +201,8 @@ export default function ClassworkClient({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="empty:hidden">
           <FocusButton
             contextType="STUDY"
             courseId={courseId}
@@ -211,21 +211,16 @@ export default function ClassworkClient({
         </div>
         {canEdit && instituteCode.toLowerCase() === 'ics' && !labsReady && <p role="status" className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950">Guided practical labs need a database upgrade before they can be used. Existing Classwork is available.</p>}
         {canEdit && (
-          <div className="flex items-center justify-end gap-3">
-            <Link
-              href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              <Sparkles className="h-4 w-4" />
+          <div className={`ml-auto grid w-full items-stretch gap-1 sm:flex sm:w-auto sm:items-center sm:gap-2 ${instituteCode.toLowerCase() === 'ics' ? 'grid-cols-[1.4fr_0.8fr_1fr]' : 'grid-cols-[1.4fr_1fr]'}`}>
+            <Link href={`/${instituteCode}/courses/${courseId}/classwork/forms/new`} className="inline-flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-1.5 text-center text-[11px] font-bold leading-tight text-white shadow-xs transition-opacity hover:opacity-90 sm:px-3 sm:text-sm" style={{ backgroundColor: theme.colors.primary }}>
+              <Sparkles aria-hidden="true" className="hidden h-4 w-4 shrink-0 sm:block" />
               <span>Create Form Assessment</span>
             </Link>
-
-            <Button theme={theme} variant="secondary" onClick={handleCreate}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add Material / Task
+            <Button theme={theme} variant="secondary" className="h-11 min-w-0 whitespace-nowrap px-1.5 py-0 text-[11px] sm:px-3 sm:text-sm" onClick={handleCreate}>
+              <Plus className="mr-1.5 hidden h-4 w-4 sm:block" />
+              Add Task
             </Button>
-            {instituteCode.toLowerCase() === 'ics' && <Link href={`/${instituteCode}/courses/${courseId}/labs`} className="inline-flex min-h-11 items-center rounded-xl border border-orange-200 px-4 py-2 text-sm font-medium text-orange-800 dark:border-orange-800 dark:text-orange-200">Guided practical labs</Link>}
+            {instituteCode.toLowerCase() === 'ics' && <Link href={`/${instituteCode}/courses/${courseId}/labs`} className="inline-flex h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-xl border border-orange-200 px-1.5 text-[11px] font-medium text-orange-800 sm:px-3 sm:text-sm dark:border-orange-800 dark:text-orange-200">Practical Labs</Link>}
           </div>
         )}
       </div>
@@ -265,7 +260,7 @@ export default function ClassworkClient({
       {/* Create/Edit Modal */}
       <Modal
         open={isModalOpen}
-        title={editingItem ? "Edit Classwork Item" : "Add Classwork Item"}
+        title={editingItem ? "Edit Classwork Item" : "Add Task"}
         onClose={() => {
           setIsModalOpen(false);
           setEditingItem(null);

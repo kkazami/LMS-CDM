@@ -3,7 +3,7 @@ import path from 'node:path';
 import { asAccount } from './administrator-checks.mjs';
 
 export async function announcementMeetBrowserChecks({ pageFor, base, db, accounts, check, output }) {
-  const { createAnnouncement } = await import('../../apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/stream/actions.ts');
+  const { createAnnouncement } = await import('../../apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/stream/actions.ts');
   const { googleMeetLinks } = await import('../../apps/web/src/lib/academic-structure/meeting-links.ts');
   const content = 'Meet UI fixture. ' + 'Please review the class instructions. '.repeat(8)
     + '\nhttps://meet.google.com/abc-defg-hij\nhttps://meet.google.com/lookup/class_1\nhttps://meet.google.com/abc-defg-hij';

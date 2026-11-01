@@ -203,7 +203,188 @@ model LabReview {
   @@index([attemptId, createdAt])
 }
 
+enum AttendanceMode {
+  IN_PERSON
+  LIVE_REMOTE
+  ASYNCHRONOUS
+}
+enum AttendanceStatus {
+  PRESENT
+  TARDY
+  ABSENT
+  EXCUSED
+}
+enum AttendanceState {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+enum AttendanceVerification {
+  NOT_CHECKED
+  NEARBY
+  OUTSIDE
+  UNCLEAR
+  DECLINED
+  MOCK_REPORTED
+}
+enum AttendanceRequestState {
+  PENDING
+  ACCEPTED
+  DECLINED
+  SUPERSEDED
+}
+model AttendancePolicy {
+  instituteId String @id
+  institute Institute @relation(fields: [instituteId], references: [id], onDelete: Restrict)
+  rollout String @default("DISABLED")
+  phase Int @default(1)
+  pilotCourseIds String[] @default([])
+  locationEnabled Boolean @default(false)
+  privacyReview String @default("")
+  recordDays Int?
+  eventDays Int?
+  requestDays Int?
+  verificationDays Int?
+  arrangementDays Int?
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+model AttendanceSettings {
+  courseId String @id
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  liveLimit Int @default(1)
+  asyncLimit Int @default(1)
+  absenceThreshold Int @default(3)
+  tardyThreshold Int @default(3)
+  latitude Float?
+  longitude Float?
+  locationLabel String @default("")
+}
+model AttendanceSession {
+  id String @id @default(cuid())
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  createdById String
+  title String
+  instructions String @default("")
+  mode AttendanceMode
+  state AttendanceState @default(OPEN)
+  opensAt DateTime @db.Timestamptz(3)
+  closesAt DateTime @db.Timestamptz(3)
+  presentUntil DateTime @db.Timestamptz(3)
+  closedAt DateTime? @db.Timestamptz(3)
+  sessionDate String
+  timezone String
+  requiresLocation Boolean @default(false)
+  latitude Float?
+  longitude Float?
+  radius Int @default(150)
+  qrGraceSeconds Int @default(30)
+  tokenVersion Int @default(1)
+  liveCodeEnabled Boolean @default(false)
+  legalHold Boolean @default(false)
+  expiresAt DateTime? @db.Timestamptz(3)
+  records AttendanceRecord[]
+  events AttendanceEvent[]
+  @@index([courseId, state, closesAt])
+  @@index([courseId, sessionDate])
+  @@index([expiresAt])
+}
+model AttendanceRecord {
+  id String @id @default(cuid())
+  sessionId String
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId String
+  student User @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  required Boolean @default(true)
+  eligibilityReason String @default("")
+  eligibleAt DateTime @db.Timestamptz(3)
+  presentUntil DateTime @db.Timestamptz(3)
+  status AttendanceStatus?
+  source String @default("")
+  verification AttendanceVerification @default(NOT_CHECKED)
+  markedAt DateTime? @db.Timestamptz(3)
+  revision Int @default(0)
+  request AttendanceRequest?
+  verificationDetails AttendanceVerificationDetail[]
+  @@unique([sessionId, studentId])
+  @@index([studentId, sessionId])
+}
+model AttendanceRequest {
+  id String @id @default(cuid())
+  recordId String @unique
+  record AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  submittedAt DateTime @default(now()) @db.Timestamptz(3)
+  reason String?
+  state AttendanceRequestState @default(PENDING)
+  verification AttendanceVerification @default(NOT_CHECKED)
+  revision Int @default(0)
+  decidedById String?
+  decidedAt DateTime? @db.Timestamptz(3)
+  decisionReason String?
+  textExpiresAt DateTime? @db.Timestamptz(3)
+  @@index([textExpiresAt])
+}
+model AttendanceVerificationDetail {
+  id String @id @default(cuid())
+  recordId String
+  record AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  distance Float?
+  accuracy Float?
+  outcome AttendanceVerification
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  @@index([expiresAt])
+}
+model AttendanceEvent {
+  id String @id @default(cuid())
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  sessionId String?
+  session AttendanceSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  actorId String?
+  studentId String?
+  action String
+  beforeStatus AttendanceStatus?
+  afterStatus AttendanceStatus?
+  source String @default("")
+  verification AttendanceVerification @default(NOT_CHECKED)
+  reason String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime? @db.Timestamptz(3)
+  @@index([courseId, createdAt])
+  @@index([expiresAt])
+}
+model AttendanceArrangement {
+  id String @id @default(cuid())
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  studentId String
+  createdById String
+  expiresAt DateTime @db.Timestamptz(3)
+  @@unique([courseId, studentId])
+  @@index([expiresAt])
+}
+model AttendanceGrant {
+  id String @id @default(cuid())
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  userId String
+  createdById String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([courseId, userId])
+}
+model AttendanceJob {
+  id String @id @default("retention")
+  lastStartedAt DateTime? @db.Timestamptz(3)
+  lastSuccessAt DateTime? @db.Timestamptz(3)
+  leaseUntil DateTime? @db.Timestamptz(3)
+  backlog Int @default(0)
+  deletedCount Int @default(0)
+}
+
 model Institute {
+  attendancePolicy AttendancePolicy?
+  timezone String @default("Asia/Manila")
   labTemplates   LabTemplate[]
   id             String            @id @default(cuid())
   code           String            @unique
@@ -226,6 +407,7 @@ model Institute {
 }
 
 model User {
+  attendanceRecords AttendanceRecord[]
   ohmwardLearner OhmwardLearner?
   labTemplates LabTemplate[] @relation("LabAuthor")
   createdLabAssignments LabAssignment[] @relation("LabAssignmentCreator")
@@ -372,6 +554,11 @@ model Session {
 }
 
 model Course {
+  attendanceSettings AttendanceSettings?
+  attendanceSessions AttendanceSession[]
+  attendanceGrants AttendanceGrant[]
+  attendanceArrangements AttendanceArrangement[]
+  attendanceEvents AttendanceEvent[]
   labAssignments LabAssignment[]
   id                  String                     @id @default(cuid())
   code                String

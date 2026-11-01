@@ -35,7 +35,7 @@ import Button from "@/components/common/Button";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import CourseReorderButtons from "@/components/dashboard/CourseReorderButtons";
 import { archiveCourse, reorderCourseCards } from "../courses/actions";
-import { approveEnrollment, declineEnrollment, approveAllPending } from "../courses/[courseId]/people/actions";
+import { approveEnrollment, declineEnrollment, approveAllPending } from "../courses/[courseId]/(learning)/people/actions";
 import { TypingBanner } from "@/components/motion/TypingBanner";
 import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
@@ -443,10 +443,6 @@ export default function TeacherDashboardClient({
         </div>
 
         {/* ─── 2. Main Grid: Taught Courses & Pending Requests ─── */}
-        <div id="calendar" className="min-w-0 scroll-mt-20">
-          <DashboardCalendar {...calendar} userId={userId} instituteCode={instituteCode} theme={theme} today={today} showClasswork={false} />
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left 2 Columns: My Courses */}
           <div className="lg:col-span-2 space-y-4">
@@ -704,7 +700,7 @@ export default function TeacherDashboardClient({
           </div>
 
           {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests & ITE At-Risk Widget ─── */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             {instituteCode.toLowerCase() === "ite" && (
               <InstructorAtRiskWidget theme={theme} instituteCode={instituteCode} />
             )}
@@ -890,6 +886,10 @@ export default function TeacherDashboardClient({
               )}
             </div>
           </div>
+            <div id="calendar" className="min-w-0 scroll-mt-20">
+              <Link href={`/${instituteCode}/tasks`} className="mb-2 inline-flex min-h-9 items-center text-sm font-semibold text-slate-600 dark:text-slate-300">Open full calendar <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              <DashboardCalendar {...calendar} compact userId={userId} instituteCode={instituteCode} theme={theme} today={today} showClasswork={false} />
+            </div>
         </div>
       </div>
     </div>

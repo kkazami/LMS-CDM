@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { localDateTimeValue } from '@/lib/forms/availability';
 import { labRequest } from '@/components/labs/types';
-import type { GradebookAssignment, GradebookCell, GradebookStudent } from '@/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions';
+import type { GradebookAssignment, GradebookCell, GradebookStudent } from '@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
 
 const field = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark]';
 export interface LabGradeResult { attemptId: string; submissionId: string; revision: number; status: string; score: number | null; submittedAt: string | null; revisionDueAt: string | null }

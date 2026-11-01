@@ -21,6 +21,30 @@ type Props = {
 type View = "day" | "week" | "month";
 type Selection = { event: CalendarEvent; anchor: HTMLButtonElement };
 
+function DotTooltip({ event, anchor }: Selection) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    function place() {
+      const tooltip = ref.current;
+      if (!tooltip) return;
+      const rect = anchor.getBoundingClientRect();
+      const left = Math.max(8, Math.min(window.innerWidth - tooltip.offsetWidth - 8, rect.left + (rect.width - tooltip.offsetWidth) / 2));
+      const top = rect.top >= tooltip.offsetHeight + 14 ? rect.top - tooltip.offsetHeight - 6 : rect.bottom + 6;
+      tooltip.style.left = `${left + window.scrollX}px`;
+      tooltip.style.top = `${top + window.scrollY}px`;
+      tooltip.style.visibility = "visible";
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [anchor, event]);
+  return createPortal(<span ref={ref} className={styles.dotTooltip} role="tooltip">{calendarLabel(event)} · {schoolTime(event.eventDate)}</span>, document.body);
+}
+
 function dateLabel(key: string, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
 }
@@ -130,6 +154,7 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(today);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [dotTooltip, setDotTooltip] = useState<Selection | null>(null);
   const [editor, setEditor] = useState<CalendarEvent | "new" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -193,21 +218,13 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
     } catch (err) { setError(err instanceof Error ? err.message : "Could not delete event."); }
     finally { setBusy(false); }
   }
-  function placeDotTooltip(button: HTMLButtonElement) {
-    const tooltip = button.querySelector<HTMLElement>(`.${styles.dotTooltip}`);
-    if (!tooltip) return;
-    const rect = button.getBoundingClientRect();
-    tooltip.style.left = `${Math.max(100, Math.min(window.innerWidth - 100, rect.left + rect.width / 2))}px`;
-    tooltip.style.top = `${rect.top - 6}px`;
-  }
   function eventButton(event: CalendarEvent, timed = false, showDetails = false) {
     if (compact) return <button key={event.id} type="button" className={styles.eventDot}
-      onMouseEnter={e => placeDotTooltip(e.currentTarget)} onFocus={e => placeDotTooltip(e.currentTarget)}
-      data-kind={event.eventType} title={`${calendarLabel(event)} · ${schoolTime(event.eventDate)}`}
+      onMouseEnter={e => setDotTooltip({ event, anchor: e.currentTarget })} onFocus={e => setDotTooltip({ event, anchor: e.currentTarget })}
+      onMouseLeave={() => setDotTooltip(null)} onBlur={() => setDotTooltip(null)} onKeyDown={e => { if (e.key === "Escape") setDotTooltip(null); }}
+      data-kind={event.eventType}
       aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
-      onClick={e => openEvent(event, e.currentTarget)}>
-      <span className={styles.dotTooltip}>{calendarLabel(event)} · {schoolTime(event.eventDate)}</span>
-    </button>;
+      onClick={e => { setDotTooltip(null); openEvent(event, e.currentTarget); }} />;
     return <button key={event.id} type="button" className={`${styles.event} ${timed ? styles.timedEvent : ""} ${selection?.event.id === event.id ? styles.selectedEvent : ""}`}
       data-kind={event.eventType} aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
       onClick={(e) => openEvent(event, e.currentTarget)}>
@@ -262,6 +279,7 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
     </div>
     {view === "day" && (eventsByDay.get(date)?.length ?? 0) === 0 && <p className={styles.empty}>No events on this day. Add a personal event or choose another date.</p>}
     <div className={styles.legend}><span>Classes</span>{showClasswork && <span data-kind="classwork">Tasks & quizzes</span>}<span data-kind="personal">Personal events</span></div>
+    {dotTooltip && dotTooltip.anchor.isConnected && <DotTooltip {...dotTooltip} />}
     {selection && <EventPopover selection={selection} editable={canEdit(selection.event)} onClose={closePopover} busy={busy} error={error} onDelete={() => void deleteEvent()} onEdit={() => { showDay(schoolDateKey(selection.event.eventDate)); setEditor(selection.event); }} />}
   </section>;
 }

@@ -4,7 +4,7 @@ import { useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import GradebookTable from './GradebookTable';
-import type { GradebookData } from '@/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions';
+import type { GradebookData } from '@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
 
 type Course = { id: string; title: string; code: string; section: string; isArchived: boolean };
 export default function GradebookWorkspace({ courses, courseId, data, instituteCode, initialPeriod, problem }: { courses: Course[]; courseId?: string; data?: GradebookData; instituteCode: string; initialPeriod?: string; problem?: string }) {
