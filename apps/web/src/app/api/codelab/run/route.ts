@@ -1,3 +1,4 @@
+import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/run
@@ -18,6 +19,7 @@ import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/
 import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
@@ -34,6 +36,9 @@ export async function POST(request: Request) {
     if (!eligibility.eligible) {
       return NextResponse.json({ error: "Forbidden: Not eligible for activities" }, { status: 403 });
     }
+
+    const limited = await limitCodeLabRuns(eligibility.session.user.id);
+    if (limited) return limited;
 
     // 2. Parse request
     const body = (await request.json()) as {

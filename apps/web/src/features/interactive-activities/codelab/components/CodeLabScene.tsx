@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { marked } from "marked";
@@ -22,6 +22,7 @@ import {
   STAGE_LABELS,
   LANGUAGE_LABELS,
 } from "../problems/types";
+import { runBrowserPractice, supportsBrowserRun } from "../utils/browser-runner";
 import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import { toast } from "@/components/common/Toast";
@@ -139,6 +140,16 @@ export default function CodeLabScene({
     startTimer,
     resetActivity,
   } = useActivityStore();
+
+  const activePractice = useRef<AbortController | null>(null);
+  const [practicePhase, setPracticePhase] = useState("");
+  const [practiceResult, setPracticeResult] = useState(false);
+  const canPracticeLocally = executionMethod === "judge0" && supportsBrowserRun(fixedLanguage);
+  useEffect(() => () => {
+    activePractice.current?.abort();
+    activePractice.current = null;
+    setExecuting(false);
+  }, [assignmentId, fixedLanguage, setExecuting]);
 
   const [completed, setCompleted] = useState(false);
   const [completionLoading, setCompletionLoading] = useState(true);
@@ -354,7 +365,7 @@ export default function CodeLabScene({
   ]);
 
   /** Run single test (Freeform execution with stdout/stderr via Judge0) */
-  const handleRun = useCallback(async () => {
+  const handleRun = useCallback(async (forceServer = false) => {
     if (isExecuting || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
@@ -370,9 +381,19 @@ export default function CodeLabScene({
     const code = codeByLanguage[fixedLanguage as CodeLabLanguage];
     const langId = fixedLanguageId || JUDGE0_LANGUAGE_IDS[fixedLanguage as CodeLabLanguage];
 
+    const local = !forceServer && supportsBrowserRun(fixedLanguage);
+    setPracticeResult(local);
+    const controller = new AbortController();
+    activePractice.current = controller;
     try {
+      if (local && supportsBrowserRun(fixedLanguage)) {
+        const result = await runBrowserPractice(fixedLanguage, code, publicTestCases[0]?.input || "", controller.signal, setPracticePhase);
+        if (activePractice.current === controller) setConsoleOutput(result);
+        return;
+      }
       const res = await fetch("/api/judge0/submit", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source_code: code,
@@ -387,8 +408,9 @@ export default function CodeLabScene({
       }
 
       const result = await res.json();
-      setConsoleOutput(result);
+      if (activePractice.current === controller) setConsoleOutput(result);
     } catch (err: unknown) {
+      if (activePractice.current !== controller) return;
       const message = err instanceof Error ? err.message : "Execution failed";
       setConsoleOutput({
         stdout: null,
@@ -396,10 +418,14 @@ export default function CodeLabScene({
         compile_output: null,
         time: "0",
         memory: 0,
-        status: { id: 13, description: "Execution Error" },
+        status: { id: local ? 11 : 13, description: "Execution Error" },
       });
     } finally {
-      setExecuting(false);
+      if (activePractice.current === controller) {
+        activePractice.current = null;
+        setPracticePhase("");
+        setExecuting(false);
+      }
     }
   }, [
     completionLoading,
@@ -631,7 +657,7 @@ export default function CodeLabScene({
           </div>
         </div>
 
-        <div className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:gap-3 xl:w-auto xl:shrink-0">
+        <div className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:gap-3 xl:w-auto xl:shrink-0 sm:flex-wrap">
           {/* Timer */}
           <div
             className={`flex min-h-11 shrink-0 items-center justify-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-xl text-xs font-mono font-bold ${
@@ -646,14 +672,29 @@ export default function CodeLabScene({
 
           {/* Run button */}
           <button
-            onClick={handleRun}
+            onClick={() => void handleRun()}
             disabled={isExecuting || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
             className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 py-2 sm:flex-1 sm:px-3.5 xl:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs [&>svg]:shrink-0"
           >
             {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-[#F97316]" />}
-            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">Run Tests</span>
+            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">{canPracticeLocally ? "Run" : "Run Tests"}</span>
           </button>
+
+          {canPracticeLocally && (
+            <button type="button" onClick={() => void handleRun(true)}
+              disabled={isExecuting || completionLoading || Boolean(completionError)}
+              title="Uses the shared server execution allowance"
+              className="min-h-11 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5">
+              Run on server
+            </button>
+          )}
+          {practicePhase && isExecuting && (
+            <button type="button" onClick={() => activePractice.current?.abort()}
+              className="min-h-11 rounded-xl border border-rose-300 px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40">
+              Stop
+            </button>
+          )}
 
           {/* Submit button */}
           <button
@@ -928,17 +969,18 @@ export default function CodeLabScene({
                 {!consoleOutput && !isExecuting && (
                   <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2 font-sans">
                     <Terminal className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-                    <p className="text-xs">Click &quot;Run Tests&quot; to execute your code.</p>
+                    <p className="text-xs">Run your code to see its output.</p>
                   </div>
                 )}
                 {isExecuting && (
                   <div className="flex items-center justify-center h-48 gap-2 text-slate-500">
                     <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
-                    <span>Executing in sandbox...</span>
+                    <span role="status">{practicePhase || "Executing on server…"}</span>
                   </div>
                 )}
                 {consoleOutput && (
                   <div className="space-y-3">
+                    {practiceResult && <p className="font-sans text-xs text-slate-600 dark:text-slate-300" role="status">Practice result — submit for grading.</p>}
                     {consoleOutput.stdout && (
                       <div className="p-4 bg-slate-900 dark:bg-[#10131C] border border-slate-800 dark:border-white/10 text-emerald-400 dark:text-emerald-300 rounded-2xl shadow-xs">
                         <div className="text-[11px] text-slate-400 dark:text-slate-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">

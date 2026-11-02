@@ -8,6 +8,7 @@ import { useCodeLabStore } from "../stores/codelab-store";
 import { Play, Eye, Code2 } from "lucide-react";
 import MonacoInit from "@/components/common/MonacoInit";
 import { CodeSymbolBar } from './CodeSymbolBar';
+import { buildStaticPreviewDocument } from '../utils/html-css-runner';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -56,7 +57,7 @@ export default function HTMLPreviewEditor({
   useEffect(() => {
     const timer = setTimeout(() => {
       if (iframeRef.current) {
-        iframeRef.current.srcdoc = buildSrcDoc(code);
+        iframeRef.current.srcdoc = buildStaticPreviewDocument(buildSrcDoc(code));
       }
     }, 400);
 
@@ -165,7 +166,7 @@ export default function HTMLPreviewEditor({
           ref={iframeRef}
           title="HTML/CSS Live Sandbox Preview"
           className="flex-1 w-full h-full border-none bg-white"
-          sandbox="allow-scripts"
+          sandbox=""
         />
       </div>
       </div>

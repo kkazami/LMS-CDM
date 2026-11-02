@@ -26,6 +26,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/codelab-sandbox',
+        headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }],
+      },
+      {
+        source: '/codelab-runtime/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
+        ],
+      },
+      {
         source: '/api/assets/:path*',
         headers: [
           {

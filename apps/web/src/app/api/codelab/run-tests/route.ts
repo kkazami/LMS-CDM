@@ -1,3 +1,4 @@
+import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/run-tests
@@ -22,6 +23,7 @@ import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/
 import { wrapStudentCode, getWrapperLanguageFromId } from "@/features/interactive-activities/codelab/utils/code-wrappers";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
@@ -49,15 +51,17 @@ interface TestRunResult {
 async function executeOnJudge0(
   sourceCode: string,
   languageId: number,
-  stdin: string
+  stdin: string,
+  deadline: number
 ) {
-  return executeJudge0Submission(sourceCode, languageId, stdin);
+  return executeJudge0Submission(sourceCode, languageId, stdin, deadline);
 }
 
 export async function POST(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "POST codelab/run-tests/route.ts");
   if (ceilingDenial) return ceilingDenial;
 
+  const deadline = Date.now() + 50_000;
   try {
     // 1. Auth + eligibility
     const eligibility = await checkActivityEligibility();
@@ -67,6 +71,9 @@ export async function POST(request: Request) {
     if (!eligibility.eligible) {
       return NextResponse.json({ error: "Forbidden: Not eligible for activities" }, { status: 403 });
     }
+
+    const limited = await limitCodeLabRuns(eligibility.session.user.id);
+    if (limited) return limited;
 
     // 2. Parse request
     const body = (await request.json()) as {
@@ -134,7 +141,7 @@ export async function POST(request: Request) {
 
       try {
         const executableCode = wrapStudentCode(wrapperLang, sourceCode, funcSig, substitutedInput);
-        const judgeResult = await executeOnJudge0(executableCode, languageId, substitutedInput);
+        const judgeResult = await executeOnJudge0(executableCode, languageId, substitutedInput, deadline);
         const actualOut = (judgeResult.stdout || "").trim();
         const expectedOut = substitutedExpected.trim();
         const passed = judgeResult.status.id === 3 && actualOut === expectedOut;
@@ -179,6 +186,7 @@ export async function POST(request: Request) {
       }
     }
 
+    if (Date.now() >= deadline) throw new CodeRunnerUnavailableError();
     const totalCount = allTestCases.length;
     const score = totalCount > 0 ? Math.round((passCount / totalCount) * 100) : 0;
 

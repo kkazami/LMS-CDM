@@ -47,7 +47,7 @@ const JDOODLE_LANGUAGES: Record<number, { language: string; versionIndex: string
   82: { language: "sql", versionIndex: "5" },
 };
 
-async function executeJDoodle(sourceCode: string, languageId: number, stdin: string): Promise<Judge0ExecutionResponse> {
+async function executeJDoodle(sourceCode: string, languageId: number, stdin: string, deadline: number): Promise<Judge0ExecutionResponse> {
   const clientId = process.env.JDOODLE_CLIENT_ID?.trim();
   const clientSecret = process.env.JDOODLE_CLIENT_SECRET?.trim();
   const language = JDOODLE_LANGUAGES[languageId];
@@ -58,7 +58,7 @@ async function executeJDoodle(sourceCode: string, languageId: number, stdin: str
     headers: { "Content-Type": "application/json" },
     redirect: "error",
     cache: "no-store",
-    signal: AbortSignal.timeout(EXECUTION_TIMEOUT_MS),
+    signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     body: JSON.stringify({ clientId, clientSecret, script: sourceCode, stdin, ...language }),
   }).catch((error: unknown) => {
     const cause = error as { name?: string; cause?: { code?: string } };
@@ -93,20 +93,27 @@ export interface Judge0ExecutionResponse {
   message?: string | null;
 }
 
-export async function executeJudge0Submission(sourceCode: string, languageId: number, stdin = ""): Promise<Judge0ExecutionResponse> {
+export async function executeJudge0Submission(sourceCode: string, languageId: number, stdin = "", requestDeadline = Infinity): Promise<Judge0ExecutionResponse> {
   if (pendingExecutions >= MAX_PENDING_EXECUTIONS) throw new CodeRunnerUnavailableError('All code runners are busy. Try again in a few seconds. Your progress has not changed.');
   pendingExecutions++;
-  const deadline = Date.now() + EXECUTION_TIMEOUT_MS;
+  const deadline = Math.min(Date.now() + EXECUTION_TIMEOUT_MS, requestDeadline);
   try {
+    if (Date.now() >= deadline) throw new CodeRunnerUnavailableError('Code evaluation timed out. Your progress has not changed.');
     const provider = process.env.CODELAB_RUNNER?.trim().toLowerCase() || "judge0";
-    if (provider === "jdoodle") return await executeJDoodle(sourceCode, languageId, stdin);
-    if (provider !== "judge0") throw new CodeRunnerUnavailableError();
-    const base = getJudge0BaseUrl();
-    const headers = getJudge0Headers();
+    if (![54, 62, 51, 71, 93, 82].includes(languageId)) throw new CodeRunnerUnavailableError('This language is not configured for CodeLab.');
+    if (provider === "jdoodle") return await executeJDoodle(sourceCode, languageId, stdin, deadline);
+    if (provider !== "judge0" && provider !== "onlinecompiler") throw new CodeRunnerUnavailableError();
+    const online = provider === "onlinecompiler";
+    const onlineKey = process.env.ONLINECOMPILER_API_KEY?.trim();
+    if (online && !onlineKey) throw new CodeRunnerUnavailableError('OnlineCompiler.io is not configured on this server. Ask the administrator to add its API key and redeploy.');
+    const base = online ? 'https://api.onlinecompiler.io/api/judge0' : getJudge0BaseUrl();
+    const headers = online ? { 'Content-Type': 'application/json', 'X-Auth-Token': onlineKey! } : getJudge0Headers();
     const request = async (url: string, init?: RequestInit) => {
       const remaining = deadline - Date.now();
       if (remaining <= 0) throw new CodeRunnerUnavailableError();
       const response = await fetch(url, { ...init, headers, redirect: "error", signal: AbortSignal.timeout(Math.min(10_000, remaining)) });
+      if (online && [401, 403].includes(response.status)) throw new CodeRunnerUnavailableError('OnlineCompiler.io rejected the server API key. Ask the administrator to check its configuration.');
+      if (online && response.status === 429) throw new CodeRunnerUnavailableError('OnlineCompiler.io is busy or its free running limit has been reached. Try again later. Your progress has not changed.');
       if (!response.ok) throw new CodeRunnerUnavailableError();
       return await response.json();
     };
@@ -116,7 +123,7 @@ export async function executeJudge0Submission(sourceCode: string, languageId: nu
     let data = await request(`${base}/submissions?base64_encoded=true&wait=false`, {
       method: "POST",
       body: JSON.stringify({ source_code: Buffer.from(sourceCode).toString("base64"), language_id: languageId,
-        stdin: Buffer.from(stdin).toString("base64"), enable_network: false }),
+        stdin: Buffer.from(stdin).toString("base64"), ...(online ? {} : { enable_network: false }) }),
     });
     const token = data.token;
     while (!data.status || data.status.id === 1 || data.status.id === 2) {

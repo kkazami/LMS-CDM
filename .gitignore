@@ -65,6 +65,9 @@ test-results/
 /.idea/
 /.vscode/
 *.tsbuildinfo
+# Copied from pinned packages by the web dev/build scripts.
+/apps/web/public/codelab-runtime/pyodide-*/
+/apps/web/public/codelab-runtime/sql.js-*/
 *.log
 
 # Next.js regenerates this file for development/build/typegen.

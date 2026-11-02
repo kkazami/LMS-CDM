@@ -1,3 +1,4 @@
+import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
@@ -6,59 +7,18 @@ import { wrapStudentCode, WrapperLanguage } from "@/features/interactive-activit
 import { executeJudge0Submission, CodeRunnerUnavailableError } from "@/features/interactive-activities/codelab/utils/judge0-config";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // ─── Security Constants ───
 
 /** Maximum source code size in bytes (64 KB) */
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
-/** Maximum submissions per user within the rate limit window */
-const RATE_LIMIT_MAX = 30;
-
-/** Rate limit window in milliseconds (5 minutes) */
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
-
 /**
  * Allowed Judge0 language IDs — reject anything not in this set.
  * Maps to: Python 3 (71), C++ (54), C# (51), Java (62), JS/Node 18 (93), SQL (82)
  */
 const ALLOWED_LANGUAGE_IDS = new Set<number>([71, 54, 51, 62, 93, 82]);
-
-// ─── In-Memory Rate Limiter ───
-
-interface RateLimitEntry {
-  timestamps: number[];
-}
-
-/** Per-user submission timestamps for rate limiting. */
-const rateLimitMap = new Map<string, RateLimitEntry>();
-
-/**
- * Checks whether a user has exceeded the submission rate limit.
- * Prunes expired timestamps on each check.
- *
- * @returns true if the user is within limits; false if rate-limited
- */
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const cutoff = now - RATE_LIMIT_WINDOW_MS;
-
-  let entry = rateLimitMap.get(userId);
-  if (!entry) {
-    entry = { timestamps: [] };
-    rateLimitMap.set(userId, entry);
-  }
-
-  // Prune timestamps older than the window
-  entry.timestamps = entry.timestamps.filter((ts) => ts > cutoff);
-
-  if (entry.timestamps.length >= RATE_LIMIT_MAX) {
-    return false;
-  }
-
-  entry.timestamps.push(now);
-  return true;
-}
 
 export async function POST(req: Request) {
   const ceilingDenial = await denyLegacyApi(req, "POST judge0/submit/route.ts");
@@ -77,17 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden: Not eligible for activities" }, { status: 403 });
     }
 
-    // 3. Per-user rate limit
-    const userId = session.user.id;
-    if (!checkRateLimit(userId)) {
-      return NextResponse.json(
-        {
-          error: "Rate limit exceeded. Maximum 30 submissions per 5 minutes.",
-          retryAfterSeconds: 300,
-        },
-        { status: 429 }
-      );
-    }
+    const limited = await limitCodeLabRuns(session.user.id);
+    if (limited) return limited;
 
     // 4. Parse input
     const body = await req.json();
@@ -124,7 +75,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 7. Submit to Judge0 with automatic cloud CE & in-process fallback handling
+    // 7. Execute through the configured managed provider; never fall back.
     function getLanguageFromId(id: number): WrapperLanguage {
       switch (id) {
         case 71: return "python";

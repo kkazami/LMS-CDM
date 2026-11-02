@@ -2,9 +2,9 @@
   "name": "web",
   "private": true,
   "scripts": {
-    "dev": "prisma generate --schema=../../prisma/schema.prisma && next dev -H 0.0.0.0",
-    "build": "prisma generate --schema=../../prisma/schema.prisma && node ../../scripts/programming-coursework-database.mjs --vercel-build && next build --webpack",
-    "postinstall": "prisma generate --schema=../../prisma/schema.prisma",
+    "dev": "node ../../scripts/prepare-codelab-runtimes.mjs && prisma generate --schema=../../prisma/schema.prisma && next dev -H 0.0.0.0",
+    "build": "node ../../scripts/prepare-codelab-runtimes.mjs && prisma generate --schema=../../prisma/schema.prisma && node ../../scripts/programming-coursework-database.mjs --vercel-build && next build --webpack",
+    "postinstall": "node ../../scripts/prepare-codelab-runtimes.mjs && prisma generate --schema=../../prisma/schema.prisma",
     "start": "next start -H 0.0.0.0",
     "test:unit": "tsx --env-file=.env --test src/lib/ite/__tests__/*.test.ts src/lib/ite/focus/__tests__/*.test.ts src/lib/ite/guidance/__tests__/*.test.ts src/lib/ite/meetings/__tests__/*.test.ts src/lib/dashboard/__tests__/*.test.ts src/lib/practicum/__tests__/*.test.ts src/lib/__tests__/*.test.ts src/lib/ite/offline/__tests__/*.test.ts src/lib/ite/search/__tests__/*.test.ts"
   },
@@ -42,6 +42,7 @@
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^6.2.108",
     "pg": "^8.23.0",
+    "pyodide": "314.0.7",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
@@ -49,6 +50,7 @@
     "react-pdf": "^10.4.1",
     "recharts": "^3.10.1",
     "sanitize-html": "^2.18.1",
+    "sql.js": "1.15.2",
     "three": "^0.185.1",
     "zod": "^4.6.6",
     "zustand": "^5.0.14"
