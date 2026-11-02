@@ -127,7 +127,7 @@ export default function DashboardLayout({
           enrolledCourses={enrolledCourses}
         />
 
-        <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-hidden max-w-full transition-all duration-300 ${
+        <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-clip max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
         }`}>
           <Topbar

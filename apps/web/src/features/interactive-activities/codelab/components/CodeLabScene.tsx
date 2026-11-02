@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { marked } from "marked";
 import { CodeEditor } from "./CodeEditor";
 import HTMLPreviewEditor from "./HTMLPreviewEditor";
+import { ResizeDivider } from "./ResizeDivider";
 import {
   useCodeLabStore,
   TestCase,
@@ -141,6 +142,17 @@ export default function CodeLabScene({
     resetActivity,
   } = useActivityStore();
 
+  const tutorialId = useId();
+  const [tutorialCollapsed, setTutorialCollapsed] = useState(false);
+  const [panelSizes, setPanelSizes] = useState([24, 54, 22]);
+  function resizePanels(index: number, share: number) {
+    setPanelSizes(previous => {
+      const next = [...previous], pair = previous[index] + previous[index + 1];
+      next[index] = pair * share / 100;
+      next[index + 1] = pair - next[index];
+      return next;
+    });
+  }
   const activePractice = useRef<AbortController | null>(null);
   const [practicePhase, setPracticePhase] = useState("");
   const [practiceResult, setPracticeResult] = useState(false);
@@ -783,27 +795,41 @@ export default function CodeLabScene({
       </div>
 
       {/* ──── Main Layout ──── */}
-      <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:grid md:[grid-template-columns:var(--codelab-columns)]"
+        data-codelab-panels
+        style={{ '--codelab-columns': tutorialCollapsed
+          ? `44px minmax(240px, ${panelSizes[1]}fr) 6px minmax(180px, ${panelSizes[2]}fr)`
+          : `minmax(180px, ${panelSizes[0]}fr) 6px minmax(240px, ${panelSizes[1]}fr) 6px minmax(180px, ${panelSizes[2]}fr)` } as React.CSSProperties}>
+        {tutorialCollapsed && <div className="hidden min-h-0 flex-col items-center border-r border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-[#181B26] md:flex">
+          <button type="button" aria-label="Show Tutorial & Challenge" title="Show Tutorial & Challenge"
+            aria-expanded={false} aria-controls={tutorialId} onClick={() => setTutorialCollapsed(false)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent text-slate-600 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-slate-300">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>}
         {/* Left Panel: W3Schools Educational Problem Statement */}
         <aside
-          className={`w-full md:w-[32%] min-w-0 md:min-w-[240px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 ${
-            mobilePanel === "tutorial" ? "flex" : "hidden md:flex"
-          } min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
-          style={{ resize: "horizontal" }}
+          id={tutorialId}
+          data-codelab-tutorial
+          className={`w-full min-w-0 max-w-full bg-white dark:bg-[#141721] ${
+            mobilePanel === "tutorial" ? "flex" : "hidden"
+          } ${tutorialCollapsed ? "md:hidden" : "md:flex"} min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
         >
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="flex min-h-11 shrink-0 items-center justify-between gap-1 pl-3 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[11px] font-bold text-slate-600 dark:text-[#8B92A5] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                 Tutorial & Challenge
               </span>
             </div>
-            {tags.length > 0 && (
-              <span className="text-[11px] font-mono text-slate-400">#{tags[0]}</span>
-            )}
+            <button type="button" aria-label="Hide Tutorial & Challenge" title="Hide Tutorial & Challenge"
+              aria-expanded={true} aria-controls={tutorialId} onClick={() => setTutorialCollapsed(true)}
+              className="hidden h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent text-slate-600 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-slate-300 md:flex">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-6 min-w-0 max-w-full">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6 min-w-0 max-w-full">
             {/* Parsed description markdown */}
             <div
               className="codelab-prose w-full max-w-full min-w-0 text-sm leading-relaxed text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:[overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_code]:whitespace-pre-wrap [&_code]:break-words [&_code]:[overflow-wrap:anywhere]"
@@ -813,7 +839,7 @@ export default function CodeLabScene({
             {/* ──── Adaptive 3-Tier Progressive Hint System ──── */}
             {progressiveHints.length > 0 && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-[#F0F2F8] uppercase tracking-wider">
                     <Lightbulb className="w-4 h-4 text-amber-500" />
                     <span>Adaptive Hints</span>
@@ -829,7 +855,7 @@ export default function CodeLabScene({
                     <p className="leading-relaxed font-medium">
                       <strong>Try exploring first.</strong> If you run into errors or get stuck, progressive hints will automatically unlock to guide you:
                     </p>
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
                       <span>Hint 1 (Concept Direction):</span>
                       <span className="font-mono text-[#F97316] font-bold">{failedRunCount} / 3 attempts</span>
                     </div>
@@ -865,7 +891,7 @@ export default function CodeLabScene({
                     return (
                       <div
                         key={tierIdx}
-                        className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#555C72] flex items-center justify-between text-xs"
+                        className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 text-xs"
                       >
                         <span className="flex items-center gap-1.5 font-semibold">
                           <Lock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
@@ -913,9 +939,13 @@ export default function CodeLabScene({
           </div>
         </aside>
 
+        {!tutorialCollapsed && <ResizeDivider label="Resize tutorial and editor panels"
+          value={panelSizes[0] / (panelSizes[0] + panelSizes[1]) * 100}
+          minBefore={200} minAfter={320} resetValue={24 / 78 * 100} onChange={share => resizePanels(0, share)} />}
+
         {/* Center / Preview Panel */}
         {executionMethod === "html-preview" || executionMethod === "css-preview" ? (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 overflow-hidden bg-white dark:bg-[#141721]`} data-codelab-editor>
             <HTMLPreviewEditor
               initialCode={codeByLanguage[fixedLanguage as CodeLabLanguage] || ""}
               language={fixedLanguage as "html" | "css"}
@@ -924,20 +954,24 @@ export default function CodeLabScene({
             />
           </main>
         ) : (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 overflow-hidden bg-white dark:bg-[#141721]`} data-codelab-editor>
             <CodeEditor />
           </main>
         )}
 
+        <ResizeDivider label="Resize editor and results panels"
+          value={panelSizes[1] / (panelSizes[1] + panelSizes[2]) * 100}
+          minBefore={320} minAfter={200} resetValue={54 / 76 * 100} onChange={share => resizePanels(1, share)} />
+
         {/* Right Panel: Test Suite & Results */}
         <aside
-          className={`w-full md:w-[30%] min-w-0 md:min-w-[220px] ${
+          data-codelab-results
+          className={`w-full min-w-0 overflow-hidden ${
             mobilePanel === "results" ? "flex" : "hidden md:flex"
           } min-h-0 flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]`}
-          style={{ resize: "horizontal" }}
         >
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] flex-none">
+          <div className="flex min-h-11 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] flex-none">
             <button
               onClick={() => setActiveTab("console")}
               className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -946,7 +980,7 @@ export default function CodeLabScene({
                   : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
-              <Terminal className="w-3.5 h-3.5" /> Output
+              <Terminal className="w-3.5 h-3.5 shrink-0" /> Output
             </button>
             <button
               onClick={() => setActiveTab("tests")}
@@ -956,7 +990,7 @@ export default function CodeLabScene({
                   : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5" /> Test Suite
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Tests
               {totalTestsCount > 0 && (
                 <span
                   className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
@@ -972,7 +1006,7 @@ export default function CodeLabScene({
           </div>
 
           {/* Results Content */}
-          <div className="flex-1 overflow-y-auto p-4 text-xs">
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto p-3 text-xs [overflow-wrap:anywhere]">
             {activeTab === "console" ? (
               <div className="space-y-4 font-mono">
                 {!consoleOutput && !isExecuting && (
@@ -1044,7 +1078,7 @@ export default function CodeLabScene({
                           Test Case #{idx + 1}
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold uppercase">
+                      <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase">
                         {result.passed ? (
                           <span className="text-emerald-600 dark:text-emerald-400">Passed</span>
                         ) : (

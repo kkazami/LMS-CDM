@@ -359,14 +359,27 @@ html[data-native-reduced-motion="true"] *::after { animation: none !important; t
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  overflow: clip;
 }
 .dashboard-workspace-shell:has([data-codelab-workspace]) > header {
   flex-shrink: 0;
 }
 .dashboard-workspace-shell > main:has([data-codelab-workspace]) {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
   min-height: 0;
+  overflow: hidden;
   padding: 0 0 calc(56px + env(safe-area-inset-bottom, 0px));
+}
+.dashboard-workspace-shell > main > [data-codelab-workspace] {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: auto;
+}
+/* Embedded previews must not take the pointer away from an active pane resize. */
+body:has([data-codelab-resize-shield]) iframe {
+  pointer-events: none;
 }
 @media (min-width: 1024px) {
   .dashboard-workspace-shell > main:has([data-codelab-workspace]) { padding: 0; }
