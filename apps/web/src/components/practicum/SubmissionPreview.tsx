@@ -4,6 +4,13 @@ import type { SubmissionDTO } from "@/lib/practicum/dto";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg"];
 
+function toDownloadHref(fileUrl: string): string {
+  if (fileUrl.startsWith("/api/practicum/lesson-plans/")) {
+    return fileUrl.includes("?") ? `${fileUrl}&download=1` : `${fileUrl}?download=1`;
+  }
+  return fileUrl;
+}
+
 /** Shows the submitted evidence: a video player, an embedded video link, an image, or a document link. */
 export default function SubmissionPreview({ submission }: { submission: SubmissionDTO }) {
   const { fileUrl, fileName, fileSize, videoLink, type, title } = submission;
@@ -43,6 +50,7 @@ export default function SubmissionPreview({ submission }: { submission: Submissi
   }
 
   const extension = getExtension(fileName ?? fileUrl);
+  const downloadHref = toDownloadHref(fileUrl);
   const meta = (
     <p className="text-xs text-slate-600 dark:text-[#94A3B8]">
       {fileName}
@@ -60,7 +68,7 @@ export default function SubmissionPreview({ submission }: { submission: Submissi
           className="w-full max-h-[70vh] rounded-xl border border-slate-200 dark:border-white/10 bg-black"
         >
           Your browser cannot play this video.{" "}
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+          <a href={downloadHref} target="_blank" rel="noopener noreferrer">
             Download it instead
           </a>
           .
@@ -98,7 +106,7 @@ export default function SubmissionPreview({ submission }: { submission: Submissi
           <ExternalLink className="h-4 w-4" aria-hidden="true" />
           {extension === "pdf" ? "Preview" : "Open"}
         </a>
-        <a href={fileUrl} download={fileName ?? undefined} className="inline-flex items-center gap-1 hover:underline">
+        <a href={downloadHref} download={fileName ?? undefined} className="inline-flex items-center gap-1 hover:underline">
           <Download className="h-4 w-4" aria-hidden="true" />
           Download
         </a>

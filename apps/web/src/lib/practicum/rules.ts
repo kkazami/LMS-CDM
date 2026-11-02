@@ -30,9 +30,18 @@ export const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
 
 const MB = 1024 * 1024;
 
-const MIME_BY_EXTENSION: Record<string, string> = {
+export function getMaxUploadMb(): number {
+  const raw = typeof process !== "undefined" ? process.env?.MAX_UPLOAD_MB : undefined;
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+}
+
+export const MIME_BY_EXTENSION: Record<string, string> = {
   pdf: "application/pdf",
+  doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -47,8 +56,8 @@ export interface UploadRule {
 }
 
 export const UPLOAD_RULES: Record<SubmissionType, UploadRule> = {
-  LESSON_PLAN: { extensions: ["pdf", "docx"], maxBytes: 10 * MB },
-  PORTFOLIO_EVIDENCE: { extensions: ["pdf", "png", "jpg", "jpeg"], maxBytes: 10 * MB },
+  LESSON_PLAN: { extensions: ["pdf", "doc", "docx", "ppt", "pptx"], maxBytes: getMaxUploadMb() * MB },
+  PORTFOLIO_EVIDENCE: { extensions: ["pdf", "png", "jpg", "jpeg"], maxBytes: getMaxUploadMb() * MB },
   DEMO_VIDEO: { extensions: ["mp4", "webm", "mov"], maxBytes: 200 * MB },
 };
 
@@ -77,20 +86,22 @@ export function validateUpload(
   sizeBytes?: number | null
 ): RuleCheck {
   const rule = UPLOAD_RULES[type];
+  const maxBytes = type === "DEMO_VIDEO" ? rule.maxBytes : getMaxUploadMb() * MB;
+  const maxMb = Math.round((maxBytes / MB) * 10) / 10;
   const ext = getExtension(fileName);
 
   if (!ext || !rule.extensions.includes(ext)) {
     return { ok: false, reason: `Allowed file types: ${rule.extensions.map((e) => e.toUpperCase()).join(", ")}.` };
   }
   if (contentType && !allowedContentTypes(type).includes(contentType.toLowerCase())) {
-    return { ok: false, reason: "The file content type is not allowed for this submission type." };
+    return { ok: false, reason: `Invalid file type. Allowed types: ${rule.extensions.map((e) => e.toUpperCase()).join(", ")}.` };
   }
   if (sizeBytes !== undefined && sizeBytes !== null) {
     if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
       return { ok: false, reason: "The file is empty." };
     }
-    if (sizeBytes > rule.maxBytes) {
-      return { ok: false, reason: `The file is too large. Maximum size is ${rule.maxBytes / MB} MB.` };
+    if (sizeBytes > maxBytes) {
+      return { ok: false, reason: `File too large (max ${maxMb} MB)` };
     }
   }
   return { ok: true };
@@ -203,6 +214,11 @@ export type TransitionResult = { ok: true; status: SubmissionStatus } | { ok: fa
 /** A student may resubmit only while the supervisor has asked for a revision. */
 export function canResubmit(status: SubmissionStatus): boolean {
   return status === "NEEDS_REVISION";
+}
+
+/** A student may delete a lesson plan only while it is SUBMITTED (awaiting review). */
+export function canDeleteSubmission(status: SubmissionStatus): boolean {
+  return status === "SUBMITTED";
 }
 
 export function statusAfterResubmit(current: SubmissionStatus): TransitionResult {

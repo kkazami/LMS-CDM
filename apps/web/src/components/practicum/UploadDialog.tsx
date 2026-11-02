@@ -2,15 +2,17 @@
 
 import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Loader2, UploadCloud, X } from "lucide-react";
+import { FileText, Loader2, UploadCloud, X } from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { SubmissionDTO } from "@/lib/practicum/dto";
 import {
+  MIME_BY_EXTENSION,
   UPLOAD_RULES,
   formatBytes,
-  isValidUploadPathname,
+  getExtension,
   parseVideoLink,
+  practicumPathPrefix,
   validateUpload,
   type SubmissionType,
 } from "@/lib/practicum/rules";
@@ -24,7 +26,7 @@ interface UploadDialogProps {
   target: UploadTarget;
   uploadsConfigured: boolean;
   onClose: () => void;
-  onDone: () => void;
+  onDone: (submission?: SubmissionDTO) => void;
 }
 
 const SINGULAR: Record<SubmissionType, string> = {
@@ -33,16 +35,23 @@ const SINGULAR: Record<SubmissionType, string> = {
   PORTFOLIO_EVIDENCE: "portfolio evidence",
 };
 
-function safeFileName(name: string): string {
-  return name.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "file";
-}
-
 const inputClass =
   "w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-500 dark:placeholder:text-[#94A3B8] outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
 
+function createClientIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function safeUploadFileName(fileName: string): string {
+  const base = (fileName.split(/[\\/]/).pop() ?? "file").replace(/[^A-Za-z0-9._-]/g, "_");
+  return base || "file";
+}
+
 /**
- * New submission / resubmission dialog. Files go straight from the browser to Vercel Blob
- * (never through our API routes); only the resulting URL is sent to the submissions API.
+ * New submission / resubmission dialog with client-side Vercel Blob upload and idempotency support.
  */
 export default function UploadDialog({ target, uploadsConfigured, onClose, onDone }: UploadDialogProps) {
   const isResubmit = target.kind === "resubmit";
@@ -50,43 +59,69 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
   const placementId = isResubmit ? target.submission.placementId : target.placementId;
   const rule = UPLOAD_RULES[type];
 
+  const [idempotencyKey] = useState<string>(() => createClientIdempotencyKey());
   const [title, setTitle] = useState(isResubmit ? target.submission.title : "");
   const [description, setDescription] = useState(isResubmit ? target.submission.description ?? "" : "");
   const [source, setSource] = useState<"file" | "link">(
     type === "DEMO_VIDEO" && !uploadsConfigured ? "link" : "file"
   );
   const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [videoLink, setVideoLink] = useState("");
-  const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const submittingRef = useRef(false);
 
   const requestClose = () => {
-    if (!busy) onClose();
+    if (!busy && !submittingRef.current) onClose();
   };
   useDialogA11y(true, requestClose, panelRef);
 
   const acceptAttr = rule.extensions.map((e) => `.${e}`).join(",");
   const fileUnavailable = source === "file" && !uploadsConfigured;
+  const fileOptional = !isResubmit && type === "LESSON_PLAN";
 
-  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const picked = event.target.files?.[0] ?? null;
+  function handleSelectedFile(picked: File | null) {
     setError(null);
     if (!picked) {
       setFile(null);
       return;
     }
-    const check = validateUpload(type, picked.name, picked.type || null, picked.size);
+    const ext = getExtension(picked.name);
+    const rawMime = (picked.type || "").trim().toLowerCase();
+    const effectiveMime =
+      !rawMime || rawMime === "application/octet-stream" ? MIME_BY_EXTENSION[ext] ?? rawMime : rawMime;
+    const check = validateUpload(type, picked.name, effectiveMime || null, picked.size);
     if (!check.ok) {
       setFile(null);
       setError(check.reason);
-      event.target.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     setFile(picked);
+  }
+
+  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const picked = event.target.files?.[0] ?? null;
+    handleSelectedFile(picked);
+  }
+
+  function onDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setDragging(false);
+    if (busy || submittingRef.current) return;
+    const dropped = event.dataTransfer.files?.[0] ?? null;
+    handleSelectedFile(dropped);
+  }
+
+  function removeSelectedFile() {
+    setFile(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function cancelUpload() {
@@ -95,7 +130,7 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || submittingRef.current) return;
     setError(null);
 
     if (!title.trim()) {
@@ -103,90 +138,154 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
       return;
     }
 
-    let payload: Record<string, string | undefined> = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-    };
-
     if (source === "link") {
       const parsed = parseVideoLink(videoLink);
       if (!parsed.ok) {
         setError(parsed.reason);
         return;
       }
-      payload = { ...payload, videoLink: parsed.url };
-    } else {
+
+      submittingRef.current = true;
+      setBusy(true);
+      try {
+        const payload = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          videoLink: parsed.url,
+        };
+        const res = isResubmit
+          ? await practicumFetch<{ submission: SubmissionDTO }>(
+              `/api/practicum/submissions/${target.submission.id}`,
+              {
+                method: "PATCH",
+                body: JSON.stringify(payload),
+              }
+            )
+          : await practicumFetch<{ submission: SubmissionDTO }>("/api/practicum/submissions", {
+              method: "POST",
+              body: JSON.stringify({ ...payload, placementId, type }),
+            });
+        setTitle("");
+        setDescription("");
+        setVideoLink("");
+        toast.success(isResubmit ? "Resubmitted" : "Submitted", "Your supervisor has been notified.");
+        onDone(res.submission);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Submission failed. Please try again.");
+      } finally {
+        submittingRef.current = false;
+        setBusy(false);
+      }
+      return;
+    }
+
+    if (file) {
       if (!uploadsConfigured) {
         setError("File uploads are not configured.");
         return;
       }
-      if (!file) {
-        setError("Choose a file to upload.");
-        return;
-      }
-      const check = validateUpload(type, file.name, file.type || null, file.size);
+      const ext = getExtension(file.name);
+      const rawMime = (file.type || "").trim().toLowerCase();
+      const effectiveMime =
+        !rawMime || rawMime === "application/octet-stream" ? MIME_BY_EXTENSION[ext] ?? rawMime : rawMime;
+      const check = validateUpload(type, file.name, effectiveMime || null, file.size);
       if (!check.ok) {
         setError(check.reason);
         return;
       }
+    } else if (!fileOptional) {
+      if (!uploadsConfigured) {
+        setError("File uploads are not configured.");
+        return;
+      }
+      setError("Choose a file to upload.");
+      return;
     }
 
+    submittingRef.current = true;
     setBusy(true);
-    setProgress(0);
     const controller = new AbortController();
     abortRef.current = controller;
 
     try {
-      if (source === "file" && file) {
-        const pathname = `practicum/${placementId}/${safeFileName(file.name)}`;
-        if (!isValidUploadPathname(pathname, placementId)) {
-          throw new Error("Invalid file name.");
-        }
+      const formData = new FormData();
+      formData.append("title", title.trim());
+      if (description.trim()) {
+        formData.append("description", description.trim());
+      }
+      formData.append("placementId", placementId);
+      formData.append("type", type);
+      formData.append("idempotencyKey", idempotencyKey);
+      if (isResubmit) {
+        formData.append("submissionId", target.submission.id);
+      }
+      if (file) {
+        const ext = getExtension(file.name);
+        const rawMime = (file.type || "").trim().toLowerCase();
+        const effectiveMime =
+          !rawMime || rawMime === "application/octet-stream" ? MIME_BY_EXTENSION[ext] ?? rawMime : rawMime;
+        const pathname = `${practicumPathPrefix(placementId)}${safeUploadFileName(file.name)}`;
         const blob = await upload(pathname, file, {
           access: "public",
           handleUploadUrl: "/api/practicum/upload",
           clientPayload: JSON.stringify({ placementId, type }),
-          // Multipart for videos: parallel parts with automatic retries on unstable connections.
           multipart: type === "DEMO_VIDEO",
-          contentType: file.type || undefined,
+          contentType: effectiveMime || undefined,
           abortSignal: controller.signal,
-          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
         });
-        payload = { ...payload, fileUrl: blob.url, fileName: file.name };
+        formData.append("fileUrl", blob.url);
+        formData.append("fileName", file.name);
       }
 
-      if (isResubmit) {
-        await practicumFetch(`/api/practicum/submissions/${target.submission.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await practicumFetch("/api/practicum/submissions", {
-          method: "POST",
-          body: JSON.stringify({ ...payload, placementId, type }),
-        });
+      const response = await fetch("/api/practicum/lesson-plans", {
+        method: "POST",
+        headers: {
+          "x-idempotency-key": idempotencyKey,
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        lessonPlan?: SubmissionDTO;
+        submission?: SubmissionDTO;
+        error?: string;
+        message?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || data?.message || "Could not save the lesson plan. Please try again."
+        );
       }
 
+      const createdItem = data?.lessonPlan ?? data?.submission;
+      setTitle("");
+      setDescription("");
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success(isResubmit ? "Resubmitted" : "Submitted", "Your supervisor has been notified.");
-      onDone();
+      onDone(createdItem);
     } catch (err) {
       if (controller.signal.aborted) {
         setError("Upload cancelled. You can try again.");
       } else {
-        const message = err instanceof Error ? err.message : "";
         setError(
-          message
-            ? `${message} Use Retry to try again.`
-            : "The upload failed. Check your connection and use Retry to try again."
+          err instanceof Error && err.message
+            ? err.message
+            : "Could not save the lesson plan. Please try again."
         );
       }
     } finally {
+      submittingRef.current = false;
       setBusy(false);
       abortRef.current = null;
     }
   }
 
   const heading = isResubmit ? `Resubmit ${SINGULAR[type]}` : `New ${SINGULAR[type]}`;
+  const maxMb = Math.round((rule.maxBytes / (1024 * 1024)) * 10) / 10;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
@@ -301,23 +400,55 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
           ) : (
             <div>
               <label htmlFor="practicum-file" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                File
+                File {fileOptional && <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>}
               </label>
-              <label
-                htmlFor="practicum-file"
-                className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-6 text-center hover:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500 dark:border-white/15 dark:hover:bg-white/5"
-              >
-                <UploadCloud className="h-6 w-6 text-slate-500 dark:text-[#94A3B8]" aria-hidden="true" />
-                <span className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  {file ? file.name : "Choose a file"}
-                </span>
-                <span className="text-xs text-slate-600 dark:text-[#94A3B8]">
-                  {file
-                    ? formatBytes(file.size)
-                    : `${rule.extensions.map((e) => e.toUpperCase()).join(", ")} · up to ${formatBytes(rule.maxBytes)}`}
-                </span>
-              </label>
+
+              {file ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 dark:border-white/15 dark:bg-[#1E2132]">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <FileText className="h-5 w-5 shrink-0 text-blue-500" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{file.name}</p>
+                      <p className="text-xs text-slate-600 dark:text-[#94A3B8]">{formatBytes(file.size)}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeSelectedFile}
+                    disabled={busy}
+                    aria-label="Remove selected file"
+                    className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 hover:text-slate-900 disabled:opacity-40 dark:text-[#94A3B8] dark:hover:bg-white/10 dark:hover:text-[#F0F2F8]"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="practicum-file"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (!busy) setDragging(true);
+                  }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={onDrop}
+                  className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
+                    dragging
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-slate-300 hover:bg-slate-50 dark:border-white/15 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <UploadCloud className="h-6 w-6 text-slate-500 dark:text-[#94A3B8]" aria-hidden="true" />
+                  <span className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                    Choose a file or drag and drop
+                  </span>
+                  <span className="text-xs text-slate-600 dark:text-[#94A3B8]">
+                    {rule.extensions.map((e) => e.toUpperCase()).join(", ")} · up to {maxMb} MB
+                  </span>
+                </label>
+              )}
+
               <input
+                ref={fileInputRef}
                 id="practicum-file"
                 type="file"
                 accept={acceptAttr}
@@ -325,25 +456,6 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
                 disabled={busy}
                 className="sr-only"
               />
-            </div>
-          )}
-
-          {busy && source === "file" && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs text-slate-700 dark:text-[#D1D5DB]">
-                <span>Uploading…</span>
-                <span className="font-mono tabular-nums">{progress}%</span>
-              </div>
-              <div
-                role="progressbar"
-                aria-label="Upload progress"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={progress}
-                className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"
-              >
-                <div className="h-full rounded-full bg-blue-500 transition-[width]" style={{ width: `${progress}%` }} />
-              </div>
             </div>
           )}
 
@@ -377,11 +489,11 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
             )}
             <button
               type="submit"
-              disabled={busy || fileUnavailable}
+              disabled={busy || !title.trim() || (fileUnavailable && !fileOptional)}
               className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              {busy ? "Submitting…" : error ? "Retry" : isResubmit ? "Resubmit" : "Submit"}
+              {busy ? "Uploading…" : error ? "Retry" : isResubmit ? "Resubmit" : "Submit"}
             </button>
           </div>
         </form>
