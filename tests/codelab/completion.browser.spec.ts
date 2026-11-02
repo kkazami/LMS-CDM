@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Route } from "@playwright/test";
 import path from "node:path";
 import { createRequire } from "node:module";
 import fs from "node:fs/promises";
@@ -43,6 +43,11 @@ test.beforeAll(async () => {
   await fs.mkdir(screenshots, { recursive: true });
 });
 
+async function fulfillSandbox(route: Route) {
+  const response = sandbox(new Request(route.request().url()));
+  return route.fulfill({ body:await response.text(), headers:Object.fromEntries(response.headers) });
+}
+
 test('local Run and Stop preserve grades while explicit server runs consume quota', async ({ page }) => {
   let runs = 0, grades = 0;
   await page.route('http://localhost/**', async route => {
@@ -63,14 +68,24 @@ test('local Run and Stop preserve grades while explicit server runs consume quot
   await page.evaluate(() => { (window as any).notifications = []; });
   await page.addScriptTag({ content:script });
   await expect(page.getByRole('button', {name:'Run',exact:true})).toBeEnabled();
+  await expect(page.getByRole('button', {name:'Run on server',exact:true})).toHaveCount(0);
   await page.getByLabel('Code', {exact:true}).fill('console.log("Local output")');
   await page.getByRole('button', {name:'Run',exact:true}).click();
   await expect(page.getByText('Local output', {exact:true})).toBeVisible();
   await expect(page.getByText('Practice result — submit for grading.', {exact:true})).toBeVisible();
   expect(runs).toBe(0); expect(grades).toBe(0);
+  await expect(page.getByRole('button', {name:'Run on server',exact:true})).toHaveCount(0);
+  await page.getByLabel('Code', {exact:true}).fill("require('unsupported-module')");
+  await page.getByRole('button', {name:'Run',exact:true}).click();
+  await expect(page.getByRole('button', {name:'Run on server',exact:true})).toBeVisible();
+  expect(runs).toBe(0);
   await page.getByRole('button', {name:'Run on server',exact:true}).click();
   await expect(page.getByText('Server output', {exact:true})).toBeVisible();
   expect(runs).toBe(1);
+  await page.getByLabel('Code', {exact:true}).fill('console.log("Recovered")');
+  await page.getByRole('button', {name:'Run',exact:true}).click();
+  await expect(page.getByText('Recovered', {exact:true})).toBeVisible();
+  await expect(page.getByRole('button', {name:'Run on server',exact:true})).toHaveCount(0);
   await page.getByLabel('Code', {exact:true}).fill('while(true){}');
   await page.getByRole('button', {name:'Run',exact:true}).click();
   await expect(page.getByRole('button', {name:'Stop',exact:true})).toBeVisible();
@@ -78,6 +93,7 @@ test('local Run and Stop preserve grades while explicit server runs consume quot
   await expect(page.getByText('Practice stopped.', {exact:false})).toBeVisible();
   await expect(page.getByRole('button', {name:'Submit Solution',exact:true})).toBeEnabled();
   await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.getByRole('button', {name:'Run on server',exact:true})).toHaveCount(0);
   expect(grades).toBe(0);
   await page.screenshot({ path:path.join(screenshots, 'local-practice.png') });
 });
@@ -89,6 +105,8 @@ test("saved completion survives reload while code remains editable and runnable"
   page.on("pageerror", error => errors.push(error.message));
   await page.route("http://codelab.test/**", async route => {
     const url = new URL(route.request().url());
+    if (url.pathname === '/codelab-sandbox') return fulfillSandbox(route);
+    if (url.pathname.startsWith('/codelab-runtime/')) return route.fulfill({status:404,body:''});
     if (url.pathname === "/api/codelab/progress") return route.fulfill({ json: { completed: Boolean(saved), submission: saved } });
     if (url.pathname === "/api/codelab/evaluate") {
       evaluations++;
@@ -116,6 +134,7 @@ test("saved completion survives reload while code remains editable and runnable"
   await expect(page.locator("canvas")).toHaveCount(0);
   await expect(page.getByLabel("Code", { exact: true })).toHaveValue("print('Hello')");
   await page.getByLabel("Code", { exact: true }).fill("print('Practice')");
+  await page.getByRole("button", { name: "Run", exact: true }).click();
   await page.getByRole("button", { name: "Run on server", exact: true }).click();
   await expect.poll(() => runs).toBe(1);
   expect(evaluations).toBe(1);
@@ -128,6 +147,8 @@ test("compiler diagnostics are visible and runner outages are not failed student
   let runs = 0;
   await page.route("http://codelab.test/**", async route => {
     const url = new URL(route.request().url());
+    if (url.pathname === '/codelab-sandbox') return fulfillSandbox(route);
+    if (url.pathname.startsWith('/codelab-runtime/')) return route.fulfill({status:404,body:''});
     if (url.pathname === "/api/codelab/progress") return route.fulfill({ json: { completed: false } });
     if (url.pathname === "/api/judge0/submit") {
       runs++;
@@ -140,6 +161,8 @@ test("compiler diagnostics are visible and runner outages are not failed student
   await page.addStyleTag({ content: css });
   await page.evaluate(() => { (window as any).notifications = []; });
   await page.addScriptTag({ content: script });
+  await expect(page.getByRole("button", {name:"Run",exact:true})).toBeEnabled();
+  await page.getByRole("button", {name:"Run",exact:true}).click();
   const run = page.getByRole("button", { name: "Run on server", exact: true });
   await expect(run).toBeEnabled();
   await run.click();
@@ -155,6 +178,8 @@ test("a failed save remains retryable and never celebrates an unsaved completion
   let attempts = 0;
   await page.route("http://codelab.test/**", async route => {
     const url = new URL(route.request().url());
+    if (url.pathname === '/codelab-sandbox') return fulfillSandbox(route);
+    if (url.pathname.startsWith('/codelab-runtime/')) return route.fulfill({status:404,body:''});
     if (url.pathname === "/api/codelab/progress") return route.fulfill({ json: { completed: false } });
     if (url.pathname === "/api/codelab/evaluate") {
       attempts++;
@@ -199,6 +224,8 @@ for (const viewport of [
     page.on('pageerror', error => errors.push(error.message));
     await page.route('http://codelab.test/**', async route => {
       const url = new URL(route.request().url());
+      if (url.pathname === '/codelab-sandbox') return fulfillSandbox(route);
+      if (url.pathname.startsWith('/codelab-runtime/')) return route.fulfill({status:404,body:''});
       if (url.pathname === '/api/codelab/progress') { await progress; return route.fulfill({ json: { completed: false, submission: null } }); }
       if (url.pathname === '/api/judge0/submit') { runs++; await execution; return route.fulfill({ json: { stdout: 'Hello', stderr: null, time: '0', status: { id: 3 } } }); }
       if (url.pathname === '/api/codelab/evaluate') {
@@ -212,7 +239,8 @@ for (const viewport of [
     await page.addStyleTag({ content: css + `html,body{height:100%;margin:0}#app-header{height:56px;padding:16px;border-bottom:1px solid var(--border-color)}#root{height:100%;width:100%}#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--bg-surface);border-top:1px solid var(--border-color);display:grid;place-items:center;font-size:11px}textarea[aria-label=Code]{min-height:100px;width:100%;padding:16px;color:var(--text-primary);background:var(--bg-surface)}@media(min-width:1024px){.dashboard-workspace-shell{margin-left:288px;width:calc(100% - 288px)}#bottom-nav{display:none}}` });
     await page.evaluate(dark => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; document.documentElement.classList.toggle('dark', dark); (window as any).notifications = []; }, viewport.dark);
     await page.addScriptTag({ content: script });
-    const run = page.getByRole('button', { name: ['python','javascript','sql'].includes(viewport.language) ? 'Run on server' : 'Run Tests', exact: true });
+    const local = ['python','javascript','sql'].includes(viewport.language);
+    const run = page.getByRole('button', { name: local ? 'Run' : 'Run Tests', exact: true });
     const submit = page.getByRole('button', { name: 'Submit Solution', exact: true });
     const loading = page.getByRole('button', { name: 'Loading progress…', exact: true });
     await expect(loading).toBeDisabled();
@@ -232,7 +260,9 @@ for (const viewport of [
     if (viewport.width < 768) await page.getByRole('button', { name: 'Editor', exact: true }).click();
     await page.getByLabel('Code', { exact: true }).fill('// Synthetic mobile layout fixture');
     await page.screenshot({ path: path.join(screenshots, `toolbar-${viewport.width}.png`) });
-    await run.click(); await expect.poll(() => runs).toBe(1);
+    await run.click();
+    if (local) await page.getByRole('button', {name:'Run on server',exact:true}).click();
+    await expect.poll(() => runs).toBe(1);
     await expect(run).toBeDisabled(); await expect(submit).toBeDisabled();
     releaseRun(); await expect(run).toBeEnabled();
     await submit.click(); await expect.poll(() => submissions).toBe(1);

@@ -19,7 +19,9 @@ Unset `CODELAB_RUNNER` retains the legacy Judge0 default; `.env.example` selects
 OnlineCompiler.io explicitly.
 
 **Run** uses local practice for JavaScript, Python (Pyodide), and SQLite SQL
-(sql.js). **Run on server** explicitly spends provider quota. C++, C#, and Java
+(sql.js). **Run on server** appears only after a local run reports an error and
+explicitly spends provider quota. Starting a new local run hides the option;
+successful local runs and manually stopped runs do not reveal it. C++, C#, and Java
 always use server execution. **Submit Solution** continues to run programming
 tests on the server and is the only programming-code path that can save completion
 or award XP. HTML/CSS previews and completion rules are unchanged. Browser results

@@ -144,11 +144,15 @@ export default function CodeLabScene({
   const activePractice = useRef<AbortController | null>(null);
   const [practicePhase, setPracticePhase] = useState("");
   const [practiceResult, setPracticeResult] = useState(false);
+  const [showServerRun, setShowServerRun] = useState(false);
   const canPracticeLocally = executionMethod === "judge0" && supportsBrowserRun(fixedLanguage);
-  useEffect(() => () => {
-    activePractice.current?.abort();
-    activePractice.current = null;
-    setExecuting(false);
+  useEffect(() => {
+    setShowServerRun(false);
+    return () => {
+      activePractice.current?.abort();
+      activePractice.current = null;
+      setExecuting(false);
+    };
   }, [assignmentId, fixedLanguage, setExecuting]);
 
   const [completed, setCompleted] = useState(false);
@@ -382,13 +386,17 @@ export default function CodeLabScene({
     const langId = fixedLanguageId || JUDGE0_LANGUAGE_IDS[fixedLanguage as CodeLabLanguage];
 
     const local = !forceServer && supportsBrowserRun(fixedLanguage);
+    if (local) setShowServerRun(false);
     setPracticeResult(local);
     const controller = new AbortController();
     activePractice.current = controller;
     try {
       if (local && supportsBrowserRun(fixedLanguage)) {
         const result = await runBrowserPractice(fixedLanguage, code, publicTestCases[0]?.input || "", controller.signal, setPracticePhase);
-        if (activePractice.current === controller) setConsoleOutput(result);
+        if (activePractice.current === controller) {
+          setConsoleOutput(result);
+          setShowServerRun(result.status.id !== 3 || Boolean(result.stderr || result.compile_output));
+        }
         return;
       }
       const res = await fetch("/api/judge0/submit", {
@@ -411,6 +419,7 @@ export default function CodeLabScene({
       if (activePractice.current === controller) setConsoleOutput(result);
     } catch (err: unknown) {
       if (activePractice.current !== controller) return;
+      if (local && !controller.signal.aborted) setShowServerRun(true);
       const message = err instanceof Error ? err.message : "Execution failed";
       setConsoleOutput({
         stdout: null,
@@ -681,7 +690,7 @@ export default function CodeLabScene({
             <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">{canPracticeLocally ? "Run" : "Run Tests"}</span>
           </button>
 
-          {canPracticeLocally && (
+          {canPracticeLocally && showServerRun && (
             <button type="button" onClick={() => void handleRun(true)}
               disabled={isExecuting || completionLoading || Boolean(completionError)}
               title="Uses the shared server execution allowance"
