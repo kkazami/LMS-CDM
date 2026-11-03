@@ -6,6 +6,14 @@ import { sessionActivity } from '@/lib/session-policy';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  // These public files contain no session data. The iframe supplies its own restrictive CSP.
+  if (pathname === '/codelab-sandbox') return NextResponse.next();
+  if (pathname.startsWith('/codelab-runtime/')) {
+    const runtime = NextResponse.next();
+    runtime.headers.set('Access-Control-Allow-Origin', '*');
+    runtime.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    return runtime;
+  }
   const api = pathname.startsWith('/api/');
   if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || pathname === '/ite-sw.js' || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());

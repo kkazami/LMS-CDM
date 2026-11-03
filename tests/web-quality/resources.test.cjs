@@ -1,4 +1,7 @@
-const { test } = require('node:test');
+const { test, beforeEach, afterEach } = require('node:test');
+let previousScanning;
+beforeEach(() => { previousScanning = process.env.FILE_SCANNING_ENABLED; process.env.FILE_SCANNING_ENABLED = 'true'; });
+afterEach(() => { if (previousScanning === undefined) delete process.env.FILE_SCANNING_ENABLED; else process.env.FILE_SCANNING_ENABLED = previousScanning; });
 const assert = require('node:assert/strict');
 const net = require('node:net');
 const fs = require('node:fs');
@@ -39,6 +42,31 @@ test('multipart body is bounded even when Content-Length is absent and upload co
   await assert.rejects(api.withUploadSlot(async () => {}), error => error.status === 503); release(); await Promise.all([first, second]);
   await api.withUploadSlot(async () => {});
 });
+test('disabled scanning saves unscanned uploads, retains file validation and permits owner downloads', async () => {
+  delete process.env.FILE_SCANNING_ENABLED;
+  let saved;
+  const db = {
+    $transaction: async callback => callback({ $queryRaw: async () => [], privateAsset: {
+      aggregate: async () => ({ _sum: { size: 0 } }),
+      create: async ({ data }) => { saved = data; return data; },
+    } }),
+    $queryRaw: async () => [{ tables: 0, columns: 0 }],
+    privateAsset: {
+      findFirst: async ({ where }) => { assert.ok(where.scanStatus.in.includes('UNSCANNED')); return saved; },
+      findUniqueOrThrow: async () => saved,
+    },
+  };
+  const api = await compile(sources, { db });
+  assert.equal(await api.scanUpload(Buffer.from('test')), 'UNSCANNED');
+  const result = await api.savePrivateUpload(student, new File(['Hello'], 'notes.txt', { type: 'text/plain' }));
+  assert.equal(saved.scanStatus, 'UNSCANNED');
+  assert.equal((await api.readPrivateUpload(student, saved.id)).bytes.toString(), 'Hello');
+  await api.requireOwnedUpload(db, student, result.url);
+  await assert.rejects(api.savePrivateUpload(student, new File(['MZmalware'], 'fake.png', { type: 'image/png' })), error => error.status === 400);
+  process.env.FILE_SCANNING_ENABLED = 'false';
+  assert.equal(await api.scanUpload(Buffer.from('test')), 'UNSCANNED');
+});
+
 test('ClamAV protocol sends exact bounded bytes and publishes only an explicit clean verdict', async () => {
   const api = await compile(sources); const oldHost = process.env.CLAMAV_HOST, oldPort = process.env.CLAMAV_PORT;
   delete process.env.CLAMAV_HOST; delete process.env.CLAMAV_PORT;

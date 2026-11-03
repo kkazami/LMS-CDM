@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { attendanceEnrollmentChanged } from '@/lib/attendance/lifecycle';
 import { AccessError } from "@/lib/super-user-v1/actor";
 import { lockAccounts } from '@/lib/super-user-v1/account-lock';
 import {
@@ -575,12 +576,14 @@ export async function commitImport(
               },
             });
           } else if (targetId) {
+            await attendanceEnrollmentChanged(tx, course.id, student.id, true);
             await tx.enrollment.update({
               where: { id: targetId },
               data: { status: "APPROVED" },
             });
             outcome = "UPDATED";
           } else {
+            await attendanceEnrollmentChanged(tx, course.id, student.id, true);
             const enrollment = await tx.enrollment.create({
               data: {
                 studentId: student.id,

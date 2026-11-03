@@ -71,6 +71,8 @@ export function configureNotificationHandler(): void {
 }
 
 export async function registerForPushNotificationsAsync(api: ApiClient): Promise<string | null> {
+  // Keep permission prompts off until a real delivery service is provisioned.
+  if (process.env.EXPO_PUBLIC_REMOTE_PUSH_ENABLED !== 'true') return null;
   if (Platform.OS === 'web') return null;
 
   if (isExpoGoClient() && Platform.OS === 'android') {

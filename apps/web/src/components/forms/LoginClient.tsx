@@ -122,7 +122,7 @@ export default function LoginClient({
           <section className={styles.panel} aria-labelledby="sign-in-title">
             <header className={styles.panelBrand}>
               <Image src="/images/cdm-logo.png" alt="Colegio de Montalban crest" width={64} height={64} priority />
-              <h2 id="sign-in-title">{isDesktopAdminMode ? "Administrator sign in" : "Welcome back."}</h2>
+              <h2 id="sign-in-title">{isDesktopAdminMode ? "Admin and Super User sign in" : "Welcome back."}</h2>
               <p>{activeUser ? "You are currently signed into CdM LMS." : isDesktopAdminMode ? "Dedicated access to your desktop console." : "Sign in to your CdM learning space."}</p>
               {isDesktopAdminMode && <span className={styles.adminBadge}><ShieldCheck aria-hidden="true" />Desktop console</span>}
             </header>
@@ -135,7 +135,9 @@ export default function LoginClient({
                 </div>
                 <div className={styles.userDetails}><h3>{activeUser.name}</h3><p>{activeUser.email}</p><span>{activeUser.role} · {activeUser.instituteCode.toUpperCase()}</span></div>
                 <Link
-                  href={isDesktopAdminMode || activeUser.role.toUpperCase() === "ADMIN"
+                  href={activeUser.role.toUpperCase() === "SUPER_USER"
+                    ? `/${activeUser.instituteCode || instituteCode}/academic-operations`
+                    : isDesktopAdminMode || activeUser.role.toUpperCase() === "ADMIN"
                     ? `/${activeUser.instituteCode || instituteCode}/admin`
                     : activeUser.role.toUpperCase() === "STUDENT"
                       ? `/${activeUser.instituteCode || instituteCode}/students`

@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { crc32 } from 'node:zlib';
 import {
   isBusinessPlanEligible,
   isSameOriginRequest,
@@ -459,6 +460,14 @@ describe("MP-LMS Business Plan Guide", () => {
       const docxBuffer = renderBusinessPlanDocx(record, "Angela Villanueva");
       assert.equal(docxBuffer.subarray(0, 2).toString("latin1"), "PK", "DOCX must be a valid PK ZIP archive");
       const docxAscii = docxBuffer.toString("utf8");
+      let zipOffset = 0, zipEntries = 0;
+      while (docxBuffer.readUInt32LE(zipOffset) === 0x04034b50) {
+        const size = docxBuffer.readUInt32LE(zipOffset + 18);
+        const start = zipOffset + 30 + docxBuffer.readUInt16LE(zipOffset + 26) + docxBuffer.readUInt16LE(zipOffset + 28);
+        assert.equal(docxBuffer.readUInt32LE(zipOffset + 14), crc32(docxBuffer.subarray(start, start + size)) >>> 0, 'Stored DOCX entry checksum matches the independent Node implementation');
+        zipOffset = start + size; zipEntries++;
+      }
+      assert.equal(zipEntries, 3);
       assert.ok(docxAscii.includes("word/document.xml"), "DOCX must contain word/document.xml entry");
       assert.ok(docxAscii.includes("TABLE OF CONTENTS"));
       assert.ok(docxAscii.includes("Brew &amp; Banquet"));

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { FlashcardPractice } from '../../../../src/components/institute/FlashcardPractice';
 import {
   View,
   Text,
@@ -33,9 +34,10 @@ import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { radius, spacing } from '../../../../src/lib/theme';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import type { FlashcardCard } from '@lms/types';
+import { queueCardReview, queueCardCompletion, syncCardQueue } from '../../../../src/lib/flashcard-queue';
 
 export default function StudentFlashcardStudyScreen() {
-  const { deckId } = useLocalSearchParams<{ deckId: string }>();
+  const { deckId, deckTitle } = useLocalSearchParams<{ deckId: string; deckTitle?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -53,6 +55,28 @@ export default function StudentFlashcardStudyScreen() {
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [expAwarded, setExpAwarded] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const startedAt = useRef(Date.now());
+  const completionKey = useRef(`cards-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+  const finishSession = async () => {
+    const key = completionKey.current;
+    const durationSeconds = Math.floor((Date.now() - startedAt.current) / 1000);
+    if (durationSeconds < 5) {
+      setErrorMessage('Your reviews are saved. A session must last at least 5 seconds to receive a reward.');
+      return;
+    }
+    try {
+      await queueCardCompletion({ deckId: deckId!, cardsReviewed: cards.length, durationSeconds, idempotencyKey: completionKey.current });
+      const res = await syncCardQueue();
+      if (completionKey.current !== key) return;
+      setExpAwarded(previous => Math.max(previous, res.expEarned ?? 0));
+      setErrorMessage(null);
+    } catch {
+      setErrorMessage('Saved on this device · sync pending. Reconnect and retry to confirm your reviews and reward.');
+    }
+  };
 
   const loadCards = async () => {
     if (!deckId) return;
@@ -66,7 +90,7 @@ export default function StudentFlashcardStudyScreen() {
       }
 
       const response = await api.flashcards.getCards(deckId);
-      if (response?.cards && response.cards.length > 0) {
+      if (response?.cards) {
         setCards(response.cards);
         await setCachedData(`deck_cards_${deckId}`, response.cards);
       }
@@ -86,50 +110,40 @@ export default function StudentFlashcardStudyScreen() {
   const currentCard = cards[currentIndex];
 
   const handleResponse = async (status: 'correct' | 'incorrect') => {
-    if (!currentCard || !deckId) return;
+    if (!currentCard || !deckId || !isFlipped || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setErrorMessage(null);
+    try {
+      await queueCardReview(currentCard.id, status === 'correct' ? 'knew_it' : 'still_learning');
+    } catch {
+      setErrorMessage('This review could not save on this device. Reconnect to verify your sign-in, then tap your answer again.');
+      savingRef.current = false;
+      setSaving(false);
+      return;
+    }
 
     const nextCorrect = status === 'correct' ? correctCount + 1 : correctCount;
     const nextIncorrect = status === 'incorrect' ? incorrectCount + 1 : incorrectCount;
 
     if (status === 'correct') setCorrectCount(nextCorrect);
     else setIncorrectCount(nextIncorrect);
-
-    // Record card progress in background
-    api.flashcards.recordProgress(currentCard.id, status).catch(() => {});
+    void syncCardQueue().catch(() => setErrorMessage('Saved on this device · sync pending. Your reviews will retry after you reconnect.'));
 
     if (currentIndex + 1 < cards.length) {
       setCurrentIndex((prev) => prev + 1);
       setIsFlipped(false);
       setShowHint(false);
     } else {
-      // Session finished! Complete session and award EXP
       setSessionCompleted(true);
-      try {
-        const stats = {
-          totalCards: cards.length,
-          correct: nextCorrect,
-          incorrect: nextIncorrect,
-          unseen: 0,
-        };
-        const res = await api.flashcards.completeSession(deckId, stats);
-        setExpAwarded(res?.expEarned || 50);
-
-        try {
-          Burnt.toast({
-            title: 'Study Session Finished!',
-            message: `+${res?.expEarned || 50} EXP granted`,
-            preset: 'done',
-          });
-        } catch {
-          // Fallback
-        }
-      } catch {
-        setExpAwarded(30);
-      }
+      await finishSession();
     }
+    savingRef.current = false;
+    setSaving(false);
   };
 
   const handleRestart = () => {
+    if (savingRef.current) return;
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowHint(false);
@@ -137,7 +151,17 @@ export default function StudentFlashcardStudyScreen() {
     setIncorrectCount(0);
     setSessionCompleted(false);
     setExpAwarded(0);
+    startedAt.current = Date.now();
+    completionKey.current = `cards-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   };
+
+  if (!loading && currentCard && !sessionCompleted) return <FlashcardPractice
+    card={currentCard} title={deckTitle || 'Study flashcards'} index={currentIndex} count={cards.length}
+    flipped={isFlipped} saving={saving} showHint={showHint}
+    onHint={() => setShowHint(value => !value)} onFlip={() => setIsFlipped(value => !value)}
+    onClose={() => router.back()} onRate={rating => { void handleResponse(rating); }}
+    notice={errorMessage ? <ErrorBanner message={errorMessage} onDismiss={() => setErrorMessage(null)} /> : null}
+  />;
 
   const progressPercent = cards.length > 0 ? ((currentIndex + (sessionCompleted ? 1 : 0)) / cards.length) * 100 : 0;
 
@@ -145,7 +169,7 @@ export default function StudentFlashcardStudyScreen() {
     <Screen contentContainerStyle={styles.screenInner}>
       <AppHeader
         showBack
-        title={sessionCompleted ? 'Session Complete' : `Card ${currentIndex + 1} of ${cards.length}`}
+        title={sessionCompleted ? 'Session Complete' : loading ? 'Loading flashcards' : 'Study flashcards'}
         subtitle="Active Recall Practice Session"
       />
 
@@ -163,7 +187,7 @@ export default function StudentFlashcardStudyScreen() {
         {errorMessage && (
           <ErrorBanner
             message={errorMessage}
-            onRetry={loadCards}
+            onRetry={sessionCompleted ? finishSession : loadCards}
             onDismiss={() => setErrorMessage(null)}
             retryAccessibilityLabel="Retry loading flashcards"
             style={{ marginBottom: s(spacing.md) }}
@@ -354,158 +378,7 @@ export default function StudentFlashcardStudyScreen() {
               />
             </View>
           </View>
-        ) : (
-          /* ==================== ACTIVE STUDY CARD ==================== */
-          <View style={styles.cardContainer}>
-            <TouchableOpacity
-              activeOpacity={0.92}
-              onPress={() => setIsFlipped((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel={`Flashcard: ${isFlipped ? 'showing answer' : 'showing question'}. Double tap to flip.`}
-              style={[
-                styles.flashcard,
-                {
-                  backgroundColor: theme.colors.card,
-                  borderColor: isFlipped ? theme.colors.primary : theme.colors.border,
-                  borderRadius: radius.xl,
-                  padding: s(spacing.xl),
-                  minHeight: s(280),
-                },
-              ]}
-            >
-              <View style={styles.cardSideBadge}>
-                <Badge
-                  label={isFlipped ? 'ANSWER (BACK)' : 'PROMPT (FRONT)'}
-                  variant={isFlipped ? 'primary' : 'default'}
-                  size="sm"
-                />
-                <View style={[styles.flipPromptRow, { gap: s(spacing.xs) }]}>
-                  <RotateCw size={s(13)} color={theme.colors.textSecondary} />
-                  <Text
-                    style={[styles.flipPromptText, { color: theme.colors.textSecondary, fontSize: font(12) }]}
-                    maxFontSizeMultiplier={maxFontSizeMultiplier}
-                  >
-                    Tap to flip
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.cardContentBox}>
-                <Text
-                  style={[
-                    styles.cardMainText,
-                    {
-                      color: theme.colors.text,
-                      fontSize: font(19),
-                      lineHeight: font(27),
-                    },
-                  ]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  {isFlipped ? currentCard.back : currentCard.front}
-                </Text>
-              </View>
-
-              {/* Hint Section */}
-              {!isFlipped && Boolean(currentCard.hint) ? (
-                <View style={[styles.hintContainer, { marginTop: s(spacing.md) }]}>
-                  {showHint ? (
-                    <View
-                      style={[
-                        styles.hintBox,
-                        {
-                          backgroundColor: theme.colors.surfaceAlt,
-                          borderRadius: radius.md,
-                          padding: s(spacing.md),
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.hintText,
-                          { color: theme.colors.textSecondary, fontSize: font(12.5), lineHeight: font(18) },
-                        ]}
-                        maxFontSizeMultiplier={maxFontSizeMultiplier}
-                      >
-                        Hint: {currentCard.hint}
-                      </Text>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={[styles.revealHintBtn, { minHeight: TOUCH_TARGET }]}
-                      onPress={() => setShowHint(true)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Reveal flashcard hint"
-                    >
-                      <HelpCircle size={s(14)} color={theme.colors.primary} />
-                      <Text
-                        style={[
-                          styles.revealHintText,
-                          { color: theme.colors.primary, fontSize: font(13), marginLeft: s(spacing.xs) },
-                        ]}
-                        maxFontSizeMultiplier={maxFontSizeMultiplier}
-                      >
-                        Reveal Hint
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : null}
-            </TouchableOpacity>
-
-            {/* Spaced Repetition Response Buttons */}
-            <View style={[styles.responseButtonsRow, { marginTop: s(spacing.xl), gap: s(spacing.md) }]}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Mark incorrect or review needed"
-                style={[
-                  styles.respBtn,
-                  {
-                    backgroundColor: theme.colors.dangerBg,
-                    borderColor: theme.colors.danger,
-                    borderRadius: radius.md,
-                    paddingVertical: s(spacing.md),
-                  },
-                ]}
-                onPress={() => handleResponse('incorrect')}
-                activeOpacity={0.8}
-              >
-                <XCircle size={s(20)} color={theme.colors.danger} />
-                <Text
-                  style={[styles.respBtnText, { color: theme.colors.danger, fontSize: font(14), marginLeft: s(spacing.xs) }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Again
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Mark correct and confident"
-                style={[
-                  styles.respBtn,
-                  {
-                    backgroundColor: theme.colors.successBg,
-                    borderColor: theme.colors.success,
-                    borderRadius: radius.md,
-                    paddingVertical: s(spacing.md),
-                  },
-                ]}
-                onPress={() => handleResponse('correct')}
-                activeOpacity={0.8}
-              >
-                <CheckCircle2 size={s(20)} color={theme.colors.success} />
-                <Text
-                  style={[styles.respBtnText, { color: theme.colors.success, fontSize: font(14), marginLeft: s(spacing.xs) }]}
-                  maxFontSizeMultiplier={maxFontSizeMultiplier}
-                >
-                  Got It
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        ) : null}
       </ScrollView>
     </Screen>
   );

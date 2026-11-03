@@ -23,9 +23,9 @@ import {
   HardDrive,
   Library,
   Archive,
+  CalendarDays,
   FlaskConical,
   Code2,
-  Terminal,
   ChevronDown,
   ChevronRight,
   PenTool,
@@ -43,6 +43,7 @@ import {
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
 import { getNavigationPath } from "@/lib/navigation-path";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
 
 import type { ComponentType } from "react";
@@ -69,6 +70,7 @@ interface SidebarProps {
   onCloseMobileDrawer?: () => void;
   /** When true, renders the "Interactive Labs" nav entry. Must be completely absent from DOM when false. */
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
   /** When true, renders the "Practicum" nav entry (ITE students and instructors only). */
@@ -88,7 +90,7 @@ export const getStudentLinks = (code: string): (NavLink & { key?: string })[] =>
   { label: "Learning Materials", href: `/${code}/learning-materials`, icon: Library },
   { label: "Announcements", href: `/${code}/announcements`, icon: Megaphone },
   { label: "Grades", href: `/${code}/grades`, icon: GraduationCap },
-  { label: "Tasks", href: `/${code}/tasks`, icon: ListTodo },
+  { label: "Tasks & Calendar", href: `/${code}/tasks`, icon: ListTodo },
   { label: "Flashcards", href: `/${code}/flashcards`, icon: FlashcardIcon },
   { label: "Leaderboards", href: `/${code}/leaderboards`, icon: Trophy },
 ];
@@ -118,6 +120,7 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "My Classes", href: `/${code}/courses`, icon: BookOpen, key: MY_COURSES_KEY },
   { label: "Gradebooks", href: `/${code}/gradebooks`, icon: FileSpreadsheet },
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
+  { label: "Calendar", href: `/${code}/tasks`, icon: CalendarDays },
   ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
 
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
@@ -153,6 +156,7 @@ export default function Sidebar({
   isMobileDrawer = false,
   onCloseMobileDrawer,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
   isEligibleForMeetings,
@@ -166,13 +170,14 @@ export default function Sidebar({
 
   // Build link list identically on both server and client (avoids hydration mismatch)
   let links = getLinks(instituteCode, userRole);
+  const ohmwardHref = isEligibleForOhmward && ohmwardDestination(instituteCode, userRole);
+  if (ohmwardHref) links = [...links, { label: "Ohmward", href: ohmwardHref, icon: FlaskConical }];
 
   if (isEligibleForActivities) {
     if (isProfessor) {
       links = [
         ...links,
-        { label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2 },
-        { label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal },
+        { label: "CodeLab", href: `/${instituteCode}/activities/codelab/instructor`, icon: Code2 },
       ];
     } else if (isStudent) {
       links = [
@@ -239,7 +244,10 @@ export default function Sidebar({
   const activeLink = [...links]
     .sort((a, b) => b.href.length - a.href.length)
     .find(
-      (link) => pathname === link.href || pathname.startsWith(link.href + "/")
+      (link) => pathname === link.href || pathname.startsWith(link.href + "/") || (
+        isProfessor && link.href === `/${instituteCode}/activities/codelab/instructor` &&
+        pathname.startsWith(`/${instituteCode}/activities/codelab/`)
+      )
     );
 
   const handleMyCoursesToggle = () => {

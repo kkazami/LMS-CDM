@@ -22,7 +22,7 @@ export async function compressImageFile(
   } = options;
 
   // If running on server or non-browser environment, return original
-  if (typeof window === 'undefined' || !window.createImageBitmap) {
+  if (typeof window === 'undefined') {
     return file;
   }
 

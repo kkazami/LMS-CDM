@@ -54,6 +54,7 @@ function getNotificationIcon(type: string) {
     case "GRADE":
       return <GraduationCap className="h-4 w-4 text-green-500" />;
     case "CLASSWORK":
+    case "ATTENDANCE":
       return <ClipboardCheck className="h-4 w-4 text-orange-500" />;
     case "REMINDER":
       return <Clock className="h-4 w-4 text-amber-500" />;

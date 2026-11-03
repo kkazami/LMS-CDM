@@ -122,7 +122,7 @@ try {
   db = new PrismaClient({ adapter: new PrismaPg({ connectionString: cluster.url, max: 8 }), log: [] });
   const api = await load(db);
   scanner = await scannerFixture();
-  process.env.CLAMAV_HOST = scanner.host; process.env.CLAMAV_PORT = String(scanner.port);
+  process.env.FILE_SCANNING_ENABLED = 'true'; process.env.CLAMAV_HOST = scanner.host; process.env.CLAMAV_PORT = String(scanner.port);
   let template, published, assignment, attempt;
   const context = () => ['course', assignment.id, attempt.id];
   const response = stepId => attempt.responses.find(row => row.stepId === stepId);
@@ -465,6 +465,80 @@ try {
     await rejects(() => api.getAssignment(teacher, 'course', assignment.id, 3), 400);
   });
 
+  let missedLab, missedGrade;
+  const gradeKey = randomUUID();
+  await check('instructors record a zero for an unattempted missed lab without fabricating submitted work', async () => {
+    missedLab = await api.createAssignment(teacher, 'course', { versionId: published.versions[0].id, category: 'MIDTERM_EXAM', maxPoints: 10, dueDate: new Date(Date.now() - 60000).toISOString() });
+    await api.patchAssignment(teacher, 'course', missedLab.id, { published: true });
+    const input = { action: 'GRADE', studentId: 'other', expectedRevision: null, idempotencyKey: gradeKey, score: 0, reason: 'Missed practical lab without a submission.' };
+    missedGrade = await api.gradeLabFromGradebook(teacher, 'course', missedLab.id, input);
+    assert.equal(missedGrade.score, 0); assert.equal(missedGrade.status, 'GRADED'); assert.equal(missedGrade.submittedAt, null);
+    const row = await db.studentSubmission.findUniqueOrThrow({ where: { syllabusItemId_studentId: { syllabusItemId: missedLab.syllabusItem.id, studentId: 'other' } } });
+    assert.equal(row.grade, 0); assert.equal(row.isReturned, true); assert.equal(row.submittedAt, null);
+    assert.equal(await db.labSubmission.count({ where: { attemptId: missedGrade.attemptId } }), 0);
+    const book = await api.readGradebook(teacher, 'course');assert.equal(book.grades.other[missedLab.syllabusItem.id].grade, 0);assert.equal(book.grades.other[missedLab.syllabusItem.id].labRevision, missedGrade.revision);
+    const view = await api.getAttempt(other, 'course', missedLab.id, missedGrade.attemptId);assert.equal(view.gradebookHistory[0].score, 0);assert.equal(view.submissions.length, 0);
+    await rejects(() => api.saveResponse(other, 'course', missedLab.id, missedGrade.attemptId, view.version.steps[0].id, { expectedRevision: 0, answer: { acknowledged: true } }), 409);
+  });
+  await check('lost-response grading retry reuses its receipt, audit event and notification', async () => {
+    const before = await db.notification.count({ where: { userId: 'other', type: 'GRADE' } });
+    const replay = await api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { action: 'GRADE', studentId: 'other', expectedRevision: null, idempotencyKey: gradeKey, score: 0, reason: 'Missed practical lab without a submission.' });
+    assert.deepEqual(replay, missedGrade);assert.equal(await db.notification.count({ where: { userId: 'other', type: 'GRADE' } }), before);
+    assert.equal(await db.auditLog.count({ where: { action: 'LAB_GRADEBOOK_GRADE', targetId: 'other', metadata: { contains: missedGrade.attemptId } } }), 1);
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { action: 'GRADE', studentId: 'other', expectedRevision: null, idempotencyKey: gradeKey, score: 1, reason: 'Changed input.' }), 409);
+  });
+  await check('direct lab decisions reject unauthorized actors, excessive grades and stale gradebook cells', async () => {
+    const input = { action: 'GRADE', studentId: 'other', expectedRevision: missedGrade.revision, idempotencyKey: randomUUID(), score: 1, reason: 'Authorized adjustment.' };
+    await rejects(() => api.gradeLabFromGradebook(student, 'course', missedLab.id, input), 403);
+    await rejects(() => api.gradeLabFromGradebook(unrelated, 'course', missedLab.id, input), 403);
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { ...input, studentId: 'foreign' }), 403);
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { ...input, score: 11 }), 400);
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { ...input, expectedRevision: null }), 409);
+    const changed = await api.gradeLabFromGradebook(teacher, 'course', missedLab.id, input);missedGrade = changed;
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { ...input, idempotencyKey: randomUUID() }), 409);
+  });
+  await check('late permission clears the current grade and allows first submission after the original deadline', async () => {
+    const input = { action: 'REOPEN', studentId: 'other', expectedRevision: missedGrade.revision, idempotencyKey: randomUUID(), revisionDueAt: deadline(), reason: 'Approved late practical work.' };
+    const reopened = await api.gradeLabFromGradebook(teacher, 'course', missedLab.id, input);
+    assert.deepEqual(await api.gradeLabFromGradebook(teacher, 'course', missedLab.id, input), reopened);
+    const view = await api.getAttempt(other, 'course', missedLab.id, missedGrade.attemptId);
+    assert.equal(view.status, 'NEEDS_REVISION'); assert.equal(view.score, null); assert.equal(view.gradebookHistory.length, 3);assert.equal(view.submissions.length, 0);
+    await api.saveResponse(other, 'course', missedLab.id, view.id, view.version.steps[0].id, { expectedRevision: 0, answer: { acknowledged: true } });
+    assert.equal((await db.studentSubmission.findUniqueOrThrow({ where: { id: reopened.submissionId } })).grade, null);
+    await api.patchAssignment(teacher, 'course', missedLab.id, { archived: true });
+    await rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { ...input, idempotencyKey: randomUUID(), expectedRevision: reopened.revision + 1 }), 409);
+  });
+  await check('notification storage failure rolls back direct lab grades, history and idempotency receipt', async () => {
+    await api.patchAssignment(teacher, 'course', missedLab.id, { archived: false });
+    const before = await db.labAttempt.findUniqueOrThrow({ where: { id: missedGrade.attemptId } });
+    const receipts = await db.submissionRequest.count();const events = await db.auditLog.count();
+    await cluster.owner.query(`CREATE FUNCTION missed_grade_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Synthetic notification failure'; END $$; CREATE TRIGGER missed_grade_failure BEFORE INSERT ON "Notification" FOR EACH ROW EXECUTE FUNCTION missed_grade_failure()`);
+    try {
+      await assert.rejects(() => api.gradeLabFromGradebook(teacher, 'course', missedLab.id, { action: 'GRADE', studentId: 'other', expectedRevision: before.revision, idempotencyKey: randomUUID(), score: 0, reason: 'Atomic failure test.' }));
+      assert.equal(await db.submissionRequest.count(), receipts);assert.equal(await db.auditLog.count(), events);
+      const after = await db.labAttempt.findUniqueOrThrow({ where: { id: before.id } });assert.equal(after.revision, before.revision);assert.equal(after.status, before.status);
+    } finally {await cluster.owner.query('DROP TRIGGER missed_grade_failure ON "Notification"; DROP FUNCTION missed_grade_failure()');}
+  });
+  await check('expired late permission blocks saving and manual grading races safely with actual submission', async () => {
+    await db.labAttempt.update({ where: { id: missedGrade.attemptId }, data: { revisionDueAt: new Date(Date.now() - 1000) } });
+    const prior = await api.getAttempt(other, 'course', missedLab.id, missedGrade.attemptId);
+    await rejects(() => api.saveResponse(other, 'course', missedLab.id, prior.id, prior.version.steps[0].id, { expectedRevision: 1, answer: { acknowledged: true } }), 409);
+    const definition = { ...api.MYSQL_LAB, title: 'One-step concurrency lab', steps: [{ key: 'ack', title: 'Acknowledge', type: 'INSTRUCTIONS', required: true, config: { body: 'Complete your task.' } }] };
+    const template = await api.createTemplate(teacher, definition);const version = await api.publishTemplate(teacher, template.id, { expectedRevision: 0 });
+    const lab = await api.createAssignment(teacher, 'course', { versionId: version.versions[0].id, category: 'ACTIVITY', maxPoints: 10, dueDate: deadline() });await api.patchAssignment(teacher, 'course', lab.id, { published: true });
+    let work = await api.openAttempt(other, 'course', lab.id);work = await api.saveResponse(other, 'course', lab.id, work.id, work.version.steps[0].id, { expectedRevision: 0, answer: { acknowledged: true } });
+    const results = await Promise.allSettled([
+      api.gradeLabFromGradebook(teacher, 'course', lab.id, { action: 'GRADE', studentId: 'other', expectedRevision: work.revision, idempotencyKey: randomUUID(), score: 0, reason: 'Manual decision during submission.' }),
+      api.submitAttempt(other, 'course', lab.id, work.id, { idempotencyKey: randomUUID() }),
+    ]);
+    assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);assert.equal(results.find(result => result.status === 'rejected').reason.status, 409);
+    const now = await api.getAttempt(other, 'course', lab.id, work.id);
+    if (now.status === 'SUBMITTED') {
+      const snapshot = JSON.stringify(now.submissions);
+      await api.gradeLabFromGradebook(teacher, 'course', lab.id, { action: 'GRADE', studentId: 'other', expectedRevision: now.revision, idempotencyKey: randomUUID(), score: 2, reason: 'Reviewed submitted work directly from Gradebook.' });
+      assert.equal(JSON.stringify((await api.getAttempt(other, 'course', lab.id, work.id)).submissions), snapshot);
+    } else assert.equal(now.submissions.length, 0);
+  });
   await check('database constraints freeze published instructions, provenance and submitted history', async () => {
     await assert.rejects(() => cluster.owner.query('UPDATE "LabTemplateVersion" SET title=$1 WHERE id=$2', ['Changed after publication', published.versions[0].id]), error => error.code === '23514');
     await assert.rejects(() => cluster.owner.query('UPDATE "LabStep" SET title=$1 WHERE id=$2', ['Changed step', attempt.version.steps[0].id]), error => error.code === '23514');

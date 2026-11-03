@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { isIcsUser } from '../../../../src/lib/ite-eligibility';
 import {
   View,
   Text,
@@ -16,11 +18,17 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { useResponsive } from '../../../../src/hooks/useResponsive';
 import { ScreenWrapper, ScreenHeaderContainer } from '../../../../src/components/common/ScreenWrapper';
 import { Badge } from '../../../../src/components/common/Badge';
+import { Button } from '../../../../src/components/common/Button';
 import { Card } from '../../../../src/components/common/Card';
 import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import type { Course } from '@lms/types';
 
 export default function TeacherCoursesScreen() {
+  const user = useAuthStore(s => s.user);
+  return isIcsUser(user) ? <IcsDashboardScreen teacher coursesOnly /> : <TeacherCourses />;
+}
+
+function TeacherCourses() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -84,6 +92,7 @@ export default function TeacherCoursesScreen() {
         >
           My Teaching Classes
         </Text>
+        <Button title="Attendance helper assignments" variant="outline" onPress={() => router.push('/teacher/attendance')} />
         <Text
           style={[styles.headerSubtitle, { color: theme.colors.textSecondary, fontSize: font(12), marginBottom: s(8) }]}
           maxFontSizeMultiplier={maxFontSizeMultiplier}

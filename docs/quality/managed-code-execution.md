@@ -1,5 +1,79 @@
 # Managed CodeLab execution and PR #51 CI repair
 
+## OnlineCompiler.io and local practice — 2 November 2026
+
+CodeLab supports `CODELAB_RUNNER=onlinecompiler` with the server-only
+`ONLINECOMPILER_API_KEY`. Create a free REST API key at
+[OnlineCompiler.io](https://api.onlinecompiler.io), then configure both variables
+in `apps/web/.env.local` for local development, or in the Vercel project's
+Environment Variables for the intended deployment environment. Restart locally
+or redeploy on Vercel after changing settings. Never use a `NEXT_PUBLIC_` key.
+This repository change does not create an account or configure production secrets.
+
+The adapter uses `https://api.onlinecompiler.io/api/judge0`, its own `X-Auth-Token`
+header, and asynchronous submission polling. It omits `enable_network`, which
+this provider rejects. Existing API URLs and output/status contracts remain intact.
+Explicit `jdoodle` and `judge0` configurations remain available for manual rollback;
+there is no automatic fallback, repeated submission POST, or paid upgrade.
+Unset `CODELAB_RUNNER` retains the legacy Judge0 default; `.env.example` selects
+OnlineCompiler.io explicitly.
+
+**Run** uses local practice for JavaScript, Python (Pyodide), and SQLite SQL
+(sql.js). **Run on server** appears only after a local run reports an error and
+explicitly spends provider quota. Starting a new local run hides the option;
+successful local runs and manually stopped runs do not reveal it. C++, C#, and Java
+always use server execution. **Submit Solution** continues to run programming
+tests on the server and is the only programming-code path that can save completion
+or award XP. HTML/CSS previews and completion rules are unchanged. Browser results
+are untrusted practice output; runtime versions and supported libraries may differ
+from official grading.
+
+Browser execution runs in an opaque `allow-scripts` iframe with disposable workers.
+Its CSP permits only packaged runtime assets, never LMS APIs or general network
+access. Do not add `allow-same-origin` to this iframe or broaden its CSP. The
+public sandbox and `/codelab-runtime/` files contain no private data; wildcard CORS
+is restricted to these static runtime assets. Source is limited to 64 KB, each
+output stream to 64 KB, runtime initialization to 60 seconds, and execution to
+10 seconds. Stop and navigation discard the iframe and its worker. Each SQLite
+run starts with an empty database and prints pipe-separated rows.
+
+Python standard-library scripts and `input()` work locally. Third-party package
+installation and network imports are unsupported. JavaScript supports console
+output and `require('fs').readFileSync(0, 'utf8')` for wrapper/stdin compatibility;
+other Node APIs require an explicit server run. Runtime failures never silently
+consume provider quota. Pinned Pyodide 314.0.7 and sql.js 1.15.2 assets are copied
+from installed packages by `scripts/prepare-codelab-runtimes.mjs` during web
+install/dev/build; no third-party CDN is required at runtime.
+
+All authenticated execution API entrypoints share a database-backed allowance of
+30 requests per student per five minutes. Every server execution has a 30-second
+deadline; grading batches share a 50-second request deadline, with a 60-second
+Vercel handler maximum. An incomplete evaluation saves no completion or XP.
+Provider limits still apply globally across Vercel instances. The provider queues
+asynchronous submissions; there is no new persistent LMS queue.
+
+The [published free plan](https://onlinecompiler.io/pricing) provides 100,000 runs
+per month, two simultaneous executions, and 30 submissions per minute. Each
+grading test consumes one run and counts toward admission limits. Busy periods
+and quota exhaustion can still prevent grading; a free plan has no uptime SLA.
+
+Verification commands:
+
+```sh
+node --test tests/codelab/*.test.cjs
+node scripts/prepare-codelab-runtimes.mjs
+pnpm exec playwright test --config tests/codelab/playwright.config.ts
+pnpm --filter web exec tsc --noEmit
+pnpm build:web
+```
+
+For an optional live check, load server credentials without printing them, set
+`CODELAB_LIVE_SMOKE_APPROVED=synthetic-only`, and run
+`node tests/codelab/runner-live-smoke.cjs`. It executes synthetic samples only,
+consumes free quota, and must not be run against a paid plan inadvertently.
+
+The following sections describe earlier provider configurations and repairs.
+
 ## Local demo update — 22 October 2026
 
 The owner selected JDoodle's free API plan for localhost. Set `CODELAB_RUNNER=jdoodle`, `JDOODLE_CLIENT_ID` and `JDOODLE_CLIENT_SECRET` in `apps/web/.env.local`. Judge0 remains available when explicitly selected; an outage never switches providers or incurs a paid fallback.

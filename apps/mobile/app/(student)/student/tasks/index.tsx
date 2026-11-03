@@ -57,6 +57,18 @@ export default function StudentTasksScreen() {
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [dueDate, setDueDate] = useState('');
   const [savingTask, setSavingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [formError, setFormError] = useState('');
+
+  const openTask = (task?: TaskItem) => {
+    setEditingTask(task || null);
+    setTitle(task?.title || '');
+    setDescription(task?.description || '');
+    setPriority((task?.priority.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH') || 'MEDIUM');
+    setDueDate(task?.dueDate?.slice(0, 10) || '');
+    setFormError('');
+    setShowCreateModal(true);
+  };
 
   const loadTasks = async () => {
     try {
@@ -112,6 +124,7 @@ export default function StudentTasksScreen() {
         }
       }
     } catch {
+      setErrorMessage('Your task could not be updated. Please try again.');
       // Revert on error
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, completed: task.completed } : t))
@@ -138,23 +151,35 @@ export default function StudentTasksScreen() {
   };
 
   const handleCreateTask = async () => {
+    if (savingTask) return;
     if (!title.trim()) {
       Alert.alert('Title Required', 'Please provide a task title.');
       return;
     }
 
+    const date = dueDate.trim();
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date)) {
+      setFormError('Enter a valid due date using YYYY-MM-DD.');
+      return;
+    }
+    setFormError('');
     setSavingTask(true);
     try {
-      await api.workspace.createTask({
+      const fields = {
         title: title.trim(),
-        description: description.trim() || undefined,
-        priority,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-      });
+        description: description.trim(),
+        dueDate: date ? `${date}T23:59:00+08:00` : null,
+      };
+      const response = editingTask
+        ? await api.workspace.updateTask(editingTask.id, { ...fields, priority: priority.toLowerCase() as TaskItem['priority'] })
+        : await api.workspace.createTask({ ...fields, dueDate: fields.dueDate || undefined, priority });
+      const updated = editingTask ? tasks.map(task => task.id === editingTask.id ? response.task : task) : [response.task, ...tasks];
+      setTasks(updated);
+      await setCachedData('student_workspace_tasks', updated);
 
       try {
         Burnt.toast({
-          title: 'Task Added',
+          title: editingTask ? 'Task Updated' : 'Task Added',
           preset: 'done',
         });
       } catch {
@@ -165,9 +190,8 @@ export default function StudentTasksScreen() {
       setTitle('');
       setDescription('');
       setDueDate('');
-      loadTasks();
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Could not create task.');
+      setFormError(err?.message || 'Could not save this task. Please try again.');
     } finally {
       setSavingTask(false);
     }
@@ -183,7 +207,7 @@ export default function StudentTasksScreen() {
         subtitle="Personal Academic Tasks & Deadlines"
         rightAction={
           <HeaderIconButton
-            onPress={() => setShowCreateModal(true)}
+            onPress={() => openTask()}
             accessibilityLabel="Add new task"
             style={[styles.addBtn, { backgroundColor: theme.colors.primary, borderRadius: radius.full }]}
           >
@@ -372,7 +396,7 @@ export default function StudentTasksScreen() {
                   )}
                 </TouchableOpacity>
 
-                <View style={[styles.taskBody, { marginLeft: s(spacing.sm) }]}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Open task ${item.title}`} onPress={() => openTask(item)} style={[styles.taskBody, { marginLeft: s(spacing.sm) }]}>
                   <View style={styles.taskTitleRow}>
                     <Text
                       style={[
@@ -426,7 +450,7 @@ export default function StudentTasksScreen() {
                       </Text>
                     </View>
                   )}
-                </View>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => handleDeleteTask(item.id)}
@@ -446,19 +470,20 @@ export default function StudentTasksScreen() {
       {/* Add Task Modal using shared FormModal */}
       <FormModal
         visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Add New Task"
-        subtitle="Create an academic goal or revision reminder"
+        onClose={() => { if (!savingTask) setShowCreateModal(false); }}
+        title={editingTask ? 'Edit Task' : 'Add New Task'}
+        subtitle={editingTask ? 'Update the details, priority and due date' : 'Create an academic goal or revision reminder'}
         closeAccessibilityLabel="Cancel and close add task modal"
         actions={
           <Button
-            title="Add to Planner"
+            title={editingTask ? 'Save Changes' : 'Add to Planner'}
             onPress={handleCreateTask}
             loading={savingTask}
             icon={Plus}
           />
         }
       >
+        {!!formError && <ErrorBanner message={formError} onDismiss={() => setFormError('')} />}
         <Input
           label="Task Title"
           placeholder="e.g. Read Chapters 4-6 or Review Algorithms"

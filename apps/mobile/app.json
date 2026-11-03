@@ -19,7 +19,8 @@
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         },
-        "NSCameraUsageDescription": "CdM LMS needs camera access for profile photos and document scanning.",
+        "NSCameraUsageDescription": "CdM LMS uses your camera to scan attendance QR codes, take profile photos and scan documents.",
+        "NSLocationWhenInUseUsageDescription": "CdM LMS can check your nearby location during attendance when your instructor enables it. You can request instructor approval instead.",
         "NSPhotoLibraryUsageDescription": "CdM LMS needs photo library access for uploading profile photos and assignments.",
         "NSFaceIDUsageDescription": "Use Face ID for quick login to CdM LMS."
       }
@@ -32,6 +33,9 @@
       }
     },
     "plugins": [
+      ["expo-camera", { "cameraPermission": "Allow CdM LMS to scan attendance QR codes.", "recordAudioAndroid": false, "microphonePermission": false }],
+      ["expo-location", { "locationWhenInUsePermission": "Allow a foreground location check for class attendance, or request instructor approval instead." }],
+      "@sentry/react-native/expo",
       "expo-router",
       "expo-secure-store",
       "expo-font",
@@ -50,7 +54,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0F1117"
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

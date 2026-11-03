@@ -18,10 +18,12 @@ const { build } = require(require.resolve("esbuild", { paths: [path.dirname(requ
     ["javascript", 93, "const fs=require('fs');console.log(fs.readFileSync(0,'utf8').trim());"],
     ["sql", 82, "SELECT 'CodeLab smoke test';"],
   ];
-  for (const [language, id, source] of cases) {
-    const run = await executeJudge0Submission(wrapStudentCode(language, source, null, "CodeLab smoke test"), id, "CodeLab smoke test");
-    assert.equal(run.status.id, 3, `${language}: ${run.compile_output || run.stderr || run.status.description}`);
-    assert.equal(run.stdout.trim(), "CodeLab smoke test", language);
-    console.log(`${language}: sandbox compilation/execution and output OK`);
+  for (let i = 0; i < cases.length; i += 2) {
+    await Promise.all(cases.slice(i, i + 2).map(async ([language, id, source]) => {
+      const run = await executeJudge0Submission(wrapStudentCode(language, source, null, "CodeLab smoke test"), id, "CodeLab smoke test");
+      assert.equal(run.status.id, 3, `${language}: ${run.compile_output || run.stderr || run.status.description}`);
+      assert.equal(run.stdout.trim(), "CodeLab smoke test", language);
+      console.log(`${language}: concurrent sandbox compilation/execution and output OK`);
+    }));
   }
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

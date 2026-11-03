@@ -70,3 +70,50 @@ test('instructors organize periods, edit scores, customize 40/60, export and swi
   try { const student = await context.newPage(); await login(student, 'student'); await student.goto('/ics/gradebooks?course=grade-course'); await expect(student).not.toHaveURL(/\/gradebooks/); }
   finally { await context.close(); }
 });
+
+
+test('professor grades an unsubmitted lab in Gradebook and allows late work without losing its grade history', async ({ page, browser }) => {
+  await login(page);
+  async function post(url: string, data: unknown) { const response = await page.request.post(url, { data }); expect(response.ok(), await response.text()).toBe(true); return (await response.json()).data; }
+  const template = await post('/api/labs/templates', { title: 'Missed lab workflow', category: 'Database', description: 'A short practical task.', objective: 'Demonstrate an instructed task.', prerequisites: '', requiredTools: 'Your own lab computer', estimatedMinutes: 5, steps: [{ key: 'complete', title: 'Complete the task', type: 'INSTRUCTIONS', required: true, config: { body: 'Perform the instructor-approved task, then confirm completion.' } }] });
+  const published = await post(`/api/labs/templates/${template.id}/publish`, { expectedRevision: template.versions[0].revision });
+  const assignment = await post('/api/courses/course/labs', { versionId: published.versions[0].id, title: 'Missed Midterm Practical', category: 'MIDTERM_EXAM', maxPoints: 10, dueDate: new Date(Date.now() - 60000).toISOString() });
+  expect((await page.request.patch(`/api/courses/course/labs/${assignment.id}`, { data: { published: true } })).ok()).toBe(true);
+  await page.goto('/ics/courses/course/gradebook?period=MIDTERM');
+  const gradeButton = page.getByRole('button', { name: 'Grade practical lab for Synthetic Other Student in Missed Midterm Practical', exact: true });
+  await expect(gradeButton).toContainText('Not submitted'); await gradeButton.click();
+  const dialog = page.getByRole('dialog', { name: 'Practical-lab grade', exact: true });
+  await dialog.getByRole('button', { name: 'Save lab grade', exact: true }).click(); await expect(dialog.getByRole('alert')).toContainText('Add a reason');
+  await dialog.getByLabel('Awarded points (out of 10)', { exact: true }).fill('0');
+  await dialog.getByLabel('Reason for the student', { exact: true }).fill('Missed the practical lab without a submission.');
+  // A lost response after commit must replay the same grade, audit event and notification.
+  let lost = true;
+  await page.route(`**/api/courses/course/labs/${assignment.id}/gradebook`, async route => {
+    if (lost) { lost = false; await route.fetch(); await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'The grade response was lost. Retry the same decision.' }) }); }
+    else await route.continue();
+  });
+  await dialog.getByRole('button', { name: 'Save lab grade', exact: true }).click(); await expect(dialog.getByRole('alert')).toContainText('response was lost');
+  await dialog.getByRole('button', { name: 'Save lab grade', exact: true }).click(); await expect(dialog).toHaveCount(0); await expect(gradeButton).toContainText('0/10');
+  await page.unroute(`**/api/courses/course/labs/${assignment.id}/gradebook`);
+  await page.reload(); await expect(gradeButton).toContainText('0/10');
+  await page.screenshot({ path: path.join(state.output, 'gradebook-missed-lab-zero.png'), fullPage: true });
+  const context = await browser.newContext({ ignoreHTTPSErrors: true, baseURL: state.origin });
+  try {
+    const student = await context.newPage(); await login(student, 'other');
+    await student.goto(`/ics/courses/course/labs/${assignment.id}`); await expect(student.getByRole('status').filter({ hasText: 'without a lab submission' })).toBeVisible();
+    await expect(student.getByRole('heading', { name: 'Gradebook decisions', exact: true })).toBeVisible();
+    await expect(student.getByText('Grade recorded: 0/10', { exact: true })).toBeVisible();
+    await gradeButton.click(); await dialog.getByLabel('Decision', { exact: true }).selectOption('REOPEN');
+    await dialog.getByLabel('Reason for the student', { exact: true }).fill('Approved makeup practical lab.');
+    await dialog.getByRole('button', { name: 'Allow late submission', exact: true }).click(); await expect(dialog).toHaveCount(0);
+    await student.reload(); await expect(student.getByRole('status').filter({ hasText: 'allowed a late submission' })).toBeVisible();
+    await student.getByRole('checkbox', { name: 'I completed this step.', exact: true }).check();
+    await student.getByRole('button', { name: 'Submit for review', exact: true }).click();
+    await student.getByRole('dialog', { name: 'Submit this work for review?', exact: true }).getByRole('button', { name: 'Submit for review', exact: true }).click();
+    await expect(student.getByText('Awaiting review', { exact: true }).first()).toBeVisible();
+    await expect(student.getByText('Grade recorded: 0/10', { exact: true })).toBeVisible();
+    const detail = (await (await context.request.get(`/api/courses/course/labs/${assignment.id}`)).json()).data;
+    const attempt = (await (await context.request.get(`/api/courses/course/labs/${assignment.id}/attempts/${detail.attempts[0].id}`)).json()).data;
+    expect(attempt.submissions).toHaveLength(1); expect(attempt.submissions[0].round).toBe(1); expect(attempt.gradebookHistory).toHaveLength(2);
+  } finally { await context.close(); }
+});

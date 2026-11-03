@@ -18,9 +18,9 @@ export function setupMenu(mainWindow: BrowserWindow, WEB_URL: string) {
       label: 'Navigate',
       submenu: [
         {
-          label: 'Admin Dashboard',
+          label: 'Dashboard',
           accelerator: 'CmdOrCtrl+1',
-          click: () => mainWindow.loadURL(WEB_URL + '/ics/admin'),
+          click: () => mainWindow.loadURL(WEB_URL + '/ics'),
         },
         {
           label: 'Course Management',

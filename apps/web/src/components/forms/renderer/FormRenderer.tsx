@@ -1,4 +1,5 @@
 "use client";
+import { useNativeDraftOwner } from '@/hooks/useNativeDraftOwner';
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -21,7 +22,7 @@ import IntegrityFeedbackToast, {
   type IntegrityToastData,
 } from "@/components/courses/IntegrityFeedbackToast";
 import { useExamTimer } from "@/hooks/useExamTimer";
-import { useFormAutosave } from "@/hooks/useFormAutosave";
+import { useFormAutosave, type AutosavePayload } from "@/hooks/useFormAutosave";
 import { evaluateQuestionVisibility } from "@/lib/forms/conditional-logic";
 import type { FormData, FormQuestionData, FormAttemptData } from "@/types/forms";
 import type { InstituteTheme } from "@/lib/theme";
@@ -62,6 +63,7 @@ export default function FormRenderer({
   canRetake = false,
 }: FormRendererProps) {
   const router = useRouter();
+  const nativeOwner = useNativeDraftOwner();
 
   // Initialize answers map from attempt.answers
   const initialAnswers = useMemo(() => {
@@ -195,10 +197,19 @@ export default function FormRenderer({
   );
 
   // Autosave hook
+  const recoverAnswers = useCallback((recovered: AutosavePayload[]) => {
+    setAnswers(previous => {
+      const next = { ...previous };
+      for (const { questionId, ...answer } of recovered) next[questionId] = { ...next[questionId], ...answer };
+      return next;
+    });
+  }, []);
+  const recovery = useMemo(() => ({ deadlineAt: attempt.deadlineAt, status: attempt.status, onRecover: recoverAnswers }), [attempt.deadlineAt, attempt.status, recoverAnswers]);
   const { save, flush, isSaving, lastSavedAt, saveError } = useFormAutosave(
     courseId,
     form.id,
-    attempt.id
+    attempt.id,
+    recovery
   );
 
   // Submit attempt handler
@@ -206,7 +217,7 @@ export default function FormRenderer({
     if (isPreview || attempt.status !== "IN_PROGRESS") return;
     setIsSubmitting(true);
     try {
-      await flush().catch(() => {});
+      await flush();
       const res = await fetch(
         `/api/courses/${courseId}/forms/${form.id}/attempts/${attempt.id}/submit`,
         {
@@ -357,8 +368,8 @@ export default function FormRenderer({
       const newCount = tabSwitchCountRef.current;
       setTabSwitchCount(newCount);
       setShowTabSwitchModal(true);
-      triggerToast("Tab switch detected — this incident has been logged.", "TAB_SWITCH");
-      logIntegrityAction("TAB_SWITCH", { durationSeconds: awayDuration, tabSwitchCount: newCount });
+      triggerToast(nativeOwner ? "App resumed. The assessment timer continued during the interruption." : "Tab switch detected — this incident has been logged.", "TAB_SWITCH");
+      logIntegrityAction("TAB_SWITCH", { durationSeconds: awayDuration, tabSwitchCount: newCount, context: nativeOwner ? "native_app_interruption" : "browser_departure" });
     };
 
     const handleVisibilityChange = () => {
@@ -399,7 +410,7 @@ export default function FormRenderer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [isPreview, submissionResult, triggerToast, logIntegrityAction]);
+  }, [isPreview, submissionResult, triggerToast, logIntegrityAction, nativeOwner]);
 
   // Questions with dynamic branching evaluation
   const allQuestions = form.questions || [];
@@ -693,11 +704,10 @@ export default function FormRenderer({
 
             <div className="space-y-2">
               <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                Tab Switch Detected!
+                {nativeOwner ? 'Welcome back to your assessment' : 'Tab Switch Detected!'}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-[#8B92A5] leading-relaxed">
-                You have navigated away from the assessment window. Leaving or switching
-                tabs during this examination is strictly monitored and recorded on your exam record.
+                {nativeOwner ? 'The app was interrupted. Your server deadline still applies. Check the saved-answer status before continuing; the interruption is recorded for your instructor’s context.' : 'You have navigated away from the assessment window. Leaving or switching tabs during this examination is strictly monitored and recorded on your exam record.'}
               </p>
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-bold border border-amber-500/20">
                 <ShieldAlert className="w-3.5 h-3.5" />

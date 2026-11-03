@@ -13,7 +13,10 @@ const antivirusTest = Buffer.from([
 ].join(''), 'ascii');
 
 test('real ClamAV accepts clean content and rejects the antivirus test signature before persistence',
-  { skip: process.env.LAB_TEST_REAL_SCANNER !== '1' }, async () => {
+  { skip: process.env.LAB_TEST_REAL_SCANNER !== '1' }, async t => {
+    const previous = process.env.FILE_SCANNING_ENABLED;
+    process.env.FILE_SCANNING_ENABLED = 'true';
+    t.after(() => { if (previous === undefined) delete process.env.FILE_SCANNING_ENABLED; else process.env.FILE_SCANNING_ENABLED = previous; });
     assert.equal(process.env.CLAMAV_HOST, '127.0.0.1');
     assert.equal(Number(process.env.CLAMAV_PORT), 3310);
     let writes = 0;

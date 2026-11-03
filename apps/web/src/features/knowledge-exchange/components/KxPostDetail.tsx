@@ -71,7 +71,6 @@ export default function KxPostDetail({
   const [answerError, setAnswerError] = useState<string | null>(null);
 
   // AI states
-  const [isDraftingAnswer, setIsDraftingAnswer] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [threadSummary, setThreadSummary] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -178,33 +177,6 @@ export default function KxPostDetail({
 
     return parts;
   }, [post.body]);
-
-  const handleDraftAnswerWithAi = async () => {
-    setIsDraftingAnswer(true);
-    setAiError(null);
-
-    try {
-      const res = await fetch("/api/knowledge-exchange/ai/draft-answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: post.title,
-          body: post.body,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAiError(data?.error || "AI features temporarily unavailable.");
-      } else if (data.draftAnswer) {
-        setAnswerBody(data.draftAnswer);
-      }
-    } catch {
-      setAiError("Could not connect to AI service.");
-    } finally {
-      setIsDraftingAnswer(false);
-    }
-  };
 
   const handleSummarizeThread = async () => {
     setIsSummarizing(true);
@@ -447,7 +419,7 @@ export default function KxPostDetail({
         </div>
 
         {/* Title */}
-        <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="break-words text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
           {post.title}
         </h1>
 
@@ -460,7 +432,7 @@ export default function KxPostDetail({
           />
 
           {/* Revisions link, Edit link, & Delete button */}
-          <div className="flex items-center gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
             <Link
               href={`/${instituteCode}/knowledge-exchange/post/${post.id}/revisions`}
               className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
@@ -504,7 +476,7 @@ export default function KxPostDetail({
         </div>
 
         {/* Body with Voting column */}
-        <div className="flex gap-4 items-start pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-start pt-2">
           {/* Voting */}
           <KxVoteButton
             initialVoteCount={post.voteCount}
@@ -726,25 +698,7 @@ export default function KxPostDetail({
               Your Answer
             </h3>
 
-            {/* AI Draft Answer Button */}
-            <button
-              type="button"
-              onClick={handleDraftAnswerWithAi}
-              disabled={isDraftingAnswer}
-              className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 transition-colors disabled:opacity-50"
-            >
-              {isDraftingAnswer ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Drafting...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Draft Answer with AI</span>
-                </>
-              )}
-            </button>
+
           </div>
 
           <form onSubmit={handleSubmitAnswer} className="space-y-4">

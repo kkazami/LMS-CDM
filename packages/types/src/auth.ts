@@ -7,6 +7,7 @@ export type LoginRequest = ({ email: string; identifier?: never } | { identifier
 };
 
 export interface LoginResponse {
+  mobileCapabilities?: { studentReceipts: number; hybridDrafts: number; agenda: number };
   message: string;
   token: string;
   expiresAt?: string;
@@ -17,6 +18,7 @@ export interface LoginResponse {
   };
   user: {
     id: string;
+    instituteId: string;
     name: string;
     email: string;
     role: string;

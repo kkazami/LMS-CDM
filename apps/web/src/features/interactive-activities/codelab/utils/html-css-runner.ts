@@ -3,13 +3,18 @@
  * Injects the student's code into a temporary sandboxed iframe and evaluates
  * test case selectors or computed property checks against the rendered DOM.
  *
- * Security: the iframe uses sandbox="allow-scripts" to prevent navigation/network calls.
+ * Test frames permit DOM inspection but never scripts. Network loads are blocked by CSP.
  */
 
 export interface HTMLTestResult {
   label: string;
   passed: boolean;
   error?: string;
+}
+
+/** HTML/CSS exercises are static: scripts, remote resources and forms are unnecessary. */
+export function buildStaticPreviewDocument(source: string): string {
+  return `<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">${source}`;
 }
 
 /**
@@ -31,15 +36,16 @@ export async function runHtmlTests(
   iframe.style.top = "-9999px";
   iframe.style.width = "800px";
   iframe.style.height = "600px";
-  iframe.sandbox.add("allow-scripts");
-  document.body.appendChild(iframe);
+  // Never combine allow-same-origin with allow-scripts for student markup.
+  iframe.sandbox.add("allow-same-origin");
 
   try {
     await new Promise<void>((resolve) => {
-      iframe.onload = () => resolve();
-      iframe.srcdoc = studentHtml;
+      const timeout = setTimeout(resolve, 300);
+      iframe.onload = () => { clearTimeout(timeout); resolve(); };
+      iframe.srcdoc = buildStaticPreviewDocument(studentHtml);
+      document.body.appendChild(iframe);
       // Fallback timeout in case onload does not trigger
-      setTimeout(resolve, 300);
     });
 
     const results: HTMLTestResult[] = testCases.map((tc) => {
@@ -93,8 +99,7 @@ export async function runCssTests(
   iframe.style.top = "-9999px";
   iframe.style.width = "800px";
   iframe.style.height = "600px";
-  iframe.sandbox.add("allow-scripts");
-  document.body.appendChild(iframe);
+  iframe.sandbox.add("allow-same-origin");
 
   const baseHtml = htmlTemplate || `<!DOCTYPE html><html><head></head><body></body></html>`;
   const srcdoc = baseHtml.includes("</head>")
@@ -103,9 +108,10 @@ export async function runCssTests(
 
   try {
     await new Promise<void>((resolve) => {
-      iframe.onload = () => resolve();
-      iframe.srcdoc = srcdoc;
-      setTimeout(resolve, 300);
+      const timeout = setTimeout(resolve, 300);
+      iframe.onload = () => { clearTimeout(timeout); resolve(); };
+      iframe.srcdoc = buildStaticPreviewDocument(srcdoc);
+      document.body.appendChild(iframe);
     });
 
     const results: HTMLTestResult[] = testCases.map((tc) => {

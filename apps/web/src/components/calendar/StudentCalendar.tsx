@@ -16,9 +16,34 @@ type Props = {
   theme: InstituteTheme;
   today: string;
   showClasswork?: boolean;
+  compact?: boolean;
 };
 type View = "day" | "week" | "month";
 type Selection = { event: CalendarEvent; anchor: HTMLButtonElement };
+
+function DotTooltip({ event, anchor }: Selection) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    function place() {
+      const tooltip = ref.current;
+      if (!tooltip) return;
+      const rect = anchor.getBoundingClientRect();
+      const left = Math.max(8, Math.min(window.innerWidth - tooltip.offsetWidth - 8, rect.left + (rect.width - tooltip.offsetWidth) / 2));
+      const top = rect.top >= tooltip.offsetHeight + 14 ? rect.top - tooltip.offsetHeight - 6 : rect.bottom + 6;
+      tooltip.style.left = `${left + window.scrollX}px`;
+      tooltip.style.top = `${top + window.scrollY}px`;
+      tooltip.style.visibility = "visible";
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [anchor, event]);
+  return createPortal(<span ref={ref} className={styles.dotTooltip} role="tooltip">{calendarLabel(event)} · {schoolTime(event.eventDate)}</span>, document.body);
+}
 
 function dateLabel(key: string, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
@@ -124,11 +149,12 @@ function EventPopover({ selection, editable, onClose, onEdit, onDelete, busy, er
   );
 }
 
-export default function StudentCalendar({ events: initialEvents, schedules, userId, instituteCode, theme, today, showClasswork = true }: Props) {
+export default function StudentCalendar({ events: initialEvents, schedules, userId, instituteCode, theme, today, showClasswork = true, compact = false }: Props) {
   const [events, setEvents] = useState(initialEvents);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(today);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [dotTooltip, setDotTooltip] = useState<Selection | null>(null);
   const [editor, setEditor] = useState<CalendarEvent | "new" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -154,7 +180,7 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
       : dateLabel(date, { month: "long", year: "numeric" });
 
   const closePopover = useCallback(() => { setSelection(null); setError(""); }, []);
-  function showDay(day: string) { setDate(day); setView("day"); setEditor(null); closePopover(); }
+  function showDay(day: string) { if (compact) { window.location.assign(`/${instituteCode}/tasks`); return; } setDate(day); setView("day"); setEditor(null); closePopover(); }
   function changeView(next: View) { setView(next); setEditor(null); closePopover(); }
   function navigate(direction: number) {
     if (view === "month") {
@@ -193,6 +219,12 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
     finally { setBusy(false); }
   }
   function eventButton(event: CalendarEvent, timed = false, showDetails = false) {
+    if (compact) return <button key={event.id} type="button" className={styles.eventDot}
+      onMouseEnter={e => setDotTooltip({ event, anchor: e.currentTarget })} onFocus={e => setDotTooltip({ event, anchor: e.currentTarget })}
+      onMouseLeave={() => setDotTooltip(null)} onBlur={() => setDotTooltip(null)} onKeyDown={e => { if (e.key === "Escape") setDotTooltip(null); }}
+      data-kind={event.eventType}
+      aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
+      onClick={e => { setDotTooltip(null); openEvent(event, e.currentTarget); }} />;
     return <button key={event.id} type="button" className={`${styles.event} ${timed ? styles.timedEvent : ""} ${selection?.event.id === event.id ? styles.selectedEvent : ""}`}
       data-kind={event.eventType} aria-label={`${calendarLabel(event)}, ${schoolTime(event.eventDate)}`} aria-expanded={selection?.event.id === event.id}
       onClick={(e) => openEvent(event, e.currentTarget)}>
@@ -202,10 +234,10 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
   }
 
   const draft = editor && editor !== "new" ? editor : null;
-  return <section className={styles.calendar} aria-labelledby={headingId} style={{ "--calendar-accent": theme.colors.primary } as React.CSSProperties}>
+  return <section className={`${styles.calendar} ${compact ? styles.compact : ""}`} aria-labelledby={headingId} style={{ "--calendar-accent": theme.colors.primary } as React.CSSProperties}>
     <div className={styles.toolbar}>
       <h2 id={headingId}>Calendar</h2>
-      <div className={styles.viewControls} role="group" aria-label="Calendar view">
+      <div hidden={compact} className={compact ? "hidden" : styles.viewControls} role="group" aria-label="Calendar view">
         {(["day", "week", "month"] as const).map((mode) => <button key={mode} aria-pressed={view === mode} onClick={() => changeView(mode)}>{mode === "day" ? "Day" : mode === "week" ? "Week" : "Month"}</button>)}
       </div>
       {view === "day" && <button className={styles.addButton} onClick={() => { setEditor("new"); closePopover(); }}><Plus size={17} />Add event</button>}
@@ -228,8 +260,8 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
         {WEEKDAYS.map((name) => <div key={name} className={styles.weekday}>{name.slice(0, 3)}</div>)}
         {days.map((day) => { const dayEvents = eventsByDay.get(day) ?? []; return <div key={day} className={`${styles.monthDay} ${day.slice(0, 7) !== date.slice(0, 7) ? styles.outsideMonth : ""}`}>
           <button className={`${styles.dateButton} ${day === today ? styles.today : ""}`} aria-label={`View ${dateLabel(day, { month: "long", day: "numeric", year: "numeric" })}`} onClick={() => showDay(day)}>{Number(day.slice(8))}</button>
-          <div className={styles.monthEvents}>{dayEvents.slice(0, 3).map((event) => eventButton(event))}</div>
-          {dayEvents.length > 2 && <button className={`${styles.more} ${dayEvents.length === 3 ? styles.mobileOnly : ""}`} onClick={() => showDay(day)}><span className={styles.desktopOnly}>+{dayEvents.length - 3} more</span><span className={styles.mobileOnly}>+{dayEvents.length - 2} more</span></button>}
+          <div className={styles.monthEvents}>{(compact ? dayEvents : dayEvents.slice(0, 3)).map((event) => eventButton(event))}</div>
+          {!compact && dayEvents.length > 2 && <button className={`${styles.more} ${dayEvents.length === 3 ? styles.mobileOnly : ""}`} onClick={() => showDay(day)}><span className={styles.desktopOnly}>+{dayEvents.length - 3} more</span><span className={styles.mobileOnly}>+{dayEvents.length - 2} more</span></button>}
           <button className={styles.daySpace} aria-label={`Open day ${day}`} onClick={() => showDay(day)} />
         </div>; })}
       </div> : <div className={`${styles.timeGrid} ${view === "week" ? styles.weekGrid : ""}`} style={{ gridTemplateColumns: `var(--time-axis-width) repeat(${days.length}, minmax(0, 1fr))` }}>
@@ -247,6 +279,7 @@ export default function StudentCalendar({ events: initialEvents, schedules, user
     </div>
     {view === "day" && (eventsByDay.get(date)?.length ?? 0) === 0 && <p className={styles.empty}>No events on this day. Add a personal event or choose another date.</p>}
     <div className={styles.legend}><span>Classes</span>{showClasswork && <span data-kind="classwork">Tasks & quizzes</span>}<span data-kind="personal">Personal events</span></div>
+    {dotTooltip && dotTooltip.anchor.isConnected && <DotTooltip {...dotTooltip} />}
     {selection && <EventPopover selection={selection} editable={canEdit(selection.event)} onClose={closePopover} busy={busy} error={error} onDelete={() => void deleteEvent()} onEdit={() => { showDay(schoolDateKey(selection.event.eventDate)); setEditor(selection.event); }} />}
   </section>;
 }

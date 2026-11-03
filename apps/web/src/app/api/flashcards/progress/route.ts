@@ -1,3 +1,5 @@
+import { studentMutationReceipt } from '@/lib/student-mutation-receipt';
+import { accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -59,44 +61,15 @@ export async function POST(request: Request) {
 
   const isCorrect = parsed.data.selfRating === "knew_it";
 
-  // Upsert progress
-  const existing = await db.flashcardProgress.findUnique({
-    where: {
-      cardId_userId: {
-        cardId: card.id,
-        userId: session.user.id,
-      },
-    },
-  });
-
-  if (existing) {
-    await db.flashcardProgress.update({
-      where: { id: existing.id },
-      data: {
-        status: isCorrect ? "correct" : "incorrect",
-        attemptCount: existing.attemptCount + 1,
-        correctCount: isCorrect ? existing.correctCount + 1 : existing.correctCount,
-        lastAnswer: parsed.data.selfRating,
-        lastReviewedAt: new Date(),
-      },
+  try {
+    const result = await studentMutationReceipt(session.user.id, 'flashcard-review', request.headers.get('idempotency-key'), parsed.data, async tx => {
+      await tx.flashcardProgress.upsert({
+        where: { cardId_userId: { cardId: card.id, userId: session.user.id } },
+        create: { cardId: card.id, userId: session.user.id, status: isCorrect ? 'correct' : 'incorrect', attemptCount: 1, correctCount: isCorrect ? 1 : 0, lastAnswer: parsed.data.selfRating, lastReviewedAt: new Date() },
+        update: { status: isCorrect ? 'correct' : 'incorrect', attemptCount: { increment: 1 }, correctCount: { increment: isCorrect ? 1 : 0 }, lastAnswer: parsed.data.selfRating, lastReviewedAt: new Date() },
+      });
+      return { correct: isCorrect, correctAnswer: card.back };
     });
-  } else {
-    await db.flashcardProgress.create({
-      data: {
-        cardId: card.id,
-        userId: session.user.id,
-        status: isCorrect ? "correct" : "incorrect",
-        attemptCount: 1,
-        correctCount: isCorrect ? 1 : 0,
-        lastAnswer: parsed.data.selfRating,
-        lastReviewedAt: new Date(),
-      },
-    });
-  }
-
-  return NextResponse.json({
-    correct: isCorrect,
-    correctAnswer: card.back,
-  });
+    return NextResponse.json(result);
+  } catch (error) { return accountErrorResponse(error); }
 }
-

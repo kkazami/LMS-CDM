@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WifiOff } from 'lucide-react-native';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 
@@ -11,11 +12,11 @@ export function OfflineNotice() {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView edges={['top']} style={styles.safeContainer}>
       <View style={styles.banner}>
         <WifiOff size={15} color="#FFFFFF" />
         <Text style={styles.bannerText}>
-          Offline Mode &bull; Showing cached LMS data
+          Offline · Saved content is available. Submissions need a connection.
         </Text>
       </View>
     </SafeAreaView>
@@ -24,11 +25,11 @@ export function OfflineNotice() {
 
 const styles = StyleSheet.create({
   safeContainer: {
-    backgroundColor: '#D97706',
+    backgroundColor: '#92400E',
     zIndex: 9999,
   },
   banner: {
-    backgroundColor: '#D97706',
+    backgroundColor: '#92400E',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

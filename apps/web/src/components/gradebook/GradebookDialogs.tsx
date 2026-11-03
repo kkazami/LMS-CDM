@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { gradingPeriods, periodPolicySchema, type ItemPeriod, type PeriodPolicy, type CategoryAllocation } from '@/lib/grading/periods';
-import type { GradebookAssignment } from '@/app/(dashboard)/[institute]/courses/[courseId]/gradebook/actions';
+import type { GradebookAssignment } from '@/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
 
 const field = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-slate-800 dark:[&>option]:text-slate-100';
 const primary = 'rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50';

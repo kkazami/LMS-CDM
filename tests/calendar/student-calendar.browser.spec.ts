@@ -28,7 +28,7 @@ test.beforeAll(async () => {
       const formMode = new URL(location.href).searchParams.get('scheduleForm');
       createRoot(document.getElementById('root')).render(formMode
         ? <form onSubmit={e => {e.preventDefault(); document.getElementById('saved').textContent = JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)));}}><ClassScheduleFields schedule={formMode === 'edit' ? schedules[0] : undefined}/><button type='submit'>Save schedule</button><output id='saved'/></form>
-        : <Calendar events={events} schedules={schedules} instituteCode='ics' userId={userId} theme={getInstituteTheme('ics')} today='2026-10-16' showClasswork={userId !== 'teacher'}/>);
+        : <Calendar compact={new URL(location.href).searchParams.has('compact')} events={events} schedules={schedules} instituteCode='ics' userId={userId} theme={getInstituteTheme('ics')} today='2026-10-16' showClasswork={userId !== 'teacher'}/>);
     `, resolveDir: path.resolve("apps/web"), loader: "tsx" },
     bundle: true, write: false, outdir: "out", jsx: "automatic",
     tsconfig: "apps/web/tsconfig.json", nodePaths: [path.resolve("apps/web/node_modules")],
@@ -38,6 +38,40 @@ test.beforeAll(async () => {
   css = result.outputFiles.find((file: { path: string }) => file.path.endsWith(".css")).text;
   await fs.mkdir(screenshotDir, { recursive: true });
 });
+
+for (const width of [1280, 390]) {
+  test(`compact tooltip stays beside its dot inside a transformed dashboard at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route("http://calendar.test/**", route => route.fulfill({ contentType: "text/html", body: '<html><body><main id="root"></main></body></html>' }));
+    await page.goto("http://calendar.test/?compact=1&instructor=1");
+    await page.addStyleTag({ content: `${css} *{box-sizing:border-box}body{margin:0;padding:24px;font-family:Arial,sans-serif;min-height:1600px}button{border:0;background:none;color:inherit}#root{width:min(100%,400px);margin:120px 0 0 auto;transform:translateY(0);overflow:hidden}` });
+    await page.addScriptTag({ content: script });
+    const dot = page.getByRole("button", { name: "ITELECT3 - Class, 12:00 PM", exact: true }).first();
+    await dot.hover();
+    const tooltip = page.getByRole("tooltip");
+    await expect(tooltip).toBeVisible();
+    async function checkPosition() {
+      const anchor = (await dot.boundingBox())!;
+      const label = (await tooltip.boundingBox())!;
+      expect(label.x).toBeGreaterThanOrEqual(8);
+      expect(label.x + label.width).toBeLessThanOrEqual(width - 8);
+      expect(Math.abs(label.y + label.height + 6 - anchor.y)).toBeLessThan(2);
+    }
+    await checkPosition();
+    await page.screenshot({ path: path.join(screenshotDir, `compact-tooltip-${width}.png`) });
+    await page.mouse.move(0, 0);
+    await expect(tooltip).toHaveCount(0);
+    await dot.focus();
+    await expect(tooltip).toBeVisible();
+    await page.evaluate(() => window.scrollBy(0, 40));
+    await checkPosition();
+    await page.keyboard.press("Escape");
+    await expect(tooltip).toHaveCount(0);
+    await dot.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(tooltip).toHaveCount(0);
+  });
+}
 
 for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }, { width: 320, height: 667 }, { width: 501, height: 678 }, { width: 667, height: 375 }, { width: 1280, height: 900, instructor: true }, { width: 390, height: 844, instructor: true }]) {
   const isInstructor = "instructor" in viewport && viewport.instructor;

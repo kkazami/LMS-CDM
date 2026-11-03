@@ -21,6 +21,8 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ message: "Invalid preferences format. Expected an object." }, { status: 400 });
     }
 
+    if ('bannerImageUrl' in preferences) return NextResponse.json({ message: 'Update banner images from your profile.' }, { status: 400 });
+
     // Merge existing preferences with new preferences
     const user = await db.user.findUnique({
       where: { id: session.user.id },

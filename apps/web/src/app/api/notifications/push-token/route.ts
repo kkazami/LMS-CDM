@@ -14,10 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { token, deviceType } = body;
-
-    return NextResponse.json({ success: true, token, deviceType });
+    return NextResponse.json({ success: false, message: 'Remote push delivery is not enabled. Updates are available in the in-app Inbox.' }, { status: 501 });
   } catch (error) {
     console.error('PUSH_TOKEN_ERROR', error);
     return NextResponse.json({ message: 'Failed to register push token.' }, { status: 500 });

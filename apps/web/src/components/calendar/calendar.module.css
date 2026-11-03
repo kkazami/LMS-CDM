@@ -18,7 +18,7 @@
 .navigation h3 { font-size: 16px; font-weight: 600; }
 .timezone { margin-left: auto; color: var(--muted); font-size: 13px; }
 .scroller { overflow: auto; max-height: 640px; overscroll-behavior-y: contain; border-top: 1px solid var(--line); scrollbar-color: #94a3b8 transparent; scrollbar-width: thin; border-radius: 0 0 12px 12px; }
-.scroller.monthScroller { max-height: none; }
+.scroller.monthScroller { max-height: none; overflow-y: visible; overscroll-behavior-y: auto; }
 .month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); min-width: 630px; }
 .weekday { text-align: center; font-size: 13px; font-weight: 600; padding: 12px 4px; color: var(--muted); background: var(--surface); position: sticky; top: 0; z-index: 3; border-bottom: 1px solid var(--line); }
 .monthDay { display: flex; flex-direction: column; min-height: 140px; padding: 5px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 0; }
@@ -89,7 +89,7 @@
   .navigation { padding: 0 10px 8px; gap: 4px 8px; }
   .navigation h3 { width: 100%; order: 3; font-size: 14px; }
   .navigation button { min-width: 40px; min-height: 40px; }
-  .scroller, .scroller.monthScroller { max-height: min(340px, 48dvh, calc(100dvh - 240px)); }
+  .scroller:not(.monthScroller) { max-height: min(340px, 48dvh, calc(100dvh - 240px)); }
   .month { min-width: 0; }
   .weekday { padding: 8px 1px; font-size: 12px; }
   .monthDay { min-height: 68px; padding: 3px; }
@@ -121,3 +121,25 @@
 }
 
 .outsideMonth .dateButton:not(.today) { color: var(--muted); font-weight: 400; }
+
+.compact .toolbar { padding: 12px; }
+.compact .toolbar h2 { font-size: 16px; }
+.compact .navigation { padding: 0 12px 10px; gap: 6px; }
+.compact .navigation h3 { font-size: 13px; }
+.compact .timezone { display: none; }
+.compact .month { min-width: 0; }
+.compact .monthDay { min-height: 46px; padding: 2px; }
+.compact .weekday { font-size: 10px; padding: 8px 0; }
+.compact .daySpace { display: none; }
+
+.compact .event, .compact .more { display: none; }
+.compact .dateButton { min-height: 36px; min-width: 36px; margin-bottom: 0; }
+
+.compact .monthEvents { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; }
+.compact .monthEvents > .eventDot:nth-child(n) { display: inline-flex; }
+.eventDot { position: relative; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 50%; }
+.eventDot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--classwork-legend, #be185d); }
+.eventDot[data-kind="class"]::before { background: var(--class-legend, #2563eb); }
+.eventDot[data-kind="personal"]::before, .eventDot[data-kind="event"]::before { background: var(--personal-legend, #15803d); }
+.eventDot:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.dotTooltip { position: absolute; visibility: hidden; z-index: 80; width: max-content; max-width: min(180px, calc(100vw - 16px)); white-space: normal; overflow-wrap: anywhere; padding: 6px 8px; border-radius: 6px; background: #0f172a; color: #fff; font-size: 12px; line-height: 1.5; text-align: left; pointer-events: none; }

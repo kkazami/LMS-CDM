@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   HelpCircle,
   MessageSquare,
   Send,
@@ -21,6 +20,8 @@ import KxCourseLinkSelector from "./KxCourseLinkSelector";
 import type { CourseOption } from "./KxCourseLinkSelector";
 import type { KxTagSummary, KxPostType } from "../types";
 import { KX_VALIDATION } from "../constants";
+import { nativeDraftKey, readNativeDraft, writeNativeDraft, removeNativeDraft } from '@/lib/native-draft';
+import { useNativeDraftOwner } from '@/hooks/useNativeDraftOwner';
 
 interface KxAskFormProps {
   instituteCode: string;
@@ -36,6 +37,7 @@ export default function KxAskForm({
   preselectedCourseId,
 }: KxAskFormProps) {
   const router = useRouter();
+  const nativeOwner = useNativeDraftOwner();
 
   const [title, setTitle] = useState("");
   const [postType, setPostType] = useState<KxPostType>("QUESTION");
@@ -60,10 +62,33 @@ export default function KxAskForm({
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(true);
+  const operation = useRef<{ fingerprint: string; key: string } | null>(null);
+  const restoringDraft = useRef(true);
+  const draftKey = `knowledge-question:${preselectedCourseId ?? 'general'}`;
+  useEffect(() => {
+    restoringDraft.current = true;
+    const draft = readNativeDraft<{ title: string; body: string; postType: KxPostType; tagIds: string[]; courseId: string | null; syllabusItemId: string | null; isAnonymous: boolean; operation?: { fingerprint: string; key: string } }>(draftKey);
+    if (draft) {
+      setTitle(draft.title); setBody(draft.body); setPostType(draft.postType); setSelectedTagIds(draft.tagIds);
+      setCourseId(draft.courseId); setSyllabusItemId(draft.syllabusItemId); setIsAnonymous(draft.isAnonymous);
+      operation.current = draft.operation ?? null;
+    }
+    setDraftReady(true);
+  }, [draftKey, nativeOwner]);
+  useEffect(() => {
+    if (!draftReady) return;
+    if (restoringDraft.current) { restoringDraft.current = false; return; }
+    setDraftSaved(writeNativeDraft(draftKey, { title, body, postType, tagIds: selectedTagIds, courseId, syllabusItemId, isAnonymous, operation: operation.current }));
+  }, [draftReady, draftKey, nativeOwner, title, body, postType, selectedTagIds, courseId, syllabusItemId, isAnonymous]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (!draftSaved && (title || body)) event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [draftSaved, title, body]);
 
   // AI states
-  const [isImproving, setIsImproving] = useState(false);
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<
     Array<{ id: string; title: string; snippet: string }>
   >([]);
@@ -95,37 +120,6 @@ export default function KxAskForm({
     return () => clearTimeout(timer);
   }, [title]);
 
-  const handleImproveWithAi = async () => {
-    if (!title.trim() && !body.trim()) {
-      setAiMessage("Enter at least a draft title or problem description first.");
-      return;
-    }
-
-    setIsImproving(true);
-    setAiMessage(null);
-
-    try {
-      const res = await fetch("/api/knowledge-exchange/ai/improve-question", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, body }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAiMessage(data?.error || "AI features temporarily unavailable.");
-      } else {
-        if (data.suggestedTitle) setTitle(data.suggestedTitle);
-        if (data.improvedBody) setBody(data.improvedBody);
-        setAiMessage(data.explanation || "Question improved successfully!");
-      }
-    } catch {
-      setAiMessage("Could not connect to AI service.");
-    } finally {
-      setIsImproving(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -149,12 +143,18 @@ export default function KxAskForm({
       return;
     }
 
+    if (isSubmitting) return;
     setIsSubmitting(true);
+    const fingerprint = JSON.stringify({ title, body, postType, isAnonymous, selectedTagIds, courseId, syllabusItemId });
+    if (operation.current?.fingerprint !== fingerprint) operation.current = { fingerprint, key: crypto.randomUUID() };
 
     try {
+      if (!writeNativeDraft(draftKey, { title, body, postType, tagIds: selectedTagIds, courseId, syllabusItemId, isAnonymous, operation: operation.current })) {
+        throw new Error('Your draft could not save on this device. Free some storage and try again.');
+      }
       const res = await fetch("/api/knowledge-exchange/posts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": operation.current!.key },
         body: JSON.stringify({
           title,
           body,
@@ -169,7 +169,7 @@ export default function KxAskForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data?.error || "Failed to create post.");
+        setErrorMsg(data?.error || data?.message || "Failed to create post.");
         setIsSubmitting(false);
         return;
       }
@@ -195,9 +195,10 @@ export default function KxAskForm({
       }
 
       // Success! Navigate to created post
+      removeNativeDraft(draftKey);
       router.push(`/${instituteCode}/knowledge-exchange/post/${data.post.id}`);
-    } catch {
-      setErrorMsg("A network error occurred. Please try again.");
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "A network error occurred. Your draft is kept; retry to confirm the same post.");
       setIsSubmitting(false);
     }
   };
@@ -205,6 +206,7 @@ export default function KxAskForm({
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
+      {draftReady && nativeDraftKey(draftKey) && <p role="status" className="text-sm text-slate-600 dark:text-slate-300">{draftSaved ? 'Draft saved on this device · not posted' : 'Draft could not save. Keep this screen open.'}</p>}
       {/* Post Type Selector */}
       <div className="flex items-center gap-3">
         <button
@@ -234,31 +236,12 @@ export default function KxAskForm({
         </button>
       </div>
 
-      {/* Title Input with AI Improvement Button */}
+      {/* Title Input */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-semibold text-slate-900 dark:text-white">
             Title <span className="text-red-500">*</span>
           </label>
-          <button
-            type="button"
-            onClick={handleImproveWithAi}
-            disabled={isImproving || (!title.trim() && !body.trim())}
-            title="Refine question title and format problem description with Gemini AI"
-            className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 disabled:opacity-40 transition-colors"
-          >
-            {isImproving ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Improving...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                <span>Improve with AI</span>
-              </>
-            )}
-          </button>
         </div>
 
         <input
@@ -272,12 +255,6 @@ export default function KxAskForm({
           }
           className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#151924] px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500/20"
         />
-
-        {aiMessage && (
-          <p className="text-xs text-purple-600 dark:text-purple-400 italic">
-            ✨ {aiMessage}
-          </p>
-        )}
 
         {/* Duplicate Suggestions Accordion / Cards */}
         {duplicates.length > 0 && (

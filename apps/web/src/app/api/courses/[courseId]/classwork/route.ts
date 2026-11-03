@@ -4,15 +4,20 @@ import { visibleSyllabusForms } from '@/lib/forms/visibility';
 import { z } from 'zod';
 import { requireCourseAccess } from '@/lib/course-access';
 import { attachmentLocation } from '@/lib/academic-records';
+import { courseworkSettingsError } from '@/lib/coursework-submission';
 import { accountErrorResponse, AccessError, assertMutationOrigin } from '@/lib/super-user-v1/actor';
 const classworkInput = z.object({
   title: z.string().trim().min(1).max(300), description: z.string().max(50000).default(''),
   type: z.string().transform(value => value.toUpperCase()).pipe(z.enum(['ASSIGNMENT','QUIZ','MATERIAL','EXAM','PROJECT','ACTIVITY'])).default('ASSIGNMENT'),
   maxPoints: z.number().finite().min(0).max(100000).nullable().optional(),
   dueDate: z.string().datetime({ offset: true }).nullable().optional(),
+  isProgramming: z.boolean().default(false), requireGithubRepo: z.boolean().default(false),
   attachmentUrl: attachmentLocation.optional(), attachmentName: z.string().max(255).optional(),
   attachments: z.array(z.object({ url: attachmentLocation, fileName: z.string().max(255).optional(), type: z.enum(['FILE','LINK']).optional(), fileSize: z.number().int().min(0).max(25 * 1024 * 1024).nullable().optional() }).strict()).max(20).optional(),
-}).strict();
+}).strict().superRefine((data, ctx) => {
+  const error = courseworkSettingsError(data);
+  if (error) ctx.addIssue({ code: 'custom', path: ['requireGithubRepo'], message: error });
+});
 
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { requireOwnedUpload } from '@/lib/private-upload';
@@ -47,6 +52,7 @@ export async function GET(request: Request, context: RouteContext) {
       db.syllabusItem.findMany({
         where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
         include: {
+          form: { select: { id: true, opensAt: true } },
           labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
           attachments: {
             select: {
@@ -100,6 +106,10 @@ export async function GET(request: Request, context: RouteContext) {
         revisionDueAt: currentLabAttempt(item.labAssignment)?.revisionDueAt?.toISOString() ?? null,
         labUrl: item.labAssignment ? `/ics/courses/${courseId}/labs/${item.labAssignment.id}` : null,
         type: item.type, // "ASSIGNMENT" | "QUIZ" | "MATERIAL" | "EXAM"
+        isProgramming: item.isProgramming,
+        requireGithubRepo: item.requireGithubRepo,
+        formId: item.form?.id ?? null,
+        opensAt: item.form?.opensAt?.toISOString() ?? null,
         title: item.title,
         description: item.description,
         maxPoints: item.maxPoints,
@@ -191,6 +201,8 @@ export async function POST(request: Request, context: RouteContext) {
       data: {
         courseId,
         type: type.toUpperCase(),
+        isProgramming: body.isProgramming,
+        requireGithubRepo: body.requireGithubRepo,
         ...await academicProvenance('UNTOUCHED', tx),
         title: title.trim(),
         description: description ? description.trim() : '',

@@ -1,0 +1,31 @@
+'use client';
+import { useState } from 'react';
+import type { AttendanceMutation, AttendanceOverview } from '@lms/types';
+export const fieldClass = 'min-h-11 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 text-[var(--text-primary)] shadow-[inset_1px_2px_3px_rgba(0,0,0,0.04)]';
+const actionBase = 'min-h-11 rounded-xl border px-4 py-2 text-sm font-semibold shadow-[2px_3px_7px_rgba(0,0,0,0.06)] disabled:opacity-50';
+export const actionClass = `${actionBase} border-[var(--border-color)] bg-[var(--bg-surface)]`;
+export const primaryActionClass = `${actionBase} border-transparent bg-[var(--action-bg)] text-[var(--action-ink)] hover:bg-[var(--action-hover)]`;
+export function AttendanceSettings({ data, admin, busy, act }: { data: AttendanceOverview; admin: boolean; busy: boolean; act: (input: AttendanceMutation) => Promise<void> }) {
+  const [settings, setSettings] = useState(data.settings); const [policy, setPolicy] = useState(data.policy);
+  return <div className="space-y-6">
+    {data.role === 'MANAGER' && <details className="rounded-xl border border-[var(--border-color)] p-4"><summary className="cursor-pointer py-2 font-semibold">Class settings and access</summary>
+      <form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void act({ action: 'SETTINGS', settings }); }}>
+        {(['liveLimit', 'asyncLimit', 'absenceThreshold', 'tardyThreshold'] as const).map(key => <label key={key} className="space-y-1 text-sm">{{ liveLimit: 'Live sessions at once', asyncLimit: 'Async sessions at once', absenceThreshold: 'Flag after this many absences in a row', tardyThreshold: 'Flag after this many tardies in a row' }[key]}<input type="number" min={key.includes('Limit') ? 1 : 2} max={key.includes('Limit') ? 10 : 20} className={fieldClass} value={settings[key]} onChange={e => setSettings({ ...settings, [key]: Number(e.target.value) })} /></label>)}
+        <label className="text-sm">Saved location name<input className={fieldClass} value={settings.locationLabel} onChange={e => setSettings({ ...settings, locationLabel: e.target.value })} /></label>
+        <button type="button" className={actionClass} onClick={() => navigator.geolocation?.getCurrentPosition(p => { if (p.coords.accuracy > 100) { window.alert('Location is not accurate enough. Retry outdoors or use attendance without location.'); return; } setSettings({ ...settings, latitude: p.coords.latitude, longitude: p.coords.longitude }); }, () => window.alert('Location unavailable. You can keep location checking disabled.'), { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 })}>Save my current class location</button>
+        <button className={actionClass} disabled={busy || !data.enabled}>Save class settings</button>
+      </form>
+      {data.phase >= 2 && <div className="mt-5 space-y-2"><h3 className="font-semibold">Approved arrangements</h3><p className="text-sm text-[var(--text-secondary)]">Use instructor approval without a repeated explanation. Do not enter medical information.</p>{data.students.map(s => <label key={s.id} className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={s.approvedArrangement} disabled={busy || !data.enabled} onChange={e => void act({ action: 'ARRANGEMENT', studentId: s.id, enabled: e.target.checked })} />{s.name}</label>)}</div>}
+      {data.phase >= 3 && <div className="mt-5 space-y-3"><h3 className="font-semibold">Attendance helpers</h3><p className="text-sm text-[var(--text-secondary)]">Helpers can take attendance and resolve pending requests, including after closure. They cannot access grades or make historical corrections.</p>{data.helpers.map(h => <div key={h.id} className="flex flex-wrap items-center justify-between gap-2"><span>{h.name}</span><button className={actionClass} disabled={busy} onClick={() => void act({ action: 'REVOKE', grantId: h.id })}>Remove access</button></div>)}<label className="block text-sm">Add an instructor<select className={fieldClass} defaultValue="" onChange={e => { if (e.target.value) void act({ action: 'GRANT', userId: e.target.value }); e.target.value = ''; }}><option value="">Choose an instructor</option>{data.staff.filter(s => !data.helpers.some(h => h.userId === s.id)).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>}
+    </details>}
+    {admin && <details className="rounded-xl border border-[var(--border-color)] p-4"><summary className="cursor-pointer py-2 font-semibold">Record retention</summary><p className="my-3 text-sm text-[var(--text-secondary)]">Attendance is available by default. These optional settings manage record storage and location verification.</p>
+      <form className="grid gap-4 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); if (window.confirm('Apply these institute-wide retention settings?')) void act({ action: 'POLICY', policy }); }}>
+        <label className="text-sm">Institute timezone<input required className={fieldClass} value={policy.timezone} onChange={e => setPolicy({ ...policy, timezone: e.target.value })} /></label>
+        <label className="text-sm sm:col-span-2">Approved privacy/retention review reference<input className={fieldClass} value={policy.privacyReview} onChange={e => setPolicy({ ...policy, privacyReview: e.target.value })} /></label>
+        {(['recordDays', 'eventDays', 'requestDays', 'verificationDays', 'arrangementDays'] as const).map(key => <label key={key} className="text-sm">{{ recordDays: 'Academic records', eventDays: 'Correction events', requestDays: 'Request explanations', verificationDays: 'Verification details', arrangementDays: 'Arrangements' }[key]} — days<input type="number" min={1} max={36500} className={fieldClass} value={policy[key] ?? ''} onChange={e => setPolicy({ ...policy, [key]: e.target.value ? Number(e.target.value) : null })} /></label>)}
+        <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={policy.locationEnabled} onChange={e => setPolicy({ ...policy, locationEnabled: e.target.checked })} />Allow location after the indoor/privacy pilot</label>
+        <button disabled={busy} className={actionClass}>Save institute policy</button>
+      </form>
+    </details>}
+  </div>;
+}

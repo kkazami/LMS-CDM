@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, Menu, FileText } from "lucide-react";
+import { Search, Settings, User, Shield, HelpCircle, LogOut, Sun, Moon, FileText, ArrowLeft } from "lucide-react";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
 import { getInstituteName } from "@lms/types";
 import type { InstituteTheme } from "@/lib/theme";
@@ -26,7 +26,6 @@ type TopbarProps = {
   studentNumber?: string | null;
   avatarUrl?: string | null;
   exp?: number;
-  onOpenMobileMenu?: () => void;
   isEligibleForActivities?: boolean;
   isEligibleForPracticum?: boolean;
   isEligibleForMeetings?: boolean;
@@ -42,7 +41,6 @@ export default function Topbar({
   studentNumber,
   avatarUrl,
   exp = 0,
-  onOpenMobileMenu,
   isEligibleForActivities,
   isEligibleForPracticum,
   isEligibleForMeetings,
@@ -114,7 +112,6 @@ export default function Topbar({
   }
 
   let dynamicTitle = "Dashboard";
-  const segment = pathname.split("/").pop();
 
   const titleMap: Record<string, string> = {
     // Student
@@ -122,7 +119,12 @@ export default function Topbar({
     courses: "My Courses",
     announcements: "Announcements",
     assignments: "To-do",
-    tasks: "Tasks",
+    tasks: "Tasks & Calendar",
+    grades: "Grades",
+    flashcards: "Flashcards",
+    "knowledge-exchange": "Knowledge Exchange",
+    organization: "Organizational Chart",
+    labs: "Practical Labs",
     practicum: "Practicum",
     meetings: "Meetings",
     leaderboards: "Leaderboards",
@@ -148,7 +150,7 @@ export default function Topbar({
     classwork: "Classwork",
     people: "People",
     // Activities
-    codelab: "CodeLab Problem Bank",
+    codelab: "CodeLab",
     instructor: "CodeLab Analytics",
     // Shared
     settings: "Settings",
@@ -156,27 +158,37 @@ export default function Topbar({
     privacy: "Privacy Settings",
     "learning-materials": "Learning Materials",
     help: "Help & Support",
+    "academic-operations": "Academic Operations",
+    "business-plan": "Business Plan Guide",
+    "learning-hub": "Learning Hub",
+    "hall-of-fame": "Hall of Fame",
+    "mock-interview": "Mock Interview",
+    "financial-statements": "Financial Statements",
+    arena: "Quiz Arena",
+    notifications: "Notifications",
   };
 
-  if (segment && titleMap[segment]) {
-    dynamicTitle = titleMap[segment];
+  const routeSegments = pathname.split('/').filter(Boolean);
+  const knownSegment = [...routeSegments.slice(1)].reverse().find(part => titleMap[part]);
+  if (knownSegment) dynamicTitle = titleMap[knownSegment];
+  const role = userRole.toUpperCase();
+  const home = `/${instituteCode}/${role === 'STUDENT' ? 'students' : role === 'SUPER_USER' ? 'academic-operations' : role === 'ADMIN' ? 'admin' : 'teachers'}`;
+  const parentFeature = routeSegments.slice(1, -1).find(part => titleMap[part]);
+  const backHref = parentFeature ? `/${instituteCode}/${parentFeature}` : home;
+  const showBack = pathname !== home;
+
+  if (pathname.endsWith('/activities/codelab/instructor')) {
+    dynamicTitle = 'CodeLab';
+  }
+  if (pathname === '/ics/activities/ohmward' || pathname.startsWith('/ics/activities/ohmward/')) {
+    dynamicTitle = 'Ohmward';
   }
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
-        {/* Left Side: Menu + Institute Badge + Dynamic Title */}
+        {/* Left Side: Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
-          {onOpenMobileMenu && (
-            <button
-              type="button"
-              onClick={onOpenMobileMenu}
-              className="rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] p-1 sm:p-2 text-slate-700 dark:text-slate-300 lg:hidden hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
-              aria-label="Open menu"
-            >
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-          )}
-
+          {showBack && <Link href={backHref} aria-label="Back to previous section" title="Back" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"><ArrowLeft className="h-4 w-4" /></Link>}
           {/* Mobile Institute Badge & Title */}
           <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1">
 
@@ -186,13 +198,13 @@ export default function Topbar({
               >
                 {instituteCode.toUpperCase()}
               </span>
-            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate min-w-0 flex-1" title={dynamicTitle}>
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] whitespace-normal min-w-0 flex-1" title={dynamicTitle}>
               {dynamicTitle}
             </h1>
           </div>
 
           {/* Desktop & Tablet Title & Institute Badge / Switcher */}
-          <div className="hidden md:flex items-center gap-3 min-w-0">
+          <div className="hidden md:flex items-center gap-3 min-w-0 flex-1">
 
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
                 <span
@@ -201,7 +213,7 @@ export default function Topbar({
                 >
                   {instituteCode.toUpperCase()}
                 </span>
-                <div className="flex flex-col min-w-0">
+                <div className="hidden 2xl:flex flex-col min-w-0">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
                     Campus
                   </span>
@@ -213,7 +225,7 @@ export default function Topbar({
 
             <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
 
-            <h1 className="text-sm lg:text-base xl:text-lg font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] truncate max-w-[160px] lg:max-w-[240px] xl:max-w-none">
+            <h1 className="text-sm lg:text-base xl:text-lg font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8] whitespace-normal leading-tight">
               {dynamicTitle}
             </h1>
           </div>
@@ -228,13 +240,14 @@ export default function Topbar({
               event.currentTarget.focus();
               setSearchModalOpen(true);
             }}
-            className={`topbar-search-trigger hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 xl:flex transition-all text-left cursor-pointer ${
+            className={`topbar-search-trigger hidden w-full max-w-xs xl:max-w-sm 2xl:max-w-md items-center justify-between gap-2.5 rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1E2132] px-3.5 py-2 2xl:flex transition-all text-left cursor-pointer ${
               isIte
                 ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 : ""
             }`}
             style={{
               borderColor: undefined,
+              maxWidth: dynamicTitle === 'Ohmward' ? '14rem' : undefined,
             }}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -243,7 +256,7 @@ export default function Topbar({
                 Search courses, notes, or peers...
               </span>
             </div>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
+            <kbd className="hidden shrink-0 whitespace-nowrap sm:inline-flex items-center gap-0.5 rounded border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-[#8B92A5]">
               {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
           </button>

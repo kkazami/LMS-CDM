@@ -3,12 +3,15 @@ import { storage } from '../lib/storage';
 import { Appearance } from 'react-native';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
+export type ThemeOrigin = { x: number; y: number };
+let transition: ((origin?: ThemeOrigin) => Promise<void>) | null = null;
+export function registerThemeTransition(handler: typeof transition) { transition = handler; }
 
 interface ThemeState {
   themePreference: ThemePreference;
   isDark: boolean;
   setThemePreference: (pref: ThemePreference) => Promise<void>;
-  toggleTheme: () => Promise<void>;
+  toggleTheme: (origin?: ThemeOrigin) => Promise<void>;
   initializeTheme: () => Promise<void>;
 }
 
@@ -41,7 +44,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     }
   },
 
-  toggleTheme: async () => {
+  toggleTheme: async (origin) => {
+    if (transition) return transition(origin);
     const nextDark = !get().isDark;
     const pref: ThemePreference = nextDark ? 'dark' : 'light';
     set({ themePreference: pref, isDark: nextDark });

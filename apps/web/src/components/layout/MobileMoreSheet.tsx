@@ -10,6 +10,7 @@ import {
   Award,
   BarChart2,
   Archive,
+  CalendarDays,
   PlusSquare,
   Network,
   ShieldCheck,
@@ -25,7 +26,6 @@ import {
   Video,
   HardDrive,
   HelpCircle,
-  Terminal,
   ChevronRight,
   Code2,
   MessageSquareQuote,
@@ -37,6 +37,7 @@ import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 import { clearAllOfflineData } from "@/lib/ite/offline/idb";
 import { getNavigationPath } from "@/lib/navigation-path";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ interface MobileMoreSheetProps {
   userName?: string;
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
 }
 
@@ -66,6 +68,7 @@ export default function MobileMoreSheet({
   userName = "User",
   avatarUrl = null,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -109,13 +112,14 @@ export default function MobileMoreSheet({
   const studentItems: NavItem[] = [
     { label: "Flashcards", href: `/${instituteCode}/flashcards`, icon: Flame, description: "Daily review decks" },
     { label: "Materials", href: `/${instituteCode}/learning-materials`, icon: BookOpen, description: "Academic library" },
-    { label: "Tasks", href: `/${instituteCode}/tasks`, icon: CheckSquare, description: "Personal planner" },
+    { label: "Tasks & Calendar", href: `/${instituteCode}/tasks`, icon: CheckSquare, description: "Personal planner" },
     { label: "Leaderboards", href: `/${instituteCode}/leaderboards`, icon: Trophy, description: "Institute standings" },
     { label: "Achievements", href: `/${instituteCode}/achievements`, icon: Award, description: "Badges and EXP" },
   ];
 
   const teacherItems: NavItem[] = [
     { label: "Archived Classes", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Review previous classes" },
+    { label: "Calendar", href: `/${instituteCode}/tasks`, icon: CalendarDays, description: "Class schedule and personal events" },
     ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
     { label: "Student Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Class progress and performance" },
     { label: "Manage Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage institute rankings" },
@@ -157,11 +161,11 @@ export default function MobileMoreSheet({
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
       : [];
 
+  const ohmwardHref = isEligibleForOhmward && ohmwardDestination(instituteCode, userRole);
   const items: NavItem[] = [
+    ...(ohmwardHref ? [{ label: "Ohmward", href: ohmwardHref, icon: Code2, description: "Every circuit starts a journey." }] : []),
     ...(isEligibleForActivities && (isStudent || isProfessor)
-      ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab`, icon: Code2, description: "Coding practice" }] : []),
-    ...(isEligibleForActivities && isProfessor
-      ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
+      ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab${isProfessor ? '/instructor' : ''}`, icon: Code2, description: isProfessor ? "Coding practice and analytics" : "Coding practice" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"

@@ -5,10 +5,11 @@ import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
  *
  * ICS-Exclusive Coding Activity Hub.
  * Shows all 8 independent language tracks (Python, C++, C#, Java, JavaScript, SQL, HTML, CSS)
- * with individual progress tracking (Levels 1–30), real SVG logos, and interactive dot constellations.
+ * with individual progress tracking (Levels 1–30), language logos, and interactive dot constellations.
  */
 
 import { notFound, redirect } from "next/navigation";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 import { getSession } from "@/lib/auth-session";
 import { isEligibleForActivities, isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
@@ -18,6 +19,7 @@ import TrackCardGrid, {
   type TrackProgressData,
 } from "@/features/interactive-activities/codelab/components/TrackCardGrid";
 
+import CodeLabBackdrop from "@/features/interactive-activities/codelab/components/CodeLabBackdrop";
 import CodeLabAlertModal, {
   type CodeLabAlertItem,
 } from "@/features/interactive-activities/codelab/components/CodeLabAlertModal";
@@ -205,19 +207,25 @@ export default async function CodeLabTrackBrowserPage({
   }));
 
   return (
-    <div className="space-y-8 pb-12 page-enter max-w-7xl mx-auto">
-      {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
-      <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
+    <div className="relative isolate" data-codelab-track-browser>
+      <CodeLabBackdrop />
+      <div className="space-y-8 page-enter max-w-7xl mx-auto">
+        {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
+        <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
 
-      {/* ─── 1. Clean Header Banner with Floating Icons Background ─── */}
-      <CodeLabHeroHeader institute={institute} />
+        {/* ─── 1. Header Banner ─── */}
+        <CodeLabHeroHeader
+          institute={institute}
+          showAnalyticsLink={['INSTRUCTOR', 'ADMIN'].includes(canonicalRole(session.user.role))}
+        />
 
-      {/* ─── 2. 8 Track Cards Grid with Dot Constellation Hover ─── */}
-      <TrackCardGrid
-        tracks={TRACKS}
-        trackProgress={trackProgress}
-        institute={institute}
-      />
+        {/* ─── 2. 8 Track Cards Grid with Dot Constellation Hover ─── */}
+        <TrackCardGrid
+          tracks={TRACKS}
+          trackProgress={trackProgress}
+          institute={institute}
+        />
+      </div>
     </div>
   );
 }

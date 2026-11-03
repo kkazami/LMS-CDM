@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Search,
   Flame,
-  ArrowLeft,
   ShieldAlert,
   Code2,
   Ban,
@@ -712,15 +711,6 @@ export function CodeLabInstructorClient({
       {/* ──── Header ──── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-[#8B92A5] mb-1">
-            <Link
-              href={`/${institute}/activities/codelab`}
-              className="hover:text-[#F97316] transition-colors flex items-center gap-1"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to tracks</span>
-            </Link>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-[#F0F2F8] tracking-tight">
             CodeLab Analytics
           </h1>
@@ -731,7 +721,7 @@ export function CodeLabInstructorClient({
 
         <div className="flex items-center gap-2">
           <Link
-            href={`/${institute}/activities/codelab`}
+            href={`/${institute}/activities/codelab/instructor?view=codelab`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs transition-all cursor-pointer"
           >
             <Code2 className="w-3.5 h-3.5" />

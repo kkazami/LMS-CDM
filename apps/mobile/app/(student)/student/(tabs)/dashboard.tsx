@@ -1,3 +1,9 @@
+import { ContinueLearning } from '../../../../src/components/institute/ContinueLearning';
+import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { useAlertsStore } from '../../../../src/stores/alerts-store';
+import { studentNotificationRoute } from '../../../../src/lib/student-navigation';
+import { markUsefulContent } from '../../../../src/lib/performance';
+import { SkeletonBlock, AppHeader, HeaderIconButton } from '../../../../src/components/ui';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -26,6 +32,8 @@ import {
   Layers,
   Trophy,
   MessageSquare,
+  Code2,
+  FlaskConical,
   AlertCircle,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
@@ -48,20 +56,29 @@ import { IteParticipationCard } from '../../../../src/components/institute/ItePa
 import { IteFocusCard } from '../../../../src/components/institute/IteFocusCard';
 import { IteSuggestionsCard } from '../../../../src/components/institute/IteSuggestionsCard';
 import { IcsKnowledgeExchangeCard } from '../../../../src/components/institute/IcsKnowledgeExchangeCard';
-import type { Course, Announcement, TaskItem, Grade } from '@lms/types';
+import type { Course, Announcement, TaskItem, Grade, LmsCalendarEvent } from '@lms/types';
 import type { ClassMeetingItem } from '@lms/api-client';
 
 export default function StudentDashboardScreen() {
+  const user = useAuthStore(s => s.user);
+  return isIcsUser(user) ? <IcsDashboardScreen /> : <StudentDashboard />;
+}
+
+function StudentDashboard() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const rewardReceipt = useAuthStore((s) => s.rewardReceipt);
   const clearRewardReceipt = useAuthStore((s) => s.clearRewardReceipt);
   const theme = useTheme();
+  const focusedHome = isIcsUser(user) && process.env.EXPO_PUBLIC_ICS_HOME_V2 !== 'false';
+  const unreadCount = useAlertsStore(s => s.unreadCount);
+  const [showCommunity, setShowCommunity] = useState(false);
   const { contentPaddingBottom } = useFloatingTabBarHeight();
 
   const [refreshing, setRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [deadlines, setDeadlines] = useState<LmsCalendarEvent[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -84,7 +101,29 @@ export default function StudentDashboardScreen() {
     }
   }, [rewardReceipt]);
 
+  const loadIcsHome = async () => {
+    setErrorMessage(null);
+    try {
+      const [savedCourses, savedDeadlines] = await Promise.all([
+        getCachedData<Course[]>('student_courses'), getCachedData<LmsCalendarEvent[]>('academic_deadlines'),
+      ]);
+      if (savedCourses) { setCourses(savedCourses); setLoading(false); markUsefulContent('home'); }
+      if (savedDeadlines) setDeadlines(savedDeadlines);
+      await Promise.allSettled([
+        api.courses.list('ics').then(async response => {
+          setCourses(response.courses); setLoading(false); markUsefulContent('home');
+          await setCachedData('student_courses', response.courses);
+        }).catch(() => setErrorMessage(savedCourses ? 'Showing saved courses. Pull to refresh when connected.' : 'Courses could not load. Check your connection and retry.')),
+        api.workspace.getAgenda().then(async response => {
+          const academic = response.events.filter(event => event.source === 'classwork' || event.source === 'class');
+          setDeadlines(academic); await setCachedData('academic_deadlines', academic);
+        }).catch(() => setErrorMessage('Deadlines could not refresh. Check your course classwork for the latest dates.')),
+      ]);
+    } finally { setLoading(false); setRefreshing(false); }
+  };
+
   const loadData = async () => {
+    if (focusedHome) { await loadIcsHome(); return; }
     try {
       setErrorMessage(null);
       // Load offline cache first
@@ -296,8 +335,14 @@ export default function StudentDashboardScreen() {
       visible: isIteUser(user),
     },
     {
+      id: 'codelab', label: 'CodeLab', icon: Code2, route: '/student/codelab', visible: isIcsUser(user),
+    },
+    {
+      id: 'practical-labs', label: 'Practical Labs', icon: FlaskConical, route: '/student/practical-labs', visible: isIcsUser(user),
+    },
+    {
       id: 'knowledge-exchange',
-      label: 'Q&A Forum',
+      label: 'Knowledge Exchange',
       icon: MessageSquare,
       route: '/student/knowledge-exchange',
       visible: isIcsUser(user),
@@ -307,7 +352,7 @@ export default function StudentDashboardScreen() {
   return (
     <Screen
       scroll
-      withTopInset
+      withTopInset={!focusedHome}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: contentPaddingBottom }]}
       refreshControl={
         <RefreshControl
@@ -335,6 +380,8 @@ export default function StudentDashboardScreen() {
         />
       )}
 
+      {focusedHome && <AppHeader title="Home" subtitle={`Welcome back, ${user?.name?.split(' ')[0] || 'student'}`} rightAction={<HeaderIconButton accessibilityLabel={`Open Inbox, ${unreadCount} unread`} onPress={() => router.push('/student/alerts' as any)}><Bell size={24} color={theme.colors.text} />{unreadCount > 0 && <Text style={{ color: theme.colors.text, fontSize: 12 }}>{unreadCount > 99 ? '99+' : unreadCount}</Text>}</HeaderIconButton>} />}
+      {!focusedHome && <>
       {/* ── Compact Hero Card with Institute Gradient ── */}
       <LinearGradient
         colors={gradients.heroGradient}
@@ -370,7 +417,7 @@ export default function StudentDashboardScreen() {
           </View>
 
           {/* Real Streak & EXP Chips */}
-          <View style={styles.chipsCol}>
+          {!focusedHome && <View style={styles.chipsCol}>
             <View
               style={[
                 styles.chip,
@@ -393,9 +440,69 @@ export default function StudentDashboardScreen() {
                 {exp != null ? `${exp} EXP` : '—'}
               </Text>
             </View>
-          </View>
+          </View>}
         </View>
       </LinearGradient>
+      </>}
+
+      {focusedHome && <>
+        <ContinueLearning courseIds={courses.map(course => course.id)} />
+        <View style={styles.section}>
+          <SectionTitle title="Upcoming coursework" actionText="Agenda" onActionPress={() => router.push('/student/calendar' as any)} />
+          {deadlines.filter(event => new Date(event.eventDate).getTime() >= Date.now()).sort((a, b) => Date.parse(a.eventDate) - Date.parse(b.eventDate)).slice(0, 3).map(event => <TouchableOpacity key={event.id} accessibilityRole="button" style={[styles.courseRowCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, minHeight: 64 }]} onPress={() => {
+            const target = studentNotificationRoute(event.deepLink, 'ics');
+            router.push((target || (event.courseId ? `/student/courses/${event.courseId}` : '/student/calendar')) as any);
+          }}><View style={{ flex: 1 }}><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24 }}>{event.title}</Text><Text style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21 }}>{new Date(event.eventDate).toLocaleString()}</Text></View><ChevronRight size={20} color={theme.colors.textSecondary} /></TouchableOpacity>)}
+          {!deadlines.some(event => new Date(event.eventDate).getTime() >= Date.now()) && <Text style={{ color: theme.colors.textSecondary, fontSize: 16, lineHeight: 24, paddingVertical: 12 }}>No upcoming coursework loaded. Check the agenda or your course for updates.</Text>}
+        </View>
+      </>}
+      {/* ── Enrolled Courses Section (List-Style Rows with Chevrons) ── */}
+      <View style={styles.section}>
+        <SectionTitle
+          title="Enrolled Courses"
+          actionText={`See All (${courses.length})`}
+          onActionPress={() => router.push('/student/courses')}
+          actionAccessibilityLabel="See all enrolled courses"
+        />
+
+        {loading ? (
+          <View style={{ gap: 12 }}><SkeletonBlock height={72} width="100%" /><SkeletonBlock height={72} width="100%" /></View>
+        ) : courses.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <BookOpen size={36} color={theme.colors.textSecondary} />
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+              No Courses Enrolled Yet
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+              Your enrolled subjects will appear here once faculty assigns them.
+            </Text>
+          </Card>
+        ) : (
+          courses.slice(0, 3).map((course) => (
+            <TouchableOpacity
+              key={course.id}
+              style={[styles.courseRowCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+              onPress={() => router.push({ pathname: '/student/courses/[courseId]' as any, params: { courseId: course.id } })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.courseCodeBadge, { backgroundColor: `${theme.colors.primary}18` }]}>
+                <Text style={[styles.courseCodeText, { color: theme.isDark ? theme.colors.primary : theme.colors.text }]}>
+                  {course.code || 'CRS'}
+                </Text>
+              </View>
+              <View style={styles.courseInfo}>
+                <Text style={[styles.courseItemTitle, { color: theme.colors.text }]} numberOfLines={2}>
+                  {course.title}
+                </Text>
+                <Text style={[styles.courseInstructorText, { color: theme.colors.textSecondary }]}>
+                  {course.instructorName || 'Faculty Instructor'}
+                </Text>
+              </View>
+              <ChevronRight size={18} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
 
       {/* ── Quick Action Grid Tiles (Evenly Stretched Last Row, Zero Overlap) ── */}
       <View style={styles.quickGridContainer}>
@@ -444,6 +551,7 @@ export default function StudentDashboardScreen() {
         </View>
       </View>
 
+      {!focusedHome && <>
       {/* ── Compact Stats Row (In Normal Layout Flow Below Tiles) ── */}
       <View style={[styles.statsRow, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
         <TouchableOpacity
@@ -496,6 +604,7 @@ export default function StudentDashboardScreen() {
         </TouchableOpacity>
       </View>
 
+      </>}
       {/* ── ITE Class Meetings Section (ITE only - All 5 States Render Visible Text) ── */}
       {isIteUser(user) && (
         <View style={styles.section}>
@@ -653,57 +762,10 @@ export default function StudentDashboardScreen() {
 
       {/* ── ICS Features: Knowledge Exchange Discussion Feed ── */}
       {isIcsUser(user) && (
-        <IcsKnowledgeExchangeCard onRefreshTrigger={refreshTrigger} />
+        showCommunity ? <IcsKnowledgeExchangeCard onRefreshTrigger={refreshTrigger} /> : <TouchableOpacity accessibilityRole="button" style={[styles.courseRowCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} onPress={() => setShowCommunity(true)}><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24 }}>See campus discussions</Text><MessageSquare size={20} color={theme.colors.textSecondary} /></TouchableOpacity>
       )}
 
-      {/* ── Enrolled Courses Section (List-Style Rows with Chevrons) ── */}
-      <View style={styles.section}>
-        <SectionTitle
-          title="Enrolled Courses"
-          actionText={`See All (${courses.length})`}
-          onActionPress={() => router.push('/student/courses')}
-          actionAccessibilityLabel="See all enrolled courses"
-        />
-
-        {loading ? (
-          <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
-        ) : courses.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <BookOpen size={36} color={theme.colors.textSecondary} />
-            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-              No Courses Enrolled Yet
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
-              Your enrolled subjects will appear here once faculty assigns them.
-            </Text>
-          </Card>
-        ) : (
-          courses.slice(0, 3).map((course) => (
-            <TouchableOpacity
-              key={course.id}
-              style={[styles.courseRowCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-              onPress={() => router.push({ pathname: '/student/courses/[courseId]' as any, params: { courseId: course.id } })}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.courseCodeBadge, { backgroundColor: `${theme.colors.primary}18` }]}>
-                <Text style={[styles.courseCodeText, { color: theme.colors.primary }]}>
-                  {course.code || 'CRS'}
-                </Text>
-              </View>
-              <View style={styles.courseInfo}>
-                <Text style={[styles.courseItemTitle, { color: theme.colors.text }]} numberOfLines={1}>
-                  {course.title}
-                </Text>
-                <Text style={[styles.courseInstructorText, { color: theme.colors.textSecondary }]}>
-                  {course.instructorName || 'Faculty Instructor'}
-                </Text>
-              </View>
-              <ChevronRight size={18} color={theme.colors.textSecondary} />
-            </TouchableOpacity>
-          ))
-        )}
-      </View>
-
+      {focusedHome ? <View style={styles.section}><SectionTitle title="Announcements" actionText="View updates" onActionPress={() => router.push('/student/announcements' as any)} /><Text style={{ color: theme.colors.textSecondary, fontSize: 16, lineHeight: 24 }}>Read your instructors’ latest notices and course updates.</Text></View> : <>
       {/* ── Recent Announcements Section (List-Style Rows with Chevrons) ── */}
       <View style={styles.section}>
         <SectionTitle
@@ -752,6 +814,7 @@ export default function StudentDashboardScreen() {
           ))
         )}
       </View>
+      </>}
     </Screen>
   );
 }
@@ -925,12 +988,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   courseItemTitle: {
-    fontSize: 14,
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '600',
     marginBottom: 2,
   },
   courseInstructorText: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 21,
   },
   announcementRowCard: {
     padding: 14,

@@ -289,8 +289,8 @@ export default function SearchModal({
         ? [
             {
               id: "prof-codelab",
-              title: "CodeLab Analytics",
-              subtitle: "Student progress, coding errors, and submissions",
+              title: "CodeLab",
+              subtitle: "Coding practice, student progress, and submissions",
               category: "Activities" as const,
               href: `/${instituteCode}/activities/codelab/instructor`,
               icon: Terminal,

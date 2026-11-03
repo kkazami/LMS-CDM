@@ -1,3 +1,5 @@
+import { useAlertsStore } from '../../../../src/stores/alerts-store';
+import { studentNotificationRoute } from '../../../../src/lib/student-navigation';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -42,6 +44,7 @@ export default function StudentAlertsScreen() {
       const response = await api.notifications.list();
       if (response?.notifications) {
         setNotifications(response.notifications);
+        useAlertsStore.getState().setUnreadCount(response.unreadCount ?? 0);
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to load notifications. Please check your connection.');
@@ -63,6 +66,7 @@ export default function StudentAlertsScreen() {
   const handleMarkRead = async (id: string) => {
     try {
       await api.notifications.markRead(id);
+      void useAlertsStore.getState().fetchUnreadCount(api);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -74,6 +78,7 @@ export default function StudentAlertsScreen() {
   const handleMarkAllRead = async () => {
     try {
       await api.notifications.markAllRead();
+      useAlertsStore.getState().setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to mark all notifications as read');
@@ -85,6 +90,7 @@ export default function StudentAlertsScreen() {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     try {
       await api.notifications.delete(id);
+      void useAlertsStore.getState().fetchUnreadCount(api);
     } catch (err: any) {
       setNotifications(previous);
       setErrorMessage(err?.message || 'Failed to delete notification');
@@ -105,6 +111,7 @@ export default function StudentAlertsScreen() {
             setNotifications([]);
             try {
               await api.notifications.clearAll();
+              useAlertsStore.getState().setUnreadCount(0);
             } catch (err: any) {
               setNotifications(previous);
               setErrorMessage(err?.message || 'Failed to clear all notifications');
@@ -271,7 +278,7 @@ export default function StudentAlertsScreen() {
                 {
                   backgroundColor: item.isRead ? theme.colors.card : theme.colors.cardSecondary,
                   borderColor: item.isRead ? theme.colors.border : theme.colors.primary,
-                  borderLeftWidth: item.isRead ? 1 : 4,
+                  borderLeftWidth: 1,
                 },
               ]}
             >
@@ -279,6 +286,8 @@ export default function StudentAlertsScreen() {
                 style={styles.cardMainTouch}
                 onPress={() => {
                   if (!item.isRead) handleMarkRead(item.id);
+                  const target = studentNotificationRoute(item.link?.split('#')[0], user?.institute.code ?? 'ics');
+                  if (target) { router.push(target as any); return; }
                   const text = `${item.title || ''} ${item.message || ''}`.toLowerCase();
                   const isMeetingAlert =
                     (item.type && item.type.toLowerCase().includes('meeting')) ||

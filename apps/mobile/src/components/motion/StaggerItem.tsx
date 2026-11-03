@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  cancelAnimation,
   useReducedMotion,
 } from "react-native-reanimated";
 
@@ -28,8 +29,8 @@ export function StaggerItem({
   const ty = useSharedValue(reducedMotion ? 0 : 16);
 
   useEffect(() => {
-    if (reducedMotion) return;
-    const delay = baseDelay + index * staggerMs;
+    if (reducedMotion) { cancelAnimation(opacity); cancelAnimation(ty); opacity.value = 1; ty.value = 0; return; }
+    const delay = Math.min(baseDelay + index * staggerMs, 250);
     opacity.value = withDelay(delay, withTiming(1, { duration }));
     ty.value = withDelay(delay, withTiming(0, { duration }));
   }, [index, staggerMs, baseDelay, duration, reducedMotion, opacity, ty]);

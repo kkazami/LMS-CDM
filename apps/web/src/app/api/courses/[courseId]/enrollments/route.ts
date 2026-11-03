@@ -1,6 +1,7 @@
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { attendanceEnrollmentChanged } from '@/lib/attendance/lifecycle';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { createNotification } from '@/lib/notifications';
 
@@ -136,11 +137,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Enrollment record not found in this course.' }, { status: 404 });
     }
 
-    const updated = await db.enrollment.update({
+    const updated = await db.$transaction(async tx => {
+      await attendanceEnrollmentChanged(tx, courseId, enrollment.studentId, normalizedAction === 'APPROVE');
+      return tx.enrollment.update({
       where: { id: enrollmentId },
       data: {
         status: normalizedAction === 'APPROVE' ? 'APPROVED' : 'REJECTED',
       },
+    });
     });
 
     // Notify student if approved

@@ -10,6 +10,11 @@
     "packages/*"
   ],
   "scripts": {
+    "test:ohmward": "node --import tsx --test tests/ohmward/*.test.ts",
+    "test:ohmward:integration": "node --import tsx tests/ohmward/integration.mjs",
+    "ohmward:dump-content": "tsx scripts/ohmward/dump-content.ts",
+    "ohmward:check-db": "node scripts/ohmward/check-database.mjs",
+    "ohmward:verify-db": "node tests/ohmward/database-runtime.mjs",
     "check:setup": "node scripts/check-local-setup.mjs",
     "dev:web": "node scripts/check-local-setup.mjs web && node scripts/start-local-scanner.mjs --if-configured && pnpm --filter web dev",
     "scanner:start": "node scripts/start-local-scanner.mjs",
@@ -37,8 +42,11 @@
     "test:e2e:report": "playwright show-report playwright/report",
     "test:labs": "node --import tsx --test tests/labs/schema.test.ts tests/labs/presets.test.ts tests/labs/resources.test.ts tests/labs/transport.test.cjs",
     "test:labs:integration": "node tests/labs/integration.mjs",
-    "test:gradebook": "node --import tsx --test tests/gradebook/periods.test.ts",
-    "test:gradebook:integration": "node tests/gradebook/integration.mjs"
+    "test:gradebook": "node --import tsx --test tests/gradebook/*.test.ts",
+    "test:gradebook:integration": "node tests/gradebook/integration.mjs",
+    "test:attendance": "node --test tests/attendance/*.test.cjs",
+    "test:attendance:integration": "node tests/attendance/integration.mjs",
+    "test:attendance:browser": "playwright test --config tests/attendance/playwright.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -103,7 +103,7 @@ export function IcsKnowledgeExchangeCard({ onRefreshTrigger }: IcsKnowledgeExcha
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Open Knowledge Exchange"
-          onPress={() => router.push('/student/knowledge-exchange' as any)}
+          onPress={() => router.push(kxRoute as any)}
           activeOpacity={0.8}
         >
           <Card style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
@@ -126,7 +126,7 @@ export function IcsKnowledgeExchangeCard({ onRefreshTrigger }: IcsKnowledgeExcha
               accessibilityRole="button"
               accessibilityLabel={`View post: ${post.title}`}
               style={[styles.postCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-              onPress={() => router.push(kxRoute as any)}
+              onPress={() => router.push({ pathname: kxRoute as any, params: { postId: post.id } })}
               activeOpacity={0.8}
             >
               <View style={styles.postHeader}>

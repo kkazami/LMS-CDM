@@ -92,6 +92,42 @@ test('the dedicated CodeLab key takes precedence over the legacy RapidAPI alias'
 });
 
 const jdoodleEnv = {CODELAB_RUNNER:'jdoodle',JDOODLE_CLIENT_ID:'synthetic-client',JDOODLE_CLIENT_SECRET:'synthetic-secret'};
+const onlineEnv = { CODELAB_RUNNER: 'onlinecompiler', ONLINECOMPILER_API_KEY: 'online-only', JUDGE0_RAPIDAPI_KEY: 'never-send', JDOODLE_CLIENT_SECRET: 'never-send' };
+test('OnlineCompiler uses its fixed path, own key, base64 and asynchronous polling for every track', async () => {
+  for (const language of [54, 62, 51, 71, 93, 82]) {
+    const r = runner([{ body: { token: 'job-123' } }, { body: { status: { id: 2 } } },
+      { body: { status: { id: 3 }, stdout: encoded('Hello 世界\n') } }], onlineEnv);
+    assert.equal((await r.api.executeJudge0Submission('synthetic', language, 'input')).stdout, 'Hello 世界\n');
+    assert.equal(r.calls[0].url, 'https://api.onlinecompiler.io/api/judge0/submissions?base64_encoded=true&wait=false');
+    assert.equal(r.calls[0].options.headers['X-Auth-Token'], 'online-only');
+    assert.equal(r.calls[0].options.headers['X-RapidAPI-Key'], undefined);
+    const body = JSON.parse(r.calls[0].options.body);
+    assert.equal(body.language_id, language); assert.equal(body.enable_network, undefined);
+    assert.equal(Buffer.from(body.stdin, 'base64').toString(), 'input');
+    assert.equal(r.calls[0].options.redirect, 'error');
+  }
+});
+test('OnlineCompiler diagnostics remain student errors; failures never resend or fall back', async () => {
+  for (const id of [5, 6, 11]) {
+    const r = runner([{ body: { status: { id }, compile_output: id === 6 ? encoded('compile error') : null, stderr: encoded('diagnostic') } }], onlineEnv);
+    assert.equal((await r.api.executeJudge0Submission('bad code', 71)).status.id, id);
+  }
+  for (const reply of [{http:401}, {http:403}, {http:429}, {http:503}, new Error('network'), {body:null}, {body:{}}, {body:{status:{id:13}}}]) {
+    const r = runner([reply], onlineEnv);
+    await assert.rejects(r.api.executeJudge0Submission('code', 71), e => e instanceof r.api.CodeRunnerUnavailableError && !e.message.includes('online-only'));
+    assert.equal(r.calls.length, 1);
+  }
+  const missing = runner([], { CODELAB_RUNNER: 'onlinecompiler' });
+  await assert.rejects(missing.api.executeJudge0Submission('code', 71), /not configured/);
+  assert.equal(missing.calls.length, 0);
+});
+test('expired grading deadline rejects before execution for every provider', async () => {
+  for (const env of [onlineEnv, jdoodleEnv, { JUDGE0_RAPIDAPI_KEY: 'key' }]) {
+    const r = runner([], env);
+    await assert.rejects(r.api.executeJudge0Submission('code', 71, '', 1), /timed out/);
+    assert.equal(r.calls.length, 0);
+  }
+});
 test('JDoodle uses authenticated server requests for every CodeLab language without sending Judge0 credentials',async()=>{
   for(const [id,language,versionIndex] of [[54,'cpp17','1'],[62,'java','4'],[51,'csharp','4'],[71,'python3','5'],[93,'nodejs','5'],[82,'sql','5']]) {
     const r=runner([{body:{statusCode:200,output:'Hello 世界\n',cpuTime:'0.01',memory:'1024'}}],{...jdoodleEnv,JUDGE0_RAPIDAPI_KEY:'unrelated-key'});
@@ -127,4 +163,15 @@ test('JDoodle preserves complete compiler messages instead of treating HTTP succ
   const result=await r.api.executeJudge0Submission('bad code',71);
   assert.equal(result.stdout,'SyntaxError: invalid syntax\n');assert.equal(result.status.description,'Execution finished');
   assert.notEqual(result.stdout.trim(),'Hello, Python!');
+});
+
+test('JDoodle errors distinguish missing settings, rejected credentials and network failure without exposing secrets', async () => {
+  const missing = runner([], { CODELAB_RUNNER: 'jdoodle' });
+  await assert.rejects(missing.api.executeJudge0Submission('code', 71), /not configured on this server/);
+  for (const reply of [{http:401}, {body:{statusCode:403,error:'synthetic-secret'}}]) {
+    const r = runner([reply], jdoodleEnv);
+    await assert.rejects(r.api.executeJudge0Submission('code', 71), error => /rejected this server/.test(error.message) && !error.message.includes('synthetic-secret'));
+  }
+  const network = runner([new Error('synthetic-secret')], jdoodleEnv);
+  await assert.rejects(network.api.executeJudge0Submission('code', 71), /could not reach JDoodle/);
 });

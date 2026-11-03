@@ -48,7 +48,7 @@ export default function TrackCardGrid({
           <Link
             key={track.language}
             href={`/${institute}/activities/codelab/${track.language}`}
-            className={`group relative flex flex-col justify-between rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 border-l-4 ${track.borderClass} p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 cursor-pointer overflow-hidden`}
+            className={`group relative flex flex-col justify-between rounded-2xl bg-white/90 dark:bg-[#141721]/90 border border-slate-200/80 dark:border-white/5 border-l-4 ${track.borderClass} p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 cursor-pointer overflow-hidden`}
             style={{ animationDelay: `${idx * 40}ms` }}
             onMouseEnter={() => setHoveredLanguage(track.language)}
             onMouseLeave={() => setHoveredLanguage(null)}

@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useRef } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
+import React, { useEffect, useRef, useState } from "react";
+import type { OnMount } from "@monaco-editor/react";
+import dynamic from 'next/dynamic';
 import { useCodeLabStore } from "../stores/codelab-store";
 import { CodeLabLanguage } from "../utils/starter-code";
 import { AlertTriangle, Code2 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { LANGUAGE_LABELS } from "../problems/types";
 import MonacoInit from "@/components/common/MonacoInit";
+import { CodeSymbolBar } from './CodeSymbolBar';
+
+const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 /** Maps our language keys to Monaco editor language identifiers. */
 const MONACO_LANGUAGE_MAP: Record<CodeLabLanguage, string> = {
@@ -28,7 +32,18 @@ export function CodeEditor() {
   const updateCode = useCodeLabStore((s) => s.updateCode);
   const pasteCount = useCodeLabStore((s) => s.pasteCount);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const touchInput = useRef<HTMLTextAreaElement>(null);
   const { themeMode } = useTheme();
+  const [touchEditor, setTouchEditor] = useState(true);
+  const previousCode = useRef(code);
+  useEffect(() => { previousCode.current = code; }, [code]);
+
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse), (max-width: 767px)');
+    const update = () => setTouchEditor(query.matches);
+    update(); query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   const handleEditorMount: OnMount = (editor) => {
     // Disable the built-in context menu to reduce right-click confusion
@@ -58,7 +73,7 @@ export function CodeEditor() {
 
   return (
     <div ref={editorContainerRef} className="flex flex-col h-full bg-white dark:bg-[#1e1e1e]">
-      <MonacoInit />
+      {!touchEditor && <MonacoInit />}
       {/* Subtle paste warning banner */}
       {pasteCount >= 1 && (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs animate-in fade-in slide-in-from-top-1 duration-200">
@@ -81,8 +96,26 @@ export function CodeEditor() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
-        <Editor
+      <div className="flex flex-1 min-h-0 flex-col">
+        {touchEditor ? <textarea
+          ref={touchInput}
+          aria-label={`${displayLanguage} code editor`}
+          value={code}
+          onChange={event => {
+            const value = event.target.value;
+            const added = value.length - previousCode.current.length;
+            if (added > 0) useCodeLabStore.getState().incrementTypedChars(added);
+            previousCode.current = value;
+            updateCode(value);
+          }}
+          onPaste={event => {
+            const store = useCodeLabStore.getState();
+            store.incrementPasteCount();
+            store.addPasteEvent({ timestamp: new Date().toISOString(), charCount: event.clipboardData.getData('text').length, language });
+          }}
+          autoCapitalize="off" autoCorrect="off" spellCheck={false}
+          className="block h-full min-h-32 w-full resize-none rounded-none border-0 bg-white p-4 font-mono text-base leading-7 text-slate-900 outline-offset-[-2px] dark:bg-[#1e1e1e] dark:text-slate-100"
+        /> : <Editor
           height="100%"
           language={MONACO_LANGUAGE_MAP[language] || "python"}
           value={code}
@@ -105,7 +138,8 @@ export function CodeEditor() {
             tabSize: 4,
             insertSpaces: true,
           }}
-        />
+        />}
+        {touchEditor && <CodeSymbolBar editor={touchInput} value={code} onChange={updateCode} />}
       </div>
     </div>
   );

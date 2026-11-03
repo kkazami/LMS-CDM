@@ -7,8 +7,6 @@
  * Never logs or returns API keys or raw internal provider error traces.
  */
 
-import fs from "fs";
-import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
 import { buildStudyHelpPrompt } from "./prompt";
@@ -34,46 +32,8 @@ export interface ModelCaller {
 }
 
 function resolveEnvKey(varName: string, minLength: number): string {
-  let key = (process.env[varName] || "").trim().replace(/^["']|["']$/g, "");
-  if (
-    !key ||
-    key.toLowerCase().includes("your") ||
-    key.toLowerCase().includes("api-key") ||
-    key.toLowerCase().includes("placeholder") ||
-    key.length < minLength
-  ) {
-    try {
-      const candidatePaths = [
-        path.resolve(process.cwd(), ".env"),
-        path.resolve(process.cwd(), ".env.local"),
-        path.resolve(process.cwd(), "apps/web/.env"),
-        path.resolve(process.cwd(), "apps/web/.env.local"),
-        path.resolve(process.cwd(), "../../.env"),
-      ];
-      for (const p of candidatePaths) {
-        if (fs.existsSync(p)) {
-          const content = fs.readFileSync(p, "utf8");
-          const regex = new RegExp(`^${varName}=(.*)$`, "m");
-          const match = content.match(regex);
-          if (match) {
-            const parsed = match[1].trim().replace(/^["']|["']$/g, "");
-            if (
-              parsed &&
-              !parsed.toLowerCase().includes("your") &&
-              !parsed.toLowerCase().includes("api-key") &&
-              !parsed.toLowerCase().includes("placeholder") &&
-              parsed.length >= minLength
-            ) {
-              return parsed;
-            }
-          }
-        }
-      }
-    } catch {
-      // fallback to key
-    }
-  }
-  return key;
+  const key = (process.env[varName] || "").trim().replace(/^["']|["']$/g, "");
+  return key.length >= minLength && !/your|api-key|placeholder/i.test(key) ? key : "";
 }
 
 /**

@@ -72,19 +72,18 @@ export function Button({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={containerStyle}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
     >
-      {loading ? (
-        <ActivityIndicator color={textColor} />
-      ) : (
         <>
-          {Icon && <Icon color={textColor} size={20} style={styles.icon} />}
+          {loading ? <ActivityIndicator color={textColor} style={styles.icon} /> : Icon && <Icon color={textColor} size={20} style={styles.icon} />}
           <Text style={[styles.text, { color: textColor }, textStyle]}>{title}</Text>
         </>
-      )}
     </TouchableOpacity>
   );
 }

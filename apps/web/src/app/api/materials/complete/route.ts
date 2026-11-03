@@ -6,6 +6,9 @@ import { requireWorkspaceSession } from "../../workspace/_shared";
 import { grantExp } from "@/lib/gamification/grant-exp";
 import { EXP_VALUES, DAILY_EXP_CAPS } from "@/lib/gamification/exp-engine";
 import { awardBadgeIfEarned } from "@/lib/gamification/badge-checker";
+import { requireCourseAccess } from '@/lib/course-access';
+import { accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { visibleSyllabusForms } from '@/lib/forms/visibility';
 
 export const dynamic = "force-dynamic";
 
@@ -32,14 +35,15 @@ export async function POST(request: Request) {
     const { materialId, durationSeconds } = parsed.data;
 
     // Verify material exists
-    const material = await db.syllabusItem.findUnique({
-      where: { id: materialId },
+    const material = await db.syllabusItem.findFirst({
+      where: { id: materialId, type: 'MATERIAL', ...await visibleSyllabusForms(undefined, session.user.id) },
       select: { id: true, title: true, courseId: true },
     });
 
     if (!material) {
       return NextResponse.json({ message: "Learning material not found" }, { status: 404 });
     }
+    await requireCourseAccess(session.user, material.courseId);
 
     // Minimum engagement threshold (≥15 seconds of reading)
     let grantedExp = 0;
@@ -72,6 +76,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("MATERIAL_COMPLETE_ERROR", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }

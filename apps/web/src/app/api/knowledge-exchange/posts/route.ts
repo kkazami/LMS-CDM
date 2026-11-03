@@ -1,3 +1,5 @@
+import { accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { studentMutationReceipt } from '@/lib/student-mutation-receipt';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -254,6 +256,7 @@ export async function POST(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "POST knowledge-exchange/posts/route.ts");
   if (ceilingDenial) return ceilingDenial;
 
+  try {
   const eligibility = await checkKxEligibility(request);
   if (!eligibility) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -292,7 +295,7 @@ export async function POST(request: Request) {
   const userId = eligibility.session.user.id;
 
   // Execute in transaction
-  const createdPost = await db.$transaction(async (tx) => {
+  const createdPost = await studentMutationReceipt(userId, 'knowledge-question', request.headers.get('idempotency-key'), parsed.data, async (tx) => {
     const newPost = await tx.kxPost.create({
       data: {
         title,
@@ -329,4 +332,5 @@ export async function POST(request: Request) {
   await awardExpForQuestion(userId, createdPost.id).catch(() => {});
 
   return NextResponse.json({ success: true, post: createdPost }, { status: 201 });
+  } catch (error) { return accountErrorResponse(error); }
 }

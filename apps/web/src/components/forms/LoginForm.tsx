@@ -104,9 +104,9 @@ export default function LoginForm({
 
       const role = data.user.role.toUpperCase();
 
-      if (isDesktopMode && role !== "ADMIN") {
+      if (isDesktopMode && !["ADMIN", "SUPER_USER"].includes(role)) {
         setErrorMessage(
-          "This application is restricted to administrators only. Students and instructors should use the web portal or mobile app."
+          "This application is restricted to administrators and super users. Students and instructors should use the web portal or mobile app."
         );
         await fetch("/api/auth/logout", { method: "POST" });
         return;

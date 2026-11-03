@@ -1,3 +1,4 @@
+import { readGoogleMobileFlow, prepareGoogleMobile, clearGoogleMobile, googleMobileReturn } from '@/lib/google-mobile';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { finishGoogle, googleConfig, saveGoogleProfile } from '@/lib/google-auth';
@@ -9,6 +10,7 @@ import { getClientIp } from '@/lib/rate-limit';
 export async function GET(request: Request) {
   let origin: string;
   try { origin = googleConfig().origin; } catch { return Response.json({ message: 'Google sign-in is not configured.' }, { status: 503 }); }
+  const mobile = await readGoogleMobileFlow();
   try {
     const profile = await finishGoogle(new URL(request.url));
     const user = await db.user.findUnique({ where: { googleSubject: profile.sub }, include: { institute: true } });
@@ -18,9 +20,11 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/register?google=1', origin));
     }
     if (canonicalRole(user.role) !== 'STUDENT' || !mayAdmitAccount(user) || user.institute.code !== profile.instituteCode) throw new Error('Account not available in this portal.');
-    await createSession(user.id, { userAgent: request.headers.get('user-agent') || undefined, ipAddress: getClientIp(request) }, undefined, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState, googleSubject: profile.sub });
+    const session = await createSession(user.id, { userAgent: request.headers.get('user-agent') || undefined, ipAddress: getClientIp(request) }, undefined, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState, googleSubject: profile.sub });
+    if (mobile) { await prepareGoogleMobile(session.sessionId, profile.sub); return NextResponse.redirect(new URL('/api/auth/google/mobile/complete', origin)); }
     return NextResponse.redirect(new URL(await needsClassEnrollment(user) ? '/join-class' : `/${user.institute.code}/students`, origin));
   } catch {
+    if (mobile) { await clearGoogleMobile(); return googleMobileReturn(mobile, { error: 'Google sign-in was cancelled or could not be completed. Check your institute and try again.' }); }
     return NextResponse.redirect(new URL('/login?googleError=1&force=true', origin));
   }
 }

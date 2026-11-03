@@ -152,6 +152,7 @@ export default async function InstituteLayout({
       avatarUrl={(session.user as Record<string, unknown>).avatarUrl as string | null ?? null}
       theme={theme}
       isEligibleForActivities={activityEligible}
+      isEligibleForOhmward={process.env.OHMWARD_ENABLED === 'true' && institute.toLowerCase() === 'ics' && userInstituteCode === 'ics' && ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(userRole))}
       isEligibleForKnowledgeExchange={kxEligible}
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}

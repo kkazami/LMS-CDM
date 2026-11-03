@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { marked } from "marked";
 import { CodeEditor } from "./CodeEditor";
 import HTMLPreviewEditor from "./HTMLPreviewEditor";
+import { ResizeDivider } from "./ResizeDivider";
 import {
   useCodeLabStore,
   TestCase,
@@ -22,10 +23,12 @@ import {
   STAGE_LABELS,
   LANGUAGE_LABELS,
 } from "../problems/types";
+import { runBrowserPractice, supportsBrowserRun } from "../utils/browser-runner";
 import { runHtmlTests, runCssTests } from "../utils/html-css-runner";
 import { useActivityStore } from "../../shared/stores/activity-store";
 import { toast } from "@/components/common/Toast";
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
+import { useNativeDraftOwner } from '@/hooks/useNativeDraftOwner';
 import {
   Terminal,
   Play,
@@ -101,6 +104,7 @@ export default function CodeLabScene({
   executionMethod = "judge0",
   htmlTemplate = "",
 }: CodeLabSceneProps) {
+  const nativeOwner = useNativeDraftOwner();
   const initialize = useCodeLabStore((s) => s.initialize);
   const updateCode = useCodeLabStore((s) => s.updateCode);
   const {
@@ -137,6 +141,31 @@ export default function CodeLabScene({
     startTimer,
     resetActivity,
   } = useActivityStore();
+
+  const tutorialId = useId();
+  const [tutorialCollapsed, setTutorialCollapsed] = useState(false);
+  const [panelSizes, setPanelSizes] = useState([24, 54, 22]);
+  function resizePanels(index: number, share: number) {
+    setPanelSizes(previous => {
+      const next = [...previous], pair = previous[index] + previous[index + 1];
+      next[index] = pair * share / 100;
+      next[index + 1] = pair - next[index];
+      return next;
+    });
+  }
+  const activePractice = useRef<AbortController | null>(null);
+  const [practicePhase, setPracticePhase] = useState("");
+  const [practiceResult, setPracticeResult] = useState(false);
+  const [showServerRun, setShowServerRun] = useState(false);
+  const canPracticeLocally = executionMethod === "judge0" && supportsBrowserRun(fixedLanguage);
+  useEffect(() => {
+    setShowServerRun(false);
+    return () => {
+      activePractice.current?.abort();
+      activePractice.current = null;
+      setExecuting(false);
+    };
+  }, [assignmentId, fixedLanguage, setExecuting]);
 
   const [completed, setCompleted] = useState(false);
   const [completionLoading, setCompletionLoading] = useState(true);
@@ -175,9 +204,15 @@ export default function CodeLabScene({
 
   useEffect(() => {
     resetActivity();
-    initialize(fixedLanguage as CodeLabLanguage, signature, publicTestCases);
+    initialize(fixedLanguage as CodeLabLanguage, signature, publicTestCases, `codelab:${studentId}:${assignmentId}`);
     startTimer();
-  }, [assignmentId, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
+  }, [assignmentId, studentId, nativeOwner, level, fixedLanguage, signature, publicTestCases, resetActivity, initialize, startTimer]);
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (useCodeLabStore.getState().draftSaveError) event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -199,7 +234,7 @@ export default function CodeLabScene({
         if (data.submission) {
           setSavedScore(data.submission.score);
           setScore(data.submission.score);
-          if (typeof data.submission.stateCheck?.sourceCode === "string") updateCode(data.submission.stateCheck.sourceCode);
+          if (typeof data.submission.stateCheck?.sourceCode === "string" && !useCodeLabStore.getState().hasLocalDraft) updateCode(data.submission.stateCheck.sourceCode);
         }
       } catch (error) {
         if (!controller.signal.aborted) setCompletionError(error instanceof Error ? error.message : "Unable to load progress. Reload this page.");
@@ -346,7 +381,7 @@ export default function CodeLabScene({
   ]);
 
   /** Run single test (Freeform execution with stdout/stderr via Judge0) */
-  const handleRun = useCallback(async () => {
+  const handleRun = useCallback(async (forceServer = false) => {
     if (isExecuting || completionLoading || completionError) return;
 
     if (executionMethod === "html-preview" || executionMethod === "css-preview") {
@@ -362,9 +397,23 @@ export default function CodeLabScene({
     const code = codeByLanguage[fixedLanguage as CodeLabLanguage];
     const langId = fixedLanguageId || JUDGE0_LANGUAGE_IDS[fixedLanguage as CodeLabLanguage];
 
+    const local = !forceServer && supportsBrowserRun(fixedLanguage);
+    if (local) setShowServerRun(false);
+    setPracticeResult(local);
+    const controller = new AbortController();
+    activePractice.current = controller;
     try {
+      if (local && supportsBrowserRun(fixedLanguage)) {
+        const result = await runBrowserPractice(fixedLanguage, code, publicTestCases[0]?.input || "", controller.signal, setPracticePhase);
+        if (activePractice.current === controller) {
+          setConsoleOutput(result);
+          setShowServerRun(result.status.id !== 3 || Boolean(result.stderr || result.compile_output));
+        }
+        return;
+      }
       const res = await fetch("/api/judge0/submit", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source_code: code,
@@ -379,8 +428,10 @@ export default function CodeLabScene({
       }
 
       const result = await res.json();
-      setConsoleOutput(result);
+      if (activePractice.current === controller) setConsoleOutput(result);
     } catch (err: unknown) {
+      if (activePractice.current !== controller) return;
+      if (local && !controller.signal.aborted) setShowServerRun(true);
       const message = err instanceof Error ? err.message : "Execution failed";
       setConsoleOutput({
         stdout: null,
@@ -388,10 +439,14 @@ export default function CodeLabScene({
         compile_output: null,
         time: "0",
         memory: 0,
-        status: { id: 13, description: "Execution Error" },
+        status: { id: local ? 11 : 13, description: "Execution Error" },
       });
     } finally {
-      setExecuting(false);
+      if (activePractice.current === controller) {
+        activePractice.current = null;
+        setPracticePhase("");
+        setExecuting(false);
+      }
     }
   }, [
     completionLoading,
@@ -570,6 +625,7 @@ export default function CodeLabScene({
 
   return (
     <div className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+      {useCodeLabStore.getState().draftKey && <p role="status" className="px-4 py-2 text-sm text-slate-700 dark:text-slate-200">{useCodeLabStore.getState().draftSaveError ? 'Draft could not save on this device. Keep this screen open until you can submit.' : 'Code saved on this device · use Submit to send your work.'}</p>}
       {/* ──── Academic Integrity / Rejection Warning Modal ──── */}
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -622,7 +678,7 @@ export default function CodeLabScene({
           </div>
         </div>
 
-        <div className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:gap-3 xl:w-auto xl:shrink-0">
+        <div className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:flex sm:gap-3 xl:w-auto xl:shrink-0 sm:flex-wrap">
           {/* Timer */}
           <div
             className={`flex min-h-11 shrink-0 items-center justify-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-xl text-xs font-mono font-bold ${
@@ -637,14 +693,29 @@ export default function CodeLabScene({
 
           {/* Run button */}
           <button
-            onClick={handleRun}
+            onClick={() => void handleRun()}
             disabled={isExecuting || completionLoading || Boolean(completionError)}
             aria-busy={isExecuting}
             className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 py-2 sm:flex-1 sm:px-3.5 xl:flex-none bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2132] dark:hover:bg-[#25293C] text-slate-800 dark:text-[#F0F2F8] text-xs font-bold rounded-xl border border-slate-200/80 dark:border-white/10 transition-all disabled:opacity-40 active:scale-95 cursor-pointer shadow-2xs [&>svg]:shrink-0"
           >
             {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-[#F97316]" />}
-            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">Run Tests</span>
+            <span className="min-w-0 break-words leading-snug sm:whitespace-nowrap">{canPracticeLocally ? "Run" : "Run Tests"}</span>
           </button>
+
+          {canPracticeLocally && showServerRun && (
+            <button type="button" onClick={() => void handleRun(true)}
+              disabled={isExecuting || completionLoading || Boolean(completionError)}
+              title="Uses the shared server execution allowance"
+              className="min-h-11 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5">
+              Run on server
+            </button>
+          )}
+          {practicePhase && isExecuting && (
+            <button type="button" onClick={() => activePractice.current?.abort()}
+              className="min-h-11 rounded-xl border border-rose-300 px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40">
+              Stop
+            </button>
+          )}
 
           {/* Submit button */}
           <button
@@ -724,27 +795,41 @@ export default function CodeLabScene({
       </div>
 
       {/* ──── Main Layout ──── */}
-      <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:grid md:[grid-template-columns:var(--codelab-columns)]"
+        data-codelab-panels
+        style={{ '--codelab-columns': tutorialCollapsed
+          ? `44px minmax(240px, ${panelSizes[1]}fr) 6px minmax(180px, ${panelSizes[2]}fr)`
+          : `minmax(180px, ${panelSizes[0]}fr) 6px minmax(240px, ${panelSizes[1]}fr) 6px minmax(180px, ${panelSizes[2]}fr)` } as React.CSSProperties}>
+        {tutorialCollapsed && <div className="hidden min-h-0 flex-col items-center border-r border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-[#181B26] md:flex">
+          <button type="button" aria-label="Show Tutorial & Challenge" title="Show Tutorial & Challenge"
+            aria-expanded={false} aria-controls={tutorialId} onClick={() => setTutorialCollapsed(false)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent text-slate-600 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-slate-300">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>}
         {/* Left Panel: W3Schools Educational Problem Statement */}
         <aside
-          className={`w-full md:w-[32%] min-w-0 md:min-w-[240px] max-w-full bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-white/10 ${
-            mobilePanel === "tutorial" ? "flex" : "hidden md:flex"
-          } min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
-          style={{ resize: "horizontal" }}
+          id={tutorialId}
+          data-codelab-tutorial
+          className={`w-full min-w-0 max-w-full bg-white dark:bg-[#141721] ${
+            mobilePanel === "tutorial" ? "flex" : "hidden"
+          } ${tutorialCollapsed ? "md:hidden" : "md:flex"} min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
         >
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="flex min-h-11 shrink-0 items-center justify-between gap-1 pl-3 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[11px] font-bold text-slate-600 dark:text-[#8B92A5] uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                 Tutorial & Challenge
               </span>
             </div>
-            {tags.length > 0 && (
-              <span className="text-[11px] font-mono text-slate-400">#{tags[0]}</span>
-            )}
+            <button type="button" aria-label="Hide Tutorial & Challenge" title="Hide Tutorial & Challenge"
+              aria-expanded={true} aria-controls={tutorialId} onClick={() => setTutorialCollapsed(true)}
+              className="hidden h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent text-slate-600 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-slate-300 md:flex">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-6 min-w-0 max-w-full">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6 min-w-0 max-w-full">
             {/* Parsed description markdown */}
             <div
               className="codelab-prose w-full max-w-full min-w-0 text-sm leading-relaxed text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:[overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_code]:whitespace-pre-wrap [&_code]:break-words [&_code]:[overflow-wrap:anywhere]"
@@ -754,7 +839,7 @@ export default function CodeLabScene({
             {/* ──── Adaptive 3-Tier Progressive Hint System ──── */}
             {progressiveHints.length > 0 && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-[#F0F2F8] uppercase tracking-wider">
                     <Lightbulb className="w-4 h-4 text-amber-500" />
                     <span>Adaptive Hints</span>
@@ -770,7 +855,7 @@ export default function CodeLabScene({
                     <p className="leading-relaxed font-medium">
                       <strong>Try exploring first.</strong> If you run into errors or get stuck, progressive hints will automatically unlock to guide you:
                     </p>
-                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-slate-500 dark:text-[#8B92A5] pt-1">
                       <span>Hint 1 (Concept Direction):</span>
                       <span className="font-mono text-[#F97316] font-bold">{failedRunCount} / 3 attempts</span>
                     </div>
@@ -806,7 +891,7 @@ export default function CodeLabScene({
                     return (
                       <div
                         key={tierIdx}
-                        className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#555C72] flex items-center justify-between text-xs"
+                        className="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 text-xs"
                       >
                         <span className="flex items-center gap-1.5 font-semibold">
                           <Lock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
@@ -854,9 +939,13 @@ export default function CodeLabScene({
           </div>
         </aside>
 
+        {!tutorialCollapsed && <ResizeDivider label="Resize tutorial and editor panels"
+          value={panelSizes[0] / (panelSizes[0] + panelSizes[1]) * 100}
+          minBefore={200} minAfter={320} resetValue={24 / 78 * 100} onChange={share => resizePanels(0, share)} />}
+
         {/* Center / Preview Panel */}
         {executionMethod === "html-preview" || executionMethod === "css-preview" ? (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 overflow-hidden bg-white dark:bg-[#141721]`} data-codelab-editor>
             <HTMLPreviewEditor
               initialCode={codeByLanguage[fixedLanguage as CodeLabLanguage] || ""}
               language={fixedLanguage as "html" | "css"}
@@ -865,20 +954,24 @@ export default function CodeLabScene({
             />
           </main>
         ) : (
-          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 bg-white dark:bg-[#141721]`}>
+          <main className={`flex-1 ${mobilePanel === "editor" ? "flex" : "hidden md:flex"} flex-col min-h-0 min-w-0 overflow-hidden bg-white dark:bg-[#141721]`} data-codelab-editor>
             <CodeEditor />
           </main>
         )}
 
+        <ResizeDivider label="Resize editor and results panels"
+          value={panelSizes[1] / (panelSizes[1] + panelSizes[2]) * 100}
+          minBefore={320} minAfter={200} resetValue={54 / 76 * 100} onChange={share => resizePanels(1, share)} />
+
         {/* Right Panel: Test Suite & Results */}
         <aside
-          className={`w-full md:w-[30%] min-w-0 md:min-w-[220px] ${
+          data-codelab-results
+          className={`w-full min-w-0 overflow-hidden ${
             mobilePanel === "results" ? "flex" : "hidden md:flex"
           } min-h-0 flex-col bg-white dark:bg-[#141721] border-l border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-[#F0F2F8]`}
-          style={{ resize: "horizontal" }}
         >
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] flex-none">
+          <div className="flex min-h-11 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] flex-none">
             <button
               onClick={() => setActiveTab("console")}
               className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -887,7 +980,7 @@ export default function CodeLabScene({
                   : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
-              <Terminal className="w-3.5 h-3.5" /> Output
+              <Terminal className="w-3.5 h-3.5 shrink-0" /> Output
             </button>
             <button
               onClick={() => setActiveTab("tests")}
@@ -897,7 +990,7 @@ export default function CodeLabScene({
                   : "text-slate-500 hover:text-slate-800 dark:text-[#8B92A5] dark:hover:text-[#F0F2F8]"
               }`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5" /> Test Suite
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Tests
               {totalTestsCount > 0 && (
                 <span
                   className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
@@ -913,23 +1006,24 @@ export default function CodeLabScene({
           </div>
 
           {/* Results Content */}
-          <div className="flex-1 overflow-y-auto p-4 text-xs">
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto p-3 text-xs [overflow-wrap:anywhere]">
             {activeTab === "console" ? (
               <div className="space-y-4 font-mono">
                 {!consoleOutput && !isExecuting && (
                   <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2 font-sans">
                     <Terminal className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-                    <p className="text-xs">Click &quot;Run Tests&quot; to execute your code.</p>
+                    <p className="text-xs">Run your code to see its output.</p>
                   </div>
                 )}
                 {isExecuting && (
                   <div className="flex items-center justify-center h-48 gap-2 text-slate-500">
                     <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
-                    <span>Executing in sandbox...</span>
+                    <span role="status">{practicePhase || "Executing on server…"}</span>
                   </div>
                 )}
                 {consoleOutput && (
                   <div className="space-y-3">
+                    {practiceResult && <p className="font-sans text-xs text-slate-600 dark:text-slate-300" role="status">Practice result — submit for grading.</p>}
                     {consoleOutput.stdout && (
                       <div className="p-4 bg-slate-900 dark:bg-[#10131C] border border-slate-800 dark:border-white/10 text-emerald-400 dark:text-emerald-300 rounded-2xl shadow-xs">
                         <div className="text-[11px] text-slate-400 dark:text-slate-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5">
@@ -984,7 +1078,7 @@ export default function CodeLabScene({
                           Test Case #{idx + 1}
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold uppercase">
+                      <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase">
                         {result.passed ? (
                           <span className="text-emerald-600 dark:text-emerald-400">Passed</span>
                         ) : (

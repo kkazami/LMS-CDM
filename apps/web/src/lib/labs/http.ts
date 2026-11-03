@@ -75,6 +75,7 @@ export async function handleLabRequest(request: Request, route: { courseId?: str
         result = await service.getAssignment(actor, courseId, assignmentId, page, studentId);
       }
       else if (parts.length === 1 && method === 'PATCH') result = await service.patchAssignment(actor, courseId, assignmentId, await jsonBody(request));
+      else if (parts.length === 2 && parts[1] === 'gradebook' && method === 'POST') result = await service.gradeLabFromGradebook(actor, courseId, assignmentId, await jsonBody(request));
       else if (parts[1] === 'attempts') {
         const attemptId = parts[2];
         if (parts.length === 2 && method === 'POST') result = await service.openAttempt(actor, courseId, assignmentId);
@@ -93,7 +94,7 @@ export async function handleLabRequest(request: Request, route: { courseId?: str
           if (!context.assignment.version.steps.some(s => s.id === parts[4] && s.type === 'EVIDENCE_UPLOAD')) throw new AccessError(404, 'Evidence step not found.');
           await persistentLimit(`upload:${actor.id}`, 20, 60000);
           result = await withUploadSlot(async () => {
-            const data = await boundedUploadBody(request, LAB_MAX_BYTES);
+            const data = await boundedUploadBody(request, LAB_MAX_BYTES, 240000);
             const file = data.get('file');
             if (!(file instanceof File) || [...data.values()].filter(v => v instanceof File).length !== 1 || [...data.keys()].some(k => !['file', 'expectedRevision', 'replaceEvidenceId'].includes(k))) throw new AccessError(400, 'Provide exactly one evidence file.');
             const revision = String(data.get('expectedRevision') ?? '');

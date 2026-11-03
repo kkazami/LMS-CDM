@@ -1,0 +1,56 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  color: #34769f;
+  mask-image: linear-gradient(90deg, #000, #000b 28%, #000b 72%, #000);
+}
+
+.backdrop svg { width: 100%; height: 100%; }
+.backdrop path { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.traces { stroke: currentColor; stroke-width: 1.2; opacity: .18; }
+.relief { stroke: #fff; stroke-width: 1.5; opacity: .45; }
+.signals { stroke: #4badeb; stroke-width: 2; opacity: .62; }
+.signals path {
+  stroke-dasharray: .07 .93;
+  animation: ohm-circuit-transfer 22s linear infinite;
+  animation-play-state: paused;
+}
+.backdrop[data-running=true] .signals path { animation-play-state: running; }
+
+.toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--ohm-edge);
+  border-radius: 12px;
+  color: var(--ohm-muted);
+  background: var(--ohm-ground);
+  box-shadow: 2px 2px 5px #18233208, -2px -2px 5px #ffffff60;
+}
+.toggle:hover { color: var(--ohm-ink); }
+
+:global(.dark) .traces, :global([data-theme=dark]) .traces { stroke: #6ba6c9; opacity: .25; }
+:global(.dark) .relief, :global([data-theme=dark]) .relief { stroke: #b5dcf0; opacity: .025; }
+:global(.dark) .signals, :global([data-theme=dark]) .signals { opacity: .65; }
+:global(.dark) .toggle, :global([data-theme=dark]) .toggle { box-shadow: 2px 2px 5px #0002, -2px -2px 5px #ffffff04; }
+
+@keyframes ohm-circuit-transfer {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  12%, 88% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+@media (max-width: 639px) {
+  .backdrop { opacity: .9; }
+  .signals path:nth-child(n+4) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signals, .toggle { display: none; }
+  .signals path { animation: none; }
+}
+@media print { .backdrop, .toggle { display: none; } }

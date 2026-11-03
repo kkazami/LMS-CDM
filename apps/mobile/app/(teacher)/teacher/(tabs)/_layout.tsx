@@ -36,7 +36,7 @@ export default function TeacherTabsLayout() {
           <Tabs.Screen
             name="alerts"
             options={{
-              title: 'Broadcasts',
+              title: 'Alerts',
             }}
           />
           <Tabs.Screen

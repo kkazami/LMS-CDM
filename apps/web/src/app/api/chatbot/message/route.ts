@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
@@ -15,45 +13,7 @@ export async function OPTIONS(request: Request) {
 }
 
 function getGroqApiKey(): string {
-  let key = (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
-  if (
-    !key ||
-    key.toLowerCase().includes("your") ||
-    key.toLowerCase().includes("api-key") ||
-    key.toLowerCase().includes("placeholder") ||
-    key.length < 15
-  ) {
-    try {
-      const candidatePaths = [
-        path.resolve(process.cwd(), ".env"),
-        path.resolve(process.cwd(), ".env.local"),
-        path.resolve(process.cwd(), "apps/web/.env"),
-        path.resolve(process.cwd(), "apps/web/.env.local"),
-        path.resolve(process.cwd(), "../../.env"),
-      ];
-      for (const p of candidatePaths) {
-        if (fs.existsSync(p)) {
-          const content = fs.readFileSync(p, "utf8");
-          const match = content.match(/^GROQ_API_KEY=(.*)$/m);
-          if (match) {
-            const parsed = match[1].trim().replace(/^["']|["']$/g, "");
-            if (
-              parsed &&
-              !parsed.toLowerCase().includes("your") &&
-              !parsed.toLowerCase().includes("api-key") &&
-              !parsed.toLowerCase().includes("placeholder") &&
-              parsed.length >= 15
-            ) {
-              return parsed;
-            }
-          }
-        }
-      }
-    } catch {
-      // fallback to key
-    }
-  }
-  return key;
+  return (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
 }
 
 async function callGroqFallback({
@@ -127,45 +87,7 @@ async function callGroqFallback({
 }
 
 function getGeminiApiKey(): string {
-  let key = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
-  if (
-    !key ||
-    key.toLowerCase().includes("your") ||
-    key.toLowerCase().includes("api-key") ||
-    key.toLowerCase().includes("placeholder") ||
-    key.length < 20
-  ) {
-    try {
-      const candidatePaths = [
-        path.resolve(process.cwd(), ".env"),
-        path.resolve(process.cwd(), ".env.local"),
-        path.resolve(process.cwd(), "apps/web/.env"),
-        path.resolve(process.cwd(), "apps/web/.env.local"),
-        path.resolve(process.cwd(), "../../.env"),
-      ];
-      for (const p of candidatePaths) {
-        if (fs.existsSync(p)) {
-          const content = fs.readFileSync(p, "utf8");
-          const match = content.match(/^GEMINI_API_KEY=(.*)$/m);
-          if (match) {
-            const parsed = match[1].trim().replace(/^["']|["']$/g, "");
-            if (
-              parsed &&
-              !parsed.toLowerCase().includes("your") &&
-              !parsed.toLowerCase().includes("api-key") &&
-              !parsed.toLowerCase().includes("placeholder") &&
-              parsed.length >= 20
-            ) {
-              return parsed;
-            }
-          }
-        }
-      }
-    } catch {
-      // fallback to key
-    }
-  }
-  return key;
+  return (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
 }
 
 // In-memory sliding window rate limiter: 15 messages per 60 seconds per user

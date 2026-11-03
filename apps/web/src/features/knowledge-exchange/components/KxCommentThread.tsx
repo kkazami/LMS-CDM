@@ -1,5 +1,7 @@
 "use client";
 
+import { uploadKnowledgeImage } from "../upload-image";
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Send,
@@ -232,19 +234,7 @@ export default function KxCommentThread({
     setImageUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to upload image.");
-      }
-
+      const data = { url: await uploadKnowledgeImage(file) };
       if (data?.url) {
         setAttachedImage({
           url: data.url,
@@ -437,7 +427,7 @@ export default function KxCommentThread({
 
                 {/* Right: Bubble + Action Line */}
                 <div className="flex-1 min-w-0">
-                  <div className="inline-flex items-start gap-1 max-w-full group/bubble">
+                  <div className="inline-flex min-w-0 items-start gap-1 max-w-full group/bubble">
                     {/* Facebook Speech Bubble */}
                     <div className="bg-slate-100 dark:bg-[#242526] hover:bg-slate-200/60 dark:hover:bg-[#2c2d30] rounded-2xl px-3.5 py-2 inline-block max-w-full transition-colors border border-slate-200/60 dark:border-white/5">
                       {/* Author Header */}
@@ -576,7 +566,7 @@ export default function KxCommentThread({
                   )}
 
                   {/* Action Row: Up/Down Vote · Reply · Time */}
-                  <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
                     {/* Upvote & Downvote Control */}
                     <div className="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-white/5 p-0.5 border border-slate-200/60 dark:border-white/5">
                       <button
@@ -662,7 +652,7 @@ export default function KxCommentThread({
       )}
 
       {/* Facebook-style Bottom Comment Composer */}
-      <div className="flex items-start gap-2.5 pt-1.5">
+      <div className="flex min-w-0 items-start gap-2.5 pt-1.5">
         {/* Hidden File Input for Comments */}
         <input
           ref={commentFileInputRef}
@@ -767,9 +757,9 @@ export default function KxCommentThread({
             />
 
             {/* Integrated Toolbar inside input bubble (No harsh divider line) */}
-            <div className="flex items-center justify-between pt-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
               {/* Left tools: Photo Upload & Anonymous Toggle */}
-              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-slate-500 dark:text-slate-400">
                 {/* Photo upload icon */}
                 <button
                   type="button"
@@ -790,10 +780,12 @@ export default function KxCommentThread({
                       ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold"
                       : "hover:bg-slate-200/70 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400"
                   }`}
+                  aria-label="Post anonymously"
+                  aria-pressed={isAnonymous}
                   title="Toggle anonymous mode"
                 >
                   <UserX className="h-3.5 w-3.5" />
-                  <span>{isAnonymous ? "Anonymous ON" : "Post anonymously"}</span>
+                  <span className="hidden sm:inline">{isAnonymous ? "Anonymous ON" : "Post anonymously"}</span>
                 </button>
               </div>
 

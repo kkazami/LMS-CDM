@@ -1,0 +1,509 @@
+"use client";
+
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
+import YourWorkPanel from "@/components/courses/YourWorkPanel";
+import OfflineDraftCard from "@/components/offline/OfflineDraftCard";
+import type { InstituteTheme } from "@/lib/theme";
+import FocusButton from "@/components/focus/FocusButton";
+import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
+
+const ConvertFlashcardsModal = dynamic(
+  () => import("@/components/courses/ConvertFlashcardsModal"),
+  { ssr: false }
+);
+
+import MaterialInlineViewer from "@/components/courses/MaterialInlineViewer";
+import {
+  classifyAttachmentMedia,
+  getFriendlyAttachmentTitle,
+  getSecondaryAttachmentLabel,
+} from "@/lib/ite/media-preview";
+
+interface Attachment {
+  id: string;
+  type: string;
+  url: string;
+  fileName: string;
+}
+
+interface SubmissionAttachment {
+  id: string;
+  type: string;
+  url: string;
+  fileName: string;
+}
+
+interface Submission {
+  id: string;
+  status: string;
+  grade: number | null;
+  isReturned: boolean;
+  submittedAt: Date | null;
+  attachments: SubmissionAttachment[];
+}
+
+interface SyllabusItem {
+  id: string;
+  isProgramming?: boolean;
+  requireGithubRepo?: boolean;
+  type: string;
+  title: string;
+  description: string;
+  dueDate: Date | null;
+  maxPoints: number | null;
+  attachments: Attachment[];
+  course: {
+    id: string;
+    title: string;
+    code: string;
+  };
+  form?: {
+    id: string;
+    status: string;
+    formType: string;
+    timeLimitMins: number | null;
+    maxAttempts: number;
+  } | null;
+}
+
+interface AssignmentDetailClientProps {
+  item: SyllabusItem;
+  submission: Submission | null;
+  isStudent: boolean;
+  isInstructor: boolean;
+  instituteCode: string;
+  courseId: string;
+  enrolledCount?: number;
+  theme: InstituteTheme;
+  hasSubmittedForm?: boolean;
+  canRetakeForm?: boolean;
+  formScore?: { rawScore: number; totalPoints: number } | null;
+}
+
+function formatDueDate(dueDate: Date | null): string {
+  if (!dueDate) return "No due date";
+  return new Date(dueDate).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// Check if a file extension supports flashcard conversion
+function isConvertibleFile(fileName: string): boolean {
+  const ext = fileName.toLowerCase();
+  return ext.endsWith(".pdf") || ext.endsWith(".pptx") || ext.endsWith(".docx") || ext.endsWith(".txt");
+}
+
+function AttachmentChip({ 
+  attachment, 
+  item, 
+  instituteCode, 
+  isStudent,
+  onConvertClick,
+  activePreviewId,
+  onTogglePreview,
+  onClosePreview,
+}: { 
+  attachment: Attachment;
+  item: SyllabusItem;
+  instituteCode: string;
+  isStudent: boolean;
+  onConvertClick?: (attachmentId: string, attachmentName: string) => void;
+  activePreviewId?: string | null;
+  onTogglePreview?: (attachmentId: string) => void;
+  onClosePreview?: () => void;
+}) {
+  const isIte = instituteCode?.toLowerCase() === "ite";
+  const isLink = attachment.type === "LINK";
+  const Icon = isLink ? Link2 : FileText;
+
+  const isMaterialFile = isStudent && item.type === "MATERIAL" && !isLink;
+  const href = isMaterialFile
+    ? `/${instituteCode}/learning-materials/${item.course.id}/${item.id}/read?attachmentId=${attachment.id}`
+    : attachment.url;
+
+  // Show the convert button only for MATERIAL items with supported file types
+  const showConvertBtn = isStudent && item.type === "MATERIAL" && !isLink && isConvertibleFile(attachment.fileName);
+
+  // In ITE, determine whether this attachment opens an inline preview accordion
+  const media = isIte ? classifyAttachmentMedia(attachment) : null;
+  const isPreviewable = isIte && media !== null && media.kind !== "external_link";
+  const isExpanded = isPreviewable && activePreviewId === attachment.id;
+
+  // Friendly title & secondary label for ITE
+  const displayTitle = isIte
+    ? getFriendlyAttachmentTitle(attachment)
+    : (attachment.fileName || attachment.url);
+  const secondaryLabel = isIte
+    ? getSecondaryAttachmentLabel(attachment)
+    : (isLink ? "Link" : "File");
+
+  // Use Link for internal navigation, otherwise use 'a'
+  const Component = isMaterialFile ? Link : "a";
+
+  return (
+    <div className="flex flex-col w-full min-w-0 max-w-full">
+      <div className="flex items-center gap-2 w-full min-w-0">
+        {isPreviewable ? (
+          <button
+            type="button"
+            onClick={() => onTogglePreview?.(attachment.id)}
+            aria-expanded={isExpanded}
+            aria-label={`Toggle inline preview for ${displayTitle}`}
+            className={`flex-1 min-w-0 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:shadow-xs transition-all group text-left cursor-pointer overflow-hidden ${
+              isExpanded
+                ? "border-blue-500/50 dark:border-blue-500/40 ring-1 ring-blue-500/20"
+                : "hover:border-blue-500/30"
+            }`}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <Icon className="h-4 w-4 shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p
+                className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate"
+                title={attachment.url}
+              >
+                {displayTitle}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5] truncate">
+                {secondaryLabel}
+              </p>
+            </div>
+            <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${
+              isExpanded ? "rotate-90 text-blue-600 dark:text-blue-400" : "text-slate-300 dark:text-slate-600 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+            }`} />
+          </button>
+        ) : (
+          <Component
+            href={href}
+            target={isMaterialFile ? undefined : "_blank"}
+            rel={isMaterialFile ? undefined : "noopener noreferrer"}
+            download={!isMaterialFile && attachment.url.startsWith("data:") ? (attachment.fileName || "file") : undefined}
+            className={`flex-1 min-w-0 flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/4 hover:shadow-xs transition-all group overflow-hidden ${
+              isIte ? "hover:border-blue-500/30" : "hover:border-orange-500/30"
+            }`}
+          >
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+              isIte ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-orange-500/10 dark:bg-orange-500/20 text-[#F97316]"
+            }`}>
+              <Icon className="h-4 w-4 shrink-0" />
+            </div>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p
+                className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8] truncate"
+                title={attachment.url}
+              >
+                {displayTitle}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-[#8B92A5] truncate">{secondaryLabel}</p>
+            </div>
+            <ChevronRight className={`h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 transition-colors ${
+              isIte ? "group-hover:text-blue-600 dark:group-hover:text-blue-400" : "group-hover:text-[#F97316]"
+            }`} />
+          </Component>
+        )}
+
+        {/* Convert to Flashcards button — only for MATERIAL file attachments */}
+        {showConvertBtn && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onConvertClick?.(attachment.id, attachment.fileName);
+            }}
+            title="Convert to Flashcards"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Accordion inline preview panel (ITE only, under item) */}
+      {isPreviewable && isExpanded && (
+        <MaterialInlineViewer
+          attachment={attachment}
+          onClose={onClosePreview || (() => onTogglePreview?.(attachment.id))}
+          instituteCode={instituteCode}
+        />
+      )}
+    </div>
+  );
+}
+
+export default function AssignmentDetailClient({
+  item,
+  submission,
+  isStudent,
+  isInstructor,
+  instituteCode,
+  courseId,
+  enrolledCount,
+  theme,
+  hasSubmittedForm = false,
+  canRetakeForm = false,
+  formScore = null,
+}: AssignmentDetailClientProps) {
+  const isPastDeadline = item.dueDate ? new Date() > item.dueDate : false;
+  const isIte = instituteCode?.toLowerCase() === "ite";
+  const typeMeta = getClassworkAppearance(item.type);
+  const TypeIcon = typeMeta.icon;
+
+  // ── Convert to Flashcards modal state ──
+  const [convertModal, setConvertModal] = useState<{
+    attachmentId: string;
+    attachmentName: string;
+  } | null>(null);
+
+  // ── Active inline preview attachment state (ITE only, one open at a time) ──
+  const [activePreviewAttachmentId, setActivePreviewAttachmentId] = useState<string | null>(null);
+
+  return (
+    <div className="min-h-screen">
+      {/* Breadcrumb header */}
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-4 py-3 sm:px-6 sm:py-4 mb-6 shadow-xs">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link
+            href={`/${instituteCode}/courses/${courseId}/classwork`}
+            className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8] transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate max-w-30 sm:max-w-50">{item.course.title}</span>
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300 dark:text-white/10 shrink-0" />
+          <span className="text-xs sm:text-sm font-medium text-slate-900 dark:text-[#F0F2F8] truncate flex-1 min-w-0">
+
+            {item.title}
+          </span>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto">
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Left: Assignment details */}
+          <div className="space-y-6 min-w-0">
+            {/* Header card */}
+            <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${typeMeta.badgeClassName}`}>
+                  <TypeIcon size={14} aria-hidden="true"/>
+                  {typeMeta.label}
+                </span>
+                {isStudent && (
+                  <FocusButton
+                    contextType={item.type === "QUIZ" ? "QUIZ" : item.type === "MATERIAL" ? "MATERIAL" : "STUDY"}
+                    courseId={courseId}
+                    refId={item.id}
+                    title={item.title}
+                  />
+                )}
+              </div>
+
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-4">{item.title}</h1>
+              {item.isProgramming && <p className="mb-4 text-sm font-medium text-slate-600 dark:text-[#8B92A5]">{item.requireGithubRepo ? 'Programming coursework · GitHub repository required' : 'Programming coursework'}</p>}
+
+              <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-[#8B92A5]">
+                {item.dueDate && (
+                  <div className={`flex items-center gap-1.5 ${isPastDeadline ? "text-red-500 font-medium" : ""}`}>
+                    <Calendar className="h-4 w-4" />
+                    <span>Due {formatDueDate(item.dueDate)}</span>
+                    {isPastDeadline && <span className="text-xs font-semibold">(Past)</span>}
+                  </div>
+                )}
+                {item.maxPoints && (
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-4 w-4 text-amber-500" />
+                    <span>{item.maxPoints} points</span>
+                  </div>
+                )}
+                {isInstructor && enrolledCount !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4" />
+                    <span>{enrolledCount} students</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {item.description && (
+              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6">
+                <h2 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">Instructions</h2>
+                <div className="text-slate-700 dark:text-[#D1D5DB] leading-relaxed whitespace-pre-wrap">{item.description}</div>
+              </div>
+            )}
+
+            {/* Instructor attachments */}
+            {item.attachments.length > 0 && (
+              <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs p-6 min-w-0 overflow-hidden">
+                <h2 className="text-xs font-bold text-slate-500 dark:text-[#8B92A5] uppercase tracking-wider mb-3">
+                  Materials & Resources
+                </h2>
+                <div className="space-y-2 w-full min-w-0">
+                  {item.attachments.map((att) => (
+                    <AttachmentChip 
+                      key={att.id} 
+                      attachment={att} 
+                      item={item}
+                      instituteCode={instituteCode}
+                      isStudent={isStudent}
+                      onConvertClick={(id, name) => setConvertModal({ attachmentId: id, attachmentName: name })}
+                      activePreviewId={activePreviewAttachmentId}
+                      onTogglePreview={(id) => setActivePreviewAttachmentId((prev) => (prev === id ? null : id))}
+                      onClosePreview={() => setActivePreviewAttachmentId(null)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Form Assessment links for Instructor */}
+            {isInstructor && item.form && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link
+                  href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/builder`}
+                  className="flex items-center justify-between rounded-2xl bg-primary/10 border border-primary/20 p-5 hover:bg-primary/15 transition-all group"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Form Builder</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Edit questions & settings</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                <Link
+                  href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/responses`}
+                  className="flex items-center justify-between rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-5 hover:bg-emerald-500/15 transition-all group"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Responses & Analytics</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">View scores & student answers</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            )}
+
+            {/* Instructor: view submissions link */}
+            {isInstructor && !item.form && (
+              <Link
+                href={`/${instituteCode}/courses/${courseId}/classwork/${item.id}/submissions`}
+                className={`flex items-center justify-between rounded-2xl p-5 transition-all group ${
+                  isIte
+                    ? "bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 hover:bg-blue-500/20"
+                    : "bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/20 hover:bg-orange-500/20"
+                }`}
+              >
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-[#F0F2F8]">Student Submissions</p>
+                  <p className={`text-sm mt-0.5 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-orange-600 dark:text-orange-400"}`}>
+                    View and grade submitted work
+                  </p>
+                </div>
+                <ChevronRight className={`h-5 w-5 transition-transform group-hover:translate-x-0.5 ${
+                  isIte ? "text-blue-500" : "text-orange-500"
+                }`} />
+              </Link>
+            )}
+
+          </div>
+
+          {/* Right: Your Work panel / Form Start Panel (students only) */}
+          {isStudent && item.type !== "MATERIAL" && (
+            <div className="min-w-0 space-y-4">
+              {item.form ? (
+                <div className="rounded-2xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Assessment Form
+                    </span>
+                    {formScore ? (
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                        Score: {formScore.rawScore} / {formScore.totalPoints}
+                      </span>
+                    ) : submission?.grade !== null && submission?.grade !== undefined ? (
+                      <span className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+                        Score: {item.maxPoints ? `${Math.round((submission.grade / 100) * item.maxPoints)} / ${item.maxPoints}` : submission.grade}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Answer the interactive assessment online. Autosaves as you type.
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/${instituteCode}/courses/${courseId}/classwork/forms/${item.form.id}/respond${
+                      canRetakeForm && (submission?.status === "SUBMITTED" || hasSubmittedForm)
+                        ? "?retake=true"
+                        : ""
+                    }`}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-white shadow-xs hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: theme.colors.primary }}
+                  >
+                    <span>
+                      {submission?.status === "SUBMITTED" || hasSubmittedForm
+                        ? canRetakeForm
+                          ? "View Submitted Form / Retake"
+                          : "View Submitted Form"
+                        : "Start Assessment Form"}
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : (
+                submission && (
+                  <>
+                    {isStudent && instituteCode.toLowerCase() === "ite" && !item.requireGithubRepo && (
+                      <OfflineDraftCard
+                        itemId={item.id}
+                        courseId={courseId}
+                        itemTitle={item.title}
+                        isPastDeadline={isPastDeadline}
+                        isSubmitted={submission.status === "SUBMITTED"}
+                      />
+                    )}
+                    <YourWorkPanel
+                      requireGithubRepo={Boolean(item.requireGithubRepo)}
+                      submission={submission}
+                      isPastDeadline={isPastDeadline}
+                      maxPoints={item.maxPoints}
+                      instituteCode={instituteCode}
+                      courseId={courseId}
+                      itemId={item.id}
+                      theme={theme}
+                    />
+                  </>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Convert to Flashcards Modal */}
+      {convertModal && (
+        <ConvertFlashcardsModal
+          attachmentId={convertModal.attachmentId}
+          attachmentName={convertModal.attachmentName}
+          courseId={courseId}
+          instituteCode={instituteCode}
+          onClose={() => setConvertModal(null)}
+        />
+      )}
+    </div>
+  );
+}

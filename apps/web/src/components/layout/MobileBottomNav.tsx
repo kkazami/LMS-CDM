@@ -16,6 +16,7 @@ interface MobileBottomNavProps {
   userName?: string;
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
+  isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
 }
 
@@ -26,6 +27,7 @@ export default function MobileBottomNav({
   userName,
   avatarUrl,
   isEligibleForActivities,
+  isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -134,6 +136,7 @@ export default function MobileBottomNav({
 
       {/* More Options Bottom Sheet */}
       <MobileMoreSheet
+        isEligibleForOhmward={isEligibleForOhmward}
 
         isOpen={isMoreOpen}
         onClose={() => setIsMoreOpen(false)}

@@ -6,7 +6,7 @@ test('gradebook final grade requires every score, accepts zero, and hides again 
   const fs = require('node:fs');
   const path = require('node:path');
   const ts = require(require.resolve('typescript', { paths: [path.resolve('apps/web')] }));
-  const source = fs.readFileSync('apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/gradebook/client.tsx', 'utf8');
+  const source = fs.readFileSync('apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/client.tsx', 'utf8');
   const startIdx = source.indexOf('  function computeFinalGrade(');
   const endIdx = source.indexOf('  function handleCellEdit(');
   const fallbackCalculation = `

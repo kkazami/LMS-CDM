@@ -1,5 +1,7 @@
 "use client";
 
+import { uploadKnowledgeImage } from "../upload-image";
+
 import React, { useState, useRef, useMemo } from "react";
 import {
   Bold,
@@ -103,19 +105,7 @@ export default function KxRichTextEditor({
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to upload image.");
-      }
-
+      const data = { url: await uploadKnowledgeImage(file) };
       if (data?.url) {
         insertImageMarkdown(file.name, data.url);
       } else {

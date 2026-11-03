@@ -11,21 +11,35 @@ function event(id: string, start: string, end?: string): CalendarEvent {
   return { id, title: "QUIZ1", courseCode: "ITELECT3", eventDate: new Date(`2026-10-16T${start}:00+08:00`).toISOString(), endDate: end ? new Date(`2026-10-16T${end}:00+08:00`).toISOString() : null, description: "", professorName: "", eventType: "exam", maxPoints: 30, courseId: "course", creatorId: "teacher", instituteId: "ics", createdAt: "", updatedAt: "", deepLink: "/ics/courses/course/classwork/quiz" };
 }
 
-test("dashboard renders the calendar before enrolled classes and Tasks no longer renders a calendar", () => {
+test("student dashboard places a compact calendar below deadlines and Tasks opens the full calendar", () => {
   const dashboard = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/students/client.tsx"), "utf8");
   const workspace = readFileSync(path.resolve("apps/web/src/components/workspace/WorkspaceDashboard.tsx"), "utf8");
   assert.ok(dashboard.indexOf("<StudentCalendar ") > 0);
   assert.ok(dashboard.indexOf("My Enrolled Classes") > 0);
-  assert.ok(dashboard.indexOf("<StudentCalendar ") < dashboard.indexOf("My Enrolled Classes"));
+  assert.ok(dashboard.indexOf("<StudentCalendar ") > dashboard.indexOf("Deadlines"));
+  assert.ok(dashboard.includes("compact userId={userId}"));
+  const tasksPage = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/tasks/page.tsx"), "utf8");
+  assert.ok(tasksPage.includes('view === "notes"'));
+  assert.ok(tasksPage.includes("<StudentCalendar"));
+  assert.ok(tasksPage.includes("See notes & tasks"));
   assert.ok(!workspace.includes("Monthly Calendar"));
   assert.ok(!workspace.includes("Assignment Details"));
 });
 
-test("instructor dashboard renders the shared calendar before My Classes", () => {
+test("instructor dashboard uses a compact calendar and links to the full calendar below Archived Classes", () => {
   const dashboard = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/teachers/client.tsx"), "utf8");
   const page = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/teachers/page.tsx"), "utf8");
   assert.ok(dashboard.indexOf("<DashboardCalendar ") > 0);
-  assert.ok(dashboard.indexOf("<DashboardCalendar ") < dashboard.indexOf(">My Classes</h2>"));
+  assert.ok(dashboard.indexOf("<DashboardCalendar ") > dashboard.indexOf('id="pending-requests"'));
+  assert.ok(dashboard.includes("<DashboardCalendar {...calendar} compact"));
+  assert.ok(dashboard.includes("Open full calendar"));
+  for (const file of ["Sidebar.tsx", "MobileMoreSheet.tsx"]) {
+    const navigation = readFileSync(path.resolve("apps/web/src/components/layout", file), "utf8");
+    assert.match(navigation, /label: "Archived Classes"[^\n]+\n\s*\{ label: "Calendar", href: `\/\$\{(?:code|instituteCode)\}\/tasks`/);
+  }
+  const tasksPage = readFileSync(path.resolve("apps/web/src/app/(dashboard)/[institute]/tasks/page.tsx"), "utf8");
+  assert.ok(tasksPage.includes('isInstructor ? "Calendar" : "Tasks & Calendar"'));
+  assert.ok(tasksPage.includes("showClasswork={!isInstructor}"));
   assert.ok(page.includes("getDashboardCalendar"));
   assert.ok(page.includes("calendar={calendar}"));
 });

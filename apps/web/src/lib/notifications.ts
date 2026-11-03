@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 /**
  * Notification types corresponding to real LMS events.
  */
-export type NotificationType = "ANNOUNCEMENT" | "GRADE" | "CLASSWORK" | "REMINDER" | "ALERT" | "BROADCAST";
+export type NotificationType = "ANNOUNCEMENT" | "GRADE" | "CLASSWORK" | "REMINDER" | "ALERT" | "BROADCAST" | "ATTENDANCE";
 
 interface CreateNotificationParams {
   userId: string;

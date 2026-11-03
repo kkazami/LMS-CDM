@@ -14,18 +14,23 @@ import {
   Bell,
   Menu,
   BarChart2,
+  CalendarDays,
+  MessageSquare,
+  User,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../../stores/auth-store';
 import { useAlertsStore } from '../../stores/alerts-store';
 import { useMoreMenu } from './MoreMenuDrawer';
+import { IcsTabBar } from './IcsTabBar';
 import {
   getOnPrimaryColor,
   getInstituteGradients,
   useFloatingTabBarHeight,
   FLOATING_TAB_BAR_HEIGHT,
   FLOATING_TAB_BAR_MARGIN_HORIZONTAL,
+  useReducedMotion,
 } from '../../lib/design-system';
 
 export interface TabRoute {
@@ -68,15 +73,17 @@ function TabItem({
   unreadCount,
 }: TabItemProps) {
   const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0.9)).current;
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reducedMotion) { scaleAnim.stopAnimation(); scaleAnim.setValue(1); return; }
     Animated.spring(scaleAnim, {
       toValue: isFocused ? 1 : 0.9,
       friction: 6,
       tension: 100,
       useNativeDriver: true,
     }).start();
-  }, [isFocused, scaleAnim]);
+  }, [isFocused, scaleAnim, reducedMotion]);
 
   const renderIcon = (color: string, size: number) => {
     const routeName = route.name;
@@ -98,6 +105,9 @@ function TabItem({
 
     // Student tabs
     switch (routeName) {
+      case 'agenda': return <CalendarDays size={size} color={color} />;
+      case 'community': return <MessageSquare size={size} color={color} />;
+      case 'profile': return <User size={size} color={color} />;
       case 'dashboard':
         return <LayoutDashboard size={size} color={color} />;
       case 'courses':
@@ -122,7 +132,7 @@ function TabItem({
       accessibilityLabel={`${label} tab`}
       onPress={onPress}
       onLongPress={onLongPress}
-      style={styles.tabButton}
+      style={[styles.tabButton, route.name === 'community' && { flex: 1.3, minWidth: 68 }]}
       activeOpacity={0.8}
     >
       <Animated.View
@@ -132,7 +142,7 @@ function TabItem({
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        {renderIcon(isFocused ? onPrimaryColor : 'rgba(255, 255, 255, 0.55)', isFocused ? 22 : 21)}
+        {renderIcon(isFocused ? onPrimaryColor : 'rgba(255, 255, 255, 0.85)', isFocused ? 22 : 21)}
 
         {showBadge && (
           <View style={[styles.badge, isFocused && styles.badgeActive]}>
@@ -142,11 +152,17 @@ function TabItem({
           </View>
         )}
       </Animated.View>
+      <Text numberOfLines={2} maxFontSizeMultiplier={2} style={{ maxWidth: '100%', textAlign: 'center', color: '#FFFFFF', fontSize: 12, lineHeight: 16, fontWeight: isFocused ? '700' : '500' }}>{label === 'Dashboard' ? 'Home' : label}</Text>
     </TouchableOpacity>
   );
 }
 
-export function FloatingPillTabBar({
+export function FloatingPillTabBar(props: FloatingPillTabBarProps) {
+  const theme = useTheme();
+  return theme.code === 'ics' ? <IcsTabBar {...props} /> : <LegacyTabBar {...props} />;
+}
+
+function LegacyTabBar({
   state,
   descriptors,
   navigation,
@@ -157,7 +173,7 @@ export function FloatingPillTabBar({
   const unreadCount = useAlertsStore((s) => s.unreadCount);
   const fetchUnreadCount = useAlertsStore((s) => s.fetchUnreadCount);
   const { openMenu } = useMoreMenu();
-  const { bottomLift, totalClearance } = useFloatingTabBarHeight();
+  const { bottomLift, totalClearance, barHeight } = useFloatingTabBarHeight();
 
   const gradients = getInstituteGradients(theme.colors.primary, theme.isDark);
   const onPrimaryColor = getOnPrimaryColor(theme);
@@ -189,6 +205,7 @@ export function FloatingPillTabBar({
           styles.container,
           {
             bottom: bottomLift,
+            height: barHeight,
             backgroundColor: gradients.pillBackground,
             borderColor: gradients.borderTint,
           },
@@ -196,6 +213,7 @@ export function FloatingPillTabBar({
       >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
+        if (options.href === null || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
         const isFocused = state.index === index;
         const isMore = route.name === 'more';
 
@@ -278,13 +296,14 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
+    minWidth: 48,
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconContainer: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',

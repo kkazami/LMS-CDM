@@ -3,6 +3,7 @@ import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 
 
 import { db } from "@/lib/db";
+import { attendanceEnrollmentChanged } from '@/lib/attendance/lifecycle';
 import { executeSkill } from "./index";
 import type { SkillResult } from "./index";
 
@@ -78,20 +79,12 @@ export async function enrollmentManager(
 
     if (input.action === "auto-process") {
       // Auto-process: approve all pending enrollments for this course
-      const pendingEnrollments = await db.enrollment.findMany({
-        where: {
-          courseId: input.courseId,
-          status: "PENDING",
-        },
-        select: { id: true, studentId: true },
-      });
-
-      await db.enrollment.updateMany({
-        where: {
-          courseId: input.courseId,
-          status: "PENDING",
-        },
-        data: { status: "APPROVED" },
+      const pendingEnrollments = await db.$transaction(async tx => {
+        await tx.$queryRaw`SELECT id FROM "Course" WHERE id = ${input.courseId} FOR UPDATE`;
+        const pending = await tx.enrollment.findMany({ where: { courseId: input.courseId, status: "PENDING" }, select: { id: true, studentId: true } });
+        for (const enrollment of pending) await attendanceEnrollmentChanged(tx, input.courseId, enrollment.studentId, true);
+        await tx.enrollment.updateMany({ where: { courseId: input.courseId, status: "PENDING" }, data: { status: "APPROVED" } });
+        return pending;
       });
 
       for (const enrollment of pendingEnrollments) {
@@ -126,9 +119,12 @@ export async function enrollmentManager(
           continue;
         }
 
-        await db.enrollment.update({
+        await db.$transaction(async tx => {
+        await attendanceEnrollmentChanged(tx, input.courseId, enrollment.studentId, newStatus === 'APPROVED');
+        await tx.enrollment.update({
           where: { id: enrollmentId },
           data: { status: newStatus },
+        });
         });
 
         results.push({

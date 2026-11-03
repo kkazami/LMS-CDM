@@ -28,6 +28,7 @@ interface ProfileUser {
   department: string;
   yearLevel: string;
   coverColor: string;
+  bannerImageUrl: string;
   createdAt: string;
   institute: { code: string; name: string };
   taughtCourses: { id: string; title: string; code: string }[];
@@ -64,9 +65,11 @@ export default function PublicProfileClient({
     <div className="mx-auto w-full min-w-0 max-w-3xl">
       {/* Cover Banner */}
       <div
-        className="relative h-36 rounded-t-2xl sm:h-44"
+        className="relative aspect-[4/1] rounded-t-2xl"
         style={{
-          background: `linear-gradient(135deg, ${user.coverColor}, ${user.coverColor}99)`,
+          backgroundColor: user.coverColor,
+          backgroundImage: user.bannerImageUrl ? `url("${user.bannerImageUrl}")` : `linear-gradient(135deg, ${user.coverColor}, ${user.coverColor}99)`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
         }}
       >
         {/* Edit button */}

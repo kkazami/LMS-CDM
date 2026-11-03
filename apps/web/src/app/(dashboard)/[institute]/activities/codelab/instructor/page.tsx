@@ -12,6 +12,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { isEligibleForActivities, isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { db } from "@/lib/db";
+import CodeLabTrackBrowserPage from "../page";
 import { getProblemById, getProblemSummaries } from "@/features/interactive-activities/codelab/problems";
 import {
   CodeLabInstructorClient,
@@ -20,8 +21,10 @@ import {
 
 export default async function CodeLabInstructorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ institute: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/activities/codelab/instructor/page.tsx", await params);
 
@@ -45,6 +48,10 @@ export default async function CodeLabInstructorPage({
 
   if (!eligible || !isEligibleInstituteCode(institute)) {
     notFound();
+  }
+
+  if ((await searchParams).view === "codelab") {
+    return <CodeLabTrackBrowserPage params={params} />;
   }
 
   // 2. Fetch all student CodeLab submissions

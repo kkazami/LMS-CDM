@@ -1,3 +1,4 @@
+import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * POST /api/codelab/evaluate
@@ -24,6 +25,7 @@ import { db } from "@/lib/db";
 import { CodeLabCompletionError, getCodeLabCompletion, getCodeLabReward, saveCodeLabCompletion } from "@/lib/codelab-completion";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_SOURCE_CODE_BYTES = 64 * 1024;
 
@@ -65,15 +67,17 @@ interface EvaluateResponse {
 async function executeTestCaseOnJudge0(
   sourceCode: string,
   languageId: number,
-  stdin: string
+  stdin: string,
+  deadline: number
 ) {
-  return executeJudge0Submission(sourceCode, languageId, stdin);
+  return executeJudge0Submission(sourceCode, languageId, stdin, deadline);
 }
 
 export async function POST(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "POST codelab/evaluate/route.ts");
   if (ceilingDenial) return ceilingDenial;
 
+  const deadline = Date.now() + 50_000;
   try {
     // 1. Session check
     const session = await getSession();
@@ -86,6 +90,9 @@ export async function POST(request: Request) {
     if (!eligibility || !eligibility.eligible) {
       return NextResponse.json({ error: "Forbidden: Not eligible for activities" }, { status: 403 });
     }
+
+    const limited = await limitCodeLabRuns(session.user.id);
+    if (limited) return limited;
 
     // 3. Parse and validate body
     const body = (await request.json()) as EvaluateRequest;
@@ -194,7 +201,7 @@ export async function POST(request: Request) {
       const chunkResults = await Promise.allSettled(
         chunk.map(async (tc) => {
           const finalCode = wrapStudentCode(wrapperLang, sourceCode, null, tc.input);
-          const judgeOut = await executeTestCaseOnJudge0(finalCode, languageId, tc.input);
+          const judgeOut = await executeTestCaseOnJudge0(finalCode, languageId, tc.input, deadline);
           const actualOutput = (judgeOut.stdout || "").trim();
           const expectedOutput = tc.expectedOutput.trim();
           const passed = judgeOut.status.id === 3 && actualOutput === expectedOutput;
@@ -228,7 +235,6 @@ export async function POST(request: Request) {
             // NEVER reveal input or expectedOutput for hidden test cases
             hiddenResults.push({
               passed: outcome.passed,
-              error: outcome.error,
             });
           } else {
             publicResults.push({
@@ -246,7 +252,6 @@ export async function POST(request: Request) {
           if (tc.isHidden) {
             hiddenResults.push({
               passed: false,
-              error: res.reason instanceof Error ? res.reason.message : "Execution failed",
             });
           } else {
             publicResults.push({
@@ -262,6 +267,7 @@ export async function POST(request: Request) {
       }
     }
 
+    if (Date.now() >= deadline) throw new CodeRunnerUnavailableError();
     const totalCases = testCasesToRun.length;
     const score = totalCases > 0 ? Math.round((totalPassed / totalCases) * 100) : 0;
 
