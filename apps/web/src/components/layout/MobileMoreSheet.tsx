@@ -29,7 +29,6 @@ import {
   ChevronRight,
   Code2,
   MessageSquareQuote,
-  Gamepad2,
   FileSpreadsheet,
   Briefcase,
   type LucideIcon,
@@ -51,7 +50,6 @@ interface MobileMoreSheetProps {
   isEligibleForActivities?: boolean;
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
-  isEligibleForArena?: boolean;
 }
 
 interface NavItem {
@@ -72,7 +70,6 @@ export default function MobileMoreSheet({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
-  isEligibleForArena,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -171,8 +168,6 @@ export default function MobileMoreSheet({
       ? [{ label: "CodeLab", href: `/${instituteCode}/activities/codelab${isProfessor ? '/instructor' : ''}`, icon: Code2, description: isProfessor ? "Coding practice and analytics" : "Coding practice" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
-    ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"
-      ? [{ label: "Quiz Arena", href: `/${instituteCode}/arena`, icon: Gamepad2, description: isProfessor ? "Host live interactive quizzes" : "Live interactive quiz battles" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
       ? [
           { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },

@@ -34,8 +34,6 @@ interface DashboardLayoutProps {
   isEligibleForOhmward?: boolean;
   /** Whether this user qualifies for Knowledge Exchange. Controls sidebar entry visibility. */
   isEligibleForKnowledgeExchange?: boolean;
-  /** Whether this user qualifies for Quiz Arena (IBE). Controls sidebar entry visibility. */
-  isEligibleForArena?: boolean;
   /** Whether this user qualifies for the ITE Practicum module. Controls the sidebar entry. */
   isEligibleForPracticum?: boolean;
   /** Whether this user qualifies for the ITE Meetings module. Controls the sidebar entry. */
@@ -67,7 +65,6 @@ export default function DashboardLayout({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
-  isEligibleForArena,
   isEligibleForPracticum,
   isEligibleForMeetings,
   isEligibleForFocusMode,
@@ -121,7 +118,6 @@ export default function DashboardLayout({
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForOhmward={isEligibleForOhmward}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-          isEligibleForArena={isEligibleForArena}
           isEligibleForPracticum={isEligibleForPracticum}
           isEligibleForMeetings={isEligibleForMeetings}
           enrolledCourses={enrolledCourses}
@@ -167,7 +163,6 @@ export default function DashboardLayout({
         avatarUrl={avatarUrl ?? null}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-        isEligibleForArena={isEligibleForArena}
       />
       </div>
 

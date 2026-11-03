@@ -36,7 +36,6 @@ import {
   Video,
   X,
   LifeBuoy,
-  Gamepad2,
   FileSpreadsheet,
   Briefcase,
   type LucideIcon,
@@ -74,8 +73,6 @@ interface SidebarProps {
   isEligibleForOhmward?: boolean;
   /** When true, renders the "Knowledge Exchange" nav entry. Must be completely absent from DOM when false. */
   isEligibleForKnowledgeExchange?: boolean;
-  /** When true, renders the "Quiz Arena" nav entry for IBE. */
-  isEligibleForArena?: boolean;
   /** When true, renders the "Practicum" nav entry (ITE students and instructors only). */
   isEligibleForPracticum?: boolean;
   /** When true, renders the "Meetings" nav entry (ITE students and instructors only). */
@@ -161,7 +158,6 @@ export default function Sidebar({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
-  isEligibleForArena,
   isEligibleForPracticum,
   isEligibleForMeetings,
   enrolledCourses,
@@ -208,17 +204,6 @@ export default function Sidebar({
         label: "Knowledge Exchange",
         href: `/${instituteCode}/knowledge-exchange`,
         icon: MessageSquareQuote,
-      },
-    ];
-  }
-
-  if ((isEligibleForArena || instituteCode.toLowerCase() === "ibe") && (isStudent || isProfessor)) {
-    links = [
-      ...links,
-      {
-        label: "Quiz Arena",
-        href: `/${instituteCode}/arena`,
-        icon: Gamepad2,
       },
     ];
   }
