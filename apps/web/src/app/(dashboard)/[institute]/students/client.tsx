@@ -19,7 +19,6 @@ import {
   CheckSquare,
   Code2,
   Trophy,
-  Gamepad2,
   Sparkles,
   Briefcase,
 } from "lucide-react";
@@ -236,7 +235,6 @@ export default function StudentDashboardClient({
   const unenrollTarget = confirmUnenroll ? courses.find((c) => c.id === confirmUnenroll) : null;
 
   const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
-  const isArenaVisible = instituteCode.toLowerCase() === "ibe";
 
   // Quick action items for mobile and desktop quick navigation bar
   const quickActions = [
@@ -268,15 +266,6 @@ export default function StudentDashboardClient({
             label: "CodeLab",
             icon: Code2,
             href: `/${instituteCode}/activities/codelab`,
-          },
-        ]
-      : []),
-    ...(isArenaVisible
-      ? [
-          {
-            label: "Quiz Arena",
-            icon: Gamepad2,
-            href: `/${instituteCode}/arena`,
           },
         ]
       : []),
@@ -378,7 +367,7 @@ export default function StudentDashboardClient({
         </FadeIn>
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
-        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${(isCodeLabVisible || isArenaVisible) ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
+        <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${isCodeLabVisible ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
           <StaggerItem>
             <QuickActionCard
               icon={Plus}
@@ -429,19 +418,6 @@ export default function StudentDashboardClient({
                 href={`/${instituteCode}/activities/codelab`}
                 sublabel="Interactive labs"
                 color={theme.colors.primary}
-              />
-            </StaggerItem>
-          )}
-          {isArenaVisible && (
-            <StaggerItem>
-              <QuickActionCard
-                icon={Gamepad2}
-                label="Quiz Arena"
-                href={`/${instituteCode}/arena`}
-                sublabel="Live multiplayer"
-                color={theme.colors.primary}
-                badge="Live"
-                badgeVariant="warning"
               />
             </StaggerItem>
           )}

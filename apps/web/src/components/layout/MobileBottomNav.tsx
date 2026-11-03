@@ -17,7 +17,6 @@ interface MobileBottomNavProps {
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
-  isEligibleForArena?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -28,7 +27,6 @@ export default function MobileBottomNav({
   avatarUrl,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
-  isEligibleForArena,
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -146,7 +144,6 @@ export default function MobileBottomNav({
         avatarUrl={avatarUrl}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-        isEligibleForArena={isEligibleForArena}
       />
     </>
   );

@@ -29,7 +29,6 @@ import {
   ChevronRight,
   Code2,
   MessageSquareQuote,
-  Gamepad2,
   FileSpreadsheet,
   Briefcase,
   type LucideIcon,
@@ -49,7 +48,6 @@ interface MobileMoreSheetProps {
   avatarUrl?: string | null;
   isEligibleForActivities?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
-  isEligibleForArena?: boolean;
 }
 
 interface NavItem {
@@ -69,7 +67,6 @@ export default function MobileMoreSheet({
   avatarUrl = null,
   isEligibleForActivities,
   isEligibleForKnowledgeExchange,
-  isEligibleForArena,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -167,8 +164,6 @@ export default function MobileMoreSheet({
       ? [{ label: "CodeLab Analytics", href: `/${instituteCode}/activities/codelab/instructor`, icon: Terminal, description: "Submissions and coding progress" }] : []),
     ...(isEligibleForKnowledgeExchange
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
-    ...(isEligibleForArena || instituteCode.toLowerCase() === "ibe"
-      ? [{ label: "Quiz Arena", href: `/${instituteCode}/arena`, icon: Gamepad2, description: isProfessor ? "Host live interactive quizzes" : "Live interactive quiz battles" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
       ? [
           { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },

@@ -21,7 +21,6 @@ import {
   Share2,
   BarChart3,
   ClipboardCheck,
-  Gamepad2,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import DashboardCalendar from "@/components/calendar/StudentCalendar";
@@ -420,19 +419,6 @@ export default function TeacherDashboardClient({
                   sublabel="Lab workspace"
                   href={`/${instituteCode}/activities/codelab`}
                   color="#06B6D4"
-                />
-              </StaggerItem>
-            )}
-            {instituteCode.toLowerCase() === "ibe" && (
-              <StaggerItem>
-                <QuickActionCard
-                  icon={Gamepad2}
-                  label="Quiz Arena"
-                  sublabel="Host live battle"
-                  href={`/${instituteCode}/arena`}
-                  color={theme.colors.primary}
-                  badge="IBE Live"
-                  badgeVariant="warning"
                 />
               </StaggerItem>
             )}
