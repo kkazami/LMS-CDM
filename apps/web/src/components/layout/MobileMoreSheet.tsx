@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
-import { clearAllOfflineData } from "@/lib/ite/offline/idb";
+
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
@@ -141,7 +141,7 @@ export default function MobileMoreSheet({
     setLoggingOut(true);
     try {
       logoutFromNative();
-      await clearAllOfflineData().catch(() => {});
+
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore
