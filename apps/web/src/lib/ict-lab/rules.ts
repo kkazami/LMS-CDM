@@ -342,10 +342,16 @@ export function buildPlaygroundSrcdoc(
   html: string,
   css: string,
   js: string,
-  runId = 0
+  runId = 0,
+  nonce?: string
 ): string {
   const safeCss = escapeClosingTag(css, "style");
   const safeJs = escapeClosingTag(js, "script");
+  const cleanNonce = nonce?.trim() || "";
+  const nonceAttr = cleanNonce ? ` nonce="${cleanNonce}"` : "";
+  const iframeCsp = cleanNonce
+    ? `default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline' 'nonce-${cleanNonce}'; img-src data: https:; font-src data: https:;`
+    : PLAYGROUND_IFRAME_CSP;
 
   const bridgeScript = `
 (function() {
@@ -428,17 +434,17 @@ export function buildPlaygroundSrcdoc(
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta http-equiv="Content-Security-Policy" content="${PLAYGROUND_POSTMESSAGE_SOURCE ? PLAYGROUND_IFRAME_CSP : ""}" />
+<meta http-equiv="Content-Security-Policy" content="${iframeCsp}" />
 <style>
 ${safeCss}
 </style>
-<script>
+<script${nonceAttr}>
 ${bridgeScript}
 </script>
 </head>
 <body>
 ${html}
-<script>
+<script${nonceAttr}>
 try {
 ${safeJs}
 } catch (__err) {

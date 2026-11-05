@@ -61,7 +61,20 @@ const EDITOR_TABS: { id: PlaygroundEditorLanguage; label: string; badge: string;
   },
 ];
 
-export default function CodePlaygroundTab() {
+export interface CodePlaygroundTabProps {
+  nonce?: string;
+}
+
+export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}) {
+  const resolveActiveNonce = useCallback((): string | undefined => {
+    if (nonce) return nonce;
+    if (typeof document !== "undefined") {
+      const el = document.querySelector("script[nonce]") as HTMLScriptElement | null;
+      return el?.nonce || el?.getAttribute("nonce") || undefined;
+    }
+    return undefined;
+  }, [nonce]);
+
   const [projects, setProjects] = useState<IctPlaygroundProjectDTO[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -81,7 +94,15 @@ export default function CodePlaygroundTab() {
   const [activeEditorTab, setActiveEditorTab] = useState<PlaygroundEditorLanguage>("html");
   const [autoRun, setAutoRun] = useState<boolean>(false);
   const runCounterRef = useRef<number>(0);
-  const [srcdoc, setSrcdoc] = useState<string>(() => buildPlaygroundSrcdoc("", "", "", 0));
+  const [srcdoc, setSrcdoc] = useState<string>(() =>
+    buildPlaygroundSrcdoc(
+      "",
+      "",
+      "",
+      0,
+      nonce || (typeof document !== "undefined" ? (document.querySelector("script[nonce]") as HTMLScriptElement | null)?.nonce : undefined)
+    )
+  );
   const [consoleEntries, setConsoleEntries] = useState<PlaygroundConsoleEntry[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -181,9 +202,17 @@ export default function CodePlaygroundTab() {
     (nextHtml: string, nextCss: string, nextJs: string) => {
       runCounterRef.current += 1;
       setConsoleEntries([]);
-      setSrcdoc(buildPlaygroundSrcdoc(nextHtml, nextCss, nextJs, runCounterRef.current));
+      setSrcdoc(
+        buildPlaygroundSrcdoc(
+          nextHtml,
+          nextCss,
+          nextJs,
+          runCounterRef.current,
+          resolveActiveNonce()
+        )
+      );
     },
-    []
+    [resolveActiveNonce]
   );
 
   // Optional debounced auto-run

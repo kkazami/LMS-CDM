@@ -283,6 +283,42 @@ describe("BTLED ICT Lab - Code Playground Validation, Ownership & postMessage Se
     assert.ok(doc.includes("window.__cdmReportError"));
     assert.ok(doc.indexOf("<script>\n(function()") < doc.indexOf("<script>\ntry {"));
   });
+
+  it("generates preview srcdoc with unescaped student JavaScript placed after HTML body, bridge loaded before, and inline script CSP", () => {
+    const studentHtml = '<h1>Hi</h1><button id="plus">Add</button><p id="msg"></p>';
+    const studentJs =
+      'let count=0; document.getElementById("plus").addEventListener("click",()=>{count++;document.getElementById("msg").textContent="Count: "+count;console.log("count =",count);}); console.log("Script loaded");';
+
+    // 1. Without nonce (standard / standalone)
+    const doc = buildPlaygroundSrcdoc(studentHtml, "body { margin: 0; }", studentJs, 42);
+
+    // CSP permits inline scripts and keeps default-src 'none' (no network access)
+    assert.ok(doc.includes("default-src 'none'"));
+    assert.ok(doc.includes("script-src 'unsafe-inline'"));
+    assert.ok(doc.includes("style-src 'unsafe-inline'"));
+
+    // Bridge script exists in <head> before student code
+    const bridgeIndex = doc.indexOf('var SOURCE = "cdm-ict-playground";');
+    const htmlBodyIndex = doc.indexOf(studentHtml);
+    const studentJsIndex = doc.indexOf(studentJs);
+
+    assert.ok(bridgeIndex !== -1, "Bridge script must be present");
+    assert.ok(htmlBodyIndex !== -1, "Student HTML markup must be present");
+    assert.ok(studentJsIndex !== -1, "Student JS code must be present in unescaped form");
+
+    // Execution order: Bridge in <head> -> HTML body elements -> Student script
+    assert.ok(bridgeIndex < htmlBodyIndex, "Bridge script must load before HTML elements");
+    assert.ok(htmlBodyIndex < studentJsIndex, "Student script must be placed after HTML body elements");
+
+    // Student code is embedded unescaped inside <script>
+    assert.ok(doc.includes(`<script>\ntry {\n${studentJs}\n} catch (__err)`));
+
+    // 2. With request nonce (Next.js strict-dynamic CSP compatibility)
+    const docWithNonce = buildPlaygroundSrcdoc(studentHtml, "", studentJs, 43, "test-nonce-xyz");
+    assert.ok(docWithNonce.includes('nonce="test-nonce-xyz"'));
+    assert.ok(docWithNonce.includes("'nonce-test-nonce-xyz'"));
+    assert.ok(docWithNonce.includes(`<script nonce="test-nonce-xyz">\ntry {\n${studentJs}`));
+  });
 });
 
 describe("BTLED ICT Lab - Hardware Explorer Data & SVG Completeness", () => {

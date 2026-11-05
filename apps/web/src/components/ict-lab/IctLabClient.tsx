@@ -14,6 +14,7 @@ export interface IctLabClientProps {
   programCode: string | null;
   hardwareData: HardwarePartsData;
   lanCableData: LanCableData;
+  nonce?: string;
 }
 
 const MAIN_TABS: {
@@ -47,6 +48,7 @@ export default function IctLabClient({
   programCode,
   hardwareData,
   lanCableData,
+  nonce,
 }: IctLabClientProps) {
   const [activeTab, setActiveTab] = useState<IctLabMainTabId>("playground");
 
@@ -140,7 +142,7 @@ export default function IctLabClient({
         role="tabpanel"
         aria-labelledby={`ict-lab-tab-${activeTab}`}
       >
-        {activeTab === "playground" && <CodePlaygroundTab />}
+        {activeTab === "playground" && <CodePlaygroundTab nonce={nonce} />}
         {activeTab === "hardware" && <HardwareExplorerTab data={hardwareData} />}
         {activeTab === "lan-cable" && <LanCableGuideTab data={lanCableData} />}
       </div>
