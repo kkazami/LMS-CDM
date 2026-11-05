@@ -1,0 +1,97 @@
+{
+  "palette": {
+    "orange": "#F58220",
+    "green": "#2E9B3F",
+    "blue": "#1E6FD9",
+    "brown": "#7A4B2A",
+    "white": "#FFFFFF"
+  },
+  "wires": [
+    { "id": "white-orange", "label": "White/Orange", "pair": "orange", "striped": true },
+    { "id": "orange", "label": "Orange", "pair": "orange", "striped": false },
+    { "id": "white-green", "label": "White/Green", "pair": "green", "striped": true },
+    { "id": "green", "label": "Green", "pair": "green", "striped": false },
+    { "id": "white-blue", "label": "White/Blue", "pair": "blue", "striped": true },
+    { "id": "blue", "label": "Blue", "pair": "blue", "striped": false },
+    { "id": "white-brown", "label": "White/Brown", "pair": "brown", "striped": true },
+    { "id": "brown", "label": "Brown", "pair": "brown", "striped": false }
+  ],
+  "standards": [
+    {
+      "id": "T568A",
+      "name": "T568A",
+      "pins": [
+        { "pin": 1, "wire": "white-green" },
+        { "pin": 2, "wire": "green" },
+        { "pin": 3, "wire": "white-orange" },
+        { "pin": 4, "wire": "blue" },
+        { "pin": 5, "wire": "white-blue" },
+        { "pin": 6, "wire": "orange" },
+        { "pin": 7, "wire": "white-brown" },
+        { "pin": 8, "wire": "brown" }
+      ]
+    },
+    {
+      "id": "T568B",
+      "name": "T568B",
+      "pins": [
+        { "pin": 1, "wire": "white-orange" },
+        { "pin": 2, "wire": "orange" },
+        { "pin": 3, "wire": "white-green" },
+        { "pin": 4, "wire": "blue" },
+        { "pin": 5, "wire": "white-blue" },
+        { "pin": 6, "wire": "green" },
+        { "pin": 7, "wire": "white-brown" },
+        { "pin": 8, "wire": "brown" }
+      ]
+    }
+  ],
+  "pinOrientationNote": "Hold the RJ45 plug with the contacts (gold pins) facing up and the clip (latch) facing down, cable pointing toward you. Pin 1 is on the left.",
+  "cableTypes": [
+    {
+      "id": "straight-through",
+      "name": "Straight-through cable",
+      "wiring": "The same standard (for example T568B) on both ends.",
+      "usedFor": "Connecting different kinds of devices, such as a computer to a switch or a router to a switch.",
+      "testerPattern": [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8]]
+    },
+    {
+      "id": "crossover",
+      "name": "Crossover cable",
+      "wiring": "T568A on one end and T568B on the other end.",
+      "usedFor": "Connecting two devices of the same kind directly, such as a computer to a computer or a switch to a switch. Many modern devices detect the cable type automatically (Auto-MDI/MDIX), so a straight-through cable usually works too.",
+      "testerPattern": [[1,3],[2,6],[3,1],[4,4],[5,5],[6,2],[7,7],[8,8]]
+    }
+  ],
+  "facts": [
+    "Twisted-pair Ethernet cable runs should not be longer than 100 meters between devices.",
+    "A UTP Ethernet cable has 8 wires arranged in 4 twisted pairs: orange, green, blue and brown.",
+    "Each pair has one solid-colored wire and one white wire with a stripe of the same color.",
+    "Standard 10/100 Mbps Ethernet uses pins 1, 2, 3 and 6. Gigabit Ethernet uses all 8 pins."
+  ],
+  "tools": [
+    { "id": "utp-cable", "name": "UTP cable", "use": "The unshielded twisted-pair cable that carries the network signal." },
+    { "id": "rj45", "name": "RJ45 connector (plug)", "use": "The 8-pin plug that is crimped onto the end of the cable." },
+    { "id": "stripper", "name": "Cable stripper", "use": "Removes the outer jacket without cutting the wires inside." },
+    { "id": "cutter", "name": "Cutter or snips", "use": "Cuts the cable end clean and trims the wires to an even length." },
+    { "id": "crimper", "name": "Crimping tool", "use": "Presses the RJ45 contacts into the wires and clamps the plug onto the cable jacket." },
+    { "id": "tester", "name": "LAN cable tester", "use": "Checks that each of the 8 wires connects to the correct pin at the other end." }
+  ],
+  "crimpingSteps": [
+    { "step": 1, "title": "Prepare the cable", "detail": "Cut the end of the cable clean and straight with the cutter." },
+    { "step": 2, "title": "Strip the jacket", "detail": "Remove about 2 to 3 cm (about 1 inch) of the outer jacket with the stripper. Do not nick the wires inside." },
+    { "step": 3, "title": "Untwist and straighten", "detail": "Separate the four pairs, untwist them, and straighten each wire. If there is a thin pull string inside the jacket, cut it off." },
+    { "step": 4, "title": "Arrange the wires", "detail": "Line the 8 wires up side by side in the order of your chosen standard (T568B for a straight-through cable). Pin 1 is on the left when the clip faces down." },
+    { "step": 5, "title": "Trim to length", "detail": "Hold the wires flat and cut them straight so about 1.2 to 1.3 cm (about half an inch) of wire sticks out past the jacket." },
+    { "step": 6, "title": "Insert into the plug", "detail": "Push the wires into the RJ45 plug until every wire touches the end of the plug. The outer jacket should sit slightly inside the plug. Check that all 8 wires are visible at the tip and in the right order." },
+    { "step": 7, "title": "Crimp", "detail": "Place the plug in the RJ45 slot of the crimping tool and squeeze firmly until the tool is fully closed. The contacts pierce the wires and the plug grips the jacket." },
+    { "step": 8, "title": "Wire the second end", "detail": "Repeat steps 2 to 7 on the other end. Use the same standard for a straight-through cable, or the other standard for a crossover cable." },
+    { "step": 9, "title": "Test the cable", "detail": "Plug both ends into the cable tester and switch it on. On a good straight-through cable, LEDs 1 to 8 light up in order on both units. If any LED is dark or out of order, re-crimp the plug or cut it off and start again." }
+  ],
+  "faults": [
+    { "id": "open", "name": "Open (broken or not pushed in)", "meaning": "A wire does not reach its contact, so its LED stays off." },
+    { "id": "short", "name": "Short", "meaning": "Two wires touch each other, so two LEDs light up at once." },
+    { "id": "miswire", "name": "Miswire", "meaning": "Wires are in the wrong order, so the LEDs light in a different order than expected." },
+    { "id": "split-pair", "name": "Split pair", "meaning": "Each wire reaches the correct pin but the wires of one pair are not twisted together, which causes crosstalk and a slow or unreliable connection. A basic tester may still show a pass." }
+  ]
+}

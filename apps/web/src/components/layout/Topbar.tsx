@@ -126,6 +126,7 @@ export default function Topbar({
     organization: "Organizational Chart",
     labs: "Practical Labs",
     practicum: "Practicum",
+    "ict-lab": "ICT Lab",
     meetings: "Meetings",
     leaderboards: "Leaderboards",
     // Professor

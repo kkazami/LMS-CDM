@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ITE_STUDENT_PROGRAM_CODES, isEligibleIteStudentProgramCode } from "./ite-programs/features";
 
 /**
  * Dynamic institute code validation pattern:
@@ -27,6 +28,8 @@ export const loginSchema = z.object({
   acceptedPolicies: z.literal(true, { error: "Agree to the Terms and Conditions and acknowledge the Privacy Policy to sign in." }),
 }).refine(data => Boolean(data.email) !== Boolean(data.identifier), 'Provide either email or student ID.');
 
+export const iteStudentProgramCodeSchema = z.enum(ITE_STUDENT_PROGRAM_CODES);
+
 const studentRegistrationFields = z.object({
   name: z.string().trim().min(2, 'Enter your full name.').max(150),
   studentNumber: z.string().trim().regex(/^\d{2}-\d{5}$/, 'Student ID must use the format XX-XXXXX (for example, 26-12345).'),
@@ -34,16 +37,66 @@ const studentRegistrationFields = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
   instituteCode: z.enum(['ics', 'ite', 'ibe']),
+  program: z.string().optional(),
   acceptedPolicies: z.literal(true, { error: 'Agree to the Terms and Conditions and acknowledge the Privacy Policy.' }),
 });
+
+/**
+ * Server-side registration schema (`POST /api/auth/register`).
+ * `program` is optional at the schema level so mobile ITE signups (which do not send `program`)
+ * continue to work; when `program` is provided for `instituteCode === 'ite'`, the route handler
+ * validates it against the 4 ITE `AcademicProgram` rows in PostgreSQL.
+ */
 export const studentRegistrationSchema = studentRegistrationFields.refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match.', path: ['confirmPassword'],
 });
+
+/**
+ * Web registration form schema (`RegisterForm.tsx`).
+ * Requires `program` when `instituteCode === 'ite'`.
+ */
+export const webStudentRegistrationSchema = studentRegistrationSchema.superRefine((data, ctx) => {
+  if (data.instituteCode === 'ite') {
+    if (!data.program || !data.program.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['program'],
+        message: 'Select your program.',
+      });
+    } else if (!isEligibleIteStudentProgramCode(data.program)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['program'],
+        message: 'Select one of the eligible ITE academic programs.',
+      });
+    }
+  }
+});
+
 // Linking authenticates an existing account; it must not register or edit its student details.
 export const googleLinkSchema = studentRegistrationFields.pick({
   email: true,
   instituteCode: true,
+  program: true,
   acceptedPolicies: true,
 }).extend({
   password: z.string().min(1, 'Enter your existing password.').max(1024),
+});
+
+export const webGoogleLinkSchema = googleLinkSchema.superRefine((data, ctx) => {
+  if (data.instituteCode === 'ite') {
+    if (!data.program || !data.program.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['program'],
+        message: 'Select your program.',
+      });
+    } else if (!isEligibleIteStudentProgramCode(data.program)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['program'],
+        message: 'Select one of the eligible ITE academic programs.',
+      });
+    }
+  }
 });

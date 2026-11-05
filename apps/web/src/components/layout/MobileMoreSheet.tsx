@@ -21,7 +21,6 @@ import {
   User,
   Settings,
   LogOut,
-  Sparkles,
   NotebookPen,
   Video,
   HardDrive,
@@ -31,10 +30,12 @@ import {
   MessageSquareQuote,
   FileSpreadsheet,
   Briefcase,
+  Cpu,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
+import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
 
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
@@ -50,6 +51,7 @@ interface MobileMoreSheetProps {
   isEligibleForActivities?: boolean;
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
+  iteProgramTools?: IteSidebarProgramTool[];
 }
 
 interface NavItem {
@@ -70,6 +72,7 @@ export default function MobileMoreSheet({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
+  iteProgramTools = [],
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -161,6 +164,16 @@ export default function MobileMoreSheet({
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
       : [];
 
+  const iteProgramToolItems: NavItem[] =
+    isStudent && instituteCode.toLowerCase() === "ite"
+      ? iteProgramTools.map((tool) => ({
+          label: tool.title,
+          href: tool.href,
+          icon: Cpu,
+          description: tool.description,
+        }))
+      : [];
+
   const ohmwardHref = isEligibleForOhmward && ohmwardDestination(instituteCode, userRole);
   const items: NavItem[] = [
     ...(ohmwardHref ? [{ label: "Ohmward", href: ohmwardHref, icon: Code2, description: "Every circuit starts a journey." }] : []),
@@ -174,7 +187,7 @@ export default function MobileMoreSheet({
           { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
         ] : []),
     ...(isStudent
-      ? [...studentItems, ...meetingsItems, ...practicumItems]
+      ? [...studentItems, ...meetingsItems, ...practicumItems, ...iteProgramToolItems]
       : isProfessor
         ? [...teacherItems, ...meetingsItems, ...practicumItems]
         : adminItems),

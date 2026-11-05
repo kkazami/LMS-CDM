@@ -6,7 +6,6 @@ import {
   Camera,
   Save,
   Mail,
-  Phone,
   Calendar,
   BookOpen,
   GraduationCap,
@@ -16,6 +15,7 @@ import {
   Trophy,
   Sparkles,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { PolicyLink } from "@/components/legal/PolicyNavigation";
@@ -65,6 +65,10 @@ interface ProfileEditClientProps {
   user: ProfileUser;
   instituteCode: string;
   theme: InstituteTheme;
+  lockedIteProgram?: {
+    code: string;
+    name: string;
+  } | null;
 }
 
 const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Irregular"];
@@ -94,6 +98,7 @@ export default function ProfileEditClient({
   user,
   instituteCode,
   theme,
+  lockedIteProgram = null,
 }: ProfileEditClientProps) {
   const router = useRouter();
   const { avatarUrl } = useAvatar();
@@ -113,7 +118,8 @@ export default function ProfileEditClient({
   const [saving, setSaving] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
-  const isStudent = user.role === "STUDENT";
+  const isStudent = user.role.toUpperCase() === "STUDENT";
+  const isIteStudentLocked = isIte && isStudent;
   const courses = isStudent
     ? user.enrollments.map((e) => e.course)
     : user.taughtCourses;
@@ -159,10 +165,19 @@ export default function ProfileEditClient({
     }
     setSaving(true);
     try {
+      const payload: Record<string, unknown> = {
+        name,
+        bio,
+        phone,
+        yearLevel,
+        coverColor,
+        bannerImageUrl,
+        ...(isIteStudentLocked ? {} : { department }),
+      };
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, phone, department, yearLevel, coverColor, bannerImageUrl }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to save");
       toast.success("Profile updated!");
@@ -293,21 +308,47 @@ export default function ProfileEditClient({
             <label htmlFor="profile-department" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Program
             </label>
-            <select
-              id="profile-department"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition ${
-                isIte ? "focus:border-blue-600" : "focus:border-orange-500"
-              }`}
-            >
-              <option value="">Select program</option>
-              {programOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            {isIteStudentLocked ? (
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <input
+                    id="profile-department"
+                    type="text"
+                    readOnly
+                    disabled
+                    value={
+                      lockedIteProgram
+                        ? `${lockedIteProgram.code} — ${lockedIteProgram.name}`
+                        : department || "Not selected yet (choose on your student dashboard)"
+                    }
+                    className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1A1D2B] px-3 py-2 pr-9 text-sm text-slate-700 dark:text-[#C8CEE0] outline-none cursor-not-allowed"
+                  />
+                  <Lock
+                    className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-[#8B92A5]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
+                  Your ITE academic program is locked after selection. Contact an ITE administrator if a correction is needed.
+                </p>
+              </div>
+            ) : (
+              <select
+                id="profile-department"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className={`rounded-xl border border-slate-200 dark:border-[#3D4460] bg-white dark:bg-[#1E2132] px-3 py-2 text-sm text-slate-900 dark:text-[#F0F2F8] outline-none transition ${
+                  isIte ? "focus:border-blue-600" : "focus:border-orange-500"
+                }`}
+              >
+                <option value="">Select program</option>
+                {programOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Year Level (students only) */}
