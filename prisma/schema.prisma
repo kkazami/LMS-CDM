@@ -519,7 +519,8 @@ model User {
   // ─── ITE Practicum relations ───
   practicumPlacements PracticumPlacement[] @relation("PracticumStudent")
   practicumSupervised PracticumPlacement[] @relation("PracticumSupervisor")
-  practicumFeedback   PracticumFeedback[]  @relation("PracticumFeedbackAuthor")
+  practicumFeedback   PracticumFeedback[]        @relation("PracticumFeedbackAuthor")
+  practicumFiles      PracticumLessonPlanFile[]  @relation("PracticumUploadedBy")
 
   // ─── ITE Focus Mode relations ───
   focusSessions FocusSession[]
@@ -1981,15 +1982,18 @@ model PracticumSubmission {
   fileType    String?
   fileSize    Int?
   /// External link (e.g. an unlisted YouTube video) used instead of an uploaded file.
-  videoLink   String?
+  videoLink      String?
+  idempotencyKey String?
   status      PracticumSubmissionStatus @default(SUBMITTED)
   version     Int                       @default(1)
   submittedAt DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
 
   placement PracticumPlacement  @relation(fields: [placementId], references: [id], onDelete: Cascade)
-  feedback  PracticumFeedback[]
+  feedback     PracticumFeedback[]
+  uploadedFile PracticumLessonPlanFile? @relation("PracticumLessonPlanFiles")
 
+  @@unique([placementId, idempotencyKey])
   @@index([placementId, type])
   @@index([placementId, status])
   @@index([status])
@@ -2010,6 +2014,23 @@ model PracticumFeedback {
 
   @@index([submissionId, createdAt])
   @@index([authorId])
+}
+
+model PracticumLessonPlanFile {
+  id           String   @id @default(cuid())
+  storageKey   String
+  originalName String
+  mimeType     String
+  size         Int
+  uploadedById String
+  lessonPlanId String   @unique
+  createdAt    DateTime @default(now())
+
+  uploadedBy User                @relation("PracticumUploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+  lessonPlan PracticumSubmission @relation("PracticumLessonPlanFiles", fields: [lessonPlanId], references: [id], onDelete: Cascade)
+
+  @@index([uploadedById])
+  @@index([lessonPlanId])
 }
 
 // ─── ITE Focus Mode (distraction-free learning) ───────────────

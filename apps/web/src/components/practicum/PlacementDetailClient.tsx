@@ -191,6 +191,7 @@ function SubmissionCard({ submission, onChanged }: { submission: SubmissionDTO; 
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{submission.title}</p>
           <p className="mt-0.5 text-xs text-slate-600 dark:text-[#94A3B8]">
             Version {submission.version} · {formatDate(submission.submittedAt)}
+            {submission.fileName && ` · ${submission.fileName}`}
             {submission.feedback.length > 0 && ` · ${submission.feedback.length} feedback`}
           </p>
         </div>

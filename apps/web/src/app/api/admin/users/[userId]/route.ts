@@ -11,6 +11,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { administratorInstitute } from '@/lib/administrator-scope';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { resolveAdminStudentDepartmentSync } from '@/lib/ite-programs/registration';
 import { rosterActor, adminTransaction, rosterError, audit, setStudentProgram } from '@/lib/roster/policy';
 import { STUDENT_SCHEMA, normalizeCode } from '@/lib/roster/csv';
 import { AccessError } from '@/lib/super-user-v1/actor';
@@ -111,12 +112,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (!parsed.success) throw new AccessError(400, 'Provide first name, last name, program, section, and a valid email.');
       await adminTransaction(actor, async tx => {
         await lockAccounts(tx, [userId]);
-        const current = await tx.user.findFirst({ where: { id: userId, instituteId: actor.instituteId, role: { equals: 'STUDENT', mode: 'insensitive' } } });
+        const current = await tx.user.findFirst({
+          where: { id: userId, instituteId: actor.instituteId, role: { equals: 'STUDENT', mode: 'insensitive' } },
+          include: { institute: { select: { code: true } } },
+        });
         if (!current) throw new AccessError(404, 'Student not found.');
         if (parsed.data.email !== current.email && current.activationStatus === 'PENDING_ACTIVATION') throw new AccessError(409, 'Use Correct Email in Account Invitations to revoke existing links safely.');
         const programs = await tx.academicProgram.findMany({ where: { instituteId: actor.instituteId, isActive: true, code: { equals: parsed.data.program, mode: 'insensitive' } } });
         if (programs.length !== 1) throw new AccessError(400, 'Choose an active program in your institute.');
-        await tx.user.update({ where: { id: userId }, data: { firstName: parsed.data.first_name, lastName: parsed.data.last_name, name: parsed.data.first_name + ' ' + parsed.data.last_name, section: normalizeCode(parsed.data.section), email: parsed.data.email } });
+        const departmentSync = resolveAdminStudentDepartmentSync({
+          studentInstituteCode: current.institute.code,
+          programCode: programs[0].code,
+        });
+        await tx.user.update({ where: { id: userId }, data: { firstName: parsed.data.first_name, lastName: parsed.data.last_name, name: parsed.data.first_name + ' ' + parsed.data.last_name, section: normalizeCode(parsed.data.section), email: parsed.data.email, ...departmentSync } });
         const membership = await tx.programMembership.findUnique({ where: { programId_userId: { programId: programs[0].id, userId } } });
         if (!membership?.isActive) await setStudentProgram(tx, actor, userId, programs[0].id);
         if (parsed.data.email !== current.email) await tx.session.deleteMany({ where: { userId } });

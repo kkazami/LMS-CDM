@@ -16,7 +16,6 @@ import {
   PanelLeftOpen,
   GraduationCap,
   BarChart2,
-  PlusSquare,
   Users,
   FileText,
   ShieldCheck,
@@ -27,8 +26,6 @@ import {
   FlaskConical,
   Code2,
   ChevronDown,
-  ChevronRight,
-  PenTool,
   Settings,
   HelpCircle,
   MessageSquareQuote,
@@ -38,10 +35,11 @@ import {
   LifeBuoy,
   FileSpreadsheet,
   Briefcase,
-  type LucideIcon,
+  Cpu,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
+import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
@@ -77,12 +75,23 @@ interface SidebarProps {
   isEligibleForPracticum?: boolean;
   /** When true, renders the "Meetings" nav entry (ITE students and instructors only). */
   isEligibleForMeetings?: boolean;
+  /** Available program-specific tools for the ITE student ("Program tools" group). */
+  iteProgramTools?: IteSidebarProgramTool[];
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
 
 /** Sidebar link ID for "My Courses" — used to detect the accordion item. */
 const MY_COURSES_KEY = "my-courses";
+
+function getProgramToolIcon(toolId: string): ComponentType<{ className?: string }> {
+  switch (toolId) {
+    case "ict-lab":
+      return Cpu;
+    default:
+      return BookOpen;
+  }
+}
 
 export const getStudentLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Dashboard", href: `/${code}/students`, icon: LayoutDashboard },
@@ -100,7 +109,11 @@ export const getStudentLinks = (code: string): (NavLink & { key?: string })[] =>
  */
 export function getIteStudentNavLinks(
   code: string,
-  options?: { isEligibleForPracticum?: boolean; isEligibleForMeetings?: boolean }
+  options?: {
+    isEligibleForPracticum?: boolean;
+    isEligibleForMeetings?: boolean;
+    iteProgramTools?: IteSidebarProgramTool[];
+  }
 ): NavLink[] {
   const base = getStudentLinks(code).map(({ key, ...item }) => item);
   const includeMeetings = options?.isEligibleForMeetings ?? (code.toLowerCase() === "ite");
@@ -111,6 +124,15 @@ export function getIteStudentNavLinks(
   }
   if (includePracticum) {
     list.push({ label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen });
+  }
+  if (code.toLowerCase() === "ite" && options?.iteProgramTools?.length) {
+    for (const tool of options.iteProgramTools) {
+      list.push({
+        label: tool.title,
+        href: tool.href,
+        icon: getProgramToolIcon(tool.id),
+      });
+    }
   }
   return list;
 }
@@ -160,6 +182,7 @@ export default function Sidebar({
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
   isEligibleForMeetings,
+  iteProgramTools,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -167,6 +190,7 @@ export default function Sidebar({
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
   const isProfessor = userRole.toUpperCase() === "PROFESSOR" || userRole.toUpperCase() === "TEACHER";
+  const isIte = instituteCode.toLowerCase() === "ite";
 
   // Build link list identically on both server and client (avoids hydration mismatch)
   let links = getLinks(instituteCode, userRole);
@@ -188,7 +212,7 @@ export default function Sidebar({
   }
 
   const meetingsEligible =
-    (isEligibleForMeetings ?? (instituteCode.toLowerCase() === "ite")) && (isStudent || isProfessor);
+    (isEligibleForMeetings ?? isIte) && (isStudent || isProfessor);
   if (meetingsEligible) {
     links = [...links, { label: "Meetings", href: `/${instituteCode}/meetings`, icon: Video }];
   }
@@ -239,9 +263,19 @@ export default function Sidebar({
     ];
   }
 
+  const visibleProgramTools =
+    isStudent && isIte && iteProgramTools && iteProgramTools.length > 0
+      ? iteProgramTools.map((tool) => ({
+          id: tool.id,
+          label: tool.title,
+          href: tool.href,
+          icon: getProgramToolIcon(tool.id),
+        }))
+      : [];
 
   // Find the active link by getting the longest href that matches the current pathname
-  const activeLink = [...links]
+  const allMatchableLinks = [...links, ...visibleProgramTools];
+  const activeLink = [...allMatchableLinks]
     .sort((a, b) => b.href.length - a.href.length)
     .find(
       (link) => pathname === link.href || pathname.startsWith(link.href + "/") || (
@@ -493,6 +527,58 @@ export default function Sidebar({
             </Link>
           );
         })}
+
+        {/* ITE Student "Program tools" group — shown ONLY when the student's program has available tools */}
+        {visibleProgramTools.length > 0 && (
+          <div
+            role="group"
+            aria-label="Program tools"
+            className="mt-2 pt-2 border-t border-slate-200/80 dark:border-white/5 flex flex-col gap-1"
+          >
+            {!isCollapsed && (
+              <span className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#8B92A5]">
+                Program tools
+              </span>
+            )}
+            {visibleProgramTools.map((tool) => {
+              const Icon = tool.icon;
+              const active = activeLink?.href === tool.href;
+
+              return (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  onClick={handleLinkClick}
+                  aria-current={active ? "page" : undefined}
+                  title={isCollapsed ? tool.label : undefined}
+                  className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
+                      : "border-l-[3px] border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-[#8B92A5] dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] rounded-xl"
+                  }`}
+                  style={
+                    active
+                      ? {
+                          borderColor: theme.colors.primary,
+                          backgroundColor: `${theme.colors.primary}1A`,
+                          color: "var(--institute-ink)",
+                        }
+                      : undefined
+                  }
+                >
+                  <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
+                  <span
+                    className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                      isCollapsed ? "w-0 opacity-0" : "opacity-100"
+                    }`}
+                  >
+                    {tool.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
     </aside>
   );

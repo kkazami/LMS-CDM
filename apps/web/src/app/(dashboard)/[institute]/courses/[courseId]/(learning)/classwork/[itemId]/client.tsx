@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FileText, Link2, Calendar, Star, ChevronRight, ArrowLeft, Users, Sparkles } from "lucide-react";
 import YourWorkPanel from "@/components/courses/YourWorkPanel";
-import OfflineDraftCard from "@/components/offline/OfflineDraftCard";
 import type { InstituteTheme } from "@/lib/theme";
 import FocusButton from "@/components/focus/FocusButton";
 import { getClassworkAppearance } from '@/components/courses/classwork-appearance';
@@ -467,15 +466,6 @@ export default function AssignmentDetailClient({
               ) : (
                 submission && (
                   <>
-                    {isStudent && instituteCode.toLowerCase() === "ite" && !item.requireGithubRepo && (
-                      <OfflineDraftCard
-                        itemId={item.id}
-                        courseId={courseId}
-                        itemTitle={item.title}
-                        isPastDeadline={isPastDeadline}
-                        isSubmitted={submission.status === "SUBMITTED"}
-                      />
-                    )}
                     <YourWorkPanel
                       requireGithubRepo={Boolean(item.requireGithubRepo)}
                       submission={submission}

@@ -30,7 +30,7 @@ test.beforeAll(async () => {
       userName='Student' userRole='INSTRUCTOR' theme={{colors:{primary:'#F97316'}}} isEligibleForActivities>{content}</DashboardLayout></PageTransition>);`,
     resolveDir:process.cwd(),loader:'tsx'}, bundle:true,write:false,jsx:'automatic', tsconfig:'apps/web/tsconfig.json',nodePaths:[path.resolve('apps/web/node_modules')],
     plugins:[{name:'browser-adapters',setup(b:any){
-      b.onResolve({filter:/^next\/link$|^next\/dynamic$|^@monaco-editor\/react$|^next\/navigation$|MonacoInit$|common\/(Toast|ChatbotWidget|BadgeToast|LoginRewardModal|FloatingStudyTimer)$|^@\/components\/layout\/(Sidebar|Topbar|NavigationProgress|MobileBottomNav)$|^@\/lib\/(theme-context|chatbot-context)$|FocusModeProvider$|OfflineBootstrap$|DraftRecovery$/},({path:name}:{path:string})=>({path:name,namespace:'fixture'}));
+      b.onResolve({filter:/^next\/link$|^next\/dynamic$|^@monaco-editor\/react$|^next\/navigation$|MonacoInit$|common\/(Toast|ChatbotWidget|BadgeToast|LoginRewardModal|FloatingStudyTimer)$|^@\/components\/layout\/(Sidebar|Topbar|NavigationProgress|MobileBottomNav)$|^@\/lib\/(theme-context|chatbot-context)$|FocusModeProvider$|DraftRecovery$/},({path:name}:{path:string})=>({path:name,namespace:'fixture'}));
       b.onLoad({filter:/.*/,namespace:'fixture'},({path:name}:{path:string})=>({loader:'tsx',resolveDir:path.resolve('apps/web'),contents:
         name==='next/navigation' ? 'export const usePathname=()=>location.pathname;' :
         name.endsWith('/Sidebar') ? `export default function Sidebar(){return <aside id='sidebar' className='fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white p-6 dark:bg-slate-950 lg:block'>CdM LMS</aside>}` :
@@ -38,7 +38,7 @@ test.beforeAll(async () => {
         name.endsWith('/MobileBottomNav') ? `export default function Nav(){return <nav aria-label='Mobile navigation' className='fixed inset-x-0 bottom-0 h-14 border-t border-slate-200 bg-white p-4 lg:hidden'>Dashboard · Courses · Grades</nav>}` :
         name.endsWith('theme-context') ? `export function ThemeProvider({children}){return children}; export function useTheme(){return {themeMode:document.documentElement.dataset.theme||'light'}}` :
         name.endsWith('chatbot-context') ? 'export function ChatbotProvider({children}){return children}' :
-        name.endsWith('FocusModeProvider') || name.endsWith('OfflineBootstrap') ? 'export default function Provider({children}){return children}' :
+        name.endsWith('FocusModeProvider') ? 'export default function Provider({children}){return children}' :
         name.endsWith('DraftRecovery') ? 'export function DraftRecoveryProvider({children}){return children}' :
         name==='next/link' ? 'export default function Link({children,...props}){return <a {...props}>{children}</a>}' :
         name==='next/dynamic' ? `export default function dynamic(){return function Editor({value,onChange}){if(!onChange)return null;return <textarea aria-label='Source code editor' style={{height:'100%',width:'100%',resize:'none',fontFamily:'monospace',padding:16,background:'var(--bg-surface)',color:'var(--text-primary)'}} value={value} onChange={e=>onChange(e.target.value)}/>}}` :

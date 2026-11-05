@@ -6,6 +6,11 @@ import { db } from '@/lib/db';
 import { studentRegistrationSchema, googleLinkSchema } from '@/lib/auth-schema';
 import { createSession } from '@/lib/auth-session';
 import { clearGoogleProfile, readGoogleProfile } from '@/lib/google-auth';
+import { resolveIteStudentProgramFromRecord } from '@/lib/ite-programs/features';
+import {
+  loadActiveIteStudentProgramsFromDb,
+  resolveRegistrationDepartmentForInstitute,
+} from '@/lib/ite-programs/registration';
 import { needsClassEnrollment } from '@/lib/student-access';
 import { mutationOriginAllowed } from '@/lib/request-security';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
@@ -22,7 +27,7 @@ export async function POST(request: Request) {
   try {
     if (!mutationOriginAllowed(request)) throw new AccessError(403, 'Forbidden request origin.');
     await persistentLimit('register-ip:' + getClientIp(request), 10, 60 * 60 * 1000);
-    const body = await boundedJson(request, 8192) as { google?: unknown };
+    const body = await boundedJson(request, 8192) as { google?: unknown; program?: unknown };
     const profile = body?.google === true ? await readGoogleProfile() : null;
     if (body?.google === true && !profile) throw new AccessError(400, 'Google sign-in expired. Start again.');
     const linking = profile && await db.user.findFirst({ where: { email: { equals: profile.email, mode: 'insensitive' } }, select: { id: true } });
@@ -33,6 +38,14 @@ export async function POST(request: Request) {
     if (profile && profile.email !== data.email) throw new AccessError(400, 'Use the email verified by Google.');
     const institute = await db.institute.findUnique({ where: { code: data.instituteCode } });
     if (!institute) throw new AccessError(400, 'Institute is not available.');
+    const programValidation = await resolveRegistrationDepartmentForInstitute({
+      instituteCode: institute.code,
+      instituteId: institute.id,
+      rawProgram: body?.program,
+      loadItePrograms: loadActiveIteStudentProgramsFromDb,
+    });
+    if (!programValidation.ok) throw new AccessError(programValidation.status, programValidation.message);
+    const validatedIteProgramCode = programValidation.department;
     const registration = registrationResult?.success ? registrationResult.data : null;
     const password = registration ? await hash(registration.password, 12) : null;
     const user = await db.$transaction(async tx => {
@@ -40,24 +53,59 @@ export async function POST(request: Request) {
       for (const value of (registration ? [data.email, registration.studentNumber] : [data.email]).sort()) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${value}, 0))`;
       if (linking && profile) {
         await lockAccounts(tx, [linking.id]);
-        const current = await tx.user.findUnique({ where: { id: linking.id }, include: { institute: true } });
+        const current = await tx.user.findUnique({
+          where: { id: linking.id },
+          include: {
+            institute: true,
+            programMemberships: {
+              where: { isActive: true },
+              select: { isActive: true, kind: true, program: { select: { code: true, name: true } } },
+            },
+            enrollments: {
+              where: { status: 'APPROVED' },
+              select: { status: true, course: { select: { section: true, program: { select: { code: true, name: true } } } } },
+            },
+          },
+        });
         if (!current || current.email.toLowerCase() !== profile.email) throw new AccessError(409, 'Your existing account changed. Start Google sign-in again.');
         if (canonicalRole(current.role) !== 'STUDENT' || !mayAdmitAccount(current) || !current.password) throw new AccessError(403, 'This account cannot connect to Google. Contact your Instructor or Program Head.');
         if (current.instituteId !== institute.id || current.institute.code !== profile.instituteCode) throw new AccessError(403, 'Your account belongs to a different institute. Select your existing institute and start Google sign-in again.');
         if (!await compare(data.password, current.password)) throw new AccessError(401, 'Your LMS password is incorrect. Try again or reset your password before connecting Google.');
         if (current.googleSubject && current.googleSubject !== profile.sub) throw new AccessError(409, 'This account is connected to a different Google account. Contact your Instructor or Program Head.');
-        return tx.user.update({ where: { id: current.id }, data: { googleSubject: profile.sub } });
+        const existingIteProgram = institute.code === 'ite' ? resolveIteStudentProgramFromRecord(current) : null;
+        return tx.user.update({
+          where: { id: current.id },
+          data: {
+            googleSubject: profile.sub,
+            ...(validatedIteProgramCode && !existingIteProgram ? { department: validatedIteProgramCode } : {}),
+          },
+        });
       }
       if (!registration || !password) throw new AccessError(409, 'Your existing account changed. Start Google sign-in again.');
       const existing = await tx.user.findFirst({ where: { OR: [{ email: { equals: data.email, mode: 'insensitive' } }, { studentNumber: registration.studentNumber }] } });
       if (existing) throw new AccessError(409, 'An account already uses this email or student ID. Sign in with that account or contact your Instructor or Program Head.');
-      return tx.user.create({ data: { name: registration.name, email: data.email, studentNumber: registration.studentNumber, uniqueId: registration.studentNumber, password, googleSubject: profile?.sub ?? null, role: 'STUDENT', instituteId: institute.id, isActive: true, activationStatus: 'ACTIVE', activatedAt: new Date() } });
+      return tx.user.create({
+        data: {
+          name: registration.name,
+          email: data.email,
+          studentNumber: registration.studentNumber,
+          uniqueId: registration.studentNumber,
+          password,
+          googleSubject: profile?.sub ?? null,
+          role: 'STUDENT',
+          instituteId: institute.id,
+          ...(validatedIteProgramCode ? { department: validatedIteProgramCode } : {}),
+          isActive: true,
+          activationStatus: 'ACTIVE',
+          activatedAt: new Date(),
+        },
+      });
     });
     const { token, expiresAt, sessionId } = await createSession(user.id, { userAgent: request.headers.get('user-agent') || undefined, ipAddress: getClientIp(request) }, user.password!, { role: user.role, instituteId: user.instituteId, credentialProvisioningState: user.credentialProvisioningState, ...(profile ? { googleSubject: profile.sub } : {}) });
     await clearGoogleProfile();
     const mobileGoogle = profile ? await prepareGoogleMobile(sessionId, profile.sub) : false;
     const requiresEnrollment = await needsClassEnrollment(user);
-    return NextResponse.json({ mobileCapabilities, message: 'Account ready.', token, expiresAt: expiresAt.toISOString(), redirectTo: mobileGoogle ? '/api/auth/google/mobile/complete' : requiresEnrollment ? '/join-class' : `/${institute.code}/students`, user: { id: user.id, name: user.name, email: user.email, studentNumber: user.studentNumber, role: user.role, requiresEnrollment, instituteId: institute.id, institute: { code: institute.code, name: institute.name } } }, { status: 200, headers: getCorsHeaders(request) });
+    return NextResponse.json({ mobileCapabilities, message: 'Account ready.', token, expiresAt: expiresAt.toISOString(), redirectTo: mobileGoogle ? '/api/auth/google/mobile/complete' : requiresEnrollment ? '/join-class' : `/${institute.code}/students`, user: { id: user.id, name: user.name, email: user.email, studentNumber: user.studentNumber, department: user.department, role: user.role, requiresEnrollment, instituteId: institute.id, institute: { code: institute.code, name: institute.name } } }, { status: 200, headers: getCorsHeaders(request) });
   } catch (error) {
     if ((error as { code?: string })?.code === 'P2002') return Response.json({ message: 'An account already uses this email or student ID.' }, { status: 409 });
     return accountErrorResponse(error);
