@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/lib/theme-context";
 import { ChatbotProvider } from "@/lib/chatbot-context";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import type { InstituteTheme } from "@/lib/theme";
+import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
 
 const ChatbotWidget = dynamic(() => import("@/components/common/ChatbotWidget"));
 const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"));
@@ -39,8 +40,8 @@ interface DashboardLayoutProps {
   isEligibleForMeetings?: boolean;
   /** Whether this user qualifies for ITE Focus Mode (ITE students only). */
   isEligibleForFocusMode?: boolean;
-  /** Whether this user qualifies for the ITE BTLED ICT Lab. Controls sidebar entry visibility. */
-  isEligibleForIctLab?: boolean;
+  /** Available program-specific tools for the ITE student ("Program tools" sidebar group). */
+  iteProgramTools?: IteSidebarProgramTool[];
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -67,7 +68,7 @@ export default function DashboardLayout({
   isEligibleForPracticum,
   isEligibleForMeetings,
   isEligibleForFocusMode,
-  isEligibleForIctLab,
+  iteProgramTools,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -117,7 +118,7 @@ export default function DashboardLayout({
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForOhmward={isEligibleForOhmward}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-        isEligibleForIctLab={isEligibleForIctLab}
+          iteProgramTools={iteProgramTools}
           isEligibleForPracticum={isEligibleForPracticum}
           isEligibleForMeetings={isEligibleForMeetings}
           enrolledCourses={enrolledCourses}
@@ -163,7 +164,7 @@ export default function DashboardLayout({
         avatarUrl={avatarUrl ?? null}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-        isEligibleForIctLab={isEligibleForIctLab}
+        iteProgramTools={iteProgramTools}
       />
       </div>
 

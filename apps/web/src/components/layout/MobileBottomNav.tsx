@@ -3,8 +3,9 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, Trophy, Megaphone, MoreHorizontal, BarChart2, Shield, Users } from "lucide-react";
+import { LayoutDashboard, BookOpen, Trophy, Megaphone, MoreHorizontal, BarChart2, Users } from "lucide-react";
 import MobileMoreSheet from "@/components/layout/MobileMoreSheet";
+import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
 
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import { getNavigationPath } from "@/lib/navigation-path";
@@ -18,7 +19,7 @@ interface MobileBottomNavProps {
   isEligibleForActivities?: boolean;
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
-  isEligibleForIctLab?: boolean;
+  iteProgramTools?: IteSidebarProgramTool[];
 }
 
 export default function MobileBottomNav({
@@ -30,7 +31,7 @@ export default function MobileBottomNav({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
-  isEligibleForIctLab,
+  iteProgramTools = [],
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -139,7 +140,6 @@ export default function MobileBottomNav({
       {/* More Options Bottom Sheet */}
       <MobileMoreSheet
         isEligibleForOhmward={isEligibleForOhmward}
-
         isOpen={isMoreOpen}
         onClose={() => setIsMoreOpen(false)}
         instituteCode={instituteCode}
@@ -149,7 +149,7 @@ export default function MobileBottomNav({
         avatarUrl={avatarUrl}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
-        isEligibleForIctLab={isEligibleForIctLab}
+        iteProgramTools={iteProgramTools}
       />
     </>
   );

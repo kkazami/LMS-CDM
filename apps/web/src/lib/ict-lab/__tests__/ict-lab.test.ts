@@ -1,4 +1,4 @@
-import { describe, it, afterEach } from "node:test";
+import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
@@ -23,20 +23,8 @@ import {
 } from "../rules";
 import { HARDWARE_SVG_PART_IDS } from "../../../components/ict-lab/HardwareExplorerTab";
 
-describe("BTLED ICT Lab - Access Guard & Testing Switch", () => {
-  const originalEnv = process.env.ICT_LAB_OPEN_TO_ALL_ITE;
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.ICT_LAB_OPEN_TO_ALL_ITE;
-    } else {
-      process.env.ICT_LAB_OPEN_TO_ALL_ITE = originalEnv;
-    }
-  });
-
-  it("denies ITE instructor, ITE admin, and non-BTLED ITE students when ICT_LAB_OPEN_TO_ALL_ITE is off", async () => {
-    delete process.env.ICT_LAB_OPEN_TO_ALL_ITE;
-
+describe("BTLED ICT Lab - Access Guard", () => {
+  it("allows only ITE students in the BTLEd ICT program and denies ITE instructors, admins, and non-BTLED ITE students", async () => {
     const instructorDecision = await evaluateIctLabAccess({
       userId: "inst-1",
       userRole: "PROFESSOR",
@@ -79,62 +67,35 @@ describe("BTLED ICT Lab - Access Guard & Testing Switch", () => {
     assert.equal(btledStudentDecision.programCode, "BTLEd ICT");
   });
 
-  it("allows ITE instructor and non-BTLED ITE student when ICT_LAB_OPEN_TO_ALL_ITE is true", async () => {
-    process.env.ICT_LAB_OPEN_TO_ALL_ITE = "true";
-
-    const instructorDecision = await evaluateIctLabAccess({
-      userId: "inst-1",
-      userRole: "PROFESSOR",
-      userInstituteCode: "ite",
+  it("denies non-ITE users and non-ITE routes", async () => {
+    const icsUserOnIteRoute = await evaluateIctLabAccess({
+      userId: "stu-ics",
+      userRole: "STUDENT",
+      userInstituteCode: "ics",
       routeInstituteCode: "ite",
-      resolveStudentProgram: async () => ({ isBtledIct: false, programCode: null }),
+      resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
     });
-    assert.equal(instructorDecision.allowed, true);
-    assert.equal(instructorDecision.role, "INSTRUCTOR");
+    assert.equal(icsUserOnIteRoute.allowed, false);
+    assert.equal(icsUserOnIteRoute.reason, "NOT_ITE_USER");
 
-    const beedStudentDecision = await evaluateIctLabAccess({
-      userId: "stu-beed",
+    const ibeUserOnIteRoute = await isEligibleForIctLabSidebar({
+      userId: "stu-ibe",
+      userRole: "STUDENT",
+      userInstituteCode: "ibe",
+      routeInstituteCode: "ite",
+      resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
+    });
+    assert.equal(ibeUserOnIteRoute, false);
+
+    const iteUserOnIcsRoute = await evaluateIctLabAccess({
+      userId: "stu-ite",
       userRole: "STUDENT",
       userInstituteCode: "ite",
-      routeInstituteCode: "ite",
-      resolveStudentProgram: async () => ({ isBtledIct: false, programCode: "BEEd" }),
+      routeInstituteCode: "ics",
+      resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
     });
-    assert.equal(beedStudentDecision.allowed, true);
-  });
-
-  it("denies non-ITE users and non-ITE routes whether ICT_LAB_OPEN_TO_ALL_ITE is off or on", async () => {
-    for (const flag of ["false", "true"]) {
-      process.env.ICT_LAB_OPEN_TO_ALL_ITE = flag;
-
-      const icsUserOnIteRoute = await evaluateIctLabAccess({
-        userId: "stu-ics",
-        userRole: "STUDENT",
-        userInstituteCode: "ics",
-        routeInstituteCode: "ite",
-        resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
-      });
-      assert.equal(icsUserOnIteRoute.allowed, false);
-      assert.equal(icsUserOnIteRoute.reason, "NOT_ITE_USER");
-
-      const ibeUserOnIteRoute = await isEligibleForIctLabSidebar({
-        userId: "stu-ibe",
-        userRole: "STUDENT",
-        userInstituteCode: "ibe",
-        routeInstituteCode: "ite",
-        resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
-      });
-      assert.equal(ibeUserOnIteRoute, false);
-
-      const iteUserOnIcsRoute = await evaluateIctLabAccess({
-        userId: "stu-ite",
-        userRole: "STUDENT",
-        userInstituteCode: "ite",
-        routeInstituteCode: "ics",
-        resolveStudentProgram: async () => ({ isBtledIct: true, programCode: "BTLEd ICT" }),
-      });
-      assert.equal(iteUserOnIcsRoute.allowed, false);
-      assert.equal(iteUserOnIcsRoute.reason, "NOT_ITE_ROUTE");
-    }
+    assert.equal(iteUserOnIcsRoute.allowed, false);
+    assert.equal(iteUserOnIcsRoute.reason, "NOT_ITE_ROUTE");
   });
 });
 
@@ -373,4 +334,3 @@ describe("BTLED ICT Lab - LAN Cable Tester Classification", () => {
     assert.deepEqual(resShort.shortedPins, [1, 2]);
   });
 });
-

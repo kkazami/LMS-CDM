@@ -4,7 +4,8 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { isEligibleKxInstituteCode } from "@/lib/kx-eligibility";
 import { isIteInstituteCode } from "@/lib/ite/ite-eligibility";
-import { isEligibleForIctLabSidebar } from "@/lib/ict-lab/guard";
+import { getAvailableSidebarToolsForIteProgram } from "@/lib/ite-programs/features";
+import { resolveIteStudentProgram } from "@/lib/ite-programs/registration";
 import { db } from "@/lib/db";
 import { getPHTDateString, getPHTMidnight, processLoginReward } from "@/lib/gamification/login-rewards";
 import { getInstituteByCode, getStudentEnrollments } from "@/lib/dashboard-data";
@@ -69,15 +70,15 @@ export default async function InstituteLayout({
 
   // Focus Mode is ITE-students-only; hidden everywhere else.
   const focusModeEligible = isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
-  const ictLabEligible =
-    isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute)
-      ? await isEligibleForIctLabSidebar({
-          userId: session.user.id,
-          userRole,
-          userInstituteCode,
-          routeInstituteCode: institute,
-        })
-      : false;
+
+  // ITE per-program student sidebar tools ("Program tools" group): only for ITE students, only "available" features for their program.
+  const resolvedIteProgram =
+    isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute)
+      ? await resolveIteStudentProgram(session.user.id)
+      : null;
+  const iteProgramTools = getAvailableSidebarToolsForIteProgram(
+    resolvedIteProgram?.programCode
+  );
 
   // Use the institute id already loaded with the session when this is the user's own institute
   // (no extra query); only look it up when it is a different one.
@@ -167,8 +168,7 @@ export default async function InstituteLayout({
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}
-      isEligibleForIctLab={ictLabEligible}
-
+      iteProgramTools={iteProgramTools}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}

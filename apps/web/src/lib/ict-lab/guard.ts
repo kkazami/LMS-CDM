@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { normalizeRole } from "../admin-types";
+import { resolveIteStudentProgram } from "../ite-programs/registration";
 import { HttpError } from "../practicum/http";
-import { isBtledIctProgram } from "./rules";
 
 export type IctLabRole = "STUDENT" | "INSTRUCTOR" | "ADMIN";
 
@@ -50,76 +50,14 @@ export async function checkStudentBtledIctProgram(userId: string): Promise<{
   isBtledIct: boolean;
   programCode: string | null;
 }> {
-  try {
-    const { db } = await import("@/lib/db");
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        department: true,
-        section: true,
-        programMemberships: {
-          where: { isActive: true },
-          select: {
-            program: {
-              select: { code: true, name: true },
-            },
-          },
-        },
-        enrollments: {
-          where: { status: "APPROVED" },
-          select: {
-            course: {
-              select: {
-                section: true,
-                program: {
-                  select: { code: true, name: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!user) return { isBtledIct: false, programCode: null };
-
-    for (const membership of user.programMemberships) {
-      if (
-        isBtledIctProgram(membership.program.code) ||
-        isBtledIctProgram(membership.program.name)
-      ) {
-        return { isBtledIct: true, programCode: membership.program.code };
-      }
-    }
-
-    if (isBtledIctProgram(user.department)) {
-      return { isBtledIct: true, programCode: user.department };
-    }
-
-    if (isBtledIctProgram(user.section)) {
-      return { isBtledIct: true, programCode: "BTLEd ICT" };
-    }
-
-    for (const enrollment of user.enrollments) {
-      const prog = enrollment.course.program;
-      if (
-        (prog && (isBtledIctProgram(prog.code) || isBtledIctProgram(prog.name))) ||
-        isBtledIctProgram(enrollment.course.section)
-      ) {
-        return {
-          isBtledIct: true,
-          programCode: prog?.code ?? "BTLEd ICT",
-        };
-      }
-    }
-
-    return {
-      isBtledIct: false,
-      programCode: user.programMemberships[0]?.program.code || user.department || null,
-    };
-  } catch {
+  const resolved = await resolveIteStudentProgram(userId);
+  if (!resolved) {
     return { isBtledIct: false, programCode: null };
   }
+  return {
+    isBtledIct: resolved.programCode === "BTLEd ICT",
+    programCode: resolved.programCode,
+  };
 }
 
 /**
@@ -169,17 +107,7 @@ export async function evaluateIctLabAccess(
     };
   }
 
-  // TEMPORARY testing switch - remove before merging to main
-  const isOpenToAllIte = process.env.ICT_LAB_OPEN_TO_ALL_ITE === "true";
-
   if (normalizedRole !== "STUDENT") {
-    if (isOpenToAllIte) {
-      return {
-        allowed: true,
-        role: normalizedRole,
-        programCode: null,
-      };
-    }
     return {
       allowed: false,
       role: normalizedRole,
@@ -190,7 +118,7 @@ export async function evaluateIctLabAccess(
 
   const { isBtledIct, programCode } = await resolveStudentProgram(userId);
 
-  if (!isBtledIct && !isOpenToAllIte) {
+  if (!isBtledIct) {
     return {
       allowed: false,
       role: "STUDENT",
@@ -306,4 +234,3 @@ export async function requireIctLabApiActor(request: Request): Promise<IctLabAct
     programCode: decision.programCode,
   };
 }
-

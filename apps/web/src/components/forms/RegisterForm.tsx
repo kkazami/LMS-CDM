@@ -6,36 +6,110 @@ import { ArrowLeft, ArrowRight, BookOpen, KeyRound, UserRoundPlus, LoaderCircle 
 import { PolicyLink } from '@/components/legal/PolicyNavigation';
 import { INSTITUTES } from '@/components/common/InstituteSelector';
 import Input from '@/components/common/Input';
+import { webGoogleLinkSchema, webStudentRegistrationSchema } from '@/lib/auth-schema';
 import { getInstituteTheme } from '@/lib/get-institute-theme';
+import type { IteStudentProgramCode } from '@/lib/ite-programs/features';
 import { syncSessionToNative } from '@/lib/mobile-bridge';
 import GoogleSignIn from './GoogleSignIn';
 import styles from './login.module.css';
 import register from './register.module.css';
 
-type Props = { instituteCode: string; googleEnabled: boolean; googleProfile: { name: string; email: string } | null; linking: boolean; studentNumber?: string; googleExpired?: boolean };
-export default function RegisterForm({ instituteCode, googleEnabled, googleProfile, linking, studentNumber = '', googleExpired = false }: Props) {
+export interface IteProgramOption {
+  id: string;
+  code: IteStudentProgramCode;
+  name: string;
+}
+
+type Props = {
+  instituteCode: string;
+  googleEnabled: boolean;
+  googleProfile: { name: string; email: string } | null;
+  linking: boolean;
+  studentNumber?: string;
+  googleExpired?: boolean;
+  itePrograms?: IteProgramOption[];
+  missingItePrograms?: IteStudentProgramCode[];
+};
+
+export default function RegisterForm({
+  instituteCode,
+  googleEnabled,
+  googleProfile,
+  linking,
+  studentNumber = '',
+  googleExpired = false,
+  itePrograms = [],
+  missingItePrograms = [],
+}: Props) {
   const [institute, setInstitute] = useState(instituteCode);
+  const [program, setProgram] = useState('');
   const [saving, setSaving] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [error, setError] = useState('');
   const busy = saving || googleBusy;
+  const isIte = institute === 'ite';
+  const hasMissingIteConfig = isIte && missingItePrograms.length > 0;
   const theme = getInstituteTheme(institute);
   const instituteStyle = {
     '--login-institute': theme.colors.primary,
     '--login-institute-index': INSTITUTES.findIndex(item => item.code === institute),
   } as CSSProperties;
 
+  function handleSelectInstitute(nextInstitute: string) {
+    setInstitute(nextInstitute);
+    if (nextInstitute !== 'ite') {
+      setProgram('');
+    }
+    setError('');
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSaving(true); setError('');
+    event.preventDefault();
+    setError('');
+
+    if (hasMissingIteConfig) {
+      setError(
+        `ITE registration is unavailable because the following academic program(s) are missing in the database: ${missingItePrograms.join(', ')}.`
+      );
+      return;
+    }
+
     const form = new FormData(event.currentTarget);
+    const rawValues = Object.fromEntries(form);
+    const payload: Record<string, unknown> = {
+      ...rawValues,
+      instituteCode: institute,
+      google: Boolean(googleProfile),
+      acceptedPolicies,
+      ...(isIte ? { program } : {}),
+    };
+    if (!isIte) {
+      delete payload.program;
+    }
+
+    const schema = linking ? webGoogleLinkSchema : webStudentRegistrationSchema;
+    const validation = schema.safeParse(payload);
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message || 'Please check your registration details.');
+      return;
+    }
+
+    setSaving(true);
     try {
-      const response = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...Object.fromEntries(form), instituteCode: institute, google: Boolean(googleProfile), acceptedPolicies }) });
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to register. Please try again.');
       syncSessionToNative(data.token, data.user);
       window.location.assign(data.redirectTo);
-    } catch (error) { setError(error instanceof Error ? error.message : 'Unable to register.'); setSaving(false); }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to register.');
+      setSaving(false);
+    }
   }
 
   return <main className={styles.page} style={instituteStyle} data-institute={institute}>
@@ -69,11 +143,48 @@ export default function RegisterForm({ instituteCode, googleEnabled, googleProfi
               <input type="hidden" name="instituteCode" value={institute} />
               <div className={styles.instituteTrack} role="group" aria-labelledby="register-institute-label">
                 <span className={styles.instituteSelection} aria-hidden="true" />
-                {INSTITUTES.map(item => <button key={item.code} type="button" className={styles.institute} aria-pressed={institute === item.code} aria-controls="register-institute-name" disabled={busy || linking} onClick={() => setInstitute(item.code)}>{item.short}</button>)}
+                {INSTITUTES.map(item => <button key={item.code} type="button" className={styles.institute} aria-pressed={institute === item.code} aria-controls="register-institute-name" disabled={busy || linking} onClick={() => handleSelectInstitute(item.code)}>{item.short}</button>)}
               </div>
               <p className={styles.instituteName} id="register-institute-name" aria-live="polite">{theme.name}{linking ? ' · Your existing institute' : ''}</p>
             </div>
             <div className={register.details}>
+              {isIte && (
+                <div className={`${styles.field} ${register.field} ${register.fullWidth}`}>
+                  <div className="grid gap-1.5">
+                    <label htmlFor="register-program" className="text-xs font-semibold text-slate-700 dark:text-[#8B92A5]">
+                      Select your program
+                    </label>
+                    <select
+                      id="register-program"
+                      name="program"
+                      value={program}
+                      onChange={event => {
+                        setProgram(event.target.value);
+                        setError('');
+                      }}
+                      required
+                      disabled={busy || hasMissingIteConfig}
+                      aria-describedby="register-program-hint"
+                      className={register.selectControl}
+                    >
+                      <option value="">Select your ITE academic program</option>
+                      {itePrograms.map(item => (
+                        <option key={item.id} value={item.code}>
+                          {item.code} — {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <span id="register-program-hint" className={register.hint}>
+                    Your program customizes your ITE student dashboard and tools, and is locked after registration.
+                  </span>
+                  {hasMissingIteConfig && (
+                    <p role="alert" className={styles.error}>
+                      Configuration error: Required ITE program(s) missing in database ({missingItePrograms.join(', ')}). Please contact an administrator.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className={`${styles.field} ${register.field}`}><Input id="register-name" name="name" label="Full name" placeholder="Your full name" theme={theme} autoComplete="name" defaultValue={googleProfile?.name} readOnly={linking} minLength={2} maxLength={150} required disabled={busy} /></div>
               <div className={`${styles.field} ${register.field}`}><Input id="register-student-id" name="studentNumber" label="Student ID" theme={theme} aria-describedby="student-id-hint" autoComplete="off" placeholder="26-12345" defaultValue={studentNumber} readOnly={linking} pattern={linking ? undefined : "[0-9]{2}-[0-9]{5}"} maxLength={linking ? 40 : 8} title="Two digits, a hyphen, then five digits (26-12345)" required={!linking} disabled={busy} /><span id="student-id-hint" className={register.hint}>{linking ? 'Use your existing student ID.' : 'Format: XX-XXXXX'}</span></div>
               <div className={`${styles.field} ${register.field} ${register.fullWidth}`}><Input id="register-email" name="email" label="Email" placeholder="you@example.com" theme={theme} type="email" autoComplete="email" defaultValue={googleProfile?.email} readOnly={Boolean(googleProfile)} maxLength={254} required disabled={busy} /></div>
@@ -87,7 +198,7 @@ export default function RegisterForm({ instituteCode, googleEnabled, googleProfi
               <label htmlFor="register-policies">I agree to the <PolicyLink href="/terms">Terms and Conditions</PolicyLink> and acknowledge the <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.</label>
             </div>
             {error && <p role="alert" className={styles.error}>{error}</p>}
-            <button type="submit" className={styles.submit} disabled={busy}>{saving ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}{saving ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
+            <button type="submit" className={styles.submit} disabled={busy || hasMissingIteConfig}>{saving ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}{saving ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
             {!googleProfile && googleEnabled && <GoogleSignIn instituteCode={institute} acceptedPolicies={acceptedPolicies} disabled={busy} onBusyChange={setGoogleBusy} onError={setError} />}
             <div className={styles.accountHelp}><span>Already have an account?</span><Link href={`/login?institute=${institute}`}>Sign in</Link></div>
           </form>

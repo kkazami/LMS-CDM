@@ -6,13 +6,19 @@ import { redirect } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
-import { getInstituteByCode, getStudentEnrollments, getStudentRank } from "@/lib/dashboard-data";
+import { getStudentEnrollments, getStudentRank } from "@/lib/dashboard-data";
 import type { InstituteTheme } from "@/lib/theme";
 import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
 import StudentDashboardClient from "./client";
 import { getSession } from "@/lib/auth-session";
 import { getDashboardGreeting, isFirstLoginSession } from "@/lib/dashboard-greeting";
+import {
+  ITE_STUDENT_PROGRAM_CODES,
+  inspectIteDatabasePrograms,
+} from "@/lib/ite-programs/features";
+import { resolveIteStudentProgram } from "@/lib/ite-programs/registration";
+import type { IteStudentProgramDashboardData } from "@/components/ite/IteStudentProgramSection";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +44,11 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     redirect(`/login?institute=${institute}`);
   }
 
+  const isIte = instituteRecord.code.toLowerCase() === "ite";
+
   // 1. Independent lookups run together: approved courses (shared with the layout),
   //    gamification profile with login streak/badges, student's pending join requests, and auth session.
-  const [enrollments, gamification, pendingJoinCount, session] = await Promise.all([
+  const [enrollments, gamification, pendingJoinCount, session, iteProgramData] = await Promise.all([
     getStudentEnrollments(studentId, instituteRecord.id),
     db.gamificationProfile.findUnique({
       where: { studentId },
@@ -60,6 +68,41 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       },
     }),
     getSession(),
+    isIte
+      ? (async (): Promise<IteStudentProgramDashboardData> => {
+          const [resolved, rawPrograms] = await Promise.all([
+            resolveIteStudentProgram(studentId),
+            db.academicProgram.findMany({
+              where: {
+                instituteId: instituteRecord.id,
+                isActive: true,
+                code: { in: [...ITE_STUDENT_PROGRAM_CODES] },
+              },
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                isActive: true,
+              },
+            }),
+          ]);
+          const { programs, missingCodes } =
+            inspectIteDatabasePrograms(rawPrograms);
+          const dbMatched = resolved
+            ? programs.find((p) => p.code === resolved.programCode)
+            : null;
+          return {
+            resolvedProgram: resolved
+              ? {
+                  code: resolved.programCode,
+                  name: dbMatched?.name ?? resolved.programName,
+                }
+              : null,
+            availablePrograms: programs,
+            missingProgramCodes: missingCodes,
+          };
+        })()
+      : Promise.resolve(null),
   ]);
 
   const enrolledCourses = enrollments.map((e) => ({
@@ -166,6 +209,7 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
       pendingJoinCount={pendingJoinCount}
       showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
+      iteProgramData={iteProgramData}
     />
   );
 }
