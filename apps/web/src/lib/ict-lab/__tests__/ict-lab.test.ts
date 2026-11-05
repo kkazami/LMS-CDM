@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
 import {
+  ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
   MAX_PLAYGROUND_BYTES,
   MAX_PLAYGROUND_PROJECTS_PER_STUDENT,
   PLAYGROUND_IFRAME_CSP,
@@ -17,6 +18,8 @@ import {
   isBeedProgram,
   isBsedScienceProgram,
   isBtledIctProgram,
+  isMissingPlaygroundTableError,
+  mapIctPlaygroundRouteError,
   simulateCableTester,
   validatePlaygroundProjectInput,
   validatePreviewMessageEvent,
@@ -207,11 +210,78 @@ describe("BTLED ICT Lab - Code Playground Validation, Ownership & postMessage Se
     assert.notEqual(valid, null);
     assert.equal(valid?.level, "warn");
     assert.equal(valid?.text, '<img src=x onerror=alert(1)> {"count":2}');
+
+    // Opaque origin "null" from sandbox="allow-scripts" iframe -> accepted
+    const validWithNullOrigin = validatePreviewMessageEvent(
+      {
+        source: fakeIframeWindow,
+        origin: "null",
+        data: {
+          source: PLAYGROUND_POSTMESSAGE_SOURCE,
+          level: "error",
+          args: ["Uncaught ReferenceError: foo is not defined"],
+          timestamp: 123457,
+        },
+      },
+      fakeIframeWindow
+    );
+    assert.notEqual(validWithNullOrigin, null);
+    assert.equal(validWithNullOrigin?.level, "error");
+    assert.equal(validWithNullOrigin?.text, "Uncaught ReferenceError: foo is not defined");
+
+    // Malicious untrusted origin -> rejected
+    const rejectedUntrustedOrigin = validatePreviewMessageEvent(
+      {
+        source: fakeIframeWindow,
+        origin: "https://malicious-site.com",
+        data: {
+          source: PLAYGROUND_POSTMESSAGE_SOURCE,
+          level: "log",
+          args: ["spoofed message"],
+        },
+      },
+      fakeIframeWindow
+    );
+    assert.equal(rejectedUntrustedOrigin, null);
   });
 
-  it("builds srcdoc with restrictive Content-Security-Policy meta tag", () => {
+  it("maps missing IctPlaygroundProject table (P2021 / 42P01) to 503 and preserves generic messages for other errors", () => {
+    const prismaP2021 = {
+      code: "P2021",
+      message: 'The table `public.IctPlaygroundProject` does not exist in the current database.',
+    };
+    assert.equal(isMissingPlaygroundTableError(prismaP2021), true);
+
+    const postgres42P01 = {
+      code: "42P01",
+      message: 'relation "IctPlaygroundProject" does not exist',
+    };
+    assert.equal(isMissingPlaygroundTableError(postgres42P01), true);
+
+    const mappedP2021 = mapIctPlaygroundRouteError(prismaP2021);
+    assert.equal(mappedP2021.status, 503);
+    assert.equal(mappedP2021.body.message, ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE);
+    assert.equal(mappedP2021.body.storageUnavailable, true);
+
+    // Other unexpected errors map to 500 "Internal error."
+    const genericErr = new Error("Database connection pool timeout");
+    assert.equal(isMissingPlaygroundTableError(genericErr), false);
+    const mappedGeneric = mapIctPlaygroundRouteError(genericErr);
+    assert.equal(mappedGeneric.status, 500);
+    assert.equal(mappedGeneric.body.message, "Internal error.");
+
+    // Known HTTP error preserves its status and message
+    const notFoundErr = { status: 404, message: "Project not found." };
+    const mappedNotFound = mapIctPlaygroundRouteError(notFoundErr);
+    assert.equal(mappedNotFound.status, 404);
+    assert.equal(mappedNotFound.body.message, "Project not found.");
+  });
+
+  it("builds srcdoc with restrictive Content-Security-Policy meta tag and console error bridge", () => {
     const doc = buildPlaygroundSrcdoc("<h1>Hi</h1>", "body{}", "console.log(1)");
     assert.ok(doc.includes(PLAYGROUND_IFRAME_CSP));
+    assert.ok(doc.includes("window.__cdmReportError"));
+    assert.ok(doc.indexOf("<script>\n(function()") < doc.indexOf("<script>\ntry {"));
   });
 });
 

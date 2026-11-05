@@ -20,6 +20,7 @@ import {
 import type { PlaygroundEditorLanguage } from "./CodeMirrorEditor";
 import type { IctPlaygroundProjectDTO } from "@/lib/ict-lab/types";
 import {
+  ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
   MAX_PLAYGROUND_BYTES,
   MAX_PLAYGROUND_PROJECTS_PER_STUDENT,
   MAX_PROJECT_TITLE_LENGTH,
@@ -79,8 +80,8 @@ export default function CodePlaygroundTab() {
 
   const [activeEditorTab, setActiveEditorTab] = useState<PlaygroundEditorLanguage>("html");
   const [autoRun, setAutoRun] = useState<boolean>(false);
-  const [srcdoc, setSrcdoc] = useState<string>(() => buildPlaygroundSrcdoc("", "", ""));
-  const [runVersion, setRunVersion] = useState<number>(0);
+  const runCounterRef = useRef<number>(0);
+  const [srcdoc, setSrcdoc] = useState<string>(() => buildPlaygroundSrcdoc("", "", "", 0));
   const [consoleEntries, setConsoleEntries] = useState<PlaygroundConsoleEntry[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -89,7 +90,7 @@ export default function CodePlaygroundTab() {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameDraft, setRenameDraft] = useState("");
   const [statusBanner, setStatusBanner] = useState<{
-    kind: "success" | "error";
+    kind: "success" | "warning" | "error";
     text: string;
   } | null>(null);
 
@@ -145,8 +146,20 @@ export default function CodePlaygroundTab() {
         headers: { Accept: "application/json" },
       });
       if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(errData.message || "Failed to load saved projects.");
+        const errData = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          storageUnavailable?: boolean;
+        };
+        setProjects([]);
+        setStatusBanner({
+          kind: res.status === 503 || errData.storageUnavailable ? "warning" : "error",
+          text:
+            errData.message ||
+            (res.status === 503
+              ? ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE
+              : "Failed to load saved projects."),
+        });
+        return;
       }
       const data = (await res.json()) as { projects?: IctPlaygroundProjectDTO[] };
       setProjects(Array.isArray(data.projects) ? data.projects : []);
@@ -166,9 +179,9 @@ export default function CodePlaygroundTab() {
 
   const runPreview = useCallback(
     (nextHtml: string, nextCss: string, nextJs: string) => {
+      runCounterRef.current += 1;
       setConsoleEntries([]);
-      setSrcdoc(buildPlaygroundSrcdoc(nextHtml, nextCss, nextJs));
-      setRunVersion((v) => v + 1);
+      setSrcdoc(buildPlaygroundSrcdoc(nextHtml, nextCss, nextJs, runCounterRef.current));
     },
     []
   );
@@ -204,7 +217,7 @@ export default function CodePlaygroundTab() {
       js: "",
     });
     setShowDeleteConfirm(false);
-    setStatusBanner(null);
+    setStatusBanner((prev) => (prev?.kind === "warning" ? prev : null));
     runPreview("", "", "");
   };
 
@@ -225,9 +238,14 @@ export default function CodePlaygroundTab() {
       const payload = (await res.json().catch(() => ({}))) as {
         project?: IctPlaygroundProjectDTO;
         message?: string;
+        storageUnavailable?: boolean;
       };
       if (!res.ok || !payload.project) {
-        throw new Error(payload.message || "Unable to load project.");
+        setStatusBanner({
+          kind: res.status === 503 || payload.storageUnavailable ? "warning" : "error",
+          text: payload.message || "Unable to load project.",
+        });
+        return;
       }
       const proj = payload.project;
       setActiveProjectId(proj.id);
@@ -293,9 +311,18 @@ export default function CodePlaygroundTab() {
       const data = (await res.json().catch(() => ({}))) as {
         project?: IctPlaygroundProjectDTO;
         message?: string;
+        storageUnavailable?: boolean;
       };
       if (!res.ok || !data.project) {
-        throw new Error(data.message || "Failed to save project.");
+        setStatusBanner({
+          kind: res.status === 503 || data.storageUnavailable ? "warning" : "error",
+          text:
+            data.message ||
+            (res.status === 503
+              ? ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE
+              : "Failed to save project."),
+        });
+        return;
       }
 
       const saved = data.project;
@@ -356,9 +383,16 @@ export default function CodePlaygroundTab() {
         method: "DELETE",
         headers: { Accept: "application/json" },
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        storageUnavailable?: boolean;
+      };
       if (!res.ok) {
-        throw new Error(data.message || "Failed to delete project.");
+        setStatusBanner({
+          kind: res.status === 503 || data.storageUnavailable ? "warning" : "error",
+          text: data.message || "Failed to delete project.",
+        });
+        return;
       }
       const deletedTitle = title;
       setProjects((prev) => prev.filter((p) => p.id !== activeProjectId));
@@ -592,12 +626,16 @@ export default function CodePlaygroundTab() {
             className={`mt-3 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
               statusBanner.kind === "success"
                 ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
-                : "border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/15 text-red-800 dark:text-red-200"
+                : statusBanner.kind === "warning"
+                  ? "border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/15 text-amber-900 dark:text-amber-200"
+                  : "border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/15 text-red-800 dark:text-red-200"
             }`}
           >
             <span className="inline-flex items-center gap-1.5">
               {statusBanner.kind === "success" ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              ) : statusBanner.kind === "warning" ? (
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               ) : (
                 <AlertTriangle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
               )}
@@ -693,7 +731,6 @@ export default function CodePlaygroundTab() {
             <div className="relative flex-1 bg-white">
               {/* Strictly sandbox="allow-scripts" ONLY — never allow-same-origin, allow-forms, allow-popups, or allow-top-navigation */}
               <iframe
-                key={runVersion}
                 ref={iframeRef}
                 title="Code Playground Live Preview"
                 sandbox="allow-scripts"

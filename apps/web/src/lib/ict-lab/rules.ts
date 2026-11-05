@@ -106,6 +106,102 @@ export const PLAYGROUND_IFRAME_CSP =
 
 export const PLAYGROUND_POSTMESSAGE_SOURCE = "cdm-ict-playground";
 
+export const ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE =
+  "Saving projects is not available yet. Your code still runs, but it can't be saved.";
+
+/**
+ * Detects whether a database error thrown while querying `db.ictPlaygroundProject`
+ * is caused by the `IctPlaygroundProject` table not existing yet (Prisma `P2021` or PostgreSQL `42P01`).
+ */
+export function isMissingPlaygroundTableError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const candidate = err as {
+    code?: unknown;
+    message?: unknown;
+    meta?: {
+      table?: unknown;
+      modelName?: unknown;
+      driverAdapterError?: {
+        cause?: { originalCode?: unknown; originalMessage?: unknown };
+      };
+    };
+    cause?: { code?: unknown; message?: unknown };
+  };
+
+  if (candidate.code === "P2021" || candidate.code === "42P01") {
+    return true;
+  }
+  if (candidate.cause?.code === "P2021" || candidate.cause?.code === "42P01") {
+    return true;
+  }
+  if (candidate.meta?.driverAdapterError?.cause?.originalCode === "42P01") {
+    return true;
+  }
+
+  const msg = typeof candidate.message === "string" ? candidate.message : "";
+  if (
+    /\bP2021\b/.test(msg) ||
+    /IctPlaygroundProject.*does not exist/i.test(msg) ||
+    /relation\s+"?IctPlaygroundProject"?\s+does not exist/i.test(msg) ||
+    /table\s+`?(?:public\.)?"?IctPlaygroundProject"?`?\s+does not exist/i.test(msg)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Maps errors thrown in `/api/ite/ict-lab/projects` and `/api/ite/ict-lab/projects/[id]`
+ * to an HTTP status and JSON body.
+ * - Missing `IctPlaygroundProject` table (`P2021` / `42P01`) -> `503` with `ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE`.
+ * - Known HTTP status errors (`HttpError`) -> `err.status` with `err.message`.
+ * - `ZodError` -> `400` with validation issue message.
+ * - Any other unexpected error -> `500` with `"Internal error."`.
+ */
+export function mapIctPlaygroundRouteError(err: unknown): {
+  status: number;
+  body: { error: string; message: string; storageUnavailable?: boolean };
+} {
+  if (isMissingPlaygroundTableError(err)) {
+    return {
+      status: 503,
+      body: {
+        error: ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
+        message: ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
+        storageUnavailable: true,
+      },
+    };
+  }
+
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    typeof (err as { status?: unknown }).status === "number" &&
+    typeof (err as { message?: unknown }).message === "string"
+  ) {
+    const statusErr = err as { status: number; message: string };
+    return {
+      status: statusErr.status,
+      body: { error: statusErr.message, message: statusErr.message },
+    };
+  }
+
+  if (err instanceof z.ZodError) {
+    const first = err.issues[0];
+    const where = first?.path.length ? `${first.path.join(".")}: ` : "";
+    const msg = `${where}${first?.message ?? "Invalid request."}`;
+    return {
+      status: 400,
+      body: { error: msg, message: msg },
+    };
+  }
+
+  return {
+    status: 500,
+    body: { error: "Internal error.", message: "Internal error." },
+  };
+}
+
 const textEncoder = new TextEncoder();
 
 export function computeProjectByteSize(html: string, css: string, js: string): number {
@@ -176,15 +272,26 @@ export interface PlaygroundConsoleEntry {
 }
 
 /**
- * Validates a `window` message event from the sandboxed preview iframe.
- * Rejects any message where `event.source !== expectedContentWindow` or where `expectedContentWindow` is null/undefined.
- * Converts all arguments to plain text strings so nothing is ever rendered as HTML.
+ * Validates a `window` message event from the sandboxed preview iframe (`sandbox="allow-scripts"`).
+ * - Requires `expectedContentWindow` to be present and `event.source === expectedContentWindow`.
+ * - Because the iframe uses `sandbox="allow-scripts"` without `allow-same-origin`, its origin is
+ *   opaque and serialized by browsers as the string `"null"`. Rejects any event whose `origin`
+ *   is a non-`"null"` string.
+ * - Converts all arguments to plain text strings so nothing is ever rendered as HTML.
  */
 export function validatePreviewMessageEvent(
-  event: { source: unknown; data: unknown },
+  event: { source: unknown; origin?: unknown; data: unknown },
   expectedContentWindow: unknown
 ): PlaygroundConsoleEntry | null {
   if (!expectedContentWindow || event.source !== expectedContentWindow) {
+    return null;
+  }
+  if (
+    event.origin !== undefined &&
+    event.origin !== "null" &&
+    event.origin !== null &&
+    event.origin !== ""
+  ) {
     return null;
   }
   if (!event.data || typeof event.data !== "object") {
@@ -216,7 +323,7 @@ export function validatePreviewMessageEvent(
 }
 
 /**
- * Escapes `</script` inside student CSS/JS before embedding in `srcdoc`.
+ * Escapes `</script` or `</style` inside student CSS/JS before embedding in `srcdoc`.
  */
 function escapeClosingTag(code: string, tagName: "style" | "script"): string {
   const regex = new RegExp(`<\\/${tagName}`, "gi");
@@ -226,20 +333,33 @@ function escapeClosingTag(code: string, tagName: "style" | "script"): string {
 /**
  * Builds the sandboxed `<iframe srcdoc="...">` HTML document with:
  * - Restrictive `<meta http-equiv="Content-Security-Policy" ...>`
- * - Console (`log`, `info`, `warn`, `error`) and runtime error (`window.onerror`, `unhandledrejection`) capture via `parent.postMessage`
+ * - Console bridge script injected in `<head>` BEFORE any student HTML or JS scripts
+ * - Captures `console.log`, `console.info`, `console.warn`, `console.error`, and uncaught
+ *   runtime errors (both synchronous exceptions and `window` `error` / `unhandledrejection` events)
+ *   and posts them to `parent.postMessage`.
  */
-export function buildPlaygroundSrcdoc(html: string, css: string, js: string): string {
+export function buildPlaygroundSrcdoc(
+  html: string,
+  css: string,
+  js: string,
+  runId = 0
+): string {
   const safeCss = escapeClosingTag(css, "style");
   const safeJs = escapeClosingTag(js, "script");
 
   const bridgeScript = `
 (function() {
   var SOURCE = "${PLAYGROUND_POSTMESSAGE_SOURCE}";
+  var lastReportedError = null;
   function formatArg(val) {
     if (val === undefined) return "undefined";
     if (val === null) return "null";
     if (typeof val === "string") return val;
-    if (val instanceof Error) return (val.name || "Error") + ": " + (val.message || "");
+    if (val instanceof Error || (val && typeof val === "object" && (val.name || val.message))) {
+      var name = val.name || "Error";
+      var message = val.message || "";
+      return message.indexOf(name) === 0 ? message : name + ": " + message;
+    }
     try {
       return JSON.stringify(val);
     } catch (e) {
@@ -260,6 +380,14 @@ export function buildPlaygroundSrcdoc(html: string, css: string, js: string): st
       }, "*");
     } catch (e) {}
   }
+  window.__cdmReportError = function(err) {
+    lastReportedError = err;
+    var formatted = formatArg(err);
+    if (formatted.indexOf("Uncaught ") !== 0) {
+      formatted = "Uncaught " + formatted;
+    }
+    send("error", [formatted]);
+  };
   var origLog = console.log;
   var origInfo = console.info;
   var origWarn = console.warn;
@@ -269,8 +397,22 @@ export function buildPlaygroundSrcdoc(html: string, css: string, js: string): st
   console.warn = function() { send("warn", arguments); if (origWarn) origWarn.apply(console, arguments); };
   console.error = function() { send("error", arguments); if (origError) origError.apply(console, arguments); };
   window.addEventListener("error", function(ev) {
-    var msg = ev && ev.message ? ev.message : "Runtime error";
-    if (ev && ev.lineno) msg += " (line " + ev.lineno + ")";
+    if (ev && ev.error && ev.error === lastReportedError) {
+      lastReportedError = null;
+      return;
+    }
+    var msg = "";
+    if (ev && ev.error) {
+      msg = formatArg(ev.error);
+      if (msg.indexOf("Uncaught ") !== 0) msg = "Uncaught " + msg;
+    } else if (ev && ev.message) {
+      msg = ev.message;
+    } else {
+      msg = "Uncaught runtime error";
+    }
+    if (ev && typeof ev.lineno === "number" && ev.lineno > 0) {
+      msg += " (line " + ev.lineno + ")";
+    }
     send("error", [msg]);
   });
   window.addEventListener("unhandledrejection", function(ev) {
@@ -281,6 +423,7 @@ export function buildPlaygroundSrcdoc(html: string, css: string, js: string): st
 `.trim();
 
   return `<!DOCTYPE html>
+<!-- cdm-run:${runId} -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -299,7 +442,11 @@ ${html}
 try {
 ${safeJs}
 } catch (__err) {
-  console.error(__err);
+  if (typeof window.__cdmReportError === "function") {
+    window.__cdmReportError(__err);
+  } else {
+    console.error(__err);
+  }
 }
 </script>
 </body>
@@ -635,4 +782,3 @@ export function simulateCableTester(params: {
     shortedPins: null,
   };
 }
-

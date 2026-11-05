@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { HttpError, errorResponse, readJson } from "@/lib/practicum/http";
+import { HttpError, readJson } from "@/lib/practicum/http";
 import { requireIctLabApiActor } from "@/lib/ict-lab/guard";
 import {
   checkProjectOwnership,
   computeProjectByteSize,
+  mapIctPlaygroundRouteError,
   validatePlaygroundProjectInput,
 } from "@/lib/ict-lab/rules";
 import type { IctPlaygroundProjectDTO } from "@/lib/ict-lab/types";
@@ -32,6 +33,14 @@ function toProjectDTO(row: {
   };
 }
 
+function playgroundErrorResponse(err: unknown): NextResponse {
+  const mapped = mapIctPlaygroundRouteError(err);
+  if (mapped.status === 500) {
+    console.error("[ICT_LAB_PROJECT_ID_API_ERROR]", err);
+  }
+  return NextResponse.json(mapped.body, { status: mapped.status });
+}
+
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
@@ -53,7 +62,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     return NextResponse.json({ project: toProjectDTO(existing) });
   } catch (err) {
-    return errorResponse(err);
+    return playgroundErrorResponse(err);
   }
 }
 
@@ -101,7 +110,7 @@ async function handleUpdate(request: Request, context: RouteContext) {
 
     return NextResponse.json({ project: toProjectDTO(updated) });
   } catch (err) {
-    return errorResponse(err);
+    return playgroundErrorResponse(err);
   }
 }
 
@@ -134,7 +143,6 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     return NextResponse.json({ deleted: true, id: existing.id });
   } catch (err) {
-    return errorResponse(err);
+    return playgroundErrorResponse(err);
   }
 }
-

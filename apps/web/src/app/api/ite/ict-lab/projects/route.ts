@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { HttpError, errorResponse, readJson } from "@/lib/practicum/http";
+import { HttpError, readJson } from "@/lib/practicum/http";
 import { requireIctLabApiActor } from "@/lib/ict-lab/guard";
 import {
   checkProjectCountLimit,
   computeProjectByteSize,
+  mapIctPlaygroundRouteError,
   validatePlaygroundProjectInput,
 } from "@/lib/ict-lab/rules";
 import type { IctPlaygroundProjectDTO } from "@/lib/ict-lab/types";
@@ -32,6 +33,14 @@ function toProjectDTO(row: {
   };
 }
 
+function playgroundErrorResponse(err: unknown): NextResponse {
+  const mapped = mapIctPlaygroundRouteError(err);
+  if (mapped.status === 500) {
+    console.error("[ICT_LAB_PROJECTS_API_ERROR]", err);
+  }
+  return NextResponse.json(mapped.body, { status: mapped.status });
+}
+
 export async function GET(request: Request) {
   try {
     const actor = await requireIctLabApiActor(request);
@@ -44,7 +53,7 @@ export async function GET(request: Request) {
       projects: projects.map(toProjectDTO),
     });
   } catch (err) {
-    return errorResponse(err);
+    return playgroundErrorResponse(err);
   }
 }
 
@@ -81,7 +90,6 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (err) {
-    return errorResponse(err);
+    return playgroundErrorResponse(err);
   }
 }
-
