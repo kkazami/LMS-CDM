@@ -37,6 +37,7 @@ import {
   FileSpreadsheet,
   Briefcase,
   Cpu,
+  Music,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
@@ -89,6 +90,11 @@ function getProgramToolIcon(toolId: string): ComponentType<{ className?: string 
   switch (toolId) {
     case "ict-lab":
       return Cpu;
+    case "nursery-songs-youtube-categories":
+    case "nursery-song-library":
+      return Music;
+    case "matatag-curriculum-guide":
+      return BookOpen;
     default:
       return BookOpen;
   }

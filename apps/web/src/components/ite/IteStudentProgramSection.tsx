@@ -48,6 +48,7 @@ function getFeatureIcon(featureId: string) {
     case "ict-lab":
       return Cpu;
     case "nursery-songs-youtube-categories":
+    case "nursery-song-library":
       return Music;
     case "matatag-curriculum-guide":
       return BookOpen;

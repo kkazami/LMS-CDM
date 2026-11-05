@@ -94,8 +94,8 @@ export interface IteSidebarProgramTool {
 
 /**
  * Authoritative ITE per-program student feature configuration.
- * - "Lesson Plan Models": all four ITE student programs (coming-soon)
- * - "Nursery Songs & YouTube Categories": BECEd only (coming-soon)
+ * - "Lesson Plan Builder": all four ITE student programs (available, links to /ite/lesson-plans)
+ * - "Nursery Song & Educational Media Library": BECEd only (available, links to /ite/nursery-library)
  * - "MATATAG Curriculum Guide": BEEd only (coming-soon)
  * - "Interactive Educational Charts": BSEd SCIENCE only (coming-soon)
  * - "ICT Lab": BTLEd ICT only (available, links to /ite/ict-lab)
@@ -111,11 +111,12 @@ export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   },
   {
     id: "nursery-songs-youtube-categories",
-    title: "Nursery Songs & YouTube Categories",
+    title: "Nursery Song & Educational Media Library",
     description:
       "Curated early childhood songs, action rhymes, and classroom video categories for young learners.",
+    href: "/ite/nursery-library",
     programs: ["BECEd"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "matatag-curriculum-guide",

@@ -557,15 +557,29 @@ describe("ITE Program Features & Sidebar Filtering", () => {
       href: "/ite/lesson-plans",
     };
 
+    const nurseryTool = {
+      id: "nursery-songs-youtube-categories",
+      title: "Nursery Song & Educational Media Library",
+      description:
+        "Curated early childhood songs, action rhymes, and classroom video categories for young learners.",
+      href: "/ite/nursery-library",
+    };
+
     const becedFeatures = getFeaturesForIteProgram("BECEd");
     assert.deepEqual(
       becedFeatures.map((f) => f.title),
-      ["Nursery Songs & YouTube Categories", "Lesson Plan Builder"]
+      ["Nursery Song & Educational Media Library", "Lesson Plan Builder"]
     );
+    const becedLib = becedFeatures.find((f) => f.id === "nursery-songs-youtube-categories");
+    assert.equal(becedLib?.status, "available");
+    assert.equal(becedLib?.href, "/ite/nursery-library");
     const becedLp = becedFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(becedLp?.status, "available");
     assert.equal(becedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), [
+      nurseryTool,
+      lessonPlanTool,
+    ]);
 
     const beedFeatures = getFeaturesForIteProgram("BEEd");
     assert.deepEqual(
