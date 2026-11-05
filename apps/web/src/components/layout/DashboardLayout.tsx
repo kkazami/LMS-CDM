@@ -39,6 +39,8 @@ interface DashboardLayoutProps {
   isEligibleForMeetings?: boolean;
   /** Whether this user qualifies for ITE Focus Mode (ITE students only). */
   isEligibleForFocusMode?: boolean;
+  /** Whether this user qualifies for the ITE BTLED ICT Lab. Controls sidebar entry visibility. */
+  isEligibleForIctLab?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -65,6 +67,7 @@ export default function DashboardLayout({
   isEligibleForPracticum,
   isEligibleForMeetings,
   isEligibleForFocusMode,
+  isEligibleForIctLab,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -114,6 +117,7 @@ export default function DashboardLayout({
           isEligibleForActivities={isEligibleForActivities}
           isEligibleForOhmward={isEligibleForOhmward}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+        isEligibleForIctLab={isEligibleForIctLab}
           isEligibleForPracticum={isEligibleForPracticum}
           isEligibleForMeetings={isEligibleForMeetings}
           enrolledCourses={enrolledCourses}
@@ -159,6 +163,7 @@ export default function DashboardLayout({
         avatarUrl={avatarUrl ?? null}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+        isEligibleForIctLab={isEligibleForIctLab}
       />
       </div>
 

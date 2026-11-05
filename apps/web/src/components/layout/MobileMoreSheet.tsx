@@ -31,6 +31,7 @@ import {
   MessageSquareQuote,
   FileSpreadsheet,
   Briefcase,
+  Cpu,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -50,6 +51,7 @@ interface MobileMoreSheetProps {
   isEligibleForActivities?: boolean;
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
+  isEligibleForIctLab?: boolean;
 }
 
 interface NavItem {
@@ -70,6 +72,7 @@ export default function MobileMoreSheet({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
+  isEligibleForIctLab,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -174,7 +177,7 @@ export default function MobileMoreSheet({
           { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
         ] : []),
     ...(isStudent
-      ? [...studentItems, ...meetingsItems, ...practicumItems]
+      ? [...studentItems, ...meetingsItems, ...practicumItems, ...(isEligibleForIctLab && instituteCode.toLowerCase() === "ite" ? [{ label: "ICT Lab", href: `/${instituteCode}/ict-lab`, icon: Cpu, description: "Code, Hardware & LAN Lab" }] : [])]
       : isProfessor
         ? [...teacherItems, ...meetingsItems, ...practicumItems]
         : adminItems),

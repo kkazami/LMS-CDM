@@ -531,6 +531,9 @@ model User {
   createdMeetings ClassMeeting[] @relation("ClassMeetingCreatedBy")
   meetingJoins    MeetingJoin[]
 
+  // ─── ITE BTLED ICT Lab relations ───
+  ictPlaygroundProjects IctPlaygroundProject[]
+
   @@unique([id, instituteId])
 }
 
@@ -2651,4 +2654,20 @@ model OhmwardProgress {
   learner OhmwardLearner @relation(fields: [studentId, instituteId], references: [studentId, instituteId], onDelete: Cascade)
   @@id([studentId, levelId])
   @@index([instituteId, firstPassedAt])
+}
+
+// ─── ITE BTLED ICT Lab Playground Projects ──────────────────
+model IctPlaygroundProject {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  html      String   @db.Text
+  css       String   @db.Text
+  js        String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
 }

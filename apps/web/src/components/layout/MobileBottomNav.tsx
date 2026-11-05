@@ -18,6 +18,7 @@ interface MobileBottomNavProps {
   isEligibleForActivities?: boolean;
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
+  isEligibleForIctLab?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -29,6 +30,7 @@ export default function MobileBottomNav({
   isEligibleForActivities,
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
+  isEligibleForIctLab,
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -147,6 +149,7 @@ export default function MobileBottomNav({
         avatarUrl={avatarUrl}
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
+        isEligibleForIctLab={isEligibleForIctLab}
       />
     </>
   );

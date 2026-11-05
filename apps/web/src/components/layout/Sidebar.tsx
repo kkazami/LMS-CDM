@@ -38,6 +38,7 @@ import {
   LifeBuoy,
   FileSpreadsheet,
   Briefcase,
+  Cpu,
   type LucideIcon,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
@@ -77,6 +78,8 @@ interface SidebarProps {
   isEligibleForPracticum?: boolean;
   /** When true, renders the "Meetings" nav entry (ITE students and instructors only). */
   isEligibleForMeetings?: boolean;
+  /** When true, renders the "ICT Lab" nav entry (ITE BTLED ICT students only, or ITE when testing switch is on). */
+  isEligibleForIctLab?: boolean;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -100,7 +103,7 @@ export const getStudentLinks = (code: string): (NavLink & { key?: string })[] =>
  */
 export function getIteStudentNavLinks(
   code: string,
-  options?: { isEligibleForPracticum?: boolean; isEligibleForMeetings?: boolean }
+  options?: { isEligibleForPracticum?: boolean; isEligibleForMeetings?: boolean; isEligibleForIctLab?: boolean }
 ): NavLink[] {
   const base = getStudentLinks(code).map(({ key, ...item }) => item);
   const includeMeetings = options?.isEligibleForMeetings ?? (code.toLowerCase() === "ite");
@@ -111,6 +114,9 @@ export function getIteStudentNavLinks(
   }
   if (includePracticum) {
     list.push({ label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen });
+    if (options?.isEligibleForIctLab && code.toLowerCase() === "ite") {
+      list.push({ label: "ICT Lab", href: `/${code}/ict-lab`, icon: Cpu });
+    }
   }
   return list;
 }
@@ -160,6 +166,7 @@ export default function Sidebar({
   isEligibleForKnowledgeExchange,
   isEligibleForPracticum,
   isEligibleForMeetings,
+  isEligibleForIctLab,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -195,6 +202,9 @@ export default function Sidebar({
 
   if (isEligibleForPracticum && (isStudent || isProfessor)) {
     links = [...links, { label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen }];
+  }
+  if (isEligibleForIctLab && instituteCode.toLowerCase() === "ite") {
+    links = [...links, { label: "ICT Lab", href: `/${instituteCode}/ict-lab`, icon: Cpu }];
   }
 
   if (isEligibleForKnowledgeExchange) {
