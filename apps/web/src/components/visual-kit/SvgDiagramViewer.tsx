@@ -11,6 +11,8 @@ export interface SvgDiagramViewerProps {
   mode: "explore" | "label";
   selectedPartId: string | null;
   onSelectPart: (partId: string) => void;
+  selectedExtraId?: string | null;
+  onSelectExtra?: (extraId: string) => void;
   labelAnswers?: Record<string, string | null>;
   isSubmitted?: boolean;
   scoreResults?: Record<string, boolean>;
@@ -23,6 +25,8 @@ export default function SvgDiagramViewer({
   mode,
   selectedPartId,
   onSelectPart,
+  selectedExtraId,
+  onSelectExtra,
   labelAnswers = {},
   isSubmitted = false,
   scoreResults = {},
@@ -33,6 +37,34 @@ export default function SvgDiagramViewer({
   const isDark = themeMode === "dark";
   const glowFilterId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sanitize label targets on mobile/responsive: ensure minimum tap target and shrink rather than overlap
+  const sanitizedLabelTargets = React.useMemo(() => {
+    if (!diagram.labelTargets || diagram.labelTargets.length === 0) return [];
+    const list = diagram.labelTargets.map((t) => ({ ...t, box: { ...t.box } }));
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i];
+        const b = list[j];
+        const xOverlap = Math.max(
+          0,
+          Math.min(a.box.x + a.box.w, b.box.x + b.box.w) - Math.max(a.box.x, b.box.x)
+        );
+        const yOverlap = Math.max(
+          0,
+          Math.min(a.box.y + a.box.h, b.box.y + b.box.h) - Math.max(a.box.y, b.box.y)
+        );
+        if (xOverlap > 0 && yOverlap > 0) {
+          if (a.box.y < b.box.y) {
+            a.box.h = Math.max(0, b.box.y - a.box.y);
+          } else {
+            b.box.h = Math.max(0, a.box.y - b.box.y);
+          }
+        }
+      }
+    }
+    return list;
+  }, [diagram.labelTargets]);
 
   const { w, h } = diagram.viewBox;
 
@@ -436,6 +468,56 @@ export default function SvgDiagramViewer({
               );
             })}
           </div>
+
+          {/* =========================================================================
+              CLICKABLE PRINTED ANATOMICAL LABELS (EXPLORE MODE ONLY)
+              Transparent buttons allowing direct tapping of printed label text
+              ========================================================================= */}
+          {mode === "explore" && sanitizedLabelTargets.length > 0 && (
+            <div
+              className="absolute inset-0 pointer-events-none z-20"
+              data-testid="diagram-label-targets"
+            >
+              {sanitizedLabelTargets.map((target, idx) => {
+                const isPartMapped = Boolean(target.partId);
+                const isSelected = isPartMapped
+                  ? selectedPartId === target.partId
+                  : selectedExtraId === target.extra;
+
+                const selectedBorder = isPartMapped
+                  ? "border-amber-500 bg-amber-500/15 ring-2 ring-amber-400/50"
+                  : "border-sky-500 bg-sky-500/15 ring-2 ring-sky-400/50";
+
+                return (
+                  <button
+                    key={`label-target-${idx}-${target.label}`}
+                    type="button"
+                    aria-label={`${target.label} - show details`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (target.partId) {
+                        onSelectPart(target.partId);
+                      } else if (target.extra && onSelectExtra) {
+                        onSelectExtra(target.extra);
+                      }
+                    }}
+                    style={{
+                      left: `${target.box.x}%`,
+                      top: `${target.box.y}%`,
+                      width: `${target.box.w}%`,
+                      height: `${target.box.h}%`,
+                      minHeight: "24px",
+                    }}
+                    className={`absolute pointer-events-auto rounded-md transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 border ${
+                      isSelected
+                        ? selectedBorder
+                        : "border-transparent hover:border-sky-400/80 hover:bg-sky-500/10 dark:hover:border-sky-400/70 dark:hover:bg-sky-500/15"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

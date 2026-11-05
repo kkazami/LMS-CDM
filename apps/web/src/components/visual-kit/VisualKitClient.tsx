@@ -63,6 +63,7 @@ export default function VisualKitClient({
   const [selectedArea, setSelectedArea] = useState<string>("ALL");
   const [mode, setMode] = useState<"explore" | "label">("explore");
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const [selectedExtraId, setSelectedExtraId] = useState<string | null>(null);
 
   // Circuit simulation state
   const [circuitClosed, setCircuitClosed] = useState<boolean>(true);
@@ -94,6 +95,14 @@ export default function VisualKitClient({
     );
   }, [currentDiagram, selectedPartId]);
 
+  // Selected Extra Structure (if reference-only printed label is clicked)
+  const activeExtra = useMemo(() => {
+    if (!currentDiagram || !selectedExtraId) return null;
+    return (
+      currentDiagram.extraStructures?.find((e) => e.id === selectedExtraId) ?? null
+    );
+  }, [currentDiagram, selectedExtraId]);
+
   // Load best scores from localStorage on mount
   useEffect(() => {
     try {
@@ -119,12 +128,14 @@ export default function VisualKitClient({
     setIsSubmitted(false);
     setShowingAnswers(false);
     setSelectedPartId(currentDiagram.parts[0]?.id ?? null);
+    setSelectedExtraId(null);
   }, [currentDiagram, hardMode, initialDiagrams]);
 
   // Reset state when switching diagram
   const handleSelectDiagram = (diagramId: string) => {
     setSelectedDiagramId(diagramId);
     setSelectedPartId(null);
+    setSelectedExtraId(null);
     setIsSubmitted(false);
     setShowingAnswers(false);
     setLabelAnswers({});
@@ -407,7 +418,10 @@ export default function VisualKitClient({
             <div className="inline-flex rounded-xl bg-white dark:bg-slate-950 p-1 border border-slate-200 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setMode("explore")}
+                onClick={() => {
+                  setMode("explore");
+                  setSelectedExtraId(null);
+                }}
                 className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   mode === "explore"
                     ? "bg-sky-600 text-white shadow-xs"
@@ -419,7 +433,10 @@ export default function VisualKitClient({
               </button>
               <button
                 type="button"
-                onClick={() => setMode("label")}
+                onClick={() => {
+                  setMode("label");
+                  setSelectedExtraId(null);
+                }}
                 className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   mode === "label"
                     ? "bg-sky-600 text-white shadow-xs"
@@ -463,7 +480,15 @@ export default function VisualKitClient({
             diagram={currentDiagram}
             mode={mode}
             selectedPartId={selectedPartId}
-            onSelectPart={(partId) => setSelectedPartId(partId)}
+            onSelectPart={(partId) => {
+              setSelectedPartId(partId);
+              setSelectedExtraId(null);
+            }}
+            selectedExtraId={selectedExtraId}
+            onSelectExtra={(extraId) => {
+              setSelectedExtraId(extraId);
+              setSelectedPartId(null);
+            }}
             labelAnswers={labelAnswers}
             isSubmitted={isSubmitted}
             scoreResults={scoreData?.results ?? {}}
@@ -565,21 +590,69 @@ export default function VisualKitClient({
               <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-xs font-bold">
-                      {currentDiagram.parts.findIndex(
-                        (p) => p.id === activePart?.id
-                      ) + 1}
-                    </span>
+                    {activeExtra ? (
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                        <Info className="h-3.5 w-3.5 text-sky-500" />
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-xs font-bold">
+                        {currentDiagram.parts.findIndex(
+                          (p) => p.id === activePart?.id
+                        ) + 1}
+                      </span>
+                    )}
                     <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                      {activePart?.name ?? "Select a component"}
+                      {activeExtra ? activeExtra.name : activePart?.name ?? "Select a component"}
                     </h2>
                   </div>
                   <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                    Component Inspector
+                    {activeExtra ? "Reference Structure" : "Component Inspector"}
                   </span>
                 </div>
 
-                {activePart ? (
+                {activeExtra ? (
+                  <div className="space-y-4 text-xs leading-relaxed" data-testid="extra-info-card">
+                    {/* Notice banner */}
+                    <div className="p-3 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-semibold text-xs">
+                        <Info className="h-4 w-4 text-sky-500 shrink-0" />
+                        <span>Reference only - not part of the quiz</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedExtraId(null);
+                          setSelectedPartId(currentDiagram.parts[0]?.id ?? null);
+                        }}
+                        className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+                      >
+                        Inspect Quiz Components
+                      </button>
+                    </div>
+
+                    {/* Definition */}
+                    <div>
+                      <div className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+                        Definition
+                      </div>
+                      <p className="mt-1 text-slate-800 dark:text-slate-200 font-medium text-sm">
+                        {activeExtra.definition}
+                      </p>
+                    </div>
+
+                    {/* Where to find it */}
+                    {activeExtra.where && (
+                      <div>
+                        <div className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+                          Where to Find It in Diagram
+                        </div>
+                        <p className="mt-1 text-slate-600 dark:text-slate-300">
+                          {activeExtra.where}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : activePart ? (
                   <div className="space-y-4 text-xs leading-relaxed">
                     {/* Primary Function */}
                     <div>

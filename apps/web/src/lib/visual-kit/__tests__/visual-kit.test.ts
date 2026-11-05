@@ -319,6 +319,59 @@ describe("Visual Kit - Diagram Data Integrity & Quality Verification", () => {
       }
     }
   });
+
+  it("validates labelTargets integrity on human-heart diagram: exactly one of partId/extra, valid IDs, and boxes inside 0-100%", () => {
+    const heart = VISUAL_KIT_DIAGRAMS.find((d) => d.id === "human-heart")!;
+    assert.ok(heart.labelTargets && heart.labelTargets.length === 26, "Expected exactly 26 label targets on human-heart");
+    assert.ok(heart.extraStructures && heart.extraStructures.length === 10, "Expected exactly 10 extra structures on human-heart");
+
+    const partIds = new Set(heart.parts.map((p) => p.id));
+    const extraIds = new Set(heart.extraStructures.map((e) => e.id));
+
+    // Extras must have unique IDs, non-empty name and definition
+    assert.equal(extraIds.size, heart.extraStructures.length, "Extra structure IDs must be unique");
+    for (const extra of heart.extraStructures) {
+      assert.ok(extra.id.trim().length > 0, "Extra id must not be empty");
+      assert.ok(extra.name.trim().length > 0, "Extra name must not be empty");
+      assert.ok(extra.definition.trim().length > 10, `Extra ${extra.id} definition must be informative`);
+    }
+
+    for (const target of heart.labelTargets) {
+      // Exactly one of partId or extra
+      const hasPartId = Boolean(target.partId);
+      const hasExtra = Boolean(target.extra);
+      assert.ok(
+        (hasPartId && !hasExtra) || (!hasPartId && hasExtra),
+        `Label target '${target.label}' must have exactly one of partId or extra`
+      );
+
+      // Referenced IDs must exist
+      if (target.partId) {
+        assert.ok(
+          partIds.has(target.partId),
+          `Label target '${target.label}' references non-existent partId: ${target.partId}`
+        );
+      }
+      if (target.extra) {
+        assert.ok(
+          extraIds.has(target.extra),
+          `Label target '${target.label}' references non-existent extra: ${target.extra}`
+        );
+      }
+
+      // Box must be inside 0-100%
+      assert.ok(target.box.x >= 0 && target.box.x <= 100, `Box x out of bounds: ${target.box.x}`);
+      assert.ok(target.box.y >= 0 && target.box.y <= 100, `Box y out of bounds: ${target.box.y}`);
+      assert.ok(
+        target.box.w > 0 && target.box.x + target.box.w <= 100.1,
+        `Box x+w out of bounds: ${target.box.x + target.box.w}`
+      );
+      assert.ok(
+        target.box.h > 0 && target.box.y + target.box.h <= 100.1,
+        `Box y+h out of bounds: ${target.box.y + target.box.h}`
+      );
+    }
+  });
 });
 
 describe("Visual Kit - Labeling Rules, Shuffling & Scoring", () => {

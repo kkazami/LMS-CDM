@@ -74,6 +74,20 @@ export interface CoverBox {
   label?: string;
 }
 
+export interface LabelTarget {
+  box: { x: number; y: number; w: number; h: number };
+  label: string;
+  partId?: string;
+  extra?: string;
+}
+
+export interface ExtraStructure {
+  id: string;
+  name: string;
+  definition: string;
+  where?: string;
+}
+
 export interface Diagram {
   id: string;
   title: string;
@@ -86,6 +100,10 @@ export interface Diagram {
   attribution?: DiagramAttribution;
   /** Percentage-based cover boxes rendered in 'label' mode to hide printed diagram text */
   coverBoxes?: CoverBox[];
+  /** Clickable printed label target bounds for Explore mode */
+  labelTargets?: LabelTarget[];
+  /** Supplementary anatomical structures for reference-only labels */
+  extraStructures?: ExtraStructure[];
   viewBox: { w: number; h: number };
   parts: Part[];
   decorations: Shape[];

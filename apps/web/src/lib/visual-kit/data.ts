@@ -54,6 +54,220 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
       // Bottom label
       { x: 40.5, y: 95.0, w: 19.0, h: 4.5, label: "Anterior view" },
     ],
+    extraStructures: [
+      {
+        id: "fossa-ovalis",
+        name: "Fossa Ovalis",
+        definition:
+          "A shallow oval depression on the interatrial septum marking the closed site of the fetal foramen ovale.",
+        where: "Located on the interior medial wall of the right atrium.",
+      },
+      {
+        id: "chordae-tendineae",
+        name: "Chordae Tendineae",
+        definition:
+          "Fibrous cord-like heartstrings connecting papillary muscles to the tricuspid and mitral valve leaflets to prevent valve eversion during systole.",
+        where:
+          "Found branching between the papillary muscles and valve cusps inside both ventricles.",
+      },
+      {
+        id: "trabeculae-carneae",
+        name: "Trabeculae Carneae",
+        definition:
+          "Rounded muscular ridges and columns projecting from the inner myocardial surface of the ventricles to prevent chamber suction.",
+        where: "Lining the lower interior walls of the right and left ventricles.",
+      },
+      {
+        id: "moderator-band",
+        name: "Moderator Band",
+        definition:
+          "A specialized muscular trabecula (septomarginal trabecula) that conducts electrical impulses from the septum to the anterior papillary muscle.",
+        where:
+          "Bridging the lower interventricular septum to the anterior wall of the right ventricle.",
+      },
+      {
+        id: "papillary-muscle",
+        name: "Papillary Muscle",
+        definition:
+          "Conical muscular projections anchored to the ventricular walls that contract to pull chordae tendineae taut prior to ventricular ejection.",
+        where: "Arising from the interior myocardial walls of both ventricles.",
+      },
+      {
+        id: "interventricular-septum",
+        name: "Interventricular Septum",
+        definition:
+          "A stout muscular and membranous partition that completely separates the left and right ventricular chambers.",
+        where:
+          "Running vertically through the center of the heart between the right and left ventricles.",
+      },
+      {
+        id: "epicardium",
+        name: "Epicardium",
+        definition:
+          "The thin outermost serous membrane of the heart wall that functions as the visceral layer of the serous pericardium.",
+        where: "Forming the outer external surface covering of the myocardium.",
+      },
+      {
+        id: "myocardium",
+        name: "Myocardium",
+        definition:
+          "The thick middle layer of contractile cardiac muscle tissue responsible for the rhythmic pumping action of the heart.",
+        where:
+          "Forming the bulk of the heart wall, particularly prominent in the left ventricular wall.",
+      },
+      {
+        id: "endocardium",
+        name: "Endocardium",
+        definition:
+          "The glistening inner endothelial and connective tissue layer that lines all heart chambers and covers heart valves.",
+        where:
+          "Lining the innermost luminal surfaces of both atria, ventricles, and valve cusps.",
+      },
+      {
+        id: "anterior-view",
+        name: "Anterior View",
+        definition:
+          "The frontal anatomical orientation showing the heart positioned as viewed from the chest wall.",
+        where:
+          "Indicated at the bottom center of the diagram, reflecting the sternocostal surface.",
+      },
+    ],
+    labelTargets: [
+      // Top label
+      {
+        label: "Aorta",
+        box: { x: 24.5, y: 3.5, w: 9.5, h: 4.5 },
+        partId: "aorta",
+      },
+      // Left margin column
+      {
+        label: "Superior vena cava",
+        box: { x: 0.2, y: 10.5, w: 22.0, h: 4.5 },
+        partId: "superior-vena-cava",
+      },
+      {
+        label: "Right pulmonary artery",
+        box: { x: 0.2, y: 16.5, w: 24.5, h: 4.5 },
+        partId: "pulmonary-artery",
+      },
+      {
+        label: "Pulmonary trunk",
+        box: { x: 0.2, y: 23.5, w: 18.5, h: 4.5 },
+        partId: "pulmonary-artery",
+      },
+      {
+        label: "Right pulmonary veins",
+        box: { x: 0.2, y: 29.5, w: 18.5, h: 7.5 },
+        partId: "pulmonary-veins",
+      },
+      {
+        label: "Right atrium",
+        box: { x: 0.2, y: 39.5, w: 14.5, h: 4.5 },
+        partId: "right-atrium",
+      },
+      {
+        label: "Fossa ovalis",
+        box: { x: 0.2, y: 45.0, w: 14.5, h: 4.5 },
+        extra: "fossa-ovalis",
+      },
+      {
+        label: "Tricuspid valve",
+        box: { x: 0.2, y: 50.0, w: 16.5, h: 4.5 },
+        partId: "tricuspid-valve",
+      },
+      {
+        label: "Right ventricle",
+        box: { x: 0.2, y: 55.5, w: 16.5, h: 4.5 },
+        partId: "right-ventricle",
+      },
+      {
+        label: "Chordae tendineae",
+        box: { x: 0.2, y: 61.0, w: 21.5, h: 4.5 },
+        extra: "chordae-tendineae",
+      },
+      {
+        label: "Trabeculae carneae",
+        box: { x: 0.2, y: 67.0, w: 21.5, h: 4.5 },
+        extra: "trabeculae-carneae",
+      },
+      {
+        label: "Moderator band",
+        box: { x: 0.2, y: 73.5, w: 18.0, h: 4.5 },
+        extra: "moderator-band",
+      },
+      {
+        label: "Inferior vena cava",
+        box: { x: 0.2, y: 79.5, w: 19.5, h: 4.5 },
+        partId: "inferior-vena-cava",
+      },
+      // Right margin column
+      {
+        label: "Left pulmonary artery",
+        box: { x: 75.0, y: 10.5, w: 24.5, h: 4.5 },
+        partId: "pulmonary-artery",
+      },
+      {
+        label: "Left atrium",
+        box: { x: 75.0, y: 18.5, w: 13.5, h: 4.5 },
+        partId: "left-atrium",
+      },
+      {
+        label: "Left pulmonary veins",
+        box: { x: 75.0, y: 25.5, w: 23.5, h: 4.5 },
+        partId: "pulmonary-veins",
+      },
+      {
+        label: "Mitral (bicuspid) valve",
+        box: { x: 75.0, y: 34.5, w: 24.5, h: 4.5 },
+        partId: "mitral-valve",
+      },
+      {
+        label: "Aortic valve",
+        box: { x: 75.0, y: 42.5, w: 14.0, h: 4.5 },
+        partId: "aortic-valve",
+      },
+      {
+        label: "Pulmonary valve",
+        box: { x: 75.0, y: 48.0, w: 18.5, h: 4.8 },
+        partId: "pulmonary-valve",
+      },
+      {
+        label: "Left ventricle",
+        box: { x: 75.0, y: 54.0, w: 15.5, h: 4.5 },
+        partId: "left-ventricle",
+      },
+      {
+        label: "Papillary muscle",
+        box: { x: 75.0, y: 59.5, w: 18.5, h: 4.5 },
+        extra: "papillary-muscle",
+      },
+      {
+        label: "Interventricular septum",
+        box: { x: 75.0, y: 65.5, w: 24.5, h: 4.2 },
+        extra: "interventricular-septum",
+      },
+      {
+        label: "Epicardium",
+        box: { x: 75.0, y: 70.0, w: 13.5, h: 4.2 },
+        extra: "epicardium",
+      },
+      {
+        label: "Myocardium",
+        box: { x: 75.0, y: 75.0, w: 15.0, h: 4.2 },
+        extra: "myocardium",
+      },
+      {
+        label: "Endocardium",
+        box: { x: 75.0, y: 80.0, w: 16.5, h: 4.5 },
+        extra: "endocardium",
+      },
+      // Bottom label
+      {
+        label: "Anterior view",
+        box: { x: 40.5, y: 95.0, w: 19.0, h: 4.5 },
+        extra: "anterior-view",
+      },
+    ],
     viewBox: { w: 600, h: 480 },
     discussionQuestions: [
       "Why is the muscular myocardium of the left ventricle significantly thicker than that of the right ventricle?",
