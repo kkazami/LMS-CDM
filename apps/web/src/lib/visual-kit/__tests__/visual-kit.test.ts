@@ -230,14 +230,22 @@ describe("Visual Kit - Diagram Data Integrity & Quality Verification", () => {
       const attr = diagram.attribution;
       assert.ok(attr.sourceTitle.trim().length > 0);
       assert.ok(attr.author.trim().length > 0);
-      assert.ok(attr.sourceUrl.startsWith("http"));
-      assert.ok(attr.licenseUrl.startsWith("http"));
-      assert.ok(
-        allowedLicenses.includes(attr.licenseName),
-        `License ${attr.licenseName} for ${diagram.id} is not an allowed permissive license (Public Domain, CC0, CC BY)`
-      );
-      assert.ok(!attr.licenseName.includes("SA"), "CC BY-SA is strictly disallowed");
-      assert.ok(!attr.licenseName.includes("NC"), "CC BY-NC is strictly disallowed");
+      if (attr.licenseName) {
+        assert.ok(
+          allowedLicenses.includes(attr.licenseName),
+          `License ${attr.licenseName} for ${diagram.id} is not an allowed permissive license (Public Domain, CC0, CC BY)`
+        );
+        assert.ok(!attr.licenseName.includes("SA"), "CC BY-SA is strictly disallowed");
+        assert.ok(!attr.licenseName.includes("NC"), "CC BY-NC is strictly disallowed");
+        assert.ok(attr.sourceUrl && attr.sourceUrl.startsWith("http"));
+        assert.ok(attr.licenseUrl && attr.licenseUrl.startsWith("http"));
+      } else {
+        assert.strictEqual(
+          attr.author,
+          "Original illustration by the CdM LMS team.",
+          `Original drawings without external license must specify LMS team authorship`
+        );
+      }
     }
   });
 

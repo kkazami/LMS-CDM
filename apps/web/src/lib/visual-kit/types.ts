@@ -59,10 +59,10 @@ export interface Part {
 export interface DiagramAttribution {
   sourceTitle: string;
   author: string;
-  sourceUrl: string;
-  licenseName: string;
-  licenseUrl: string;
-  viaText: string;
+  sourceUrl?: string;
+  licenseName?: string;
+  licenseUrl?: string;
+  viaText?: string;
   notes?: string;
 }
 

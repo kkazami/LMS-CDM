@@ -448,17 +448,23 @@ export default function SvgDiagramViewer({
               <strong className="text-slate-700 dark:text-slate-300">
                 {diagram.attribution.sourceTitle}
               </strong>{" "}
-              by {diagram.attribution.author} • Licensed under{" "}
-              <a
-                href={diagram.attribution.licenseUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline hover:text-sky-600 dark:hover:text-sky-400 inline-flex items-center gap-0.5"
-              >
-                <span>{diagram.attribution.licenseName}</span>
-                <ExternalLink className="h-2.5 w-2.5" />
-              </a>{" "}
-              via {diagram.attribution.viaText}
+              {diagram.attribution.licenseName && diagram.attribution.licenseUrl ? (
+                <>
+                  by {diagram.attribution.author} • Licensed under{" "}
+                  <a
+                    href={diagram.attribution.licenseUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline hover:text-sky-600 dark:hover:text-sky-400 inline-flex items-center gap-0.5"
+                  >
+                    <span>{diagram.attribution.licenseName}</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>{" "}
+                  {diagram.attribution.viaText && `via ${diagram.attribution.viaText}`}
+                </>
+              ) : (
+                <span>• {diagram.attribution.author}</span>
+              )}
             </span>
           </div>
           {diagram.attribution.notes && (
