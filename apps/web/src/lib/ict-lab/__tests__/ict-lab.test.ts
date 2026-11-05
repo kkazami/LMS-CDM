@@ -6,6 +6,8 @@ import {
   MAX_PLAYGROUND_BYTES,
   PLAYGROUND_IFRAME_CSP,
   PLAYGROUND_POSTMESSAGE_SOURCE,
+  HARDWARE_PART_BOUNDING_BOXES,
+  findOverlappingBoundingBoxes,
   assertAllHardwarePartsHaveSvgDrawing,
   buildPlaygroundSrcdoc,
   classifyIteProgram,
@@ -288,6 +290,22 @@ describe("BTLED ICT Lab - Hardware Explorer Data & SVG Completeness", () => {
         HARDWARE_SVG_PART_IDS.filter((id) => id !== "cmos-battery")
       );
     }, /cmos-battery/);
+  });
+
+  it("ensures no two discrete component hit areas overlap in the 2D diagram", () => {
+    const overlaps = findOverlappingBoundingBoxes(HARDWARE_PART_BOUNDING_BOXES);
+    assert.deepEqual(overlaps, [], `Overlapping parts detected: ${JSON.stringify(overlaps)}`);
+  });
+
+  it("ensures every part id in hardware-parts.json has a valid rendered hit area with non-zero dimensions", () => {
+    const hw = loadHardwarePartsData();
+    const boxMap = new Map(HARDWARE_PART_BOUNDING_BOXES.map((b) => [b.id, b]));
+    for (const part of hw.parts) {
+      const box = boxMap.get(part.id);
+      assert.ok(box, `Part ${part.id} must have a defined bounding box`);
+      assert.ok(box.width > 0, `Part ${part.id} must have positive width`);
+      assert.ok(box.height > 0, `Part ${part.id} must have positive height`);
+    }
   });
 
   it("generates 10 quiz questions from hardware-parts.json for both quiz modes", () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useTheme } from "@/lib/theme-context";
 import {
   Cpu,
   HelpCircle,
@@ -40,6 +41,237 @@ export interface HardwareExplorerTabProps {
 }
 
 export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) {
+  const { themeMode } = useTheme();
+  const isDark = themeMode === "dark";
+
+  const colors = useMemo(() => {
+    if (isDark) {
+      return {
+        chassisOuterFill: "#1e293b",
+        chassisOuterStroke: "#475569",
+        chassisInnerFill: "#0b1329",
+        chassisInnerStroke: "#1e293b",
+        dividerStroke: "#334155",
+        activeStroke: "#60A5FA",
+        activeFill: "#1e3a8a",
+
+        motherboard: {
+          fill: "#064e3b",
+          activeFill: "#1e3a8a",
+          stroke: "#10b981",
+          traces: "#059669",
+          text: "#ecfdf5",
+          subtext: "#a7f3d0",
+        },
+        caseFan: {
+          fill: "#0c2a42",
+          activeFill: "#1e3a8a",
+          stroke: "#38bdf8",
+          blades: "#0284c7",
+          hub: "#38bdf8",
+          circle: "#0369a1",
+          text: "#f0f9ff",
+        },
+        cpuCooler: {
+          fill: "#1e293b",
+          activeFill: "#1e3a8a",
+          stroke: "#94a3b8",
+          fins: "#475569",
+          text: "#f8fafc",
+        },
+        cpu: {
+          fill: "#451a03",
+          activeFill: "#1e3a8a",
+          stroke: "#f59e0b",
+          socketFill: "#78350f",
+          socketStroke: "#d97706",
+          text: "#fef3c7",
+          subtext: "#fde68a",
+        },
+        ram: {
+          fill: "#2e1065",
+          activeFill: "#1e3a8a",
+          stroke: "#c084fc",
+          dimmA: "#7c3aed",
+          dimmB: "#9333ea",
+          text: "#faf5ff",
+          subtext: "#e9d5ff",
+        },
+        cmos: {
+          fill: "#1e293b",
+          activeFill: "#1e3a8a",
+          stroke: "#94a3b8",
+          inner: "#334155",
+          text: "#f8fafc",
+          subtext: "#cbd5e1",
+        },
+        gpu: {
+          fill: "#450a0a",
+          activeFill: "#1e3a8a",
+          stroke: "#f87171",
+          fanFill: "#7f1d1d",
+          fanStroke: "#ef4444",
+          text: "#fef2f2",
+          subtext: "#fca5a5",
+        },
+        nic: {
+          fill: "#042f2e",
+          activeFill: "#1e3a8a",
+          stroke: "#2dd4bf",
+          rj45: "#0f766e",
+          text: "#f0fdfa",
+          subtext: "#99f6e4",
+        },
+        ssd: {
+          fill: "#1e1b4b",
+          activeFill: "#1e3a8a",
+          stroke: "#818cf8",
+          inner: "#312e81",
+          text: "#eef2ff",
+          subtext: "#c7d2fe",
+        },
+        hdd: {
+          fill: "#3b0764",
+          activeFill: "#1e3a8a",
+          stroke: "#c084fc",
+          platter: "#581c87",
+          platterStroke: "#9333ea",
+          spindle: "#c084fc",
+          text: "#faf5ff",
+          subtext: "#e9d5ff",
+        },
+        sataCable: {
+          cableStroke: "#fb923c",
+          badgeFill: "#431407",
+          activeBadgeFill: "#1e3a8a",
+          badgeStroke: "#fb923c",
+          text: "#ffedd5",
+        },
+        psu: {
+          fill: "#422006",
+          activeFill: "#1e3a8a",
+          stroke: "#facc15",
+          fanFill: "#713f12",
+          fanStroke: "#ca8a04",
+          text: "#fefce8",
+          subtext: "#fde047",
+        },
+      };
+    }
+
+    // Light mode (default)
+    return {
+      chassisOuterFill: "#e2e8f0",
+      chassisOuterStroke: "#64748b",
+      chassisInnerFill: "#f8fafc",
+      chassisInnerStroke: "#94a3b8",
+      dividerStroke: "#cbd5e1",
+      activeStroke: "#2563EB",
+      activeFill: "#bfdbfe",
+
+      motherboard: {
+        fill: "#dcfce7",
+        activeFill: "#dbeafe",
+        stroke: "#15803d",
+        traces: "#86efac",
+        text: "#14532d",
+        subtext: "#166534",
+      },
+      caseFan: {
+        fill: "#e0f2fe",
+        activeFill: "#bfdbfe",
+        stroke: "#0369a1",
+        blades: "#0284c7",
+        hub: "#0369a1",
+        circle: "#bae6fd",
+        text: "#0c4a6e",
+      },
+      cpuCooler: {
+        fill: "#e2e8f0",
+        activeFill: "#bfdbfe",
+        stroke: "#334155",
+        fins: "#64748b",
+        text: "#0f172a",
+      },
+      cpu: {
+        fill: "#fef3c7",
+        activeFill: "#bfdbfe",
+        stroke: "#b45309",
+        socketFill: "#fde68a",
+        socketStroke: "#d97706",
+        text: "#78350f",
+        subtext: "#92400e",
+      },
+      ram: {
+        fill: "#ede9fe",
+        activeFill: "#bfdbfe",
+        stroke: "#6d28d9",
+        dimmA: "#8b5cf6",
+        dimmB: "#7c3aed",
+        text: "#4c1d95",
+        subtext: "#6d28d9",
+      },
+      cmos: {
+        fill: "#f1f5f9",
+        activeFill: "#bfdbfe",
+        stroke: "#475569",
+        inner: "#cbd5e1",
+        text: "#1e293b",
+        subtext: "#334155",
+      },
+      gpu: {
+        fill: "#fee2e2",
+        activeFill: "#bfdbfe",
+        stroke: "#b91c1c",
+        fanFill: "#fecaca",
+        fanStroke: "#dc2626",
+        text: "#7f1d1d",
+        subtext: "#991b1b",
+      },
+      nic: {
+        fill: "#ccfbf1",
+        activeFill: "#bfdbfe",
+        stroke: "#0f766e",
+        rj45: "#14b8a6",
+        text: "#134e4a",
+        subtext: "#115e59",
+      },
+      ssd: {
+        fill: "#e0e7ff",
+        activeFill: "#bfdbfe",
+        stroke: "#3730a3",
+        inner: "#c7d2fe",
+        text: "#1e1b4b",
+        subtext: "#312e81",
+      },
+      hdd: {
+        fill: "#f3e8ff",
+        activeFill: "#bfdbfe",
+        stroke: "#6b21a8",
+        platter: "#e9d5ff",
+        platterStroke: "#7e22ce",
+        spindle: "#6b21a8",
+        text: "#3b0764",
+        subtext: "#581c87",
+      },
+      sataCable: {
+        cableStroke: "#ea580c",
+        badgeFill: "#ffedd5",
+        activeBadgeFill: "#bfdbfe",
+        badgeStroke: "#c2410c",
+        text: "#7c2d12",
+      },
+      psu: {
+        fill: "#fef9c3",
+        activeFill: "#bfdbfe",
+        stroke: "#a16207",
+        fanFill: "#fef08a",
+        fanStroke: "#ca8a04",
+        text: "#713f12",
+        subtext: "#854d0e",
+      },
+    };
+  }, [isDark]);
   // Fail loudly if any part in hardware-parts.json has no SVG drawing
   useMemo(() => {
     assertAllHardwarePartsHaveSvgDrawing(data.parts, HARDWARE_SVG_PART_IDS);
@@ -204,7 +436,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   };
 
   const strokeFor = (partId: string, defaultStroke = "#475569") =>
-    isPartHighlighted(partId) ? "#2563EB" : defaultStroke;
+    isPartHighlighted(partId) ? colors.activeStroke : defaultStroke;
 
   const strokeWidthFor = (partId: string, defaultWidth = 2) =>
     isPartHighlighted(partId) ? defaultWidth + 1.5 : defaultWidth;
@@ -303,10 +535,11 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
             )}
           </div>
 
-          <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg border border-theme bg-elevated p-2">
+          <div className="relative flex w-full flex-col items-center justify-start overflow-hidden rounded-lg border border-theme bg-elevated p-2 sm:p-3">
             <svg
               viewBox="0 0 820 540"
-              className="h-auto max-h-[480px] w-full select-none"
+              preserveAspectRatio="xMidYMid meet"
+              className="block h-auto w-full max-h-[70vh] select-none"
               role="group"
               aria-label="Interactive 2D diagram of desktop computer internal hardware components"
             >
@@ -317,8 +550,8 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 width="780"
                 height="508"
                 rx="16"
-                fill="#e2e8f0"
-                stroke="#64748b"
+                fill={colors.chassisOuterFill}
+                stroke={colors.chassisOuterStroke}
                 strokeWidth="3"
               />
               {/* Inner Chassis Cavity */}
@@ -328,8 +561,8 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 width="744"
                 height="472"
                 rx="10"
-                fill="#f8fafc"
-                stroke="#94a3b8"
+                fill={colors.chassisInnerFill}
+                stroke={colors.chassisInnerStroke}
                 strokeWidth="2"
               />
               {/* Drive Bay Column Divider (Right side of chassis) */}
@@ -338,7 +571,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 y1="34"
                 x2="545"
                 y2="375"
-                stroke="#cbd5e1"
+                stroke={colors.dividerStroke}
                 strokeWidth="3"
                 strokeDasharray="6 4"
               />
@@ -348,7 +581,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 y1="375"
                 x2="782"
                 y2="375"
-                stroke="#cbd5e1"
+                stroke={colors.dividerStroke}
                 strokeWidth="3"
               />
 
@@ -360,24 +593,36 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="380"
                   height="304"
                   rx="8"
-                  fill={isPartHighlighted("motherboard") ? "#dbeafe" : "#dcfce7"}
-                  stroke={strokeFor("motherboard", "#15803d")}
+                  fill={isPartHighlighted("motherboard") ? colors.motherboard.activeFill : colors.motherboard.fill}
+                  stroke={strokeFor("motherboard", colors.motherboard.stroke)}
                   strokeWidth={strokeWidthFor("motherboard", 2.5)}
                 />
                 {/* PCB circuit traces decoration */}
                 <path
-                  d="M150 80 H230 M150 320 H340 M420 260 V335"
-                  stroke="#86efac"
+                  d="M145 92 H205 M145 320 H340 M420 260 V335"
+                  stroke={colors.motherboard.traces}
                   strokeWidth="2"
                 />
+                {/* MOTHERBOARD Label in clear top-right corner of the board - no CPU cooler overlap */}
                 <text
-                  x="146"
-                  y="74"
-                  fontSize="12"
-                  fontWeight="700"
-                  fill="#14532d"
+                  x="494"
+                  y="70"
+                  textAnchor="end"
+                  fontSize="14.5"
+                  fontWeight="800"
+                  fill={colors.motherboard.text}
                 >
-                  MOTHERBOARD (Main PCB)
+                  MOTHERBOARD
+                </text>
+                <text
+                  x="494"
+                  y="84"
+                  textAnchor="end"
+                  fontSize="11.5"
+                  fontWeight="700"
+                  fill={colors.motherboard.subtext}
+                >
+                  Main System Board (ATX)
                 </text>
               </g>
 
@@ -389,28 +634,28 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="66"
                   height="110"
                   rx="8"
-                  fill={isPartHighlighted("case-fan") ? "#bfdbfe" : "#e0f2fe"}
-                  stroke={strokeFor("case-fan", "#0369a1")}
+                  fill={isPartHighlighted("case-fan") ? colors.caseFan.activeFill : colors.caseFan.fill}
+                  stroke={strokeFor("case-fan", colors.caseFan.stroke)}
                   strokeWidth={strokeWidthFor("case-fan", 2)}
                 />
                 <circle
                   cx="81"
                   cy="124"
                   r="24"
-                  fill="#bae6fd"
-                  stroke="#0284c7"
+                  fill={colors.caseFan.circle}
+                  stroke={colors.caseFan.stroke}
                   strokeWidth="2"
                 />
-                <circle cx="81" cy="124" r="7" fill="#0369a1" />
-                <line x1="81" y1="100" x2="81" y2="148" stroke="#0284c7" strokeWidth="2" />
-                <line x1="57" y1="124" x2="105" y2="124" stroke="#0284c7" strokeWidth="2" />
+                <circle cx="81" cy="124" r="7" fill={colors.caseFan.hub} />
+                <line x1="81" y1="100" x2="81" y2="148" stroke={colors.caseFan.blades} strokeWidth="2" />
+                <line x1="57" y1="124" x2="105" y2="124" stroke={colors.caseFan.blades} strokeWidth="2" />
                 <text
                   x="81"
                   y="174"
                   textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="700"
-                  fill="#0c4a6e"
+                  fontSize="13"
+                  fontWeight="800"
+                  fill={colors.caseFan.text}
                 >
                   Case Fan
                 </text>
@@ -424,39 +669,39 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="92"
                   height="84"
                   rx="6"
-                  fill={isPartHighlighted("cpu") ? "#bfdbfe" : "#fef3c7"}
-                  stroke={strokeFor("cpu", "#b45309")}
+                  fill={isPartHighlighted("cpu") ? colors.cpu.activeFill : colors.cpu.fill}
+                  stroke={strokeFor("cpu", colors.cpu.stroke)}
                   strokeWidth={strokeWidthFor("cpu", 2.5)}
                 />
                 <rect
                   x="246"
-                  y="124"
+                  y="122"
                   width="64"
                   height="46"
                   rx="3"
-                  fill="#fde68a"
-                  stroke="#d97706"
+                  fill={colors.cpu.socketFill}
+                  stroke={colors.cpu.socketStroke}
                   strokeWidth="1.5"
                 />
                 <text
                   x="278"
                   y="151"
                   textAnchor="middle"
-                  fontSize="12"
+                  fontSize="16"
                   fontWeight="800"
-                  fill="#78350f"
+                  fill={colors.cpu.text}
                 >
                   CPU
                 </text>
                 <text
                   x="278"
-                  y="186"
+                  y="184"
                   textAnchor="middle"
-                  fontSize="9.5"
-                  fontWeight="600"
-                  fill="#92400e"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  fill={colors.cpu.subtext}
                 >
-                  Processor Socket
+                  Processor
                 </text>
               </g>
 
@@ -468,22 +713,22 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="116"
                   height="44"
                   rx="6"
-                  fill={isPartHighlighted("cpu-cooler") ? "#bfdbfe" : "#e2e8f0"}
-                  stroke={strokeFor("cpu-cooler", "#334155")}
+                  fill={isPartHighlighted("cpu-cooler") ? colors.cpuCooler.activeFill : colors.cpuCooler.fill}
+                  stroke={strokeFor("cpu-cooler", colors.cpuCooler.stroke)}
                   strokeWidth={strokeWidthFor("cpu-cooler", 2)}
                 />
                 {/* Heatsink fins */}
-                <line x1="236" y1="64" x2="236" y2="100" stroke="#64748b" strokeWidth="2" />
-                <line x1="250" y1="64" x2="250" y2="100" stroke="#64748b" strokeWidth="2" />
-                <line x1="306" y1="64" x2="306" y2="100" stroke="#64748b" strokeWidth="2" />
-                <line x1="320" y1="64" x2="320" y2="100" stroke="#64748b" strokeWidth="2" />
+                <line x1="236" y1="64" x2="236" y2="100" stroke={colors.cpuCooler.fins} strokeWidth="2" />
+                <line x1="250" y1="64" x2="250" y2="100" stroke={colors.cpuCooler.fins} strokeWidth="2" />
+                <line x1="306" y1="64" x2="306" y2="100" stroke={colors.cpuCooler.fins} strokeWidth="2" />
+                <line x1="320" y1="64" x2="320" y2="100" stroke={colors.cpuCooler.fins} strokeWidth="2" />
                 <text
                   x="278"
-                  y="86"
+                  y="87"
                   textAnchor="middle"
-                  fontSize="10.5"
-                  fontWeight="700"
-                  fill="#0f172a"
+                  fontSize="14"
+                  fontWeight="800"
+                  fill={colors.cpuCooler.text}
                 >
                   CPU Cooler
                 </text>
@@ -497,24 +742,24 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="118"
                   height="112"
                   rx="6"
-                  fill={isPartHighlighted("ram") ? "#bfdbfe" : "#ede9fe"}
-                  stroke={strokeFor("ram", "#6d28d9")}
+                  fill={isPartHighlighted("ram") ? colors.ram.activeFill : colors.ram.fill}
+                  stroke={strokeFor("ram", colors.ram.stroke)}
                   strokeWidth={strokeWidthFor("ram", 2)}
                 />
                 {/* Four vertical DIMM sticks */}
-                <rect x="376" y="96" width="14" height="72" rx="2" fill="#8b5cf6" />
-                <rect x="398" y="96" width="14" height="72" rx="2" fill="#7c3aed" />
-                <rect x="420" y="96" width="14" height="72" rx="2" fill="#8b5cf6" />
-                <rect x="442" y="96" width="14" height="72" rx="2" fill="#7c3aed" />
+                <rect x="376" y="94" width="14" height="68" rx="2" fill={colors.ram.dimmA} />
+                <rect x="398" y="94" width="14" height="68" rx="2" fill={colors.ram.dimmB} />
+                <rect x="420" y="94" width="14" height="68" rx="2" fill={colors.ram.dimmA} />
+                <rect x="442" y="94" width="14" height="68" rx="2" fill={colors.ram.dimmB} />
                 <text
                   x="421"
-                  y="186"
+                  y="185"
                   textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="700"
-                  fill="#4c1d95"
+                  fontSize="14"
+                  fontWeight="800"
+                  fill={colors.ram.text}
                 >
-                  RAM (DIMM Slots)
+                  RAM (DIMM)
                 </text>
               </g>
 
@@ -523,29 +768,29 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 <circle
                   cx="364"
                   cy="228"
-                  r="24"
-                  fill={isPartHighlighted("cmos-battery") ? "#bfdbfe" : "#f1f5f9"}
-                  stroke={strokeFor("cmos-battery", "#475569")}
+                  r="26"
+                  fill={isPartHighlighted("cmos-battery") ? colors.cmos.activeFill : colors.cmos.fill}
+                  stroke={strokeFor("cmos-battery", colors.cmos.stroke)}
                   strokeWidth={strokeWidthFor("cmos-battery", 2)}
                 />
-                <circle cx="364" cy="228" r="16" fill="#cbd5e1" />
+                <circle cx="364" cy="228" r="18" fill={colors.cmos.inner} />
                 <text
                   x="364"
                   y="226"
                   textAnchor="middle"
-                  fontSize="8.5"
+                  fontSize="12.5"
                   fontWeight="800"
-                  fill="#1e293b"
+                  fill={colors.cmos.text}
                 >
                   CMOS
                 </text>
                 <text
                   x="364"
-                  y="236"
+                  y="240"
                   textAnchor="middle"
-                  fontSize="7.5"
+                  fontSize="11"
                   fontWeight="700"
-                  fill="#334155"
+                  fill={colors.cmos.subtext}
                 >
                   CR2032
                 </text>
@@ -559,31 +804,31 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="184"
                   height="64"
                   rx="7"
-                  fill={isPartHighlighted("gpu") ? "#bfdbfe" : "#fee2e2"}
-                  stroke={strokeFor("gpu", "#b91c1c")}
+                  fill={isPartHighlighted("gpu") ? colors.gpu.activeFill : colors.gpu.fill}
+                  stroke={strokeFor("gpu", colors.gpu.stroke)}
                   strokeWidth={strokeWidthFor("gpu", 2.5)}
                 />
-                <circle cx="188" cy="246" r="18" fill="#fecaca" stroke="#dc2626" strokeWidth="1.5" />
-                <circle cx="292" cy="246" r="18" fill="#fecaca" stroke="#dc2626" strokeWidth="1.5" />
+                <circle cx="188" cy="246" r="18" fill={colors.gpu.fanFill} stroke={colors.gpu.fanStroke} strokeWidth="1.5" />
+                <circle cx="292" cy="246" r="18" fill={colors.gpu.fanFill} stroke={colors.gpu.fanStroke} strokeWidth="1.5" />
                 <text
                   x="240"
-                  y="243"
+                  y="242"
                   textAnchor="middle"
-                  fontSize="11"
+                  fontSize="15"
                   fontWeight="800"
-                  fill="#7f1d1d"
+                  fill={colors.gpu.text}
                 >
                   GPU
                 </text>
                 <text
                   x="240"
-                  y="256"
+                  y="259"
                   textAnchor="middle"
-                  fontSize="9"
-                  fontWeight="600"
-                  fill="#991b1b"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  fill={colors.gpu.subtext}
                 >
-                  Graphics Card (PCIe)
+                  PCIe Graphics
                 </text>
               </g>
 
@@ -595,31 +840,31 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="164"
                   height="46"
                   rx="6"
-                  fill={isPartHighlighted("nic") ? "#bfdbfe" : "#ccfbf1"}
-                  stroke={strokeFor("nic", "#0f766e")}
+                  fill={isPartHighlighted("nic") ? colors.nic.activeFill : colors.nic.fill}
+                  stroke={strokeFor("nic", colors.nic.stroke)}
                   strokeWidth={strokeWidthFor("nic", 2)}
                 />
                 {/* Rear RJ45 port icon */}
-                <rect x="156" y="302" width="24" height="24" rx="3" fill="#14b8a6" />
+                <rect x="156" y="302" width="24" height="24" rx="3" fill={colors.nic.rj45} />
                 <text
-                  x="242"
-                  y="314"
+                  x="244"
+                  y="313"
                   textAnchor="middle"
-                  fontSize="10.5"
+                  fontSize="14"
                   fontWeight="800"
-                  fill="#134e4a"
+                  fill={colors.nic.text}
                 >
-                  NIC (Network Card)
+                  NIC (Network)
                 </text>
                 <text
-                  x="242"
-                  y="327"
+                  x="244"
+                  y="328"
                   textAnchor="middle"
-                  fontSize="8.5"
-                  fontWeight="600"
-                  fill="#115e59"
+                  fontSize="11.5"
+                  fontWeight="700"
+                  fill={colors.nic.subtext}
                 >
-                  RJ45 / Wi-Fi Adapter
+                  RJ45 / Wi-Fi
                 </text>
               </g>
 
@@ -631,30 +876,30 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="184"
                   height="86"
                   rx="8"
-                  fill={isPartHighlighted("ssd") ? "#bfdbfe" : "#e0e7ff"}
-                  stroke={strokeFor("ssd", "#3730a3")}
+                  fill={isPartHighlighted("ssd") ? colors.ssd.activeFill : colors.ssd.fill}
+                  stroke={strokeFor("ssd", colors.ssd.stroke)}
                   strokeWidth={strokeWidthFor("ssd", 2.5)}
                 />
-                <rect x="590" y="88" width="152" height="32" rx="4" fill="#c7d2fe" />
+                <rect x="590" y="88" width="152" height="32" rx="4" fill={colors.ssd.inner} />
                 <text
                   x="666"
-                  y="109"
+                  y="108"
                   textAnchor="middle"
-                  fontSize="12"
+                  fontSize="15"
                   fontWeight="800"
-                  fill="#1e1b4b"
+                  fill={colors.ssd.text}
                 >
-                  SSD (Solid State Drive)
+                  SSD (Solid State)
                 </text>
                 <text
                   x="666"
                   y="142"
                   textAnchor="middle"
-                  fontSize="9.5"
-                  fontWeight="600"
-                  fill="#312e81"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  fill={colors.ssd.subtext}
                 >
-                  Flash Storage (2.5&quot; / NVMe)
+                  2.5&quot; / NVMe Flash
                 </text>
               </g>
 
@@ -666,30 +911,30 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="184"
                   height="104"
                   rx="8"
-                  fill={isPartHighlighted("hdd") ? "#bfdbfe" : "#f3e8ff"}
-                  stroke={strokeFor("hdd", "#6b21a8")}
+                  fill={isPartHighlighted("hdd") ? colors.hdd.activeFill : colors.hdd.fill}
+                  stroke={strokeFor("hdd", colors.hdd.stroke)}
                   strokeWidth={strokeWidthFor("hdd", 2.5)}
                 />
                 {/* Platter circle */}
-                <circle cx="622" cy="244" r="28" fill="#e9d5ff" stroke="#7e22ce" strokeWidth="2" />
-                <circle cx="622" cy="244" r="8" fill="#6b21a8" />
+                <circle cx="622" cy="244" r="28" fill={colors.hdd.platter} stroke={colors.hdd.platterStroke} strokeWidth="2" />
+                <circle cx="622" cy="244" r="8" fill={colors.hdd.spindle} />
                 <text
                   x="702"
                   y="238"
                   textAnchor="middle"
-                  fontSize="12"
+                  fontSize="15"
                   fontWeight="800"
-                  fill="#3b0764"
+                  fill={colors.hdd.text}
                 >
                   HDD
                 </text>
                 <text
                   x="702"
-                  y="254"
+                  y="259"
                   textAnchor="middle"
-                  fontSize="9.5"
-                  fontWeight="600"
-                  fill="#581c87"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  fill={colors.hdd.subtext}
                 >
                   3.5&quot; Magnetic Drive
                 </text>
@@ -701,7 +946,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 <path
                   d="M 488 265 C 535 265, 535 125, 574 125 M 488 285 C 535 285, 535 245, 574 245"
                   fill="none"
-                  stroke={isPartHighlighted("sata-cable") ? "#2563EB" : "#ea580c"}
+                  stroke={isPartHighlighted("sata-cable") ? colors.activeStroke : colors.sataCable.cableStroke}
                   strokeWidth={isPartHighlighted("sata-cable") ? 7 : 5}
                   strokeLinecap="round"
                 />
@@ -709,22 +954,22 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 <rect
                   x="456"
                   y="298"
-                  width="106"
-                  height="32"
+                  width="112"
+                  height="34"
                   rx="6"
-                  fill={isPartHighlighted("sata-cable") ? "#bfdbfe" : "#ffedd5"}
-                  stroke={strokeFor("sata-cable", "#c2410c")}
+                  fill={isPartHighlighted("sata-cable") ? colors.sataCable.activeBadgeFill : colors.sataCable.badgeFill}
+                  stroke={strokeFor("sata-cable", colors.sataCable.badgeStroke)}
                   strokeWidth={strokeWidthFor("sata-cable", 2)}
                 />
                 <text
-                  x="509"
-                  y="318"
+                  x="512"
+                  y="320"
                   textAnchor="middle"
-                  fontSize="10.5"
+                  fontSize="13"
                   fontWeight="800"
-                  fill="#7c2d12"
+                  fill={colors.sataCable.text}
                 >
-                  SATA Data Cable
+                  SATA Cable
                 </text>
               </g>
 
@@ -736,49 +981,47 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                   width="310"
                   height="98"
                   rx="8"
-                  fill={isPartHighlighted("psu") ? "#bfdbfe" : "#fef9c3"}
-                  stroke={strokeFor("psu", "#a16207")}
+                  fill={isPartHighlighted("psu") ? colors.psu.activeFill : colors.psu.fill}
+                  stroke={strokeFor("psu", colors.psu.stroke)}
                   strokeWidth={strokeWidthFor("psu", 2.5)}
                 />
                 {/* PSU Fan grill */}
-                <circle cx="112" cy="441" r="30" fill="#fef08a" stroke="#ca8a04" strokeWidth="2" />
-                <circle cx="112" cy="441" r="16" fill="none" stroke="#ca8a04" strokeWidth="1.5" />
+                <circle cx="112" cy="441" r="30" fill={colors.psu.fanFill} stroke={colors.psu.fanStroke} strokeWidth="2" />
+                <circle cx="112" cy="441" r="16" fill="none" stroke={colors.psu.fanStroke} strokeWidth="1.5" />
                 <text
-                  x="236"
+                  x="246"
                   y="434"
                   textAnchor="middle"
-                  fontSize="13"
+                  fontSize="16"
                   fontWeight="800"
-                  fill="#713f12"
+                  fill={colors.psu.text}
                 >
                   PSU (Power Supply Unit)
                 </text>
                 <text
-                  x="236"
-                  y="454"
+                  x="246"
+                  y="456"
                   textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="600"
-                  fill="#854d0e"
+                  fontSize="12.5"
+                  fontWeight="700"
+                  fill={colors.psu.subtext}
                 >
-                  AC → DC (24-pin ATX / 8-pin CPU / PCIe / SATA)
-                </text>
-              </g>
-
-              {/* Legend / Orientation footer inside chassis */}
-              <g pointerEvents="none">
-                <rect x="400" y="405" width="360" height="72" rx="8" fill="#f1f5f9" stroke="#cbd5e1" />
-                <text x="418" y="428" fontSize="11" fontWeight="700" fill="#334155">
-                  Interactive Hardware Map ({data.parts.length} Core Parts)
-                </text>
-                <text x="418" y="446" fontSize="10" fill="#64748b">
-                  • Click any component or use keyboard Tab + Enter/Space.
-                </text>
-                <text x="418" y="462" fontSize="10" fill="#64748b">
-                  • Use &ldquo;Connects to&rdquo; chips on the right to trace connections.
+                  AC → DC Power Delivery
                 </text>
               </g>
             </svg>
+          </div>
+
+          {/* Legend / Orientation Footer as clean, readable HTML text */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-theme bg-elevated px-3 py-2 text-xs text-secondary-theme">
+            <div className="flex items-center gap-1.5 font-semibold text-primary-theme">
+              <Layers className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span>Interactive Hardware Map ({data.parts.length} Core Parts)</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-secondary-theme">
+              <span>• Click any part or press Tab + Enter</span>
+              <span>• Use &ldquo;Connects To&rdquo; chips to trace connections</span>
+            </div>
           </div>
         </div>
 

@@ -309,6 +309,49 @@ ${safeJs}
 
 // ─── Hardware Explorer Verification & Quiz Generation ───────────────────────
 
+export interface HardwarePartBoundingBox {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isSurface?: boolean;
+}
+
+export const HARDWARE_PART_BOUNDING_BOXES: readonly HardwarePartBoundingBox[] = [
+  { id: "motherboard", x: 130, y: 52, width: 380, height: 304, isSurface: true },
+  { id: "case-fan", x: 48, y: 76, width: 66, height: 110 },
+  { id: "cpu-cooler", x: 220, y: 60, width: 116, height: 44 },
+  { id: "cpu", x: 232, y: 112, width: 92, height: 84 },
+  { id: "ram", x: 362, y: 84, width: 118, height: 112 },
+  { id: "cmos-battery", x: 338, y: 202, width: 52, height: 52 },
+  { id: "gpu", x: 148, y: 214, width: 184, height: 64 },
+  { id: "nic", x: 148, y: 292, width: 164, height: 46 },
+  { id: "sata-cable", x: 456, y: 298, width: 112, height: 34 },
+  { id: "ssd", x: 574, y: 72, width: 184, height: 86 },
+  { id: "hdd", x: 574, y: 192, width: 184, height: 104 },
+  { id: "psu", x: 56, y: 392, width: 310, height: 98 },
+] as const;
+
+export function findOverlappingBoundingBoxes(
+  boxes: readonly HardwarePartBoundingBox[]
+): { boxA: string; boxB: string }[] {
+  const overlaps: { boxA: string; boxB: string }[] = [];
+  const nonSurface = boxes.filter((b) => !b.isSurface);
+  for (let i = 0; i < nonSurface.length; i++) {
+    for (let j = i + 1; j < nonSurface.length; j++) {
+      const a = nonSurface[i]!;
+      const b = nonSurface[j]!;
+      const overlapX = a.x < b.x + b.width && a.x + a.width > b.x;
+      const overlapY = a.y < b.y + b.height && a.y + a.height > b.y;
+      if (overlapX && overlapY) {
+        overlaps.push({ boxA: a.id, boxB: b.id });
+      }
+    }
+  }
+  return overlaps;
+}
+
 /**
  * Verifies that every part ID from `hardware-parts.json` has a corresponding SVG drawing.
  * Throws a descriptive error if any part in the JSON has no SVG drawing.
