@@ -66,7 +66,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "superior-vena-cava",
         name: "Superior Vena Cava",
         colorKey: "blue",
-        anchor: { x: 26.0, y: 18.0 },
+        anchor: { x: 35.5, y: 15.0 },
         function: "Transports deoxygenated blood from the upper half of the body (head, neck, and arms) into the right atrium.",
         details:
           "It is a large-diameter vein situated in the anterior right superior mediastinum. Because it drains the upper body under gravity, it lacks venous valves.",
@@ -78,7 +78,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "inferior-vena-cava",
         name: "Inferior Vena Cava",
         colorKey: "blue",
-        anchor: { x: 28.0, y: 88.0 },
+        anchor: { x: 36.5, y: 75.5 },
         function: "Drains deoxygenated venous blood from the abdomen, pelvis, and lower extremities back to the right atrium.",
         details:
           "It is the largest vein in the human body, ascending through the posterior abdominal wall to pierce the diaphragm at the caval opening.",
@@ -90,7 +90,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "right-atrium",
         name: "Right Atrium",
         colorKey: "blue",
-        anchor: { x: 27.0, y: 44.0 },
+        anchor: { x: 35.0, y: 38.0 },
         function: "Receives deoxygenated systemic venous return and propels it through the tricuspid valve into the right ventricle.",
         details:
           "Contains the sinoatrial (SA) node in its upper wall, which serves as the natural electrical pacemaker generating rhythm for heart contractions.",
@@ -102,7 +102,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "tricuspid-valve",
         name: "Tricuspid Valve",
         colorKey: "slate",
-        anchor: { x: 35.0, y: 60.0 },
+        anchor: { x: 38.0, y: 53.0 },
         function: "Prevents backflow of blood from the right ventricle into the right atrium during ventricular systole.",
         details:
           "Consists of three fibrous cusps attached to chordae tendineae ('heartstrings'), which anchor to papillary muscles inside the ventricle.",
@@ -114,7 +114,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "right-ventricle",
         name: "Right Ventricle",
         colorKey: "blue",
-        anchor: { x: 38.0, y: 74.0 },
+        anchor: { x: 36.0, y: 64.0 },
         function: "Pumps deoxygenated blood through the pulmonary valve into the pulmonary trunk toward the lungs.",
         details:
           "Forms the largest part of the anterior surface of the heart. Its walls are moderately muscular but thinner than the left ventricle due to low pulmonary resistance.",
@@ -125,7 +125,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-valve",
         name: "Pulmonary Valve",
         colorKey: "slate",
-        anchor: { x: 44.0, y: 46.0 },
+        anchor: { x: 46.5, y: 40.5 },
         function: "Prevents pulmonary trunk blood from leaking back into the right ventricle during diastole.",
         details:
           "A semilunar valve composed of three pocket-like cusps that catch backward-surging blood when ventricular pressure drops.",
@@ -136,7 +136,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-artery",
         name: "Pulmonary Artery",
         colorKey: "blue",
-        anchor: { x: 44.0, y: 28.0 },
+        anchor: { x: 49.0, y: 26.0 },
         function: "Carries deoxygenated blood from the heart to the lungs for gaseous exchange.",
         details:
           "The main pulmonary trunk divides into right and left branches. It is one of the few arteries in the adult body carrying deoxygenated blood.",
@@ -148,7 +148,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "aorta",
         name: "Aorta",
         colorKey: "red",
-        anchor: { x: 53.0, y: 12.0 },
+        anchor: { x: 49.0, y: 11.5 },
         function: "The primary systemic arterial trunk delivering high-pressure oxygenated blood to all organs and tissues of the body.",
         details:
           "Its elastic walls expand during ventricular ejection (systole) and recoil during diastole (Windkessel effect), smoothing blood flow downstream.",
@@ -160,7 +160,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "left-atrium",
         name: "Left Atrium",
         colorKey: "red",
-        anchor: { x: 70.0, y: 38.0 },
+        anchor: { x: 59.5, y: 32.5 },
         function: "Receives newly oxygenated blood returning from both lungs via the four pulmonary veins.",
         details:
           "Forms most of the posterior surface (base) of the heart and channels blood across the mitral valve into the left ventricle.",
@@ -171,7 +171,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "mitral-valve",
         name: "Mitral Valve",
         colorKey: "slate",
-        anchor: { x: 62.0, y: 55.0 },
+        anchor: { x: 63.0, y: 41.5 },
         function: "Prevents retrograde flow of blood from the high-pressure left ventricle into the left atrium during systole.",
         details:
           "Also known as the bicuspid valve because it possesses two heavy-duty leaflets shaped like a bishop's miter headwear.",
@@ -182,7 +182,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "aortic-valve",
         name: "Aortic Valve",
         colorKey: "slate",
-        anchor: { x: 53.0, y: 50.0 },
+        anchor: { x: 52.0, y: 44.0 },
         function: "Maintains unidirectional flow from the left ventricle into the ascending aorta.",
         details:
           "A three-cusp semilunar valve positioned behind the pulmonary valve; coronary artery openings (ostia) originate just above its cusps.",
@@ -193,7 +193,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "left-ventricle",
         name: "Left Ventricle",
         colorKey: "red",
-        anchor: { x: 64.0, y: 72.0 },
+        anchor: { x: 64.0, y: 58.0 },
         function: "Pumps oxygen-rich blood into the aorta against systemic vascular resistance to nourish the entire body.",
         details:
           "Its myocardial wall is 3 times thicker than the right ventricle, enabling it to generate peak systolic pressures of ~120 mmHg.",
@@ -205,7 +205,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-veins",
         name: "Pulmonary Veins",
         colorKey: "red",
-        anchor: { x: 67.0, y: 31.0 },
+        anchor: { x: 67.5, y: 28.0 },
         function: "Carry freshly oxygenated blood from alveolar capillaries back to the left atrium.",
         details:
           "There are typically four pulmonary veins (two from each lung). Like pulmonary arteries, they break the general rule by carrying oxygenated blood in veins.",
