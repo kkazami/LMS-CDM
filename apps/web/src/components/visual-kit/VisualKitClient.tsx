@@ -103,6 +103,11 @@ export default function VisualKitClient({
     );
   }, [currentDiagram, selectedExtraId]);
 
+  // Total labeled components across all loaded diagrams
+  const totalLabeledComponents = useMemo(() => {
+    return initialDiagrams.reduce((acc, d) => acc + d.parts.length, 0);
+  }, [initialDiagrams]);
+
   // Load best scores from localStorage on mount
   useEffect(() => {
     try {
@@ -291,24 +296,24 @@ export default function VisualKitClient({
           </div>
 
           {/* Quick Stats Widget */}
-          <div className="flex flex-row lg:flex-col gap-3 shrink-0">
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-xs dark:border-white/10 dark:bg-slate-850 min-w-[140px]">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full sm:w-auto shrink-0">
+            <div className="w-full sm:w-auto sm:min-w-[140px] rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900/60 p-3.5 shadow-xs transition-colors">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-300">
                 Interactive Topics
               </div>
               <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                6 Diagrams
+                {initialDiagrams.length} Diagrams
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                53 labeled components
+                {totalLabeledComponents} labeled components
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-xs dark:border-white/10 dark:bg-slate-850 min-w-[140px]">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400">
+            <div className="w-full sm:w-auto sm:min-w-[140px] rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900/60 p-3.5 shadow-xs transition-colors">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-300">
                 Pre-service Alignment
               </div>
-              <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
+              <div className="mt-1 text-2xl font-bold text-sky-700 dark:text-sky-400">
                 K to 12
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
