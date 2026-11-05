@@ -18,7 +18,6 @@ const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"
 const LoginRewardModal = dynamic(() => import("@/components/common/LoginRewardModal"));
 const FloatingStudyTimer = dynamic(() => import("@/components/common/FloatingStudyTimer"));
 import FocusModeProvider from "@/components/focus/FocusModeProvider";
-import OfflineBootstrap from "@/components/offline/OfflineBootstrap";
 import { DraftRecoveryProvider } from "@/features/interactive-activities/ohmward/components/DraftRecovery";
 
 interface DashboardLayoutProps {
@@ -40,8 +39,6 @@ interface DashboardLayoutProps {
   isEligibleForMeetings?: boolean;
   /** Whether this user qualifies for ITE Focus Mode (ITE students only). */
   isEligibleForFocusMode?: boolean;
-  /** Whether this user qualifies for ITE Offline Access (ITE students only). */
-  isEligibleForOffline?: boolean;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -68,7 +65,6 @@ export default function DashboardLayout({
   isEligibleForPracticum,
   isEligibleForMeetings,
   isEligibleForFocusMode,
-  isEligibleForOffline,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -194,16 +190,10 @@ export default function DashboardLayout({
     layoutContent
   );
 
-  const offlineWrappedContent = (
-    <OfflineBootstrap userId={userId} isEligible={isEligibleForOffline}>
-      {wrappedContent}
-    </OfflineBootstrap>
-  );
-
   return (
     <ThemeProvider>
       <ChatbotProvider userName={userName} userRole={userRole}>
-        {offlineWrappedContent}
+        {wrappedContent}
       </ChatbotProvider>
     </ThemeProvider>
   );

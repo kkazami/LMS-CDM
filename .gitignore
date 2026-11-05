@@ -10,6 +10,10 @@ build
 .expo
 
 # Ignore uploads
+.local-uploads/
+apps/web/.local-uploads/
+uploads/
+apps/web/uploads/
 apps/web/public/uploads/*
 *.backup
 
