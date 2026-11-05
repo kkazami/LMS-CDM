@@ -2,6 +2,7 @@ import { MATATAG_DATA } from "./data";
 import type {
   CompetencyItem,
   CompetencySearchResult,
+  DocumentSourceBadgeInfo,
   GradeOption,
   MatatagData,
   MatatagDocument,
@@ -94,8 +95,8 @@ export function getGradeOptions(data?: MatatagData): GradeOption[] {
 
 /**
  * Returns subjects sorted according to the fixed BEEd priority list,
- * followed by any additional subjects present in the data.
- * Subjects with no matching document for the current grade filter are marked enabled: false ("Not added yet").
+ * followed by any other subjects appearing in the data sorted alphabetically.
+ * Subjects with no matching document for the current grade filter are marked enabled: false.
  */
 export function getSubjectOptions(
   grade?: string | number | null,
@@ -111,15 +112,29 @@ export function getSubjectOptions(
     relevantDocs.map((d) => d.subject.trim().toLowerCase())
   );
 
-  const subjectList: string[] = [...FIXED_BEED_SUBJECT_ORDER];
+  const fixedSet = new Set<string>(
+    FIXED_BEED_SUBJECT_ORDER.map((s) => s.toLowerCase())
+  );
+
+  // Collect other subjects from documents that are not in FIXED_BEED_SUBJECT_ORDER
+  const otherSubjectsSet = new Set<string>();
   for (const doc of docs) {
     const trimmed = doc.subject.trim();
-    if (!subjectList.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
-      subjectList.push(trimmed);
+    if (!fixedSet.has(trimmed.toLowerCase())) {
+      otherSubjectsSet.add(trimmed);
     }
   }
 
-  return subjectList.map((name) => ({
+  const otherSubjectsSorted = Array.from(otherSubjectsSet).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" })
+  );
+
+  const combinedSubjects: string[] = [
+    ...FIXED_BEED_SUBJECT_ORDER,
+    ...otherSubjectsSorted,
+  ];
+
+  return combinedSubjects.map((name) => ({
     name,
     enabled: activeSubjects.has(name.toLowerCase()),
   }));
@@ -127,7 +142,7 @@ export function getSubjectOptions(
 
 /**
  * Formats informational text when a document covers secondary grades (7+).
- * E.g., "This PDF also covers Grade 7"
+ * E.g., "This PDF also covers Grade 7" or "This PDF also covers Grades 7, 8, 9, 10"
  */
 export function formatSecondaryGradesNote(grades: number[]): string | null {
   const secondary = grades.filter((g) => g >= 7).sort((a, b) => a - b);
@@ -139,7 +154,32 @@ export function formatSecondaryGradesNote(grades: number[]): string | null {
 }
 
 /**
+ * Determines whether two documents cover the same subject and strand (for MAPEH).
+ */
+export function areDocumentsSameSubjectAndStrand(
+  a: MatatagDocument,
+  b: MatatagDocument
+): boolean {
+  if (a.subject.toLowerCase() !== b.subject.toLowerCase()) {
+    return false;
+  }
+  if (a.subject === "MAPEH") {
+    const aIsPe = /pe|health/i.test(a.title);
+    const bIsPe = /pe|health/i.test(b.title);
+    const aIsMusic = /music|art/i.test(a.title);
+    const bIsMusic = /music|art/i.test(b.title);
+    if (aIsPe && bIsPe) return true;
+    if (aIsMusic && bIsMusic) return true;
+    return false;
+  }
+  return true;
+}
+
+/**
  * Filters documents by grade, subject, and text query.
+ * When filtering:
+ * 1. If an official and a mirror document cover the same subject and grade, show the official one and hide the mirror duplicate.
+ * 2. Official documents are always ordered before mirror documents.
  */
 export function filterGuides(
   guides: MatatagDocument[],
@@ -151,7 +191,7 @@ export function filterGuides(
   const normalizedSubject = subject?.trim().toLowerCase();
   const normalizedQuery = query?.trim().toLowerCase();
 
-  return guides.filter((doc) => {
+  let matched = guides.filter((doc) => {
     if (gradeKey && !documentCoversGrade(doc, gradeKey)) {
       return false;
     }
@@ -175,11 +215,33 @@ export function filterGuides(
     }
     return true;
   });
+
+  // If a grade is specified, deduplicate mirror documents where an official document covers that subject and grade
+  if (gradeKey) {
+    const officialDocs = matched.filter(
+      (d) => (d.sourceType ?? "official") === "official"
+    );
+    matched = matched.filter((doc) => {
+      if (doc.sourceType === "mirror") {
+        const hasOfficial = officialDocs.some((off) =>
+          areDocumentsSameSubjectAndStrand(off, doc)
+        );
+        if (hasOfficial) return false;
+      }
+      return true;
+    });
+  }
+
+  // Sort: official documents first, then mirror documents
+  return [...matched].sort((a, b) => {
+    const aOfficial = (a.sourceType ?? "official") === "official" ? 0 : 1;
+    const bOfficial = (b.sourceType ?? "official") === "official" ? 0 : 1;
+    return aOfficial - bOfficial;
+  });
 }
 
 /**
  * Searches competencies across documents matching the grade, subject, and text query.
- * Case-insensitive over learningCompetency, domain, contentStandard, performanceStandard, and code.
  */
 export function searchCompetencies(
   guides: MatatagDocument[],
@@ -260,3 +322,78 @@ export function isOfficialDepedUrl(url: string | null | undefined): boolean {
   }
 }
 
+/**
+ * Strict mirror URL validator.
+ * Accepts ONLY https URLs whose hostname is exactly matatagcurriculum.com.
+ * Requires:
+ * - pathname starting with /wp-content/uploads/2024/11/ and ending with .pdf (case-insensitive)
+ * OR
+ * - exact page URL https://matatagcurriculum.com/matatag-curriculum-guide/ (or without trailing slash)
+ * Rejects look-alikes, credentials, non-standard ports, http, javascript:, and other paths.
+ */
+export function isAllowedMirrorUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:") return false;
+    if (parsed.hostname !== "matatagcurriculum.com") return false;
+    if (parsed.username || parsed.password) return false;
+    if (parsed.port && parsed.port !== "443") return false;
+
+    // Exact guide page URL
+    const normalizedPath = parsed.pathname.replace(/\/+$/, "");
+    if (normalizedPath === "/matatag-curriculum-guide") {
+      return true;
+    }
+
+    // PDF files inside /wp-content/uploads/2024/11/
+    const lowerPath = parsed.pathname.toLowerCase();
+    if (
+      lowerPath.startsWith("/wp-content/uploads/2024/11/") &&
+      lowerPath.endsWith(".pdf")
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validates a document's URL based on its source type.
+ * Official documents must pass isOfficialDepedUrl.
+ * Mirror documents must pass isAllowedMirrorUrl.
+ */
+export function isAllowedGuideUrl(doc: MatatagDocument): boolean {
+  if (doc.sourceType === "mirror") {
+    return isAllowedMirrorUrl(doc.url);
+  }
+  return isOfficialDepedUrl(doc.url);
+}
+
+/**
+ * Pure helper determining badge text, disclaimer, and action button label.
+ */
+export function getDocumentSourceBadgeInfo(
+  doc: MatatagDocument
+): DocumentSourceBadgeInfo {
+  const isMirror = doc.sourceType === "mirror";
+  if (isMirror) {
+    return {
+      isMirror: true,
+      badgeText:
+        "Unofficial copy: matatagcurriculum.com, not affiliated with DepEd",
+      buttonLabel: "Open unofficial copy",
+      disclaimer: "Check the official DepEd page for the latest version.",
+    };
+  }
+  return {
+    isMirror: false,
+    badgeText: `Source: ${doc.source || "DepEd"}`,
+    buttonLabel: "Open official PDF",
+  };
+}

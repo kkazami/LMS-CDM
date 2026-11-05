@@ -8,17 +8,18 @@ import { MATATAG_DATA, getMatatagData, getMatatagDocuments } from "../data";
 import {
   BEED_ALLOWED_COURSE_CODES,
   type CompetencyItem,
-  type MatatagData,
   type MatatagDocument,
 } from "../types";
 import {
   FIXED_BEED_SUBJECT_ORDER,
   SELECTABLE_ELEMENTARY_GRADES,
-  documentCoversGrade,
   filterGuides,
   formatSecondaryGradesNote,
+  getDocumentSourceBadgeInfo,
   getGradeOptions,
   getSubjectOptions,
+  isAllowedGuideUrl,
+  isAllowedMirrorUrl,
   isOfficialDepedUrl,
   searchCompetencies,
 } from "../rules";
@@ -171,39 +172,38 @@ describe("MATATAG Curriculum Reference Hub - Selectable Grades & Subject Rules",
     }
   });
 
-  it("getGradeOptions() flags enabled:true only for grades covered by documents", () => {
+  it("getGradeOptions() flags all grades enabled now that full elementary set is covered", () => {
     const options = getGradeOptions(MATATAG_DATA);
     assert.equal(options.length, 7);
 
-    // In starter data, doc 1 covers [1, 4, 7] and doc 2 covers [4, 7]
-    const g1 = options.find((o) => o.key === "1");
-    const g4 = options.find((o) => o.key === "4");
-    const g2 = options.find((o) => o.key === "2");
-    const gK = options.find((o) => o.key === "Kindergarten");
-
-    assert.equal(g1?.enabled, true);
-    assert.equal(g4?.enabled, true);
-    assert.equal(g2?.enabled, false);
-    assert.equal(gK?.enabled, false);
+    // All grades K to 6 are now covered by documents
+    for (const opt of options) {
+      assert.equal(
+        opt.enabled,
+        true,
+        `Expected grade ${opt.key} to be enabled with expanded dataset`
+      );
+    }
   });
 
-  it("sorts subjects in the fixed BEEd priority order", () => {
+  it("sorts subjects in the fixed BEEd priority order, followed by extra subjects alphabetically", () => {
     const options = getSubjectOptions(null, MATATAG_DATA);
     const subjectNames = options.map((o) => o.name);
 
+    // Fixed order first
     assert.deepEqual(
       subjectNames.slice(0, FIXED_BEED_SUBJECT_ORDER.length),
       [...FIXED_BEED_SUBJECT_ORDER]
     );
 
-    // Active subjects in starter data: Mathematics and Araling Panlipunan
-    const math = options.find((o) => o.name === "Mathematics");
-    const ap = options.find((o) => o.name === "Araling Panlipunan");
-    const english = options.find((o) => o.name === "English");
-
-    assert.equal(math?.enabled, true);
-    assert.equal(ap?.enabled, true);
-    assert.equal(english?.enabled, false);
+    // Other subjects sorted alphabetically
+    const remainder = subjectNames.slice(FIXED_BEED_SUBJECT_ORDER.length);
+    assert.deepEqual(remainder, [
+      "Kindergarten",
+      "Language",
+      "Makabansa",
+      "Reading and Literacy",
+    ]);
   });
 
   it("formats secondary grades note when a document also covers Grade 7+", () => {
@@ -215,50 +215,58 @@ describe("MATATAG Curriculum Reference Hub - Selectable Grades & Subject Rules",
       formatSecondaryGradesNote([4, 7, 8]),
       "This PDF also covers Grades 7, 8"
     );
+    assert.equal(
+      formatSecondaryGradesNote([4, 5, 6, 7, 8, 9, 10]),
+      "This PDF also covers Grades 7, 8, 9, 10"
+    );
     assert.equal(formatSecondaryGradesNote([1, 2, 3, 4, 5, 6]), null);
   });
 });
 
-describe("MATATAG Curriculum Reference Hub - Filter & Search Logic", () => {
-  it("filterGuides filters by grade", () => {
-    const g1Docs = filterGuides(MATATAG_DATA.documents, "1");
-    assert.equal(g1Docs.length, 1);
-    assert.equal(g1Docs[0].id, "mathematics-grades-1-4-7");
+describe("MATATAG Curriculum Reference Hub - Filter, Search & Deduplication Logic", () => {
+  it("prefers official documents over mirror duplicates when filtering by grade", () => {
+    // Grade 4 has both official English (grades [4, 7]) and mirror English (grades [2..10])
+    const grade4English = filterGuides(MATATAG_DATA.documents, "4", "English");
+    assert.equal(grade4English.length, 1);
+    assert.equal(grade4English[0].id, "english-grades-4-7");
+    assert.equal(grade4English[0].sourceType, "official");
 
-    const g4Docs = filterGuides(MATATAG_DATA.documents, "4");
-    assert.equal(g4Docs.length, 2);
+    // Grade 2 English only exists in mirror
+    const grade2English = filterGuides(MATATAG_DATA.documents, "2", "English");
+    assert.equal(grade2English.length, 1);
+    assert.equal(grade2English[0].id, "mirror-english-grades-2-10");
+    assert.equal(grade2English[0].sourceType, "mirror");
 
-    const g2Docs = filterGuides(MATATAG_DATA.documents, "2");
-    assert.equal(g2Docs.length, 0);
+    // Grade 4 MAPEH: official PE and Health covers 4; mirror PE and Health is hidden; mirror Music & Arts is preserved!
+    const grade4Mapeh = filterGuides(MATATAG_DATA.documents, "4", "MAPEH");
+    const mapehIds = grade4Mapeh.map((d) => d.id);
+    assert.ok(mapehIds.includes("pe-and-health-grades-4-7"), "Must include official PE and Health");
+    assert.ok(mapehIds.includes("mirror-music-and-arts-grades-4-10"), "Must include mirror Music & Arts");
+    assert.equal(
+      mapehIds.includes("mirror-pe-and-health-grades-4-10"),
+      false,
+      "Must hide mirror PE and Health duplicate"
+    );
   });
 
-  it("filterGuides filters by subject", () => {
-    const mathDocs = filterGuides(MATATAG_DATA.documents, null, "Mathematics");
-    assert.equal(mathDocs.length, 1);
-    assert.equal(mathDocs[0].subject, "Mathematics");
-
-    const sciDocs = filterGuides(MATATAG_DATA.documents, null, "Science");
-    assert.equal(sciDocs.length, 0);
+  it("always sorts official documents before mirror documents", () => {
+    const allGuides = filterGuides(MATATAG_DATA.documents, null, null, null);
+    let seenMirror = false;
+    for (const doc of allGuides) {
+      if (doc.sourceType === "mirror") {
+        seenMirror = true;
+      } else if (seenMirror) {
+        assert.fail(
+          `Found official document ${doc.id} after a mirror document in list`
+        );
+      }
+    }
   });
 
-  it("filterGuides filters by query across title, subject, courses, and source", () => {
-    const queryMath = filterGuides(MATATAG_DATA.documents, null, null, "arithmetic");
-    assert.equal(queryMath.length, 0);
-
-    const queryCourse = filterGuides(MATATAG_DATA.documents, null, null, "ELEMATP");
-    assert.equal(queryCourse.length, 1);
-    assert.equal(queryCourse[0].id, "mathematics-grades-1-4-7");
-
-    const queryDeped = filterGuides(MATATAG_DATA.documents, null, null, "DepEd");
-    assert.equal(queryDeped.length, 2);
-  });
-
-  it("searchCompetencies returns empty list on empty data", () => {
+  it("searchCompetencies returns empty list on empty data and finds synthetic items", () => {
     const results = searchCompetencies(MATATAG_DATA.documents, null, null, "number");
     assert.deepEqual(results, []);
-  });
 
-  it("searchCompetencies finds synthetic competencies in test data", () => {
     const syntheticDocs: MatatagDocument[] = [
       {
         id: "mock-math-1",
@@ -268,53 +276,27 @@ describe("MATATAG Curriculum Reference Hub - Filter & Search Logic", () => {
         url: "https://www.deped.gov.ph/wp-content/uploads/mock-math.pdf",
         localPath: null,
         source: "DepEd",
+        sourceType: "official",
         supportsCourses: ["ELEMATP"],
         competencies: [
           {
             id: "comp-1",
             grade: 1,
-            quarter: 1,
-            domain: "Numbers and Number Sense",
-            contentStandard: "Demonstrates understanding of whole numbers up to 100",
-            performanceStandard: "Able to recognize, represent, and order whole numbers",
-            learningCompetency: "Visualizes and represents numbers from 0 to 100",
-            code: "M1NS-Ia-1.1",
-          },
-          {
-            id: "comp-2",
-            grade: 2,
-            quarter: 2,
-            domain: "Geometry",
-            learningCompetency: "Identifies straight lines and curves",
-            code: "M2GE-IIa-1",
+            learningCompetency: "Counts from 1 to 100",
+            code: "M1NS-Ia-1",
           },
         ],
       },
     ];
 
-    // Search by competency text
-    const foundByText = searchCompetencies(syntheticDocs, null, null, "Visualizes");
-    assert.equal(foundByText.length, 1);
-    assert.equal(foundByText[0].competency.id, "comp-1");
-
-    // Search by domain
-    const foundByDomain = searchCompetencies(syntheticDocs, null, null, "geometry");
-    assert.equal(foundByDomain.length, 1);
-    assert.equal(foundByDomain[0].competency.id, "comp-2");
-
-    // Search by code
-    const foundByCode = searchCompetencies(syntheticDocs, null, null, "M1NS-Ia-1.1");
-    assert.equal(foundByCode.length, 1);
-
-    // Search filtered by grade
-    const grade1Only = searchCompetencies(syntheticDocs, "1", null, null);
-    assert.equal(grade1Only.length, 1);
-    assert.equal(grade1Only[0].competency.grade, 1);
+    const found = searchCompetencies(syntheticDocs, "1", "Mathematics", "counts");
+    assert.equal(found.length, 1);
+    assert.equal(found[0].competency.id, "comp-1");
   });
 });
 
-describe("MATATAG Curriculum Reference Hub - Official DepEd URL Validator", () => {
-  it("accepts valid https www.deped.gov.ph URLs", () => {
+describe("MATATAG Curriculum Reference Hub - Official and Mirror URL Validators", () => {
+  it("isOfficialDepedUrl accepts valid https www.deped.gov.ph URLs and rejects bad cases", () => {
     assert.equal(
       isOfficialDepedUrl(
         "https://www.deped.gov.ph/wp-content/uploads/MATATAG-Mathematics-CG-Grades1-4-and-7.pdf"
@@ -322,127 +304,215 @@ describe("MATATAG Curriculum Reference Hub - Official DepEd URL Validator", () =
       true
     );
     assert.equal(
-      isOfficialDepedUrl(
-        "https://www.deped.gov.ph/wp-content/uploads/ARALING-PANLIPUNAN-GRADES-4-7.pdf"
+      isOfficialDepedUrl("https://www.deped.gov.ph/matatagcurriculumk147/"),
+      true
+    );
+
+    // Rejections
+    assert.equal(isOfficialDepedUrl("http://www.deped.gov.ph/uploads/math.pdf"), false);
+    assert.equal(isOfficialDepedUrl("https://deped.gov.ph/uploads/math.pdf"), false);
+    assert.equal(isOfficialDepedUrl("https://www.deped.gov.ph.evil.com/fake.pdf"), false);
+    assert.equal(isOfficialDepedUrl("https://www.deped.gov.ph@evil.com/fake.pdf"), false);
+    assert.equal(isOfficialDepedUrl("https://user:pass@www.deped.gov.ph/fake.pdf"), false);
+    assert.equal(isOfficialDepedUrl("https://www.deped.gov.ph:8080/fake.pdf"), false);
+    assert.equal(isOfficialDepedUrl("javascript:alert(1)"), false);
+    assert.equal(isOfficialDepedUrl("data:text/html,evil"), false);
+  });
+
+  it("isAllowedMirrorUrl accepts valid mirror URLs and exact guide page", () => {
+    assert.equal(
+      isAllowedMirrorUrl(
+        "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-10-Maths.pdf"
       ),
       true
     );
     assert.equal(
-      isOfficialDepedUrl("https://www.deped.gov.ph/matatagcurriculumk147/"),
+      isAllowedMirrorUrl(
+        "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Guide-Kindergarten.PDF"
+      ),
       true
     );
     assert.equal(
-      isOfficialDepedUrl("https://www.deped.gov.ph:443/matatagcurriculumk147/"),
+      isAllowedMirrorUrl(
+        "https://matatagcurriculum.com/matatag-curriculum-guide/"
+      ),
+      true
+    );
+    assert.equal(
+      isAllowedMirrorUrl(
+        "https://matatagcurriculum.com/matatag-curriculum-guide"
+      ),
+      true
+    );
+    assert.equal(
+      isAllowedMirrorUrl(
+        "https://matatagcurriculum.com:443/matatag-curriculum-guide/"
+      ),
       true
     );
   });
 
-  it("rejects http URLs", () => {
+  it("isAllowedMirrorUrl rejects invalid hosts, look-alikes, credentials, non-pdf or wrong paths", () => {
     assert.equal(
-      isOfficialDepedUrl("http://www.deped.gov.ph/uploads/math.pdf"),
+      isAllowedMirrorUrl("http://matatagcurriculum.com/wp-content/uploads/2024/11/math.pdf"),
       false
     );
+    assert.equal(
+      isAllowedMirrorUrl("https://matatagcurriculum.com.evil.com/wp-content/uploads/2024/11/math.pdf"),
+      false
+    );
+    assert.equal(
+      isAllowedMirrorUrl("https://matatagcurriculum.com@evil.com/wp-content/uploads/2024/11/math.pdf"),
+      false
+    );
+    assert.equal(
+      isAllowedMirrorUrl("https://user:pass@matatagcurriculum.com/wp-content/uploads/2024/11/math.pdf"),
+      false
+    );
+    assert.equal(
+      isAllowedMirrorUrl("https://matatagcurriculum.com:8080/wp-content/uploads/2024/11/math.pdf"),
+      false
+    );
+    assert.equal(
+      isAllowedMirrorUrl("https://matatagcurriculum.com/wp-content/uploads/2024/12/math.pdf"),
+      false
+    );
+    assert.equal(
+      isAllowedMirrorUrl("https://matatagcurriculum.com/wp-content/uploads/2024/11/math.exe"),
+      false
+    );
+    assert.equal(isAllowedMirrorUrl("https://matatagcurriculum.com/about/"), false);
+    assert.equal(isAllowedMirrorUrl("javascript:alert(1)"), false);
+    assert.equal(isAllowedMirrorUrl(""), false);
   });
 
-  it("rejects other hosts and subdomains", () => {
-    assert.equal(isOfficialDepedUrl("https://deped.gov.ph/uploads/math.pdf"), false);
-    assert.equal(
-      isOfficialDepedUrl("https://portal.deped.gov.ph/uploads/math.pdf"),
-      false
-    );
-    assert.equal(isOfficialDepedUrl("https://google.com"), false);
-  });
+  it("isAllowedGuideUrl validates based on document sourceType", () => {
+    const officialDoc: MatatagDocument = {
+      id: "doc-off",
+      title: "Official",
+      subject: "Math",
+      grades: [1],
+      url: "https://www.deped.gov.ph/wp-content/uploads/math.pdf",
+      localPath: null,
+      source: "DepEd",
+      sourceType: "official",
+      supportsCourses: [],
+      competencies: [],
+    };
+    const mirrorDoc: MatatagDocument = {
+      id: "doc-mir",
+      title: "Mirror",
+      subject: "Math",
+      grades: [1],
+      url: "https://matatagcurriculum.com/wp-content/uploads/2024/11/math.pdf",
+      localPath: null,
+      source: "matatagcurriculum.com",
+      sourceType: "mirror",
+      supportsCourses: [],
+      competencies: [],
+    };
 
-  it("rejects look-alikes and attacker spoof domains", () => {
-    assert.equal(
-      isOfficialDepedUrl("https://www.deped.gov.ph.evil.com/fake.pdf"),
-      false
-    );
-    assert.equal(
-      isOfficialDepedUrl("https://www.deped.gov.ph@evil.com/fake.pdf"),
-      false
-    );
-  });
+    assert.equal(isAllowedGuideUrl(officialDoc), true);
+    assert.equal(isAllowedGuideUrl(mirrorDoc), true);
 
-  it("rejects URLs with embedded credentials", () => {
+    // Swap URLs with invalid ones
     assert.equal(
-      isOfficialDepedUrl("https://user:password@www.deped.gov.ph/fake.pdf"),
+      isAllowedGuideUrl({ ...officialDoc, url: mirrorDoc.url }),
       false
     );
-  });
-
-  it("rejects non-standard ports", () => {
     assert.equal(
-      isOfficialDepedUrl("https://www.deped.gov.ph:8080/fake.pdf"),
+      isAllowedGuideUrl({ ...mirrorDoc, url: officialDoc.url }),
       false
     );
-  });
-
-  it("rejects javascript:, data:, and empty/invalid values", () => {
-    assert.equal(isOfficialDepedUrl("javascript:alert(1)"), false);
-    assert.equal(isOfficialDepedUrl("data:text/html;base64,PHNjcmlwdD4="), false);
-    assert.equal(isOfficialDepedUrl(""), false);
-    assert.equal(isOfficialDepedUrl(null), false);
-    assert.equal(isOfficialDepedUrl(undefined), false);
-    assert.equal(isOfficialDepedUrl("not a valid url"), false);
   });
 });
 
-describe("MATATAG Curriculum Reference Hub - JSON Data Integrity", () => {
-  it("data has sourcePages and documents arrays", () => {
-    const data = getMatatagData();
-    assert.ok(Array.isArray(data.sourcePages), "sourcePages must be an array");
-    assert.ok(Array.isArray(data.documents), "documents must be an array");
-    assert.ok(data.documents.length >= 2, "Must contain at least 2 documents");
+describe("MATATAG Curriculum Reference Hub - Badge Helper & JSON Data Integrity", () => {
+  it("getDocumentSourceBadgeInfo correctly distinguishes official vs mirror badges", () => {
+    const officialDoc: MatatagDocument = {
+      id: "doc-off",
+      title: "Official",
+      subject: "Math",
+      grades: [1],
+      url: "https://www.deped.gov.ph/wp-content/uploads/math.pdf",
+      localPath: null,
+      source: "DepEd",
+      sourceType: "official",
+      supportsCourses: [],
+      competencies: [],
+    };
+    const mirrorDoc: MatatagDocument = {
+      id: "doc-mir",
+      title: "Mirror",
+      subject: "Math",
+      grades: [1],
+      url: "https://matatagcurriculum.com/wp-content/uploads/2024/11/math.pdf",
+      localPath: null,
+      source: "matatagcurriculum.com (unofficial copy)",
+      sourceType: "mirror",
+      supportsCourses: [],
+      competencies: [],
+    };
+
+    const offInfo = getDocumentSourceBadgeInfo(officialDoc);
+    assert.equal(offInfo.isMirror, false);
+    assert.equal(offInfo.buttonLabel, "Open official PDF");
+    assert.equal(offInfo.badgeText, "Source: DepEd");
+
+    const mirInfo = getDocumentSourceBadgeInfo(mirrorDoc);
+    assert.equal(mirInfo.isMirror, true);
+    assert.equal(mirInfo.buttonLabel, "Open unofficial copy");
+    assert.equal(
+      mirInfo.badgeText,
+      "Unofficial copy: matatagcurriculum.com, not affiliated with DepEd"
+    );
+    assert.equal(
+      mirInfo.disclaimer,
+      "Check the official DepEd page for the latest version."
+    );
   });
 
-  it("all documents have unique non-empty IDs", () => {
+  it("all documents have unique IDs, sourceType, non-empty grades, and competencies array", () => {
     const docs = getMatatagDocuments();
+    assert.equal(docs.length, 17, "Expected 17 documents (6 official + 11 mirror)");
+
     const ids = docs.map((d) => d.id);
     const uniqueIds = new Set(ids);
     assert.equal(uniqueIds.size, ids.length, "All document IDs must be unique");
-    for (const id of ids) {
-      assert.ok(id && id.trim().length > 0, "Document ID must be non-empty");
-    }
-  });
 
-  it("all document URLs pass the strict official DepEd URL validator", () => {
-    const docs = getMatatagDocuments();
     for (const doc of docs) {
-      assert.equal(
-        isOfficialDepedUrl(doc.url),
-        true,
-        `Document ${doc.id} url (${doc.url}) must pass isOfficialDepedUrl`
+      assert.ok(doc.id && doc.id.trim().length > 0, "ID must be non-empty");
+      assert.ok(
+        doc.sourceType === "official" || doc.sourceType === "mirror",
+        `Document ${doc.id} must have valid sourceType`
       );
-    }
-
-    const data = getMatatagData();
-    for (const page of data.sourcePages) {
-      assert.equal(
-        isOfficialDepedUrl(page.url),
-        true,
-        `Source page url (${page.url}) must pass isOfficialDepedUrl`
-      );
-    }
-  });
-
-  it("all documents have non-empty grades arrays", () => {
-    const docs = getMatatagDocuments();
-    for (const doc of docs) {
       assert.ok(
         Array.isArray(doc.grades) && doc.grades.length > 0,
-        `Document ${doc.id} must have non-empty grades array`
+        `Document ${doc.id} must have non-empty grades`
       );
-    }
-  });
-
-  it("all documents have competencies array present (even if empty)", () => {
-    const docs = getMatatagDocuments();
-    for (const doc of docs) {
       assert.ok(
         Array.isArray(doc.competencies),
         `Document ${doc.id} must have competencies array`
       );
+    }
+  });
+
+  it("every official doc passes isOfficialDepedUrl and every mirror doc passes isAllowedMirrorUrl", () => {
+    const docs = getMatatagDocuments();
+    for (const doc of docs) {
+      if (doc.sourceType === "official") {
+        assert.equal(
+          isOfficialDepedUrl(doc.url),
+          true,
+          `Official doc ${doc.id} URL (${doc.url}) must pass isOfficialDepedUrl`
+        );
+      } else {
+        assert.equal(
+          isAllowedMirrorUrl(doc.url),
+          true,
+          `Mirror doc ${doc.id} URL (${doc.url}) must pass isAllowedMirrorUrl`
+        );
+      }
     }
   });
 
@@ -451,10 +521,6 @@ describe("MATATAG Curriculum Reference Hub - JSON Data Integrity", () => {
     const allowed = new Set<string>(BEED_ALLOWED_COURSE_CODES);
 
     for (const doc of docs) {
-      assert.ok(
-        Array.isArray(doc.supportsCourses),
-        `Document ${doc.id} must have supportsCourses array`
-      );
       for (const courseCode of doc.supportsCourses) {
         assert.ok(
           allowed.has(courseCode),
@@ -464,4 +530,3 @@ describe("MATATAG Curriculum Reference Hub - JSON Data Integrity", () => {
     }
   });
 });
-

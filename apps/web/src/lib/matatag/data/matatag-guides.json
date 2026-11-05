@@ -2,7 +2,13 @@
   "sourcePages": [
     {
       "title": "DepEd MATATAG Curriculum Guides (Kindergarten, Grades 1, 4 and 7)",
-      "url": "https://www.deped.gov.ph/matatagcurriculumk147/"
+      "url": "https://www.deped.gov.ph/matatagcurriculumk147/",
+      "sourceType": "official"
+    },
+    {
+      "title": "matatagcurriculum.com (unofficial mirror, not affiliated with DepEd)",
+      "url": "https://matatagcurriculum.com/matatag-curriculum-guide/",
+      "sourceType": "mirror"
     }
   ],
   "documents": [
@@ -14,6 +20,7 @@
       "url": "https://www.deped.gov.ph/wp-content/uploads/MATATAG-Mathematics-CG-Grades1-4-and-7.pdf",
       "localPath": null,
       "source": "DepEd",
+      "sourceType": "official",
       "supportsCourses": ["ELEMATP", "ELEMATI"],
       "competencies": []
     },
@@ -25,9 +32,189 @@
       "url": "https://www.deped.gov.ph/wp-content/uploads/ARALING-PANLIPUNAN-GRADES-4-7.pdf",
       "localPath": null,
       "source": "DepEd",
+      "sourceType": "official",
       "supportsCourses": ["ELETCUL", "ELETHIS"],
+      "competencies": []
+    },
+    {
+      "id": "english-grades-4-7",
+      "title": "MATATAG English Curriculum Guide",
+      "subject": "English",
+      "grades": [4, 7],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/MATATAG-ENGLISH-CG-G4-and-7.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "sourceType": "official",
+      "supportsCourses": ["ELETLIT", "ELETLAN"],
+      "competencies": []
+    },
+    {
+      "id": "gmrc-ve-grades-1-4-7",
+      "title": "MATATAG GMRC and Values Education Curriculum Guide",
+      "subject": "Edukasyon sa Pagpapakatao",
+      "grades": [1, 4, 7],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/MATATAG-GMRC-and-VE-Grades-1-4-and-7.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "sourceType": "official",
+      "supportsCourses": ["ELEGMRC"],
+      "competencies": []
+    },
+    {
+      "id": "pe-and-health-grades-4-7",
+      "title": "MATATAG PE and Health Curriculum Guide",
+      "subject": "MAPEH",
+      "grades": [4, 7],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/PE-and-HEALTH_CG-2023_Grade-4-and-7.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "sourceType": "official",
+      "supportsCourses": ["ELEPEEG"],
+      "competencies": []
+    },
+    {
+      "id": "epp-tle-grades-4-10",
+      "title": "MATATAG EPP / TLE Curriculum Guide",
+      "subject": "EPP",
+      "grades": [4, 5, 6, 7, 8, 9, 10],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/MATATAG-EPP_TLE-CG-2023-Grades-4-10-1.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "sourceType": "official",
+      "supportsCourses": ["ELEEPAP", "ELEEPPE"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-kindergarten",
+      "title": "MATATAG Kindergarten Curriculum Guide",
+      "subject": "Kindergarten",
+      "grades": [0],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Guide-Kindergarten.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": [],
+      "competencies": []
+    },
+    {
+      "id": "mirror-language-grade-1",
+      "title": "MATATAG Language Curriculum Guide (Grade 1)",
+      "subject": "Language",
+      "grades": [1],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-Language.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": [],
+      "competencies": []
+    },
+    {
+      "id": "mirror-reading-and-literacy-grade-1",
+      "title": "MATATAG Reading and Literacy Curriculum Guide (Grade 1)",
+      "subject": "Reading and Literacy",
+      "grades": [1],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-Reading-and-Literacy.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": [],
+      "competencies": []
+    },
+    {
+      "id": "mirror-makabansa-grade-1",
+      "title": "MATATAG Makabansa Curriculum Guide (Grade 1)",
+      "subject": "Makabansa",
+      "grades": [1],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-Makabansa.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": [],
+      "competencies": []
+    },
+    {
+      "id": "mirror-english-grades-2-10",
+      "title": "MATATAG English Curriculum Guide (Grades 2 to 10)",
+      "subject": "English",
+      "grades": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-2-10-English.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELETLIT", "ELETLAN"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-filipino-grades-2-10",
+      "title": "MATATAG Filipino Curriculum Guide (Grades 2 to 10)",
+      "subject": "Filipino",
+      "grades": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-2-10-Filipino-Baitang.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELEFIL1", "ELEFIL2"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-mathematics-grades-1-10",
+      "title": "MATATAG Mathematics Curriculum Guide (Grades 1 to 10)",
+      "subject": "Mathematics",
+      "grades": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-10-Maths.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELEMATP", "ELEMATI"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-science-grades-3-10",
+      "title": "MATATAG Science Curriculum Guide (Grades 3 to 10)",
+      "subject": "Science",
+      "grades": [3, 4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-3-10-Science.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELETBIO", "ELETPHY"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-music-and-arts-grades-4-10",
+      "title": "MATATAG Music and Arts Curriculum Guide (Grades 4 to 10)",
+      "subject": "MAPEH",
+      "grades": [4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-4-10-Music-and-Arts.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELEMUSC", "ELEARTS"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-pe-and-health-grades-4-10",
+      "title": "MATATAG PE and Health Curriculum Guide (Grades 4 to 10)",
+      "subject": "MAPEH",
+      "grades": [4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-4-10-PE-and-Health.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELEPEEG"],
+      "competencies": []
+    },
+    {
+      "id": "mirror-gmrc-ve-grades-1-10",
+      "title": "MATATAG GMRC and Values Education Curriculum Guide (Grades 1 to 10)",
+      "subject": "Edukasyon sa Pagpapakatao",
+      "grades": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "url": "https://matatagcurriculum.com/wp-content/uploads/2024/11/MATATAG-Curriculum-Grade-1-10-GMRC.pdf",
+      "localPath": null,
+      "source": "matatagcurriculum.com (unofficial copy)",
+      "sourceType": "mirror",
+      "supportsCourses": ["ELEGMRC"],
       "competencies": []
     }
   ]
 }
-

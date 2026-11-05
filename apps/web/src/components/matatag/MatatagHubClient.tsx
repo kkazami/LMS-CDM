@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   BookOpen,
   Check,
   Copy,
@@ -25,8 +26,11 @@ import { BEED_COURSE_DESCRIPTIONS } from "@/lib/matatag/types";
 import {
   filterGuides,
   formatSecondaryGradesNote,
+  getDocumentSourceBadgeInfo,
   getGradeOptions,
   getSubjectOptions,
+  isAllowedGuideUrl,
+  isAllowedMirrorUrl,
   isOfficialDepedUrl,
   searchCompetencies,
 } from "@/lib/matatag/rules";
@@ -110,8 +114,15 @@ export default function MatatagHubClient({
     }
   };
 
-  const primarySourcePage = initialData.sourcePages?.[0];
+  const primarySourcePage = initialData.sourcePages?.find(
+    (p) => (p.sourceType ?? "official") === "official"
+  );
   const isSourcePageValid = isOfficialDepedUrl(primarySourcePage?.url);
+
+  const mirrorSourcePage = initialData.sourcePages?.find(
+    (p) => p.sourceType === "mirror"
+  );
+  const isMirrorSourceValid = isAllowedMirrorUrl(mirrorSourcePage?.url);
 
   return (
     <div className="space-y-6 pb-12">
@@ -156,30 +167,43 @@ export default function MatatagHubClient({
             </p>
           </div>
 
-          {/* Official DepEd Disclaimer Banner */}
+          {/* Official DepEd & Mirror Disclaimer Banner */}
           <div
             role="note"
-            aria-label="Official DepEd reference notice"
+            aria-label="Official DepEd and mirror reference notice"
             className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3.5 sm:px-4 text-xs text-blue-900 dark:text-blue-200"
           >
             <div className="flex items-start sm:items-center gap-2.5">
               <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0 text-blue-600 dark:text-blue-400" />
               <span className="font-medium">
-                Official DepEd documents, opened from deped.gov.ph. Not hosted by this LMS.
+                Official DepEd documents are opened from deped.gov.ph. Documents marked Unofficial copy come from a third-party site that is not affiliated with DepEd. Not hosted by this LMS.
               </span>
             </div>
 
-            {primarySourcePage && isSourcePageValid && (
-              <a
-                href={primarySourcePage.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300 hover:underline shrink-0"
-              >
-                <span>DepEd K-1-4-7 Portal</span>
-                <ExternalLink className="h-3 w-3" aria-hidden="true" />
-              </a>
-            )}
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              {primarySourcePage && isSourcePageValid && (
+                <a
+                  href={primarySourcePage.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="inline-flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300 hover:underline"
+                >
+                  <span>DepEd K-1-4-7 Portal</span>
+                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                </a>
+              )}
+              {mirrorSourcePage && isMirrorSourceValid && (
+                <a
+                  href={mirrorSourcePage.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300 hover:underline text-[11px]"
+                >
+                  <span>Mirror Index</span>
+                  <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -389,14 +413,19 @@ export default function MatatagHubClient({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               {filteredGuides.map((doc: MatatagDocument) => {
-                const isPdfUrlValid = isOfficialDepedUrl(doc.url);
+                const isUrlValid = isAllowedGuideUrl(doc);
                 const secondaryNote = formatSecondaryGradesNote(doc.grades);
                 const elementaryGrades = doc.grades.filter((g) => g < 7);
+                const badgeInfo = getDocumentSourceBadgeInfo(doc);
 
                 return (
                   <article
                     key={doc.id}
-                    className="flex flex-col justify-between rounded-2xl border border-theme bg-surface p-5 sm:p-6 shadow-xs hover:border-blue-500/50 transition-all space-y-4"
+                    className={`flex flex-col justify-between rounded-2xl border bg-surface p-5 sm:p-6 shadow-xs transition-all space-y-4 ${
+                      badgeInfo.isMirror
+                        ? "border-amber-500/30 hover:border-amber-500/60"
+                        : "border-theme hover:border-blue-500/50"
+                    }`}
                   >
                     <div className="space-y-3">
                       {/* Header tags */}
@@ -405,10 +434,24 @@ export default function MatatagHubClient({
                           {doc.subject}
                         </span>
 
-                        <span className="inline-flex items-center rounded-md border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme">
-                          Source: {doc.source}
-                        </span>
+                        {badgeInfo.isMirror ? (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">
+                            <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>{badgeInfo.badgeText}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-md border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme">
+                            {badgeInfo.badgeText}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Mirror disclaimer line */}
+                      {badgeInfo.isMirror && badgeInfo.disclaimer && (
+                        <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300 italic">
+                          {badgeInfo.disclaimer}
+                        </p>
+                      )}
 
                       {/* Title */}
                       <h2 className="text-base sm:text-lg font-bold text-primary-theme leading-snug">
@@ -474,15 +517,19 @@ export default function MatatagHubClient({
 
                     {/* Actions */}
                     <div className="flex flex-wrap items-center gap-2.5 pt-3 border-t border-theme">
-                      {isPdfUrlValid ? (
+                      {isUrlValid ? (
                         <a
                           href={doc.url}
                           target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600 cursor-pointer"
+                          rel="noopener noreferrer nofollow"
+                          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-xs transition focus-visible:outline-2 cursor-pointer ${
+                            badgeInfo.isMirror
+                              ? "bg-amber-600 text-white hover:bg-amber-700 focus-visible:outline-amber-600"
+                              : "bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-blue-600"
+                          }`}
                         >
                           <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span>Open official PDF</span>
+                          <span>{badgeInfo.buttonLabel}</span>
                           <ExternalLink className="h-3 w-3" aria-hidden="true" />
                         </a>
                       ) : (
@@ -495,7 +542,7 @@ export default function MatatagHubClient({
                         <a
                           href={primarySourcePage.url}
                           target="_blank"
-                          rel="noopener noreferrer"
+                          rel="noopener noreferrer nofollow"
                           className="inline-flex items-center gap-1 text-xs font-semibold text-secondary-theme hover:text-primary-theme transition px-2 py-1"
                         >
                           <span>DepEd Source</span>
@@ -547,7 +594,7 @@ export default function MatatagHubClient({
                   <a
                     href={primarySourcePage.url}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
                     className="inline-flex items-center gap-1.5 rounded-xl border border-theme bg-elevated px-4 py-2 text-xs font-bold text-primary-theme hover:bg-surface transition"
                   >
                     <span>DepEd Portal</span>
@@ -643,4 +690,3 @@ export default function MatatagHubClient({
     </div>
   );
 }
-
