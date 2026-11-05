@@ -319,9 +319,9 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
                     role="tab"
                     aria-selected={isSelected}
                     onClick={() => setActiveEditorTab(tab.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-t-lg border-b-2 px-3.5 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`inline-flex items-center gap-1.5 rounded-t-lg border-t-2 border-x border-b-0 px-3.5 py-1.5 font-mono text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isSelected
-                        ? "border-blue-600 dark:border-blue-400 bg-surface text-blue-700 dark:text-blue-300"
+                        ? "border-t-blue-600 dark:border-t-blue-400 border-x-theme bg-surface text-blue-700 dark:text-blue-300 shadow-xs"
                         : "border-transparent text-secondary-theme hover:bg-slate-200/60 dark:hover:bg-white/5 hover:text-primary-theme"
                     }`}
                   >
@@ -364,7 +364,7 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
             <div className="flex items-center justify-between border-b border-theme bg-elevated px-3.5 py-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span className="text-xs font-semibold text-primary-theme">Live Preview</span>
+                <span className="font-mono text-xs font-bold text-primary-theme">preview // output</span>
               </div>
               <span
                 className="inline-flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
@@ -390,9 +390,9 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
           <div className="flex h-44 flex-col overflow-hidden rounded-xl border border-theme bg-surface text-primary-theme shadow-sm">
             <div className="flex items-center justify-between border-b border-theme bg-elevated px-3.5 py-1.5">
               <div className="flex items-center gap-2">
-                <Terminal className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span className="text-xs font-semibold text-primary-theme">
-                  Console &amp; Runtime Errors
+                <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400" aria-hidden="true">&gt;_</span>
+                <span className="font-mono text-xs font-semibold text-primary-theme">
+                  terminal / console
                 </span>
                 <span className="rounded-full bg-slate-200/70 dark:bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-secondary-theme">
                   {consoleEntries.length}
