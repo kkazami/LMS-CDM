@@ -134,12 +134,13 @@ export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
     status: "coming-soon",
   },
   {
-    id: "lesson-plan-models",
-    title: "Lesson Plan Models",
+    id: "lesson-plan-builder",
+    title: "Lesson Plan Builder",
     description:
-      "Structured 4A's, 5E's, and DepEd DLP/DLL lesson plan exemplars tailored for pre-service teachers.",
+      "Interactive lesson planner with DepEd ILAW, 4A's, 5E's, and 6E's frameworks.",
+    href: "/ite/lesson-plans",
     programs: ["BECEd", "BEEd", "BTLEd ICT", "BSEd SCIENCE"],
-    status: "coming-soon",
+    status: "available",
   },
 ] as const;
 

@@ -53,6 +53,7 @@ function getFeatureIcon(featureId: string) {
       return BookOpen;
     case "interactive-educational-charts":
       return FlaskConical;
+    case "lesson-plan-builder":
     case "lesson-plan-models":
     default:
       return FileText;

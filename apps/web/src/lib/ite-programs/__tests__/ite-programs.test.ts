@@ -548,35 +548,49 @@ describe("Profile Department Locking & One-Time Program Selection", () => {
 });
 
 describe("ITE Program Features & Sidebar Filtering", () => {
-  it("returns only each program's features and exposes ICT Lab in sidebar tools only for BTLEd ICT", () => {
+  it("returns each program's features and exposes Lesson Plan Builder for all 4 programs, plus ICT Lab for BTLEd ICT", () => {
+    const lessonPlanTool = {
+      id: "lesson-plan-builder",
+      title: "Lesson Plan Builder",
+      description:
+        "Interactive lesson planner with DepEd ILAW, 4A's, 5E's, and 6E's frameworks.",
+      href: "/ite/lesson-plans",
+    };
+
     const becedFeatures = getFeaturesForIteProgram("BECEd");
     assert.deepEqual(
       becedFeatures.map((f) => f.title),
-      ["Nursery Songs & YouTube Categories", "Lesson Plan Models"]
+      ["Nursery Songs & YouTube Categories", "Lesson Plan Builder"]
     );
-    assert.ok(becedFeatures.every((f) => f.status === "coming-soon"));
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), []);
+    const becedLp = becedFeatures.find((f) => f.id === "lesson-plan-builder");
+    assert.equal(becedLp?.status, "available");
+    assert.equal(becedLp?.href, "/ite/lesson-plans");
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), [lessonPlanTool]);
 
     const beedFeatures = getFeaturesForIteProgram("BEEd");
     assert.deepEqual(
       beedFeatures.map((f) => f.title),
-      ["MATATAG Curriculum Guide", "Lesson Plan Models"]
+      ["MATATAG Curriculum Guide", "Lesson Plan Builder"]
     );
-    assert.ok(beedFeatures.every((f) => f.status === "coming-soon"));
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), []);
+    const beedLp = beedFeatures.find((f) => f.id === "lesson-plan-builder");
+    assert.equal(beedLp?.status, "available");
+    assert.equal(beedLp?.href, "/ite/lesson-plans");
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [lessonPlanTool]);
 
     const bsedSciFeatures = getFeaturesForIteProgram("BSEd SCIENCE");
     assert.deepEqual(
       bsedSciFeatures.map((f) => f.title),
-      ["Interactive Educational Charts", "Lesson Plan Models"]
+      ["Interactive Educational Charts", "Lesson Plan Builder"]
     );
-    assert.ok(bsedSciFeatures.every((f) => f.status === "coming-soon"));
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), []);
+    const bsedLp = bsedSciFeatures.find((f) => f.id === "lesson-plan-builder");
+    assert.equal(bsedLp?.status, "available");
+    assert.equal(bsedLp?.href, "/ite/lesson-plans");
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), [lessonPlanTool]);
 
     const btledFeatures = getFeaturesForIteProgram("BTLEd ICT");
     assert.deepEqual(
       btledFeatures.map((f) => f.title),
-      ["ICT Lab", "Lesson Plan Models"]
+      ["ICT Lab", "Lesson Plan Builder"]
     );
     const ictLabFeature = btledFeatures.find((f) => f.id === "ict-lab");
     assert.equal(ictLabFeature?.status, "available");
@@ -590,6 +604,7 @@ describe("ITE Program Features & Sidebar Filtering", () => {
         description: "Code Playground, Hardware Explorer, LAN Cable Guide",
         href: "/ite/ict-lab",
       },
+      lessonPlanTool,
     ]);
 
     assert.deepEqual(getFeaturesForIteProgram(null), []);
