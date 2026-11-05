@@ -249,7 +249,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "mouth",
         name: "Mouth",
         colorKey: "amber",
-        anchor: { x: 45.0, y: 12.0 },
+        anchor: { x: 46.5, y: 17.0 },
         function: "Initiates mechanical digestion via chewing and chemical digestion via salivary amylase.",
         details:
           "Salivary glands secrete saliva containing amylase and lipase to moisten food into an easily swallowable bolus.",
@@ -261,7 +261,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "esophagus",
         name: "Esophagus",
         colorKey: "amber",
-        anchor: { x: 48.0, y: 27.0 },
+        anchor: { x: 52.0, y: 34.0 },
         function: "Transports food boluses from the pharynx to the stomach through coordinated peristaltic contractions.",
         details:
           "A muscular tube roughly 25 cm long composed of striated muscle in the upper third and smooth muscle in the lower third.",
@@ -273,7 +273,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "stomach",
         name: "Stomach",
         colorKey: "amber",
-        anchor: { x: 57.0, y: 44.0 },
+        anchor: { x: 64.0, y: 56.0 },
         function: "Stores ingested food, churning it with gastric juice containing HCl and pepsin to form chyme.",
         details:
           "Highly acidic pH (1.5 to 3.5) denatures proteins and kills pathogens. Chief cells secrete pepsinogen, which acid activates into pepsin.",
@@ -285,7 +285,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "liver",
         name: "Liver",
         colorKey: "amber",
-        anchor: { x: 36.0, y: 41.0 },
+        anchor: { x: 37.5, y: 52.0 },
         function: "Produces bile salts for fat emulsification, metabolizes absorbed nutrients, and detoxifies chemicals.",
         details:
           "The largest internal organ, receiving dual blood supply from the hepatic artery and nutrient-rich hepatic portal vein.",
@@ -296,7 +296,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "gallbladder",
         name: "Gallbladder",
         colorKey: "emerald",
-        anchor: { x: 38.0, y: 50.0 },
+        anchor: { x: 42.0, y: 59.5 },
         function: "Stores and concentrates bile synthesized by the liver until signaled to release it into the duodenum.",
         details:
           "When fatty chyme enters the duodenum, cholecystokinin (CCK) stimulates the gallbladder to contract and discharge bile down the common bile duct.",
@@ -307,7 +307,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pancreas",
         name: "Pancreas",
         colorKey: "yellow",
-        anchor: { x: 52.0, y: 51.0 },
+        anchor: { x: 51.0, y: 66.5 },
         function: "Secretes alkaline digestive enzymes (amylase, trypsin, lipase) and systemic hormones (insulin and glucagon).",
         details:
           "Bicarbonate ions in pancreatic juice neutralize acidic gastric chyme, creating an optimal slightly basic pH for intestinal enzymes.",
@@ -318,7 +318,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "small-intestine",
         name: "Small Intestine",
         colorKey: "amber",
-        anchor: { x: 48.0, y: 67.0 },
+        anchor: { x: 50.0, y: 77.0 },
         function: "The primary site for final chemical digestion and absorption of nutrients, water, and minerals.",
         details:
           "Divided into duodenum, jejunum, and ileum. Circular folds, villi, and microvilli create an absorptive surface area of over 30 square meters.",
@@ -330,7 +330,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "large-intestine",
         name: "Large Intestine",
         colorKey: "amber",
-        anchor: { x: 34.0, y: 62.0 },
+        anchor: { x: 37.0, y: 78.5 },
         function: "Reabsorbs water, salts, and vitamins produced by gut microflora, condensing indigestible residue into feces.",
         details:
           "Consists of cecum, ascending, transverse, descending, and sigmoid colon. Trillions of symbiotic bacteria ferment residual fibers and synthesize vitamin K.",
@@ -341,7 +341,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "rectum",
         name: "Rectum",
         colorKey: "amber",
-        anchor: { x: 48.0, y: 84.0 },
+        anchor: { x: 53.0, y: 93.0 },
         function: "Temporarily stores fecal matter until stretch receptors stimulate defecation reflexes.",
         details:
           "Terminates at the anal canal, regulated by an involuntary internal anal sphincter (smooth muscle) and voluntary external anal sphincter (skeletal muscle).",
