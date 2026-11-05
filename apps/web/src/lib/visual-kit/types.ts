@@ -66,6 +66,14 @@ export interface DiagramAttribution {
   notes?: string;
 }
 
+export interface CoverBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label?: string;
+}
+
 export interface Diagram {
   id: string;
   title: string;
@@ -76,6 +84,8 @@ export interface Diagram {
   imageAlt?: string;
   aspectRatio?: string;
   attribution?: DiagramAttribution;
+  /** Percentage-based cover boxes rendered in 'label' mode to hide printed diagram text */
+  coverBoxes?: CoverBox[];
   viewBox: { w: number; h: number };
   parts: Part[];
   decorations: Shape[];

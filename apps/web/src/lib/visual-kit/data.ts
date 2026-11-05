@@ -22,6 +22,38 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
       viaText: "Wikimedia Commons / OpenStax Anatomy and Physiology",
       notes: "Internal anatomical coronal section showing cardiac chambers and valve cusps",
     },
+    coverBoxes: [
+      // Top label
+      { x: 24.5, y: 3.5, w: 9.5, h: 4.5, label: "Aorta" },
+      // Left margin column
+      { x: 0.2, y: 10.5, w: 22.0, h: 4.5, label: "Superior vena cava" },
+      { x: 0.2, y: 16.5, w: 24.5, h: 4.5, label: "Right pulmonary artery" },
+      { x: 0.2, y: 23.5, w: 18.5, h: 4.5, label: "Pulmonary trunk" },
+      { x: 0.2, y: 29.5, w: 18.5, h: 7.5, label: "Right pulmonary veins" },
+      { x: 0.2, y: 39.5, w: 14.5, h: 4.5, label: "Right atrium" },
+      { x: 0.2, y: 45.0, w: 14.5, h: 4.5, label: "Fossa ovalis" },
+      { x: 0.2, y: 50.0, w: 16.5, h: 4.5, label: "Tricuspid valve" },
+      { x: 0.2, y: 55.5, w: 16.5, h: 4.5, label: "Right ventricle" },
+      { x: 0.2, y: 61.0, w: 21.5, h: 4.5, label: "Chordae tendineae" },
+      { x: 0.2, y: 67.0, w: 21.5, h: 4.5, label: "Trabeculae carneae" },
+      { x: 0.2, y: 73.5, w: 18.0, h: 4.5, label: "Moderator band" },
+      { x: 0.2, y: 79.5, w: 19.5, h: 4.5, label: "Inferior vena cava" },
+      // Right margin column
+      { x: 75.0, y: 10.5, w: 24.5, h: 4.5, label: "Left pulmonary artery" },
+      { x: 75.0, y: 18.5, w: 13.5, h: 4.5, label: "Left atrium" },
+      { x: 75.0, y: 25.5, w: 23.5, h: 4.5, label: "Left pulmonary veins" },
+      { x: 75.0, y: 34.5, w: 24.5, h: 4.5, label: "Mitral (bicuspid) valve" },
+      { x: 75.0, y: 42.5, w: 14.0, h: 4.5, label: "Aortic valve" },
+      { x: 75.0, y: 48.0, w: 18.5, h: 4.8, label: "Pulmonary valve" },
+      { x: 75.0, y: 54.0, w: 15.5, h: 4.5, label: "Left ventricle" },
+      { x: 75.0, y: 59.5, w: 18.5, h: 4.5, label: "Papillary muscle" },
+      { x: 75.0, y: 65.5, w: 24.5, h: 4.5, label: "Interventricular septum" },
+      { x: 75.0, y: 70.0, w: 13.5, h: 4.2, label: "Epicardium" },
+      { x: 75.0, y: 75.0, w: 15.0, h: 4.2, label: "Myocardium" },
+      { x: 75.0, y: 80.0, w: 16.5, h: 4.5, label: "Endocardium" },
+      // Bottom label
+      { x: 40.5, y: 95.0, w: 19.0, h: 4.5, label: "Anterior view" },
+    ],
     viewBox: { w: 600, h: 480 },
     discussionQuestions: [
       "Why is the muscular myocardium of the left ventricle significantly thicker than that of the right ventricle?",
@@ -173,7 +205,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-veins",
         name: "Pulmonary Veins",
         colorKey: "red",
-        anchor: { x: 78.0, y: 44.0 },
+        anchor: { x: 67.0, y: 31.0 },
         function: "Carry freshly oxygenated blood from alveolar capillaries back to the left atrium.",
         details:
           "There are typically four pulmonary veins (two from each lung). Like pulmonary arteries, they break the general rule by carrying oxygenated blood in veins.",
@@ -711,7 +743,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
       "The solar-powered thermodynamic cycle that continuously recirculates water through the hydrosphere, atmosphere, lithosphere, and biosphere.",
     imageSrc: "/visual-kit/water-cycle.webp",
     imageAlt: "USGS official diagram illustrating the natural global water cycle and phase changes",
-    aspectRatio: "16/9",
+    aspectRatio: "960/657",
     attribution: {
       sourceTitle: "The Water Cycle (USGS)",
       author: "Hayley Corson-Dosch, Cee Nell, Rachel Volentine, et al. (USGS)",
@@ -721,6 +753,54 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
       viaText: "U.S. Geological Survey (USGS)",
       notes: "USGS educational public-domain diagram showing global water pathways and storage reservoirs",
     },
+    coverBoxes: [
+      // Bottom explanatory paragraphs banner
+      { x: 0.5, y: 78.0, w: 99.0, h: 21.5, label: "Bottom narrative and definitions" },
+      // Top-right pools and fluxes legend card + logo
+      { x: 76.5, y: 3.0, w: 22.5, h: 16.0, label: "Pools and Fluxes legend box" },
+      { x: 92.0, y: 19.0, w: 7.2, h: 3.8, label: "USGS logo" },
+      // Upper atmosphere & precipitation
+      { x: 1.0, y: 5.2, w: 12.5, h: 4.8, label: "Atmospheric moisture over ocean" },
+      { x: 4.0, y: 15.8, w: 13.0, h: 4.2, label: "Transport of moisture" },
+      { x: 1.0, y: 28.2, w: 8.0, h: 4.8, label: "Precipitation over ocean" },
+      { x: 15.2, y: 18.8, w: 12.2, h: 4.2, label: "Precipitation over land (left)" },
+      { x: 60.5, y: 11.8, w: 12.5, h: 4.2, label: "Precipitation over land (right)" },
+      { x: 39.0, y: 8.8, w: 14.0, h: 4.5, label: "Atmospheric moisture over land" },
+      // Mountain snow, ice and evapotranspiration
+      { x: 37.0, y: 22.2, w: 11.5, h: 3.8, label: "Evapotranspiration (center)" },
+      { x: 60.5, y: 31.8, w: 12.0, h: 3.8, label: "Evapotranspiration (right)" },
+      { x: 49.0, y: 19.8, w: 9.5, h: 5.0, label: "Ice sheets and glaciers" },
+      { x: 59.0, y: 19.8, w: 7.5, h: 3.8, label: "Snowpack" },
+      { x: 65.0, y: 20.8, w: 7.2, h: 3.8, label: "Snowmelt" },
+      { x: 88.0, y: 24.8, w: 8.5, h: 3.8, label: "Permafrost" },
+      { x: 81.0, y: 30.2, w: 9.5, h: 4.5, label: "Groundwater recharge" },
+      { x: 72.0, y: 26.2, w: 7.8, h: 3.8, label: "Reservoirs" },
+      // Mid-elevation terrain, lakes, wetlands, and human use
+      { x: 20.0, y: 30.2, w: 6.5, h: 3.8, label: "Runoff" },
+      { x: 26.5, y: 24.8, w: 9.5, h: 4.8, label: "Streamflow to closed basins" },
+      { x: 34.0, y: 25.2, w: 5.5, h: 4.5, label: "Lakes saline" },
+      { x: 24.5, y: 38.2, w: 5.5, h: 4.5, label: "Lakes fresh" },
+      { x: 40.0, y: 34.5, w: 6.8, h: 4.5, label: "Wetlands fresh" },
+      { x: 12.5, y: 44.5, w: 7.2, h: 4.2, label: "Wetlands brackish" },
+      { x: 26.0, y: 41.5, w: 5.0, h: 2.8, label: "Domestic water use" },
+      { x: 52.5, y: 40.8, w: 7.5, h: 4.5, label: "Grazing water use" },
+      { x: 63.0, y: 45.8, w: 9.0, h: 4.5, label: "Agricultural water use" },
+      { x: 33.0, y: 44.2, w: 6.0, h: 4.0, label: "Rivers" },
+      { x: 26.5, y: 47.5, w: 6.8, h: 4.0, label: "Urban runoff" },
+      { x: 31.0, y: 50.2, w: 8.0, h: 4.5, label: "Municipal water use" },
+      { x: 43.0, y: 51.8, w: 7.5, h: 4.5, label: "Industrial water use" },
+      { x: 33.5, y: 56.0, w: 8.0, h: 4.5, label: "Streamflow to ocean" },
+      // Ocean, groundwater and subsurface
+      { x: 0.8, y: 49.0, w: 8.5, h: 4.5, label: "Ocean evaporation" },
+      { x: 9.5, y: 54.0, w: 7.5, h: 4.2, label: "Ocean circulation" },
+      { x: 9.0, y: 61.0, w: 7.5, h: 4.2, label: "Ocean mixed zone" },
+      { x: 3.5, y: 69.5, w: 9.5, h: 4.5, label: "Ocean deep water zone" },
+      { x: 16.5, y: 71.0, w: 12.0, h: 4.5, label: "Groundwater discharge to ocean" },
+      { x: 55.5, y: 57.0, w: 8.8, h: 4.0, label: "Soil moisture" },
+      { x: 44.5, y: 60.5, w: 9.0, h: 4.0, label: "Groundwater (subsurface flow)" },
+      { x: 77.5, y: 55.5, w: 7.2, h: 3.2, label: "Groundwater (bedrock)" },
+      { x: 74.5, y: 70.0, w: 4.5, h: 5.5, label: "General overview schematic box" },
+    ],
     viewBox: { w: 600, h: 480 },
     discussionQuestions: [
       "How does solar thermal irradiance drive phase changes from liquid water to atmospheric vapor, and what latent heat transfers occur?",
@@ -733,7 +813,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "sun",
         name: "Sun",
         colorKey: "amber",
-        anchor: { x: 16.0, y: 15.0 },
+        anchor: { x: 15.0, y: 11.0 },
         function: "The primary radiative energy powerhouse driving global thermal convection and water phase changes.",
         details:
           "Absorbed solar insolation warms surface waters, providing the latent heat of vaporization (~2,260 kJ/kg) required to convert liquid to gas.",
@@ -744,7 +824,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "ocean",
         name: "Ocean",
         colorKey: "blue",
-        anchor: { x: 88.0, y: 72.0 },
+        anchor: { x: 8.0, y: 64.0 },
         function: "The planetary reservoir containing roughly 97% of all Earth's water, supplying over 85% of evaporated atmospheric moisture.",
         details:
           "Thermal mass of oceans moderates planetary climate and regulates thermohaline circulation currents that transport heat across latitudes.",
@@ -755,7 +835,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "evaporation",
         name: "Evaporation",
         colorKey: "cyan",
-        anchor: { x: 80.0, y: 46.0 },
+        anchor: { x: 5.0, y: 44.0 },
         function: "Phase transition converting surface liquid water into invisible gaseous atmospheric water vapor.",
         details:
           "Molecules with sufficient kinetic energy overcome hydrogen bonds and surface tension to enter the atmosphere as vapor.",
@@ -766,7 +846,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "condensation-cloud",
         name: "Condensation (Cloud)",
         colorKey: "sky",
-        anchor: { x: 54.0, y: 18.0 },
+        anchor: { x: 53.0, y: 11.0 },
         function: "Vapor cooling at higher altitudes condenses upon microscopic cloud condensation nuclei into liquid droplets or ice crystals.",
         details:
           "As humid air ascends adiabatically, it expands and cools to its dew point. Latent heat is released, warming the surrounding atmospheric parcel.",
@@ -777,7 +857,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "precipitation",
         name: "Precipitation",
         colorKey: "blue",
-        anchor: { x: 42.0, y: 30.0 },
+        anchor: { x: 21.0, y: 24.0 },
         function: "Water released from clouds in the form of rain, freezing rain, sleet, snow, or hail.",
         details:
           "Occurs when condensed droplets coalesce until their mass overcomes updraft air resistance, falling under gravitational acceleration.",
@@ -788,7 +868,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "runoff",
         name: "Runoff",
         colorKey: "blue",
-        anchor: { x: 38.0, y: 58.0 },
+        anchor: { x: 35.0, y: 48.0 },
         function: "Precipitation that flows gravitationally across Earth's surface into streams, rivers, lakes, and oceans.",
         details:
           "Occurs when rainfall intensity exceeds the infiltration capacity of soil, shaping geological terrain through erosion and sediment transport.",
@@ -799,7 +879,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "infiltration-groundwater",
         name: "Infiltration (Groundwater)",
         colorKey: "amber",
-        anchor: { x: 58.0, y: 82.0 },
+        anchor: { x: 84.0, y: 62.0 },
         function: "Downwelling seepage of surface water through soil strata and permeable porous bedrock into underground aquifers.",
         details:
           "Groundwater moves slowly through aquifers under hydraulic gradients, feeding deep wells, natural springs, and baseflow of rivers.",
@@ -810,7 +890,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "transpiration",
         name: "Transpiration",
         colorKey: "emerald",
-        anchor: { x: 24.0, y: 46.0 },
+        anchor: { x: 44.0, y: 32.0 },
         function: "Evaporative loss of water vapor from aerial vegetative tissues, predominantly through open foliar stomata.",
         details:
           "Creates negative hydrostatic pressure in leaf xylem that pulls water and minerals upward from roots across hundreds of vertical feet.",

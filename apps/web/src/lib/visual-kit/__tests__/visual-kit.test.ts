@@ -269,6 +269,48 @@ describe("Visual Kit - Diagram Data Integrity & Quality Verification", () => {
       }
     }
   });
+
+  it("ensures image diagrams with printed labels define valid cover boxes strictly bounded within 0% to 100%", () => {
+    // Diagrams with printed textbook/source labels that require concealing in Label It mode
+    const diagramsNeedingCovers = ["human-heart", "water-cycle"];
+
+    for (const diagramId of diagramsNeedingCovers) {
+      const diagram = VISUAL_KIT_DIAGRAMS.find((d) => d.id === diagramId);
+      assert.ok(diagram, `Diagram ${diagramId} must exist`);
+      assert.ok(
+        diagram.coverBoxes && diagram.coverBoxes.length > 0,
+        `Diagram ${diagramId} must have at least one coverBox defined`
+      );
+
+      for (let i = 0; i < diagram.coverBoxes.length; i++) {
+        const box = diagram.coverBoxes[i];
+        assert.ok(
+          box.x >= 0 && box.x <= 100,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) x must be within 0-100: got ${box.x}`
+        );
+        assert.ok(
+          box.y >= 0 && box.y <= 100,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) y must be within 0-100: got ${box.y}`
+        );
+        assert.ok(
+          box.w > 0 && box.w <= 100,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) w must be within (0, 100]: got ${box.w}`
+        );
+        assert.ok(
+          box.h > 0 && box.h <= 100,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) h must be within (0, 100]: got ${box.h}`
+        );
+        assert.ok(
+          box.x + box.w <= 100.1,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) exceeds horizontal bounds: x+w=${box.x + box.w}`
+        );
+        assert.ok(
+          box.y + box.h <= 100.1,
+          `Diagram ${diagramId} box ${i} (${box.label ?? ""}) exceeds vertical bounds: y+h=${box.y + box.h}`
+        );
+      }
+    }
+  });
 });
 
 describe("Visual Kit - Labeling Rules, Shuffling & Scoring", () => {

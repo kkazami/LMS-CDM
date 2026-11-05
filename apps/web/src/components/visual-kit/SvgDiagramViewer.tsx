@@ -213,6 +213,28 @@ export default function SvgDiagramViewer({
                 priority
                 unoptimized
               />
+
+              {/* Cover Patches for Label It Mode to conceal printed anatomical/process text */}
+              {mode === "label" && diagram.coverBoxes && diagram.coverBoxes.length > 0 && (
+                <div
+                  className="absolute inset-0 pointer-events-none z-10"
+                  aria-hidden="true"
+                  data-testid="diagram-cover-boxes"
+                >
+                  {diagram.coverBoxes.map((box, bIdx) => (
+                    <div
+                      key={`cover-box-${bIdx}`}
+                      className="absolute rounded bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/70 shadow-sm"
+                      style={{
+                        left: `${box.x}%`,
+                        top: `${box.y}%`,
+                        width: `${box.w}%`,
+                        height: `${box.h}%`,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             /* =========================================================================
@@ -330,8 +352,9 @@ export default function SvgDiagramViewer({
           {/* =========================================================================
               ACCESSIBLE NUMBERED HOTSPOT BUTTON OVERLAY
               Positions accurately scale with container width (x%, y%)
+              Rendered at z-20 above z-10 label cover patches
               ========================================================================= */}
-          <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 pointer-events-none z-20">
             {diagram.parts.map((part, index) => {
               const markerNum = index + 1;
               const isSelected = selectedPartId === part.id;
