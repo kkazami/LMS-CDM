@@ -32,6 +32,8 @@ import {
   FileSpreadsheet,
   Briefcase,
   Cpu,
+  FlaskConical,
+  Music,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -170,12 +172,29 @@ export default function MobileMoreSheet({
       ? [{ label: "Lecture Videos", href: `/${instituteCode}/lecture-videos`, icon: Film, description: "Recorded lectures" }]
       : [];
 
+  const getProgramIcon = (id: string): LucideIcon => {
+    switch (id) {
+      case "ict-lab":
+        return Cpu;
+      case "nursery-songs-youtube-categories":
+      case "nursery-song-library":
+        return Music;
+      case "matatag-curriculum-guide":
+        return BookOpen;
+      case "interactive-educational-charts":
+      case "visual-kit":
+        return FlaskConical;
+      default:
+        return FileText;
+    }
+  };
+
   const iteProgramToolItems: NavItem[] =
     isStudent && instituteCode.toLowerCase() === "ite"
       ? iteProgramTools.map((tool) => ({
           label: tool.title,
           href: tool.href,
-          icon: Cpu,
+          icon: getProgramIcon(tool.id),
           description: tool.description,
         }))
       : [];

@@ -95,6 +95,9 @@ function getProgramToolIcon(toolId: string): ComponentType<{ className?: string 
       return Music;
     case "matatag-curriculum-guide":
       return BookOpen;
+    case "interactive-educational-charts":
+    case "visual-kit":
+      return FlaskConical;
     default:
       return BookOpen;
   }

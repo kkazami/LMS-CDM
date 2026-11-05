@@ -53,6 +53,7 @@ function getFeatureIcon(featureId: string) {
     case "matatag-curriculum-guide":
       return BookOpen;
     case "interactive-educational-charts":
+    case "visual-kit":
       return FlaskConical;
     case "lesson-plan-builder":
     case "lesson-plan-models":

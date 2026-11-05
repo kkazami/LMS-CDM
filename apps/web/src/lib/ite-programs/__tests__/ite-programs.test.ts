@@ -591,15 +591,29 @@ describe("ITE Program Features & Sidebar Filtering", () => {
     assert.equal(beedLp?.href, "/ite/lesson-plans");
     assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [lessonPlanTool]);
 
+    const visualKitTool = {
+      id: "interactive-educational-charts",
+      title: "Interactive Visual Learning Kit",
+      description:
+        "Interactive 2D anatomical models, biological systems, and physical processes for BSEd Science pre-service educators.",
+      href: "/ite/visual-kit",
+    };
+
     const bsedSciFeatures = getFeaturesForIteProgram("BSEd SCIENCE");
     assert.deepEqual(
       bsedSciFeatures.map((f) => f.title),
-      ["Interactive Educational Charts", "Lesson Plan Builder"]
+      ["Interactive Visual Learning Kit", "Lesson Plan Builder"]
     );
+    const bsedVisualKit = bsedSciFeatures.find((f) => f.id === "interactive-educational-charts");
+    assert.equal(bsedVisualKit?.status, "available");
+    assert.equal(bsedVisualKit?.href, "/ite/visual-kit");
     const bsedLp = bsedSciFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(bsedLp?.status, "available");
     assert.equal(bsedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), [
+      visualKitTool,
+      lessonPlanTool,
+    ]);
 
     const btledFeatures = getFeaturesForIteProgram("BTLEd ICT");
     assert.deepEqual(

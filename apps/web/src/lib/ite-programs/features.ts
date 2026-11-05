@@ -128,11 +128,12 @@ export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   },
   {
     id: "interactive-educational-charts",
-    title: "Interactive Educational Charts",
+    title: "Interactive Visual Learning Kit",
     description:
-      "Visual science reference charts, periodic tables, and interactive anatomical and physical diagrams.",
+      "Interactive 2D anatomical models, biological systems, and physical processes for BSEd Science pre-service educators.",
+    href: "/ite/visual-kit",
     programs: ["BSEd SCIENCE"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "lesson-plan-builder",
