@@ -206,6 +206,87 @@ export function getDraftStorageKey(frameworkId: FrameworkId): string {
   return `cdm_lms_lp_draft_v1_${frameworkId}`;
 }
 
+export interface PrintSection {
+  stageId: string;
+  stageName: string;
+  purpose: string;
+  content: string;
+}
+
+export interface PrintablePlanData {
+  frameworkName: string;
+  topic: string;
+  subject: string;
+  gradeLevel: string;
+  date: string;
+  preparedBy: string;
+  learningCompetency: string;
+  learningObjectives: string;
+  materials: string;
+  sections: PrintSection[];
+}
+
+/**
+ * Extracts and formats print sections for each stage of a framework in sequential order.
+ */
+export function buildPrintSections(
+  framework: LessonPlanFramework,
+  values: LessonPlanFormValues
+): PrintSection[] {
+  return framework.stages.map((stage) => ({
+    stageId: stage.id,
+    stageName: stage.name,
+    purpose: stage.purpose,
+    content: values.stages[stage.id]?.trim() || "(No procedure recorded)",
+  }));
+}
+
+/**
+ * Builds structured data for printing, supporting both active drafts and exemplar samples.
+ */
+export function buildPrintablePlanData(
+  framework: LessonPlanFramework,
+  formValues?: LessonPlanFormValues | null
+): PrintablePlanData {
+  if (!formValues) {
+    const sp = framework.samplePlan;
+    return {
+      frameworkName: framework.name,
+      topic: sp.topic,
+      subject: sp.subject,
+      gradeLevel: sp.gradeLevel,
+      date: new Date().toISOString().split("T")[0] ?? "",
+      preparedBy: "Exemplar Sample (Practice)",
+      learningCompetency: sp.learningCompetency,
+      learningObjectives: sp.learningObjectives,
+      materials: sp.materials,
+      sections: framework.stages.map((st) => {
+        const sec = sp.sections.find((s) => s.stageId === st.id);
+        return {
+          stageId: st.id,
+          stageName: st.name,
+          purpose: st.purpose,
+          content: sec ? sec.content : "(No procedure recorded)",
+        };
+      }),
+    };
+  }
+
+  const h = formValues.headers;
+  return {
+    frameworkName: framework.name,
+    topic: sanitizeInput(h.topic).trim() || "Untitled Lesson",
+    subject: sanitizeInput(h.subject).trim() || "Not specified",
+    gradeLevel: sanitizeInput(h.gradeLevel).trim() || "Not specified",
+    date: sanitizeInput(h.date).trim() || "Not specified",
+    preparedBy: sanitizeInput(h.preparedBy).trim() || "Not specified",
+    learningCompetency: sanitizeInput(h.learningCompetency).trim() || "Not specified",
+    learningObjectives: sanitizeInput(h.learningObjectives).trim() || "Not specified",
+    materials: sanitizeInput(h.materials).trim() || "Not specified",
+    sections: buildPrintSections(framework, formValues),
+  };
+}
+
 /**
  * Serializes form values for localStorage with version and timestamp.
  */

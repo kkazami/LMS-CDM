@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Lightbulb,
   PenTool,
+  Printer,
   Sparkles,
   UserCheck,
   Users,
@@ -18,11 +19,13 @@ import {
 interface LearnModeViewProps {
   framework: LessonPlanFramework;
   onSwitchToBuild: (loadSample?: boolean) => void;
+  onPrintSample: () => void;
 }
 
 export default function LearnModeView({
   framework,
   onSwitchToBuild,
+  onPrintSample,
 }: LearnModeViewProps) {
   const [activeStageIndex, setActiveStageIndex] = useState(0);
   const [showSamplePlan, setShowSamplePlan] = useState(false);
@@ -46,6 +49,15 @@ export default function LearnModeView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onPrintSample}
+            title="Print or Save as PDF the annotated exemplar for this framework"
+            className="inline-flex items-center gap-2 rounded-xl border border-theme bg-surface px-3.5 py-2 text-xs font-semibold text-secondary-theme hover:text-primary-theme hover:bg-elevated cursor-pointer shadow-2xs"
+          >
+            <Printer className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <span>Print Exemplar</span>
+          </button>
           <button
             type="button"
             onClick={() => onSwitchToBuild(false)}
@@ -219,7 +231,15 @@ export default function LearnModeView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onPrintSample}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-theme bg-elevated px-3 py-1.5 text-xs font-semibold text-secondary-theme hover:text-primary-theme cursor-pointer"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print Exemplar</span>
+            </button>
             <button
               type="button"
               onClick={() => setShowSamplePlan(!showSamplePlan)}

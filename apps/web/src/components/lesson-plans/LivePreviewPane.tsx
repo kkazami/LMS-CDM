@@ -33,36 +33,8 @@ export default function LivePreviewPane({
 
   return (
     <div className="space-y-3">
-      {/* Print Stylesheet */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #printable-lesson-plan,
-          #printable-lesson-plan * {
-            visibility: visible !important;
-          }
-          #printable-lesson-plan {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 32px !important;
-            background: #ffffff !important;
-            color: #111827 !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-
       {/* Export Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-theme bg-surface p-3 shadow-xs no-print">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-theme bg-surface p-3 shadow-xs">
         <div className="text-xs font-bold text-primary-theme">
           Live Formatted Preview
         </div>
@@ -116,11 +88,8 @@ export default function LivePreviewPane({
         </div>
       </div>
 
-      {/* Printable / Rendered Plan Document */}
-      <div
-        id="printable-lesson-plan"
-        className="rounded-2xl border border-theme bg-surface p-6 sm:p-8 shadow-xs space-y-6 font-sans text-primary-theme"
-      >
+      {/* Formatted Plan Document */}
+      <div className="rounded-2xl border border-theme bg-surface p-6 sm:p-8 shadow-xs space-y-6 font-sans text-primary-theme">
         {/* Document Header */}
         <div className="border-b border-theme/80 pb-5 space-y-2">
           <div className="flex items-center justify-between gap-2">

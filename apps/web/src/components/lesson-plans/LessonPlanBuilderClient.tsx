@@ -13,11 +13,14 @@ import {
   serializeDraft,
   deserializeDraft,
   validatePlan,
+  buildPrintablePlanData,
+  type PrintablePlanData,
 } from "@/lib/lesson-plans/rules";
 import FrameworkPicker from "./FrameworkPicker";
 import LearnModeView from "./LearnModeView";
 import BuildModeView from "./BuildModeView";
 import LivePreviewPane from "./LivePreviewPane";
+import LessonPlanPrintPortal from "./LessonPlanPrintPortal";
 import { BookOpen, Eye, GraduationCap, PenTool } from "lucide-react";
 
 interface LessonPlanBuilderClientProps {
@@ -36,6 +39,7 @@ export default function LessonPlanBuilderClient({
   const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
   const [copied, setCopied] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [activePrintPlan, setActivePrintPlan] = useState<PrintablePlanData | null>(null);
 
   const framework = useMemo(
     () => getFrameworkById(selectedFrameworkId) ?? FRAMEWORKS[0]!,
@@ -206,10 +210,14 @@ export default function LessonPlanBuilderClient({
     [framework, formValues]
   );
 
-  // Export: Print dialog
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+  // Export: Print dialog via portal
+  const handlePrintDraft = useCallback(() => {
+    setActivePrintPlan(buildPrintablePlanData(framework, formValues));
+  }, [framework, formValues]);
+
+  const handlePrintSample = useCallback(() => {
+    setActivePrintPlan(buildPrintablePlanData(framework, null));
+  }, [framework]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
@@ -319,6 +327,7 @@ export default function LessonPlanBuilderClient({
         <LearnModeView
           framework={framework}
           onSwitchToBuild={handleSwitchToBuild}
+          onPrintSample={handlePrintSample}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -352,10 +361,18 @@ export default function LessonPlanBuilderClient({
               copied={copied}
               onCopyText={handleCopyText}
               onDownload={handleDownload}
-              onPrint={handlePrint}
+              onPrint={handlePrintDraft}
             />
           </div>
         </div>
+      )}
+
+      {/* Print-only Portal mounted directly under document.body */}
+      {activePrintPlan && (
+        <LessonPlanPrintPortal
+          planData={activePrintPlan}
+          onPrinted={() => setActivePrintPlan(null)}
+        />
       )}
     </div>
   );

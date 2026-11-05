@@ -9,6 +9,8 @@ import {
   validatePlan,
   serializeDraft,
   deserializeDraft,
+  buildPrintSections,
+  buildPrintablePlanData,
   MAX_FIELD_LENGTH,
 } from "../rules";
 import { evaluateLessonPlanAccess } from "../guard";
@@ -378,5 +380,77 @@ describe("Lesson Plan Builder - Logic, Formatting & Validation", () => {
     // Corrupted JSON
     assert.equal(deserializeDraft("{ not valid json"), null);
     assert.equal(deserializeDraft(null), null);
+  });
+
+  it("buildPrintSections returns all stage headings in exact order with content or fallback", () => {
+    const sixEs = getFrameworkById("6es")!;
+    const formValues: LessonPlanFormValues = {
+      frameworkId: "6es",
+      headers: {
+        subject: "STEM",
+        gradeLevel: "Grade 6",
+        topic: "Water Filter Prototype",
+        learningCompetency: "Build filter",
+        learningObjectives: "Test filter",
+        materials: "Sand, gravel",
+        date: "2026-11-05",
+        preparedBy: "Maria",
+      },
+      stages: {
+        engage: "Typhoon scenario",
+        explore: "Test sand flow rate",
+        explain: "Explain mechanical straining",
+        // engineer omitted to test fallback
+        enrich: "SODIS disinfection",
+        evaluate: "Rubric evaluation",
+      },
+    };
+
+    const sections = buildPrintSections(sixEs, formValues);
+    assert.equal(sections.length, 6);
+    assert.deepEqual(
+      sections.map((s) => s.stageName),
+      ["Engage", "Explore", "Explain", "Engineer", "Enrich", "Evaluate"]
+    );
+    assert.equal(sections[0]?.content, "Typhoon scenario");
+    assert.equal(sections[3]?.content, "(No procedure recorded)");
+    assert.equal(sections[4]?.content, "SODIS disinfection");
+  });
+
+  it("buildPrintablePlanData builds print-ready data for both drafts and exemplar samples", () => {
+    const ilaw = getFrameworkById("ilaw")!;
+    const samplePlanData = buildPrintablePlanData(ilaw, null);
+    assert.equal(samplePlanData.frameworkName, "ILAW Framework");
+    assert.equal(samplePlanData.topic, "Parts and Functions of Plant Roots");
+    assert.equal(samplePlanData.sections.length, 4);
+    assert.deepEqual(
+      samplePlanData.sections.map((s) => s.stageName),
+      ["Intentions", "Learning Experience", "Assessing Learning", "Ways Forward"]
+    );
+    assert.ok(samplePlanData.sections[0]?.content.includes("Lesson Targets"));
+
+    const customPlanData = buildPrintablePlanData(ilaw, {
+      frameworkId: "ilaw",
+      headers: {
+        subject: "Science 4",
+        gradeLevel: "Grade 4",
+        topic: "Plant Growth",
+        learningCompetency: "Identify parts",
+        learningObjectives: "Draw roots",
+        materials: "Potted plant",
+        date: "2026-11-05",
+        preparedBy: "Juan Dela Cruz",
+      },
+      stages: {
+        intentions: "State targets",
+        "learning-experience": "Examine roots",
+        "assessing-learning": "Label test",
+        "ways-forward": "Enrichment study",
+      },
+    });
+
+    assert.equal(customPlanData.topic, "Plant Growth");
+    assert.equal(customPlanData.preparedBy, "Juan Dela Cruz");
+    assert.equal(customPlanData.sections[0]?.content, "State targets");
   });
 });
