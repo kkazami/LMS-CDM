@@ -75,7 +75,6 @@ export default function SvgDiagramViewer({
     }
 
     const commonProps = {
-      key,
       fill: fill ?? "none",
       stroke: stroke ?? "none",
       strokeWidth: isPartSelected && mode === "explore" ? (shape.strokeWidth ?? 2) + 1.5 : shape.strokeWidth,
@@ -88,10 +87,11 @@ export default function SvgDiagramViewer({
 
     switch (shape.type) {
       case "circle":
-        return <circle cx={shape.cx} cy={shape.cy} r={shape.r} {...commonProps} />;
+        return <circle key={key} cx={shape.cx} cy={shape.cy} r={shape.r} {...commonProps} />;
       case "ellipse":
         return (
           <ellipse
+            key={key}
             cx={shape.cx}
             cy={shape.cy}
             rx={shape.rx}
@@ -102,6 +102,7 @@ export default function SvgDiagramViewer({
       case "rect":
         return (
           <rect
+            key={key}
             x={shape.x}
             y={shape.y}
             width={shape.width}
@@ -113,6 +114,7 @@ export default function SvgDiagramViewer({
       case "line":
         return (
           <line
+            key={key}
             x1={shape.x1}
             y1={shape.y1}
             x2={shape.x2}
@@ -121,12 +123,13 @@ export default function SvgDiagramViewer({
           />
         );
       case "polygon":
-        return <polygon points={shape.points} {...commonProps} />;
+        return <polygon key={key} points={shape.points} {...commonProps} />;
       case "path":
-        return <path d={shape.d} {...commonProps} />;
+        return <path key={key} d={shape.d} {...commonProps} />;
       case "text":
         return (
           <text
+            key={key}
             x={shape.x}
             y={shape.y}
             fontSize={shape.fontSize}
