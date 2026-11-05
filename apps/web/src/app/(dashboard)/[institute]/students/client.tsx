@@ -21,6 +21,9 @@ import {
   Trophy,
   Sparkles,
   Briefcase,
+  FileSpreadsheet,
+  NotebookPen,
+  Library,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -430,6 +433,50 @@ export default function StudentDashboardClient({
               color={theme.colors.primary}
             />
           </StaggerItem>
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={FileSpreadsheet}
+                label="Financial Statements"
+                href={`/${instituteCode}/financial-statements`}
+                sublabel="Accounting reports"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Briefcase}
+                label="Mock Interview"
+                href={`/${instituteCode}/mock-interview`}
+                sublabel="AI interview coach"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={Library}
+                label="IBE Learning Hub"
+                href={`/${instituteCode}/learning-hub`}
+                sublabel="External courses"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
+          {instituteCode.toLowerCase() === "ibe" && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={GraduationCap}
+                label="Hall of Fame"
+                href={`/${instituteCode}/hall-of-fame`}
+                sublabel="Business & HR leaders"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
           {instituteCode.toLowerCase() === "ibe" && (
             <StaggerItem>
               <QuickActionCard

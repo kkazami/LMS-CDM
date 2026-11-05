@@ -121,7 +121,7 @@ export async function ensureBusinessPlanTable(): Promise<void> {
       // Ignore individual constraint/grant failures on restricted DB roles
     }
   }
-  businessPlanTableVerified = true;
+  try { await db.businessPlan.count({ take: 1 }); businessPlanTableVerified = true; } catch { /* retry next call if table still missing */ }
 }
 
 export async function loadOwnedBusinessPlan(id: string, studentId: string) {

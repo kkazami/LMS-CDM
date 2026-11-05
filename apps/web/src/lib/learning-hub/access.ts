@@ -120,11 +120,16 @@ export async function ensureLearningHubTable(): Promise<void> {
   for (const sql of statements) {
     try {
       await db.$executeRawUnsafe(sql);
-    } catch {
-      // Ignore individual constraint/grant failures on restricted DB roles
+    } catch (err) {
+      console.warn("[ensureLearningHubTable] DDL warning:", err instanceof Error ? err.message : String(err));
     }
   }
-  learningHubTableVerified = true;
+  try {
+    await db.ibeLearningRecord.count({ take: 1 });
+    learningHubTableVerified = true;
+  } catch (err) {
+    console.error("[ensureLearningHubTable] Table still unavailable after DDL:", err instanceof Error ? err.message : String(err));
+  }
 }
 
 export async function loadOwnedLearningRecord(id: string, studentId: string) {

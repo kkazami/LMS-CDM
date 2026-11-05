@@ -184,7 +184,7 @@ export default function Topbar({
     dynamicTitle = 'Ohmward';
   }
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-[48px] sm:min-h-[56px] flex flex-col justify-center">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#1A1D27] sm:bg-white/95 sm:dark:bg-[#1A1D27]/95 sm:backdrop-blur-md transition-colors duration-200 min-h-12 sm:min-h-14 flex flex-col justify-center">
       <div className="flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-3">
         {/* Left Side: Institute Badge + Dynamic Title */}
         <div className="flex flex-1 min-w-0 items-center gap-1.5 sm:gap-2.5">
@@ -206,7 +206,7 @@ export default function Topbar({
           {/* Desktop & Tablet Title & Institute Badge / Switcher */}
           <div className="hidden md:flex items-center gap-3 min-w-0 flex-1">
 
-              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] shadow-xs">
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/3 shadow-xs">
                 <span
                   className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shrink-0 shadow-xs"
                   style={{ backgroundColor: `${theme.colors.primary}18`, color: "var(--institute-ink)" }}
@@ -217,7 +217,7 @@ export default function Topbar({
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
                     Campus
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-[140px] lg:max-w-[200px] leading-tight">
+                  <span className="text-xs font-bold text-slate-800 dark:text-[#F0F2F8] truncate max-w-35 lg:max-w-50 leading-tight">
                     {resolvedInstituteName}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export default function Topbar({
               event.currentTarget.focus();
               setSearchModalOpen(true);
             }}
-            className={`topbar-search-trigger hidden sm:flex xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0 ${
+            className={`topbar-search-trigger flex 2xl:hidden relative rounded-lg sm:rounded-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)] bg-white dark:bg-[#22263A] p-1 sm:p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer shadow-xs active:scale-95 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center shrink-0 ${
               isIte
                 ? "hover:border-blue-500/50 dark:hover:border-blue-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 : ""
@@ -322,13 +322,13 @@ export default function Topbar({
               aria-haspopup="true"
             >
               {/* Tablet Compact User Info (1024px - 1279px) */}
-              <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-[100px]">
+              <div className="text-right hidden lg:block xl:hidden min-w-0 max-w-25">
                 <p className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#8B92A5] truncate">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
               </div>
 
               {/* Desktop Full User Info (1280px+) */}
-              <div className="text-right hidden xl:block min-w-0 max-w-[150px] 2xl:max-w-[200px]">
+              <div className="text-right hidden xl:block min-w-0 max-w-37.5 2xl:max-w-50">
                 <div className="flex items-center justify-end gap-1.5 min-w-0">
                   <p className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{userName}</p>
                 </div>
@@ -357,10 +357,10 @@ export default function Topbar({
               }`}
               style={{ transformOrigin: "top right" }}
             >
-              <div className="border-b border-[var(--border-color)] px-4 py-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)] break-words">{userName}</p>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
-                {studentNumber && <p className="mt-1 text-xs text-[var(--text-secondary)]">Student ID: {studentNumber}</p>}
+              <div className="border-b border-(--border-color) px-4 py-3">
+                <p className="text-sm font-semibold text-(--text-primary) wrap-break-word">{userName}</p>
+                <p className="mt-1 text-xs text-(--text-secondary)">{userRole === "ADMIN" ? "Administrator" : userRole}</p>
+                {studentNumber && <p className="mt-1 text-xs text-(--text-secondary)">Student ID: {studentNumber}</p>}
               </div>
               <Link
                 href={`/${instituteCode}/profile`}

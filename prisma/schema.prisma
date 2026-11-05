@@ -508,6 +508,7 @@ model User {
   ibeLearningRecords             IbeLearningRecord[]             @relation("StudentIbeLearningRecords")
   mockInterviewSavedQuestions    MockInterviewSavedQuestion[]
   mockInterviewApplicantAttempts MockInterviewApplicantAttempt[]
+  mockInterviewAiRequests        MockInterviewAiRequest[]
   mockInterviewRecruiterAttempts MockInterviewRecruiterAttempt[]
   mockInterviewQuizAttempts      MockInterviewQuizAttempt[]
 
@@ -2491,12 +2492,28 @@ model MockInterviewApplicantAttempt {
   checklistAssessment Json     @default("{}")
   feedbackNotes       String?  @db.Text
   createdAt           DateTime @default(now())
+  // Advisory AI evaluation (nullable; null for attempts saved without AI)
+  aiScore             Int?
+  aiRating            String?
+  aiFeedback          Json?
+  aiProvider          String?
 
   student  User                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   question MockInterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([studentId, createdAt])
   @@index([questionId])
+}
+
+/// Usage ledger for AI evaluations (daily quota + cooldown per student).
+model MockInterviewAiRequest {
+  id        String   @id @default(cuid())
+  studentId String
+  createdAt DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
 }
 
 model MockInterviewRecruiterAttempt {

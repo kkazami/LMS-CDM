@@ -112,6 +112,17 @@ export async function ensureMockInterviewTablesAndContent() {
       `CREATE INDEX IF NOT EXISTS "MockInterviewRecruiterAttempt_studentId_completedAt_idx" ON "MockInterviewRecruiterAttempt"("studentId", "completedAt")`,
       `CREATE INDEX IF NOT EXISTS "MockInterviewRecruiterAttempt_scenarioId_idx" ON "MockInterviewRecruiterAttempt"("scenarioId")`,
       `CREATE INDEX IF NOT EXISTS "MockInterviewQuizAttempt_studentId_completedAt_idx" ON "MockInterviewQuizAttempt"("studentId", "completedAt")`,
+      `ALTER TABLE "MockInterviewApplicantAttempt" ADD COLUMN IF NOT EXISTS "aiScore" INTEGER`,
+      `ALTER TABLE "MockInterviewApplicantAttempt" ADD COLUMN IF NOT EXISTS "aiRating" TEXT`,
+      `ALTER TABLE "MockInterviewApplicantAttempt" ADD COLUMN IF NOT EXISTS "aiFeedback" JSONB`,
+      `ALTER TABLE "MockInterviewApplicantAttempt" ADD COLUMN IF NOT EXISTS "aiProvider" TEXT`,
+      `CREATE TABLE IF NOT EXISTS "MockInterviewAiRequest" (
+        "id" TEXT NOT NULL,
+        "studentId" TEXT NOT NULL,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "MockInterviewAiRequest_pkey" PRIMARY KEY ("id")
+      )`,
+      `CREATE INDEX IF NOT EXISTS "MockInterviewAiRequest_studentId_createdAt_idx" ON "MockInterviewAiRequest"("studentId", "createdAt")`,
       `DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MockInterviewSavedQuestion_studentId_fkey') THEN
@@ -140,6 +151,10 @@ export async function ensureMockInterviewTablesAndContent() {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MockInterviewQuizAttempt_studentId_fkey') THEN
           ALTER TABLE "MockInterviewQuizAttempt" ADD CONSTRAINT "MockInterviewQuizAttempt_studentId_fkey"
+            FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MockInterviewAiRequest_studentId_fkey') THEN
+          ALTER TABLE "MockInterviewAiRequest" ADD CONSTRAINT "MockInterviewAiRequest_studentId_fkey"
             FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
         END IF;
       END $$`,

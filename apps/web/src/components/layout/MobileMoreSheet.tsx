@@ -31,6 +31,7 @@ import {
   MessageSquareQuote,
   FileSpreadsheet,
   Briefcase,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -172,6 +173,9 @@ export default function MobileMoreSheet({
       ? [
           { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },
           { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
+          { label: "Business Plan Guide", href: `/${instituteCode}/business-plan`, icon: NotebookPen, description: "Guided lessons and venture builder" },
+          { label: "IBE Learning Hub", href: `/${instituteCode}/learning-hub`, icon: Library, description: "Free external business courses" },
+          { label: "Hall of Fame", href: `/${instituteCode}/hall-of-fame`, icon: GraduationCap, description: "Entrepreneur & HR leader biographies" },
         ] : []),
     ...(isStudent
       ? [...studentItems, ...meetingsItems, ...practicumItems]

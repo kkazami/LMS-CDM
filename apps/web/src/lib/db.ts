@@ -70,7 +70,7 @@ const schemaVersion = createHash("sha256")
   .update(JSON.stringify(Prisma.dmmf.datamodel) + "lab-provenance-omit-v1")
   .digest("hex");
 const previous = globalForPrisma.prisma;
-export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion && "financialStatement" in (previous as object)
+export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion && "financialStatement" in (previous as object) && "businessPlan" in (previous as object) && "ibeLearningRecord" in (previous as object) && "mockInterviewApplicantAttempt" in (previous as object)
   ? previous
   : createPrismaClient();
 

@@ -44,11 +44,12 @@ export default async function BusinessPlanHubPage({
   const initialPlans = rows.map(toBusinessPlanSummary);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <BusinessPlanHubClient
         instituteCode={institute}
         initialPlans={initialPlans}
         studentName={session.user.name || "IBE Student"}
+        studentId={session.user.id}
       />
     </div>
   );

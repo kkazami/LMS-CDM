@@ -65,10 +65,10 @@ export function StatusBadge({ status }: { status: StatementStatus }) {
   const generated = status === "GENERATED";
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold border ${
         generated
-          ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
-          : "bg-amber-500/12 text-amber-700 dark:text-amber-300"
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+          : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-white/10"
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${generated ? "bg-emerald-500" : "bg-amber-500"}`} />
@@ -78,13 +78,13 @@ export function StatusBadge({ status }: { status: StatementStatus }) {
 }
 
 export const cardClass =
-  "rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-white/5 dark:bg-[#12151E]";
+  "rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] shadow-xs";
 
 export const inputClass =
-  "w-full min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-(--focus-ring,#6366f1)/40 focus:border-(--focus-ring,#6366f1) disabled:opacity-60 dark:border-white/10 dark:bg-[#0F1117] dark:text-[#F0F2F8] dark:placeholder:text-[#555C72]";
+  "w-full min-h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#10131B] px-3 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 transition-colors focus:outline-none focus:border-amber-500 disabled:opacity-60";
 
-export const mutedText = "text-slate-500 dark:text-[#8B92A5]";
-export const headingText = "text-slate-900 dark:text-[#F0F2F8]";
+export const mutedText = "text-slate-500 dark:text-slate-400";
+export const headingText = "text-slate-900 dark:text-white";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -114,17 +114,17 @@ export function ConfirmDialog({ open, title, description, confirmLabel, destruct
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-120 flex items-end justify-center p-4 sm:items-center">
-      <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onCancel} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onCancel} aria-hidden="true" />
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="fs-confirm-title"
-        className={`relative w-full max-w-md ${cardClass} p-5 shadow-2xl`}
+        className={`relative w-full max-w-md ${cardClass} p-5 shadow-lg`}
       >
         <button
           type="button"
           onClick={onCancel}
-          className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5"
+          className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 cursor-pointer"
           aria-label="Close dialog"
         >
           <X className="h-4 w-4" />
@@ -132,14 +132,14 @@ export function ConfirmDialog({ open, title, description, confirmLabel, destruct
         <h2 id="fs-confirm-title" className={`pr-8 text-base font-bold ${headingText}`}>
           {title}
         </h2>
-        <div className={`mt-2 text-sm leading-relaxed ${mutedText}`}>{description}</div>
+        <div className={`mt-2 text-xs sm:text-sm leading-relaxed ${mutedText}`}>{description}</div>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="min-h-10 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-[#F0F2F8] dark:hover:bg-white/5"
+            className="min-h-9 rounded-lg border border-slate-200 dark:border-white/10 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-60 cursor-pointer"
           >
             Cancel
           </button>
@@ -147,8 +147,8 @@ export function ConfirmDialog({ open, title, description, confirmLabel, destruct
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className={`min-h-10 rounded-xl px-4 text-sm font-bold text-white disabled:opacity-60 ${
-              destructive ? "bg-rose-600 hover:bg-rose-700" : "bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+            className={`min-h-9 rounded-lg px-4 text-xs font-semibold text-white disabled:opacity-60 cursor-pointer ${
+              destructive ? "bg-rose-600 hover:bg-rose-700" : "bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
             }`}
           >
             {busy ? "Please wait…" : confirmLabel}

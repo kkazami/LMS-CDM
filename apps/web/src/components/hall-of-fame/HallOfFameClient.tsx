@@ -11,8 +11,6 @@ import {
   Building2,
   Compass,
   ExternalLink,
-  Globe,
-  MapPin,
   RotateCcw,
   Search,
   Sparkles,
@@ -26,6 +24,7 @@ import {
   getNextProfileInCategory,
   getProfileById,
 } from "@/lib/hall-of-fame/catalog";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import type {
   HallOfFameCategory,
   HallOfFameProfile,
@@ -390,12 +389,7 @@ function LeaderPortraitImage({
   const showRealPhoto = Boolean(photoUrl) && !photoFailed;
 
   return (
-    <div
-      className={`${className} relative overflow-hidden select-none`}
-      style={{
-        background: `linear-gradient(160deg, ${profile.portraitAccent.primary} 0%, ${profile.portraitAccent.secondary} 100%)`,
-      }}
-    >
+    <div className={`${className} relative overflow-hidden select-none bg-slate-900`}>
       {/* Bespoke Illustrated Human Portrait Layer (always rendered underneath so there is zero blank state or letter box) */}
       <svg
         viewBox="0 0 240 300"
@@ -403,13 +397,18 @@ function LeaderPortraitImage({
         aria-hidden="true"
       >
         <defs>
+          <linearGradient id={`bg-${profile.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={profile.portraitAccent.primary} />
+            <stop offset="100%" stopColor={profile.portraitAccent.secondary} />
+          </linearGradient>
           <radialGradient id={`glow-${profile.id}`} cx="50%" cy="35%" r="60%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
             <stop offset="100%" stopColor="rgba(15,23,42,0.4)" />
           </radialGradient>
         </defs>
 
-        {/* Museum backdrop glow */}
+        {/* Museum backdrop gradient + glow */}
+        <rect width="240" height="300" fill={`url(#bg-${profile.id})`} />
         <rect width="240" height="300" fill={`url(#glow-${profile.id})`} />
         <circle cx="120" cy="115" r="78" fill="rgba(255,255,255,0.07)" />
         <circle
@@ -575,6 +574,7 @@ function LeaderPortraitImage({
   );
 }
 
+
 /**
  * Interactive Portrait Card: Clicking the picture opens the full profile details.
  */
@@ -594,7 +594,7 @@ function ClickablePortraitCard({
   const primaryAchievement = profile.majorAchievements[0];
 
   return (
-    <article className="group relative rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex flex-col justify-between shadow-sm hover:-translate-y-1 hover:border-amber-500/70 hover:shadow-xl transition-all duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none">
+    <article className="group relative rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] overflow-hidden flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-white/25 transition-colors">
       {/* Bookmark Floating Button */}
       <button
         type="button"
@@ -604,10 +604,10 @@ function ClickablePortraitCard({
             ? `Remove ${profile.fullName} from bookmarks`
             : `Bookmark ${profile.fullName}`
         }
-        className={`absolute top-3 right-3 z-20 p-2 rounded-full backdrop-blur-md border transition focus-visible:outline-2 focus-visible:outline-amber-500 ${
+        className={`absolute top-2.5 right-2.5 z-20 p-1.5 rounded-lg border transition cursor-pointer ${
           isBookmarked
-            ? "bg-amber-500 text-slate-950 border-amber-300 shadow"
-            : "bg-slate-950/55 text-white border-white/20 hover:bg-slate-950/80"
+            ? "bg-amber-500 text-slate-950 border-amber-400"
+            : "bg-slate-950/75 text-white border-white/20 hover:bg-slate-950"
         }`}
       >
         <Bookmark className="w-3.5 h-3.5" />
@@ -617,65 +617,67 @@ function ClickablePortraitCard({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full text-left focus-visible:outline-2 focus-visible:outline-amber-500 flex-1 flex flex-col"
+        className="w-full text-left flex-1 flex flex-col cursor-pointer"
       >
         {/* Portrait Frame */}
-        <div className="relative aspect-[4/4.6] w-full overflow-hidden bg-slate-900">
+        <div className="relative aspect-[4/4.4] w-full overflow-hidden bg-slate-900 border-b-2 border-slate-200 dark:border-white/15">
           <LeaderPortraitImage profile={profile} className="w-full h-full" />
 
           {/* Top Origin Badge */}
-          <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5">
+          <div className="absolute top-2.5 left-2.5 right-10 z-10 flex flex-wrap items-center gap-1.5">
             <span
-              className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-xs ${
+              className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                 profile.origin === "FILIPINO"
-                  ? "bg-amber-500/95 text-slate-950"
-                  : "bg-slate-900/85 text-sky-300 border border-sky-400/30"
+                  ? "bg-amber-500 text-slate-950"
+                  : "bg-slate-900/90 text-sky-300 border border-sky-400/30"
               }`}
             >
-              {profile.origin === "FILIPINO" ? "🇵🇭 Philippines" : `🌐 ${profile.countryLabel.replace(" (International)", "")}`}
+              {profile.origin === "FILIPINO"
+                ? "🇵🇭 Philippines"
+                : `🌐 ${profile.countryLabel.replace(" (International)", "")}`}
             </span>
             {isExplored && (
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/90 text-slate-950 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-semibold">
                 Explored
               </span>
             )}
           </div>
 
-          {/* Bottom Gradient Nameplate Overlay on Portrait */}
-          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950 via-slate-950/80 to-transparent pt-12 pb-3.5 px-4">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block">
+          {/* Solid Bottom Nameplate Bar */}
+          <div className="absolute inset-x-0 bottom-0 bg-slate-950/90 border-t border-white/10 py-2.5 px-3.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
               {profile.category === "ENTREPRENEUR" ? "Entrepreneur" : "HR Leader"}
             </span>
-            <h3 className="text-base sm:text-lg font-serif font-bold text-white leading-tight">
+            <h3 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
               {profile.fullName}
             </h3>
-            <p className="text-xs text-amber-200/90 font-medium truncate mt-0.5">
+            <p className="text-[11px] text-slate-300 truncate mt-0.5">
               {profile.organization}
             </p>
           </div>
         </div>
 
         {/* Concise Editorial Details Preview Below Portrait */}
-        <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+        <div className="p-3.5 flex-1 flex flex-col justify-between gap-3">
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 line-clamp-2">
+            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
               {profile.whyTheyMatterSummary}
             </p>
             {primaryAchievement && (
-              <div className="rounded-xl bg-[#FAF8F5] dark:bg-slate-950/70 border border-amber-500/25 px-3 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 block">
+              <div className="rounded-lg bg-slate-50/70 dark:bg-[#10131B] border border-slate-200/80 dark:border-white/10 px-2.5 py-2">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
                   Key Achievement ({primaryAchievement.period})
                 </span>
-                <p className="text-[11px] font-bold text-slate-900 dark:text-white line-clamp-1">
+                <p className="text-[11px] font-semibold text-slate-900 dark:text-white line-clamp-1 mt-0.5">
                   {primaryAchievement.title}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
-            <span>Click Picture to View Details</span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transform-none" />
+          <div className="pt-2.5 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs font-semibold text-amber-600 dark:text-amber-400">
+            <span>View Profile</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
           </div>
         </div>
       </button>
@@ -803,20 +805,6 @@ export default function HallOfFameClient({
     return base.filter((p) => bookmarkedIds.includes(p.id));
   }, [activeCategory, originFilter, subjectFilter, searchQuery, onlyBookmarked, bookmarkedIds]);
 
-  const entrepreneurSpotlight = useMemo(
-    () =>
-      ENTREPRENEUR_PROFILES.find((p) => p.isFeaturedSpotlight) ??
-      ENTREPRENEUR_PROFILES[0]!,
-    []
-  );
-
-  const hrLeaderSpotlight = useMemo(
-    () =>
-      HR_LEADER_PROFILES.find((p) => p.isFeaturedSpotlight) ??
-      HR_LEADER_PROFILES[0]!,
-    []
-  );
-
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     originFilter !== "ALL" ||
@@ -824,164 +812,137 @@ export default function HallOfFameClient({
     onlyBookmarked;
 
   return (
-    <div className="space-y-8 text-slate-900 dark:text-slate-100">
-      {/* ─── TOP GALLERY NAVIGATION BAR ─── */}
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 text-slate-900 dark:text-slate-100">
+      {/* Compact Header + Flat Stat Strip */}
+      <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] shadow-xs overflow-hidden">
+        <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                IBE Hall of Fame
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+                <Award className="w-3.5 h-3.5 text-amber-500" />
+                20 Curated Biographies
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>. Explore 10 Entrepreneur Founders and 10 HR Leaders across the Philippines and the world. Click any portrait to study their biography, major achievements, and career timeline.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => openCategory("ENTREPRENEUR")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1E2B] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+              Entrepreneurs ({ENTREPRENEUR_PROFILES.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => openCategory("HR_LEADER")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D97706] hover:bg-amber-700 text-white transition-colors cursor-pointer"
+            >
+              <Users className="w-3.5 h-3.5" />
+              HR Leaders ({HR_LEADER_PROFILES.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Flat 3-Column Stat Strip */}
+        <div className="grid grid-cols-3 divide-x-2 border-t-2 border-slate-200 dark:border-white/15 divide-slate-200 dark:divide-white/15 bg-slate-50/70 dark:bg-[#10131B]">
+          <div className="px-4 py-3 sm:px-6">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              Total Leaders
+            </div>
+            <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
+              {HALL_OF_FAME_PROFILES.length}
+            </div>
+          </div>
+          <div className="px-4 py-3 sm:px-6">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              Profiles Explored
+            </div>
+            <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
+              {exploredIds.length}{" "}
+              <span className="text-xs font-normal text-slate-400">
+                / {HALL_OF_FAME_PROFILES.length}
+              </span>
+            </div>
+          </div>
+          <div className="px-4 py-3 sm:px-6">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              Bookmarked
+            </div>
+            <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
+              {bookmarkedIds.length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Clean Underline Tabs */}
       <nav
         aria-label="Hall of Fame Navigation"
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-[#FAF8F5] dark:bg-slate-900/90 px-4 py-3 shadow-xs"
+        className="border-b-2 border-slate-200 dark:border-white/15 flex items-center gap-6 overflow-x-auto no-scrollbar"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setViewMode("LANDING")}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition duration-150 focus-visible:outline-2 focus-visible:outline-amber-500 ${
-              viewMode === "LANDING"
-                ? "bg-[#0F172A] text-amber-400 shadow-xs dark:bg-amber-500 dark:text-slate-950"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-amber-500/50"
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Portrait Gallery Home</span>
-          </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("LANDING")}
+          className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+            viewMode === "LANDING"
+              ? "border-amber-500 text-amber-600 dark:text-amber-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>Portrait Gallery (20)</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => openCategory("ENTREPRENEUR")}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition duration-150 focus-visible:outline-2 focus-visible:outline-amber-500 ${
-              viewMode === "CATEGORY" && activeCategory === "ENTREPRENEUR"
-                ? "bg-[#0F172A] text-amber-400 shadow-xs dark:bg-amber-500 dark:text-slate-950"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-amber-500/50"
-            }`}
-          >
-            <Briefcase className="w-4 h-4" />
-            <span>Entrepreneurs ({ENTREPRENEUR_PROFILES.length})</span>
-          </button>
+        <button
+          type="button"
+          onClick={() => openCategory("ENTREPRENEUR")}
+          className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+            viewMode === "CATEGORY" && activeCategory === "ENTREPRENEUR"
+              ? "border-amber-500 text-amber-600 dark:text-amber-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          }`}
+        >
+          <Briefcase className="w-4 h-4" />
+          <span>Entrepreneurs ({ENTREPRENEUR_PROFILES.length})</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={() => openCategory("HR_LEADER")}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition duration-150 focus-visible:outline-2 focus-visible:outline-amber-500 ${
-              viewMode === "CATEGORY" && activeCategory === "HR_LEADER"
-                ? "bg-[#0F172A] text-amber-400 shadow-xs dark:bg-amber-500 dark:text-slate-950"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-amber-500/50"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>HR Leaders ({HR_LEADER_PROFILES.length})</span>
-          </button>
-        </div>
-
-        {/* Progress & Bookmark Summary Pill */}
-        <div className="flex items-center gap-3 text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>
-              Explored: <strong>{exploredIds.length}</strong> /{" "}
-              {HALL_OF_FAME_PROFILES.length}
-            </span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <Bookmark className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>
-              Bookmarked: <strong>{bookmarkedIds.length}</strong>
-            </span>
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={() => openCategory("HR_LEADER")}
+          className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+            viewMode === "CATEGORY" && activeCategory === "HR_LEADER"
+              ? "border-amber-500 text-amber-600 dark:text-amber-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>HR Leaders ({HR_LEADER_PROFILES.length})</span>
+        </button>
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════════════════
           VIEW 1: HALL OF FAME PORTRAIT GALLERY LANDING PAGE
          ═══════════════════════════════════════════════════════════════════════ */}
       {viewMode === "LANDING" && (
-        <div className="space-y-10 animate-in fade-in duration-200 motion-reduce:animate-none">
-          {/* 1. Deep Navy & Gold Editorial Hero Section */}
-          <section className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-[#0F172A] text-white p-6 sm:p-10 shadow-xl">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-amber-500/10 blur-2xl"
-            />
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-7 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-widest">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>IBE Interactive Portrait Gallery • {studentName}</span>
-                </div>
-
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold tracking-tight text-white">
-                  Hall of Fame
-                </h1>
-
-                <p className="text-base sm:text-lg text-amber-200/95 font-medium leading-relaxed">
-                  Discover the people shaping business, entrepreneurship, and the future of work.
-                </p>
-
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                  Click on any portrait picture below to open the leader&apos;s full biography, <strong className="text-white">Why They Are Famous</strong>, <strong className="text-white">Major Achievements</strong>, and career milestones timeline.
-                </p>
-
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => openCategory("ENTREPRENEUR")}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition duration-150 shadow-md"
-                  >
-                    <Briefcase className="w-4 h-4" />
-                    <span>Filter 10 Entrepreneurs</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openCategory("HR_LEADER")}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-bold text-xs sm:text-sm transition duration-150"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Filter 10 HR Leaders</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Two Featured Clickable Portrait Cards in Hero */}
-              <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-                {[entrepreneurSpotlight, hrLeaderSpotlight].map((featured) => (
-                  <button
-                    key={featured.id}
-                    type="button"
-                    onClick={() => openProfile(featured, "LANDING")}
-                    className="group text-left rounded-2xl border border-amber-400/30 bg-slate-900/90 overflow-hidden shadow-lg hover:-translate-y-1 hover:border-amber-400 transition-all duration-200"
-                  >
-                    <div className="relative aspect-[4/4.4] w-full overflow-hidden">
-                      <LeaderPortraitImage profile={featured} className="w-full h-full" />
-                      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950 via-slate-950/75 to-transparent p-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
-                          {featured.category === "ENTREPRENEUR"
-                            ? "Entrepreneur Spotlight"
-                            : "HR Leader Spotlight"}
-                        </span>
-                        <div className="text-sm font-serif font-bold text-white truncate">
-                          {featured.fullName}
-                        </div>
-                        <div className="text-[11px] text-slate-300 truncate">
-                          Click picture for details →
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* 2. WING A: 10 ENTREPRENEURS PORTRAIT GALLERY */}
-          <section aria-labelledby="entrepreneurs-gallery-heading" className="space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="space-y-8">
+          {/* 1. WING A: 10 ENTREPRENEURS PORTRAIT GALLERY */}
+          <section aria-labelledby="entrepreneurs-gallery-heading" className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                   Wing I • 5 Filipino & 5 International Founders
                 </span>
                 <h2
                   id="entrepreneurs-gallery-heading"
-                  className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white mt-0.5"
+                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
                 >
                   Entrepreneur Hall of Fame (10)
                 </h2>
@@ -989,14 +950,14 @@ export default function HallOfFameClient({
               <button
                 type="button"
                 onClick={() => openCategory("ENTREPRENEUR")}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
               >
                 <span>Search & Filter Entrepreneurs Wing</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {ENTREPRENEUR_PROFILES.map((profile) => (
                 <ClickablePortraitCard
                   key={profile.id}
@@ -1013,16 +974,16 @@ export default function HallOfFameClient({
             </div>
           </section>
 
-          {/* 3. WING B: 10 HR LEADERS PORTRAIT GALLERY */}
-          <section aria-labelledby="hr-leaders-gallery-heading" className="space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+          {/* 2. WING B: 10 HR LEADERS PORTRAIT GALLERY */}
+          <section aria-labelledby="hr-leaders-gallery-heading" className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                   Wing II • 5 Filipino & 5 International People Pioneers
                 </span>
                 <h2
                   id="hr-leaders-gallery-heading"
-                  className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white mt-0.5"
+                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
                 >
                   HR Leaders Hall of Fame (10)
                 </h2>
@@ -1030,14 +991,14 @@ export default function HallOfFameClient({
               <button
                 type="button"
                 onClick={() => openCategory("HR_LEADER")}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
               >
                 <span>Search & Filter HR Leaders Wing</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {HR_LEADER_PROFILES.map((profile) => (
                 <ClickablePortraitCard
                   key={profile.id}
@@ -1060,58 +1021,23 @@ export default function HallOfFameClient({
           VIEW 2: CATEGORY WING PAGE (ENTREPRENEURS OR HR LEADERS)
          ═══════════════════════════════════════════════════════════════════════ */}
       {viewMode === "CATEGORY" && (
-        <div className="space-y-8 animate-in fade-in duration-200 motion-reduce:animate-none">
+        <div className="space-y-5">
           {/* Category Banner */}
-          <section className="rounded-3xl border border-amber-500/30 bg-[#0F172A] text-white p-6 sm:p-8 shadow-lg">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className="space-y-3 max-w-3xl">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("LANDING")}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back to Full Portrait Gallery</span>
-                </button>
-
+          <section className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 sm:p-6 shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="space-y-1.5 max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold uppercase tracking-wider">
                     {CATEGORY_META[activeCategory].badgeLabel}
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                   {CATEGORY_META[activeCategory].title}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   {CATEGORY_META[activeCategory].subtitle}
                 </p>
-              </div>
-
-              {/* Category Switcher */}
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => openCategory("ENTREPRENEUR")}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition ${
-                    activeCategory === "ENTREPRENEUR"
-                      ? "bg-amber-500 text-slate-950 shadow"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  Entrepreneurs (10)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openCategory("HR_LEADER")}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition ${
-                    activeCategory === "HR_LEADER"
-                      ? "bg-amber-500 text-slate-950 shadow"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  HR Leaders (10)
-                </button>
               </div>
             </div>
           </section>
@@ -1119,7 +1045,7 @@ export default function HallOfFameClient({
           {/* Search & Filter Controls */}
           <section
             aria-label="Filter Hall of Fame Profiles"
-            className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#FAF8F5] dark:bg-slate-900/90 p-4 sm:p-5 space-y-4"
+            className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-4 sm:p-5 space-y-4 shadow-xs"
           >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               {/* Search Input */}
@@ -1131,12 +1057,12 @@ export default function HallOfFameClient({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, company, profession, or major achievement..."
                   aria-label="Search profiles by name, company, profession, or achievement"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-[#10131B] border border-slate-200 dark:border-white/10 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               {/* Origin Filter Pills */}
-              <div className="md:col-span-4 flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+              <div className="md:col-span-4 flex items-center gap-1 bg-slate-50 dark:bg-[#10131B] p-1 rounded-lg border border-slate-200 dark:border-white/10">
                 {(
                   [
                     { id: "ALL", label: "All (10)" },
@@ -1148,9 +1074,9 @@ export default function HallOfFameClient({
                     key={item.id}
                     type="button"
                     onClick={() => setOriginFilter(item.id)}
-                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition ${
+                    className={`flex-1 py-1.5 px-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                       originFilter === item.id
-                        ? "bg-[#0F172A] text-amber-300 dark:bg-amber-500 dark:text-slate-950"
+                        ? "bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950"
                         : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
@@ -1161,30 +1087,28 @@ export default function HallOfFameClient({
 
               {/* Subject Filter Dropdown */}
               <div className="md:col-span-2">
-                <select
+                <ResponsiveSelect<HallOfFameSubject | "ALL">
+                  ariaLabel="Filter by related IBE subject"
                   value={subjectFilter}
-                  onChange={(e) =>
-                    setSubjectFilter(e.target.value as HallOfFameSubject | "ALL")
-                  }
-                  aria-label="Filter by related IBE subject"
-                  className="w-full h-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="ALL">All Subjects</option>
-                  {CATEGORY_META[activeCategory].subjects.map((subj) => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSubjectFilter}
+                  align="right"
+                  options={[
+                    { value: "ALL", label: "All Subjects" },
+                    ...CATEGORY_META[activeCategory].subjects.map((subj) => ({
+                      value: subj,
+                      label: subj,
+                    })),
+                  ]}
+                />
               </div>
             </div>
 
             {/* Active Count & Filter Reset Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200/80 dark:border-slate-800 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-white/10 text-xs">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="text-slate-600 dark:text-slate-400">
                   Showing{" "}
-                  <strong className="text-slate-900 dark:text-white">
+                  <strong className="font-mono text-slate-900 dark:text-white">
                     {categoryProfiles.length}
                   </strong>{" "}
                   of 10 portraits in {CATEGORY_META[activeCategory].title}
@@ -1193,10 +1117,10 @@ export default function HallOfFameClient({
                 <button
                   type="button"
                   onClick={() => setOnlyBookmarked((prev) => !prev)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold transition ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-semibold transition-colors cursor-pointer ${
                     onlyBookmarked
-                      ? "bg-amber-500/20 border-amber-500/50 text-amber-900 dark:text-amber-300"
-                      : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                      ? "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300"
+                      : "bg-slate-50 dark:bg-[#10131B] border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   <Bookmark className="w-3.5 h-3.5" />
@@ -1208,7 +1132,7 @@ export default function HallOfFameClient({
                 <button
                   type="button"
                   onClick={resetCategoryFilters}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Filters</span>
@@ -1219,27 +1143,27 @@ export default function HallOfFameClient({
 
           {/* Clickable Portrait Cards Grid */}
           {categoryProfiles.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-10 text-center space-y-4">
-              <Search className="w-8 h-8 text-amber-600 mx-auto" />
+            <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-10 text-center space-y-3 shadow-xs">
+              <Search className="w-7 h-7 text-amber-500 mx-auto" />
               <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   No profiles match your search or filter
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Try clearing your search term or switching the Filipino / International filter to view all 10 portraits in this wing.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={resetCategoryFilters}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs sm:text-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D97706] hover:bg-amber-700 text-white font-semibold text-xs cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 <span>Show All 10 Portraits</span>
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {categoryProfiles.map((profile) => (
                 <ClickablePortraitCard
                   key={profile.id}
@@ -1259,10 +1183,10 @@ export default function HallOfFameClient({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          VIEW 3: DETAILED PROFILE EDITORIAL PAGE (10 REQUIRED SECTIONS IN ORDER)
+          VIEW 3: DETAILED PROFILE EDITORIAL PAGE
          ═══════════════════════════════════════════════════════════════════════ */}
       {viewMode === "PROFILE" && activeProfile && (
-        <article className="space-y-8 animate-in fade-in duration-200 motion-reduce:animate-none">
+        <article className="space-y-6">
           {/* Top Back & Next Profile Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button
@@ -1272,9 +1196,9 @@ export default function HallOfFameClient({
                   ? setViewMode("CATEGORY")
                   : setViewMode("LANDING")
               }
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 hover:border-amber-500/50 transition"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-[#141721] border-2 border-slate-200 dark:border-white/15 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               <span>
                 {previousView === "CATEGORY"
                   ? `Back to ${CATEGORY_META[activeProfile.category].title}`
@@ -1286,10 +1210,10 @@ export default function HallOfFameClient({
               <button
                 type="button"
                 onClick={() => toggleBookmark(activeProfile.id)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border-2 text-xs font-semibold transition-colors cursor-pointer ${
                   bookmarkedIds.includes(activeProfile.id)
-                    ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300"
-                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                    ? "bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-300"
+                    : "bg-white dark:bg-[#141721] border-slate-200 dark:border-white/15 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <Bookmark className="w-3.5 h-3.5" />
@@ -1306,10 +1230,10 @@ export default function HallOfFameClient({
                   <button
                     type="button"
                     onClick={() => openProfile(nextProfile, previousView)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0F172A] text-amber-300 dark:bg-amber-500 dark:text-slate-950 text-xs sm:text-sm font-bold transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 text-xs font-semibold transition-colors cursor-pointer"
                   >
                     <span>Next: {nextProfile.fullName}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 );
               })()}
@@ -1317,9 +1241,9 @@ export default function HallOfFameClient({
           </div>
 
           {/* ─── SECTION 1: PROFILE HEADER ─── */}
-          <header className="rounded-3xl border border-amber-500/30 bg-[#0F172A] text-white p-6 sm:p-8 lg:p-10 shadow-xl">
+          <header className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="w-32 h-36 sm:w-40 sm:h-48 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-xl shrink-0">
+              <div className="w-32 h-36 sm:w-36 sm:h-44 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-white/15 shrink-0">
                 <LeaderPortraitImage
                   profile={activeProfile}
                   className="w-full h-full"
@@ -1328,46 +1252,46 @@ export default function HallOfFameClient({
 
               <div className="space-y-3 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-amber-600 dark:text-amber-400 text-xs font-semibold uppercase tracking-wider">
                     {activeProfile.category === "ENTREPRENEUR"
                       ? "Entrepreneur Hall of Fame"
                       : "HR Leaders Hall of Fame"}
                   </span>
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
+                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-semibold">
                     {activeProfile.countryLabel}
                   </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
                   {activeProfile.fullName}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-amber-200">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                   <span className="inline-flex items-center gap-1.5 font-semibold">
-                    <Briefcase className="w-4 h-4 text-amber-400" />
+                    <Briefcase className="w-4 h-4 text-amber-500" />
                     {activeProfile.professionRole}
                   </span>
                   <span className="inline-flex items-center gap-1.5 font-semibold">
-                    <Building2 className="w-4 h-4 text-amber-400" />
+                    <Building2 className="w-4 h-4 text-amber-500" />
                     {activeProfile.organization}
                   </span>
                 </div>
 
                 {/* Historical vs Current/Final Positions Clearly Distinguished */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-white/15 text-xs">
-                  <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                    <span className="font-bold uppercase tracking-wider text-amber-300 block mb-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-white/10 text-xs">
+                  <div className="rounded-lg bg-slate-50/70 dark:bg-[#10131B] p-3 border border-slate-200/80 dark:border-white/10">
+                    <span className="font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-1">
                       Current / Final Status
                     </span>
-                    <p className="text-slate-200 leading-relaxed">
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                       {activeProfile.currentOrFinalStatus}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                    <span className="font-bold uppercase tracking-wider text-sky-300 block mb-1">
+                  <div className="rounded-lg bg-slate-50/70 dark:bg-[#10131B] p-3 border border-slate-200/80 dark:border-white/10">
+                    <span className="font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 block mb-1">
                       Historical Leadership Positions
                     </span>
-                    <p className="text-slate-200 leading-relaxed">
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
                       {activeProfile.historicalPositions}
                     </p>
                   </div>
@@ -1377,164 +1301,163 @@ export default function HallOfFameClient({
           </header>
 
           {/* Editorial Detail Sections */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* ─── SECTION 2: CAREER OVERVIEW ─── */}
-              <section
-                aria-labelledby="section-career-overview"
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/85 p-6 sm:p-8 space-y-4 shadow-xs"
+            <section
+              aria-labelledby="section-career-overview"
+              className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-6 space-y-4 shadow-xs"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <BookOpen className="w-4 h-4 text-amber-500" />
+                <span>Section 2 • Career Overview & Turning Points</span>
+              </div>
+              <h2
+                id="section-career-overview"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white"
               >
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Section 2 • Career Overview & Turning Points</span>
+                Career Overview
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                {activeProfile.shortBiography}
+              </p>
+              <div className="rounded-lg bg-slate-50/70 dark:bg-[#10131B] border border-slate-200/80 dark:border-white/10 p-4 space-y-1.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Career Background & Crucial Turning Points
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {activeProfile.careerBackgroundAndTurningPoints}
+                </p>
+              </div>
+            </section>
+
+            {/* ─── SECTION 3: WHY THEY ARE FAMOUS ─── */}
+            <section
+              aria-labelledby="section-why-famous"
+              className="rounded-xl border-2 border-amber-500/40 bg-white dark:bg-[#141721] p-6 space-y-3 shadow-xs"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Section 3 • Signature Impact</span>
+                </div>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Verified Industry & Educational Influence
+                </span>
+              </div>
+
+              <h2
+                id="section-why-famous"
+                className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white"
+              >
+                Why They Are Famous
+              </h2>
+
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                {activeProfile.whyFamous}
+              </p>
+            </section>
+
+            {/* ─── SECTION 4: MAJOR ACHIEVEMENTS ─── */}
+            <section
+              aria-labelledby="section-major-achievements"
+              className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs"
+            >
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <Award className="w-4 h-4" />
+                  <span>Section 4 • Verified Accomplishments</span>
                 </div>
                 <h2
-                  id="section-career-overview"
-                  className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white"
+                  id="section-major-achievements"
+                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1"
                 >
-                  Career Overview
+                  Major Achievements
                 </h2>
-                <p className="text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
-                  {activeProfile.shortBiography}
-                </p>
-                <div className="rounded-2xl bg-[#FAF8F5] dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800 p-4 space-y-1.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
-                    Career Background & Crucial Turning Points
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {activeProfile.careerBackgroundAndTurningPoints}
-                  </p>
-                </div>
-              </section>
+              </div>
 
-              {/* ─── SECTION 3: WHY THEY ARE FAMOUS (MANDATORY PROMINENT SECTION) ─── */}
-              <section
-                aria-labelledby="section-why-famous"
-                className="rounded-3xl border-2 border-amber-500/45 bg-[#FAF8F5] dark:bg-slate-900 p-6 sm:p-8 space-y-4 shadow-md"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0F172A] text-amber-300 text-xs font-bold uppercase tracking-widest">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Section 3 • Signature Impact</span>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Verified Industry & Educational Influence
-                  </span>
-                </div>
-
-                <h2
-                  id="section-why-famous"
-                  className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white"
-                >
-                  Why They Are Famous
-                </h2>
-
-                <p className="text-sm sm:text-base text-slate-800 dark:text-slate-100 leading-relaxed font-normal">
-                  {activeProfile.whyFamous}
-                </p>
-              </section>
-
-              {/* ─── SECTION 4: MAJOR ACHIEVEMENTS (MANDATORY SEPARATE SECTION) ─── */}
-              <section
-                aria-labelledby="section-major-achievements"
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/85 p-6 sm:p-8 space-y-6 shadow-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                    <Award className="w-4 h-4" />
-                    <span>Section 4 • Verified Accomplishments</span>
-                  </div>
-                  <h2
-                    id="section-major-achievements"
-                    className="text-2xl font-serif font-bold text-slate-900 dark:text-white mt-1"
+              <div className="space-y-3">
+                {activeProfile.majorAchievements.map((achievement, index) => (
+                  <div
+                    key={achievement.id}
+                    className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-[#10131B] p-4 space-y-2.5"
                   >
-                    Major Achievements
-                  </h2>
-                </div>
-
-                <div className="space-y-4">
-                  {activeProfile.majorAchievements.map((achievement, index) => (
-                    <div
-                      key={achievement.id}
-                      className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#FAF8F5] dark:bg-slate-950/60 p-5 space-y-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                          <span className="w-6 h-6 rounded-full bg-[#0F172A] text-amber-300 inline-flex items-center justify-center text-[11px]">
-                            {index + 1}
-                          </span>
-                          <span>Achievement</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                        <span className="w-5 h-5 rounded-md bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-mono inline-flex items-center justify-center text-[11px]">
+                          {index + 1}
                         </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
-                          Period: {achievement.period}
-                        </span>
-                      </div>
-
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                        {achievement.title}
-                      </h3>
-
-                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {achievement.explanation}
-                      </p>
-
-                      <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-2">
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          Source: {achievement.sourceLabel}
-                        </span>
-                        <a
-                          href={achievement.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline shrink-0"
-                        >
-                          <span>Verify Source</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* ─── SECTION 5: CAREER MILESTONES TIMELINE ─── */}
-              <section
-                aria-labelledby="section-career-milestones"
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/85 p-6 sm:p-8 space-y-6 shadow-xs"
-              >
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                    Section 5 • Chronological History
-                  </span>
-                  <h2
-                    id="section-career-milestones"
-                    className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white mt-1"
-                  >
-                    Career Milestones
-                  </h2>
-                </div>
-
-                <ol className="relative border-s-2 border-amber-500/40 ms-3 space-y-6">
-                  {activeProfile.careerMilestones.map((milestone, idx) => (
-                    <li key={`${milestone.year}-${idx}`} className="ms-6">
-                      <span className="absolute -inset-s-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#0F172A] text-amber-300 ring-4 ring-white dark:ring-slate-900 text-[10px] font-bold">
-                        {idx + 1}
+                        <span>Achievement</span>
                       </span>
-                      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-[#FAF8F5] dark:bg-slate-950/60 p-4 space-y-1">
-                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 text-xs font-bold">
-                          {milestone.year}
-                        </span>
-                        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                          {milestone.title}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                          {milestone.description}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 text-xs font-mono font-semibold text-slate-700 dark:text-slate-200">
+                        Period: {achievement.period}
+                      </span>
+                    </div>
 
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {achievement.title}
+                    </h3>
+
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {achievement.explanation}
+                    </p>
+
+                    <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        Source: {achievement.sourceLabel}
+                      </span>
+                      <a
+                        href={achievement.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline shrink-0"
+                      >
+                        <span>Verify Source</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ─── SECTION 5: CAREER MILESTONES TIMELINE ─── */}
+            <section
+              aria-labelledby="section-career-milestones"
+              className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-6 space-y-5 shadow-xs"
+            >
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Section 5 • Chronological History
+                </span>
+                <h2
+                  id="section-career-milestones"
+                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1"
+                >
+                  Career Milestones
+                </h2>
+              </div>
+
+              <ol className="relative border-s-2 border-slate-200 dark:border-white/15 ms-3 space-y-4">
+                {activeProfile.careerMilestones.map((milestone, idx) => (
+                  <li key={`${milestone.year}-${idx}`} className="ms-6">
+                    <span className="absolute -inset-s-3 flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-mono text-[10px] font-bold">
+                      {idx + 1}
+                    </span>
+                    <div className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-[#10131B] p-4 space-y-1">
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 font-mono text-xs font-bold">
+                        {milestone.year}
+                      </span>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {milestone.title}
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {milestone.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
           </div>
         </article>
       )}

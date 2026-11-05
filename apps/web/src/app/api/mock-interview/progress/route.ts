@@ -6,6 +6,9 @@ import {
 } from "@/lib/mock-interview/access";
 import { PREDEFINED_QUESTIONS, PREDEFINED_SCENARIOS } from "@/lib/mock-interview/content-bank";
 import { ensureMockInterviewTablesAndContent } from "@/lib/mock-interview/server-db";
+import { applicantAttemptDetails, loadApplicantAttempts } from "@/lib/mock-interview/attempts";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const access = await requireMockInterviewStudent(request);
@@ -13,11 +16,7 @@ export async function GET(request: Request) {
 
   try {
     const [applicantAttempts, recruiterAttempts, quizAttempts] = await Promise.all([
-      db.mockInterviewApplicantAttempt.findMany({
-        where: { studentId: access.userId },
-        orderBy: { createdAt: "desc" },
-        take: 30,
-      }),
+      loadApplicantAttempts(access.userId),
       db.mockInterviewRecruiterAttempt.findMany({
         where: { studentId: access.userId },
         orderBy: { completedAt: "desc" },
@@ -37,12 +36,7 @@ export async function GET(request: Request) {
         type: "APPLICANT" as const,
         title: q ? q.questionText : "Applicant Mode Practice",
         date: a.createdAt.toISOString(),
-        details: {
-          writtenAnswer: a.writtenAnswer,
-          checklist: a.checklistAssessment,
-          notes: a.feedbackNotes,
-          questionId: a.questionId,
-        },
+        details: applicantAttemptDetails(a),
       };
     });
 

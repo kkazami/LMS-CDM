@@ -8,6 +8,8 @@ import {
 import { PREDEFINED_SCENARIOS } from "@/lib/mock-interview/content-bank";
 import { ensureMockInterviewTablesAndContent } from "@/lib/mock-interview/server-db";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const violation = sameOriginViolation(request);
   if (violation) return violation;
@@ -47,9 +49,8 @@ export async function POST(request: Request) {
     }
 
     let score = 0;
-    if (isQuestionCorrect) score += 35;
-    if (isClassificationCorrect) score += 35;
-    if (isFollowUpCorrect) score += 30;
+    if (isQuestionCorrect) score += 50;
+    if (isClassificationCorrect) score += 50;
     const maxScore = 100;
 
     let attemptRecord;

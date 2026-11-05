@@ -4,26 +4,27 @@ import React, { useMemo, useState } from "react";
 import {
   Award,
   BookOpen,
-  Clock,
-  Compass,
+  Building2,
   ExternalLink,
   Filter,
   Globe,
   GraduationCap,
   Layers,
-  RotateCcw,
   Search,
+  Tag,
 } from "lucide-react";
 import {
   EXTERNAL_COURSE_CATALOG,
   IBE_SUBJECT_CATEGORIES,
   LEARNING_PROVIDERS,
-  filterAndSortCatalog,
 } from "@/lib/learning-hub/catalog";
+import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import type {
   CertificateAvailability,
   CourseLinkType,
+  ExternalCourseEntry,
   IbeSubjectCategory,
+  LearningProvider,
   LearningProviderId,
   StudentLearningRecord,
 } from "@/lib/learning-hub/types";
@@ -34,7 +35,7 @@ interface LearningHubClientProps {
   studentName: string;
 }
 
-type HubTab = "PROVIDERS" | "CATALOG";
+type ActiveTab = "providers" | "catalog";
 
 function ProviderLogo({
   providerId,
@@ -47,7 +48,7 @@ function ProviderLogo({
     size === "sm"
       ? "w-5 h-5 rounded-md"
       : size === "lg"
-      ? "w-12 h-12 rounded-xl"
+      ? "w-11 h-11 rounded-lg"
       : "w-9 h-9 rounded-lg";
 
   switch (providerId) {
@@ -206,551 +207,497 @@ function ProviderLogo({
   }
 }
 
-const LINK_TYPE_META: Record<
-  CourseLinkType,
-  { label: string; buttonLabel: string; badgeClass: string }
-> = {
-  VERIFIED_COURSE: {
-    label: "Verified Course Page",
-    buttonLabel: "Start Course",
-    badgeClass:
-      "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
-  },
-  PROVIDER_CATEGORY: {
-    label: "Official Category / Search",
-    buttonLabel: "Explore Official Catalog",
-    badgeClass:
-      "bg-sky-500/10 text-sky-700 border-sky-500/30 dark:text-sky-300",
-  },
-  PROVIDER_HOMEPAGE: {
-    label: "Official Provider Portal",
-    buttonLabel: "Visit Official Portal",
-    badgeClass:
-      "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-300",
-  },
-};
-
-const CERT_BADGE_META: Record<
-  CertificateAvailability,
-  { shortLabel: string; badgeClass: string }
-> = {
-  FREE_VERIFIED: {
-    shortLabel: "Free Certificate (Verified)",
-    badgeClass:
-      "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
-  },
-  PAID_OR_CONDITIONAL: {
-    shortLabel: "Paid / Conditional Certificate",
-    badgeClass:
-      "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
-  },
-  UNVERIFIED: {
-    shortLabel: "Certificate Policy Unverified",
-    badgeClass:
-      "bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  },
-};
-
 export default function LearningHubClient({
+  instituteCode: _instituteCode,
+  initialRecords: _initialRecords,
   studentName,
 }: LearningHubClientProps) {
-  const [activeTab, setActiveTab] = useState<HubTab>("PROVIDERS");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("providers");
 
-  // Catalog filter state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState<IbeSubjectCategory | "ALL">("ALL");
-  const [selectedProvider, setSelectedProvider] = useState<LearningProviderId | "ALL">("ALL");
-  const [selectedCertFilter, setSelectedCertFilter] = useState<CertificateAvailability | "ALL">("ALL");
-  const [selectedLinkType, setSelectedLinkType] = useState<CourseLinkType | "ALL">("ALL");
-  const [sortBy, setSortBy] = useState<"RECOMMENDED" | "TITLE_ASC" | "DURATION_ASC">("RECOMMENDED");
+  // Course Catalog filters
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<"ALL" | IbeSubjectCategory>("ALL");
+  const [selectedProvider, setSelectedProvider] = useState<"ALL" | LearningProviderId>("ALL");
+  const [selectedCertFilter, setSelectedCertFilter] = useState<"ALL" | CertificateAvailability>("ALL");
+  const [selectedLinkFilter, setSelectedLinkFilter] = useState<"ALL" | CourseLinkType>("ALL");
 
-  const filteredCourses = useMemo(
-    () =>
-      filterAndSortCatalog({
-        search: searchQuery,
-        subject: selectedSubject,
-        providerId: selectedProvider,
-        certificateAvailability: selectedCertFilter,
-        linkType: selectedLinkType,
-        sortBy,
-      }),
-    [
-      searchQuery,
-      selectedSubject,
-      selectedProvider,
-      selectedCertFilter,
-      selectedLinkType,
-      sortBy,
-    ]
-  );
+  const filteredCourses = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return EXTERNAL_COURSE_CATALOG.filter((course) => {
+      if (selectedSubject !== "ALL" && course.subject !== selectedSubject) {
+        return false;
+      }
+      if (selectedProvider !== "ALL" && course.providerId !== selectedProvider) {
+        return false;
+      }
+      if (
+        selectedCertFilter !== "ALL" &&
+        course.certificateAvailability !== selectedCertFilter
+      ) {
+        return false;
+      }
+      if (selectedLinkFilter !== "ALL" && course.linkType !== selectedLinkFilter) {
+        return false;
+      }
+      if (query) {
+        const haystack = [
+          course.title,
+          course.providerName,
+          course.subject,
+          course.description,
+          ...course.keywords,
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [
+    searchQuery,
+    selectedSubject,
+    selectedProvider,
+    selectedCertFilter,
+    selectedLinkFilter,
+  ]);
 
-  const hasActiveFilters =
-    searchQuery.trim() !== "" ||
-    selectedSubject !== "ALL" ||
-    selectedProvider !== "ALL" ||
-    selectedCertFilter !== "ALL" ||
-    selectedLinkType !== "ALL" ||
-    sortBy !== "RECOMMENDED";
+  const subjectCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of IBE_SUBJECT_CATEGORIES) {
+      counts[s] = EXTERNAL_COURSE_CATALOG.filter((c) => c.subject === s).length;
+    }
+    return counts;
+  }, []);
+
+  function handleBrowseProviderCourses(providerId: LearningProviderId) {
+    setSelectedProvider(providerId);
+    setSelectedSubject("ALL");
+    setSelectedCertFilter("ALL");
+    setSelectedLinkFilter("ALL");
+    setSearchQuery("");
+    setActiveTab("catalog");
+  }
+
+  function handleSelectSubjectChip(subject: "ALL" | IbeSubjectCategory) {
+    setSelectedSubject(subject);
+    if (activeTab !== "catalog") {
+      setActiveTab("catalog");
+    }
+  }
 
   function resetCatalogFilters() {
     setSearchQuery("");
     setSelectedSubject("ALL");
     setSelectedProvider("ALL");
     setSelectedCertFilter("ALL");
-    setSelectedLinkType("ALL");
-    setSortBy("RECOMMENDED");
+    setSelectedLinkFilter("ALL");
   }
 
   return (
-    <div className="space-y-8 text-slate-900 dark:text-slate-100">
-      {/* ─── Hero Header ─── */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-linear-to-br from-amber-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/40 p-6 sm:p-8 shadow-lg">
-        <div className="space-y-3 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold uppercase tracking-wider">
-            <GraduationCap className="w-3.5 h-3.5" />
-            IBE Student Exclusive • External Courses & Certificates
+    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      {/* Compact Header Card */}
+      <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] shadow-xs overflow-hidden">
+        <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                IBE Learning Hub
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+                <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
+                External Courses & Certificates
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>. Explore verified global business academies (HP LIFE, Saylor University, HubSpot Academy, OpenLearn, Santander Open Academy, Alison) mapped to your 12 IBE subjects.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            IBE Learning Hub
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-            Welcome,{" "}
-            <span className="font-semibold text-amber-600 dark:text-amber-300">
-              {studentName}
-            </span>
-            . Discover verified business, accounting, finance, HR, and marketing courses and launch courses directly on their official websites.
-          </p>
-        </div>
 
-        {/* Navigation Tabs (Official Providers first, Course Catalog second) */}
-        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("PROVIDERS")}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              activeTab === "PROVIDERS"
-                ? "bg-amber-500 text-slate-950 shadow"
-                : "bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
-            }`}
-          >
-            <Globe className="w-4 h-4" />
-            {LEARNING_PROVIDERS.length} Official Providers
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("CATALOG")}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              activeTab === "CATALOG"
-                ? "bg-amber-500 text-slate-950 shadow"
-                : "bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            Course Catalog ({EXTERNAL_COURSE_CATALOG.length})
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab(activeTab === "providers" ? "catalog" : "providers")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1E2B] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+              {activeTab === "providers"
+                ? `Browse Course Catalog (${EXTERNAL_COURSE_CATALOG.length})`
+                : `View Official Providers (${LEARNING_PROVIDERS.length})`}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ─── TAB 1: 7 OFFICIAL PROVIDERS ─── */}
-      {activeTab === "PROVIDERS" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {LEARNING_PROVIDERS.map((provider) => {
-            const providerCourses = EXTERNAL_COURSE_CATALOG.filter(
-              (c) => c.providerId === provider.id
-            );
-            return (
-              <div
-                key={provider.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-5 sm:p-6 flex flex-col justify-between gap-4 shadow-xs hover:border-amber-500/40 transition"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <ProviderLogo providerId={provider.id} size="lg" />
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
-                          {provider.name}
-                        </h3>
-                        <a
-                          href={provider.homepageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-mono text-amber-600 dark:text-amber-400 hover:underline truncate block"
-                        >
-                          {provider.homepageUrl}
-                        </a>
-                      </div>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold shrink-0">
-                      {providerCourses.length} Curated Entries
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {provider.description}
-                  </p>
-                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-600 dark:text-slate-300">
-                    <strong className="text-slate-900 dark:text-white">
-                      Certificate Policy:
-                    </strong>{" "}
-                    {provider.certificatePolicyNote}
-                  </div>
-                </div>
+      {/* Clean Underline Tabs */}
+      <div className="border-b-2 border-slate-200 dark:border-white/15 flex items-center gap-6 overflow-x-auto no-scrollbar">
+        {[
+          {
+            id: "providers" as const,
+            label: `Official Providers (${LEARNING_PROVIDERS.length})`,
+            icon: Building2,
+          },
+          {
+            id: "catalog" as const,
+            label: `Course Catalog (${EXTERNAL_COURSE_CATALOG.length})`,
+            icon: BookOpen,
+          },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+                active
+                  ? "border-amber-500 text-amber-600 dark:text-amber-400"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProvider(provider.id);
-                      setActiveTab("CATALOG");
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition"
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                    View {provider.shortName} Courses in Hub
-                  </button>
-                  <a
-                    href={provider.homepageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition"
-                  >
-                    <span>Visit {provider.shortName} Website</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+      {/* TAB 1: OFFICIAL LEARNING PROVIDERS */}
+      {activeTab === "providers" && (
+        <div className="space-y-6">
+          {/* Providers Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {LEARNING_PROVIDERS.map((provider: LearningProvider) => {
+              const providerCourseCount = EXTERNAL_COURSE_CATALOG.filter(
+                (c) => c.providerId === provider.id
+              ).length;
+
+              return (
+                <div
+                  key={provider.id}
+                  className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-white/25 transition-colors"
+                >
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <ProviderLogo providerId={provider.id} size="lg" />
+                        <div>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <Globe className="w-3 h-3 text-amber-500" />
+                            Official External Platform
+                          </span>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                            {provider.name}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-mono font-semibold shrink-0">
+                        {providerCourseCount} courses
+                      </span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {provider.description}
+                    </p>
+
+                    <div className="rounded-lg bg-slate-50/70 dark:bg-[#10131B] border border-slate-200/80 dark:border-white/10 p-3 space-y-1">
+                      <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        Certificate Policy
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {provider.certificatePolicyNote}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBrowseProviderCourses(provider.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-white/10 transition-colors cursor-pointer"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                      Filter {providerCourseCount} Courses
+                    </button>
+
+                    <a
+                      href={provider.catalogUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#D97706] hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+                    >
+                      Visit Official Portal
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Subject Jump Strip */}
+          <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 space-y-3.5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-amber-500" />
+                  Jump Straight to an IBE Subject Area
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Select any business subject below to view all external courses mapped to that discipline.
+                </p>
               </div>
-            );
-          })}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {IBE_SUBJECT_CATEGORIES.map((subject) => (
+                <button
+                  key={subject}
+                  type="button"
+                  onClick={() => handleSelectSubjectChip(subject)}
+                  className="flex items-center justify-between p-3 rounded-lg bg-slate-50/70 hover:bg-slate-100 dark:bg-[#10131B] dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 text-left transition-colors cursor-pointer group"
+                >
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate pr-2">
+                    {subject}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-white dark:bg-[#141721] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-mono font-bold shrink-0">
+                    {subjectCounts[subject] ?? 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ─── TAB 2: COURSE CATALOG ─── */}
-      {activeTab === "CATALOG" && (
-        <div className="space-y-6">
-          {/* Quick Provider Filter Strip */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                Filter by Official Provider (7 Platforms)
-              </span>
-              {selectedProvider !== "ALL" && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedProvider("ALL")}
-                  className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
-                >
-                  Show All Providers
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedProvider("ALL")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                  selectedProvider === "ALL"
-                    ? "bg-amber-500 text-slate-950 border-amber-500"
-                    : "bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                }`}
-              >
-                All 7 Providers ({EXTERNAL_COURSE_CATALOG.length})
-              </button>
-              {LEARNING_PROVIDERS.map((provider) => {
-                const count = EXTERNAL_COURSE_CATALOG.filter(
-                  (c) => c.providerId === provider.id
-                ).length;
-                const active = selectedProvider === provider.id;
-                return (
-                  <button
-                    key={provider.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedProvider(active ? "ALL" : provider.id)
-                    }
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                      active
-                        ? "bg-amber-500 text-slate-950 border-amber-500"
-                        : "bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                    }`}
-                  >
-                    <ProviderLogo providerId={provider.id} size="sm" />
-                    <span>
-                      {provider.name} ({count})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Search & Multi-Filter Controls */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 sm:p-5 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* TAB 2: CURATED COURSE CATALOG BY IBE SUBJECT */}
+      {activeTab === "catalog" && (
+        <div className="space-y-5">
+          {/* Search & Multi-Filter Control Panel */}
+          <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 space-y-4 shadow-xs">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
               {/* Search Box */}
-              <div className="relative lg:col-span-2">
+              <div className="lg:col-span-5 relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  aria-label="Search external courses"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by course title, topic, or keyword (e.g., accounting, SEO, HR)..."
-                  aria-label="Search courses"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
+                  placeholder="Search courses, keywords (e.g., Bookkeeping, SEO, Pricing, HR)..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-[#10131B] border border-slate-200 dark:border-white/10 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
                 />
               </div>
 
-              {/* Subject Filter */}
-              <div>
-                <select
-                  value={selectedSubject}
-                  onChange={(e) =>
-                    setSelectedSubject(e.target.value as IbeSubjectCategory | "ALL")
-                  }
-                  aria-label="Filter by IBE subject"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="ALL">All 12 IBE Subjects</option>
-                  {IBE_SUBJECT_CATEGORIES.map((subject) => (
-                    <option key={subject} value={subject}>
-                      {subject}
-                    </option>
-                  ))}
-                </select>
+              {/* Provider Filter */}
+              <div className="lg:col-span-3">
+                <ResponsiveSelect<"ALL" | LearningProviderId>
+                  ariaLabel="Filter by provider"
+                  value={selectedProvider}
+                  onChange={setSelectedProvider}
+                  options={[
+                    { value: "ALL", label: `All Providers (${LEARNING_PROVIDERS.length})` },
+                    ...LEARNING_PROVIDERS.map((p) => ({ value: p.id, label: p.name })),
+                  ]}
+                />
               </div>
 
               {/* Certificate Filter */}
-              <div>
-                <select
+              <div className="lg:col-span-2">
+                <ResponsiveSelect<"ALL" | CertificateAvailability>
+                  ariaLabel="Filter by certificate availability"
                   value={selectedCertFilter}
-                  onChange={(e) =>
-                    setSelectedCertFilter(
-                      e.target.value as CertificateAvailability | "ALL"
-                    )
-                  }
-                  aria-label="Filter by certificate availability"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="ALL">All Certificate Policies</option>
-                  <option value="FREE_VERIFIED">
-                    Free Certificate (Verified)
-                  </option>
-                  <option value="PAID_OR_CONDITIONAL">
-                    Paid / Conditional Certificate
-                  </option>
-                  <option value="UNVERIFIED">
-                    Certificate Policy Unverified
-                  </option>
-                </select>
+                  onChange={setSelectedCertFilter}
+                  options={[
+                    { value: "ALL", label: "All Certificates" },
+                    { value: "FREE_VERIFIED", label: "Free Certificate" },
+                    { value: "PAID_OR_CONDITIONAL", label: "Optional Paid Cert" },
+                  ]}
+                />
               </div>
 
-              {/* Sort Order */}
-              <div>
-                <select
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy(
-                      e.target.value as
-                        | "RECOMMENDED"
-                        | "TITLE_ASC"
-                        | "DURATION_ASC"
-                    )
-                  }
-                  aria-label="Sort courses"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="RECOMMENDED">
-                    Sort: Verified Courses First
-                  </option>
-                  <option value="TITLE_ASC">Sort: Title (A–Z)</option>
-                  <option value="DURATION_ASC">
-                    Sort: Duration (Shortest Verified)
-                  </option>
-                </select>
+              {/* Link Type Filter */}
+              <div className="lg:col-span-2">
+                <ResponsiveSelect<"ALL" | CourseLinkType>
+                  ariaLabel="Filter by link type"
+                  value={selectedLinkFilter}
+                  onChange={setSelectedLinkFilter}
+                  align="right"
+                  options={[
+                    { value: "ALL", label: "All Destination Types" },
+                    { value: "VERIFIED_COURSE", label: "Direct Course Page" },
+                    { value: "PROVIDER_CATEGORY", label: "Category Catalog" },
+                  ]}
+                />
               </div>
             </div>
 
-            {/* Link Type Pills & Filter Summary */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5" />
-                  Destination Type:
+            {/* Subject Area Horizontal Pills */}
+            <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <Filter className="w-3.5 h-3.5 text-amber-500" />
+                  Filter by IBE Subject Area
                 </span>
-                {(
-                  [
-                    { id: "ALL", label: "All Links" },
-                    { id: "VERIFIED_COURSE", label: "Verified Individual Courses" },
-                    { id: "PROVIDER_CATEGORY", label: "Official Category / Search Pages" },
-                    { id: "PROVIDER_HOMEPAGE", label: "Official Provider Portals" },
-                  ] as const
-                ).map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedLinkType(item.id)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
-                      selectedLinkType === item.id
-                        ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/40"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Showing{" "}
-                  <strong className="text-slate-900 dark:text-white">
-                    {filteredCourses.length}
-                  </strong>{" "}
-                  of {EXTERNAL_COURSE_CATALOG.length} entries
-                </span>
-                {hasActiveFilters && (
+                {(selectedSubject !== "ALL" ||
+                  selectedProvider !== "ALL" ||
+                  selectedCertFilter !== "ALL" ||
+                  selectedLinkFilter !== "ALL" ||
+                  searchQuery.trim() !== "") && (
                   <button
                     type="button"
                     onClick={resetCatalogFilters}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
+                    className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Reset Filters
+                    Reset all filters
                   </button>
                 )}
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubject("ALL")}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer border ${
+                    selectedSubject === "ALL"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-amber-500 dark:text-slate-950 dark:border-amber-500"
+                      : "bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
+                  }`}
+                >
+                  All Subjects ({EXTERNAL_COURSE_CATALOG.length})
+                </button>
+                {IBE_SUBJECT_CATEGORIES.map((subject) => {
+                  const active = selectedSubject === subject;
+                  return (
+                    <button
+                      key={subject}
+                      type="button"
+                      onClick={() => setSelectedSubject(subject)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer border ${
+                        active
+                          ? "bg-slate-900 text-white border-slate-900 dark:bg-amber-500 dark:text-slate-950 dark:border-amber-500"
+                          : "bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
+                      }`}
+                    >
+                      {subject} ({subjectCounts[subject] ?? 0})
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Empty State */}
+          {/* Results Summary Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
+            <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Showing{" "}
+              <strong className="font-mono text-slate-900 dark:text-white">
+                {filteredCourses.length}
+              </strong>{" "}
+              of {EXTERNAL_COURSE_CATALOG.length} external business courses
+              {selectedSubject !== "ALL" && (
+                <>
+                  {" "}
+                  in{" "}
+                  <span className="font-semibold text-amber-600 dark:text-amber-400">
+                    {selectedSubject}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Course Cards Grid */}
           {filteredCourses.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-10 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
-                <Search className="w-6 h-6" />
+            <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-10 text-center space-y-3 shadow-xs">
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 text-amber-500 flex items-center justify-center mx-auto">
+                <Search className="w-5 h-5" />
               </div>
-              <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  No courses match your current filters
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  Try clearing your search keyword or switching the IBE subject or provider filter to explore all available courses.
-                </p>
-              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                No matching courses found
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                Try clearing one of your subject, provider, or certificate filters to see more business courses.
+              </p>
               <button
                 type="button"
                 onClick={resetCatalogFilters}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D97706] hover:bg-amber-700 text-white font-semibold text-xs transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" />
-                Reset All Filters
+                Reset Filters
               </button>
             </div>
           ) : (
-            /* Course Cards Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {filteredCourses.map((course) => {
-                const linkMeta = LINK_TYPE_META[course.linkType];
-                const certMeta = CERT_BADGE_META[course.certificateAvailability];
-
-                return (
-                  <div
-                    key={course.id}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-5 sm:p-6 flex flex-col justify-between gap-4 hover:border-amber-500/40 transition shadow-xs"
-                  >
-                    <div className="space-y-3">
-                      {/* Top Badges: Provider + Link Type */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
-                          <ProviderLogo providerId={course.providerId} size="sm" />
-                          <span>{course.providerName}</span>
-                        </span>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-md border text-[11px] font-semibold ${linkMeta.badgeClass}`}
-                        >
-                          {linkMeta.label}
-                        </span>
-                      </div>
-
-                      {/* Subject Category Label */}
-                      <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                        <Layers className="w-3.5 h-3.5 shrink-0" />
-                        <span>{course.subject}</span>
-                      </div>
-
-                      {/* Course Title & Description */}
-                      <div>
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
-                          {course.title}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
-                          {course.description}
-                        </p>
-                      </div>
-
-                      {/* Metadata Grid: Duration, Format */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/60 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-slate-800">
-                          <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>
-                            <strong>Duration:</strong>{" "}
-                            {course.durationLabel ?? "Not specified by provider"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/60 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-slate-800">
-                          <BookOpen className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
-                          <span className="truncate">
-                            <strong>Format:</strong>{" "}
-                            {course.learningFormat ?? "Online"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Certificate & Pricing Strip */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-semibold ${certMeta.badgeClass}`}
-                        >
-                          <Award className="w-3.5 h-3.5 shrink-0" />
-                          {course.certificateConditionLabel}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold">
-                          {course.pricingLabel}
-                        </span>
-                      </div>
-
-                      {/* Official URL display + Fallback URL */}
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <span className="truncate max-w-full font-mono">
-                          Official URL: {course.officialUrl}
-                        </span>
-                        {course.officialUrl !== course.fallbackUrl && (
-                          <a
-                            href={course.fallbackUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-amber-600 dark:text-amber-400 hover:underline shrink-0"
-                          >
-                            Provider Home ↗
-                          </a>
-                        )}
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCourses.map((course: ExternalCourseEntry) => (
+                <div
+                  key={course.id}
+                  className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-white/25 transition-colors"
+                >
+                  <div className="space-y-3">
+                    {/* Top Badges */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-semibold">
+                        <ProviderLogo providerId={course.providerId} size="sm" />
+                        {course.providerName}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                          course.certificateAvailability === "FREE_VERIFIED"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                            : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10"
+                        }`}
+                      >
+                        {course.pricingLabel}
+                      </span>
                     </div>
 
-                    {/* Action Button */}
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-start">
-                      <a
-                        href={course.officialUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-xs"
-                      >
-                        <span>{linkMeta.buttonLabel}</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                    {/* Subject & Title */}
+                    <div className="space-y-1">
+                      <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <Tag className="w-3 h-3 shrink-0" />
+                        {course.subject}
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                        {course.title}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {course.description}
+                    </p>
+
+                    {/* Keywords Chips */}
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {course.keywords.slice(0, 4).map((kw) => (
+                        <span
+                          key={kw}
+                          className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-medium"
+                        >
+                          {kw}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Card Footer */}
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10">
+                    <a
+                      href={course.officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs transition-colors"
+                    >
+                      Open Course on {course.providerName}
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
