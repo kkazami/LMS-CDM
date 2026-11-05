@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useTheme } from "@/lib/theme-context";
 import { Code2, Cpu, Cable, GraduationCap } from "lucide-react";
 import type { HardwarePartsData, LanCableData } from "@/lib/ict-lab/types";
 import CodePlaygroundTab from "./CodePlaygroundTab";
@@ -43,6 +44,83 @@ const MAIN_TABS: {
   },
 ];
 
+
+/**
+ * Pattern Layer A: Network Mesh 360x360 seamless tile.
+ * Topology: 9 nodes (circles, router ring, switch squares) joined by 1px straight lines.
+ * Monospace labels: "192.168.1.1" and "RJ45".
+ * Edge alignment: Left (0, 120) meets Right (360, 120); Top (200, 0) meets Bottom (200, 360).
+ */
+function createNetworkMeshSvg(isDark: boolean): string {
+  const strokeColor = isDark ? "rgba(147,197,253,0.16)" : "rgba(37,99,235,0.12)";
+  const fillColor = isDark ? "rgba(147,197,253,0.16)" : "rgba(37,99,235,0.12)";
+  const textColor = isDark ? "rgba(147,197,253,0.18)" : "rgba(37,99,235,0.14)";
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+    <g stroke="${strokeColor}" stroke-width="1" fill="none">
+      <path d="M0,120 L60,100 L110,60 L200,0 M110,60 L200,80 L150,160 M200,80 L270,120 L360,120 M270,120 L310,190 L240,240 L200,360 M240,240 L150,160 L140,270 L80,220 L60,100" />
+      <circle cx="150" cy="160" r="7" stroke-width="1.5" />
+      <circle cx="150" cy="160" r="2" fill="${fillColor}" />
+      <rect x="55" y="95" width="10" height="10" rx="2" fill="${fillColor}" />
+      <rect x="265" y="115" width="10" height="10" rx="2" fill="${fillColor}" />
+      <circle cx="110" cy="60" r="3.5" fill="${fillColor}" />
+      <circle cx="200" cy="80" r="3.5" fill="${fillColor}" />
+      <circle cx="310" cy="190" r="3.5" fill="${fillColor}" />
+      <circle cx="240" cy="240" r="3.5" fill="${fillColor}" />
+      <circle cx="140" cy="270" r="3.5" fill="${fillColor}" />
+      <circle cx="80" cy="220" r="3.5" fill="${fillColor}" />
+    </g>
+    <text x="165" y="155" fill="${textColor}" font-family="monospace" font-size="9" font-weight="600">192.168.1.1</text>
+    <text x="278" y="140" fill="${textColor}" font-family="monospace" font-size="9" font-weight="600">RJ45</text>
+  </svg>`;
+
+  return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+}
+
+/**
+ * Pattern Layer B: Tech Doodles 420x420 tile with 8 outline icons (stroke only, no fill):
+ * </>, { }, chip, RAM stick, RJ45 plug, monitor, binary 0 1, and #.
+ */
+function createTechDoodlesSvg(isDark: boolean): string {
+  const strokeColor = isDark ? "rgba(147,197,253,0.10)" : "rgba(37,99,235,0.09)";
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">
+    <g stroke="${strokeColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <g transform="translate(70, 70) rotate(-8)">
+        <path d="M-10,-6 L-16,0 L-10,6 M-3,8 L3,-8 M10,-6 L16,0 L10,6" />
+      </g>
+      <g transform="translate(280, 60) rotate(10)">
+        <path d="M-8,-10 C-12,-10 -12,-6 -12,-3 C-12,0 -16,0 -16,0 C-16,0 -12,0 -12,3 C-12,6 -12,10 -8,10 M8,-10 C12,-10 12,-6 12,-3 C12,0 16,0 16,0 C16,0 12,0 12,3 C12,6 12,10 8,10" />
+      </g>
+      <g transform="translate(170, 160) rotate(-6)">
+        <rect x="-12" y="-12" width="24" height="24" rx="3" />
+        <path d="M-6,-15 V-12 M0,-15 V-12 M6,-15 V-12 M-6,12 V15 M0,12 V15 M6,12 V15 M-15,-6 H-12 M-15,0 H-12 M-15,6 H-12 M12,-6 H15 M12,0 H15 M12,6 H15" />
+      </g>
+      <g transform="translate(340, 210) rotate(14)">
+        <rect x="-22" y="-7" width="44" height="14" rx="2" />
+        <path d="M-3,7 L0,4 L3,7 M-16,-3 H-10 V3 H-16 Z M-6,-3 H0 V3 H-6 Z M4,-3 H10 V3 H4 Z M-19,7 H-7 M7,7 H19" />
+      </g>
+      <g transform="translate(80, 260) rotate(12)">
+        <rect x="-9" y="-11" width="18" height="22" rx="2" />
+        <path d="M-4,11 L-5,16 H5 L4,11 M-5,-11 V-7 M-2,-11 V-7 M2,-11 V-7 M5,-11 V-7" />
+      </g>
+      <g transform="translate(270, 320) rotate(-10)">
+        <rect x="-13" y="-10" width="26" height="18" rx="2" />
+        <path d="M0,8 V13 M-7,13 H7" />
+      </g>
+      <g transform="translate(160, 360) rotate(6)">
+        <rect x="-14" y="-8" width="10" height="16" rx="4" />
+        <path d="M9,-8 L12,-8 V8 M6,8 H15" />
+      </g>
+      <g transform="translate(370, 90) rotate(8)">
+        <path d="M-8,-4 H8 M-8,4 H8 M-4,-8 V8 M4,-8 V8" />
+      </g>
+    </g>
+  </svg>`;
+
+  return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+}
+
 export default function IctLabClient({
   studentName,
   programCode,
@@ -50,7 +128,12 @@ export default function IctLabClient({
   lanCableData,
   nonce,
 }: IctLabClientProps) {
+  const { themeMode } = useTheme();
+  const isDark = themeMode === "dark";
   const [activeTab, setActiveTab] = useState<IctLabMainTabId>("playground");
+
+  const meshDataUri = useMemo(() => createNetworkMeshSvg(isDark), [isDark]);
+  const doodlesDataUri = useMemo(() => createTechDoodlesSvg(isDark), [isDark]);
 
   const handleTabKeyDown = (e: React.KeyboardEvent, idx: number) => {
     if (e.key === "ArrowRight") {
@@ -65,22 +148,53 @@ export default function IctLabClient({
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-8rem)] w-full overflow-hidden pb-10">
-      {/* Circuit-board blueprint backdrop: low-contrast grid + soft ambient glow */}
+    <div className="relative -mx-4 -mt-4 lg:-mx-8 lg:-mt-8 px-4 pt-4 lg:px-8 lg:pt-8 min-h-[calc(100vh-6rem)] overflow-x-clip pb-12">
+      {/* Full-width Network Mesh & Tech Doodles Backdrop */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:radial-gradient(ellipse_at_top,black_40%,transparent_95%)]"
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-gradient-to-br from-[#eef4ff] via-[#f3f7fe] to-[#f8fbff] dark:from-[#0b1020] dark:via-[#0d1428] dark:to-[#0f1730]"
       >
-        {/* Soft radial glow in corner */}
-        <div className="absolute -top-24 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/15" />
-        <div className="absolute top-1/3 -left-24 h-80 w-80 rounded-full bg-indigo-500/5 blur-3xl dark:bg-indigo-600/10" />
+        {/* Slow drift animation (enabled on md+ screens, strictly respects prefers-reduced-motion) */}
+        <style>{`
+          @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+            @keyframes ictBackdropDrift {
+              0% { transform: translate(0, 0); }
+              100% { transform: translate(16px, 16px); }
+            }
+            .animate-ict-drift {
+              animation: ictBackdropDrift 60s linear infinite alternate;
+            }
+          }
+        `}</style>
 
-        {/* Blueprint dot/grid lines: <8% dark opacity, <10% light opacity */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(37,99,235,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(37,99,235,0.06)_1px,transparent_1px)] bg-[size:28px_28px] dark:bg-[linear-gradient(to_right,rgba(96,165,250,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(96,165,250,0.045)_1px,transparent_1px)]" />
+        {/* Ambient Corner Glows: Soft blue top-left & indigo bottom-right */}
+        <div className="absolute -top-32 -left-32 h-[540px] w-[540px] rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/20" />
+        <div className="absolute -bottom-32 -right-32 h-[540px] w-[540px] rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-600/20" />
+
+        {/* Masked Pattern Layers: Soft vignette at extreme 6% edges only */}
+        <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_94%,transparent_100%)]">
+          {/* Pattern Layer A: Network Mesh (360x360 seamless tile) */}
+          <div
+            className="absolute inset-0 bg-repeat animate-ict-drift"
+            style={{
+              backgroundImage: `url("${meshDataUri}")`,
+              backgroundSize: "360px 360px",
+            }}
+          />
+
+          {/* Pattern Layer B: Tech Doodles (420x420 tile with offset) */}
+          <div
+            className="absolute inset-0 bg-repeat animate-ict-drift"
+            style={{
+              backgroundImage: `url("${doodlesDataUri}")`,
+              backgroundSize: "420px 420px",
+              backgroundPosition: "70px 50px",
+            }}
+          />
+        </div>
       </div>
 
       <div className="mx-auto max-w-7xl space-y-4">
-        {/* ITE Blue Header Banner with Circuit Traces & Processor Glyph Artwork */}
         <header className="relative overflow-hidden rounded-2xl border border-blue-200/80 dark:border-blue-500/30 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-950 dark:via-blue-900 dark:to-indigo-950 p-6 text-white shadow-sm">
           {/* Circuit Trace Pulse CSS (strictly respects prefers-reduced-motion) */}
           <style>{`
