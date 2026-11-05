@@ -68,7 +68,7 @@ export default function AttendancePanel({ courseId, admin = false }: { courseId:
       {data.role === 'MANAGER' && <section className={surface}><h2 className="font-bold">Export attendance</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Filter by the session opening date in its institute timezone.</p><div className="mt-3 flex flex-wrap items-end gap-3"><label className="text-sm">From<input type="date" className={fieldClass} value={from} onChange={e => setFrom(e.target.value)} /></label><label className="text-sm">To<input type="date" className={fieldClass} value={to} onChange={e => setTo(e.target.value)} /></label><button className={actionClass} disabled={busy} onClick={() => void exportCsv()}>Download CSV</button></div></section>}
       <AttendanceSettings data={data} admin={admin} busy={busy} act={act} />
     </>}
-    {scanner && <Scanner onClose={() => setScanner(undefined)} onScan={token => { const sessionId = scanner; setScanner(undefined); void act({ action: 'CHECK_IN', sessionId, token, ...location.current }); }} />}
+    {scanner && <Scanner onClose={() => setScanner(undefined)} onScan={(token: string) => { const sessionId = scanner; setScanner(undefined); void act({ action: 'CHECK_IN', sessionId, token, ...location.current }); }} />}
   </div>;
 }
 
