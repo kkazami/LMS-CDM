@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useId } from "react";
+import React, { useId, useRef } from "react";
+import Image from "next/image";
 import { useTheme } from "@/lib/theme-context";
-import { Check, X, Zap, Power } from "lucide-react";
+import { Check, X, Zap, Power, ExternalLink, Info } from "lucide-react";
 import type { Diagram, Part, Shape } from "@/lib/visual-kit/types";
 
 export interface SvgDiagramViewerProps {
@@ -31,10 +32,20 @@ export default function SvgDiagramViewer({
   const { themeMode } = useTheme();
   const isDark = themeMode === "dark";
   const glowFilterId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { w, h } = diagram.viewBox;
 
-  // Render generic shape
+  // Dev-only calibration click logger (guarded against production)
+  const handleCalibrationClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (process.env.NODE_ENV === "production") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
+    const y = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
+    console.log(`[VisualKit Calibration] x: ${x}%, y: ${y}%`);
+  };
+
+  // Render generic shape for fallback/interactive vector redraws
   const renderShape = (shape: Shape, key: string, isPartSelected = false) => {
     const isCircuitLightBulb =
       diagram.id === "simple-electric-circuit" &&
@@ -177,288 +188,270 @@ export default function SvgDiagramViewer({
         </div>
       )}
 
-      {/* Main SVG Container */}
-      <div className="relative w-full aspect-[4/3] max-h-[560px] p-2 flex items-center justify-center">
-        <svg
-          viewBox={`0 0 ${w} ${h}`}
-          className="w-full h-full select-none"
-          role="img"
-          aria-label={diagram.title}
+      {/* Main Illustration & Hotspots Canvas Container */}
+      <div
+        ref={containerRef}
+        onClick={handleCalibrationClick}
+        className="relative w-full overflow-hidden bg-slate-50 dark:bg-slate-900/60 p-2 sm:p-4 flex items-center justify-center min-h-[300px]"
+      >
+        <div
+          className="relative w-full max-w-[850px] mx-auto select-none rounded-xl overflow-hidden"
+          style={{ aspectRatio: diagram.aspectRatio ?? "4/3" }}
         >
-          <defs>
-            {/* Glow filter for active selections and closed circuit */}
-            <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {/* Canvas background subtle rect */}
-          <rect
-            x={0}
-            y={0}
-            width={w}
-            height={h}
-            fill={isDark ? "#090d16" : "#fafafa"}
-            rx={12}
-          />
-
-          {/* Circuit-closed glow effect around light bulb */}
-          {diagram.id === "simple-electric-circuit" && circuitClosed && (
-            <g className="transition-opacity duration-300">
-              <circle
-                cx={490}
-                cy={210}
-                r={50}
-                fill="rgba(250, 204, 21, 0.25)"
-                filter={`url(#${glowFilterId})`}
+          {diagram.imageSrc ? (
+            /* =========================================================================
+               PROFESSIONAL LICENSED 2D ILLUSTRATION RENDERER
+               Rendered via Next/Image (sanitized, scripts cannot run)
+               ========================================================================= */
+            <div className="relative w-full h-full bg-white dark:bg-slate-950 flex items-center justify-center">
+              <Image
+                src={diagram.imageSrc}
+                alt={diagram.imageAlt ?? diagram.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 850px"
+                className="object-contain select-none pointer-events-none"
+                priority
+                unoptimized
               />
-              <circle
-                cx={490}
-                cy={210}
-                r={68}
-                fill="rgba(250, 204, 21, 0.12)"
+            </div>
+          ) : (
+            /* =========================================================================
+               VECTOR REDRAW / INTERACTIVE SIMULATION RENDERER
+               Used for custom interactive circuits and verified vector redraws
+               ========================================================================= */
+            <svg
+              viewBox={`0 0 ${w} ${h}`}
+              className="w-full h-full select-none"
+              role="img"
+              aria-label={diagram.title}
+            >
+              <defs>
+                <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              <rect
+                x={0}
+                y={0}
+                width={w}
+                height={h}
+                fill={isDark ? "#090d16" : "#fafafa"}
+                rx={12}
               />
-              {/* Radiating light rays */}
-              <line x1={490} y1={140} x2={490} y2={125} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-              <line x1={540} y1={160} x2={555} y2={148} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-              <line x1={560} y1={210} x2={575} y2={210} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-              <line x1={440} y1={160} x2={425} y2={148} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-              <line x1={420} y1={210} x2={405} y2={210} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-            </g>
-          )}
 
-          {/* Background Decorations */}
-          {diagram.decorations.map((deco, idx) =>
-            renderShape(deco, `deco-${idx}`)
-          )}
-
-          {/* Circuit Switch Interactive Lever */}
-          {diagram.id === "simple-electric-circuit" && (
-            <g className="transition-transform duration-200">
-              {circuitClosed ? (
-                <line
-                  x1={275}
-                  y1={80}
-                  x2={325}
-                  y2={80}
-                  stroke="#22c55e"
-                  strokeWidth={5}
-                  strokeLinecap="round"
-                />
-              ) : (
-                <line
-                  x1={275}
-                  y1={80}
-                  x2={315}
-                  y2={54}
-                  stroke="#94a3b8"
-                  strokeWidth={5}
-                  strokeLinecap="round"
-                />
-              )}
-            </g>
-          )}
-
-          {/* Diagram Parts (Shapes) */}
-          {diagram.parts.map((part) => {
-            const isSelected = selectedPartId === part.id;
-            const shapes = Array.isArray(part.shape) ? part.shape : [part.shape];
-
-            return (
-              <g
-                key={part.id}
-                role="button"
-                tabIndex={0}
-                aria-label={part.name}
-                onClick={() => onSelectPart(part.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectPart(part.id);
-                  }
-                }}
-                className="cursor-pointer transition-transform duration-150 focus:outline-none"
-              >
-                {shapes.map((s, sIdx) =>
-                  renderShape(s, `${part.id}-${sIdx}`, isSelected)
-                )}
-              </g>
-            );
-          })}
-
-          {/* Anchor Markers */}
-          {diagram.parts.map((part, index) => {
-            const markerNum = index + 1;
-            const isSelected = selectedPartId === part.id;
-            const studentAnswer = labelAnswers[part.id];
-            const hasAnswer = Boolean(studentAnswer);
-            const isCorrect = scoreResults[part.id];
-
-            // Marker visual styling based on mode and scoring
-            let markerBg = isDark ? "#1e293b" : "#ffffff";
-            let markerBorder = isDark ? "#475569" : "#94a3b8";
-            let markerText = isDark ? "#f8fafc" : "#0f172a";
-
-            if (mode === "explore") {
-              if (isSelected) {
-                markerBg = "#f59e0b"; // amber
-                markerBorder = "#b45309";
-                markerText = "#ffffff";
-              }
-            } else {
-              // Label It Mode
-              if (isSubmitted) {
-                if (isCorrect) {
-                  markerBg = "#16a34a"; // green
-                  markerBorder = "#15803d";
-                  markerText = "#ffffff";
-                } else {
-                  markerBg = "#dc2626"; // red
-                  markerBorder = "#b91c1c";
-                  markerText = "#ffffff";
-                }
-              } else if (isSelected) {
-                markerBg = "#2563eb"; // blue
-                markerBorder = "#1d4ed8";
-                markerText = "#ffffff";
-              } else if (hasAnswer) {
-                markerBg = isDark ? "#0f766e" : "#ccfbf1";
-                markerBorder = isDark ? "#14b8a6" : "#0d9488";
-                markerText = isDark ? "#ffffff" : "#0f766e";
-              }
-            }
-
-            return (
-              <g
-                key={`marker-${part.id}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Marker ${markerNum}: ${part.name}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectPart(part.id);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onSelectPart(part.id);
-                  }
-                }}
-                className="cursor-pointer group focus:outline-none"
-              >
-                {/* Active marker outer halo */}
-                {isSelected && (
+              {/* Circuit-closed glow effect around light bulb */}
+              {diagram.id === "simple-electric-circuit" && circuitClosed && (
+                <g className="transition-opacity duration-300">
                   <circle
-                    cx={part.anchor.x}
-                    cy={part.anchor.y}
-                    r={18}
-                    fill="none"
-                    stroke={mode === "explore" ? "#f59e0b" : "#3b82f6"}
-                    strokeWidth={2.5}
-                    className="animate-pulse"
+                    cx={490}
+                    cy={210}
+                    r={50}
+                    fill="rgba(250, 204, 21, 0.25)"
+                    filter={`url(#${glowFilterId})`}
                   />
-                )}
+                  <circle
+                    cx={490}
+                    cy={210}
+                    r={68}
+                    fill="rgba(250, 204, 21, 0.12)"
+                  />
+                  <line x1={490} y1={140} x2={490} y2={125} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
+                  <line x1={540} y1={160} x2={555} y2={148} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
+                  <line x1={560} y1={210} x2={575} y2={210} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
+                  <line x1={440} y1={160} x2={425} y2={148} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
+                  <line x1={420} y1={210} x2={405} y2={210} stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
+                </g>
+              )}
 
-                {/* Marker Circle */}
-                <circle
-                  cx={part.anchor.x}
-                  cy={part.anchor.y}
-                  r={12}
-                  fill={markerBg}
-                  stroke={markerBorder}
-                  strokeWidth={2}
-                  filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.25))"
-                  className="transition-colors duration-150 group-hover:scale-110"
-                />
+              {/* Background Decorations */}
+              {diagram.decorations.map((deco, idx) =>
+                renderShape(deco, `deco-${idx}`)
+              )}
 
-                {/* Marker Number or Status Icon */}
-                {mode === "label" && isSubmitted ? (
-                  isCorrect ? (
-                    <text
-                      x={part.anchor.x}
-                      y={part.anchor.y + 3.5}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize={11}
-                      fontWeight="bold"
-                    >
-                      ✓
-                    </text>
-                  ) : (
-                    <text
-                      x={part.anchor.x}
-                      y={part.anchor.y + 3.5}
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize={11}
-                      fontWeight="bold"
-                    >
-                      ✕
-                    </text>
-                  )
-                ) : (
-                  <text
-                    x={part.anchor.x}
-                    y={part.anchor.y + 3.5}
-                    textAnchor="middle"
-                    fill={markerText}
-                    fontSize={10}
-                    fontWeight="bold"
-                  >
-                    {markerNum}
-                  </text>
-                )}
-
-                {/* In Label mode: Answer Badge below marker if assigned */}
-                {mode === "label" && studentAnswer && (
-                  <g>
-                    <rect
-                      x={part.anchor.x - 45}
-                      y={part.anchor.y + 15}
-                      width={90}
-                      height={18}
-                      rx={4}
-                      fill={isDark ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)"}
-                      stroke={
-                        isSubmitted
-                          ? isCorrect
-                            ? "#16a34a"
-                            : "#dc2626"
-                          : isDark
-                          ? "#334155"
-                          : "#cbd5e1"
-                      }
-                      strokeWidth={1}
-                      filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.15))"
+              {/* Circuit Switch Interactive Lever */}
+              {diagram.id === "simple-electric-circuit" && (
+                <g className="transition-transform duration-200">
+                  {circuitClosed ? (
+                    <line
+                      x1={275}
+                      y1={80}
+                      x2={325}
+                      y2={80}
+                      stroke="#22c55e"
+                      strokeWidth={5}
+                      strokeLinecap="round"
                     />
-                    <text
-                      x={part.anchor.x}
-                      y={part.anchor.y + 27}
-                      textAnchor="middle"
-                      fill={isDark ? "#e2e8f0" : "#1e293b"}
-                      fontSize={9}
-                      fontWeight="600"
-                    >
-                      {studentAnswer.length > 15
-                        ? `${studentAnswer.slice(0, 14)}…`
-                        : studentAnswer}
-                    </text>
+                  ) : (
+                    <line
+                      x1={275}
+                      y1={80}
+                      x2={315}
+                      y2={54}
+                      stroke="#94a3b8"
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                    />
+                  )}
+                </g>
+              )}
+
+              {/* Diagram Parts (Shapes) */}
+              {diagram.parts.map((part) => {
+                if (!part.shape) return null;
+                const isSelected = selectedPartId === part.id;
+                const shapes = Array.isArray(part.shape) ? part.shape : [part.shape];
+
+                return (
+                  <g
+                    key={part.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={part.name}
+                    onClick={() => onSelectPart(part.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectPart(part.id);
+                      }
+                    }}
+                    className="cursor-pointer transition-transform duration-150 focus:outline-none"
+                  >
+                    {shapes.map((s, sIdx) =>
+                      renderShape(s, `${part.id}-${sIdx}`, isSelected)
+                    )}
                   </g>
-                )}
-              </g>
-            );
-          })}
-        </svg>
+                );
+              })}
+            </svg>
+          )}
+
+          {/* =========================================================================
+              ACCESSIBLE NUMBERED HOTSPOT BUTTON OVERLAY
+              Positions accurately scale with container width (x%, y%)
+              ========================================================================= */}
+          <div className="absolute inset-0 pointer-events-none">
+            {diagram.parts.map((part, index) => {
+              const markerNum = index + 1;
+              const isSelected = selectedPartId === part.id;
+              const studentAnswer = labelAnswers[part.id];
+              const hasAnswer = Boolean(studentAnswer);
+              const isCorrect = scoreResults[part.id];
+
+              let markerBg = isDark
+                ? "bg-slate-900 text-slate-100 border-slate-600"
+                : "bg-white text-slate-900 border-slate-400";
+
+              if (mode === "explore") {
+                if (isSelected) {
+                  markerBg = "bg-amber-500 text-white border-amber-600 ring-4 ring-amber-400/40";
+                }
+              } else {
+                // Label It Mode
+                if (isSubmitted) {
+                  if (isCorrect) {
+                    markerBg = "bg-emerald-600 text-white border-emerald-700 ring-2 ring-emerald-500/30";
+                  } else {
+                    markerBg = "bg-rose-600 text-white border-rose-700 ring-2 ring-rose-500/30";
+                  }
+                } else if (isSelected) {
+                  markerBg = "bg-sky-600 text-white border-sky-700 ring-4 ring-sky-400/40";
+                } else if (hasAnswer) {
+                  markerBg = isDark
+                    ? "bg-teal-700 text-teal-100 border-teal-500"
+                    : "bg-teal-600 text-white border-teal-700";
+                }
+              }
+
+              return (
+                <div
+                  key={`hotspot-${part.id}`}
+                  style={{
+                    left: `${part.anchor.x}%`,
+                    top: `${part.anchor.y}%`,
+                  }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                >
+                  <button
+                    type="button"
+                    role="button"
+                    aria-label={`Marker ${markerNum}: ${part.name}`}
+                    onClick={() => onSelectPart(part.id)}
+                    className={`relative flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full text-xs font-bold border-2 shadow-md transition-all duration-150 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-500 ${markerBg}`}
+                  >
+                    {mode === "label" && isSubmitted ? (
+                      isCorrect ? (
+                        <Check className="h-3.5 w-3.5 stroke-[3]" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 stroke-[3]" />
+                      )
+                    ) : (
+                      <span>{markerNum}</span>
+                    )}
+                  </button>
+
+                  {/* Label It Mode: Assigned badge below marker */}
+                  {mode === "label" && studentAnswer && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 pointer-events-none whitespace-nowrap z-20">
+                      <span
+                        className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold shadow-xs border ${
+                          isSubmitted
+                            ? isCorrect
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700"
+                              : "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-700"
+                            : "bg-white/95 text-slate-800 border-slate-300 dark:bg-slate-900/95 dark:text-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        {studentAnswer.length > 14
+                          ? `${studentAnswer.slice(0, 13)}…`
+                          : studentAnswer}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
+      {/* Attribution & Provenance Footer */}
+      {diagram.attribution && (
+        <div className="px-4 py-2 bg-slate-50/80 dark:bg-slate-900/40 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Info className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <span>
+              <strong className="text-slate-700 dark:text-slate-300">
+                {diagram.attribution.sourceTitle}
+              </strong>{" "}
+              by {diagram.attribution.author} • Licensed under{" "}
+              <a
+                href={diagram.attribution.licenseUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline hover:text-sky-600 dark:hover:text-sky-400 inline-flex items-center gap-0.5"
+              >
+                <span>{diagram.attribution.licenseName}</span>
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>{" "}
+              via {diagram.attribution.viaText}
+            </span>
+          </div>
+          {diagram.attribution.notes && (
+            <span className="text-[10px] italic text-slate-400">
+              {diagram.attribution.notes}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Helper Legend / Hint footer */}
-      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+      <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
         <span>
           {mode === "explore"
-            ? "Click on any anatomical part or numbered marker to inspect its function and pedagogy tips."
-            : "Select a numbered marker, then choose the matching anatomical label from the word bank."}
+            ? "Click any numbered hotspot button on the illustration to inspect its physiological mechanism and teaching tips."
+            : "Select a numbered hotspot, then click its corresponding scientific label from the word bank."}
         </span>
         <span className="font-mono text-[10px] text-slate-400">
           {diagram.parts.length} components
@@ -467,4 +460,3 @@ export default function SvgDiagramViewer({
     </div>
   );
 }
-

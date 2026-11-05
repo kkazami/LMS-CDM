@@ -6,6 +6,7 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
+  ExternalLink,
   Eye,
   FileText,
   Flame,
@@ -17,6 +18,7 @@ import {
   MousePointerClick,
   RefreshCw,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
   Trophy,
   XCircle,
@@ -809,6 +811,70 @@ export default function VisualKitClient({
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          ILLUSTRATION CREDITS & PROVENANCE SECTION
+         ========================================================================= */}
+      <section
+        aria-labelledby="visual-kit-credits-heading"
+        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 shadow-xs space-y-3"
+      >
+        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <h2
+            id="visual-kit-credits-heading"
+            className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+          >
+            Illustration Credits &amp; Provenance
+          </h2>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          The Visual Learning Kit utilizes professionally licensed scientific educational illustrations vetted strictly under Public Domain and Creative Commons Attribution (CC BY) licenses. All vector schematics have been sanitized to remove scripts and text labels to support active self-check labeling.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+          {initialDiagrams.map((d) => (
+            <div
+              key={d.id}
+              className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 text-[11px] space-y-1"
+            >
+              <div className="font-semibold text-slate-800 dark:text-slate-200">
+                {d.title}
+              </div>
+              {d.attribution ? (
+                <div className="text-slate-500 dark:text-slate-400 space-y-0.5">
+                  <div>
+                    Source:{" "}
+                    <a
+                      href={d.attribution.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-sky-600 dark:text-sky-400 underline inline-flex items-center gap-0.5"
+                    >
+                      <span>{d.attribution.sourceTitle}</span>
+                      <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  </div>
+                  <div>Author: {d.attribution.author}</div>
+                  <div>
+                    License:{" "}
+                    <a
+                      href={d.attribution.licenseUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="underline font-medium hover:text-slate-700 dark:hover:text-slate-200"
+                    >
+                      {d.attribution.licenseName}
+                    </a>{" "}
+                    via {d.attribution.viaText}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-slate-400 italic">Custom vector simulation</div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
     </div>

@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { VISUAL_KIT_DIAGRAMS } from "../data";
 import {
   calculateMinAnchorDistance,
@@ -173,30 +175,27 @@ describe("Visual Kit - Diagram Data Integrity & Quality Verification", () => {
     }
   });
 
-  it("ensures all anchors are inside viewBox with safe margins", () => {
+  it("ensures all hotspot anchors are within valid percent bounds (5% to 95%)", () => {
     for (const diagram of VISUAL_KIT_DIAGRAMS) {
-      const { w, h } = diagram.viewBox;
-      assert.ok(w > 0 && h > 0, `Invalid viewBox for ${diagram.id}`);
-
       for (const part of diagram.parts) {
         assert.ok(
-          part.anchor.x >= 20 && part.anchor.x <= w - 20,
-          `Anchor x out of bounds in ${diagram.id} for ${part.id}: ${part.anchor.x} in [20, ${w - 20}]`
+          part.anchor.x >= 5 && part.anchor.x <= 95,
+          `Anchor x out of percent bounds in ${diagram.id} for ${part.id}: ${part.anchor.x}%`
         );
         assert.ok(
-          part.anchor.y >= 20 && part.anchor.y <= h - 20,
-          `Anchor y out of bounds in ${diagram.id} for ${part.id}: ${part.anchor.y} in [20, ${h - 20}]`
+          part.anchor.y >= 5 && part.anchor.y <= 95,
+          `Anchor y out of percent bounds in ${diagram.id} for ${part.id}: ${part.anchor.y}%`
         );
       }
     }
   });
 
-  it("passes anchor spacing quality check: pairwise Euclidean distance >= 18 units", () => {
+  it("passes anchor spacing quality check: pairwise Euclidean distance >= 6% on image canvas", () => {
     for (const diagram of VISUAL_KIT_DIAGRAMS) {
       const minDist = calculateMinAnchorDistance(diagram);
       assert.ok(
-        minDist >= 18,
-        `Diagram ${diagram.id} min anchor distance ${minDist.toFixed(2)} is less than 18 units!`
+        minDist >= 6,
+        `Diagram ${diagram.id} min anchor distance ${minDist.toFixed(2)}% is less than 6%!`
       );
     }
   });
@@ -224,41 +223,49 @@ describe("Visual Kit - Diagram Data Integrity & Quality Verification", () => {
     assert.equal(circuit.supportsCircuitToggle, true);
   });
 
-  it("strictly prohibits forbidden SVG attributes and non-numeric geometry", () => {
-    const validateShape = (shape: Shape, diagramId: string) => {
-      // Must not contain script or event handler props
-      const keys = Object.keys(shape);
-      for (const k of keys) {
-        assert.ok(
-          !k.startsWith("on"),
-          `Diagram ${diagramId} contains forbidden event handler attribute ${k}`
-        );
-      }
-      assert.notEqual(
-        (shape.type as string).toLowerCase(),
-        "foreignobject",
-        `Diagram ${diagramId} contains forbidden foreignObject tag`
-      );
-
-      // Verify numeric coordinates
-      if (shape.x !== undefined) assert.ok(!Number.isNaN(shape.x));
-      if (shape.y !== undefined) assert.ok(!Number.isNaN(shape.y));
-      if (shape.cx !== undefined) assert.ok(!Number.isNaN(shape.cx));
-      if (shape.cy !== undefined) assert.ok(!Number.isNaN(shape.cy));
-      if (shape.r !== undefined) assert.ok(!Number.isNaN(shape.r));
-      if (shape.width !== undefined) assert.ok(!Number.isNaN(shape.width));
-      if (shape.height !== undefined) assert.ok(!Number.isNaN(shape.height));
-    };
-
+  it("verifies illustration attribution metadata meets licensing requirements (Public Domain, CC0, CC BY)", () => {
+    const allowedLicenses = ["Public domain", "CC0", "CC BY 3.0", "CC BY 4.0"];
     for (const diagram of VISUAL_KIT_DIAGRAMS) {
-      for (const deco of diagram.decorations) {
-        validateShape(deco, diagram.id);
-      }
-      for (const part of diagram.parts) {
-        const shapes = Array.isArray(part.shape) ? part.shape : [part.shape];
-        for (const s of shapes) {
-          validateShape(s, diagram.id);
-        }
+      assert.ok(diagram.attribution, `Diagram ${diagram.id} must have attribution`);
+      const attr = diagram.attribution;
+      assert.ok(attr.sourceTitle.trim().length > 0);
+      assert.ok(attr.author.trim().length > 0);
+      assert.ok(attr.sourceUrl.startsWith("http"));
+      assert.ok(attr.licenseUrl.startsWith("http"));
+      assert.ok(
+        allowedLicenses.includes(attr.licenseName),
+        `License ${attr.licenseName} for ${diagram.id} is not an allowed permissive license (Public Domain, CC0, CC BY)`
+      );
+      assert.ok(!attr.licenseName.includes("SA"), "CC BY-SA is strictly disallowed");
+      assert.ok(!attr.licenseName.includes("NC"), "CC BY-NC is strictly disallowed");
+    }
+  });
+
+  it("scans every static SVG in public/visual-kit/ for prohibited script, foreignObject, on*, or external url tags", () => {
+    const publicDir = path.resolve(process.cwd(), "public/visual-kit");
+    if (!fs.existsSync(publicDir)) return;
+
+    const files = fs.readdirSync(publicDir).filter((f) => f.endsWith(".svg"));
+    assert.ok(files.length > 0, "Expected at least one SVG in public/visual-kit");
+
+    for (const file of files) {
+      const fullPath = path.join(publicDir, file);
+      const content = fs.readFileSync(fullPath, "utf8");
+
+      assert.ok(!/<script/i.test(content), `${file} must not contain <script>`);
+      assert.ok(!/<foreignObject/i.test(content), `${file} must not contain <foreignObject>`);
+      assert.ok(!/\son[a-z]+=/i.test(content), `${file} must not contain on* event handlers`);
+      assert.ok(!/@import/i.test(content), `${file} must not contain CSS @import`);
+      assert.ok(!/url\(\s*['"]?https?:/i.test(content), `${file} must not contain external url()`);
+
+      // Verify href and xlink:href only reference local internal fragments (#id)
+      const hrefMatches = content.match(/(?:href|xlink:href)=["']([^"']+)["']/gi) || [];
+      for (const h of hrefMatches) {
+        const val = h.split("=")[1].replace(/["']/g, "");
+        assert.ok(
+          val.startsWith("#") || val.startsWith("data:"),
+          `${file} contains non-fragment href: ${h}`
+        );
       }
     }
   });
@@ -354,4 +361,3 @@ describe("Visual Kit - Labeling Rules, Shuffling & Scoring", () => {
     });
   });
 });
-

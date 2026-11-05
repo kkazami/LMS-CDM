@@ -45,9 +45,10 @@ export interface Shape {
 export interface Part {
   id: string;
   name: string;
-  shape: Shape | Shape[];
+  shape?: Shape | Shape[];
+  /** Hotspot anchor coordinate in percentage (0 to 100) relative to image container */
   anchor: { x: number; y: number };
-  colorKey: string;
+  colorKey?: string;
   function: string;
   details: string;
   funFact?: string;
@@ -55,11 +56,26 @@ export interface Part {
   commonMisconception?: string;
 }
 
+export interface DiagramAttribution {
+  sourceTitle: string;
+  author: string;
+  sourceUrl: string;
+  licenseName: string;
+  licenseUrl: string;
+  viaText: string;
+  notes?: string;
+}
+
 export interface Diagram {
   id: string;
   title: string;
   area: ScienceArea;
   summary: string;
+  /** Static illustration asset path under /visual-kit/ */
+  imageSrc?: string;
+  imageAlt?: string;
+  aspectRatio?: string;
+  attribution?: DiagramAttribution;
   viewBox: { w: number; h: number };
   parts: Part[];
   decorations: Shape[];
@@ -85,4 +101,3 @@ export interface BestScoresPayload {
   version: number;
   scores: Record<string, BestScoreRecord>;
 }
-
