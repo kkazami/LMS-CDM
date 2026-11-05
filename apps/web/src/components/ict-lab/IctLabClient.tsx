@@ -45,16 +45,26 @@ const MAIN_TABS: {
 ];
 
 
+function toBase64Svg(svg: string): string {
+  const clean = svg.replace(/\s+/g, " ").trim();
+  const base64 =
+    typeof Buffer !== "undefined"
+      ? Buffer.from(clean).toString("base64")
+      : btoa(unescape(encodeURIComponent(clean)));
+  return `data:image/svg+xml;base64,${base64}`;
+}
+
 /**
  * Pattern Layer A: Network Mesh 360x360 seamless tile.
  * Topology: 9 nodes (circles, router ring, switch squares) joined by 1px straight lines.
  * Monospace labels: "192.168.1.1" and "RJ45".
+ * Opacity: ~20% dark mode, ~14% light mode.
  * Edge alignment: Left (0, 120) meets Right (360, 120); Top (200, 0) meets Bottom (200, 360).
  */
 function createNetworkMeshSvg(isDark: boolean): string {
-  const strokeColor = isDark ? "rgba(147,197,253,0.16)" : "rgba(37,99,235,0.12)";
-  const fillColor = isDark ? "rgba(147,197,253,0.16)" : "rgba(37,99,235,0.12)";
-  const textColor = isDark ? "rgba(147,197,253,0.18)" : "rgba(37,99,235,0.14)";
+  const strokeColor = isDark ? "rgba(147,197,253,0.20)" : "rgba(37,99,235,0.14)";
+  const fillColor = isDark ? "rgba(147,197,253,0.20)" : "rgba(37,99,235,0.14)";
+  const textColor = isDark ? "rgba(147,197,253,0.22)" : "rgba(37,99,235,0.16)";
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
     <g stroke="${strokeColor}" stroke-width="1" fill="none">
@@ -74,15 +84,16 @@ function createNetworkMeshSvg(isDark: boolean): string {
     <text x="278" y="140" fill="${textColor}" font-family="monospace" font-size="9" font-weight="600">RJ45</text>
   </svg>`;
 
-  return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+  return toBase64Svg(svg);
 }
 
 /**
  * Pattern Layer B: Tech Doodles 420x420 tile with 8 outline icons (stroke only, no fill):
  * </>, { }, chip, RAM stick, RJ45 plug, monitor, binary 0 1, and #.
+ * Opacity: ~13% dark mode, ~11% light mode.
  */
 function createTechDoodlesSvg(isDark: boolean): string {
-  const strokeColor = isDark ? "rgba(147,197,253,0.10)" : "rgba(37,99,235,0.09)";
+  const strokeColor = isDark ? "rgba(147,197,253,0.13)" : "rgba(37,99,235,0.11)";
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">
     <g stroke="${strokeColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -118,7 +129,7 @@ function createTechDoodlesSvg(isDark: boolean): string {
     </g>
   </svg>`;
 
-  return `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, " ").trim())}`;
+  return toBase64Svg(svg);
 }
 
 export default function IctLabClient({
@@ -148,8 +159,8 @@ export default function IctLabClient({
   };
 
   return (
-    <div className="relative -mx-4 -mt-4 lg:-mx-8 lg:-mt-8 px-4 pt-4 lg:px-8 lg:pt-8 min-h-[calc(100vh-6rem)] overflow-x-clip pb-12">
-      {/* Full-width Network Mesh & Tech Doodles Backdrop */}
+    <div className="relative isolate -mx-4 -mt-4 lg:-mx-8 lg:-mt-8 px-4 pt-4 lg:px-8 lg:pt-8 min-h-[calc(100vh-4rem)] overflow-x-clip pb-12">
+      {/* Full-width Network Mesh & Tech Doodles Backdrop (isolated stacking context) */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-gradient-to-br from-[#eef4ff] via-[#f3f7fe] to-[#f8fbff] dark:from-[#0b1020] dark:via-[#0d1428] dark:to-[#0f1730]"
@@ -171,9 +182,15 @@ export default function IctLabClient({
         <div className="absolute -top-32 -left-32 h-[540px] w-[540px] rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/20" />
         <div className="absolute -bottom-32 -right-32 h-[540px] w-[540px] rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-600/20" />
 
-        {/* Masked Pattern Layers: Soft vignette at extreme 6% edges only */}
-        <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_94%,transparent_100%)]">
-          {/* Pattern Layer A: Network Mesh (360x360 seamless tile) */}
+        {/* Masked Pattern Layers: Soft vignette at extreme 8% edges only */}
+        <div
+          className="absolute inset-0"
+          style={{
+            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+          }}
+        >
+          {/* Pattern Layer A: Network Mesh (360x360 seamless tile, ~20% dark / ~14% light opacity) */}
           <div
             className="absolute inset-0 bg-repeat animate-ict-drift"
             style={{
@@ -182,7 +199,7 @@ export default function IctLabClient({
             }}
           />
 
-          {/* Pattern Layer B: Tech Doodles (420x420 tile with offset) */}
+          {/* Pattern Layer B: Tech Doodles (420x420 tile with offset, ~13% dark / ~11% light opacity) */}
           <div
             className="absolute inset-0 bg-repeat animate-ict-drift"
             style={{
@@ -194,7 +211,7 @@ export default function IctLabClient({
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-4">
+      <div className="relative z-10 mx-auto max-w-7xl space-y-4">
         <header className="relative overflow-hidden rounded-2xl border border-blue-200/80 dark:border-blue-500/30 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-950 dark:via-blue-900 dark:to-indigo-950 p-6 text-white shadow-sm">
           {/* Circuit Trace Pulse CSS (strictly respects prefers-reduced-motion) */}
           <style>{`
