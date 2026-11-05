@@ -75,15 +75,12 @@ export interface LanCableData {
   faults: LanFault[];
 }
 
-export interface IctPlaygroundProjectDTO {
+export interface PlaygroundExampleSnippet {
   id: string;
-  userId: string;
   title: string;
+  description: string;
   html: string;
   css: string;
   js: string;
-  byteSize: number;
-  createdAt: string;
-  updatedAt: string;
 }
 

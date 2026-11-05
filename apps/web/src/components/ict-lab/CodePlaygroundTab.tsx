@@ -4,31 +4,27 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import {
   Play,
-  Plus,
-  Save,
-  Trash2,
-  Edit3,
+  RotateCcw,
+  Code2,
   Terminal,
   Eraser,
-  FolderOpen,
-  AlertTriangle,
-  CheckCircle2,
   Loader2,
   ShieldCheck,
   Sparkles,
+  Info,
 } from "lucide-react";
 import type { PlaygroundEditorLanguage } from "./CodeMirrorEditor";
-import type { IctPlaygroundProjectDTO } from "@/lib/ict-lab/types";
 import {
-  ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
   MAX_PLAYGROUND_BYTES,
-  MAX_PLAYGROUND_PROJECTS_PER_STUDENT,
-  MAX_PROJECT_TITLE_LENGTH,
   type PlaygroundConsoleEntry,
   buildPlaygroundSrcdoc,
   computeProjectByteSize,
   validatePreviewMessageEvent,
 } from "@/lib/ict-lab/rules";
+import {
+  PLAYGROUND_EXAMPLES,
+  DEFAULT_EXAMPLE,
+} from "@/lib/ict-lab/examples";
 
 const LazyCodeMirrorEditor = dynamic(() => import("./CodeMirrorEditor"), {
   ssr: false,
@@ -57,7 +53,7 @@ const EDITOR_TABS: { id: PlaygroundEditorLanguage; label: string; badge: string;
     id: "javascript",
     label: "JavaScript",
     badge: "script.js",
-    placeholder: "// Write your JavaScript code here",
+    placeholder: "// Write your JavaScript code here (use addEventListener)",
   },
 ];
 
@@ -75,56 +71,42 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
     return undefined;
   }, [nonce]);
 
-  const [projects, setProjects] = useState<IctPlaygroundProjectDTO[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-
-  const [title, setTitle] = useState<string>("Untitled Project");
-  const [htmlCode, setHtmlCode] = useState<string>("");
-  const [cssCode, setCssCode] = useState<string>("");
-  const [jsCode, setJsCode] = useState<string>("");
-
-  const [savedSnapshot, setSavedSnapshot] = useState({
-    title: "Untitled Project",
-    html: "",
-    css: "",
-    js: "",
-  });
+  const [selectedExampleId, setSelectedExampleId] = useState<string>(DEFAULT_EXAMPLE.id);
+  const [htmlCode, setHtmlCode] = useState<string>(DEFAULT_EXAMPLE.html);
+  const [cssCode, setCssCode] = useState<string>(DEFAULT_EXAMPLE.css);
+  const [jsCode, setJsCode] = useState<string>(DEFAULT_EXAMPLE.js);
 
   const [activeEditorTab, setActiveEditorTab] = useState<PlaygroundEditorLanguage>("html");
   const [autoRun, setAutoRun] = useState<boolean>(false);
   const runCounterRef = useRef<number>(0);
   const [srcdoc, setSrcdoc] = useState<string>(() =>
     buildPlaygroundSrcdoc(
-      "",
-      "",
-      "",
+      DEFAULT_EXAMPLE.html,
+      DEFAULT_EXAMPLE.css,
+      DEFAULT_EXAMPLE.js,
       0,
-      nonce || (typeof document !== "undefined" ? (document.querySelector("script[nonce]") as HTMLScriptElement | null)?.nonce : undefined)
+      nonce ||
+        (typeof document !== "undefined"
+          ? (document.querySelector("script[nonce]") as HTMLScriptElement | null)?.nonce
+          : undefined)
     )
   );
   const [consoleEntries, setConsoleEntries] = useState<PlaygroundConsoleEntry[]>([]);
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameDraft, setRenameDraft] = useState("");
-  const [statusBanner, setStatusBanner] = useState<{
-    kind: "success" | "warning" | "error";
-    text: string;
-  } | null>(null);
-
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const currentExample = useMemo(
+    () => PLAYGROUND_EXAMPLES.find((ex) => ex.id === selectedExampleId) ?? DEFAULT_EXAMPLE,
+    [selectedExampleId]
+  );
 
   const isDirty = useMemo(() => {
     return (
-      title !== savedSnapshot.title ||
-      htmlCode !== savedSnapshot.html ||
-      cssCode !== savedSnapshot.css ||
-      jsCode !== savedSnapshot.js
+      htmlCode !== currentExample.html ||
+      cssCode !== currentExample.css ||
+      jsCode !== currentExample.js
     );
-  }, [title, htmlCode, cssCode, jsCode, savedSnapshot]);
+  }, [htmlCode, cssCode, jsCode, currentExample]);
 
   const currentByteSize = useMemo(
     () => computeProjectByteSize(htmlCode, cssCode, jsCode),
@@ -133,7 +115,7 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
 
   const isOverSizeLimit = currentByteSize > MAX_PLAYGROUND_BYTES;
 
-  // Warn before unloading browser tab when dirty
+  // Warn before unloading browser tab when code has unsaved modifications
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!isDirty) return;
@@ -157,46 +139,6 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
-
-  // Load caller's projects on mount
-  const fetchProjects = useCallback(async () => {
-    setIsLoadingProjects(true);
-    try {
-      const res = await fetch("/api/ite/ict-lab/projects", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as {
-          message?: string;
-          storageUnavailable?: boolean;
-        };
-        setProjects([]);
-        setStatusBanner({
-          kind: res.status === 503 || errData.storageUnavailable ? "warning" : "error",
-          text:
-            errData.message ||
-            (res.status === 503
-              ? ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE
-              : "Failed to load saved projects."),
-        });
-        return;
-      }
-      const data = (await res.json()) as { projects?: IctPlaygroundProjectDTO[] };
-      setProjects(Array.isArray(data.projects) ? data.projects : []);
-    } catch (err) {
-      setStatusBanner({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Could not load projects.",
-      });
-    } finally {
-      setIsLoadingProjects(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchProjects();
-  }, [fetchProjects]);
 
   const runPreview = useCallback(
     (nextHtml: string, nextCss: string, nextJs: string) => {
@@ -224,232 +166,36 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
     return () => window.clearTimeout(timer);
   }, [autoRun, htmlCode, cssCode, jsCode, runPreview]);
 
-  const confirmDiscardIfDirty = useCallback((): boolean => {
-    if (!isDirty) return true;
-    return window.confirm(
-      "You have unsaved changes in your current project. Discard unsaved changes and continue?"
-    );
-  }, [isDirty]);
+  const handleSelectExample = (exampleId: string) => {
+    if (exampleId === selectedExampleId) return;
+    const nextExample = PLAYGROUND_EXAMPLES.find((ex) => ex.id === exampleId);
+    if (!nextExample) return;
 
-  // "New project" starts completely empty (html: "", css: "", js: "") with no starter templates
-  const handleNewProject = () => {
-    if (!confirmDiscardIfDirty()) return;
-    setActiveProjectId(null);
-    setTitle("Untitled Project");
-    setHtmlCode("");
-    setCssCode("");
-    setJsCode("");
-    setSavedSnapshot({
-      title: "Untitled Project",
-      html: "",
-      css: "",
-      js: "",
-    });
-    setShowDeleteConfirm(false);
-    setStatusBanner((prev) => (prev?.kind === "warning" ? prev : null));
-    runPreview("", "", "");
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "You have modified the current code. Discard your edits and load the selected example?"
+      );
+      if (!confirmed) return;
+    }
+
+    setSelectedExampleId(nextExample.id);
+    setHtmlCode(nextExample.html);
+    setCssCode(nextExample.css);
+    setJsCode(nextExample.js);
+    runPreview(nextExample.html, nextExample.css, nextExample.js);
   };
 
-  const handleSelectProject = async (projectId: string) => {
-    if (!projectId) {
-      handleNewProject();
-      return;
+  const handleResetCode = () => {
+    if (isDirty) {
+      const confirmed = window.confirm(
+        `Reset code to the default "${currentExample.title}" snippet? This will discard your current edits.`
+      );
+      if (!confirmed) return;
     }
-    if (projectId === activeProjectId) return;
-    if (!confirmDiscardIfDirty()) return;
-
-    setStatusBanner(null);
-    try {
-      const res = await fetch(`/api/ite/ict-lab/projects/${encodeURIComponent(projectId)}`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        project?: IctPlaygroundProjectDTO;
-        message?: string;
-        storageUnavailable?: boolean;
-      };
-      if (!res.ok || !payload.project) {
-        setStatusBanner({
-          kind: res.status === 503 || payload.storageUnavailable ? "warning" : "error",
-          text: payload.message || "Unable to load project.",
-        });
-        return;
-      }
-      const proj = payload.project;
-      setActiveProjectId(proj.id);
-      setTitle(proj.title);
-      setHtmlCode(proj.html);
-      setCssCode(proj.css);
-      setJsCode(proj.js);
-      setSavedSnapshot({
-        title: proj.title,
-        html: proj.html,
-        css: proj.css,
-        js: proj.js,
-      });
-      setShowDeleteConfirm(false);
-      runPreview(proj.html, proj.css, proj.js);
-    } catch (err) {
-      setStatusBanner({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Failed to load project.",
-      });
-    }
-  };
-
-  const handleSaveProject = async (overrideTitle?: string) => {
-    const cleanTitle = (overrideTitle ?? title).trim();
-    if (!cleanTitle || cleanTitle.length > MAX_PROJECT_TITLE_LENGTH) {
-      setStatusBanner({
-        kind: "error",
-        text: `Project title must be between 1 and ${MAX_PROJECT_TITLE_LENGTH} characters.`,
-      });
-      return;
-    }
-    if (isOverSizeLimit) {
-      setStatusBanner({
-        kind: "error",
-        text: `Combined HTML + CSS + JS exceeds the 100 KB limit (${(
-          currentByteSize / 1024
-        ).toFixed(1)} KB).`,
-      });
-      return;
-    }
-
-    setIsSaving(true);
-    setStatusBanner(null);
-    try {
-      const isUpdating = Boolean(activeProjectId);
-      const endpoint = isUpdating
-        ? `/api/ite/ict-lab/projects/${encodeURIComponent(activeProjectId!)}`
-        : "/api/ite/ict-lab/projects";
-      const method = isUpdating ? "PATCH" : "POST";
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          title: cleanTitle,
-          html: htmlCode,
-          css: cssCode,
-          js: jsCode,
-        }),
-      });
-
-      const data = (await res.json().catch(() => ({}))) as {
-        project?: IctPlaygroundProjectDTO;
-        message?: string;
-        storageUnavailable?: boolean;
-      };
-      if (!res.ok || !data.project) {
-        setStatusBanner({
-          kind: res.status === 503 || data.storageUnavailable ? "warning" : "error",
-          text:
-            data.message ||
-            (res.status === 503
-              ? ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE
-              : "Failed to save project."),
-        });
-        return;
-      }
-
-      const saved = data.project;
-      setActiveProjectId(saved.id);
-      setTitle(saved.title);
-      setSavedSnapshot({
-        title: saved.title,
-        html: saved.html,
-        css: saved.css,
-        js: saved.js,
-      });
-      setProjects((prev) => {
-        const filtered = prev.filter((p) => p.id !== saved.id);
-        return [saved, ...filtered];
-      });
-      setStatusBanner({
-        kind: "success",
-        text: isUpdating ? `Saved "${saved.title}".` : `Created project "${saved.title}".`,
-      });
-    } catch (err) {
-      setStatusBanner({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Could not save project.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleOpenRename = () => {
-    setRenameDraft(title);
-    setShowRenameModal(true);
-  };
-
-  const handleConfirmRename = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = renameDraft.trim();
-    if (!trimmed || trimmed.length > MAX_PROJECT_TITLE_LENGTH) {
-      setStatusBanner({
-        kind: "error",
-        text: `Title must be between 1 and ${MAX_PROJECT_TITLE_LENGTH} characters.`,
-      });
-      return;
-    }
-    setTitle(trimmed);
-    setShowRenameModal(false);
-    if (activeProjectId) {
-      await handleSaveProject(trimmed);
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    if (!activeProjectId) return;
-    setIsDeleting(true);
-    setStatusBanner(null);
-    try {
-      const res = await fetch(`/api/ite/ict-lab/projects/${encodeURIComponent(activeProjectId)}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        message?: string;
-        storageUnavailable?: boolean;
-      };
-      if (!res.ok) {
-        setStatusBanner({
-          kind: res.status === 503 || data.storageUnavailable ? "warning" : "error",
-          text: data.message || "Failed to delete project.",
-        });
-        return;
-      }
-      const deletedTitle = title;
-      setProjects((prev) => prev.filter((p) => p.id !== activeProjectId));
-      setActiveProjectId(null);
-      setTitle("Untitled Project");
-      setHtmlCode("");
-      setCssCode("");
-      setJsCode("");
-      setSavedSnapshot({
-        title: "Untitled Project",
-        html: "",
-        css: "",
-        js: "",
-      });
-      setShowDeleteConfirm(false);
-      runPreview("", "", "");
-      setStatusBanner({
-        kind: "success",
-        text: `Deleted project "${deletedTitle}".`,
-      });
-    } catch (err) {
-      setStatusBanner({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Could not delete project.",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+    setHtmlCode(currentExample.html);
+    setCssCode(currentExample.css);
+    setJsCode(currentExample.js);
+    runPreview(currentExample.html, currentExample.css, currentExample.js);
   };
 
   const activeCodeValue =
@@ -468,101 +214,51 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
 
   return (
     <div className="space-y-4">
-      {/* Top Toolbar: Project Selector + Actions + Run */}
+      {/* Practice Toolbar: Examples Dropdown + Reset + Auto-run + Run Code */}
       <div className="rounded-xl border border-theme bg-surface p-3.5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Left: Project Selector & Title */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Left: Examples selector + Size limit indicator */}
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-              <label htmlFor="ict-project-select" className="sr-only">
-                Saved Projects
+              <Code2 className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+              <label htmlFor="ict-example-select" className="text-xs font-semibold text-primary-theme">
+                Starter Example:
               </label>
               <select
-                id="ict-project-select"
-                value={activeProjectId ?? ""}
-                onChange={(e) => void handleSelectProject(e.target.value)}
-                disabled={isLoadingProjects}
+                id="ict-example-select"
+                value={selectedExampleId}
+                onChange={(e) => handleSelectExample(e.target.value)}
                 className="rounded-lg border border-slate-300 dark:border-white/15 bg-elevated px-3 py-1.5 text-xs font-medium text-primary-theme [color-scheme:light] dark:[color-scheme:dark] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
-                <option value="" className="bg-surface text-primary-theme">
-                  {activeProjectId ? "— Switch to Blank Unsaved —" : "Unsaved Workspace"}
-                </option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-surface text-primary-theme">
-                    {p.title} ({(p.byteSize / 1024).toFixed(1)} KB)
+                {PLAYGROUND_EXAMPLES.map((ex) => (
+                  <option key={ex.id} value={ex.id} className="bg-surface text-primary-theme">
+                    {ex.title}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 rounded-lg border border-theme bg-elevated px-2.5 py-1">
-              <span className="text-xs font-semibold text-primary-theme">{title}</span>
-              {isDirty && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200"
-                  title="You have unsaved changes"
-                >
-                  ● Unsaved
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleOpenRename}
-                className="ml-1 rounded p-1 text-secondary-theme hover:bg-slate-200/70 dark:hover:bg-white/10 hover:text-primary-theme focus:outline-none focus:ring-2 focus:ring-blue-500"
-                title="Rename project"
-                aria-label="Rename project"
-              >
-                <Edit3 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleResetCode}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/15 bg-elevated px-3 py-1.5 text-xs font-semibold text-primary-theme transition hover:bg-slate-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              title="Reset code to current example template"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset Code
+            </button>
 
             <span className="text-xs font-medium text-secondary-theme">
-              {projects.length}/{MAX_PLAYGROUND_PROJECTS_PER_STUDENT} saved •{" "}
+              Code Size:{" "}
               <span className={isOverSizeLimit ? "font-bold text-red-600 dark:text-red-400" : ""}>
                 {(currentByteSize / 1024).toFixed(1)} / {(MAX_PLAYGROUND_BYTES / 1024).toFixed(0)} KB
               </span>
             </span>
           </div>
 
-          {/* Right: New, Save, Delete, Auto-run, Run */}
+          {/* Right: Auto-run + Run Code */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleNewProject}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/15 bg-elevated px-3 py-1.5 text-xs font-semibold text-primary-theme transition hover:bg-slate-100 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New
-            </button>
-
-            <button
-              type="button"
-              onClick={() => void handleSaveProject()}
-              disabled={isSaving || isOverSizeLimit}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-500/25 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {isSaving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              Save
-            </button>
-
-            {activeProjectId && (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-700 dark:text-red-300 transition hover:bg-red-100 dark:hover:bg-red-500/25 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
-              </button>
-            )}
-
-            <label className="ml-1 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme bg-elevated px-2.5 py-1.5 text-xs font-medium text-primary-theme [color-scheme:light] dark:[color-scheme:dark]">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme bg-elevated px-2.5 py-1.5 text-xs font-medium text-primary-theme [color-scheme:light] dark:[color-scheme:dark]">
               <input
                 type="checkbox"
                 checked={autoRun}
@@ -575,7 +271,8 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
             <button
               type="button"
               onClick={() => runPreview(htmlCode, cssCode, jsCode)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              disabled={isOverSizeLimit}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
             >
               <Play className="h-3.5 w-3.5 fill-current" />
               Run Code
@@ -583,102 +280,18 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
           </div>
         </div>
 
-        {/* Rename Modal inline */}
-        {showRenameModal && (
-          <form
-            onSubmit={(e) => void handleConfirmRename(e)}
-            className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/60 dark:bg-blue-500/10 p-2.5"
-          >
-            <label htmlFor="rename-project-input" className="text-xs font-semibold text-primary-theme">
-              Project Title (1–80 chars):
-            </label>
-            <input
-              id="rename-project-input"
-              type="text"
-              maxLength={MAX_PROJECT_TITLE_LENGTH}
-              value={renameDraft}
-              onChange={(e) => setRenameDraft(e.target.value)}
-              className="min-w-[220px] flex-1 rounded-md border border-slate-300 dark:border-white/15 bg-surface px-2.5 py-1 text-xs text-primary-theme [color-scheme:light] dark:[color-scheme:dark] focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-            >
-              Apply
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRenameModal(false)}
-              className="rounded-md border border-slate-300 dark:border-white/15 bg-elevated px-2.5 py-1 text-xs font-medium text-secondary-theme hover:bg-slate-100 dark:hover:bg-white/10"
-            >
-              Cancel
-            </button>
-          </form>
-        )}
-
-        {/* Delete Confirmation inline */}
-        {showDeleteConfirm && activeProjectId && (
-          <div
-            role="alertdialog"
-            aria-label="Confirm project deletion"
-            className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-2.5"
-          >
-            <span className="text-xs font-medium text-red-800 dark:text-red-200">
-              Delete saved project <strong>&ldquo;{title}&rdquo;</strong> permanently? This cannot be
-              undone.
+        {/* Practice Mode Notice & Script Guideline */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/70 dark:bg-blue-500/10 px-3 py-2 text-xs text-blue-900 dark:text-blue-200">
+          <div className="inline-flex items-center gap-1.5">
+            <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <span>
+              <strong>Practice mode:</strong> your code isn&apos;t saved. Refreshing the page resets it.
             </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void handleDeleteProject()}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Yes, Delete"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-md border border-slate-300 dark:border-white/15 bg-elevated px-2.5 py-1 text-xs font-medium text-primary-theme hover:bg-slate-100 dark:hover:bg-white/10"
-              >
-                Cancel
-              </button>
-            </div>
           </div>
-        )}
-
-        {/* Status feedback banner */}
-        {statusBanner && (
-          <div
-            role="status"
-            className={`mt-3 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
-              statusBanner.kind === "success"
-                ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
-                : statusBanner.kind === "warning"
-                  ? "border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/15 text-amber-900 dark:text-amber-200"
-                  : "border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/15 text-red-800 dark:text-red-200"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {statusBanner.kind === "success" ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              ) : statusBanner.kind === "warning" ? (
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              ) : (
-                <AlertTriangle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-              )}
-              {statusBanner.text}
-            </span>
-            <button
-              type="button"
-              onClick={() => setStatusBanner(null)}
-              className="text-xs underline opacity-80 hover:opacity-100"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
+          <span className="text-[11px] text-blue-800/80 dark:text-blue-300/80">
+            Use <code className="rounded bg-blue-100 dark:bg-blue-500/20 px-1 py-0.5 font-mono text-[10px]">addEventListener</code> instead of inline <code className="rounded bg-blue-100 dark:bg-blue-500/20 px-1 py-0.5 font-mono text-[10px]">onclick=&quot;...&quot;</code> (inline handlers are blocked in the sandbox).
+          </span>
+        </div>
       </div>
 
       {/* Main Split Workspace: Left Code Editor | Right Preview & Console */}
@@ -727,6 +340,12 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
             </span>
           </div>
 
+          {activeEditorTab === "javascript" && (
+            <div className="border-b border-theme bg-elevated/40 px-3 py-1 text-[11px] text-secondary-theme">
+              Note: Use <code className="font-mono text-primary-theme">addEventListener</code> instead of <code className="font-mono text-primary-theme">onclick=&quot;...&quot;</code> (inline handlers are blocked in the sandbox).
+            </div>
+          )}
+
           <div className="relative flex-1 overflow-hidden bg-surface">
             <LazyCodeMirrorEditor
               language={activeEditorTab}
@@ -756,9 +375,7 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
               </span>
             </div>
 
-            {/* The preview content area inside the iframe intentionally stays white so student web pages render against a standard browser default canvas. */}
             <div className="relative flex-1 bg-white">
-              {/* Strictly sandbox="allow-scripts" ONLY — never allow-same-origin, allow-forms, allow-popups, or allow-top-navigation */}
               <iframe
                 ref={iframeRef}
                 title="Code Playground Live Preview"
@@ -818,7 +435,6 @@ export default function CodePlaygroundTab({ nonce }: CodePlaygroundTabProps = {}
                       <span className="shrink-0 uppercase text-[10px] font-bold opacity-85">
                         [{entry.level}]
                       </span>
-                      {/* Rendered strictly as plain text node (never dangerouslySetInnerHTML) */}
                       <span className="whitespace-pre-wrap break-all">{entry.text}</span>
                     </div>
                   );

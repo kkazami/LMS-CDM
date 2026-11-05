@@ -3,27 +3,22 @@ import assert from "node:assert/strict";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
 import {
-  ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
   MAX_PLAYGROUND_BYTES,
-  MAX_PLAYGROUND_PROJECTS_PER_STUDENT,
   PLAYGROUND_IFRAME_CSP,
   PLAYGROUND_POSTMESSAGE_SOURCE,
   assertAllHardwarePartsHaveSvgDrawing,
   buildPlaygroundSrcdoc,
-  checkProjectCountLimit,
-  checkProjectOwnership,
   classifyIteProgram,
+  computeProjectByteSize,
   generateHardwareQuizQuestions,
   isBecedProgram,
   isBeedProgram,
   isBsedScienceProgram,
   isBtledIctProgram,
-  isMissingPlaygroundTableError,
-  mapIctPlaygroundRouteError,
   simulateCableTester,
-  validatePlaygroundProjectInput,
   validatePreviewMessageEvent,
 } from "../rules";
+import { PLAYGROUND_EXAMPLES, DEFAULT_EXAMPLE } from "../examples";
 import { HARDWARE_SVG_PART_IDS } from "../../../components/ict-lab/HardwareExplorerTab";
 
 describe("BTLED ICT Lab - Access Guard", () => {
@@ -132,48 +127,35 @@ describe("BTLED ICT Lab - ITE Program Matchers", () => {
   });
 });
 
-describe("BTLED ICT Lab - Code Playground Validation, Ownership & postMessage Security", () => {
-  it("enforces title length (1..80) and 100 KB combined size limit", () => {
-    const emptyTitle = validatePlaygroundProjectInput({
-      title: "   ",
-      html: "<p>Hello</p>",
-      css: "",
-      js: "",
-    });
-    assert.equal(emptyTitle.ok, false);
+describe("BTLED ICT Lab - Code Playground Practice Sandbox & postMessage Security", () => {
+  it("enforces 100 KB total size cap and computes UTF-8 byte length correctly", () => {
+    assert.equal(computeProjectByteSize("", "", ""), 0);
+    const smallSize = computeProjectByteSize("<h1>Hi</h1>", "body{}", "console.log(1)");
+    assert.ok(smallSize > 0 && smallSize < MAX_PLAYGROUND_BYTES);
+    assert.equal(MAX_PLAYGROUND_BYTES, 100 * 1024);
 
-    const longTitle = validatePlaygroundProjectInput({
-      title: "a".repeat(81),
-      html: "",
-      css: "",
-      js: "",
-    });
-    assert.equal(longTitle.ok, false);
-
-    const validSmall = validatePlaygroundProjectInput({
-      title: "My Webpage",
-      html: "<h1>Hello</h1>",
-      css: "h1 { color: blue; }",
-      js: "console.log('ready');",
-    });
-    assert.equal(validSmall.ok, true);
-
-    const oversized = validatePlaygroundProjectInput({
-      title: "Too Large",
-      html: "x".repeat(MAX_PLAYGROUND_BYTES + 1),
-      css: "",
-      js: "",
-    });
-    assert.equal(oversized.ok, false);
+    const oversizedString = "x".repeat(MAX_PLAYGROUND_BYTES + 1);
+    assert.ok(computeProjectByteSize(oversizedString, "", "") > MAX_PLAYGROUND_BYTES);
   });
 
-  it("enforces max 30 projects per student and strict ownership", () => {
-    assert.equal(checkProjectCountLimit(0).ok, true);
-    assert.equal(checkProjectCountLimit(MAX_PLAYGROUND_PROJECTS_PER_STUDENT - 1).ok, true);
-    assert.equal(checkProjectCountLimit(MAX_PLAYGROUND_PROJECTS_PER_STUDENT).ok, false);
+  it("provides 4 static starter snippets that have html, css, and js and remain under the size cap", () => {
+    assert.equal(PLAYGROUND_EXAMPLES.length, 4);
+    assert.ok(DEFAULT_EXAMPLE);
+    assert.equal(DEFAULT_EXAMPLE.id, "hello-world");
 
-    assert.equal(checkProjectOwnership("student-1", "student-1"), true);
-    assert.equal(checkProjectOwnership("student-1", "student-2"), false);
+    const expectedIds = ["hello-world", "button-counter", "css-card", "loop-array"];
+    for (const ex of PLAYGROUND_EXAMPLES) {
+      assert.ok(expectedIds.includes(ex.id), `Unexpected snippet id ${ex.id}`);
+      assert.ok(typeof ex.title === "string" && ex.title.length > 0);
+      assert.ok(typeof ex.description === "string" && ex.description.length > 0);
+      assert.ok(typeof ex.html === "string");
+      assert.ok(typeof ex.css === "string");
+      assert.ok(typeof ex.js === "string");
+
+      const size = computeProjectByteSize(ex.html, ex.css, ex.js);
+      assert.ok(size < MAX_PLAYGROUND_BYTES, `Example ${ex.id} exceeds size limit: ${size} bytes`);
+      assert.ok(size > 0, `Example ${ex.id} must have non-empty content`);
+    }
   });
 
   it("validates postMessage source strictly against iframe.contentWindow and formats plain text", () => {
@@ -243,38 +225,6 @@ describe("BTLED ICT Lab - Code Playground Validation, Ownership & postMessage Se
       fakeIframeWindow
     );
     assert.equal(rejectedUntrustedOrigin, null);
-  });
-
-  it("maps missing IctPlaygroundProject table (P2021 / 42P01) to 503 and preserves generic messages for other errors", () => {
-    const prismaP2021 = {
-      code: "P2021",
-      message: 'The table `public.IctPlaygroundProject` does not exist in the current database.',
-    };
-    assert.equal(isMissingPlaygroundTableError(prismaP2021), true);
-
-    const postgres42P01 = {
-      code: "42P01",
-      message: 'relation "IctPlaygroundProject" does not exist',
-    };
-    assert.equal(isMissingPlaygroundTableError(postgres42P01), true);
-
-    const mappedP2021 = mapIctPlaygroundRouteError(prismaP2021);
-    assert.equal(mappedP2021.status, 503);
-    assert.equal(mappedP2021.body.message, ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE);
-    assert.equal(mappedP2021.body.storageUnavailable, true);
-
-    // Other unexpected errors map to 500 "Internal error."
-    const genericErr = new Error("Database connection pool timeout");
-    assert.equal(isMissingPlaygroundTableError(genericErr), false);
-    const mappedGeneric = mapIctPlaygroundRouteError(genericErr);
-    assert.equal(mappedGeneric.status, 500);
-    assert.equal(mappedGeneric.body.message, "Internal error.");
-
-    // Known HTTP error preserves its status and message
-    const notFoundErr = { status: 404, message: "Project not found." };
-    const mappedNotFound = mapIctPlaygroundRouteError(notFoundErr);
-    assert.equal(mappedNotFound.status, 404);
-    assert.equal(mappedNotFound.body.message, "Project not found.");
   });
 
   it("builds srcdoc with restrictive Content-Security-Policy meta tag and console error bridge", () => {

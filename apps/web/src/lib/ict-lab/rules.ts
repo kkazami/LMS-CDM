@@ -97,110 +97,11 @@ export function classifyIteProgram(raw: string | null | undefined): IteProgramKi
 // ─── Code Playground Limits, Validation & Security Helpers ──────────────────
 
 export const MAX_PLAYGROUND_BYTES = 100 * 1024; // 100 KB (102,400 bytes)
-export const MAX_PLAYGROUND_PROJECTS_PER_STUDENT = 30;
-export const MIN_PROJECT_TITLE_LENGTH = 1;
-export const MAX_PROJECT_TITLE_LENGTH = 80;
 
 export const PLAYGROUND_IFRAME_CSP =
   "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: https:; font-src data: https:;";
 
 export const PLAYGROUND_POSTMESSAGE_SOURCE = "cdm-ict-playground";
-
-export const ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE =
-  "Saving projects is not available yet. Your code still runs, but it can't be saved.";
-
-/**
- * Detects whether a database error thrown while querying `db.ictPlaygroundProject`
- * is caused by the `IctPlaygroundProject` table not existing yet (Prisma `P2021` or PostgreSQL `42P01`).
- */
-export function isMissingPlaygroundTableError(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const candidate = err as {
-    code?: unknown;
-    message?: unknown;
-    meta?: {
-      table?: unknown;
-      modelName?: unknown;
-      driverAdapterError?: {
-        cause?: { originalCode?: unknown; originalMessage?: unknown };
-      };
-    };
-    cause?: { code?: unknown; message?: unknown };
-  };
-
-  if (candidate.code === "P2021" || candidate.code === "42P01") {
-    return true;
-  }
-  if (candidate.cause?.code === "P2021" || candidate.cause?.code === "42P01") {
-    return true;
-  }
-  if (candidate.meta?.driverAdapterError?.cause?.originalCode === "42P01") {
-    return true;
-  }
-
-  const msg = typeof candidate.message === "string" ? candidate.message : "";
-  if (
-    /\bP2021\b/.test(msg) ||
-    /IctPlaygroundProject.*does not exist/i.test(msg) ||
-    /relation\s+"?IctPlaygroundProject"?\s+does not exist/i.test(msg) ||
-    /table\s+`?(?:public\.)?"?IctPlaygroundProject"?`?\s+does not exist/i.test(msg)
-  ) {
-    return true;
-  }
-  return false;
-}
-
-/**
- * Maps errors thrown in `/api/ite/ict-lab/projects` and `/api/ite/ict-lab/projects/[id]`
- * to an HTTP status and JSON body.
- * - Missing `IctPlaygroundProject` table (`P2021` / `42P01`) -> `503` with `ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE`.
- * - Known HTTP status errors (`HttpError`) -> `err.status` with `err.message`.
- * - `ZodError` -> `400` with validation issue message.
- * - Any other unexpected error -> `500` with `"Internal error."`.
- */
-export function mapIctPlaygroundRouteError(err: unknown): {
-  status: number;
-  body: { error: string; message: string; storageUnavailable?: boolean };
-} {
-  if (isMissingPlaygroundTableError(err)) {
-    return {
-      status: 503,
-      body: {
-        error: ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
-        message: ICT_PLAYGROUND_STORAGE_UNAVAILABLE_MESSAGE,
-        storageUnavailable: true,
-      },
-    };
-  }
-
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    typeof (err as { status?: unknown }).status === "number" &&
-    typeof (err as { message?: unknown }).message === "string"
-  ) {
-    const statusErr = err as { status: number; message: string };
-    return {
-      status: statusErr.status,
-      body: { error: statusErr.message, message: statusErr.message },
-    };
-  }
-
-  if (err instanceof z.ZodError) {
-    const first = err.issues[0];
-    const where = first?.path.length ? `${first.path.join(".")}: ` : "";
-    const msg = `${where}${first?.message ?? "Invalid request."}`;
-    return {
-      status: 400,
-      body: { error: msg, message: msg },
-    };
-  }
-
-  return {
-    status: 500,
-    body: { error: "Internal error.", message: "Internal error." },
-  };
-}
 
 const textEncoder = new TextEncoder();
 
@@ -210,59 +111,6 @@ export function computeProjectByteSize(html: string, css: string, js: string): n
     textEncoder.encode(css).byteLength +
     textEncoder.encode(js).byteLength
   );
-}
-
-export const playgroundProjectInputSchema = z
-  .object({
-    title: z
-      .string()
-      .trim()
-      .min(MIN_PROJECT_TITLE_LENGTH, "Project title must be between 1 and 80 characters.")
-      .max(MAX_PROJECT_TITLE_LENGTH, "Project title must be at most 80 characters."),
-    html: z.string().default(""),
-    css: z.string().default(""),
-    js: z.string().default(""),
-  })
-  .superRefine((val, ctx) => {
-    const totalBytes = computeProjectByteSize(val.html, val.css, val.js);
-    if (totalBytes > MAX_PLAYGROUND_BYTES) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Project code size (${totalBytes.toLocaleString()} bytes) exceeds the 100 KB (${MAX_PLAYGROUND_BYTES.toLocaleString()} bytes) limit.`,
-        path: ["html"],
-      });
-    }
-  });
-
-export type PlaygroundProjectInput = z.infer<typeof playgroundProjectInputSchema>;
-
-export function validatePlaygroundProjectInput(
-  raw: unknown
-): { ok: true; data: PlaygroundProjectInput; byteSize: number } | { ok: false; reason: string } {
-  const parsed = playgroundProjectInputSchema.safeParse(raw);
-  if (!parsed.success) {
-    const firstIssue = parsed.error.issues[0];
-    return { ok: false, reason: firstIssue?.message || "Invalid project payload." };
-  }
-  const byteSize = computeProjectByteSize(parsed.data.html, parsed.data.css, parsed.data.js);
-  return { ok: true, data: parsed.data, byteSize };
-}
-
-export function checkProjectCountLimit(
-  currentCount: number
-): { ok: true } | { ok: false; reason: string } {
-  if (currentCount >= MAX_PLAYGROUND_PROJECTS_PER_STUDENT) {
-    return {
-      ok: false,
-      reason: `You have reached the maximum of ${MAX_PLAYGROUND_PROJECTS_PER_STUDENT} saved projects. Delete an existing project before creating a new one.`,
-    };
-  }
-  return { ok: true };
-}
-
-export function checkProjectOwnership(projectUserId: string, callerUserId: string): boolean {
-  if (!projectUserId || !callerUserId) return false;
-  return projectUserId === callerUserId;
 }
 
 export interface PlaygroundConsoleEntry {
