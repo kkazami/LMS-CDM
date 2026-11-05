@@ -1,0 +1,33 @@
+{
+  "sourcePages": [
+    {
+      "title": "DepEd MATATAG Curriculum Guides (Kindergarten, Grades 1, 4 and 7)",
+      "url": "https://www.deped.gov.ph/matatagcurriculumk147/"
+    }
+  ],
+  "documents": [
+    {
+      "id": "mathematics-grades-1-4-7",
+      "title": "MATATAG Mathematics Curriculum Guide",
+      "subject": "Mathematics",
+      "grades": [1, 4, 7],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/MATATAG-Mathematics-CG-Grades1-4-and-7.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "supportsCourses": ["ELEMATP", "ELEMATI"],
+      "competencies": []
+    },
+    {
+      "id": "araling-panlipunan-grades-4-7",
+      "title": "MATATAG Araling Panlipunan Curriculum Guide",
+      "subject": "Araling Panlipunan",
+      "grades": [4, 7],
+      "url": "https://www.deped.gov.ph/wp-content/uploads/ARALING-PANLIPUNAN-GRADES-4-7.pdf",
+      "localPath": null,
+      "source": "DepEd",
+      "supportsCourses": ["ELETCUL", "ELETHIS"],
+      "competencies": []
+    }
+  ]
+}
+

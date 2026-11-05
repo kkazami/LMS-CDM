@@ -574,7 +574,7 @@ export default function Sidebar({
                   href={tool.href}
                   onClick={handleLinkClick}
                   aria-current={active ? "page" : undefined}
-                  title={isCollapsed ? tool.label : undefined}
+                  title={tool.label}
                   className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
@@ -592,7 +592,7 @@ export default function Sidebar({
                 >
                   <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
                   <span
-                    className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                    className={`overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-300 ${
                       isCollapsed ? "w-0 opacity-0" : "opacity-100"
                     }`}
                   >

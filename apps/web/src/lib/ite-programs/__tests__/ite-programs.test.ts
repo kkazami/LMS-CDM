@@ -581,15 +581,29 @@ describe("ITE Program Features & Sidebar Filtering", () => {
       lessonPlanTool,
     ]);
 
+    const matatagTool = {
+      id: "matatag-curriculum-guide",
+      title: "MATATAG Curriculum Reference Hub",
+      description:
+        "Elementary generalist learning competencies, standards, and teaching references under the MATATAG curriculum.",
+      href: "/ite/matatag",
+    };
+
     const beedFeatures = getFeaturesForIteProgram("BEEd");
     assert.deepEqual(
       beedFeatures.map((f) => f.title),
-      ["MATATAG Curriculum Guide", "Lesson Plan Builder"]
+      ["MATATAG Curriculum Reference Hub", "Lesson Plan Builder"]
     );
+    const beedMatatag = beedFeatures.find((f) => f.id === "matatag-curriculum-guide");
+    assert.equal(beedMatatag?.status, "available");
+    assert.equal(beedMatatag?.href, "/ite/matatag");
     const beedLp = beedFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(beedLp?.status, "available");
     assert.equal(beedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [
+      matatagTool,
+      lessonPlanTool,
+    ]);
 
     const visualKitTool = {
       id: "interactive-educational-charts",

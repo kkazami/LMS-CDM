@@ -94,11 +94,11 @@ export interface IteSidebarProgramTool {
 
 /**
  * Authoritative ITE per-program student feature configuration.
- * - "Lesson Plan Builder": all four ITE student programs (available, links to /ite/lesson-plans)
  * - "Nursery Song & Educational Media Library": BECEd only (available, links to /ite/nursery-library)
- * - "MATATAG Curriculum Guide": BEEd only (coming-soon)
- * - "Interactive Educational Charts": BSEd SCIENCE only (coming-soon)
+ * - "MATATAG Curriculum Reference Hub": BEEd only (available, links to /ite/matatag)
+ * - "Interactive Visual Learning Kit": BSEd SCIENCE only (available, links to /ite/visual-kit)
  * - "ICT Lab": BTLEd ICT only (available, links to /ite/ict-lab)
+ * - "Lesson Plan Builder": all four ITE student programs (available, links to /ite/lesson-plans)
  */
 export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   {
@@ -120,11 +120,12 @@ export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   },
   {
     id: "matatag-curriculum-guide",
-    title: "MATATAG Curriculum Guide",
+    title: "MATATAG Curriculum Reference Hub",
     description:
       "Elementary generalist learning competencies, standards, and teaching references under the MATATAG curriculum.",
+    href: "/ite/matatag",
     programs: ["BEEd"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "interactive-educational-charts",
