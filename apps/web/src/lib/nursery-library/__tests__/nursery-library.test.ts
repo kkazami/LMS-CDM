@@ -438,3 +438,256 @@ describe("Nursery Song & Educational Media Library - Playlist Helpers", () => {
     assert.deepEqual(deserializePlaylists("not json", validIds), []);
   });
 });
+
+describe("Nursery Song & Educational Media Library - YouTube URL Parser & Storage", () => {
+  const {
+    parseYouTubeUrl,
+    parseStartSeconds,
+    sanitizeCustomTitle,
+    sanitizeCustomNotes,
+    serializeCustomVideos,
+    deserializeCustomVideos,
+    serializeAttachedVideos,
+    deserializeAttachedVideos,
+    MAX_CUSTOM_VIDEOS,
+    MAX_CUSTOM_VIDEO_TITLE_LENGTH,
+    MAX_CUSTOM_VIDEO_NOTES_LENGTH,
+  } = require("../youtube");
+
+  it("parses all accepted video URL shapes and extracts 11-char ID", () => {
+    const validCases = [
+      {
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "http://youtube.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "youtube.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://youtu.be/dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "youtu.be/dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://www.youtube.com/shorts/dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://m.youtube.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://music.youtube.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://www.youtube-nocookie.com/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://youtube.com/watch?v=dQw4w9WgXcQ&si=12345&feature=share",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "HTTPS://WWW.YOUTUBE.COM/watch?v=dQw4w9WgXcQ",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://YOUTUBE.COM/watch?v=dQw4w9WgXcQ/",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://youtu.be/dQw4w9WgXcQ/",
+        id: "dQw4w9WgXcQ",
+      },
+      {
+        url: "https://youtube.com/shorts/dQw4w9WgXcQ/",
+        id: "dQw4w9WgXcQ",
+      },
+    ];
+
+    for (const { url, id } of validCases) {
+      const res = parseYouTubeUrl(url);
+      assert.ok(res, `Expected URL to parse: ${url}`);
+      assert.equal(res.kind, "video");
+      assert.equal(res.videoId, id);
+      assert.ok(
+        res.embedUrl.startsWith("https://www.youtube-nocookie.com/embed/"),
+        `Embed URL must start with nocookie domain: ${res.embedUrl}`
+      );
+    }
+  });
+
+  it("parses start time from t= and start= query parameters", () => {
+    assert.equal(parseStartSeconds("120"), 120);
+    assert.equal(parseStartSeconds("90s"), 90);
+    assert.equal(parseStartSeconds("1m30s"), 90);
+    assert.equal(parseStartSeconds("1h2m3s"), 3723);
+    assert.equal(parseStartSeconds("2h"), 7200);
+    assert.equal(parseStartSeconds("45s"), 45);
+    assert.equal(parseStartSeconds("0"), undefined);
+    assert.equal(parseStartSeconds("invalid"), undefined);
+
+    const withTime1 = parseYouTubeUrl("https://youtube.com/watch?v=dQw4w9WgXcQ&t=1h2m3s");
+    assert.ok(withTime1);
+    assert.equal(withTime1.kind, "video");
+    assert.equal(withTime1.startSeconds, 3723);
+    assert.ok(withTime1.embedUrl.includes("&start=3723"));
+
+    const withTime2 = parseYouTubeUrl("https://youtu.be/dQw4w9WgXcQ?t=45s");
+    assert.ok(withTime2);
+    assert.equal(withTime2.kind, "video");
+    assert.equal(withTime2.startSeconds, 45);
+    assert.ok(withTime2.embedUrl.includes("&start=45"));
+  });
+
+  it("parses playlist-only links and builds videoseries embed URL", () => {
+    const plUrl1 = "https://www.youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf";
+    const res1 = parseYouTubeUrl(plUrl1);
+    assert.ok(res1);
+    assert.equal(res1.kind, "playlist");
+    assert.equal(res1.playlistId, "PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf");
+    assert.equal(
+      res1.embedUrl,
+      "https://www.youtube-nocookie.com/embed/videoseries?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf&rel=0&modestbranding=1&playsinline=1"
+    );
+
+    const plUrl2 = "https://m.youtube.com/playlist?list=UU1234567890abcdef";
+    const res2 = parseYouTubeUrl(plUrl2);
+    assert.ok(res2);
+    assert.equal(res2.kind, "playlist");
+    assert.equal(res2.playlistId, "UU1234567890abcdef");
+  });
+
+  it("rejects malicious, lookalike, and invalid URL formats", () => {
+    const rejectCases = [
+      "https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ",
+      "https://evilyoutube.com/watch?v=dQw4w9WgXcQ",
+      "https://evil.com/watch?v=dQw4w9WgXcQ",
+      "https://vimeo.com/123456789",
+      "javascript:alert(1)",
+      "javascript:void(0)",
+      "data:text/html,<script>alert(1)</script>",
+      "vbscript:msgbox",
+      "https://youtube.com/watch?v=dQw4w9WgXc", // 10 chars
+      "https://youtube.com/watch?v=dQw4w9WgXcQQ", // 12 chars
+      "https://youtube.com/watch?v=dQw4w9WgXc!", // bad punctuation
+      "https://youtube.com/watch?v=dQw4w9Wg Xc", // space in ID
+      "https://youtube.com/channel/UC1234567890",
+      "https://youtube.com/user/pewdiepie",
+      "https://www.youtube.com/playlist?list=short", // playlist too short (<10)
+      "",
+      "   ",
+      "not a url",
+      "https://",
+    ];
+
+    for (const bad of rejectCases) {
+      const res = parseYouTubeUrl(bad);
+      assert.equal(res, null, `Should have rejected: ${bad}`);
+    }
+  });
+
+  it("sanitizes video titles and notes", () => {
+    assert.equal(sanitizeCustomTitle("  Hello \x00World\x1F!  "), "Hello World!");
+    const longTitle = "A".repeat(120);
+    assert.equal(sanitizeCustomTitle(longTitle).length, MAX_CUSTOM_VIDEO_TITLE_LENGTH);
+
+    assert.equal(sanitizeCustomNotes("  Teaching \x07Tip\x1E  "), "Teaching Tip");
+    const longNotes = "N".repeat(300);
+    assert.equal(sanitizeCustomNotes(longNotes).length, MAX_CUSTOM_VIDEO_NOTES_LENGTH);
+  });
+
+  it("serializes and deserializes custom videos with dedupe, recovery, and 100 item cap", () => {
+    const sampleVideos = [
+      {
+        id: "custom-1",
+        title: "Song 1",
+        youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        kind: "video" as const,
+        videoId: "dQw4w9WgXcQ",
+        playlistId: null,
+        embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&playsinline=1",
+        canonicalUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      // Duplicate video ID with different entry id (should be deduped on load)
+      {
+        id: "custom-duplicate",
+        title: "Song 1 Dupe",
+        youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+        kind: "video" as const,
+        videoId: "dQw4w9WgXcQ",
+        playlistId: null,
+        embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&playsinline=1",
+        canonicalUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
+    const json = serializeCustomVideos(sampleVideos);
+    const restored = deserializeCustomVideos(json);
+    assert.equal(restored.length, 1); // duplicate was dropped
+    assert.equal(restored[0].videoId, "dQw4w9WgXcQ");
+
+    // Corrupted JSON recovery
+    assert.deepEqual(deserializeCustomVideos("not json at all"), []);
+    assert.deepEqual(deserializeCustomVideos(null), []);
+    assert.deepEqual(deserializeCustomVideos(JSON.stringify({ version: 999, videos: [] })), []);
+
+    // 100 item cap enforcement
+    const manyVideos = Array.from({ length: 120 }, (_, i) => ({
+      id: `custom-${i}`,
+      title: `Song ${i}`,
+      youtubeUrl: `https://www.youtube.com/watch?v=video${String(i).padStart(6, "0")}`,
+      kind: "video" as const,
+      videoId: `video${String(i).padStart(6, "0")}`,
+      playlistId: null,
+      embedUrl: `https://www.youtube-nocookie.com/embed/video${String(i).padStart(6, "0")}?rel=0&modestbranding=1&playsinline=1`,
+      canonicalUrl: `https://www.youtube.com/watch?v=video${String(i).padStart(6, "0")}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    const cappedJson = serializeCustomVideos(manyVideos);
+    const cappedRestored = deserializeCustomVideos(cappedJson);
+    assert.equal(cappedRestored.length, MAX_CUSTOM_VIDEOS);
+  });
+
+  it("serializes and deserializes attached videos for curated songs", () => {
+    const attachedMap = {
+      "bahay-kubo": {
+        youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        kind: "video" as const,
+        videoId: "dQw4w9WgXcQ",
+        playlistId: null,
+        embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&playsinline=1",
+        canonicalUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    const json = serializeAttachedVideos(attachedMap);
+    const restored = deserializeAttachedVideos(json);
+    assert.ok(restored["bahay-kubo"]);
+    assert.equal(restored["bahay-kubo"].videoId, "dQw4w9WgXcQ");
+
+    // Corrupted fallback
+    assert.deepEqual(deserializeAttachedVideos("{bad json"), {});
+  });
+});
+

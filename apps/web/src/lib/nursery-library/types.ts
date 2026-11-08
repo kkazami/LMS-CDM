@@ -56,3 +56,6 @@ export interface NurseryFilterOptions {
   favoriteIds?: string[] | Set<string>;
 }
 
+export type { CustomNurseryVideo, AttachedVideoRecord, YouTubeParsed } from "./youtube";
+
+
