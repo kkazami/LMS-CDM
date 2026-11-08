@@ -30,6 +30,8 @@ import {
   Volume2,
   X,
   AlertCircle,
+  RotateCcw,
+  ShieldAlert,
 } from "lucide-react";
 import type {
   NurseryCategory,
@@ -669,16 +671,70 @@ export default function NurseryLibraryClient({
     setOnlyFavorites(false);
   };
 
+  const getCategoryTint = (categoryId?: string | null) => {
+    switch (categoryId) {
+      case "filipino-folk-songs":
+        return {
+          bg: "bg-rose-100/90 dark:bg-rose-950/60",
+          text: "text-rose-800 dark:text-rose-300",
+          border: "border-rose-200/80 dark:border-rose-700/40",
+        };
+      case "counting-and-numbers":
+        return {
+          bg: "bg-sky-100/90 dark:bg-sky-950/60",
+          text: "text-sky-800 dark:text-sky-300",
+          border: "border-sky-200/80 dark:border-sky-700/40",
+        };
+      case "alphabet-and-letters":
+        return {
+          bg: "bg-teal-100/90 dark:bg-teal-950/60",
+          text: "text-teal-800 dark:text-teal-300",
+          border: "border-teal-200/80 dark:border-teal-700/40",
+        };
+      case "animals-and-nature":
+        return {
+          bg: "bg-amber-100/90 dark:bg-amber-950/60",
+          text: "text-amber-900 dark:text-amber-300",
+          border: "border-amber-200/80 dark:border-amber-700/40",
+        };
+      case "body-parts-and-movement":
+        return {
+          bg: "bg-violet-100/90 dark:bg-violet-950/60",
+          text: "text-violet-800 dark:text-violet-300",
+          border: "border-violet-200/80 dark:border-violet-700/40",
+        };
+      case "daily-routines-and-good-habits":
+        return {
+          bg: "bg-teal-100/90 dark:bg-teal-950/60",
+          text: "text-teal-800 dark:text-teal-300",
+          border: "border-teal-200/80 dark:border-teal-700/40",
+        };
+      case "lullabies-and-bedtime":
+        return {
+          bg: "bg-violet-100/90 dark:bg-violet-950/60",
+          text: "text-violet-800 dark:text-violet-300",
+          border: "border-violet-200/80 dark:border-violet-700/40",
+        };
+      case "educational-videos":
+      default:
+        return {
+          bg: "bg-sky-100/90 dark:bg-sky-950/60",
+          text: "text-sky-800 dark:text-sky-300",
+          border: "border-sky-200/80 dark:border-sky-700/40",
+        };
+    }
+  };
+
   const getItemTypeBadge = (type: NurseryItemType) => {
     switch (type) {
       case "song":
-        return { label: "Song", icon: Music, color: "bg-pink-500/10 text-pink-700 dark:text-pink-300" };
+        return { label: "Song", icon: Music, color: "bg-pink-100/90 dark:bg-pink-950/60 text-pink-800 dark:text-pink-300 border border-pink-200/80 dark:border-pink-700/40" };
       case "rhyme":
-        return { label: "Rhyme", icon: Volume2, color: "bg-purple-500/10 text-purple-700 dark:text-purple-300" };
+        return { label: "Rhyme", icon: Volume2, color: "bg-violet-100/90 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 border border-violet-200/80 dark:border-violet-700/40" };
       case "lullaby":
-        return { label: "Lullaby", icon: Moon, color: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300" };
+        return { label: "Lullaby", icon: Moon, color: "bg-indigo-100/90 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-700/40" };
       case "educational-video":
-        return { label: "Educational Video", icon: Film, color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" };
+        return { label: "Educational Video", icon: Film, color: "bg-sky-100/90 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200/80 dark:border-sky-700/40" };
     }
   };
 
@@ -688,21 +744,127 @@ export default function NurseryLibraryClient({
 
   return (
     <div className="space-y-6">
-      {/* ── HERO BANNER ── */}
+      {/* ── Nursery Library Scoped Motion & Animation Styles (honors prefers-reduced-motion) ── */}
+      <style>{`
+        @media (prefers-reduced-motion: no-preference) {
+          /* Gentle Idle Float / Bob for Hero & Tab Icons (3.2s - 3.8s cycles) */
+          @keyframes nurseryIconSway {
+            0%, 100% {
+              transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+              transform: translateY(-2px) rotate(4deg);
+            }
+          }
+          @keyframes nurseryIconPulse {
+            0%, 100% {
+              transform: scale(1);
+              opacity: 0.95;
+            }
+            50% {
+              transform: scale(1.08);
+              opacity: 1;
+            }
+          }
+          @keyframes nurseryIconFloat {
+            0%, 100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-2.5px);
+            }
+          }
+
+          /* Interactive Card Hover Keyframes (Single trigger on hover, 150-400ms) */
+          @keyframes nurseryCardIconWiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-9deg) scale(1.08); }
+            75% { transform: rotate(9deg) scale(1.08); }
+            100% { transform: rotate(0deg) scale(1); }
+          }
+          @keyframes nurseryHeartPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.28); }
+            70% { transform: scale(0.92); }
+            100% { transform: scale(1); }
+          }
+          @keyframes nurseryPlaylistSlide {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
+            100% { transform: translateX(0); }
+          }
+          @keyframes nurseryPlayGlow {
+            0% {
+              transform: scale(1);
+              box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+            50% {
+              transform: scale(1.08);
+              box-shadow: 0 0 16px 3px rgba(245, 158, 11, 0.45);
+            }
+            100% {
+              transform: scale(1.05);
+              box-shadow: 0 0 8px 1px rgba(245, 158, 11, 0.3);
+            }
+          }
+
+          /* Applied utility classes */
+          .nursery-idle-sway {
+            animation: nurseryIconSway 3.5s ease-in-out infinite;
+            transform-origin: center bottom;
+            will-change: transform;
+          }
+          .nursery-idle-pulse {
+            animation: nurseryIconPulse 3.8s ease-in-out infinite;
+            will-change: transform, opacity;
+          }
+          .nursery-idle-float {
+            animation: nurseryIconFloat 3.2s ease-in-out infinite;
+            will-change: transform;
+          }
+
+          .group:hover .nursery-hover-wiggle {
+            animation: nurseryCardIconWiggle 400ms ease-in-out;
+          }
+          .group:hover .nursery-hover-slide {
+            animation: nurseryPlaylistSlide 300ms ease-in-out;
+          }
+          .group:hover .nursery-hover-playglow {
+            animation: nurseryPlayGlow 400ms ease-in-out forwards;
+          }
+          .nursery-heart-pop {
+            animation: nurseryHeartPop 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .nursery-idle-sway,
+          .nursery-idle-pulse,
+          .nursery-idle-float,
+          .nursery-hover-wiggle,
+          .nursery-hover-slide,
+          .nursery-hover-playglow,
+          .nursery-heart-pop {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
+
+      {/* ── HERO BANNER (Violet-Sky gentle gradient) ── */}
       <section
         aria-labelledby="nursery-library-heading"
-        className="relative overflow-hidden rounded-2xl border border-theme bg-surface p-6 sm:p-8 shadow-xs"
+        className="relative overflow-hidden rounded-2xl border border-violet-200/80 dark:border-violet-500/25 bg-gradient-to-br from-[#ede9fe]/80 via-[#f5f3ff]/70 to-[#e0f2fe]/80 dark:from-[#1e1b4b]/60 dark:via-[#172554]/40 dark:to-[#0c4a6e]/50 p-6 sm:p-8 shadow-xs"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-surface pointer-events-none" />
-
         <div className="relative z-10 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-2.5 py-1 text-xs font-bold text-white shadow-2xs">
-                <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 px-2.5 py-1 text-xs font-bold text-white shadow-2xs">
+                <GraduationCap className="h-3.5 w-3.5 nursery-idle-float" aria-hidden="true" />
                 <span>{programCode}</span>
               </span>
-              <span className="text-xs font-medium text-secondary-theme">
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 {programName || "Bachelor of Early Childhood Education"}
               </span>
             </div>
@@ -711,17 +873,17 @@ export default function NurseryLibraryClient({
               <button
                 type="button"
                 onClick={handleOpenAddModal}
-                className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-purple-700 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer"
+                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 cursor-pointer"
               >
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                <Plus className="h-3.5 w-3.5 transition-transform duration-300 ease-in-out group-hover:rotate-90 motion-reduce:transform-none" aria-hidden="true" />
                 <span>Add YouTube video</span>
               </button>
 
               <Link
                 href={`/${institute}/lesson-plans`}
-                className="inline-flex items-center gap-2 rounded-xl border border-theme bg-surface px-4 py-2 text-xs font-semibold text-secondary-theme hover:text-primary-theme shadow-xs transition focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer"
+                className="group inline-flex items-center gap-2 rounded-xl border border-violet-200/80 dark:border-violet-500/30 bg-surface/80 hover:bg-violet-50/70 dark:hover:bg-violet-950/40 px-4 py-2 text-xs font-semibold text-secondary-theme hover:text-primary-theme shadow-xs transition focus-visible:outline-2 focus-visible:outline-sky-500 cursor-pointer"
               >
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                <Sparkles className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 transition-transform duration-300 group-hover:scale-125 motion-reduce:transform-none" aria-hidden="true" />
                 <span>Plan a lesson</span>
               </Link>
             </div>
@@ -730,11 +892,11 @@ export default function NurseryLibraryClient({
           <div>
             <h1
               id="nursery-library-heading"
-              className="text-2xl sm:text-3xl font-extrabold tracking-tight text-primary-theme"
+              className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white"
             >
               Nursery Song &amp; Educational Media Library
             </h1>
-            <p className="mt-1.5 max-w-3xl text-sm sm:text-base text-secondary-theme leading-relaxed">
+            <p className="mt-1.5 max-w-3xl text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
               Curated public-domain traditional folk songs, fingerplays, rhymes, and educational
               media resources curated for early childhood pre-service teachers.
             </p>
@@ -743,9 +905,9 @@ export default function NurseryLibraryClient({
           {/* Hero Note */}
           <div
             role="note"
-            className="flex items-start sm:items-center gap-2.5 rounded-xl border border-purple-500/30 bg-purple-500/10 p-3.5 text-xs text-purple-900 dark:text-purple-200"
+            className="flex items-start sm:items-center gap-2.5 rounded-xl border border-violet-300/70 dark:border-violet-500/30 bg-violet-50/80 dark:bg-violet-950/40 p-3.5 text-xs text-violet-950 dark:text-violet-200"
           >
-            <Info className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0 text-purple-600 dark:text-purple-400" />
+            <Info className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0 text-violet-600 dark:text-violet-400" />
             <span className="font-medium">
               Teaching resources for early childhood lessons. Add YouTube videos or attach them to curated rhymes to stream directly inside the LMS.
             </span>
@@ -754,7 +916,11 @@ export default function NurseryLibraryClient({
       </section>
 
       {/* ── TABS ── */}
-      <div className="flex border-b border-theme" role="tablist" aria-label="Library Navigation">
+      <div
+        className="flex items-center overflow-x-auto no-scrollbar sm:overflow-visible border-b border-theme gap-1 sm:gap-2 pb-px"
+        role="tablist"
+        aria-label="Library Navigation"
+      >
         {/* Tab 1: Curated Library */}
         <button
           type="button"
@@ -764,25 +930,25 @@ export default function NurseryLibraryClient({
           aria-controls="panel-library"
           tabIndex={activeTab === "library" ? 0 : -1}
           onClick={() => setActiveTab("library")}
-          className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${
+          className={`relative shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
             activeTab === "library"
-              ? "text-purple-600 dark:text-purple-400"
+              ? "text-violet-700 dark:text-sky-300"
               : "text-secondary-theme hover:text-primary-theme"
           }`}
         >
-          <Music className="h-4 w-4" />
+          <Music className="h-4 w-4 nursery-idle-sway text-violet-600 dark:text-sky-400" />
           <span>Library</span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
               activeTab === "library"
-                ? "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+                ? "bg-violet-100 text-violet-800 dark:bg-sky-950/60 dark:text-sky-300"
                 : "bg-elevated text-secondary-theme"
             }`}
           >
             {filteredItems.length}
           </span>
           {activeTab === "library" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600 rounded-t-full" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-sky-500 rounded-t-full" />
           )}
         </button>
 
@@ -795,25 +961,25 @@ export default function NurseryLibraryClient({
           aria-controls="panel-my-videos"
           tabIndex={activeTab === "videos" ? 0 : -1}
           onClick={() => setActiveTab("videos")}
-          className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${
+          className={`relative shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
             activeTab === "videos"
-              ? "text-purple-600 dark:text-purple-400"
+              ? "text-violet-700 dark:text-sky-300"
               : "text-secondary-theme hover:text-primary-theme"
           }`}
         >
-          <Tv className="h-4 w-4" />
+          <Tv className="h-4 w-4 nursery-idle-pulse text-sky-600 dark:text-sky-400" />
           <span>My Videos</span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
               activeTab === "videos"
-                ? "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+                ? "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300"
                 : "bg-elevated text-secondary-theme"
             }`}
           >
             {customVideos.length}
           </span>
           {activeTab === "videos" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600 rounded-t-full" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-sky-500 rounded-t-full" />
           )}
         </button>
 
@@ -826,25 +992,25 @@ export default function NurseryLibraryClient({
           aria-controls="panel-playlists"
           tabIndex={activeTab === "playlists" ? 0 : -1}
           onClick={() => setActiveTab("playlists")}
-          className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors cursor-pointer ${
+          className={`relative shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
             activeTab === "playlists"
-              ? "text-purple-600 dark:text-purple-400"
+              ? "text-violet-700 dark:text-sky-300"
               : "text-secondary-theme hover:text-primary-theme"
           }`}
         >
-          <ListPlus className="h-4 w-4" />
+          <ListPlus className="h-4 w-4 nursery-idle-float text-violet-600 dark:text-sky-400" />
           <span>My Playlists</span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
               activeTab === "playlists"
-                ? "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+                ? "bg-violet-100 text-violet-800 dark:bg-sky-950/60 dark:text-sky-300"
                 : "bg-elevated text-secondary-theme"
             }`}
           >
             {playlists.length}
           </span>
           {activeTab === "playlists" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600 rounded-t-full" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-sky-500 rounded-t-full" />
           )}
         </button>
       </div>
@@ -867,9 +1033,9 @@ export default function NurseryLibraryClient({
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-sky-700 dark:text-sky-300 hover:text-violet-700 dark:hover:text-violet-300 hover:underline cursor-pointer"
                 >
-                  <X className="h-3 w-3" />
+                  <RotateCcw className="h-3 w-3" />
                   <span>Reset filters</span>
                 </button>
               )}
@@ -885,7 +1051,7 @@ export default function NurseryLibraryClient({
                   id={categorySelectId}
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 >
                   <option value="all">All Categories</option>
                   {initialData.categories.map((c) => (
@@ -905,7 +1071,7 @@ export default function NurseryLibraryClient({
                   id={languageSelectId}
                   value={selectedLanguage}
                   onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 >
                   <option value="all">All Languages</option>
                   <option value="Filipino">Filipino</option>
@@ -922,7 +1088,7 @@ export default function NurseryLibraryClient({
                   id={ageSelectId}
                   value={selectedAgeRange}
                   onChange={(e) => setSelectedAgeRange(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 >
                   <option value="all">All Ages</option>
                   <option value="2-3">Ages 2-3</option>
@@ -941,7 +1107,7 @@ export default function NurseryLibraryClient({
                   id={typeSelectId}
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full h-10 rounded-xl border border-theme bg-elevated px-3 text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 >
                   <option value="all">All Formats</option>
                   <option value="song">Song</option>
@@ -958,11 +1124,11 @@ export default function NurseryLibraryClient({
                   onClick={() => setOnlyFavorites((prev) => !prev)}
                   className={`w-full h-10 inline-flex items-center justify-center gap-2 rounded-xl border text-xs sm:text-sm font-semibold transition cursor-pointer ${
                     onlyFavorites
-                      ? "border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      ? "border-amber-400/80 bg-amber-500/15 text-amber-900 dark:text-amber-200"
                       : "border-theme bg-elevated text-secondary-theme hover:text-primary-theme"
                   }`}
                 >
-                  <Heart className={`h-4 w-4 ${onlyFavorites ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <Heart className={`h-4 w-4 ${onlyFavorites ? "fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400 nursery-heart-pop" : ""}`} />
                   <span>Favorites Only</span>
                 </button>
               </div>
@@ -977,7 +1143,7 @@ export default function NurseryLibraryClient({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by song title, learning concept (e.g. counting, body parts)..."
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-theme bg-elevated text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-theme bg-elevated text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
               />
             </div>
           </section>
@@ -993,7 +1159,7 @@ export default function NurseryLibraryClient({
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="mt-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-purple-700 cursor-pointer"
+                className="mt-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2 text-xs font-bold text-white shadow-xs cursor-pointer"
               >
                 Reset filters
               </button>
@@ -1013,11 +1179,13 @@ export default function NurseryLibraryClient({
                 const searchUrl = buildSearchUrl(item.searchQuery);
                 const typeBadge = getItemTypeBadge(item.type);
                 const TypeIcon = typeBadge.icon;
+                const categoryTint = getCategoryTint(item.categoryId);
+                const categoryName = categoryMap.get(item.categoryId) || item.categoryId;
 
                 return (
                   <article
                     key={item.id}
-                    className="flex flex-col justify-between rounded-2xl border border-theme bg-surface p-5 shadow-xs hover:border-purple-500/40 transition-all space-y-4"
+                    className="group flex flex-col justify-between rounded-2xl border border-theme bg-surface hover:border-violet-400/60 dark:hover:border-sky-500/40 p-5 shadow-xs transition-all space-y-4"
                   >
                     <div className="space-y-3">
                       {/* Top badges and Favorite button */}
@@ -1026,8 +1194,12 @@ export default function NurseryLibraryClient({
                           <span
                             className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${typeBadge.color}`}
                           >
-                            <TypeIcon className="h-3 w-3" />
+                            <TypeIcon className="h-3 w-3 nursery-hover-wiggle" />
                             <span>{typeBadge.label}</span>
+                          </span>
+
+                          <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${categoryTint.bg} ${categoryTint.text} ${categoryTint.border}`}>
+                            {categoryName}
                           </span>
 
                           <span className="inline-flex items-center rounded-md border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme">
@@ -1046,13 +1218,13 @@ export default function NurseryLibraryClient({
                             onClick={() => toggleFavorite(item.id)}
                             aria-label={isFavorite ? `Remove ${item.title} from favorites` : `Add ${item.title} to favorites`}
                             aria-pressed={isFavorite}
-                            className={`rounded-lg p-1.5 transition cursor-pointer ${
+                            className={`group/heart rounded-lg p-1.5 transition cursor-pointer ${
                               isFavorite
-                                ? "text-rose-600 bg-rose-500/10"
-                                : "text-secondary-theme hover:text-rose-600 hover:bg-elevated"
+                                ? "text-amber-500 dark:text-amber-400 bg-amber-500/10"
+                                : "text-secondary-theme hover:text-amber-500 hover:bg-elevated"
                             }`}
                           >
-                            <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-600" : ""}`} />
+                            <Heart className={`h-4 w-4 transition-transform duration-200 ${isFavorite ? "fill-amber-500 dark:fill-amber-400 text-amber-500 dark:text-amber-400 nursery-heart-pop" : "group-hover/heart:scale-110"}`} />
                           </button>
 
                           {/* Add to playlist popover button */}
@@ -1063,9 +1235,9 @@ export default function NurseryLibraryClient({
                                 setPopoverItemId((curr) => (curr === item.id ? null : item.id))
                               }
                               aria-label={`Add ${item.title} to playlist`}
-                              className="rounded-lg p-1.5 text-secondary-theme hover:text-purple-600 hover:bg-elevated transition cursor-pointer"
+                              className="rounded-lg p-1.5 text-secondary-theme hover:text-sky-600 hover:bg-elevated transition cursor-pointer"
                             >
-                              <ListPlus className="h-4 w-4" />
+                              <ListPlus className="h-4 w-4 nursery-hover-slide" />
                             </button>
 
                             {popoverItemId === item.id && (
@@ -1108,16 +1280,26 @@ export default function NurseryLibraryClient({
                         {item.title}
                       </h2>
 
-                      {/* Learning focus chips */}
+                      {/* Learning focus chips (rotated soft tints) */}
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {item.learningFocus.map((focus) => (
-                          <span
-                            key={focus}
-                            className="inline-flex items-center rounded-md bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-800 dark:text-purple-300"
-                          >
-                            {focus}
-                          </span>
-                        ))}
+                        {item.learningFocus.map((focus, idx) => {
+                          const focusTints = [
+                            "bg-violet-100/90 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300 border-violet-200/70 dark:border-violet-800/40",
+                            "bg-sky-100/90 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200/70 dark:border-sky-800/40",
+                            "bg-teal-100/90 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border-teal-200/70 dark:border-teal-800/40",
+                            "bg-rose-100/90 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200/70 dark:border-rose-800/40",
+                            "bg-amber-100/90 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/40",
+                          ];
+                          const tint = focusTints[idx % focusTints.length];
+                          return (
+                            <span
+                              key={focus}
+                              className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${tint}`}
+                            >
+                              {focus}
+                            </span>
+                          );
+                        })}
                       </div>
 
                       {/* Teaching tip line */}
@@ -1128,9 +1310,9 @@ export default function NurseryLibraryClient({
 
                       {/* Attached video indicator */}
                       {attached && (
-                        <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 text-[11px] text-purple-800 dark:text-purple-300">
+                        <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border border-violet-200/80 dark:border-violet-800/40 bg-violet-100/80 dark:bg-violet-950/50 text-[11px] text-violet-900 dark:text-violet-300">
                           <span className="inline-flex items-center gap-1 font-semibold truncate">
-                            <LinkIcon className="h-3 w-3 shrink-0" />
+                            <LinkIcon className="h-3 w-3 shrink-0 text-violet-600 dark:text-violet-400" />
                             <span>YouTube attached</span>
                           </span>
                           <button
@@ -1158,16 +1340,16 @@ export default function NurseryLibraryClient({
                                 canonicalUrl,
                               })
                             }
-                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-purple-700 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer"
+                            className="group/btn flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all duration-200 focus-visible:outline-2 focus-visible:outline-sky-500 cursor-pointer"
                           >
-                            <Play className="h-3.5 w-3.5 fill-white" />
+                            <Play className="h-3.5 w-3.5 fill-amber-300 text-amber-300 transition-transform duration-200 group-hover/btn:scale-110" />
                             <span>Watch here</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleOpenAttachModal(item)}
-                            className="rounded-xl border border-theme bg-elevated p-2 text-secondary-theme hover:text-primary-theme transition"
+                            className="rounded-xl border border-theme bg-elevated p-2 text-secondary-theme hover:text-primary-theme transition cursor-pointer"
                             title="Change attached YouTube link"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
@@ -1178,9 +1360,9 @@ export default function NurseryLibraryClient({
                           <button
                             type="button"
                             onClick={() => handleOpenAttachModal(item)}
-                            className="w-full sm:flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-purple-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-purple-700 cursor-pointer"
+                            className="group/btn w-full sm:flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-3 py-2 text-xs font-bold text-white shadow-xs transition-all duration-200 cursor-pointer"
                           >
-                            <LinkIcon className="h-3 w-3" />
+                            <LinkIcon className="h-3 w-3 transition-transform duration-200 group-hover/btn:scale-110" />
                             <span>Attach video</span>
                           </button>
 
@@ -1219,9 +1401,9 @@ export default function NurseryLibraryClient({
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-purple-700 cursor-pointer shrink-0"
+              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all duration-200 cursor-pointer shrink-0"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5 transition-transform duration-300 ease-in-out group-hover:rotate-90 motion-reduce:transform-none" />
               <span>Add YouTube link</span>
             </button>
           </div>
@@ -1237,7 +1419,7 @@ export default function NurseryLibraryClient({
               <button
                 type="button"
                 onClick={handleOpenAddModal}
-                className="mt-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-purple-700 cursor-pointer"
+                className="mt-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2 text-xs font-bold text-white shadow-xs hover:shadow transition cursor-pointer"
               >
                 Add your first YouTube video
               </button>
@@ -1250,7 +1432,7 @@ export default function NurseryLibraryClient({
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="mt-1 text-xs font-semibold text-purple-600 hover:underline"
+                className="mt-1 text-xs font-semibold text-sky-700 dark:text-sky-300 hover:underline"
               >
                 Reset filters
               </button>
@@ -1260,20 +1442,21 @@ export default function NurseryLibraryClient({
               {filteredCustomVideos.map((video) => {
                 const isFavorite = favorites.has(video.id);
                 const categoryName = video.categoryId ? categoryMap.get(video.categoryId) : null;
+                const categoryTint = getCategoryTint(video.categoryId);
 
                 return (
                   <article
                     key={video.id}
-                    className="flex flex-col justify-between rounded-2xl border border-theme bg-surface p-5 shadow-xs hover:border-purple-500/40 transition-all space-y-4"
+                    className="group flex flex-col justify-between rounded-2xl border border-theme bg-surface hover:border-sky-400/60 dark:hover:border-violet-500/40 p-5 shadow-xs transition-all space-y-4"
                   >
                     <div className="space-y-3">
                       {/* Thumbnail or Placeholder */}
-                      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center group">
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center group/thumb">
                         {video.kind === "video" && video.videoId ? (
                           <img
                             src={`https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`}
                             alt={video.title}
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
+                            className="w-full h-full object-cover transition-transform group-hover/thumb:scale-105 duration-200"
                             onError={(e) => {
                               // If image fails to load, hide img and show fallback icon
                               (e.target as HTMLElement).style.display = "none";
@@ -1281,22 +1464,22 @@ export default function NurseryLibraryClient({
                           />
                         ) : null}
 
-                        {/* Centered Play Button overlay */}
+                        {/* Centered Play Button overlay with warm amber accent */}
                         <button
                           type="button"
                           onClick={() => handleWatch(video)}
                           aria-label={`Watch ${video.title}`}
                           className="absolute inset-0 flex items-center justify-center bg-black/35 hover:bg-black/50 transition-colors cursor-pointer"
                         >
-                          <div className="h-11 w-11 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                            <Play className="h-5 w-5 fill-white ml-0.5" />
+                          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-amber-500 to-amber-400 text-slate-950 flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover/thumb:scale-110 nursery-hover-playglow">
+                            <Play className="h-5 w-5 fill-slate-950 ml-0.5" />
                           </div>
                         </button>
 
                         {/* Top-right Kind Badge */}
                         <div className="absolute top-2 right-2">
                           <span className="inline-flex items-center gap-1 rounded-md bg-black/70 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-white border border-white/20">
-                            {video.kind === "playlist" ? <ListPlus className="h-3 w-3" /> : <Film className="h-3 w-3" />}
+                            {video.kind === "playlist" ? <ListPlus className="h-3 w-3 nursery-hover-slide" /> : <Film className="h-3 w-3 nursery-hover-wiggle" />}
                             <span>{video.kind === "playlist" ? "Playlist" : "Video"}</span>
                           </span>
                         </div>
@@ -1306,7 +1489,7 @@ export default function NurseryLibraryClient({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {categoryName && (
-                            <span className="inline-flex items-center rounded-md bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-800 dark:text-purple-300">
+                            <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${categoryTint.bg} ${categoryTint.text} ${categoryTint.border}`}>
                               {categoryName}
                             </span>
                           )}
@@ -1325,13 +1508,13 @@ export default function NurseryLibraryClient({
                             onClick={() => toggleFavorite(video.id)}
                             aria-label={isFavorite ? `Remove ${video.title} from favorites` : `Add ${video.title} to favorites`}
                             aria-pressed={isFavorite}
-                            className={`rounded-lg p-1.5 transition cursor-pointer ${
+                            className={`group/heart rounded-lg p-1.5 transition cursor-pointer ${
                               isFavorite
-                                ? "text-rose-600 bg-rose-500/10"
-                                : "text-secondary-theme hover:text-rose-600 hover:bg-elevated"
+                                ? "text-amber-500 dark:text-amber-400 bg-amber-500/10"
+                                : "text-secondary-theme hover:text-amber-500 hover:bg-elevated"
                             }`}
                           >
-                            <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-600" : ""}`} />
+                            <Heart className={`h-4 w-4 transition-transform duration-200 ${isFavorite ? "fill-amber-500 dark:fill-amber-400 text-amber-500 dark:text-amber-400 nursery-heart-pop" : "group-hover/heart:scale-110"}`} />
                           </button>
 
                           {/* Add to playlist popover button */}
@@ -1342,9 +1525,9 @@ export default function NurseryLibraryClient({
                                 setPopoverItemId((curr) => (curr === video.id ? null : video.id))
                               }
                               aria-label={`Add ${video.title} to playlist`}
-                              className="rounded-lg p-1.5 text-secondary-theme hover:text-purple-600 hover:bg-elevated transition cursor-pointer"
+                              className="rounded-lg p-1.5 text-secondary-theme hover:text-sky-600 hover:bg-elevated transition cursor-pointer"
                             >
-                              <ListPlus className="h-4 w-4" />
+                              <ListPlus className="h-4 w-4 nursery-hover-slide" />
                             </button>
 
                             {popoverItemId === video.id && (
@@ -1416,14 +1599,14 @@ export default function NurseryLibraryClient({
                       )}
                     </div>
 
-                    {/* Media action: Watch here button */}
+                    {/* Media action: Watch here button with warm amber icon */}
                     <div className="pt-3 border-t border-theme">
                       <button
                         type="button"
                         onClick={() => handleWatch(video)}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-purple-700 focus-visible:outline-2 focus-visible:outline-purple-600 cursor-pointer"
+                        className="group/btn w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all duration-200 focus-visible:outline-2 focus-visible:outline-sky-500 cursor-pointer"
                       >
-                        <Play className="h-3.5 w-3.5 fill-white" />
+                        <Play className="h-3.5 w-3.5 fill-amber-300 text-amber-300 transition-transform duration-200 group-hover/btn:scale-110" />
                         <span>Watch here</span>
                       </button>
                     </div>
@@ -1466,12 +1649,12 @@ export default function NurseryLibraryClient({
                 maxLength={40}
                 placeholder="e.g., Circle Time Greetings, Transition Rhymes..."
                 disabled={playlists.length >= MAX_PLAYLISTS}
-                className="flex-1 h-11 rounded-xl border border-theme bg-elevated px-3.5 text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                className="flex-1 h-11 rounded-xl border border-theme bg-elevated px-3.5 text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
               />
               <button
                 type="submit"
                 disabled={playlists.length >= MAX_PLAYLISTS || !newPlaylistName.trim()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-5 text-sm font-semibold text-white shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
               >
                 <Plus className="h-4 w-4" />
                 <span>Create Playlist</span>
@@ -1505,7 +1688,7 @@ export default function NurseryLibraryClient({
                     onClick={() => setActivePlaylistId(pl.id)}
                     className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
                       activePlaylistId === pl.id
-                        ? "bg-purple-600 text-white shadow-xs"
+                        ? "bg-gradient-to-r from-violet-600 to-sky-700 text-white shadow-xs"
                         : "bg-surface border border-theme text-secondary-theme hover:text-primary-theme hover:bg-elevated"
                     }`}
                   >
@@ -1538,19 +1721,19 @@ export default function NurseryLibraryClient({
                             value={editPlaylistName}
                             onChange={(e) => setEditPlaylistName(e.target.value)}
                             maxLength={40}
-                            className="h-9 rounded-lg border border-theme bg-elevated px-2.5 text-sm font-bold text-primary-theme outline-none focus:border-purple-600"
+                            className="h-9 rounded-lg border border-theme bg-elevated px-2.5 text-sm font-bold text-primary-theme outline-none focus:border-sky-500"
                           />
                           <button
                             type="button"
                             onClick={() => handleRenamePlaylist(activePlaylist.id)}
-                            className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white"
+                            className="rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
                           >
                             Save
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingPlaylistId(null)}
-                            className="rounded-lg border border-theme px-3 py-1.5 text-xs font-semibold text-secondary-theme"
+                            className="rounded-lg border border-theme px-3 py-1.5 text-xs font-semibold text-secondary-theme cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1566,7 +1749,7 @@ export default function NurseryLibraryClient({
                               setEditingPlaylistId(activePlaylist.id);
                               setEditPlaylistName(activePlaylist.name);
                             }}
-                            className="text-xs text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                            className="text-xs text-sky-700 dark:text-sky-300 hover:underline cursor-pointer"
                           >
                             Rename
                           </button>
@@ -1631,7 +1814,7 @@ export default function NurseryLibraryClient({
                                       </>
                                     )}
                                     {item.isCustom && (
-                                      <span className="inline-flex items-center rounded bg-purple-500/10 px-1.5 py-0.2 text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                                      <span className="inline-flex items-center rounded border border-sky-200/80 dark:border-sky-700/40 bg-sky-100/90 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 px-1.5 py-0.2 text-[10px] font-bold">
                                         Custom Video
                                       </span>
                                     )}
@@ -1672,7 +1855,7 @@ export default function NurseryLibraryClient({
                                   <X className="h-3.5 w-3.5" />
                                 </button>
 
-                                {/* Media action */}
+                                {/* Media action with warm amber play icon */}
                                 {item.embedUrl && item.canonicalUrl ? (
                                   <button
                                     type="button"
@@ -1683,9 +1866,9 @@ export default function NurseryLibraryClient({
                                         canonicalUrl: item.canonicalUrl!,
                                       })
                                     }
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-purple-700 ml-1 cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-3 py-1.5 text-xs font-bold text-white shadow-2xs ml-1 cursor-pointer"
                                   >
-                                    <Play className="h-3 w-3 fill-white" />
+                                    <Play className="h-3 w-3 fill-amber-300 text-amber-300" />
                                     <span>Watch</span>
                                   </button>
                                 ) : item.searchQuery ? (
@@ -1727,7 +1910,7 @@ export default function NurseryLibraryClient({
           >
             <div className="flex items-center justify-between border-b border-theme pb-3.5">
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-xl bg-purple-600 text-white flex items-center justify-center">
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-600 to-sky-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <Tv className="h-4 w-4" />
                 </div>
                 <div>
@@ -1774,7 +1957,7 @@ export default function NurseryLibraryClient({
                     }}
                     placeholder="https://www.youtube.com/watch?v=... or youtu.be/..."
                     required
-                    className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                   />
                 </div>
 
@@ -1817,7 +2000,7 @@ export default function NurseryLibraryClient({
                   maxLength={MAX_CUSTOM_VIDEO_TITLE_LENGTH}
                   placeholder="e.g., Bahay Kubo with Actions, Animal Sounds Song..."
                   required
-                  className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
@@ -1832,7 +2015,7 @@ export default function NurseryLibraryClient({
                       id="modal-yt-category"
                       value={formCategory}
                       onChange={(e) => setFormCategory(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme outline-none focus:border-purple-600"
+                      className="w-full h-10 px-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                     >
                       <option value="all">Uncategorized</option>
                       {initialData.categories.map((c) => (
@@ -1851,7 +2034,7 @@ export default function NurseryLibraryClient({
                       id="modal-yt-age"
                       value={formAgeRange}
                       onChange={(e) => setFormAgeRange(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme outline-none focus:border-purple-600"
+                      className="w-full h-10 px-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                     >
                       <option value="all">All Preschool Ages</option>
                       <option value="2-3">Ages 2-3</option>
@@ -1881,7 +2064,7 @@ export default function NurseryLibraryClient({
                     maxLength={MAX_CUSTOM_VIDEO_NOTES_LENGTH}
                     rows={2}
                     placeholder="e.g. Great for transition from playtime to circle time; focus on gross motor gestures..."
-                    className="w-full p-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none focus:border-purple-600 resize-none"
+                    className="w-full p-3 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 resize-none"
                   />
                 </div>
               )}
@@ -1926,7 +2109,7 @@ export default function NurseryLibraryClient({
                 <button
                   type="submit"
                   disabled={!formTitle.trim() || !parsedPreview}
-                  className="px-5 py-2 rounded-xl bg-purple-600 text-xs font-bold text-white shadow-xs hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 text-xs font-bold text-white shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {modalMode === "attach" ? "Attach to Song" : modalMode === "edit" ? "Update Video" : "Save Video"}
                 </button>
@@ -1954,7 +2137,7 @@ export default function NurseryLibraryClient({
                 <h3 id="player-modal-title" className="text-sm sm:text-base font-bold text-primary-theme truncate">
                   {playingMedia.title}
                 </h3>
-                <p className="text-[11px] text-secondary-theme">
+                <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium">
                   Streamed via YouTube nocookie player
                 </p>
               </div>
@@ -1983,21 +2166,24 @@ export default function NurseryLibraryClient({
               />
             </div>
 
-            {/* Modal Footer with YouTube Link & Educational Attribution */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pt-2 text-xs text-secondary-theme border-t border-theme">
-              <a
-                href={playingMedia.canonicalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-semibold text-purple-600 dark:text-purple-400 hover:underline"
-              >
-                <span>Video not playing? Open on YouTube</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+            {/* Educational Streaming Disclaimer & Fallback */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-theme text-xs text-secondary-theme">
+              <div className="flex items-center gap-1.5">
+                <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
+                <span>Educational streaming preview • Not stored on CDM LMS servers</span>
+              </div>
 
-              <span className="text-[11px] text-muted-theme">
-                Videos are streamed from YouTube. The LMS doesn't host or copy them.
-              </span>
+              {playingMedia.canonicalUrl && (
+                <a
+                  href={playingMedia.canonicalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="inline-flex items-center gap-1.5 font-semibold text-sky-600 dark:text-sky-400 hover:text-violet-600 hover:underline"
+                >
+                  <span>Video not playing? Open on YouTube</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           </div>
         </div>
