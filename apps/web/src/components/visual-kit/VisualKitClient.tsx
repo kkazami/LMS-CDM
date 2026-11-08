@@ -72,6 +72,7 @@ export default function VisualKitClient({
   // Inspector Accordion state (single open section at a time)
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [isDiscussionOpen, setIsDiscussionOpen] = useState<boolean>(false);
+  const [isRelatedStructuresOpen, setIsRelatedStructuresOpen] = useState<boolean>(false);
 
   // Circuit simulation state
   const [circuitClosed, setCircuitClosed] = useState<boolean>(true);
@@ -149,6 +150,7 @@ export default function VisualKitClient({
     setShowingAnswers(false);
     setLabelAnswers({});
     setOpenSection(null);
+    setIsRelatedStructuresOpen(false);
   };
 
   // Compute scoring evaluation
@@ -309,80 +311,89 @@ export default function VisualKitClient({
     setOpenSection((prev) => (prev === sectionName ? null : sectionName));
   };
 
+  // Render Collapsible Related Structures Reference Glossary (Heart & supplementary anatomy)
+  const renderRelatedStructuresAccordion = () => {
+    if (!currentDiagram.extraStructures || currentDiagram.extraStructures.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+        <button
+          type="button"
+          id="accordion-header-related-structures"
+          aria-expanded={isRelatedStructuresOpen}
+          aria-controls="accordion-panel-related-structures"
+          onClick={() => setIsRelatedStructuresOpen((prev) => !prev)}
+          className="w-full flex items-center justify-between px-3.5 py-2.5 text-left cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-500"
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Info className="h-3.5 w-3.5 text-sky-500 shrink-0" />
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+              Related structures ({currentDiagram.extraStructures.length})
+            </span>
+            <span className="text-[10px] text-slate-400 hidden sm:inline">
+              • Reference glossary
+            </span>
+          </div>
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${
+              isRelatedStructuresOpen ? "rotate-180 text-sky-600 dark:text-sky-400" : ""
+            }`}
+          />
+        </button>
+        {isRelatedStructuresOpen && (
+          <div
+            id="accordion-panel-related-structures"
+            role="region"
+            aria-labelledby="accordion-header-related-structures"
+            className="px-3.5 pb-3.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-300"
+          >
+            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400">
+              Reference only • not part of the quiz
+            </div>
+            <div className="space-y-2.5 divide-y divide-slate-100 dark:divide-slate-800/60">
+              {currentDiagram.extraStructures.map((structure) => (
+                <div key={structure.id} className="pt-2.5 first:pt-0 space-y-1">
+                  <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                    {structure.name}
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
+                    {structure.definition}
+                  </p>
+                  {structure.where && (
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                      Location: {structure.where}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // =========================================================================
   // INSPECTOR CONTENT RENDERER (Used in desktop column & fullscreen sidebar)
   // =========================================================================
   const renderInspectorContent = () => {
-    if (activeExtra) {
-      return (
-        <div className="space-y-3" data-testid="extra-info-card">
-          <div className="p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
-                  <Info className="h-3.5 w-3.5 text-sky-500" />
-                </span>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                  {activeExtra.name}
-                </h2>
-              </div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Reference
-              </span>
-            </div>
-
-            <div className="p-2.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2 text-xs">
-              <span className="text-slate-600 dark:text-slate-300 text-[11px]">
-                Reference only • not part of the quiz
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedExtraId(null);
-                  setSelectedPartId(currentDiagram.parts[0]?.id ?? null);
-                }}
-                className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline shrink-0"
-              >
-                Inspect Quiz Parts
-              </button>
-            </div>
-
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Definition
-              </div>
-              <p className="mt-1 text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                {activeExtra.definition}
-              </p>
-            </div>
-
-            {activeExtra.where && (
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Location in Diagram
-                </div>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {activeExtra.where}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
     if (!activePart) {
       return (
-        <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 text-center space-y-2">
-          <div className="mx-auto w-9 h-9 rounded-full bg-sky-50 dark:bg-sky-950/60 flex items-center justify-center text-sky-600 dark:text-sky-400">
-            <MousePointerClick className="h-4 w-4" />
+        <div className="space-y-3">
+          <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 text-center space-y-2">
+            <div className="mx-auto w-9 h-9 rounded-full bg-sky-50 dark:bg-sky-950/60 flex items-center justify-center text-sky-600 dark:text-sky-400">
+              <MousePointerClick className="h-4 w-4" />
+            </div>
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Tap a numbered marker to learn about a part
+            </p>
+            <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+              Click any hotspot to reveal functions, teaching tips, and misconceptions.
+            </p>
           </div>
-          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Tap a numbered marker to learn about a part
-          </p>
-          <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
-            Click any hotspot or printed label to reveal functions, teaching tips, and misconceptions.
-          </p>
+          {renderRelatedStructuresAccordion()}
         </div>
       );
     }
@@ -533,6 +544,9 @@ export default function VisualKitClient({
             )}
           </div>
         )}
+
+        {/* Collapsed Related Structures Reference Glossary */}
+        {renderRelatedStructuresAccordion()}
       </div>
     );
   };

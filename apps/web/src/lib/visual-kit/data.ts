@@ -12,48 +12,16 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
       "A dual-pump muscular organ featuring four chambers, four unidirectional valves, and major systemic and pulmonary blood vessels.",
     imageSrc: "/visual-kit/heart.webp",
     imageAlt: "Internal cross-section anatomy of the human heart showing atria, ventricles, valves, and major vessels",
-    aspectRatio: "10/7",
+    aspectRatio: "1550/2029",
     attribution: {
-      sourceTitle: "2008 Internal Anatomy of the Heart",
-      author: "OpenStax College",
-      sourceUrl: "https://commons.wikimedia.org/wiki/File:2008_Internal_Anatomy_of_the_HeartN.jpg",
-      licenseName: "CC BY 3.0",
-      licenseUrl: "https://creativecommons.org/licenses/by/3.0/",
-      viaText: "Wikimedia Commons / OpenStax Anatomy and Physiology",
-      notes: "Internal anatomical coronal section showing cardiac chambers and valve cusps",
+      sourceTitle: "Heart (2)",
+      author: "Servier Medical Art",
+      sourceUrl: "https://smart.servier.com",
+      licenseName: "CC BY 4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      viaText: "Servier Medical Art (smart.servier.com)",
+      notes: "Modified: labels and background removed, cropped.",
     },
-    coverBoxes: [
-      // Top label
-      { x: 24.5, y: 3.5, w: 9.5, h: 4.5, label: "Aorta" },
-      // Left margin column
-      { x: 0.2, y: 10.5, w: 22.0, h: 4.5, label: "Superior vena cava" },
-      { x: 0.2, y: 16.5, w: 24.5, h: 4.5, label: "Right pulmonary artery" },
-      { x: 0.2, y: 23.5, w: 18.5, h: 4.5, label: "Pulmonary trunk" },
-      { x: 0.2, y: 29.5, w: 18.5, h: 7.5, label: "Right pulmonary veins" },
-      { x: 0.2, y: 39.5, w: 14.5, h: 4.5, label: "Right atrium" },
-      { x: 0.2, y: 45.0, w: 14.5, h: 4.5, label: "Fossa ovalis" },
-      { x: 0.2, y: 50.0, w: 16.5, h: 4.5, label: "Tricuspid valve" },
-      { x: 0.2, y: 55.5, w: 16.5, h: 4.5, label: "Right ventricle" },
-      { x: 0.2, y: 61.0, w: 21.5, h: 4.5, label: "Chordae tendineae" },
-      { x: 0.2, y: 67.0, w: 21.5, h: 4.5, label: "Trabeculae carneae" },
-      { x: 0.2, y: 73.5, w: 18.0, h: 4.5, label: "Moderator band" },
-      { x: 0.2, y: 79.5, w: 19.5, h: 4.5, label: "Inferior vena cava" },
-      // Right margin column
-      { x: 75.0, y: 10.5, w: 24.5, h: 4.5, label: "Left pulmonary artery" },
-      { x: 75.0, y: 18.5, w: 13.5, h: 4.5, label: "Left atrium" },
-      { x: 75.0, y: 25.5, w: 23.5, h: 4.5, label: "Left pulmonary veins" },
-      { x: 75.0, y: 34.5, w: 24.5, h: 4.5, label: "Mitral (bicuspid) valve" },
-      { x: 75.0, y: 42.5, w: 14.0, h: 4.5, label: "Aortic valve" },
-      { x: 75.0, y: 48.0, w: 18.5, h: 4.8, label: "Pulmonary valve" },
-      { x: 75.0, y: 54.0, w: 15.5, h: 4.5, label: "Left ventricle" },
-      { x: 75.0, y: 59.5, w: 18.5, h: 4.5, label: "Papillary muscle" },
-      { x: 75.0, y: 65.5, w: 24.5, h: 4.5, label: "Interventricular septum" },
-      { x: 75.0, y: 70.0, w: 13.5, h: 4.2, label: "Epicardium" },
-      { x: 75.0, y: 75.0, w: 15.0, h: 4.2, label: "Myocardium" },
-      { x: 75.0, y: 80.0, w: 16.5, h: 4.5, label: "Endocardium" },
-      // Bottom label
-      { x: 40.5, y: 95.0, w: 19.0, h: 4.5, label: "Anterior view" },
-    ],
     extraStructures: [
       {
         id: "fossa-ovalis",
@@ -123,152 +91,8 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         where:
           "Lining the innermost luminal surfaces of both atria, ventricles, and valve cusps.",
       },
-      {
-        id: "anterior-view",
-        name: "Anterior View",
-        definition:
-          "The frontal anatomical orientation showing the heart positioned as viewed from the chest wall.",
-        where:
-          "Indicated at the bottom center of the diagram, reflecting the sternocostal surface.",
-      },
     ],
-    labelTargets: [
-      // Top label
-      {
-        label: "Aorta",
-        box: { x: 24.5, y: 3.5, w: 9.5, h: 4.5 },
-        partId: "aorta",
-      },
-      // Left margin column
-      {
-        label: "Superior vena cava",
-        box: { x: 0.2, y: 10.5, w: 22.0, h: 4.5 },
-        partId: "superior-vena-cava",
-      },
-      {
-        label: "Right pulmonary artery",
-        box: { x: 0.2, y: 16.5, w: 24.5, h: 4.5 },
-        partId: "pulmonary-artery",
-      },
-      {
-        label: "Pulmonary trunk",
-        box: { x: 0.2, y: 23.5, w: 18.5, h: 4.5 },
-        partId: "pulmonary-artery",
-      },
-      {
-        label: "Right pulmonary veins",
-        box: { x: 0.2, y: 29.5, w: 18.5, h: 7.5 },
-        partId: "pulmonary-veins",
-      },
-      {
-        label: "Right atrium",
-        box: { x: 0.2, y: 39.5, w: 14.5, h: 4.5 },
-        partId: "right-atrium",
-      },
-      {
-        label: "Fossa ovalis",
-        box: { x: 0.2, y: 45.0, w: 14.5, h: 4.5 },
-        extra: "fossa-ovalis",
-      },
-      {
-        label: "Tricuspid valve",
-        box: { x: 0.2, y: 50.0, w: 16.5, h: 4.5 },
-        partId: "tricuspid-valve",
-      },
-      {
-        label: "Right ventricle",
-        box: { x: 0.2, y: 55.5, w: 16.5, h: 4.5 },
-        partId: "right-ventricle",
-      },
-      {
-        label: "Chordae tendineae",
-        box: { x: 0.2, y: 61.0, w: 21.5, h: 4.5 },
-        extra: "chordae-tendineae",
-      },
-      {
-        label: "Trabeculae carneae",
-        box: { x: 0.2, y: 67.0, w: 21.5, h: 4.5 },
-        extra: "trabeculae-carneae",
-      },
-      {
-        label: "Moderator band",
-        box: { x: 0.2, y: 73.5, w: 18.0, h: 4.5 },
-        extra: "moderator-band",
-      },
-      {
-        label: "Inferior vena cava",
-        box: { x: 0.2, y: 79.5, w: 19.5, h: 4.5 },
-        partId: "inferior-vena-cava",
-      },
-      // Right margin column
-      {
-        label: "Left pulmonary artery",
-        box: { x: 75.0, y: 10.5, w: 24.5, h: 4.5 },
-        partId: "pulmonary-artery",
-      },
-      {
-        label: "Left atrium",
-        box: { x: 75.0, y: 18.5, w: 13.5, h: 4.5 },
-        partId: "left-atrium",
-      },
-      {
-        label: "Left pulmonary veins",
-        box: { x: 75.0, y: 25.5, w: 23.5, h: 4.5 },
-        partId: "pulmonary-veins",
-      },
-      {
-        label: "Mitral (bicuspid) valve",
-        box: { x: 75.0, y: 34.5, w: 24.5, h: 4.5 },
-        partId: "mitral-valve",
-      },
-      {
-        label: "Aortic valve",
-        box: { x: 75.0, y: 42.5, w: 14.0, h: 4.5 },
-        partId: "aortic-valve",
-      },
-      {
-        label: "Pulmonary valve",
-        box: { x: 75.0, y: 48.0, w: 18.5, h: 4.8 },
-        partId: "pulmonary-valve",
-      },
-      {
-        label: "Left ventricle",
-        box: { x: 75.0, y: 54.0, w: 15.5, h: 4.5 },
-        partId: "left-ventricle",
-      },
-      {
-        label: "Papillary muscle",
-        box: { x: 75.0, y: 59.5, w: 18.5, h: 4.5 },
-        extra: "papillary-muscle",
-      },
-      {
-        label: "Interventricular septum",
-        box: { x: 75.0, y: 65.5, w: 24.5, h: 4.2 },
-        extra: "interventricular-septum",
-      },
-      {
-        label: "Epicardium",
-        box: { x: 75.0, y: 70.0, w: 13.5, h: 4.2 },
-        extra: "epicardium",
-      },
-      {
-        label: "Myocardium",
-        box: { x: 75.0, y: 75.0, w: 15.0, h: 4.2 },
-        extra: "myocardium",
-      },
-      {
-        label: "Endocardium",
-        box: { x: 75.0, y: 80.0, w: 16.5, h: 4.5 },
-        extra: "endocardium",
-      },
-      // Bottom label
-      {
-        label: "Anterior view",
-        box: { x: 40.5, y: 95.0, w: 19.0, h: 4.5 },
-        extra: "anterior-view",
-      },
-    ],
-    viewBox: { w: 600, h: 480 },
+    viewBox: { w: 1550, h: 2029 },
     discussionQuestions: [
       "Why is the muscular myocardium of the left ventricle significantly thicker than that of the right ventricle?",
       "Trace the path of an erythrocyte from the inferior vena cava until it exits through the aorta. Where does it pick up oxygen?",
@@ -280,7 +104,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "superior-vena-cava",
         name: "Superior Vena Cava",
         colorKey: "blue",
-        anchor: { x: 35.5, y: 15.0 },
+        anchor: { x: 23.5, y: 19.5 },
         function: "Transports deoxygenated blood from the upper half of the body (head, neck, and arms) into the right atrium.",
         details:
           "It is a large-diameter vein situated in the anterior right superior mediastinum. Because it drains the upper body under gravity, it lacks venous valves.",
@@ -292,7 +116,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "inferior-vena-cava",
         name: "Inferior Vena Cava",
         colorKey: "blue",
-        anchor: { x: 36.5, y: 75.5 },
+        anchor: { x: 21.5, y: 88.0 },
         function: "Drains deoxygenated venous blood from the abdomen, pelvis, and lower extremities back to the right atrium.",
         details:
           "It is the largest vein in the human body, ascending through the posterior abdominal wall to pierce the diaphragm at the caval opening.",
@@ -304,7 +128,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "right-atrium",
         name: "Right Atrium",
         colorKey: "blue",
-        anchor: { x: 35.0, y: 38.0 },
+        anchor: { x: 23.0, y: 43.0 },
         function: "Receives deoxygenated systemic venous return and propels it through the tricuspid valve into the right ventricle.",
         details:
           "Contains the sinoatrial (SA) node in its upper wall, which serves as the natural electrical pacemaker generating rhythm for heart contractions.",
@@ -316,7 +140,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "tricuspid-valve",
         name: "Tricuspid Valve",
         colorKey: "slate",
-        anchor: { x: 38.0, y: 53.0 },
+        anchor: { x: 33.5, y: 55.5 },
         function: "Prevents backflow of blood from the right ventricle into the right atrium during ventricular systole.",
         details:
           "Consists of three fibrous cusps attached to chordae tendineae ('heartstrings'), which anchor to papillary muscles inside the ventricle.",
@@ -328,7 +152,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "right-ventricle",
         name: "Right Ventricle",
         colorKey: "blue",
-        anchor: { x: 36.0, y: 64.0 },
+        anchor: { x: 38.0, y: 70.0 },
         function: "Pumps deoxygenated blood through the pulmonary valve into the pulmonary trunk toward the lungs.",
         details:
           "Forms the largest part of the anterior surface of the heart. Its walls are moderately muscular but thinner than the left ventricle due to low pulmonary resistance.",
@@ -339,7 +163,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-valve",
         name: "Pulmonary Valve",
         colorKey: "slate",
-        anchor: { x: 46.5, y: 40.5 },
+        anchor: { x: 48.0, y: 39.0 },
         function: "Prevents pulmonary trunk blood from leaking back into the right ventricle during diastole.",
         details:
           "A semilunar valve composed of three pocket-like cusps that catch backward-surging blood when ventricular pressure drops.",
@@ -350,7 +174,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pulmonary-artery",
         name: "Pulmonary Artery",
         colorKey: "blue",
-        anchor: { x: 49.0, y: 26.0 },
+        anchor: { x: 56.5, y: 30.5 },
         function: "Carries deoxygenated blood from the heart to the lungs for gaseous exchange.",
         details:
           "The main pulmonary trunk divides into right and left branches. It is one of the few arteries in the adult body carrying deoxygenated blood.",
@@ -362,7 +186,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "aorta",
         name: "Aorta",
         colorKey: "red",
-        anchor: { x: 49.0, y: 11.5 },
+        anchor: { x: 46.0, y: 14.0 },
         function: "The primary systemic arterial trunk delivering high-pressure oxygenated blood to all organs and tissues of the body.",
         details:
           "Its elastic walls expand during ventricular ejection (systole) and recoil during diastole (Windkessel effect), smoothing blood flow downstream.",
@@ -374,7 +198,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "left-atrium",
         name: "Left Atrium",
         colorKey: "red",
-        anchor: { x: 59.5, y: 32.5 },
+        anchor: { x: 75.0, y: 38.0 },
         function: "Receives newly oxygenated blood returning from both lungs via the four pulmonary veins.",
         details:
           "Forms most of the posterior surface (base) of the heart and channels blood across the mitral valve into the left ventricle.",
@@ -385,7 +209,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "mitral-valve",
         name: "Mitral Valve",
         colorKey: "slate",
-        anchor: { x: 63.0, y: 41.5 },
+        anchor: { x: 63.5, y: 51.5 },
         function: "Prevents retrograde flow of blood from the high-pressure left ventricle into the left atrium during systole.",
         details:
           "Also known as the bicuspid valve because it possesses two heavy-duty leaflets shaped like a bishop's miter headwear.",
@@ -393,39 +217,16 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
           "Note that mitral valve regurgitation is the most common heart valve disorder taught in secondary biology.",
       },
       {
-        id: "aortic-valve",
-        name: "Aortic Valve",
-        colorKey: "slate",
-        anchor: { x: 52.0, y: 44.0 },
-        function: "Maintains unidirectional flow from the left ventricle into the ascending aorta.",
-        details:
-          "A three-cusp semilunar valve positioned behind the pulmonary valve; coronary artery openings (ostia) originate just above its cusps.",
-        teachingTip:
-          "Explain that coronary circulation feeds the heart muscle itself right when the aortic valve snaps shut during diastole.",
-      },
-      {
         id: "left-ventricle",
         name: "Left Ventricle",
         colorKey: "red",
-        anchor: { x: 64.0, y: 58.0 },
+        anchor: { x: 66.0, y: 68.0 },
         function: "Pumps oxygen-rich blood into the aorta against systemic vascular resistance to nourish the entire body.",
         details:
           "Its myocardial wall is 3 times thicker than the right ventricle, enabling it to generate peak systolic pressures of ~120 mmHg.",
         teachingTip:
           "Ask students to physically place their hand on the left side of their chest to explain why the heartbeat is felt strongest there.",
         funFact: "In a single lifetime, the left ventricle pumps enough blood to fill roughly three supertankers.",
-      },
-      {
-        id: "pulmonary-veins",
-        name: "Pulmonary Veins",
-        colorKey: "red",
-        anchor: { x: 67.5, y: 28.0 },
-        function: "Carry freshly oxygenated blood from alveolar capillaries back to the left atrium.",
-        details:
-          "There are typically four pulmonary veins (two from each lung). Like pulmonary arteries, they break the general rule by carrying oxygenated blood in veins.",
-        teachingTip:
-          "Reinforce the pair: pulmonary arteries carry deoxygenated blood away; pulmonary veins bring oxygenated blood toward.",
-        commonMisconception: "Students often categorize vessels solely by color; teach them that direction of flow relative to the heart defines artery vs. vein.",
       },
     ],
   },
@@ -439,19 +240,19 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
     area: "Human anatomy",
     summary:
       "The gastrointestinal tract and accessory digestive organs responsible for mechanical mastication, enzymatic breakdown, nutrient absorption, and waste elimination.",
-    imageSrc: "/visual-kit/digestive-system.svg",
+    imageSrc: "/visual-kit/digestive-system.webp",
     imageAlt: "Anatomical illustration of the human digestive system from mouth to rectum",
-    aspectRatio: "581/821",
+    aspectRatio: "758/2675",
     attribution: {
-      sourceTitle: "Digestive system diagram",
-      author: "Mariana Ruiz Villarreal (LadyofHats) and Jmarchn",
-      sourceUrl: "https://commons.wikimedia.org/wiki/File:Digestive_system_diagram_en.svg",
-      licenseName: "Public domain",
-      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-      viaText: "Wikimedia Commons",
-      notes: "Anterior view of the human alimentary canal and accessory digestive organs",
+      sourceTitle: "Complete digestive apparatus",
+      author: "Servier Medical Art",
+      sourceUrl: "https://smart.servier.com",
+      licenseName: "CC BY 4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      viaText: "Servier Medical Art (smart.servier.com)",
+      notes: "Modified: labels and background removed, cropped.",
     },
-    viewBox: { w: 581, h: 821 },
+    viewBox: { w: 758, h: 2675 },
     discussionQuestions: [
       "How do the structural adaptations of the small intestine (villi and microvilli) optimize nutrient absorption surface area?",
       "Why is hydrochloric acid in the stomach essential for pepsin activation, and what protects the gastric mucosa from autodigestion?",
@@ -463,7 +264,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "mouth",
         name: "Mouth",
         colorKey: "amber",
-        anchor: { x: 46.5, y: 17.0 },
+        anchor: { x: 44.0, y: 14.0 },
         function: "Initiates mechanical digestion via chewing and chemical digestion via salivary amylase.",
         details:
           "Salivary glands secrete saliva containing amylase and lipase to moisten food into an easily swallowable bolus.",
@@ -475,7 +276,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "esophagus",
         name: "Esophagus",
         colorKey: "amber",
-        anchor: { x: 52.0, y: 34.0 },
+        anchor: { x: 53.5, y: 36.0 },
         function: "Transports food boluses from the pharynx to the stomach through coordinated peristaltic contractions.",
         details:
           "A muscular tube roughly 25 cm long composed of striated muscle in the upper third and smooth muscle in the lower third.",
@@ -487,7 +288,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "stomach",
         name: "Stomach",
         colorKey: "amber",
-        anchor: { x: 64.0, y: 56.0 },
+        anchor: { x: 64.0, y: 55.0 },
         function: "Stores ingested food, churning it with gastric juice containing HCl and pepsin to form chyme.",
         details:
           "Highly acidic pH (1.5 to 3.5) denatures proteins and kills pathogens. Chief cells secrete pepsinogen, which acid activates into pepsin.",
@@ -499,7 +300,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "liver",
         name: "Liver",
         colorKey: "amber",
-        anchor: { x: 37.5, y: 52.0 },
+        anchor: { x: 34.0, y: 53.0 },
         function: "Produces bile salts for fat emulsification, metabolizes absorbed nutrients, and detoxifies chemicals.",
         details:
           "The largest internal organ, receiving dual blood supply from the hepatic artery and nutrient-rich hepatic portal vein.",
@@ -510,7 +311,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "gallbladder",
         name: "Gallbladder",
         colorKey: "emerald",
-        anchor: { x: 42.0, y: 59.5 },
+        anchor: { x: 39.0, y: 57.5 },
         function: "Stores and concentrates bile synthesized by the liver until signaled to release it into the duodenum.",
         details:
           "When fatty chyme enters the duodenum, cholecystokinin (CCK) stimulates the gallbladder to contract and discharge bile down the common bile duct.",
@@ -521,7 +322,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "pancreas",
         name: "Pancreas",
         colorKey: "yellow",
-        anchor: { x: 51.0, y: 66.5 },
+        anchor: { x: 55.0, y: 61.5 },
         function: "Secretes alkaline digestive enzymes (amylase, trypsin, lipase) and systemic hormones (insulin and glucagon).",
         details:
           "Bicarbonate ions in pancreatic juice neutralize acidic gastric chyme, creating an optimal slightly basic pH for intestinal enzymes.",
@@ -532,7 +333,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "small-intestine",
         name: "Small Intestine",
         colorKey: "amber",
-        anchor: { x: 50.0, y: 77.0 },
+        anchor: { x: 52.0, y: 76.0 },
         function: "The primary site for final chemical digestion and absorption of nutrients, water, and minerals.",
         details:
           "Divided into duodenum, jejunum, and ileum. Circular folds, villi, and microvilli create an absorptive surface area of over 30 square meters.",
@@ -544,7 +345,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "large-intestine",
         name: "Large Intestine",
         colorKey: "amber",
-        anchor: { x: 37.0, y: 78.5 },
+        anchor: { x: 20.0, y: 72.0 },
         function: "Reabsorbs water, salts, and vitamins produced by gut microflora, condensing indigestible residue into feces.",
         details:
           "Consists of cecum, ascending, transverse, descending, and sigmoid colon. Trillions of symbiotic bacteria ferment residual fibers and synthesize vitamin K.",
@@ -555,7 +356,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "rectum",
         name: "Rectum",
         colorKey: "amber",
-        anchor: { x: 53.0, y: 93.0 },
+        anchor: { x: 51.0, y: 93.0 },
         function: "Temporarily stores fecal matter until stretch receptors stimulate defecation reflexes.",
         details:
           "Terminates at the anal canal, regulated by an involuntary internal anal sphincter (smooth muscle) and voluntary external anal sphincter (skeletal muscle).",
@@ -574,19 +375,19 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
     area: "Biological systems",
     summary:
       "A eukaryotic cell model showing membrane-bound organelles that govern genetic replication, protein synthesis, cellular respiration, and waste processing.",
-    imageSrc: "/visual-kit/animal-cell.svg",
+    imageSrc: "/visual-kit/animal-cell.webp",
     imageAlt: "Eukaryotic animal cell ultrastructure showing organelles and endomembrane system",
-    aspectRatio: "724/484",
+    aspectRatio: "2000/1896",
     attribution: {
-      sourceTitle: "Animal cell structure",
-      author: "Mariana Ruiz Villarreal (LadyofHats)",
-      sourceUrl: "https://commons.wikimedia.org/wiki/File:Animal_cell_structure_en.svg",
-      licenseName: "Public domain",
-      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-      viaText: "Wikimedia Commons",
-      notes: "Cross-sectional diagram of eukaryotic animal cell anatomy and organelles",
+      sourceTitle: "Example: Animal cell",
+      author: "Servier Medical Art",
+      sourceUrl: "https://smart.servier.com",
+      licenseName: "CC BY 4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      viaText: "Servier Medical Art (smart.servier.com)",
+      notes: "Modified: labels and background removed, cropped.",
     },
-    viewBox: { w: 724, h: 484 },
+    viewBox: { w: 2000, h: 1896 },
     discussionQuestions: [
       "How does the endomembrane system (nucleus -> rough ER -> Golgi apparatus -> vesicles) coordinate protein synthesis and export?",
       "Why is the inner mitochondrial membrane deeply folded into cristae, and how does this relate to ATP synthase efficiency?",
@@ -598,7 +399,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "cell-membrane",
         name: "Cell Membrane",
         colorKey: "teal",
-        anchor: { x: 12.0, y: 45.0 },
+        anchor: { x: 10.0, y: 44.0 },
         function: "Encloses cytoplasm and regulates selective movement of ions and molecules into and out of the cell.",
         details:
           "A phospholipid bilayer with embedded cholesterol, transmembrane transport proteins, and surface receptor glycoproteins forming the fluid mosaic model.",
@@ -610,7 +411,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "cytoplasm",
         name: "Cytoplasm",
         colorKey: "emerald",
-        anchor: { x: 22.0, y: 68.0 },
+        anchor: { x: 20.0, y: 68.0 },
         function: "A gelatinous aqueous cytosol suspending organelles and hosting glycolysis and metabolic enzymatic reactions.",
         details:
           "Composed of water, dissolved salts, amino acids, and cytoskeletal actin microfilaments and tubulin microtubules that give the cell structural shape.",
@@ -621,7 +422,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "nucleus",
         name: "Nucleus",
         colorKey: "purple",
-        anchor: { x: 45.0, y: 48.0 },
+        anchor: { x: 58.0, y: 54.0 },
         function: "The control center storing genomic DNA, directing transcription, and coordinating cell division.",
         details:
           "Enclosed by a perforated double-membrane nuclear envelope with nuclear pores that govern RNA and ribosomal protein transport.",
@@ -632,7 +433,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "nucleolus",
         name: "Nucleolus",
         colorKey: "purple",
-        anchor: { x: 38.0, y: 41.0 },
+        anchor: { x: 46.0, y: 51.0 },
         function: "A dense non-membrane nuclear subregion responsible for ribosomal RNA (rRNA) transcription and ribosome subunit assembly.",
         details:
           "Assembles rRNA transcripts with imported ribosomal proteins before shipping small and large subunits through nuclear pores.",
@@ -655,7 +456,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "rough-er",
         name: "Rough ER",
         colorKey: "blue",
-        anchor: { x: 50.0, y: 70.0 },
+        anchor: { x: 35.0, y: 46.5 },
         function: "Synthesizes, folds, and modifies transmembrane and secretable proteins tagged for transport.",
         details:
           "Studded on its outer cytosolic surface with ribosomes. Nascent polypeptide chains thread into the lumen where chaperones fold them into tertiary structures.",
@@ -666,7 +467,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "smooth-er",
         name: "Smooth ER",
         colorKey: "blue",
-        anchor: { x: 67.0, y: 28.0 },
+        anchor: { x: 67.0, y: 32.0 },
         function: "Synthesizes lipids, phospholipids, and steroid hormones, and detoxifies drugs and metabolic toxins.",
         details:
           "Lacks ribosomes. In skeletal muscle cells, specialized smooth ER (sarcoplasmic reticulum) regulates intracellular calcium ion storage and release.",
@@ -677,7 +478,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "golgi-apparatus",
         name: "Golgi Apparatus",
         colorKey: "rose",
-        anchor: { x: 72.0, y: 48.0 },
+        anchor: { x: 55.0, y: 11.0 },
         function: "Modifies, packages, and sorts proteins received from the rough ER into transport vesicles for intra- or extracellular targets.",
         details:
           "Composed of flattened membranous sacs called cisternae with distinct polarity: cis face (entry from ER) and trans face (exit towards membrane).",
@@ -688,7 +489,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "ribosomes",
         name: "Ribosomes",
         colorKey: "indigo",
-        anchor: { x: 32.0, y: 82.0 },
+        anchor: { x: 30.0, y: 57.5 },
         function: "Translates messenger RNA nucleotide codons into corresponding polypeptide amino acid sequences.",
         details:
           "Non-membrane ribonucleoprotein complexes composed of a small 40S subunit (mRNA decoding) and large 60S subunit (peptide bond synthesis).",
@@ -699,7 +500,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "lysosome",
         name: "Lysosome",
         colorKey: "red",
-        anchor: { x: 26.0, y: 32.0 },
+        anchor: { x: 32.0, y: 22.0 },
         function: "Contains hydrolytic acid enzymes to break down engulfed foreign pathogens, cellular debris, and worn-out organelles (autophagy).",
         details:
           "Operates at an acidic lumen pH (~4.5 to 5.0) maintained by proton-pumping ATPases, preventing destructive accidental cytosolic breakdown if leakage occurs.",
@@ -710,7 +511,7 @@ export const VISUAL_KIT_DIAGRAMS: Diagram[] = [
         id: "centrosome",
         name: "Centrosome",
         colorKey: "cyan",
-        anchor: { x: 55.0, y: 32.0 },
+        anchor: { x: 25.0, y: 32.0 },
         function: "Serves as the main microtubule-organizing center (MTOC) that nucleates the mitotic spindle apparatus during cell division.",
         details:
           "Contains a pair of barrel-shaped centrioles positioned at right angles, each built from nine triplets of microtubules surrounded by pericentriolar matrix.",

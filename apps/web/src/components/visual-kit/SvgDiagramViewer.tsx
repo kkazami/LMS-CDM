@@ -538,7 +538,11 @@ export default function SvgDiagramViewer({
           <div
             ref={diagramContentRef}
             onClick={handleCalibrationClick}
-            className="relative w-full max-w-[850px] mx-auto select-none rounded-xl overflow-hidden transition-transform duration-75 will-change-transform"
+            className={`relative max-w-[850px] mx-auto select-none rounded-xl overflow-hidden transition-transform duration-75 will-change-transform ${
+              diagram.id === "digestive-system"
+                ? "w-auto max-h-[75vh] sm:max-h-[80vh]"
+                : "w-full max-h-[85vh]"
+            }`}
             style={{
               aspectRatio: diagram.aspectRatio ?? "4/3",
               transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
@@ -550,15 +554,23 @@ export default function SvgDiagramViewer({
                  PROFESSIONAL LICENSED 2D ILLUSTRATION RENDERER
                  ========================================================================= */
               <div
-                data-keep-white="true"
-                className="relative w-full h-full bg-white dark:bg-slate-950 flex items-center justify-center"
+                {...(diagram.id === "water-cycle" ? { "data-keep-white": "true" } : {})}
+                className={`relative w-full h-full flex items-center justify-center ${
+                  diagram.id === "water-cycle"
+                    ? "bg-white dark:bg-slate-950"
+                    : "bg-slate-100/90 dark:bg-slate-900/80"
+                }`}
               >
                 <Image
                   src={diagram.imageSrc}
                   alt={diagram.imageAlt ?? diagram.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 850px"
-                  className="object-contain select-none pointer-events-none"
+                  className={`object-contain select-none pointer-events-none transition-[filter] duration-200 ${
+                    diagram.id === "digestive-system"
+                      ? "dark:drop-shadow-[0_0_12px_rgba(255,255,255,0.22)]"
+                      : ""
+                  }`}
                   priority
                   unoptimized
                 />
