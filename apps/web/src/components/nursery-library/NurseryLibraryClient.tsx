@@ -747,22 +747,22 @@ export default function NurseryLibraryClient({
       {/* ── Nursery Library Scoped Motion & Animation Styles (honors prefers-reduced-motion) ── */}
       <style>{`
         @media (prefers-reduced-motion: no-preference) {
-          /* Gentle Idle Float / Bob for Hero & Tab Icons (3.2s - 3.8s cycles) */
+          /* Noticeable yet gentle idle animations for Tab Icons */
           @keyframes nurseryIconSway {
             0%, 100% {
-              transform: translateY(0px) rotate(0deg);
+              transform: translateY(0px) rotate(-8deg);
             }
             50% {
-              transform: translateY(-2px) rotate(4deg);
+              transform: translateY(-3px) rotate(8deg);
             }
           }
           @keyframes nurseryIconPulse {
             0%, 100% {
-              transform: scale(1);
-              opacity: 0.95;
+              transform: scale(1) translateY(0px);
+              opacity: 0.9;
             }
             50% {
-              transform: scale(1.08);
+              transform: scale(1.15) translateY(-2px);
               opacity: 1;
             }
           }
@@ -771,7 +771,7 @@ export default function NurseryLibraryClient({
               transform: translateY(0px);
             }
             50% {
-              transform: translateY(-2.5px);
+              transform: translateY(-3px);
             }
           }
 
@@ -808,18 +808,23 @@ export default function NurseryLibraryClient({
             }
           }
 
-          /* Applied utility classes */
+          /* Applied utility classes for tab & card icons */
           .nursery-idle-sway {
-            animation: nurseryIconSway 3.5s ease-in-out infinite;
+            display: inline-block;
+            animation: nurseryIconSway 2.8s ease-in-out infinite;
             transform-origin: center bottom;
             will-change: transform;
           }
           .nursery-idle-pulse {
-            animation: nurseryIconPulse 3.8s ease-in-out infinite;
+            display: inline-block;
+            animation: nurseryIconPulse 2.6s ease-in-out infinite;
+            transform-origin: center center;
             will-change: transform, opacity;
           }
           .nursery-idle-float {
-            animation: nurseryIconFloat 3.2s ease-in-out infinite;
+            display: inline-block;
+            animation: nurseryIconFloat 2.4s ease-in-out infinite;
+            transform-origin: center center;
             will-change: transform;
           }
 
@@ -835,6 +840,72 @@ export default function NurseryLibraryClient({
           .nursery-heart-pop {
             animation: nurseryHeartPop 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
           }
+
+          /* Hero Decorative Music Scene Keyframes */
+          @keyframes nurseryVinylSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .nursery-vinyl-disc {
+            animation: nurseryVinylSpin 8s linear infinite;
+            transform-origin: 60px 60px;
+            will-change: transform;
+          }
+
+          @keyframes nurseryNoteFloat1 {
+            0% { transform: translateY(0px) scale(0.85); opacity: 0; }
+            20% { opacity: 0.95; }
+            75% { opacity: 0.85; }
+            100% { transform: translateY(-26px) scale(1.05); opacity: 0; }
+          }
+          @keyframes nurseryNoteFloat2 {
+            0% { transform: translateY(0px) scale(0.85); opacity: 0; }
+            20% { opacity: 0.95; }
+            75% { opacity: 0.85; }
+            100% { transform: translateY(-30px) scale(1.08); opacity: 0; }
+          }
+          @keyframes nurseryNoteFloat3 {
+            0% { transform: translateY(0px) scale(0.85); opacity: 0; }
+            20% { opacity: 0.95; }
+            75% { opacity: 0.85; }
+            100% { transform: translateY(-24px) scale(1.04); opacity: 0; }
+          }
+          @keyframes nurseryNoteFloat4 {
+            0% { transform: translateY(0px) scale(0.85); opacity: 0; }
+            20% { opacity: 0.95; }
+            75% { opacity: 0.85; }
+            100% { transform: translateY(-26px) scale(1.06); opacity: 0; }
+          }
+          .nursery-music-note-1 { animation: nurseryNoteFloat1 3.2s ease-out infinite; will-change: transform, opacity; }
+          .nursery-music-note-2 { animation: nurseryNoteFloat2 3.4s ease-out 0.85s infinite; will-change: transform, opacity; }
+          .nursery-music-note-3 { animation: nurseryNoteFloat3 3.0s ease-out 1.7s infinite; will-change: transform, opacity; }
+          .nursery-music-note-4 { animation: nurseryNoteFloat4 3.2s ease-out 2.5s infinite; will-change: transform, opacity; }
+
+          @keyframes nurseryEqBounce1 {
+            0% { transform: scaleY(0.35); }
+            100% { transform: scaleY(0.95); }
+          }
+          @keyframes nurseryEqBounce2 {
+            0% { transform: scaleY(0.20); }
+            100% { transform: scaleY(1.00); }
+          }
+          @keyframes nurseryEqBounce3 {
+            0% { transform: scaleY(0.40); }
+            100% { transform: scaleY(0.85); }
+          }
+          @keyframes nurseryEqBounce4 {
+            0% { transform: scaleY(0.25); }
+            100% { transform: scaleY(0.92); }
+          }
+          @keyframes nurseryEqBounce5 {
+            0% { transform: scaleY(0.30); }
+            100% { transform: scaleY(0.80); }
+          }
+          .nursery-eq-bar-1 { animation: nurseryEqBounce1 0.85s ease-in-out infinite alternate; will-change: transform; }
+          .nursery-eq-bar-2 { animation: nurseryEqBounce2 1.15s ease-in-out infinite alternate; will-change: transform; }
+          .nursery-eq-bar-3 { animation: nurseryEqBounce3 0.70s ease-in-out infinite alternate; will-change: transform; }
+          .nursery-eq-bar-4 { animation: nurseryEqBounce4 0.95s ease-in-out infinite alternate; will-change: transform; }
+          .nursery-eq-bar-5 { animation: nurseryEqBounce5 1.25s ease-in-out infinite alternate; will-change: transform; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -844,7 +915,17 @@ export default function NurseryLibraryClient({
           .nursery-hover-wiggle,
           .nursery-hover-slide,
           .nursery-hover-playglow,
-          .nursery-heart-pop {
+          .nursery-heart-pop,
+          .nursery-vinyl-disc,
+          .nursery-music-note-1,
+          .nursery-music-note-2,
+          .nursery-music-note-3,
+          .nursery-music-note-4,
+          .nursery-eq-bar-1,
+          .nursery-eq-bar-2,
+          .nursery-eq-bar-3,
+          .nursery-eq-bar-4,
+          .nursery-eq-bar-5 {
             animation: none !important;
           }
         }
@@ -855,11 +936,12 @@ export default function NurseryLibraryClient({
         aria-labelledby="nursery-library-heading"
         className="relative overflow-hidden rounded-2xl border border-violet-200/80 dark:border-violet-500/25 bg-gradient-to-br from-[#ede9fe]/80 via-[#f5f3ff]/70 to-[#e0f2fe]/80 dark:from-[#1e1b4b]/60 dark:via-[#172554]/40 dark:to-[#0c4a6e]/50 p-6 sm:p-8 shadow-xs"
       >
-        <div className="relative z-10 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          {/* Left Text / Info Content */}
+          <div className="space-y-4 max-w-2xl min-w-0">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 px-2.5 py-1 text-xs font-bold text-white shadow-2xs">
-                <GraduationCap className="h-3.5 w-3.5 nursery-idle-float" aria-hidden="true" />
+                <GraduationCap className="h-3.5 w-3.5 nursery-idle-float inline-block" aria-hidden="true" />
                 <span>{programCode}</span>
               </span>
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -867,51 +949,122 @@ export default function NurseryLibraryClient({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 cursor-pointer"
+            <div>
+              <h1
+                id="nursery-library-heading"
+                className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white"
               >
-                <Plus className="h-3.5 w-3.5 transition-transform duration-300 ease-in-out group-hover:rotate-90 motion-reduce:transform-none" aria-hidden="true" />
-                <span>Add YouTube video</span>
-              </button>
+                Nursery Song &amp; Educational Media Library
+              </h1>
+              <p className="mt-1.5 text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
+                Curated public-domain traditional folk songs, fingerplays, rhymes, and educational
+                media resources curated for early childhood pre-service teachers.
+              </p>
+            </div>
 
-              <Link
-                href={`/${institute}/lesson-plans`}
-                className="group inline-flex items-center gap-2 rounded-xl border border-violet-200/80 dark:border-violet-500/30 bg-surface/80 hover:bg-violet-50/70 dark:hover:bg-violet-950/40 px-4 py-2 text-xs font-semibold text-secondary-theme hover:text-primary-theme shadow-xs transition focus-visible:outline-2 focus-visible:outline-sky-500 cursor-pointer"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 transition-transform duration-300 group-hover:scale-125 motion-reduce:transform-none" aria-hidden="true" />
-                <span>Plan a lesson</span>
-              </Link>
+            {/* Hero Note */}
+            <div
+              role="note"
+              className="flex items-start sm:items-center gap-2.5 rounded-xl border border-violet-300/70 dark:border-violet-500/30 bg-violet-50/80 dark:bg-violet-950/40 p-3.5 text-xs text-violet-950 dark:text-violet-200"
+            >
+              <Info className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0 text-violet-600 dark:text-violet-400" />
+              <span className="font-medium">
+                Teaching resources for early childhood lessons. Add YouTube videos or attach them to curated rhymes to stream directly inside the LMS.
+              </span>
             </div>
           </div>
 
-          <div>
-            <h1
-              id="nursery-library-heading"
-              className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white"
-            >
-              Nursery Song &amp; Educational Media Library
-            </h1>
-            <p className="mt-1.5 max-w-3xl text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed">
-              Curated public-domain traditional folk songs, fingerplays, rhymes, and educational
-              media resources curated for early childhood pre-service teachers.
-            </p>
-          </div>
-
-          {/* Hero Note */}
+          {/* Right Music Scene Illustration (hidden on <640px to prevent title cramping; 170-210px on md/lg) */}
           <div
-            role="note"
-            className="flex items-start sm:items-center gap-2.5 rounded-xl border border-violet-300/70 dark:border-violet-500/30 bg-violet-50/80 dark:bg-violet-950/40 p-3.5 text-xs text-violet-950 dark:text-violet-200"
+            className="hidden sm:flex shrink-0 items-center justify-center self-center md:self-auto pointer-events-none select-none"
+            aria-hidden="true"
           >
-            <Info className="h-4 w-4 shrink-0 mt-0.5 sm:mt-0 text-violet-600 dark:text-violet-400" />
-            <span className="font-medium">
-              Teaching resources for early childhood lessons. Add YouTube videos or attach them to curated rhymes to stream directly inside the LMS.
-            </span>
+            <svg
+              viewBox="0 0 210 120"
+              className="w-40 sm:w-48 md:w-52 h-auto max-h-28 overflow-visible select-none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <defs>
+                <linearGradient id="nurseryVinylGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#0284c7" />
+                </linearGradient>
+                <linearGradient id="nurserySheenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.03)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0.15)" />
+                </linearGradient>
+              </defs>
+
+              {/* VINYL RECORD (center 60, 60, radius 44) */}
+              <g className="nursery-vinyl-disc" style={{ transformOrigin: "60px 60px" }}>
+                {/* Outer Vinyl Body */}
+                <circle cx="60" cy="60" r="44" className="fill-slate-900 dark:fill-slate-950 stroke-violet-300/40 dark:stroke-violet-500/30" strokeWidth="1.5" />
+                {/* Sound Grooves */}
+                <circle cx="60" cy="60" r="38" fill="none" stroke="currentColor" className="text-white/10 dark:text-white/15" strokeWidth="0.75" />
+                <circle cx="60" cy="60" r="32" fill="none" stroke="currentColor" className="text-white/10 dark:text-white/15" strokeWidth="0.75" />
+                <circle cx="60" cy="60" r="26" fill="none" stroke="currentColor" className="text-white/10 dark:text-white/15" strokeWidth="0.75" />
+                {/* Light reflection wedge / sheen */}
+                <path d="M 60 60 L 29 29 A 44 44 0 0 1 91 29 Z" fill="url(#nurserySheenGrad)" />
+                <path d="M 60 60 L 91 91 A 44 44 0 0 1 29 91 Z" fill="url(#nurserySheenGrad)" />
+                {/* Center Label */}
+                <circle cx="60" cy="60" r="16" fill="url(#nurseryVinylGrad)" />
+                {/* Label concentric accent */}
+                <circle cx="60" cy="60" r="14" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+                {/* Spindle hole */}
+                <circle cx="60" cy="60" r="3.5" className="fill-slate-950 dark:fill-slate-900" />
+                {/* Music Note on label (visualizes continuous spinning) */}
+                <path
+                  d="M 63 53 L 63 64 A 2.5 2.5 0 1 1 60.5 61.5 L 63 61.5 L 63 53 Z"
+                  fill="#ffffff"
+                />
+              </g>
+
+              {/* FLOATING NOTES (staggered upward motion) */}
+              <g className="nursery-music-note-1" transform="translate(108, 62)" style={{ opacity: 0.85 }}>
+                <path d="M 4 2 L 4 13 A 3 2.5 0 1 1 1 10.5 L 4 10.5 L 4 2 L 10 0 L 10 3 Z" className="fill-violet-600 dark:fill-violet-400" />
+              </g>
+              <g className="nursery-music-note-2" transform="translate(86, 38)" style={{ opacity: 0.85 }}>
+                <path d="M 3 4 L 3 14 A 2.5 2 0 1 1 0.5 12 L 3 12 L 3 4 L 11 1 L 11 11 A 2.5 2 0 1 1 8.5 9 L 11 9 L 11 3 Z" className="fill-sky-500 dark:fill-sky-400" />
+              </g>
+              <g className="nursery-music-note-3" transform="translate(122, 42)" style={{ opacity: 0.85 }}>
+                <path d="M 3 2 L 3 13 A 3 2.5 0 1 1 0 10.5 L 3 10.5 L 3 2 Z" className="fill-amber-500 dark:fill-amber-400" />
+              </g>
+              <g className="nursery-music-note-4" transform="translate(98, 18)" style={{ opacity: 0.85 }}>
+                <path d="M 3 2 L 3 11 A 2.5 2 0 1 1 0.5 9 L 3 9 L 3 2 L 8 0.5 L 8 3 Z" className="fill-rose-500 dark:fill-rose-400" />
+              </g>
+
+              {/* 5-BAR EQUALIZER (desynchronized bouncy scaleY) */}
+              <rect x="142" y="52" width="7" height="42" rx="3.5" className="fill-violet-600 dark:fill-violet-400 nursery-eq-bar-1" style={{ transformOrigin: "145.5px 94px" }} />
+              <rect x="154" y="44" width="7" height="50" rx="3.5" className="fill-sky-600 dark:fill-sky-400 nursery-eq-bar-2" style={{ transformOrigin: "157.5px 94px" }} />
+              <rect x="166" y="58" width="7" height="36" rx="3.5" className="fill-amber-500 dark:fill-amber-400 nursery-eq-bar-3" style={{ transformOrigin: "169.5px 94px" }} />
+              <rect x="178" y="48" width="7" height="46" rx="3.5" className="fill-teal-600 dark:fill-teal-400 nursery-eq-bar-4" style={{ transformOrigin: "181.5px 94px" }} />
+              <rect x="190" y="62" width="7" height="32" rx="3.5" className="fill-blue-600 dark:fill-sky-300 nursery-eq-bar-5" style={{ transformOrigin: "193.5px 94px" }} />
+            </svg>
           </div>
         </div>
       </section>
+
+      {/* ── ACTION BUTTONS ROW (Directly Below Hero Box, left-aligned desktop, full-width mobile) ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={handleOpenAddModal}
+          className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 cursor-pointer"
+        >
+          <Plus className="h-4 w-4 transition-transform duration-300 ease-in-out group-hover:rotate-90 motion-reduce:transform-none" aria-hidden="true" />
+          <span>Add YouTube video</span>
+        </button>
+
+        <Link
+          href={`/${institute}/lesson-plans`}
+          className="group inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200/80 dark:border-violet-500/30 bg-surface/80 hover:bg-violet-50/70 dark:hover:bg-violet-950/40 px-4 py-2.5 text-xs font-semibold text-secondary-theme hover:text-primary-theme shadow-xs transition focus-visible:outline-2 focus-visible:outline-sky-500 cursor-pointer"
+        >
+          <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400 transition-transform duration-300 group-hover:scale-125 motion-reduce:transform-none" aria-hidden="true" />
+          <span>Plan a lesson</span>
+        </Link>
+      </div>
 
       {/* ── TABS ── */}
       <div
