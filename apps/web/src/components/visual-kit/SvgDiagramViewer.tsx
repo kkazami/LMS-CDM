@@ -60,6 +60,37 @@ export default function SvgDiagramViewer({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isFullscreenSidebarOpen, setIsFullscreenSidebarOpen] = useState<boolean>(true);
 
+  // Compute numerical aspect ratio (width / height)
+  const aspect = React.useMemo(() => {
+    if (diagram.aspectRatio) {
+      const parts = diagram.aspectRatio.split("/").map(Number);
+      if (parts.length === 2 && parts[0] > 0 && parts[1] > 0) {
+        return parts[0] / parts[1];
+      }
+    }
+    if (diagram.viewBox?.w && diagram.viewBox?.h) {
+      return diagram.viewBox.w / diagram.viewBox.h;
+    }
+    return 4 / 3;
+  }, [diagram.aspectRatio, diagram.viewBox]);
+
+  // Stage dimensions: sized by height (min(available height, containerWidth / aspect)), width = height * aspect
+  const [stageBox, setStageBox] = useState<{ width: number; height: number }>(() => {
+    if (typeof window === "undefined") {
+      return { width: 600, height: 450 };
+    }
+    const availH = Math.max(420, Math.round(window.innerHeight * 0.7));
+    const containerW = Math.min(
+      850,
+      Math.max(300, window.innerWidth > 1024 ? 650 : window.innerWidth - 32)
+    );
+    const h = Math.min(availH, containerW / aspect);
+    return {
+      width: Math.round(h * aspect),
+      height: Math.round(h),
+    };
+  });
+
   const viewerWrapperRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const diagramContentRef = useRef<HTMLDivElement>(null);
@@ -69,6 +100,58 @@ export default function SvgDiagramViewer({
     panX: 0,
     panY: 0,
   });
+
+  // Calculate and update stage size whenever aspect ratio, container dimensions, or fullscreen changes
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const updateStageSize = () => {
+      const computed = window.getComputedStyle(el);
+      const paddingX =
+        (parseFloat(computed.paddingLeft) || 0) +
+        (parseFloat(computed.paddingRight) || 0);
+      const paddingY =
+        (parseFloat(computed.paddingTop) || 0) +
+        (parseFloat(computed.paddingBottom) || 0);
+
+      const rawWidth = el.clientWidth || window.innerWidth;
+      const rawHeight = el.clientHeight || window.innerHeight;
+
+      const containerWidth = isFullscreen
+        ? Math.max(100, rawWidth - paddingX)
+        : Math.max(100, Math.min(850, rawWidth - paddingX));
+
+      let availHeight: number;
+      if (isFullscreen) {
+        availHeight = Math.max(300, rawHeight - paddingY);
+      } else {
+        availHeight = Math.max(420, Math.round(window.innerHeight * 0.7));
+      }
+
+      const height = Math.min(availHeight, containerWidth / aspect);
+      const width = Math.round(height * aspect);
+      const finalHeight = Math.round(height);
+
+      setStageBox({ width, height: finalHeight });
+    };
+
+    updateStageSize();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        updateStageSize();
+      });
+      ro.observe(el);
+    }
+
+    window.addEventListener("resize", updateStageSize);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", updateStageSize);
+    };
+  }, [aspect, isFullscreen, isFullscreenSidebarOpen]);
 
   // Reset zoom and pan whenever active diagram changes
   useEffect(() => {
@@ -516,7 +599,9 @@ export default function SvgDiagramViewer({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className={`relative w-full flex-1 overflow-hidden bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-4 flex items-center justify-center min-h-[320px] select-none touch-none ${
+          className={`relative w-full flex-1 overflow-hidden bg-slate-50/70 dark:bg-slate-900/60 p-2 sm:p-4 flex items-center justify-center select-none touch-none ${
+            isFullscreen ? "min-h-0" : "min-h-[420px]"
+          } ${
             zoom > 1
               ? isDragging
                 ? "cursor-grabbing"
@@ -538,12 +623,11 @@ export default function SvgDiagramViewer({
           <div
             ref={diagramContentRef}
             onClick={handleCalibrationClick}
-            className={`relative max-w-[850px] mx-auto select-none rounded-xl overflow-hidden transition-transform duration-75 will-change-transform ${
-              diagram.id === "digestive-system"
-                ? "w-auto max-h-[75vh] sm:max-h-[80vh]"
-                : "w-full max-h-[85vh]"
-            }`}
+            className="relative mx-auto select-none rounded-xl overflow-hidden transition-transform duration-75 will-change-transform"
             style={{
+              width: `${stageBox.width}px`,
+              height: `${stageBox.height}px`,
+              maxWidth: "100%",
               aspectRatio: diagram.aspectRatio ?? "4/3",
               transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
               transformOrigin: "center center",
