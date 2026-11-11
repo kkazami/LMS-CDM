@@ -12,6 +12,9 @@ import {
   buildPrintSections,
   buildPrintablePlanData,
   MAX_FIELD_LENGTH,
+  parseLessonFramework,
+  isDraftNonEmpty,
+  VALID_FRAMEWORK_IDS,
 } from "../rules";
 import { evaluateLessonPlanAccess } from "../guard";
 import {
@@ -454,3 +457,127 @@ describe("Lesson Plan Builder - Logic, Formatting & Validation", () => {
     assert.equal(customPlanData.sections[0]?.content, "State targets");
   });
 });
+
+describe("Lesson Plan Builder - Framework Query Parsing & Hub Logic", () => {
+  it("parseLessonFramework validates and normalizes all 4 standard framework IDs", () => {
+    assert.equal(parseLessonFramework("ilaw"), "ilaw");
+    assert.equal(parseLessonFramework("4as"), "4as");
+    assert.equal(parseLessonFramework("5es"), "5es");
+    assert.equal(parseLessonFramework("6es"), "6es");
+
+    // Case insensitivity
+    assert.equal(parseLessonFramework("ILAW"), "ilaw");
+    assert.equal(parseLessonFramework("4As"), "4as");
+    assert.equal(parseLessonFramework("5ES"), "5es");
+    assert.equal(parseLessonFramework("6Es"), "6es");
+
+    // Trims whitespace
+    assert.equal(parseLessonFramework("  ilaw  "), "ilaw");
+    assert.equal(parseLessonFramework("\t4as\n"), "4as");
+    assert.equal(parseLessonFramework("   5es   "), "5es");
+    assert.equal(parseLessonFramework("  6es "), "6es");
+  });
+
+  it("parseLessonFramework returns null for missing, empty, or whitespace-only inputs", () => {
+    assert.equal(parseLessonFramework(null), null);
+    assert.equal(parseLessonFramework(undefined), null);
+    assert.equal(parseLessonFramework(""), null);
+    assert.equal(parseLessonFramework("   "), null);
+    assert.equal(parseLessonFramework("\t\n"), null);
+  });
+
+  it("parseLessonFramework safely rejects malicious and garbage values with null", () => {
+    const garbageValues = [
+      "garbage",
+      "unknown",
+      "null",
+      "undefined",
+      "7es",
+      "3as",
+      "dlp",
+      "dll",
+      "../../../etc/passwd",
+      "<script>alert(1)</script>",
+      "ilaw?param=1",
+      "4as/preview",
+      "5es-custom",
+      "6es-invalid",
+    ];
+
+    for (const val of garbageValues) {
+      assert.equal(
+        parseLessonFramework(val),
+        null,
+        `Expected null for garbage value: ${val}`
+      );
+    }
+
+    // Non-string arguments
+    assert.equal(parseLessonFramework(123 as unknown as string), null);
+    assert.equal(parseLessonFramework({} as unknown as string), null);
+    assert.equal(parseLessonFramework(true as unknown as string), null);
+  });
+
+  it("parseLessonFramework supports custom allowlist arrays", () => {
+    const customList = ["custom-a", "custom-b"] as const;
+    assert.equal(parseLessonFramework("custom-a", customList), "custom-a");
+    assert.equal(parseLessonFramework("CUSTOM-B", customList), "custom-b");
+    assert.equal(parseLessonFramework("ilaw", customList), null);
+    assert.equal(parseLessonFramework("other", customList), null);
+  });
+
+  it("isDraftNonEmpty accurately detects whether a draft contains user entered work", () => {
+    assert.equal(isDraftNonEmpty(null), false);
+    assert.equal(isDraftNonEmpty(undefined), false);
+
+    // Empty draft with default metadata only
+    const emptyDraft: LessonPlanFormValues = {
+      frameworkId: "ilaw",
+      headers: {
+        subject: "",
+        gradeLevel: "",
+        topic: "",
+        learningCompetency: "",
+        learningObjectives: "",
+        materials: "",
+        date: "2026-11-12",
+        preparedBy: "Student Name",
+      },
+      stages: {},
+    };
+    assert.equal(isDraftNonEmpty(emptyDraft), false);
+
+    // Draft with topic only
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        headers: { ...emptyDraft.headers, topic: "Water Cycle" },
+      }),
+      true
+    );
+
+    // Draft with stage content only
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        stages: { intentions: "Define outcomes clearly." },
+      }),
+      true
+    );
+
+    // Draft with whitespace-only stage content
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        stages: { intentions: "   \n\t  " },
+      }),
+      false
+    );
+  });
+
+  it("confirms VALID_FRAMEWORK_IDS matches all FRAMEWORKS data IDs exactly", () => {
+    const frameworkIds = FRAMEWORKS.map((f) => f.id);
+    assert.deepEqual(VALID_FRAMEWORK_IDS, frameworkIds);
+  });
+});
+
