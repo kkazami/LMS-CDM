@@ -5,6 +5,7 @@ import type { IctLabModuleId } from "@/lib/ict-lab/types";
 import {
   ICT_MODULE_THEMES,
   sampleShapePoints,
+  type NormalizedShape,
   type Point2D,
 } from "@/lib/ict-lab/particle-shapes";
 import {
@@ -14,8 +15,19 @@ import {
   type TargetPoint,
 } from "@/lib/ict-lab/particle-physics";
 
+export interface ParticleThemeConfig {
+  id: string;
+  name?: string;
+  accentDark: string;
+  accentLight: string;
+  accentRgb: [number, number, number];
+  shape: NormalizedShape;
+}
+
 export interface ParticleLogoCanvasProps {
-  moduleId: IctLabModuleId;
+  moduleId?: IctLabModuleId;
+  theme?: ParticleThemeConfig;
+  particleCount?: number;
   isHovered: boolean;
   pointerPos?: Point2D | null;
   pointerPosRef?: React.RefObject<Point2D | null>;
@@ -30,6 +42,8 @@ const PARTICLE_COUNT = 140;
 
 export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
   moduleId,
+  theme: customTheme,
+  particleCount,
   isHovered,
   pointerPos,
   pointerPosRef,
@@ -41,12 +55,18 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
   const [isVisible, setIsVisible] = useState<boolean>(true);
 
-  const theme = useMemo(() => ICT_MODULE_THEMES[moduleId], [moduleId]);
+  const theme = useMemo(() => {
+    if (customTheme) return customTheme;
+    if (moduleId && ICT_MODULE_THEMES[moduleId]) return ICT_MODULE_THEMES[moduleId];
+    return ICT_MODULE_THEMES["code-playground"];
+  }, [customTheme, moduleId]);
 
-  // Normalized shape points (deterministic, 140 points)
+  const count = particleCount ?? PARTICLE_COUNT;
+
+  // Normalized shape points (deterministic)
   const normalizedPoints = useMemo(
-    () => sampleShapePoints(theme.shape, PARTICLE_COUNT),
-    [theme.shape]
+    () => sampleShapePoints(theme.shape, count),
+    [theme.shape, count]
   );
 
   // Persistent references across renders (created once per mount)
@@ -140,9 +160,9 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     const clusterRadius = Math.min(width, height) * 0.16;
 
     const newRestTargets: TargetPoint[] = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    for (let i = 0; i < count; i++) {
       const angle = i * 2.39996;
-      const r = Math.sqrt(i / PARTICLE_COUNT) * clusterRadius;
+      const r = Math.sqrt(i / count) * clusterRadius;
       newRestTargets.push({
         x: clusterCenterX + r * Math.cos(angle),
         y: clusterCenterY + r * Math.sin(angle),
@@ -317,6 +337,7 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     isDark,
     prefersReducedMotion,
     isVisible,
+    count,
   ]);
 
   // Separate wake-up effect on hover/focus change: never tears down canvas or particles

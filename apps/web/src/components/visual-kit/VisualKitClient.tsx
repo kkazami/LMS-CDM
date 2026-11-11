@@ -46,6 +46,15 @@ import {
   serializeBestScores,
   shufflePartNames,
 } from "@/lib/visual-kit/rules";
+import { ParticleLogoCanvas } from "@/components/ict-lab/ParticleLogoCanvas";
+import { getVisualKitTopicTheme } from "@/lib/visual-kit/topic-themes";
+import {
+  createInitialHoverState,
+  nextHoverState,
+  LEAVE_GRACE_PERIOD_MS,
+  type HoverMachineState,
+} from "@/lib/ict-lab/hover-machine";
+import type { Point2D } from "@/lib/ict-lab/particle-shapes";
 import SvgDiagramViewer from "./SvgDiagramViewer";
 
 const LOCAL_STORAGE_KEY = "visual_kit_best_scores";
@@ -56,6 +65,276 @@ interface VisualKitClientProps {
   programCode: string;
   programName?: string;
   initialDiagrams: Diagram[];
+}
+
+// Topic icon and area styling details
+function getTopicIconDetails(diagramId: string, area: ScienceArea) {
+  switch (diagramId) {
+    case "human-heart":
+      return {
+        icon: HeartPulse,
+        tileBg:
+          "from-rose-500/20 to-pink-500/10 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-800/50",
+        idleClass: "visualkit-heart-beat",
+        hoverClass: "group-hover:visualkit-heart-beat",
+        selectedRing:
+          "ring-2 ring-rose-500/70 shadow-rose-500/10 dark:shadow-rose-950/40",
+      };
+    case "digestive-system":
+      return {
+        icon: Apple,
+        tileBg:
+          "from-orange-500/20 to-amber-500/10 text-orange-600 dark:text-orange-400 border-orange-200/80 dark:border-orange-800/50",
+        idleClass: "visualkit-apple-wobble",
+        hoverClass: "group-hover:visualkit-apple-wobble",
+        selectedRing:
+          "ring-2 ring-orange-500/70 shadow-orange-500/10 dark:shadow-orange-950/40",
+      };
+    case "animal-cell":
+      return {
+        icon: Atom,
+        tileBg:
+          "from-teal-500/20 to-emerald-500/10 text-teal-600 dark:text-teal-400 border-teal-200/80 dark:border-teal-800/50",
+        idleClass: "visualkit-atom-spin",
+        hoverClass: "group-hover:visualkit-atom-spin",
+        selectedRing:
+          "ring-2 ring-teal-500/70 shadow-teal-500/10 dark:shadow-teal-950/40",
+      };
+    case "plant-photosynthesis":
+    case "plant-structure":
+      return {
+        icon: Sprout,
+        tileBg:
+          "from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/50",
+        idleClass: "visualkit-plant-sway",
+        hoverClass: "group-hover:visualkit-plant-sway",
+        selectedRing:
+          "ring-2 ring-emerald-500/70 shadow-emerald-500/10 dark:shadow-emerald-950/40",
+      };
+    case "water-cycle":
+      return {
+        icon: CloudRain,
+        tileBg:
+          "from-sky-500/20 to-indigo-500/10 text-sky-600 dark:text-sky-400 border-sky-200/80 dark:border-sky-800/50",
+        idleClass: "visualkit-rain-drip",
+        hoverClass: "group-hover:visualkit-rain-drip",
+        selectedRing:
+          "ring-2 ring-sky-500/70 shadow-sky-500/10 dark:shadow-sky-950/40",
+      };
+    case "simple-electric-circuit":
+      return {
+        icon: Zap,
+        tileBg:
+          "from-amber-500/20 to-yellow-500/10 text-amber-500 dark:text-amber-400 border-amber-200/80 dark:border-amber-800/50",
+        idleClass: "visualkit-zap-flicker",
+        hoverClass: "group-hover:visualkit-zap-flicker",
+        selectedRing:
+          "ring-2 ring-amber-500/70 shadow-amber-500/10 dark:shadow-amber-950/40",
+      };
+    default:
+      return {
+        icon: FlaskConical,
+        tileBg:
+          "from-sky-500/20 to-indigo-500/10 text-sky-600 dark:text-sky-400 border-sky-200/80 dark:border-sky-800/50",
+        idleClass: "visualkit-flask-tilt",
+        hoverClass: "group-hover:visualkit-flask-tilt",
+        selectedRing:
+          "ring-2 ring-sky-500/70 shadow-sky-500/10 dark:shadow-sky-950/40",
+      };
+  }
+}
+
+interface VisualKitHubCardProps {
+  diagram: Diagram;
+  bestScore?: BestScoreRecord;
+  pathname: string;
+}
+
+function VisualKitHubCard({ diagram, bestScore, pathname }: VisualKitHubCardProps) {
+  const [isActive, setIsActive] = useState(false);
+  const hoverMachineRef = useRef<HoverMachineState>(createInitialHoverState());
+  const pointerPosRef = useRef<Point2D | null>(null);
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const theme = useMemo(() => getVisualKitTopicTheme(diagram.id), [diagram.id]);
+  const topicDetails = getTopicIconDetails(diagram.id, diagram.area);
+  const TopicIcon = topicDetails.icon;
+
+  const handlePointerEnter = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointerenter" },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  const handlePointerLeave = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+    }
+    leaveTimerRef.current = setTimeout(() => {
+      pointerPosRef.current = null;
+      const next = nextHoverState(
+        hoverMachineRef.current,
+        { type: "grace_timeout" },
+        Date.now()
+      );
+      hoverMachineRef.current = next;
+      setIsActive(next.active);
+      leaveTimerRef.current = null;
+    }, LEAVE_GRACE_PERIOD_MS);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    pointerPosRef.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointermove", insideRect: true },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    if (!isActive && next.active) {
+      setIsActive(true);
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isInside =
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom;
+
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointercancel", insideRect: isInside },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  const handleFocus = () => {
+    const next = nextHoverState(hoverMachineRef.current, { type: "focus" });
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  const handleBlur = () => {
+    const next = nextHoverState(hoverMachineRef.current, { type: "blur" });
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  return (
+    <Link
+      href={`${pathname}?topic=${diagram.id}`}
+      aria-label={`${diagram.title} - ${diagram.parts.length} components`}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onPointerMove={handlePointerMove}
+      onPointerCancel={handlePointerCancel}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      style={
+        {
+          touchAction: "pan-y",
+          userSelect: "none",
+          WebkitUserDrag: "none",
+        } as React.CSSProperties
+      }
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-xs select-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 touch-pan-y ${theme.cardBorderHoverClass} ${theme.cardShadowHoverClass} ${theme.focusRingClass}`}
+    >
+      {/* Interactive Particle Logo Canvas (aria-hidden, z-0 background layer) */}
+      <ParticleLogoCanvas
+        theme={theme}
+        particleCount={120}
+        isHovered={isActive}
+        pointerPosRef={pointerPosRef}
+      />
+
+      {/* Foreground Content (relative z-10, non-draggable, pointer-events-none) */}
+      <div className="relative z-10 flex flex-1 flex-col justify-between select-none pointer-events-none">
+        <div className="space-y-4">
+          {/* Top Row: Icon Container & Area Tag */}
+          <div className="flex items-center justify-between">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${topicDetails.tileBg} border shadow-2xs transition-all duration-200 ${theme.iconTileHoverClass}`}
+            >
+              <TopicIcon
+                className={`h-6 w-6 inline-block ${topicDetails.idleClass}`}
+                aria-hidden="true"
+              />
+            </div>
+            <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+              {diagram.area}
+            </span>
+          </div>
+
+          {/* Title & Subtitle */}
+          <div>
+            <h2
+              className={`text-lg font-bold text-slate-900 dark:text-white transition-colors sm:text-xl ${theme.titleHoverClass}`}
+            >
+              {diagram.title}
+            </h2>
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+              {diagram.parts.length} labeled structures
+            </p>
+          </div>
+
+          {/* Description */}
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-3">
+            {diagram.summary}
+          </p>
+
+          {/* Badges / Best Score */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            {bestScore ? (
+              <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <Trophy className="h-3 w-3" />
+                Best: {bestScore.score}/{bestScore.total} ({bestScore.percentage}%)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Not tested yet
+              </span>
+            )}
+            {diagram.extraStructures && diagram.extraStructures.length > 0 && (
+              <span className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                +{diagram.extraStructures.length} related
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Action CTA */}
+        <div
+          className={`mt-6 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold shadow-xs select-none pointer-events-none transition-colors ${theme.buttonClass}`}
+        >
+          <span>Explore Topic</span>
+          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 function VisualKitClientContent({
@@ -261,83 +540,6 @@ function VisualKitClientContent({
       correctMap[p.id] = p.name;
     }
     setLabelAnswers(correctMap);
-  };
-
-  // Topic icon and area styling details
-  const getTopicIconDetails = (diagramId: string, area: ScienceArea) => {
-    switch (diagramId) {
-      case "human-heart":
-        return {
-          icon: HeartPulse,
-          tileBg:
-            "from-rose-500/20 to-pink-500/10 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-800/50",
-          idleClass: "visualkit-heart-beat",
-          hoverClass: "group-hover:visualkit-heart-beat",
-          selectedRing:
-            "ring-2 ring-rose-500/70 shadow-rose-500/10 dark:shadow-rose-950/40",
-        };
-      case "digestive-system":
-        return {
-          icon: Apple,
-          tileBg:
-            "from-rose-500/20 to-amber-500/10 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-800/50",
-          idleClass: "visualkit-apple-wobble",
-          hoverClass: "group-hover:visualkit-apple-wobble",
-          selectedRing:
-            "ring-2 ring-rose-500/70 shadow-rose-500/10 dark:shadow-rose-950/40",
-        };
-      case "animal-cell":
-        return {
-          icon: Atom,
-          tileBg:
-            "from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/50",
-          idleClass: "visualkit-atom-spin",
-          hoverClass: "group-hover:visualkit-atom-spin",
-          selectedRing:
-            "ring-2 ring-emerald-500/70 shadow-emerald-500/10 dark:shadow-emerald-950/40",
-        };
-      case "plant-photosynthesis":
-      case "plant-structure":
-        return {
-          icon: Sprout,
-          tileBg:
-            "from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/50",
-          idleClass: "visualkit-plant-sway",
-          hoverClass: "group-hover:visualkit-plant-sway",
-          selectedRing:
-            "ring-2 ring-emerald-500/70 shadow-emerald-500/10 dark:shadow-emerald-950/40",
-        };
-      case "water-cycle":
-        return {
-          icon: CloudRain,
-          tileBg:
-            "from-sky-500/20 to-indigo-500/10 text-sky-600 dark:text-sky-400 border-sky-200/80 dark:border-sky-800/50",
-          idleClass: "visualkit-rain-drip",
-          hoverClass: "group-hover:visualkit-rain-drip",
-          selectedRing:
-            "ring-2 ring-sky-500/70 shadow-sky-500/10 dark:shadow-sky-950/40",
-        };
-      case "simple-electric-circuit":
-        return {
-          icon: Zap,
-          tileBg:
-            "from-amber-500/20 to-sky-500/10 text-amber-500 dark:text-amber-400 border-amber-200/80 dark:border-amber-800/50",
-          idleClass: "visualkit-zap-flicker",
-          hoverClass: "group-hover:visualkit-zap-flicker",
-          selectedRing:
-            "ring-2 ring-amber-500/70 shadow-amber-500/10 dark:shadow-amber-950/40",
-        };
-      default:
-        return {
-          icon: FlaskConical,
-          tileBg:
-            "from-sky-500/20 to-indigo-500/10 text-sky-600 dark:text-sky-400 border-sky-200/80 dark:border-sky-800/50",
-          idleClass: "visualkit-flask-tilt",
-          hoverClass: "group-hover:visualkit-flask-tilt",
-          selectedRing:
-            "ring-2 ring-sky-500/70 shadow-sky-500/10 dark:shadow-sky-950/40",
-        };
-    }
   };
 
   // Toggle single accordion section
@@ -1207,77 +1409,14 @@ function VisualKitClientContent({
 
           {/* Hub: ONLY Topic Choice Cards in a 3-Col / 2-Col / 1-Col Grid */}
           <main aria-label="Visual Learning Topics" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {initialDiagrams.map((d) => {
-              const topicDetails = getTopicIconDetails(d.id, d.area);
-              const TopicIcon = topicDetails.icon;
-              const best = bestScores[d.id];
-
-              return (
-                <Link
-                  key={d.id}
-                  href={`${pathname}?topic=${d.id}`}
-                  aria-label={`${d.title} - ${d.parts.length} components`}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-sky-400 dark:hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:hover:shadow-sky-950/30 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
-                >
-                  <div className="space-y-4">
-                    {/* Top Row: Icon Container & Area Tag */}
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${topicDetails.tileBg} border shadow-2xs transition-transform duration-200 group-hover:scale-105`}
-                      >
-                        <TopicIcon
-                          className={`h-6 w-6 inline-block ${topicDetails.idleClass}`}
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                        {d.area}
-                      </span>
-                    </div>
-
-                    {/* Title & Subtitle */}
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white transition-colors group-hover:text-sky-600 dark:group-hover:text-sky-400 sm:text-xl">
-                        {d.title}
-                      </h2>
-                      <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {d.parts.length} labeled structures
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-3">
-                      {d.summary}
-                    </p>
-
-                    {/* Badges / Best Score */}
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                      {best ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                          <Trophy className="h-3 w-3" />
-                          Best: {best.score}/{best.total} ({best.percentage}%)
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                          Not tested yet
-                        </span>
-                      )}
-                      {d.extraStructures && d.extraStructures.length > 0 && (
-                        <span className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                          +{d.extraStructures.length} related
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bottom Action CTA */}
-                  <div className="mt-6 flex items-center justify-between rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors group-hover:bg-sky-700">
-                    <span>Explore Topic</span>
-                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </div>
-                </Link>
-              );
-            })}
+            {initialDiagrams.map((d) => (
+              <VisualKitHubCard
+                key={d.id}
+                diagram={d}
+                bestScore={bestScores[d.id]}
+                pathname={pathname}
+              />
+            ))}
           </main>
         </div>
       )}

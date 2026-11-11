@@ -12,6 +12,11 @@ import {
   serializeBestScores,
   shufflePartNames,
 } from "../rules";
+import {
+  getVisualKitTopicTheme,
+  DEFAULT_VISUAL_KIT_THEME,
+} from "../topic-themes";
+import { sampleShapePoints } from "../../ict-lab/particle-shapes";
 import { evaluateVisualKitAccess } from "../guard";
 import {
   getFeaturesForIteProgram,
@@ -492,5 +497,117 @@ describe("Visual Kit - Labeling Rules, Shuffling & Scoring", () => {
     assert.equal(parseVisualKitTopic("   ", VISUAL_KIT_DIAGRAMS), null);
     assert.equal(parseVisualKitTopic("garbage", VISUAL_KIT_DIAGRAMS), null);
     assert.equal(parseVisualKitTopic("unknown-diagram", VISUAL_KIT_DIAGRAMS), null);
+  });
+});
+
+describe("Visual Kit - Hub Particle Logo Themes & Normalized Shapes", () => {
+  const hexRegex = /^#[0-9a-fA-F]{6}$/;
+
+  it("ensures every diagram id in data.ts has a topic theme with valid hex accents and non-empty shape", () => {
+    assert.equal(VISUAL_KIT_DIAGRAMS.length, 6);
+
+    for (const diagram of VISUAL_KIT_DIAGRAMS) {
+      const theme = getVisualKitTopicTheme(diagram.id);
+      assert.ok(theme, `Theme must exist for diagram id ${diagram.id}`);
+      assert.equal(theme.id, diagram.id);
+
+      // Accent color hex verification
+      assert.match(
+        theme.accentDark,
+        hexRegex,
+        `accentDark must be valid hex for ${diagram.id}`
+      );
+      assert.match(
+        theme.accentLight,
+        hexRegex,
+        `accentLight must be valid hex for ${diagram.id}`
+      );
+
+      // RGB components verification
+      assert.equal(theme.accentRgb.length, 3);
+      for (const c of theme.accentRgb) {
+        assert.ok(Number.isInteger(c) && c >= 0 && c <= 255);
+      }
+
+      // Non-empty normalized shape primitives
+      assert.ok(
+        theme.shape.primitives.length >= 5,
+        `Shape for ${diagram.id} must have at least 5 primitives`
+      );
+
+      // Verify all primitive coordinates are bounded in [0, 1]
+      for (const p of theme.shape.primitives) {
+        if (p.type === "line") {
+          assert.ok(p.x1 >= 0 && p.x1 <= 1, `line x1 out of bounds for ${diagram.id}`);
+          assert.ok(p.y1 >= 0 && p.y1 <= 1, `line y1 out of bounds for ${diagram.id}`);
+          assert.ok(p.x2 >= 0 && p.x2 <= 1, `line x2 out of bounds for ${diagram.id}`);
+          assert.ok(p.y2 >= 0 && p.y2 <= 1, `line y2 out of bounds for ${diagram.id}`);
+        } else if (p.type === "rect") {
+          assert.ok(p.x >= 0 && p.x <= 1, `rect x out of bounds for ${diagram.id}`);
+          assert.ok(p.y >= 0 && p.y <= 1, `rect y out of bounds for ${diagram.id}`);
+          assert.ok(p.w > 0 && p.x + p.w <= 1, `rect width out of bounds for ${diagram.id}`);
+          assert.ok(p.h > 0 && p.y + p.h <= 1, `rect height out of bounds for ${diagram.id}`);
+        } else if (p.type === "circle") {
+          assert.ok(p.cx >= 0 && p.cx <= 1, `circle cx out of bounds for ${diagram.id}`);
+          assert.ok(p.cy >= 0 && p.cy <= 1, `circle cy out of bounds for ${diagram.id}`);
+          assert.ok(p.r > 0 && p.r <= 0.5, `circle radius out of bounds for ${diagram.id}`);
+        }
+      }
+    }
+  });
+
+  it("deterministically samples exactly N points within [0, 1] bounds for every topic shape", () => {
+    const counts = [60, 120, 140];
+
+    for (const diagram of VISUAL_KIT_DIAGRAMS) {
+      const theme = getVisualKitTopicTheme(diagram.id);
+
+      for (const count of counts) {
+        const pointsA = sampleShapePoints(theme.shape, count);
+        const pointsB = sampleShapePoints(theme.shape, count);
+
+        assert.equal(
+          pointsA.length,
+          count,
+          `sampleShapePoints must return exactly ${count} points for ${diagram.id}`
+        );
+
+        // Determinism test
+        assert.deepEqual(
+          pointsA,
+          pointsB,
+          `Sampling must be deterministic for ${diagram.id}`
+        );
+
+        // Bounds test
+        for (const pt of pointsA) {
+          assert.ok(
+            pt.x >= 0 && pt.x <= 1,
+            `Point X ${pt.x} outside [0, 1] for ${diagram.id}`
+          );
+          assert.ok(
+            pt.y >= 0 && pt.y <= 1,
+            `Point Y ${pt.y} outside [0, 1] for ${diagram.id}`
+          );
+        }
+      }
+    }
+  });
+
+  it("safely falls back to default theme for unknown or missing diagram ids", () => {
+    const unknownTheme = getVisualKitTopicTheme("non-existent-topic");
+    assert.equal(unknownTheme.id, DEFAULT_VISUAL_KIT_THEME.id);
+    assert.match(unknownTheme.accentDark, hexRegex);
+    assert.ok(unknownTheme.shape.primitives.length > 0);
+
+    const nullTheme = getVisualKitTopicTheme(null);
+    assert.equal(nullTheme.id, DEFAULT_VISUAL_KIT_THEME.id);
+
+    const undefinedTheme = getVisualKitTopicTheme(undefined);
+    assert.equal(undefinedTheme.id, DEFAULT_VISUAL_KIT_THEME.id);
+
+    // Verify fallback points sample safely
+    const points = sampleShapePoints(nullTheme.shape, 120);
+    assert.equal(points.length, 120);
   });
 });
