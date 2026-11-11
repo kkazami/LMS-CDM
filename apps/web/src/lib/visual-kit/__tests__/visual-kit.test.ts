@@ -7,6 +7,7 @@ import {
   calculateMinAnchorDistance,
   deserializeBestScores,
   getDistance,
+  parseVisualKitTopic,
   scoreLabelingAnswers,
   serializeBestScores,
   shufflePartNames,
@@ -441,5 +442,55 @@ describe("Visual Kit - Labeling Rules, Shuffling & Scoring", () => {
       version: 1,
       scores: {},
     });
+  });
+
+  it("normalizes and validates topic query parameters with alias fallback support", () => {
+    // Canonical topic IDs
+    assert.equal(
+      parseVisualKitTopic("human-heart", VISUAL_KIT_DIAGRAMS),
+      "human-heart"
+    );
+    assert.equal(
+      parseVisualKitTopic("  HUMAN-HEART  ", VISUAL_KIT_DIAGRAMS),
+      "human-heart"
+    );
+    assert.equal(
+      parseVisualKitTopic("digestive-system", VISUAL_KIT_DIAGRAMS),
+      "digestive-system"
+    );
+    assert.equal(
+      parseVisualKitTopic("animal-cell", VISUAL_KIT_DIAGRAMS),
+      "animal-cell"
+    );
+    assert.equal(
+      parseVisualKitTopic("plant-photosynthesis", VISUAL_KIT_DIAGRAMS),
+      "plant-photosynthesis"
+    );
+    assert.equal(
+      parseVisualKitTopic("water-cycle", VISUAL_KIT_DIAGRAMS),
+      "water-cycle"
+    );
+    assert.equal(
+      parseVisualKitTopic("simple-electric-circuit", VISUAL_KIT_DIAGRAMS),
+      "simple-electric-circuit"
+    );
+
+    // Aliases
+    assert.equal(
+      parseVisualKitTopic("plant", VISUAL_KIT_DIAGRAMS),
+      "plant-photosynthesis"
+    );
+    assert.equal(
+      parseVisualKitTopic("circuit", VISUAL_KIT_DIAGRAMS),
+      "simple-electric-circuit"
+    );
+
+    // Fallbacks to null (Hub view)
+    assert.equal(parseVisualKitTopic(null, VISUAL_KIT_DIAGRAMS), null);
+    assert.equal(parseVisualKitTopic(undefined, VISUAL_KIT_DIAGRAMS), null);
+    assert.equal(parseVisualKitTopic("", VISUAL_KIT_DIAGRAMS), null);
+    assert.equal(parseVisualKitTopic("   ", VISUAL_KIT_DIAGRAMS), null);
+    assert.equal(parseVisualKitTopic("garbage", VISUAL_KIT_DIAGRAMS), null);
+    assert.equal(parseVisualKitTopic("unknown-diagram", VISUAL_KIT_DIAGRAMS), null);
   });
 });

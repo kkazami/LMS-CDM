@@ -204,3 +204,39 @@ export function serializeBestScores(payload: BestScoresPayload): string {
   return JSON.stringify(payload);
 }
 
+/**
+ * Normalizes and validates a raw topic query parameter against available diagrams.
+ * Returns the canonical diagram ID if matched, or null (Hub view) if invalid/missing.
+ */
+export function parseVisualKitTopic(
+  raw: string | null | undefined,
+  diagrams: readonly Diagram[]
+): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  // Exact ID match
+  const directMatch = diagrams.find((d) => d.id.toLowerCase() === trimmed);
+  if (directMatch) return directMatch.id;
+
+  // Friendly aliases
+  if (trimmed === "plant" || trimmed === "plant-structure") {
+    const plantMatch = diagrams.find((d) => d.id === "plant-photosynthesis");
+    if (plantMatch) return plantMatch.id;
+  }
+  if (
+    trimmed === "circuit" ||
+    trimmed === "dc-circuit" ||
+    trimmed === "electric-circuit"
+  ) {
+    const circuitMatch = diagrams.find(
+      (d) => d.id === "simple-electric-circuit"
+    );
+    if (circuitMatch) return circuitMatch.id;
+  }
+
+  return null;
+}
+
+
