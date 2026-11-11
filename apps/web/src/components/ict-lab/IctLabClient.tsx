@@ -24,6 +24,12 @@ import {
   ICT_MODULE_THEMES,
   type Point2D,
 } from "@/lib/ict-lab/particle-shapes";
+import {
+  createInitialHoverState,
+  nextHoverState,
+  LEAVE_GRACE_PERIOD_MS,
+  type HoverMachineState,
+} from "@/lib/ict-lab/hover-machine";
 import { ParticleLogoCanvas } from "./ParticleLogoCanvas";
 import CodePlaygroundTab from "./CodePlaygroundTab";
 import HardwareExplorerTab from "./HardwareExplorerTab";
@@ -57,46 +63,154 @@ function HubModuleCard({
   card: ModuleCardConfig;
   pathname: string;
 }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [pointerPos, setPointerPos] = useState<Point2D | null>(null);
+  const [isActive, setIsActive] = useState(false);
+  const hoverMachineRef = useRef<HoverMachineState>(createInitialHoverState());
+  const pointerPosRef = useRef<Point2D | null>(null);
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const theme = ICT_MODULE_THEMES[card.id];
   const Icon = card.icon;
 
-  const handlePointerEnter = () => setIsHovered(true);
-  const handlePointerLeave = () => {
-    setIsHovered(false);
-    setPointerPos(null);
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) {
+        clearTimeout(leaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handlePointerEnter = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointerenter" },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
   };
+
+  const handlePointerLeave = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isInside =
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom;
+
+    if (isInside) {
+      // Edge jitter: cursor didn't actually exit bounds
+      return;
+    }
+
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+    }
+
+    hoverMachineRef.current = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointerleave", insideRect: false },
+      Date.now()
+    );
+
+    // 100ms grace period before reverting to resting cluster
+    leaveTimerRef.current = setTimeout(() => {
+      pointerPosRef.current = null;
+      const next = nextHoverState(
+        hoverMachineRef.current,
+        { type: "grace_timeout" },
+        Date.now()
+      );
+      hoverMachineRef.current = next;
+      setIsActive(next.active);
+      leaveTimerRef.current = null;
+    }, LEAVE_GRACE_PERIOD_MS);
+  };
+
   const handlePointerMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setPointerPos({
+    pointerPosRef.current = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
-    });
+    };
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointermove", insideRect: true },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    if (!isActive && next.active) {
+      setIsActive(true);
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isInside =
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom;
+
+    // Preserve hover state during native browser drag gestures
+    const next = nextHoverState(
+      hoverMachineRef.current,
+      { type: "pointercancel", insideRect: isInside },
+      Date.now()
+    );
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  const handleFocus = () => {
+    const next = nextHoverState(hoverMachineRef.current, { type: "focus" });
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
+  };
+
+  const handleBlur = () => {
+    const next = nextHoverState(hoverMachineRef.current, { type: "blur" });
+    hoverMachineRef.current = next;
+    setIsActive(next.active);
   };
 
   return (
     <Link
       href={`${pathname}?module=${card.id}`}
       aria-label={`${card.title} - ${card.subtitle}`}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
-      style={{ touchAction: "pan-y" }}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-theme bg-surface p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 touch-pan-y ${theme.cardBorderHoverClass} ${theme.cardShadowHoverClass} ${theme.focusRingClass}`}
+      onPointerCancel={handlePointerCancel}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      style={
+        {
+          touchAction: "pan-y",
+          userSelect: "none",
+          WebkitUserDrag: "none",
+        } as React.CSSProperties
+      }
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-theme bg-surface p-6 shadow-xs select-none transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 touch-pan-y ${theme.cardBorderHoverClass} ${theme.cardShadowHoverClass} ${theme.focusRingClass}`}
     >
       {/* Interactive Particle Logo Canvas (aria-hidden, z-0 background layer) */}
       <ParticleLogoCanvas
         moduleId={card.id}
-        isHovered={isHovered || isFocused}
-        pointerPos={pointerPos}
+        isHovered={isActive}
+        pointerPosRef={pointerPosRef}
       />
 
-      {/* Foreground Content (relative z-10) */}
-      <div className="relative z-10 space-y-4">
+      {/* Foreground Content (relative z-10, non-draggable, pointer-events-none) */}
+      <div className="relative z-10 space-y-4 select-none pointer-events-none">
         {/* Top Row: Icon Container & Type Indicator */}
         <div className="flex items-center justify-between">
           <div
@@ -141,9 +255,9 @@ function HubModuleCard({
         </div>
       </div>
 
-      {/* Bottom CTA Button (relative z-10) */}
+      {/* Bottom CTA Button (relative z-10, non-draggable, pointer-events-none) */}
       <div
-        className={`relative z-10 mt-6 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold shadow-xs transition-colors ${theme.buttonClass}`}
+        className={`relative z-10 mt-6 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold shadow-xs select-none pointer-events-none transition-colors ${theme.buttonClass}`}
       >
         <span>{card.ctaLabel}</span>
         <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />

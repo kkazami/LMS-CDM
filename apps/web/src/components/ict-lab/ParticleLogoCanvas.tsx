@@ -14,10 +14,11 @@ import {
   type TargetPoint,
 } from "@/lib/ict-lab/particle-physics";
 
-interface ParticleLogoCanvasProps {
+export interface ParticleLogoCanvasProps {
   moduleId: IctLabModuleId;
   isHovered: boolean;
-  pointerPos: Point2D | null;
+  pointerPos?: Point2D | null;
+  pointerPosRef?: React.RefObject<Point2D | null>;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
   moduleId,
   isHovered,
   pointerPos,
+  pointerPosRef,
   className,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -46,6 +48,22 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     () => sampleShapePoints(theme.shape, PARTICLE_COUNT),
     [theme.shape]
   );
+
+  // Persistent references across renders (created once per mount)
+  const particlesRef = useRef<ParticleWithRadius[]>([]);
+  const shapeTargetsRef = useRef<TargetPoint[]>([]);
+  const restTargetsRef = useRef<TargetPoint[]>([]);
+  const currentAlphaRef = useRef<number>(isDark ? 0.2 : 0.16);
+  const animIdRef = useRef<number | null>(null);
+  const dimensionsRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  const isHoveredRef = useRef(isHovered);
+  isHoveredRef.current = isHovered;
+
+  const pointerPosFallbackRef = useRef<Point2D | null>(pointerPos ?? null);
+  if (pointerPos !== undefined) {
+    pointerPosFallbackRef.current = pointerPos;
+  }
 
   // Monitor theme changes (light/dark mode on <html>)
   useEffect(() => {
@@ -92,98 +110,86 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Canvas animation loop and pure physics
+  // Recompute targets and clamp existing particles on container resize (never recreates particles)
+  const updateDimensionsAndTargets = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(10, Math.floor(rect.width));
+    const height = Math.max(10, Math.floor(rect.height));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    dimensionsRef.current = { width, height };
+
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+
+    // Fixed logo shape targets
+    const shapeSize = Math.min(width * 0.72, height * 0.65, 230);
+    const shapeOffsetX = (width - shapeSize) / 2;
+    const shapeOffsetY = height * 0.46 - shapeSize / 2;
+
+    shapeTargetsRef.current = normalizedPoints.map((pt) => ({
+      x: shapeOffsetX + pt.x * shapeSize,
+      y: shapeOffsetY + pt.y * shapeSize,
+    }));
+
+    // Fixed resting cluster targets
+    const clusterCenterX = width * 0.84;
+    const clusterCenterY = height * 0.82;
+    const clusterRadius = Math.min(width, height) * 0.16;
+
+    const newRestTargets: TargetPoint[] = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const angle = i * 2.39996;
+      const r = Math.sqrt(i / PARTICLE_COUNT) * clusterRadius;
+      newRestTargets.push({
+        x: clusterCenterX + r * Math.cos(angle),
+        y: clusterCenterY + r * Math.sin(angle),
+      });
+    }
+    restTargetsRef.current = newRestTargets;
+
+    // Initialize particles on first mount only
+    if (particlesRef.current.length === 0) {
+      const initialTargets = isHoveredRef.current ? shapeTargetsRef.current : restTargetsRef.current;
+      particlesRef.current = initialTargets.map((t, i) => ({
+        x: t.x,
+        y: t.y,
+        vx: 0,
+        vy: 0,
+        baseRadius: 1.5 + (i % 3) * 0.6,
+      }));
+    } else {
+      // On resize, clamp existing positions to new bounds
+      for (const p of particlesRef.current) {
+        p.x = Math.max(0, Math.min(width, p.x));
+        p.y = Math.max(0, Math.min(height, p.y));
+      }
+    }
+  };
+
+  // Main canvas animation effect: runs once per mount, independent of pointer moves
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number | null = null;
-    let width = 0;
-    let height = 0;
-    let dpr = 1;
-
-    let shapeTargets: TargetPoint[] = [];
-    let restTargets: TargetPoint[] = [];
-    let particles: ParticleWithRadius[] = [];
-    let currentAlpha = isHovered ? (isDark ? 0.75 : 0.65) : isDark ? 0.2 : 0.16;
-
-    // Recompute particle target coordinates based on container size only (never pointer)
-    const updateDimensionsAndPoints = () => {
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      width = Math.max(10, Math.floor(rect.width));
-      height = Math.max(10, Math.floor(rect.height));
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-
-      // Logo shape bounding box centered behind text
-      const shapeSize = Math.min(width * 0.72, height * 0.65, 230);
-      const shapeOffsetX = (width - shapeSize) / 2;
-      const shapeOffsetY = height * 0.46 - shapeSize / 2;
-
-      shapeTargets = normalizedPoints.map((pt) => ({
-        x: shapeOffsetX + pt.x * shapeSize,
-        y: shapeOffsetY + pt.y * shapeSize,
-      }));
-
-      // Resting cluster in the bottom-right corner
-      const clusterCenterX = width * 0.84;
-      const clusterCenterY = height * 0.82;
-      const clusterRadius = Math.min(width, height) * 0.16;
-
-      restTargets = [];
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const angle = i * 2.39996;
-        const r = Math.sqrt(i / PARTICLE_COUNT) * clusterRadius;
-        restTargets.push({
-          x: clusterCenterX + r * Math.cos(angle),
-          y: clusterCenterY + r * Math.sin(angle),
-        });
-      }
-
-      // Initialize particles if not already created
-      if (particles.length === 0) {
-        const initialTargets = isHovered ? shapeTargets : restTargets;
-        particles = initialTargets.map((t, i) => ({
-          x: t.x,
-          y: t.y,
-          vx: 0,
-          vy: 0,
-          baseRadius: 1.5 + (i % 3) * 0.6,
-        }));
-      }
-    };
-
-    updateDimensionsAndPoints();
-
-    // ResizeObserver for responsive canvas scaling
-    const resizeObserver = new ResizeObserver(() => {
-      updateDimensionsAndPoints();
-      if (prefersReducedMotion) {
-        drawStatic();
-      }
-    });
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+    updateDimensionsAndTargets(canvas, ctx);
 
     const [r, g, b] = theme.accentRgb;
 
-    // Static render for prefers-reduced-motion
+    // Static render for reduced-motion
     const drawStatic = () => {
+      const { width, height } = dimensionsRef.current;
       if (!ctx || width === 0 || height === 0) return;
       ctx.clearRect(0, 0, width, height);
 
       const alphaBase = isDark ? 0.35 : 0.28;
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alphaBase})`;
 
-      const activeTargets = isHovered ? shapeTargets : restTargets;
+      const activeTargets = isHoveredRef.current ? shapeTargetsRef.current : restTargetsRef.current;
       for (let i = 0; i < activeTargets.length; i++) {
         const t = activeTargets[i];
         const rad = 1.5 + (i % 3) * 0.6;
@@ -195,45 +201,47 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
 
     if (prefersReducedMotion) {
       drawStatic();
-      return () => {
-        resizeObserver.disconnect();
-      };
+      return;
     }
 
+    // Animation frame loop
     const render = () => {
+      const { width, height } = dimensionsRef.current;
       if (!ctx || width === 0 || height === 0) return;
 
       ctx.clearRect(0, 0, width, height);
 
-      const active = isHovered;
-      const currentTargets = active ? shapeTargets : restTargets;
+      const active = isHoveredRef.current;
+      const currentTargets = active ? shapeTargetsRef.current : restTargetsRef.current;
+      // Alpha is a CONSTANT per mode and NEVER fluctuates with mouse movement
       const targetAlpha = active ? (isDark ? 0.75 : 0.65) : isDark ? 0.2 : 0.16;
 
-      // Pure physics step: spring toward fixed targets, damped velocity, local repel, and bounds clamp
-      const nextStates = stepParticles(particles, currentTargets, {
+      const currentPointer = pointerPosRef?.current ?? pointerPosFallbackRef.current;
+
+      // Pure physics step
+      const nextStates = stepParticles(particlesRef.current, currentTargets, {
         stiffness: 0.09,
         damping: 0.85,
-        pointerPos: active ? pointerPos : null,
+        pointerPos: active ? currentPointer : null,
         repelRadius: 50,
         repelStrength: 1.2,
         bounds: { width, height },
       });
 
-      // Update particle states preserving baseRadius
-      for (let i = 0; i < particles.length; i++) {
-        particles[i].x = nextStates[i].x;
-        particles[i].y = nextStates[i].y;
-        particles[i].vx = nextStates[i].vx;
-        particles[i].vy = nextStates[i].vy;
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        particlesRef.current[i].x = nextStates[i].x;
+        particlesRef.current[i].y = nextStates[i].y;
+        particlesRef.current[i].vx = nextStates[i].vx;
+        particlesRef.current[i].vy = nextStates[i].vy;
       }
 
-      // Alpha easing
-      currentAlpha += (targetAlpha - currentAlpha) * 0.12;
+      // Smooth alpha transition between modes
+      currentAlphaRef.current += (targetAlpha - currentAlphaRef.current) * 0.12;
 
       // Draw particle dots
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${currentAlpha.toFixed(3)})`;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${currentAlphaRef.current.toFixed(3)})`;
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        const p = particlesRef.current[i];
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.baseRadius, 0, Math.PI * 2);
         ctx.fill();
@@ -242,15 +250,15 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
       // Constellation connector lines when logo is active
       if (active) {
         const maxDist = 26;
-        const lineAlpha = (isDark ? 0.18 : 0.14) * (currentAlpha / 0.75);
+        const lineAlpha = (isDark ? 0.18 : 0.14) * (currentAlphaRef.current / 0.75);
         ctx.lineWidth = 0.8;
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${lineAlpha.toFixed(3)})`;
 
         ctx.beginPath();
-        for (let i = 0; i < particles.length; i += 2) {
-          const p1 = particles[i];
-          for (let j = i + 1; j < Math.min(i + 8, particles.length); j++) {
-            const p2 = particles[j];
+        for (let i = 0; i < particlesRef.current.length; i += 2) {
+          const p1 = particlesRef.current[i];
+          for (let j = i + 1; j < Math.min(i + 8, particlesRef.current.length); j++) {
+            const p2 = particlesRef.current[j];
             const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
             if (dist < maxDist) {
               ctx.moveTo(p1.x, p1.y);
@@ -261,43 +269,140 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
         ctx.stroke();
       }
 
-      // Settled check: stop rAF loop only when every particle is on target and alpha is settled
+      // Exact settled check: stops rAF only when every particle is on target and alpha is settled
       const settled =
-        isSettled(particles, currentTargets, { distance: 0.5, speed: 0.02 }) &&
-        Math.abs(currentAlpha - targetAlpha) < 0.01;
+        isSettled(particlesRef.current, currentTargets, { distance: 0.5, speed: 0.02 }) &&
+        Math.abs(currentAlphaRef.current - targetAlpha) < 0.01;
 
-      // Continue animation loop if not settled
       if (!settled && isVisible && document.visibilityState === "visible") {
-        animId = requestAnimationFrame(render);
+        animIdRef.current = requestAnimationFrame(render);
       } else {
-        animId = null;
+        animIdRef.current = null;
       }
     };
 
-    // Trigger render loop on state change
-    animId = requestAnimationFrame(render);
+    // Wake loop helper
+    const wakeLoop = () => {
+      if (animIdRef.current === null && isVisible && document.visibilityState === "visible") {
+        animIdRef.current = requestAnimationFrame(render);
+      }
+    };
+
+    wakeLoop();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensionsAndTargets(canvas, ctx);
+      wakeLoop();
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && isVisible && !animId) {
-        animId = requestAnimationFrame(render);
+      if (document.visibilityState === "visible" && isVisible) {
+        wakeLoop();
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      if (animId) cancelAnimationFrame(animId);
+      if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
+      animIdRef.current = null;
       resizeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [
     theme,
     normalizedPoints,
-    isHovered,
-    pointerPos,
     isDark,
     prefersReducedMotion,
     isVisible,
   ]);
+
+  // Separate wake-up effect on hover/focus change: never tears down canvas or particles
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (animIdRef.current === null && isVisible && document.visibilityState === "visible") {
+      // Trigger a render step
+      const render = () => {
+        const { width, height } = dimensionsRef.current;
+        if (!ctx || width === 0 || height === 0) return;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const active = isHoveredRef.current;
+        const currentTargets = active ? shapeTargetsRef.current : restTargetsRef.current;
+        const targetAlpha = active ? (isDark ? 0.75 : 0.65) : isDark ? 0.2 : 0.16;
+
+        const currentPointer = pointerPosRef?.current ?? pointerPosFallbackRef.current;
+
+        const nextStates = stepParticles(particlesRef.current, currentTargets, {
+          stiffness: 0.09,
+          damping: 0.85,
+          pointerPos: active ? currentPointer : null,
+          repelRadius: 50,
+          repelStrength: 1.2,
+          bounds: { width, height },
+        });
+
+        for (let i = 0; i < particlesRef.current.length; i++) {
+          particlesRef.current[i].x = nextStates[i].x;
+          particlesRef.current[i].y = nextStates[i].y;
+          particlesRef.current[i].vx = nextStates[i].vx;
+          particlesRef.current[i].vy = nextStates[i].vy;
+        }
+
+        currentAlphaRef.current += (targetAlpha - currentAlphaRef.current) * 0.12;
+
+        const [r, g, b] = theme.accentRgb;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${currentAlphaRef.current.toFixed(3)})`;
+        for (let i = 0; i < particlesRef.current.length; i++) {
+          const p = particlesRef.current[i];
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.baseRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (active) {
+          const maxDist = 26;
+          const lineAlpha = (isDark ? 0.18 : 0.14) * (currentAlphaRef.current / 0.75);
+          ctx.lineWidth = 0.8;
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${lineAlpha.toFixed(3)})`;
+
+          ctx.beginPath();
+          for (let i = 0; i < particlesRef.current.length; i += 2) {
+            const p1 = particlesRef.current[i];
+            for (let j = i + 1; j < Math.min(i + 8, particlesRef.current.length); j++) {
+              const p2 = particlesRef.current[j];
+              const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+              if (dist < maxDist) {
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+              }
+            }
+          }
+          ctx.stroke();
+        }
+
+        const settled =
+          isSettled(particlesRef.current, currentTargets, { distance: 0.5, speed: 0.02 }) &&
+          Math.abs(currentAlphaRef.current - targetAlpha) < 0.01;
+
+        if (!settled && isVisible && document.visibilityState === "visible") {
+          animIdRef.current = requestAnimationFrame(render);
+        } else {
+          animIdRef.current = null;
+        }
+      };
+
+      animIdRef.current = requestAnimationFrame(render);
+    }
+  }, [isHovered, isDark, prefersReducedMotion, isVisible, theme]);
 
   return (
     <div

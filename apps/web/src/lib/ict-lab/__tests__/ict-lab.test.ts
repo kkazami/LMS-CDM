@@ -44,6 +44,12 @@ import {
   type ParticleState,
   type TargetPoint,
 } from "../particle-physics";
+import {
+  createInitialHoverState,
+  nextHoverState,
+  LEAVE_GRACE_PERIOD_MS,
+  type HoverMachineState,
+} from "../hover-machine";
 import { ICT_LAB_MODULE_IDS } from "../types";
 
 describe("BTLED ICT Lab - Access Guard", () => {
@@ -827,5 +833,99 @@ describe("BTLED ICT Lab - Particle Physics & Convergence", () => {
     }
   });
 });
+
+describe("BTLED ICT Lab - Hover State Machine & Flicker Immunity", () => {
+  it("leave followed by enter within the grace period stays hovered without toggling inactive", () => {
+    let state = createInitialHoverState();
+    const t0 = 1000;
+
+    // Pointer enters
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+
+    // Pointer leave fires
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 20);
+    assert.equal(state.isHovered, true, "isHovered remains true during grace period");
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Re-enter 40ms later (well within LEAVE_GRACE_PERIOD_MS)
+    state = nextHoverState(state, { type: "pointerenter" }, t0 + 60);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false, "Grace timer is cancelled");
+    assert.equal(state.leaveTimestamp, null);
+  });
+
+  it("pointercancel while inside bounds does not clear hover (native drag gesture immunity)", () => {
+    let state = createInitialHoverState();
+    state = nextHoverState(state, { type: "pointerenter" });
+
+    // Native browser dragstart fires pointercancel while cursor is inside card bounds
+    state = nextHoverState(state, { type: "pointercancel", insideRect: true });
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("leave alone clears hover only after the grace period expires", () => {
+    let state = createInitialHoverState();
+    const t0 = 2000;
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+
+    // Pointer leaves
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 10);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Grace timer triggers after 100ms
+    state = nextHoverState(state, { type: "grace_timeout" }, t0 + 10 + LEAVE_GRACE_PERIOD_MS);
+    assert.equal(state.isHovered, false);
+    assert.equal(state.active, false);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("move inside bounds always re-asserts hovered and cancels pending leave", () => {
+    let state = createInitialHoverState();
+    const t0 = 3000;
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 10);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Moving mouse inside bounds
+    state = nextHoverState(state, { type: "pointermove", insideRect: true }, t0 + 30);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("focus-visible forms the logo and blur clears it only if not hovered", () => {
+    let state = createInitialHoverState();
+    assert.equal(state.active, false);
+
+    // Focus triggers active logo
+    state = nextHoverState(state, { type: "focus" });
+    assert.equal(state.isFocused, true);
+    assert.equal(state.active, true);
+
+    // Blur without hover clears active
+    state = nextHoverState(state, { type: "blur" });
+    assert.equal(state.isFocused, false);
+    assert.equal(state.active, false);
+
+    // Focus with active hover: blur preserves active because hovered is true
+    state = nextHoverState(state, { type: "pointerenter" });
+    state = nextHoverState(state, { type: "focus" });
+    assert.equal(state.active, true);
+
+    state = nextHoverState(state, { type: "blur" });
+    assert.equal(state.isFocused, false);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+  });
+});
+
 
 
