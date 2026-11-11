@@ -24,6 +24,7 @@ import {
   isBeedProgram,
   isBsedScienceProgram,
   isBtledIctProgram,
+  parseIctModule,
   reduceLanToolPreviewState,
   simulateCableTester,
   validatePreviewMessageEvent,
@@ -417,6 +418,7 @@ describe("BTLED ICT Lab - LAN Cable Tester Classification", () => {
   });
 });
 
+<<<<<<< HEAD
 describe("BTLED ICT Lab - Required Tools & Materials Data, SVG Assets & Preview Behavior", () => {
   const lanData = loadLanCableData();
   const testDir = path.dirname(fileURLToPath(import.meta.url));
@@ -535,5 +537,28 @@ describe("BTLED ICT Lab - Required Tools & Materials Data, SVG Assets & Preview 
     assert.equal(getNextTrappedFocusIndex(2, 3, false), 0);
     assert.equal(getNextTrappedFocusIndex(0, 3, true), 2);
     assert.equal(getNextTrappedFocusIndex(1, 3, true), 0);
+  });
+});
+
+describe("BTLED ICT Lab - Module Query Parameter Parsing", () => {
+  it("recognizes canonical module ids regardless of case and trimming", () => {
+    assert.equal(parseIctModule("code-playground"), "code-playground");
+    assert.equal(parseIctModule("  CODE-PLAYGROUND  "), "code-playground");
+    assert.equal(parseIctModule("hardware-explorer"), "hardware-explorer");
+    assert.equal(parseIctModule("Hardware-Explorer"), "hardware-explorer");
+    assert.equal(parseIctModule("lan-cable-guide"), "lan-cable-guide");
+    assert.equal(parseIctModule("LAN-CABLE-GUIDE"), "lan-cable-guide");
+  });
+
+  it("safely falls back to null for null, undefined, empty, or unknown query params", () => {
+    assert.equal(parseIctModule(null), null);
+    assert.equal(parseIctModule(undefined), null);
+    assert.equal(parseIctModule(""), null);
+    assert.equal(parseIctModule("   "), null);
+    assert.equal(parseIctModule("garbage"), null);
+    assert.equal(parseIctModule("playground"), null);
+    assert.equal(parseIctModule("hardware"), null);
+    assert.equal(parseIctModule("cable"), null);
+    assert.equal(parseIctModule("unknown-module"), null);
   });
 });

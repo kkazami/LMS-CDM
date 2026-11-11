@@ -1,13 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
-import { Code2, Cpu, Cable, GraduationCap } from "lucide-react";
-import type { HardwarePartsData, LanCableData } from "@/lib/ict-lab/types";
+import React, { Suspense, useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  Code2,
+  Cpu,
+  Cable,
+  GraduationCap,
+  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Layers,
+  Wrench,
+} from "lucide-react";
+import type {
+  HardwarePartsData,
+  LanCableData,
+  IctLabModuleId,
+} from "@/lib/ict-lab/types";
+import { parseIctModule } from "@/lib/ict-lab/rules";
 import CodePlaygroundTab from "./CodePlaygroundTab";
 import HardwareExplorerTab from "./HardwareExplorerTab";
 import LanCableGuideTab from "./LanCableGuideTab";
 
-export type IctLabMainTabId = "playground" | "hardware" | "lan-cable";
+export type IctLabMainTabId = IctLabModuleId;
 
 export interface IctLabClientProps {
   studentName: string;
@@ -17,52 +34,89 @@ export interface IctLabClientProps {
   nonce?: string;
 }
 
-const MAIN_TABS: {
-  id: IctLabMainTabId;
-  label: string;
+interface ModuleCardConfig {
+  id: IctLabModuleId;
+  title: string;
   subtitle: string;
+  description: string;
   icon: React.ComponentType<{ className?: string }>;
-}[] = [
-  {
-    id: "playground",
-    label: "Code Playground",
-    subtitle: "HTML, CSS & JS Live Sandbox",
-    icon: Code2,
-  },
-  {
-    id: "hardware",
-    label: "Hardware Explorer",
-    subtitle: "2D Interactive PC Components",
-    icon: Cpu,
-  },
-  {
-    id: "lan-cable",
-    label: "LAN Cable Guide",
-    subtitle: "T568A/B Wiring & Cable Tester",
-    icon: Cable,
-  },
-];
+  idleAnimationClass: string;
+  badges: string[];
+  ctaLabel: string;
+}
 
-export default function IctLabClient({
+function IctLabClientContent({
   studentName,
   programCode,
   hardwareData,
   lanCableData,
   nonce,
 }: IctLabClientProps) {
-  const [activeTab, setActiveTab] = useState<IctLabMainTabId>("playground");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const rawModule = searchParams.get("module");
+  const activeModule = parseIctModule(rawModule);
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, idx: number) => {
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      const next = MAIN_TABS[(idx + 1) % MAIN_TABS.length]!;
-      setActiveTab(next.id);
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      const prev = MAIN_TABS[(idx - 1 + MAIN_TABS.length) % MAIN_TABS.length]!;
-      setActiveTab(prev.id);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Manage view transitions: smooth scroll to top and focus view heading
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
     }
+
+    if (activeModule && headingRef.current) {
+      headingRef.current.focus();
+    }
+  }, [activeModule]);
+
+  const moduleConfigs: Record<IctLabModuleId, ModuleCardConfig> = {
+    "code-playground": {
+      id: "code-playground",
+      title: "Code Playground",
+      subtitle: "HTML, CSS & JS Live Sandbox",
+      description:
+        "Practice front-end web development with real-time preview, inline error logs, and isolated iframe execution capped at 100 KB.",
+      icon: Code2,
+      idleAnimationClass: "ict-icon-pulse",
+      badges: ["HTML5", "CSS3", "JavaScript", "Sandboxed Iframe"],
+      ctaLabel: "Open Code Playground",
+    },
+    "hardware-explorer": {
+      id: "hardware-explorer",
+      title: "Hardware Explorer",
+      subtitle: "2D Interactive PC Architecture",
+      description:
+        "Explore an open desktop chassis in 2D, inspect motherboards, processors, and buses, and test your knowledge with interactive identification quizzes.",
+      icon: Cpu,
+      idleAnimationClass: "ict-icon-sway",
+      badges: [
+        `${hardwareData.parts.length} Components`,
+        "Interactive 2D",
+        "2 Quiz Modes",
+      ],
+      ctaLabel: "Open Hardware Explorer",
+    },
+    "lan-cable-guide": {
+      id: "lan-cable-guide",
+      title: "LAN Cable Guide",
+      subtitle: "Wiring Standards & Continuity Tester",
+      description:
+        "Master twisted pair color codes for T568A and T568B wiring standards, step-by-step RJ45 crimping, and simulate 8-pin continuity testing.",
+      icon: Cable,
+      idleAnimationClass: "ict-icon-float",
+      badges: ["T568A / T568B", "Crimping Guide", "Cable Tester"],
+      ctaLabel: "Open Cable Guide",
+    },
   };
+
+  const currentModuleConfig = activeModule ? moduleConfigs[activeModule] : null;
 
   return (
     <div className="relative min-h-[calc(100vh-8rem)] w-full overflow-hidden pb-10">
@@ -71,244 +125,341 @@ export default function IctLabClient({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:radial-gradient(ellipse_at_top,black_40%,transparent_95%)]"
       >
-        {/* Soft radial glow in corner */}
         <div className="absolute -top-24 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/15" />
         <div className="absolute top-1/3 -left-24 h-80 w-80 rounded-full bg-indigo-500/5 blur-3xl dark:bg-indigo-600/10" />
-
-        {/* Blueprint dot/grid lines: <8% dark opacity, <10% light opacity */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(37,99,235,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(37,99,235,0.06)_1px,transparent_1px)] bg-[size:28px_28px] dark:bg-[linear-gradient(to_right,rgba(96,165,250,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(96,165,250,0.045)_1px,transparent_1px)]" />
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-4">
-        {/* ITE Blue Header Banner with Circuit Traces & Processor Glyph Artwork */}
-        <header className="relative overflow-hidden rounded-2xl border border-blue-200/80 dark:border-blue-500/30 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-950 dark:via-blue-900 dark:to-indigo-950 p-6 text-white shadow-sm">
-          {/* Circuit Trace Pulse CSS (strictly respects prefers-reduced-motion) */}
-          <style>{`
-            @media (prefers-reduced-motion: no-preference) {
-              @keyframes ictCircuitPulse1 {
-                0% { stroke-dashoffset: 280; }
-                100% { stroke-dashoffset: 0; }
-              }
-              @keyframes ictCircuitPulse2 {
-                0% { stroke-dashoffset: 220; }
-                100% { stroke-dashoffset: 0; }
-              }
-              .animate-ict-trace-1 {
-                stroke-dasharray: 45 180;
-                animation: ictCircuitPulse1 8s linear infinite;
-              }
-              .animate-ict-trace-2 {
-                stroke-dasharray: 35 140;
-                animation: ictCircuitPulse2 6s linear infinite;
-              }
+      {/* ICT Lab Scoped Motion & Animation Styles (honors prefers-reduced-motion) */}
+      <style>{`
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes ictCircuitPulse1 {
+            0% { stroke-dashoffset: 280; }
+            100% { stroke-dashoffset: 0; }
+          }
+          @keyframes ictCircuitPulse2 {
+            0% { stroke-dashoffset: 220; }
+            100% { stroke-dashoffset: 0; }
+          }
+          .animate-ict-trace-1 {
+            stroke-dasharray: 45 180;
+            animation: ictCircuitPulse1 8s linear infinite;
+          }
+          .animate-ict-trace-2 {
+            stroke-dasharray: 35 140;
+            animation: ictCircuitPulse2 6s linear infinite;
+          }
+
+          @keyframes ictIconPulse {
+            0%, 100% {
+              transform: scale(1);
+              opacity: 0.95;
             }
-          `}</style>
+            50% {
+              transform: scale(1.12);
+              opacity: 1;
+            }
+          }
+          @keyframes ictIconFloat {
+            0%, 100% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-4px);
+            }
+          }
+          @keyframes ictIconSway {
+            0%, 100% {
+              transform: translateY(0) rotate(-4deg);
+            }
+            50% {
+              transform: translateY(-2px) rotate(4deg);
+            }
+          }
+          @keyframes ictCardHoverWiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-6deg) scale(1.05); }
+            75% { transform: rotate(6deg) scale(1.05); }
+            100% { transform: rotate(0deg) scale(1); }
+          }
 
-          {/* Decorative Inline SVG Circuit Artwork */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 bottom-0 w-64 md:w-96 select-none overflow-hidden"
-          >
-            <svg
-              viewBox="0 0 360 180"
-              preserveAspectRatio="xMidYMid slice"
-              className="h-full w-full opacity-35 dark:opacity-50"
-            >
-              {/* Circuit Bus Traces with Right-Angle Bends */}
-              <path
-                d="M 360 35 H 280 V 65 H 210 V 105 H 140 V 145 H 60"
-                fill="none"
-                stroke="#93C5FD"
-                strokeWidth="1.5"
-                className="animate-ict-trace-1"
-              />
-              <path
-                d="M 360 75 H 290 V 115 H 220 V 85 H 160"
-                fill="none"
-                stroke="rgba(147, 197, 253, 0.45)"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M 280 0 V 45 H 230 V 85 H 175 V 135 H 110"
-                fill="none"
-                stroke="#60A5FA"
-                strokeWidth="1.5"
-                className="animate-ict-trace-2"
-              />
-              <path
-                d="M 310 180 V 135 H 250 V 95 H 195"
-                fill="none"
-                stroke="rgba(147, 197, 253, 0.35)"
-                strokeWidth="1.5"
-              />
+          .ict-icon-pulse {
+            display: inline-block;
+            animation: ictIconPulse 2.8s ease-in-out infinite;
+            transform-origin: center center;
+            will-change: transform, opacity;
+          }
+          .ict-icon-float {
+            display: inline-block;
+            animation: ictIconFloat 2.6s ease-in-out infinite;
+            transform-origin: center center;
+            will-change: transform;
+          }
+          .ict-icon-sway {
+            display: inline-block;
+            animation: ictIconSway 3.2s ease-in-out infinite;
+            transform-origin: center bottom;
+            will-change: transform;
+          }
+          .group:hover .ict-hover-wiggle {
+            animation: ictCardHoverWiggle 400ms ease-in-out;
+          }
+        }
 
-              {/* Solder Pads / Component Nodes */}
-              <circle cx="60" cy="145" r="3.5" fill="#93C5FD" />
-              <circle cx="160" cy="85" r="3" fill="#60A5FA" />
-              <circle cx="110" cy="135" r="3" fill="#93C5FD" />
-              <circle cx="195" cy="95" r="3" fill="#60A5FA" />
-              <circle cx="210" cy="105" r="2.5" fill="#BFDBFE" />
+        @media (prefers-reduced-motion: reduce) {
+          .animate-ict-trace-1,
+          .animate-ict-trace-2,
+          .ict-icon-pulse,
+          .ict-icon-float,
+          .ict-icon-sway,
+          .ict-hover-wiggle {
+            animation: none !important;
+          }
+        }
+      `}</style>
 
-              {/* Integrated Circuit (CPU/IC) Chip Glyph */}
-              <g transform="translate(255, 65)">
-                {/* Pins - Top / Bottom */}
-                <line x1="10" y1="-6" x2="10" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="22" y1="-6" x2="22" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="34" y1="-6" x2="34" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="10" y1="44" x2="10" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="22" y1="44" x2="22" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="34" y1="44" x2="34" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-
-                {/* Pins - Left / Right */}
-                <line x1="-6" y1="10" x2="0" y2="10" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="-6" y1="22" x2="0" y2="22" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="-6" y1="34" x2="0" y2="34" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="44" y1="10" x2="50" y2="10" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="44" y1="22" x2="50" y2="22" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-                <line x1="44" y1="34" x2="50" y2="34" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-
-                {/* Package Body */}
-                <rect x="0" y="0" width="44" height="44" rx="6" fill="#1E3A8A" stroke="#60A5FA" strokeWidth="2" />
-                {/* Silicon Core */}
-                <rect x="11" y="11" width="22" height="22" rx="3" fill="#2563EB" stroke="#BFDBFE" strokeWidth="1" />
-                <text x="22" y="25" textAnchor="middle" fontSize="9" fontWeight="800" fill="#E0F2FE">ICT</text>
-              </g>
-            </svg>
-          </div>
-
-          <div className="relative z-10 max-w-xl space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
-              <GraduationCap className="h-4 w-4" />
-              <span>ITE Portal • {programCode ?? "BTLEd ICT"}</span>
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-              BTLED ICT Interactive Lab
-            </h1>
-            <p className="text-xs leading-relaxed text-blue-100 sm:text-sm">
-              Welcome, <strong className="font-semibold text-white">{studentName}</strong>. Practice
-              web programming in the sandboxed Code Playground, inspect 2D desktop computer
-              architecture, and master RJ45 T568A/T568B UTP cabling.
-            </p>
-          </div>
-        </header>
-
-        {/* Dynamic Status Chip Row */}
-        <div
-          className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-theme bg-surface px-4 py-2.5 shadow-xs"
-          aria-label="Active module summary"
-        >
-          <div className="flex items-center gap-2 text-xs font-semibold text-secondary-theme">
-            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
-            <span>Active Module:</span>
-            <span className="font-bold text-primary-theme">
-              {activeTab === "playground" && "Code Playground"}
-              {activeTab === "hardware" && "Hardware Explorer"}
-              {activeTab === "lan-cable" && "LAN Cable Guide"}
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-secondary-theme">
-            {activeTab === "playground" && (
-              <>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">HTML</span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">CSS</span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">JavaScript</span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 px-2 py-0.5 font-semibold text-blue-700 dark:text-blue-300">Sandboxed</span>
-              </>
-            )}
-            {activeTab === "hardware" && (
-              <>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">
-                  {hardwareData.parts.length} components
-                </span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 px-2 py-0.5 font-semibold text-blue-700 dark:text-blue-300">
-                  2 quizzes
-                </span>
-              </>
-            )}
-            {activeTab === "lan-cable" && (
-              <>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">T568A/B</span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-theme bg-elevated px-2 py-0.5 font-medium text-primary-theme">Crimping</span>
-                <span className="text-muted-theme" aria-hidden="true">•</span>
-                <span className="rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 px-2 py-0.5 font-semibold text-blue-700 dark:text-blue-300">Tester</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Refined 3-Tab Switcher with Glow, Ring, and Accent Indicator */}
-        <div
-          role="tablist"
-          aria-label="ICT Lab sections"
-          className="grid grid-cols-1 gap-2.5 rounded-xl border border-theme bg-surface p-2 shadow-xs sm:grid-cols-3"
-        >
-          {MAIN_TABS.map((tab, idx) => {
-            const Icon = tab.icon;
-            const isSelected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                id={`ict-lab-tab-${tab.id}`}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                aria-controls={`ict-lab-panel-${tab.id}`}
-                tabIndex={isSelected ? 0 : -1}
-                onClick={() => setActiveTab(tab.id)}
-                onKeyDown={(e) => handleTabKeyDown(e, idx)}
-                className={`relative flex items-center gap-3.5 rounded-xl border p-3.5 text-left transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
-                  isSelected
-                    ? "border-blue-500/60 dark:border-blue-400/50 bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:shadow-blue-900/40"
-                    : "border-theme bg-elevated text-primary-theme hover:border-blue-300 dark:hover:border-blue-500/30 hover:bg-slate-100 dark:hover:bg-white/10"
-                }`}
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* ── View A: HUB VIEW (default, or invalid/missing query param) ── */}
+        {!activeModule && (
+          <div className="space-y-6">
+            {/* ITE Blue Header Banner with Circuit Traces & Processor Glyph */}
+            <header className="relative overflow-hidden rounded-2xl border border-blue-200/80 dark:border-blue-500/30 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-950 dark:via-blue-900 dark:to-indigo-950 p-6 sm:p-8 text-white shadow-sm">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute right-0 top-0 bottom-0 w-64 md:w-96 select-none overflow-hidden"
               >
-                {/* Active bottom accent bar */}
-                {isSelected && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-blue-200 dark:bg-blue-300"
-                  />
-                )}
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                    isSelected
-                      ? "bg-white/20 text-white"
-                      : "border border-theme bg-surface text-blue-600 dark:text-blue-400"
-                  }`}
+                <svg
+                  viewBox="0 0 360 180"
+                  preserveAspectRatio="xMidYMid slice"
+                  className="h-full w-full opacity-35 dark:opacity-50"
                 >
-                  <Icon className="h-5 w-5" />
+                  <path
+                    d="M 360 35 H 280 V 65 H 210 V 105 H 140 V 145 H 60"
+                    fill="none"
+                    stroke="#93C5FD"
+                    strokeWidth="1.5"
+                    className="animate-ict-trace-1"
+                  />
+                  <path
+                    d="M 360 75 H 290 V 115 H 220 V 85 H 160"
+                    fill="none"
+                    stroke="rgba(147, 197, 253, 0.45)"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M 280 0 V 45 H 230 V 85 H 175 V 135 H 110"
+                    fill="none"
+                    stroke="#60A5FA"
+                    strokeWidth="1.5"
+                    className="animate-ict-trace-2"
+                  />
+                  <path
+                    d="M 310 180 V 135 H 250 V 95 H 195"
+                    fill="none"
+                    stroke="rgba(147, 197, 253, 0.35)"
+                    strokeWidth="1.5"
+                  />
+                  <circle cx="60" cy="145" r="3.5" fill="#93C5FD" />
+                  <circle cx="160" cy="85" r="3" fill="#60A5FA" />
+                  <circle cx="110" cy="135" r="3" fill="#93C5FD" />
+                  <circle cx="195" cy="95" r="3" fill="#60A5FA" />
+                  <circle cx="210" cy="105" r="2.5" fill="#BFDBFE" />
+
+                  <g transform="translate(255, 65)">
+                    <line x1="10" y1="-6" x2="10" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="22" y1="-6" x2="22" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="34" y1="-6" x2="34" y2="0" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="10" y1="44" x2="10" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="22" y1="44" x2="22" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="34" y1="44" x2="34" y2="50" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+
+                    <line x1="-6" y1="10" x2="0" y2="10" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="-6" y1="22" x2="0" y2="22" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="-6" y1="34" x2="0" y2="34" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="44" y1="10" x2="50" y2="10" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="44" y1="22" x2="50" y2="22" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="44" y1="34" x2="50" y2="34" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
+
+                    <rect x="0" y="0" width="44" height="44" rx="6" fill="#1E3A8A" stroke="#60A5FA" strokeWidth="2" />
+                    <rect x="11" y="11" width="22" height="22" rx="3" fill="#2563EB" stroke="#BFDBFE" strokeWidth="1" />
+                    <text x="22" y="25" textAnchor="middle" fontSize="9" fontWeight="800" fill="#E0F2FE">ICT</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div className="relative z-10 max-w-xl space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                  <GraduationCap className="h-4 w-4" />
+                  <span>ITE Portal • {programCode ?? "BTLEd ICT"}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold leading-tight">{tab.label}</p>
-                  <p
-                    className={`truncate text-xs font-medium ${
-                      isSelected ? "text-blue-100" : "text-secondary-theme"
-                    }`}
+                <h1
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="text-2xl font-extrabold tracking-tight outline-none sm:text-3xl"
+                >
+                  BTLED ICT Interactive Lab
+                </h1>
+                <p className="text-xs leading-relaxed text-blue-100 sm:text-sm">
+                  Welcome, <strong className="font-semibold text-white">{studentName}</strong>. Choose a specialized module below to practice front-end code development, explore PC architecture in 2D, or master RJ45 network cabling.
+                </p>
+              </div>
+            </header>
+
+            {/* Hub: ONLY Three Choice Cards (Responsive: 1-col on mobile, 3-col on desktop) */}
+            <main aria-label="ICT Lab Modules" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {(Object.keys(moduleConfigs) as IctLabModuleId[]).map((moduleId) => {
+                const card = moduleConfigs[moduleId];
+                const Icon = card.icon;
+                return (
+                  <Link
+                    key={card.id}
+                    href={`${pathname}?module=${card.id}`}
+                    aria-label={`${card.title} - ${card.subtitle}`}
+                    className="group relative flex flex-col justify-between rounded-2xl border border-theme bg-surface p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
                   >
-                    {tab.subtitle}
-                  </p>
+                    <div className="space-y-4">
+                      {/* Top Row: Icon Container & Type Indicator */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-blue-200/80 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 transition-colors duration-200 group-hover:bg-blue-600 group-hover:text-white">
+                          <span className={card.idleAnimationClass}>
+                            <Icon className="h-6 w-6 ict-hover-wiggle" />
+                          </span>
+                        </div>
+                        <span className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-semibold text-secondary-theme">
+                          Module
+                        </span>
+                      </div>
+
+                      {/* Header & Subtitle */}
+                      <div>
+                        <h2 className="text-lg font-bold text-primary-theme transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400 sm:text-xl">
+                          {card.title}
+                        </h2>
+                        <p className="mt-0.5 text-xs font-semibold text-secondary-theme">
+                          {card.subtitle}
+                        </p>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs leading-relaxed text-secondary-theme sm:text-sm">
+                        {card.description}
+                      </p>
+
+                      {/* Feature Badges */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {card.badges.map((badge, bIdx) => (
+                          <span
+                            key={bIdx}
+                            className="rounded-md border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bottom CTA Button */}
+                    <div className="mt-6 flex items-center justify-between rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors group-hover:bg-blue-700">
+                      <span>{card.ctaLabel}</span>
+                      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </main>
+          </div>
+        )}
+
+        {/* ── View B: FULL-PAGE MODULE VIEW ── */}
+        {activeModule && currentModuleConfig && (
+          <div className="space-y-4">
+            {/* Top Navigation Bar: Back Button, Module Icon, Heading & Subtitle */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-theme bg-surface p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="flex items-center gap-3.5">
+                <Link
+                  href={pathname}
+                  aria-label="Back to ICT Lab Hub"
+                  className="group inline-flex items-center gap-1.5 rounded-xl border border-theme bg-elevated px-3 py-2 text-xs font-semibold text-secondary-theme transition-all duration-150 hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-primary-theme focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <ArrowLeft className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
+                  <span className="hidden sm:inline">Back to ICT Lab</span>
+                  <span className="sm:hidden">Back</span>
+                </Link>
+
+                <div className="h-6 w-px bg-slate-200 dark:bg-white/10" aria-hidden="true" />
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                    <span className={currentModuleConfig.idleAnimationClass}>
+                      <currentModuleConfig.icon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div>
+                    <h1
+                      ref={headingRef}
+                      tabIndex={-1}
+                      className="text-lg font-extrabold tracking-tight text-primary-theme outline-none focus:ring-0 sm:text-xl"
+                    >
+                      {currentModuleConfig.title}
+                    </h1>
+                    <p className="text-xs font-medium text-secondary-theme">
+                      {currentModuleConfig.subtitle}
+                    </p>
+                  </div>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-      {/* Active Tab Panel */}
-      <div
-        id={`ict-lab-panel-${activeTab}`}
-        role="tabpanel"
-        aria-labelledby={`ict-lab-tab-${activeTab}`}
-      >
-        {activeTab === "playground" && <CodePlaygroundTab nonce={nonce} />}
-        {activeTab === "hardware" && <HardwareExplorerTab data={hardwareData} />}
-        {activeTab === "lan-cable" && <LanCableGuideTab data={lanCableData} />}
-      </div>
+              </div>
+
+              {/* Badges / Status Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:self-center">
+                {currentModuleConfig.badges.map((badge, bIdx) => (
+                  <span
+                    key={bIdx}
+                    className="rounded-md border border-blue-200/70 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300"
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Full-width Module Workspace */}
+            <main aria-label={currentModuleConfig.title} className="w-full">
+              {activeModule === "code-playground" && (
+                <CodePlaygroundTab nonce={nonce} />
+              )}
+              {activeModule === "hardware-explorer" && (
+                <HardwareExplorerTab data={hardwareData} />
+              )}
+              {activeModule === "lan-cable-guide" && (
+                <LanCableGuideTab data={lanCableData} />
+              )}
+            </main>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function IctLabLoadingSkeleton() {
+  return (
+    <div className="relative min-h-[calc(100vh-8rem)] w-full overflow-hidden pb-10">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="h-44 w-full animate-pulse rounded-2xl bg-blue-100/50 dark:bg-blue-950/40" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-80 w-full animate-pulse rounded-2xl border border-theme bg-surface" />
+          <div className="h-80 w-full animate-pulse rounded-2xl border border-theme bg-surface" />
+          <div className="h-80 w-full animate-pulse rounded-2xl border border-theme bg-surface" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function IctLabClient(props: IctLabClientProps) {
+  return (
+    <Suspense fallback={<IctLabLoadingSkeleton />}>
+      <IctLabClientContent {...props} />
+    </Suspense>
   );
 }
