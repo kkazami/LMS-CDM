@@ -38,6 +38,12 @@ import {
   HARDWARE_EXPLORER_SHAPE,
   LAN_CABLE_GUIDE_SHAPE,
 } from "../particle-shapes";
+import {
+  stepParticles,
+  isSettled,
+  type ParticleState,
+  type TargetPoint,
+} from "../particle-physics";
 import { ICT_LAB_MODULE_IDS } from "../types";
 
 describe("BTLED ICT Lab - Access Guard", () => {
@@ -637,4 +643,189 @@ describe("BTLED ICT Lab - Particle Shapes & Theme Configurations", () => {
     assert.deepEqual(sampleShapePoints(CODE_PLAYGROUND_SHAPE, -5), []);
   });
 });
+
+describe("BTLED ICT Lab - Particle Physics & Convergence", () => {
+  it("converges from a deterministic start to fixed targets within 0.5px after N steps and isSettled becomes true", () => {
+    const N = 50;
+    let state: ParticleState[] = Array.from({ length: N }, (_, i) => ({
+      x: 20 + (i * 7) % 300,
+      y: 10 + (i * 11) % 300,
+      vx: 0,
+      vy: 0,
+    }));
+
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 100 + ((i * 13) % 200),
+      y: 80 + ((i * 17) % 200),
+    }));
+
+    // Initially not settled
+    assert.equal(isSettled(state, targets), false);
+
+    // Run 150 physics steps with canvas bounds
+    for (let step = 0; step < 150; step++) {
+      state = stepParticles(state, targets, {
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // Every particle must be within 0.5px of its target
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - targets[i].x, state[i].y - targets[i].y);
+      assert.ok(
+        dist <= 0.5,
+        `Particle ${i} did not converge: distance = ${dist.toFixed(4)}px`
+      );
+    }
+
+    assert.equal(isSettled(state, targets), true);
+  });
+
+  it("converges back to targets without permanent offset after pointer repel is applied and removed", () => {
+    const N = 40;
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 150 + i * 2,
+      y: 150 + i * 2,
+    }));
+
+    let state: ParticleState[] = targets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+
+    // Apply fixed pointer repel right on top of a cluster of particles for 60 steps
+    const pointerPos = { x: 180, y: 180 };
+    for (let step = 0; step < 60; step++) {
+      state = stepParticles(state, targets, {
+        pointerPos,
+        repelRadius: 60,
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // While pointer is active, particles near (180, 180) are repelled away
+    assert.equal(isSettled(state, targets), false);
+
+    // Remove pointer (pointerPos: null) and run 150 steps
+    for (let step = 0; step < 150; step++) {
+      state = stepParticles(state, targets, {
+        pointerPos: null,
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // Must completely recover with zero permanent offset
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - targets[i].x, state[i].y - targets[i].y);
+      assert.ok(
+        dist <= 0.5,
+        `Particle ${i} retained permanent offset: distance = ${dist.toFixed(4)}px`
+      );
+    }
+    assert.equal(isSettled(state, targets), true);
+  });
+
+  it("keeps particles within bounds and prevents directional y-drift during 600 continuous pointer movement steps", () => {
+    const N = 50;
+    const bounds = { width: 360, height: 420 };
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 80 + (i % 10) * 20,
+      y: 100 + Math.floor(i / 10) * 35,
+    }));
+
+    let state: ParticleState[] = targets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+
+    let sumYOffsets = 0;
+
+    // Simulate mouse moving back and forth along y for 600 frames
+    for (let step = 0; step < 600; step++) {
+      const pointerPos = {
+        x: 180,
+        y: 180 + Math.sin(step * 0.08) * 90,
+      };
+
+      state = stepParticles(state, targets, {
+        pointerPos,
+        repelRadius: 50,
+        bounds,
+      });
+
+      // No particle must ever leave the canvas bounds
+      for (let i = 0; i < N; i++) {
+        assert.ok(state[i].x >= 0 && state[i].x <= bounds.width);
+        assert.ok(state[i].y >= 0 && state[i].y <= bounds.height);
+      }
+
+      // Track mean y offset from target
+      const meanYOffset =
+        state.reduce((acc, p, idx) => acc + (p.y - targets[idx].y), 0) / N;
+      sumYOffsets += meanYOffset;
+    }
+
+    // Mean directional drift over 600 steps must be virtually zero (no upward runaway drift)
+    const averageDrift = sumYOffsets / 600;
+    assert.ok(
+      Math.abs(averageDrift) < 1.0,
+      `Mean y-drift is too large: ${averageDrift.toFixed(4)}px`
+    );
+  });
+
+  it("reports isSettled accurately based on both distance threshold and speed threshold", () => {
+    const targets: TargetPoint[] = [{ x: 100, y: 100 }, { x: 200, y: 200 }];
+
+    // Perfectly on target and zero velocity
+    const settledState: ParticleState[] = [
+      { x: 100, y: 100, vx: 0, vy: 0 },
+      { x: 200, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(settledState, targets), true);
+
+    // One particle slightly outside distance threshold (0.6px > 0.5px)
+    const displacedState: ParticleState[] = [
+      { x: 100, y: 100, vx: 0, vy: 0 },
+      { x: 200.6, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(displacedState, targets), false);
+
+    // Near target (dist < 0.5px) but still moving fast (speed > 0.02)
+    const fastMovingState: ParticleState[] = [
+      { x: 100.1, y: 100.1, vx: 0.15, vy: 0 },
+      { x: 200, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(fastMovingState, targets), false);
+
+    // Empty list is trivially settled
+    assert.equal(isSettled([], []), true);
+  });
+
+  it("converges properly when switching targets from logo to resting cluster", () => {
+    const N = 40;
+    const logoTargets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 120 + (i % 8) * 15,
+      y: 120 + Math.floor(i / 8) * 20,
+    }));
+    const restTargets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 320 + Math.cos(i) * 25,
+      y: 340 + Math.sin(i) * 25,
+    }));
+
+    // Start settled on logo targets
+    let state: ParticleState[] = logoTargets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+    assert.equal(isSettled(state, logoTargets), true);
+
+    // Switch targets to resting cluster and step
+    assert.equal(isSettled(state, restTargets), false);
+
+    for (let step = 0; step < 160; step++) {
+      state = stepParticles(state, restTargets, {
+        bounds: { width: 360, height: 400 },
+      });
+    }
+
+    // Now settled on resting cluster
+    assert.equal(isSettled(state, restTargets), true);
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - restTargets[i].x, state[i].y - restTargets[i].y);
+      assert.ok(dist <= 0.5);
+    }
+  });
+});
+
 

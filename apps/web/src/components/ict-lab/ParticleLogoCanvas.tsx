@@ -7,6 +7,12 @@ import {
   sampleShapePoints,
   type Point2D,
 } from "@/lib/ict-lab/particle-shapes";
+import {
+  stepParticles,
+  isSettled,
+  type ParticleState,
+  type TargetPoint,
+} from "@/lib/ict-lab/particle-physics";
 
 interface ParticleLogoCanvasProps {
   moduleId: IctLabModuleId;
@@ -15,18 +21,8 @@ interface ParticleLogoCanvasProps {
   className?: string;
 }
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
+interface ParticleWithRadius extends ParticleState {
   baseRadius: number;
-  alpha: number;
-  targetAlpha: number;
-  restX: number;
-  restY: number;
-  shapeX: number;
-  shapeY: number;
 }
 
 const PARTICLE_COUNT = 140;
@@ -96,7 +92,7 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Canvas animation loop and physics
+  // Canvas animation loop and pure physics
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -108,9 +104,12 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     let height = 0;
     let dpr = 1;
 
-    const particles: Particle[] = [];
+    let shapeTargets: TargetPoint[] = [];
+    let restTargets: TargetPoint[] = [];
+    let particles: ParticleWithRadius[] = [];
+    let currentAlpha = isHovered ? (isDark ? 0.75 : 0.65) : isDark ? 0.2 : 0.16;
 
-    // Recompute particle target coordinates based on container size
+    // Recompute particle target coordinates based on container size only (never pointer)
     const updateDimensionsAndPoints = () => {
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
@@ -128,42 +127,36 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
       const shapeOffsetX = (width - shapeSize) / 2;
       const shapeOffsetY = height * 0.46 - shapeSize / 2;
 
+      shapeTargets = normalizedPoints.map((pt) => ({
+        x: shapeOffsetX + pt.x * shapeSize,
+        y: shapeOffsetY + pt.y * shapeSize,
+      }));
+
       // Resting cluster in the bottom-right corner
       const clusterCenterX = width * 0.84;
       const clusterCenterY = height * 0.82;
       const clusterRadius = Math.min(width, height) * 0.16;
 
+      restTargets = [];
       for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const normPt = normalizedPoints[i] || { x: 0.5, y: 0.5 };
-        const shapeX = shapeOffsetX + normPt.x * shapeSize;
-        const shapeY = shapeOffsetY + normPt.y * shapeSize;
-
-        // Golden spiral cluster at rest
         const angle = i * 2.39996;
         const r = Math.sqrt(i / PARTICLE_COUNT) * clusterRadius;
-        const restX = clusterCenterX + r * Math.cos(angle);
-        const restY = clusterCenterY + r * Math.sin(angle);
+        restTargets.push({
+          x: clusterCenterX + r * Math.cos(angle),
+          y: clusterCenterY + r * Math.sin(angle),
+        });
+      }
 
-        if (!particles[i]) {
-          particles[i] = {
-            x: restX,
-            y: restY,
-            vx: 0,
-            vy: 0,
-            baseRadius: 1.5 + (i % 3) * 0.6,
-            alpha: 0.18,
-            targetAlpha: 0.18,
-            restX,
-            restY,
-            shapeX,
-            shapeY,
-          };
-        } else {
-          particles[i].shapeX = shapeX;
-          particles[i].shapeY = shapeY;
-          particles[i].restX = restX;
-          particles[i].restY = restY;
-        }
+      // Initialize particles if not already created
+      if (particles.length === 0) {
+        const initialTargets = isHovered ? shapeTargets : restTargets;
+        particles = initialTargets.map((t, i) => ({
+          x: t.x,
+          y: t.y,
+          vx: 0,
+          vy: 0,
+          baseRadius: 1.5 + (i % 3) * 0.6,
+        }));
       }
     };
 
@@ -190,12 +183,12 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
       const alphaBase = isDark ? 0.35 : 0.28;
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alphaBase})`;
 
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const targetX = isHovered ? p.shapeX : p.restX;
-        const targetY = isHovered ? p.shapeY : p.restY;
+      const activeTargets = isHovered ? shapeTargets : restTargets;
+      for (let i = 0; i < activeTargets.length; i++) {
+        const t = activeTargets[i];
+        const rad = 1.5 + (i % 3) * 0.6;
         ctx.beginPath();
-        ctx.arc(targetX, targetY, p.baseRadius, 0, Math.PI * 2);
+        ctx.arc(t.x, t.y, rad, 0, Math.PI * 2);
         ctx.fill();
       }
     };
@@ -207,64 +200,49 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
       };
     }
 
-    let isSettled = false;
-
     const render = () => {
       if (!ctx || width === 0 || height === 0) return;
 
       ctx.clearRect(0, 0, width, height);
 
-      const active = isHovered || pointerPos !== null;
+      const active = isHovered;
+      const currentTargets = active ? shapeTargets : restTargets;
       const targetAlpha = active ? (isDark ? 0.75 : 0.65) : isDark ? 0.2 : 0.16;
 
-      let maxMotion = 0;
+      // Pure physics step: spring toward fixed targets, damped velocity, local repel, and bounds clamp
+      const nextStates = stepParticles(particles, currentTargets, {
+        stiffness: 0.09,
+        damping: 0.85,
+        pointerPos: active ? pointerPos : null,
+        repelRadius: 50,
+        repelStrength: 1.2,
+        bounds: { width, height },
+      });
 
-      // Update and draw particles
+      // Update particle states preserving baseRadius
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].x = nextStates[i].x;
+        particles[i].y = nextStates[i].y;
+        particles[i].vx = nextStates[i].vx;
+        particles[i].vy = nextStates[i].vy;
+      }
+
+      // Alpha easing
+      currentAlpha += (targetAlpha - currentAlpha) * 0.12;
+
+      // Draw particle dots
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${currentAlpha.toFixed(3)})`;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-
-        // Target position
-        let tx = active ? p.shapeX : p.restX;
-        let ty = active ? p.shapeY : p.restY;
-
-        // Interactive pointer attraction/repulsion if cursor is nearby
-        if (pointerPos && active) {
-          const dx = pointerPos.x - p.x;
-          const dy = pointerPos.y - p.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < 90 && dist > 1) {
-            // Gentle fluid swirl toward pointer
-            const factor = ((90 - dist) / 90) * 0.12;
-            tx += dx * factor;
-            ty += dy * factor;
-          }
-        }
-
-        // Spring / ease physics
-        const ax = (tx - p.x) * 0.085;
-        const ay = (ty - p.y) * 0.085;
-        p.vx = (p.vx + ax) * 0.78;
-        p.vy = (p.vy + ay) * 0.78;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Alpha easing
-        p.alpha += (targetAlpha - p.alpha) * 0.1;
-
-        const motion = Math.abs(p.vx) + Math.abs(p.vy) + Math.abs(targetAlpha - p.alpha);
-        if (motion > maxMotion) maxMotion = motion;
-
-        // Draw particle dot
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha.toFixed(3)})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.baseRadius, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Constellation connector lines when active
+      // Constellation connector lines when logo is active
       if (active) {
         const maxDist = 26;
-        const lineAlpha = (isDark ? 0.18 : 0.14) * (active ? 1 : 0);
+        const lineAlpha = (isDark ? 0.18 : 0.14) * (currentAlpha / 0.75);
         ctx.lineWidth = 0.8;
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${lineAlpha.toFixed(3)})`;
 
@@ -283,33 +261,25 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
         ctx.stroke();
       }
 
-      // Settled check: stop rAF loop when velocities are near zero
-      if (maxMotion < 0.008) {
-        if (!isSettled) {
-          isSettled = true;
-        }
-      } else {
-        isSettled = false;
-      }
+      // Settled check: stop rAF loop only when every particle is on target and alpha is settled
+      const settled =
+        isSettled(particles, currentTargets, { distance: 0.5, speed: 0.02 }) &&
+        Math.abs(currentAlpha - targetAlpha) < 0.01;
 
-      // If document hidden or off-screen, don't schedule next frame
-      if (isVisible && document.visibilityState === "visible") {
-        if (!isSettled || active) {
-          animId = requestAnimationFrame(render);
-        }
+      // Continue animation loop if not settled
+      if (!settled && isVisible && document.visibilityState === "visible") {
+        animId = requestAnimationFrame(render);
+      } else {
+        animId = null;
       }
     };
 
-    // Wake up loop whenever hover/pointer/visibility/theme changes
-    isSettled = false;
+    // Trigger render loop on state change
     animId = requestAnimationFrame(render);
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && isVisible) {
-        isSettled = false;
-        if (!animId) {
-          animId = requestAnimationFrame(render);
-        }
+      if (document.visibilityState === "visible" && isVisible && !animId) {
+        animId = requestAnimationFrame(render);
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
@@ -343,4 +313,3 @@ export const ParticleLogoCanvas: React.FC<ParticleLogoCanvasProps> = ({
     </div>
   );
 };
-
