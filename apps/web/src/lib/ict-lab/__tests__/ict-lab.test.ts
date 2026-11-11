@@ -31,6 +31,14 @@ import {
 } from "../rules";
 import { PLAYGROUND_EXAMPLES, DEFAULT_EXAMPLE } from "../examples";
 import { HARDWARE_SVG_PART_IDS } from "../../../components/ict-lab/HardwareExplorerTab";
+import {
+  ICT_MODULE_THEMES,
+  sampleShapePoints,
+  CODE_PLAYGROUND_SHAPE,
+  HARDWARE_EXPLORER_SHAPE,
+  LAN_CABLE_GUIDE_SHAPE,
+} from "../particle-shapes";
+import { ICT_LAB_MODULE_IDS } from "../types";
 
 describe("BTLED ICT Lab - Access Guard", () => {
   it("allows only ITE students in the BTLEd ICT program and denies ITE instructors, admins, and non-BTLED ITE students", async () => {
@@ -562,3 +570,71 @@ describe("BTLED ICT Lab - Module Query Parameter Parsing", () => {
     assert.equal(parseIctModule("unknown-module"), null);
   });
 });
+
+describe("BTLED ICT Lab - Particle Shapes & Theme Configurations", () => {
+  it("defines distinctive theme configurations and mathematical shapes for all modules", () => {
+    for (const moduleId of ICT_LAB_MODULE_IDS) {
+      const theme = ICT_MODULE_THEMES[moduleId];
+      assert.ok(theme, `Theme config must exist for module ${moduleId}`);
+      assert.equal(theme.id, moduleId);
+      assert.ok(theme.accentDark.startsWith("#"), "accentDark must be a hex color");
+      assert.ok(theme.accentLight.startsWith("#"), "accentLight must be a hex color");
+      assert.equal(theme.accentRgb.length, 3, "accentRgb must have 3 components");
+      assert.ok(theme.shape.primitives.length >= 3, "Shape must have at least 3 primitives");
+      assert.ok(theme.cardBorderHoverClass.length > 0);
+      assert.ok(theme.iconContainerClass.length > 0);
+      assert.ok(theme.buttonClass.length > 0);
+    }
+
+    // Verify distinctive primary colors
+    assert.equal(ICT_MODULE_THEMES["code-playground"].accentDark, "#10b981"); // Emerald
+    assert.equal(ICT_MODULE_THEMES["hardware-explorer"].accentDark, "#f59e0b"); // Amber
+    assert.equal(ICT_MODULE_THEMES["lan-cable-guide"].accentDark, "#06b6d4"); // Cyan
+  });
+
+  it("deterministically samples points within [0, 1] space matching exact requested count", () => {
+    const testCounts = [10, 50, 140, 180];
+    const shapes = [
+      { name: "code-playground", shape: CODE_PLAYGROUND_SHAPE },
+      { name: "hardware-explorer", shape: HARDWARE_EXPLORER_SHAPE },
+      { name: "lan-cable-guide", shape: LAN_CABLE_GUIDE_SHAPE },
+    ];
+
+    for (const { name, shape } of shapes) {
+      for (const count of testCounts) {
+        const points = sampleShapePoints(shape, count);
+        assert.equal(
+          points.length,
+          count,
+          `Shape ${name} must produce exactly ${count} points`
+        );
+
+        for (const pt of points) {
+          assert.ok(
+            pt.x >= 0 && pt.x <= 1,
+            `Point x=${pt.x} out of [0, 1] in ${name}`
+          );
+          assert.ok(
+            pt.y >= 0 && pt.y <= 1,
+            `Point y=${pt.y} out of [0, 1] in ${name}`
+          );
+        }
+
+        // Must be purely deterministic
+        const secondRun = sampleShapePoints(shape, count);
+        assert.deepEqual(
+          points,
+          secondRun,
+          `Sampling ${name} must be 100% deterministic`
+        );
+      }
+    }
+  });
+
+  it("handles empty shapes or zero counts gracefully", () => {
+    assert.deepEqual(sampleShapePoints({ primitives: [] }, 50), []);
+    assert.deepEqual(sampleShapePoints(CODE_PLAYGROUND_SHAPE, 0), []);
+    assert.deepEqual(sampleShapePoints(CODE_PLAYGROUND_SHAPE, -5), []);
+  });
+});
+

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
@@ -20,6 +20,11 @@ import type {
   IctLabModuleId,
 } from "@/lib/ict-lab/types";
 import { parseIctModule } from "@/lib/ict-lab/rules";
+import {
+  ICT_MODULE_THEMES,
+  type Point2D,
+} from "@/lib/ict-lab/particle-shapes";
+import { ParticleLogoCanvas } from "./ParticleLogoCanvas";
 import CodePlaygroundTab from "./CodePlaygroundTab";
 import HardwareExplorerTab from "./HardwareExplorerTab";
 import LanCableGuideTab from "./LanCableGuideTab";
@@ -43,6 +48,108 @@ interface ModuleCardConfig {
   idleAnimationClass: string;
   badges: string[];
   ctaLabel: string;
+}
+
+function HubModuleCard({
+  card,
+  pathname,
+}: {
+  card: ModuleCardConfig;
+  pathname: string;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [pointerPos, setPointerPos] = useState<Point2D | null>(null);
+  const theme = ICT_MODULE_THEMES[card.id];
+  const Icon = card.icon;
+
+  const handlePointerEnter = () => setIsHovered(true);
+  const handlePointerLeave = () => {
+    setIsHovered(false);
+    setPointerPos(null);
+  };
+  const handlePointerMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPointerPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  return (
+    <Link
+      href={`${pathname}?module=${card.id}`}
+      aria-label={`${card.title} - ${card.subtitle}`}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onPointerMove={handlePointerMove}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      style={{ touchAction: "pan-y" }}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-theme bg-surface p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 touch-pan-y ${theme.cardBorderHoverClass} ${theme.cardShadowHoverClass} ${theme.focusRingClass}`}
+    >
+      {/* Interactive Particle Logo Canvas (aria-hidden, z-0 background layer) */}
+      <ParticleLogoCanvas
+        moduleId={card.id}
+        isHovered={isHovered || isFocused}
+        pointerPos={pointerPos}
+      />
+
+      {/* Foreground Content (relative z-10) */}
+      <div className="relative z-10 space-y-4">
+        {/* Top Row: Icon Container & Type Indicator */}
+        <div className="flex items-center justify-between">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-xl border transition-colors duration-200 ${theme.iconContainerClass}`}
+          >
+            <span className={card.idleAnimationClass}>
+              <Icon className="h-6 w-6 ict-hover-wiggle" />
+            </span>
+          </div>
+          <span className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-semibold text-secondary-theme">
+            Module
+          </span>
+        </div>
+
+        {/* Header & Subtitle */}
+        <div>
+          <h2
+            className={`text-lg font-bold text-primary-theme transition-colors sm:text-xl ${theme.titleHoverClass}`}
+          >
+            {card.title}
+          </h2>
+          <p className="mt-0.5 text-xs font-semibold text-secondary-theme">
+            {card.subtitle}
+          </p>
+        </div>
+
+        {/* Description */}
+        <p className="text-xs leading-relaxed text-secondary-theme sm:text-sm">
+          {card.description}
+        </p>
+
+        {/* Feature Badges */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {card.badges.map((badge, bIdx) => (
+            <span
+              key={bIdx}
+              className={`rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors ${theme.badgeClass}`}
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom CTA Button (relative z-10) */}
+      <div
+        className={`relative z-10 mt-6 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold shadow-xs transition-colors ${theme.buttonClass}`}
+      >
+        <span>{card.ctaLabel}</span>
+        <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
 }
 
 function IctLabClientContent({
@@ -307,65 +414,13 @@ function IctLabClientContent({
 
             {/* Hub: ONLY Three Choice Cards (Responsive: 1-col on mobile, 3-col on desktop) */}
             <main aria-label="ICT Lab Modules" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {(Object.keys(moduleConfigs) as IctLabModuleId[]).map((moduleId) => {
-                const card = moduleConfigs[moduleId];
-                const Icon = card.icon;
-                return (
-                  <Link
-                    key={card.id}
-                    href={`${pathname}?module=${card.id}`}
-                    aria-label={`${card.title} - ${card.subtitle}`}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-theme bg-surface p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
-                  >
-                    <div className="space-y-4">
-                      {/* Top Row: Icon Container & Type Indicator */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-blue-200/80 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 transition-colors duration-200 group-hover:bg-blue-600 group-hover:text-white">
-                          <span className={card.idleAnimationClass}>
-                            <Icon className="h-6 w-6 ict-hover-wiggle" />
-                          </span>
-                        </div>
-                        <span className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-semibold text-secondary-theme">
-                          Module
-                        </span>
-                      </div>
-
-                      {/* Header & Subtitle */}
-                      <div>
-                        <h2 className="text-lg font-bold text-primary-theme transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400 sm:text-xl">
-                          {card.title}
-                        </h2>
-                        <p className="mt-0.5 text-xs font-semibold text-secondary-theme">
-                          {card.subtitle}
-                        </p>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-xs leading-relaxed text-secondary-theme sm:text-sm">
-                        {card.description}
-                      </p>
-
-                      {/* Feature Badges */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {card.badges.map((badge, bIdx) => (
-                          <span
-                            key={bIdx}
-                            className="rounded-md border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme"
-                          >
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Bottom CTA Button */}
-                    <div className="mt-6 flex items-center justify-between rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors group-hover:bg-blue-700">
-                      <span>{card.ctaLabel}</span>
-                      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                    </div>
-                  </Link>
-                );
-              })}
+              {(Object.keys(moduleConfigs) as IctLabModuleId[]).map((moduleId) => (
+                <HubModuleCard
+                  key={moduleId}
+                  card={moduleConfigs[moduleId]}
+                  pathname={pathname}
+                />
+              ))}
             </main>
           </div>
         )}
