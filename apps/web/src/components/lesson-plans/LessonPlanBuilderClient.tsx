@@ -516,18 +516,28 @@ export default function LessonPlanBuilderClient({
                   Citation:{" "}
                 </strong>
                 <span>{framework.sourceCitation}</span>
-                {framework.sourceUrl && (
-                  <a
-                    href={framework.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-2 inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300"
-                  >
-                    <span>Official Link</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
               </div>
+
+              {framework.sourceLinks && framework.sourceLinks.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
+                  {framework.sourceLinks.map((link) => (
+                    <a
+                      key={link.url}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300"
+                    >
+                      <span>{link.label}</span>
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  Print reference. No online link available.
+                </p>
+              )}
 
               {framework.sourceNote && (
                 <div className="rounded-xl border border-blue-100 dark:border-blue-900/50 bg-blue-50/60 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-200">

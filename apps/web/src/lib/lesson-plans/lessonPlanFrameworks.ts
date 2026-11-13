@@ -34,7 +34,18 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       "DepEd unified planning framework removing DLP and DLL formats (DepEd Order No. 016, s. 2026).",
     sourceCitation:
       "DepEd Order No. 016, s. 2026, Guidelines on Lesson Planning and Learning Design. Department of Education, Philippines, June 4, 2026.",
-    sourceUrl: "https://www.deped.gov.ph",
+    // TODO: replace the first link with the exact DO 016, s. 2026 permalink once confirmed on deped.gov.ph. Do not guess a URL.
+    sourceLinks: [
+      {
+        label: "DepEd Orders (official list)",
+        url: "https://www.deped.gov.ph/category/issuances/deped-orders/",
+      },
+      {
+        label:
+          "DepEd Gapan City Division Memo 217, s. 2026 (DO 016 dissemination)",
+        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
+      },
+    ],
     aiAssistanceNote:
       "Always check the latest text of DepEd Order No. 016, s. 2026 for current requirements, including any rules on declaring AI assistance.",
     stages: [
@@ -204,6 +215,7 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       "Aquino, A. & Nacario, C. (2016). Principles of Teaching 1. Malabon City: Jimczville Publications. Experiential learning cycle after Kolb, D. A. (1984). Experiential Learning. Prentice Hall.",
     sourceNote:
       "The 4A's is a teacher-education convention in the Philippines, not a framework issued by DepEd. It is commonly associated with Kolb's experiential learning cycle.",
+    // TODO: verify the textbook citation (authors/year) with the program head.
     stages: [
       {
         id: "activity",
@@ -376,6 +388,16 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       "BSCS 5E instructional model designed by Rodger W. Bybee for inquiry science instruction.",
     sourceCitation:
       "Bybee, R. W. (2015). The BSCS 5E Instructional Model: Creating Teachable Moments. Arlington, VA: NSTA Press.",
+    sourceLinks: [
+      {
+        label: "Publisher page (NSTA Press)",
+        url: "https://my.nsta.org/resource/100197",
+      },
+      {
+        label: "BSCS report: Origins and Effectiveness (2006)",
+        url: "https://bscs.org/reports/the-bscs",
+      },
+    ],
     stages: [
       {
         id: "engage",
@@ -581,7 +603,12 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       "ITEEA 6E Learning byDeSIGN framework integrating the 5E inquiry cycle with iterative engineering design.",
     sourceCitation:
       "Burke, B. N. (2014). The ITEEA 6E Learning byDeSIGN Model. Technology and Engineering Teacher, 73(6), 14-19. International Technology and Engineering Educators Association.",
-    sourceUrl: "https://www.iteea.org/6e-learning-bydesign",
+    sourceLinks: [
+      {
+        label: "Official Link",
+        url: "https://www.iteea.org/6e-learning-bydesign",
+      },
+    ],
     stages: [
       {
         id: "engage",

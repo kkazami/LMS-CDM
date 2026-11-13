@@ -34,6 +34,11 @@ export interface SamplePlan {
   sections: SamplePlanSection[];
 }
 
+export interface FrameworkSourceLink {
+  label: string;
+  url: string;
+}
+
 export interface LessonPlanFramework {
   id: FrameworkId;
   name: string;
@@ -43,7 +48,7 @@ export interface LessonPlanFramework {
   shortDescription: string;
   originNote: string;
   sourceCitation: string;
-  sourceUrl?: string;
+  sourceLinks?: Array<{ label: string; url: string }>;
   sourceNote?: string;
   aiAssistanceNote?: string;
   stages: StageGuide[];

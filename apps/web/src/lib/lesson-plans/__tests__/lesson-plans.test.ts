@@ -221,7 +221,18 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       ["intentions", "learning-experience", "assessing-learning", "ways-forward"]
     );
     assert.ok(ilaw.sourceCitation.includes("DepEd Order No. 016, s. 2026"));
-    assert.equal(ilaw.sourceUrl, "https://www.deped.gov.ph");
+    assert.equal(ilaw.sourceLinks?.length, 2);
+    assert.deepEqual(ilaw.sourceLinks, [
+      {
+        label: "DepEd Orders (official list)",
+        url: "https://www.deped.gov.ph/category/issuances/deped-orders/",
+      },
+      {
+        label:
+          "DepEd Gapan City Division Memo 217, s. 2026 (DO 016 dissemination)",
+        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
+      },
+    ]);
     assert.ok(
       ilaw.aiAssistanceNote?.includes("DepEd Order No. 016, s. 2026") &&
         ilaw.aiAssistanceNote.includes("rules on declaring AI assistance")
@@ -243,6 +254,7 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       fourAs.sourceNote?.includes("teacher-education convention in the Philippines")
     );
     assert.ok(!fourAs.sourceCitation.includes("42, s. 2016"));
+    assert.ok(!fourAs.sourceLinks || fourAs.sourceLinks.length === 0);
 
     // C) 5E's Framework
     const fiveEs = getFrameworkById("5es")!;
@@ -254,6 +266,17 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       ["engage", "explore", "explain", "elaborate", "evaluate"]
     );
     assert.ok(fiveEs.sourceCitation.includes("Bybee, R. W. (2015)"));
+    assert.equal(fiveEs.sourceLinks?.length, 2);
+    assert.deepEqual(fiveEs.sourceLinks, [
+      {
+        label: "Publisher page (NSTA Press)",
+        url: "https://my.nsta.org/resource/100197",
+      },
+      {
+        label: "BSCS report: Origins and Effectiveness (2006)",
+        url: "https://bscs.org/reports/the-bscs",
+      },
+    ]);
 
     // D) 6E's Framework
     const sixEs = getFrameworkById("6es")!;
@@ -265,7 +288,13 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       ["engage", "explore", "explain", "engineer", "enrich", "evaluate"]
     );
     assert.ok(sixEs.sourceCitation.includes("Burke, B. N. (2014)"));
-    assert.equal(sixEs.sourceUrl, "https://www.iteea.org/6e-learning-bydesign");
+    assert.equal(sixEs.sourceLinks?.length, 1);
+    assert.deepEqual(sixEs.sourceLinks, [
+      {
+        label: "Official Link",
+        url: "https://www.iteea.org/6e-learning-bydesign",
+      },
+    ]);
     assert.ok(!sixEs.items.some((it) => it.label.toLowerCase().includes("e-search")));
   });
 });
