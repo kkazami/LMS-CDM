@@ -390,10 +390,6 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       "Bybee, R. W. (2015). The BSCS 5E Instructional Model: Creating Teachable Moments. Arlington, VA: NSTA Press.",
     sourceLinks: [
       {
-        label: "Publisher page (NSTA Press)",
-        url: "https://my.nsta.org/resource/100197",
-      },
-      {
         label: "BSCS report: Origins and Effectiveness (2006)",
         url: "https://bscs.org/reports/the-bscs",
       },

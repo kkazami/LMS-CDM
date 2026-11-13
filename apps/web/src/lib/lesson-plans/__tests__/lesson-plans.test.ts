@@ -266,12 +266,8 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       ["engage", "explore", "explain", "elaborate", "evaluate"]
     );
     assert.ok(fiveEs.sourceCitation.includes("Bybee, R. W. (2015)"));
-    assert.equal(fiveEs.sourceLinks?.length, 2);
+    assert.equal(fiveEs.sourceLinks?.length, 1);
     assert.deepEqual(fiveEs.sourceLinks, [
-      {
-        label: "Publisher page (NSTA Press)",
-        url: "https://my.nsta.org/resource/100197",
-      },
       {
         label: "BSCS report: Origins and Effectiveness (2006)",
         url: "https://bscs.org/reports/the-bscs",
