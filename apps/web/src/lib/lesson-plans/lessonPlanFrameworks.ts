@@ -245,114 +245,120 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
         id: "activity",
         label: "Activity",
         description:
-          "Learners experience a concrete task that surfaces prior knowledge.",
+          "learners gain new knowledge and skills through a hands-on learning experience.",
       },
       {
         id: "analysis",
         label: "Analysis",
         description:
-          "Guided questions help learners process what happened and spot patterns.",
+          "learners process the experience and link it to what they already know.",
       },
       {
         id: "abstraction",
         label: "Abstraction",
         description:
-          "Concepts, rules or generalizations are drawn out and stated.",
+          "learners generalize and draw out new understanding from the experience.",
       },
       {
         id: "application",
         label: "Application",
-        description: "Learners use the concept in a new situation.",
+        description:
+          "learners try out and apply the new skills; successful application starts a new 4A cycle.",
       },
     ],
     shortDescription:
-      "Inductive, experiential lesson sequence widely used in Philippine teacher education.",
+      "Experiential, constructivist lesson sequence: Activity, Analysis, Abstraction, Application. Learners build knowledge through experience and repeat the cycle.",
     originNote:
-      "Inductive teacher-education sequence commonly associated with Kolb's experiential learning cycle.",
+      "DepEd ALS-EST constructivist learning sequence: Activity, Analysis, Abstraction, and Application.",
     sourceCitation:
-      "Aquino, A. & Nacario, C. (2016). Principles of Teaching 1. Malabon City: Jimczville Publications. Experiential learning cycle after Kolb, D. A. (1984). Experiential Learning. Prentice Hall.",
+      "Department of Education, Philippines. ALS-EST Handbook for Implementers, Chapter 6: Learning Delivery, section 'Adult Learning and Constructivism' (Figure 6-1, The 4As of Adult Learning, adopted from the ALS Manual of Operations).",
+    sourceLinks: [
+      {
+        label: "DepEd ALS-EST Handbook, Chapter 6: Learning Delivery (PDF)",
+        url: "https://www.deped.gov.ph/als-est/PDF/ALS-EST_Handbook_Chapter06.pdf",
+      },
+    ],
     sourceNote:
-      "The 4A's is a teacher-education convention in the Philippines, not a framework issued by DepEd. It is commonly associated with Kolb's experiential learning cycle.",
-    // TODO: verify the textbook citation (authors/year) with the program head.
+      "DepEd's ALS-EST Handbook presents the 4A's (Activity, Analysis, Abstraction, Application) within a constructivist, experiential approach and credits the figure to the ALS Manual; it does not name an original author. The 4A's is also widely used in Philippine teacher education and is often compared to Kolb's experiential learning cycle. It is not a lesson plan format prescribed by DepEd Order No. 016, s. 2026.",
     stages: [
       {
         id: "activity",
         name: "Activity",
         purpose:
-          "Engage learners in a concrete, hands-on, or interactive experience that elicits curiosity and activates prior knowledge.",
+          "Engage learners in a hands-on learning experience where they gain new knowledge and skills.",
         teacherDoes: [
-          "Sets up materials, guidelines, and safety or procedural parameters for the task.",
-          "Circulates to observe learner dynamics and prompt collaborative exploration.",
+          "Sets up materials, guidelines, and safety or procedural parameters for the hands-on task.",
+          "Circulates to observe learner dynamics and facilitate experiential engagement.",
         ],
         learnersDo: [
-          "Participate actively in the task, game, experiment, or simulation.",
-          "Record initial observations, data, or personal reactions.",
+          "Participate actively in the hands-on task, experiment, or simulation to gain new knowledge and skills.",
+          "Record initial observations, data, or personal reactions from the concrete experience.",
         ],
         writingTip:
-          "Design an activity that directly seeds the mathematical, scientific, or conceptual pattern explored in subsequent stages.",
+          "Design a hands-on activity where learners directly experience concepts and skills before formalization.",
         guideQuestions: [
-          "What engaging task will allow learners to experience the concept concretely before formal terminology is introduced?",
-          "How will the activity generate meaningful data or questions for group reflection?",
+          "What hands-on learning experience will allow learners to gain new knowledge and skills concretely?",
+          "How will the activity engage learners and generate meaningful observations for reflection?",
         ],
       },
       {
         id: "analysis",
         name: "Analysis",
         purpose:
-          "Facilitate structured reflection where learners examine patterns, compare findings, and discuss activity outcomes.",
+          "Guide learners to process the hands-on experience and link it to what they already know.",
         teacherDoes: [
-          "Poses scaffolding questions that guide learners to process what happened during the activity.",
-          "Facilitates dialogue, highlights contrasting results, and records student observations.",
+          "Poses scaffolding questions that prompt learners to process what happened during the activity.",
+          "Helps learners connect observations from the activity to their prior knowledge.",
         ],
         learnersDo: [
-          "Share observations, compare results with peers, and explain unexpected findings.",
-          "Identify common patterns, anomalies, and underlying relationships.",
+          "Process the learning experience by sharing observations and analyzing patterns with peers.",
+          "Link insights from the activity to what they already know.",
         ],
         writingTip:
-          "Sequence analysis questions from simple descriptive observations to deeper analytical inquiries.",
+          "Sequence analytical questions from descriptive observations to deeper links with prior knowledge.",
         guideQuestions: [
-          "What specific questions will lead learners from raw observations to pattern recognition?",
-          "How will learners articulate the reasoning behind their observations?",
+          "What guided questions will help learners process their hands-on experience and spot patterns?",
+          "How will learners link what happened during the activity to what they already know?",
         ],
       },
       {
         id: "abstraction",
         name: "Abstraction",
         purpose:
-          "Formalize the general principle, definition, rule, or concept emerging from the analyzed experience.",
+          "Facilitate generalization where learners draw out new understanding and formal principles from the experience.",
         teacherDoes: [
-          "Synthesizes student insights into formal terms, standard definitions, and general principles.",
-          "Provides visual summaries, formulas, or conceptual models.",
+          "Synthesizes learner insights into formal generalizations, standard definitions, and principles.",
+          "Clarifies the new understanding drawn out from the activity and analysis.",
         ],
         learnersDo: [
-          "Connect their activity experience to the formal rule or generalized concept.",
-          "Formulate notes, diagrams, or conceptual summaries in their notebooks.",
+          "Generalize and draw out new understanding from their analyzed experience.",
+          "Formulate notes, diagrams, or conceptual summaries expressing the generalized rule.",
         ],
         writingTip:
-          "Ensure the generalized rule clearly derives from the data gathered during Activity and Analysis.",
+          "Ensure the generalized understanding directly derives from the activity and analysis stages.",
         guideQuestions: [
-          "What is the key generalization, formula, or concept that learners must crystallize?",
-          "How will the teacher clarify definitions without resorting to passive lecturing?",
+          "What core generalization or new understanding should learners draw out from the experience?",
+          "How will the teacher support learners in stating the generalized principle without passive lecturing?",
         ],
       },
       {
         id: "application",
         name: "Application",
         purpose:
-          "Provide meaningful opportunities for learners to transfer and apply their newly crystallized concept to new contexts or real-life problems.",
+          "Provide meaningful opportunities for learners to try out and apply the new skills, initiating a new learning cycle.",
         teacherDoes: [
-          "Presents novel problems, authentic scenarios, or creative challenges.",
-          "Evaluates student transfer of learning and clarifies remaining edge cases.",
+          "Presents novel problems, authentic scenarios, or practical challenges for skill application.",
+          "Evaluates learner application of new skills and reinforces the start of new learning cycles.",
         ],
         learnersDo: [
-          "Solve independent or collaborative problems using the formal concept or rule.",
-          "Demonstrate practical utility and mastery in authentic situations.",
+          "Try out and apply the new skills in novel, authentic situations.",
+          "Demonstrate practical utility and build confidence to begin subsequent learning cycles.",
         ],
         writingTip:
-          "Use authentic contexts (e.g., household situations, community problems) rather than mechanical textbook drills.",
+          "Design authentic application tasks that demonstrate practical transfer of the new skills.",
         guideQuestions: [
-          "How will learners demonstrate that they can apply the generalization to an unfamiliar problem?",
-          "What authentic context shows the practical relevance of this concept in daily life?",
+          "How will learners try out and apply their new skills in a novel or practical context?",
+          "How does successful application reinforce mastery and set the stage for the next learning cycle?",
         ],
       },
     ],

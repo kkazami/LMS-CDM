@@ -258,13 +258,61 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       fourAs.items.map((it) => it.id),
       ["activity", "analysis", "abstraction", "application"]
     );
-    assert.ok(fourAs.sourceCitation.includes("Aquino, A. & Nacario, C. (2016)"));
-    assert.ok(fourAs.sourceCitation.includes("Kolb"));
     assert.ok(
-      fourAs.sourceNote?.includes("teacher-education convention in the Philippines")
+      fourAs.sourceCitation.includes(
+        "Department of Education, Philippines. ALS-EST Handbook for Implementers"
+      )
+    );
+    assert.ok(
+      fourAs.sourceCitation.includes(
+        "adopted from the ALS Manual of Operations"
+      )
+    );
+    assert.ok(!/aquino|nacario|jimczville|prentice|kolb,\s*d/i.test(fourAs.sourceCitation));
+    assert.equal(fourAs.sourceLinks?.length, 1);
+    assert.deepEqual(fourAs.sourceLinks, [
+      {
+        label:
+          "DepEd ALS-EST Handbook, Chapter 6: Learning Delivery (PDF)",
+        url: "https://www.deped.gov.ph/als-est/PDF/ALS-EST_Handbook_Chapter06.pdf",
+      },
+    ]);
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "DepEd's ALS-EST Handbook presents the 4A's (Activity, Analysis, Abstraction, Application)"
+      )
+    );
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "often compared to Kolb's experiential learning cycle"
+      )
+    );
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "It is not a lesson plan format prescribed by DepEd Order No. 016, s. 2026."
+      )
+    );
+    assert.equal(
+      fourAs.shortDescription,
+      "Experiential, constructivist lesson sequence: Activity, Analysis, Abstraction, Application. Learners build knowledge through experience and repeat the cycle."
+    );
+    assert.equal(
+      fourAs.items[0]?.description,
+      "learners gain new knowledge and skills through a hands-on learning experience."
+    );
+    assert.equal(
+      fourAs.items[1]?.description,
+      "learners process the experience and link it to what they already know."
+    );
+    assert.equal(
+      fourAs.items[2]?.description,
+      "learners generalize and draw out new understanding from the experience."
+    );
+    assert.equal(
+      fourAs.items[3]?.description,
+      "learners try out and apply the new skills; successful application starts a new 4A cycle."
     );
     assert.ok(!fourAs.sourceCitation.includes("42, s. 2016"));
-    assert.ok(!fourAs.sourceLinks || fourAs.sourceLinks.length === 0);
 
     // C) 5E's Framework
     const fiveEs = getFrameworkById("5es")!;
