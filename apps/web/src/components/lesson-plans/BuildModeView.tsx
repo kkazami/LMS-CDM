@@ -336,7 +336,9 @@ export default function BuildModeView({
             2. Instructional Procedure ({framework.name})
           </h3>
           <p className="text-xs text-secondary-theme">
-            Draft your step-by-step procedure according to each stage of the {framework.name}.
+            Draft your step-by-step procedure according to each{" "}
+            {framework.unitLabel === "Elements" ? "element" : "stage"} of the{" "}
+            {framework.name}.
           </p>
         </div>
 
@@ -370,7 +372,10 @@ export default function BuildModeView({
                 <div className="rounded-lg bg-surface border border-theme/80 p-3 space-y-1 text-xs text-secondary-theme">
                   <div className="flex items-center gap-1.5 font-semibold text-primary-theme">
                     <HelpCircle className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <span>Guiding Questions for this stage:</span>
+                    <span>
+                      Guiding Questions for this{" "}
+                      {framework.unitLabel === "Elements" ? "element" : "stage"}:
+                    </span>
                   </div>
                   <ul className="list-disc list-inside space-y-0.5 text-xs text-secondary-theme pl-1">
                     {stage.guideQuestions.map((q, i) => (

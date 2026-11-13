@@ -42,7 +42,7 @@ export default function FrameworkPicker({
     <div
       role="region"
       aria-label="Pedagogical Frameworks Hub"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
     >
       {frameworks.map((fw) => {
         const Icon = getFrameworkIcon(fw.id);
@@ -53,17 +53,21 @@ export default function FrameworkPicker({
             key={fw.id}
             href={`${pathname}?framework=${fw.id}`}
             id={`card-${fw.id}`}
-            aria-label={`${fw.name} - ${fw.stages.length} stages`}
+            aria-label={`${fw.name} - ${fw.count} ${fw.unitLabel}`}
             className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-950/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950 cursor-pointer"
           >
+            {/* Top / Main Content Area */}
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shadow-2xs transition-transform duration-200 group-hover:scale-105">
                   <Icon className="h-6 w-6" aria-hidden="true" />
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
-                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                    {fw.stages.length} Stages
+                  <span
+                    id={`badge-unit-${fw.id}`}
+                    className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400"
+                  >
+                    {fw.count} {fw.unitLabel}
                   </span>
                   {hasDraft && (
                     <span
@@ -86,14 +90,39 @@ export default function FrameworkPicker({
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-medium text-slate-500 dark:text-slate-400 line-clamp-1">
-                {fw.originNote}
+              {/* Items sequence pill list */}
+              <div className="pt-1">
+                <div className="flex flex-wrap gap-1">
+                  {fw.items.map((item) => (
+                    <span
+                      key={item.id}
+                      className="inline-block rounded-md bg-slate-100 dark:bg-slate-800/90 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300"
+                      title={item.description}
+                    >
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between rounded-xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors group-hover:bg-blue-700">
-              <span>Open Framework</span>
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            {/* Bottom Section: Action & Source */}
+            <div className="mt-6 flex flex-col justify-end space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors group-hover:bg-blue-700">
+                <span>Open Framework</span>
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+              </div>
+
+              {/* Source Line */}
+              <div
+                className="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] leading-snug text-slate-500 dark:text-slate-400"
+                title={fw.sourceCitation}
+              >
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  Source:{" "}
+                </span>
+                <span className="line-clamp-2">{fw.sourceCitation}</span>
+              </div>
             </div>
           </Link>
         );

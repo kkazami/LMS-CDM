@@ -29,7 +29,15 @@ import LearnModeView from "./LearnModeView";
 import BuildModeView from "./BuildModeView";
 import LivePreviewPane from "./LivePreviewPane";
 import LessonPlanPrintPortal from "./LessonPlanPrintPortal";
-import { ArrowLeft, BookOpen, Eye, GraduationCap, PenTool } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  ExternalLink,
+  Eye,
+  GraduationCap,
+  PenTool,
+} from "lucide-react";
 
 interface LessonPlanBuilderClientProps {
   studentName: string;
@@ -361,7 +369,9 @@ export default function LessonPlanBuilderClient({
                   <BookOpen className="h-3.5 w-3.5" />
                   <span>Pedagogical Model</span>
                   <span>•</span>
-                  <span>{framework.stages.length} Stages</span>
+                  <span>
+                    {framework.count} {framework.unitLabel}
+                  </span>
                 </div>
                 <h1
                   ref={viewHeadingRef}
@@ -489,6 +499,51 @@ export default function LessonPlanBuilderClient({
               </div>
             </div>
           )}
+
+          {/* Source and References Block */}
+          <footer
+            id="framework-source-references"
+            className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs space-y-3 no-print"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <BookOpen className="h-4 w-4" />
+              <span>Source and References • {framework.name}</span>
+            </div>
+
+            <div className="space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              <div>
+                <strong className="font-semibold text-slate-900 dark:text-white">
+                  Citation:{" "}
+                </strong>
+                <span>{framework.sourceCitation}</span>
+                {framework.sourceUrl && (
+                  <a
+                    href={framework.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300"
+                  >
+                    <span>Official Link</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+
+              {framework.sourceNote && (
+                <div className="rounded-xl border border-blue-100 dark:border-blue-900/50 bg-blue-50/60 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-200">
+                  <strong className="font-semibold">Note: </strong>
+                  <span>{framework.sourceNote}</span>
+                </div>
+              )}
+
+              {framework.aiAssistanceNote && (
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/70 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <span>{framework.aiAssistanceNote}</span>
+                </div>
+              )}
+            </div>
+          </footer>
         </div>
       )}
 

@@ -209,6 +209,65 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       }
     }
   });
+
+  it("verifies unitLabel, count, items, and citations match pedagogical requirements", () => {
+    // A) ILAW Framework
+    const ilaw = getFrameworkById("ilaw")!;
+    assert.equal(ilaw.unitLabel, "Elements");
+    assert.equal(ilaw.count, 4);
+    assert.equal(ilaw.items.length, 4);
+    assert.deepEqual(
+      ilaw.items.map((it) => it.id),
+      ["intentions", "learning-experience", "assessing-learning", "ways-forward"]
+    );
+    assert.ok(ilaw.sourceCitation.includes("DepEd Order No. 016, s. 2026"));
+    assert.equal(ilaw.sourceUrl, "https://www.deped.gov.ph");
+    assert.ok(
+      ilaw.aiAssistanceNote?.includes("DepEd Order No. 016, s. 2026") &&
+        ilaw.aiAssistanceNote.includes("rules on declaring AI assistance")
+    );
+    assert.ok(!ilaw.sourceCitation.includes("Order 9"));
+
+    // B) 4A's Framework
+    const fourAs = getFrameworkById("4as")!;
+    assert.equal(fourAs.unitLabel, "Stages");
+    assert.equal(fourAs.count, 4);
+    assert.equal(fourAs.items.length, 4);
+    assert.deepEqual(
+      fourAs.items.map((it) => it.id),
+      ["activity", "analysis", "abstraction", "application"]
+    );
+    assert.ok(fourAs.sourceCitation.includes("Aquino, A. & Nacario, C. (2016)"));
+    assert.ok(fourAs.sourceCitation.includes("Kolb"));
+    assert.ok(
+      fourAs.sourceNote?.includes("teacher-education convention in the Philippines")
+    );
+    assert.ok(!fourAs.sourceCitation.includes("42, s. 2016"));
+
+    // C) 5E's Framework
+    const fiveEs = getFrameworkById("5es")!;
+    assert.equal(fiveEs.unitLabel, "Stages");
+    assert.equal(fiveEs.count, 5);
+    assert.equal(fiveEs.items.length, 5);
+    assert.deepEqual(
+      fiveEs.items.map((it) => it.id),
+      ["engage", "explore", "explain", "elaborate", "evaluate"]
+    );
+    assert.ok(fiveEs.sourceCitation.includes("Bybee, R. W. (2015)"));
+
+    // D) 6E's Framework
+    const sixEs = getFrameworkById("6es")!;
+    assert.equal(sixEs.unitLabel, "Stages");
+    assert.equal(sixEs.count, 6);
+    assert.equal(sixEs.items.length, 6);
+    assert.deepEqual(
+      sixEs.items.map((it) => it.id),
+      ["engage", "explore", "explain", "engineer", "enrich", "evaluate"]
+    );
+    assert.ok(sixEs.sourceCitation.includes("Burke, B. N. (2014)"));
+    assert.equal(sixEs.sourceUrl, "https://www.iteea.org/6e-learning-bydesign");
+    assert.ok(!sixEs.items.some((it) => it.label.toLowerCase().includes("e-search")));
+  });
 });
 
 describe("Lesson Plan Builder - Logic, Formatting & Validation", () => {

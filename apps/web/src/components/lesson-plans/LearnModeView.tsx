@@ -80,7 +80,7 @@ export default function LearnModeView({
       {/* Stage Stepper Tabs */}
       <div className="space-y-3">
         <h4 className="text-xs font-bold uppercase tracking-wider text-secondary-theme">
-          Step-by-Step Instructional Sequence
+          Step-by-Step {framework.unitLabel === "Elements" ? "Element Breakdown" : "Instructional Sequence"}
         </h4>
         <div
           role="tablist"
@@ -105,7 +105,9 @@ export default function LearnModeView({
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-muted-theme">
-                  <span>Stage {idx + 1}</span>
+                  <span>
+                    {framework.unitLabel === "Elements" ? "Element" : "Stage"} {idx + 1}
+                  </span>
                   {isCurrent && (
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
                   )}
@@ -135,7 +137,8 @@ export default function LearnModeView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-4">
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              Stage {activeStageIndex + 1} of {framework.stages.length}
+              {framework.unitLabel === "Elements" ? "Element" : "Stage"}{" "}
+              {activeStageIndex + 1} of {framework.count}
             </div>
             <h3 className="mt-0.5 text-xl font-extrabold text-primary-theme">
               {activeStage.name}
@@ -296,7 +299,8 @@ export default function LearnModeView({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                      Stage {i + 1}: {sec.stageName}
+                      {framework.unitLabel === "Elements" ? "Element" : "Stage"}{" "}
+                      {i + 1}: {sec.stageName}
                     </span>
                   </div>
                   <div className="rounded-lg bg-elevated/60 p-3 text-xs text-primary-theme whitespace-pre-line font-mono leading-relaxed">
