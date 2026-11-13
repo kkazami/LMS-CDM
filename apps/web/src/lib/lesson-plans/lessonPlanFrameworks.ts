@@ -10,123 +10,181 @@ export const LESSON_PLAN_FRAMEWORKS: readonly LessonPlanFramework[] = [
       {
         id: "intentions",
         label: "I: Intentions",
-        description: "Learning competency, learning objectives, learner context.",
+        description:
+          "Learning competencies (the competencies targeted in the session contributing to progressive mastery) and learning objectives (competencies unpacked, clustered or sequenced into clear, focused, manageable objectives aligned with learner readiness, instructional context and available learning time).",
+        subItems: [
+          {
+            name: "Learning competencies",
+            description:
+              "the competencies targeted in the session; they may span several lessons, with each session contributing to progressive mastery.",
+          },
+          {
+            name: "Learning objectives",
+            description:
+              "competencies unpacked, clustered or sequenced into clear, focused, manageable objectives aligned with learner readiness, instructional context and available learning time.",
+          },
+        ],
       },
       {
         id: "learning-experience",
         label: "L: Learning Experience",
-        description: "Resources, pre-lesson activity, lesson flow, integration and contextualization.",
+        description:
+          "Learning resources (relevant resources aligned with objectives plus alternative home-based resources), pre-lesson activity (brief introductory activity/routine activating prior knowledge), lesson flow (learning design principles applied coherently and responsively to learner responses), and opportunities for integration and contextualization (cross-curricular, real-life, cultural or community-based connections).",
+        subItems: [
+          {
+            name: "Learning resources",
+            description:
+              "relevant, appropriate resources aligned with the objectives, plus alternative resources for home-based learning if face-to-face instruction is interrupted.",
+          },
+          {
+            name: "Pre-lesson activity",
+            description:
+              "a brief introductory activity, routine or check-in that activates prior knowledge and prepares learners.",
+          },
+          {
+            name: "Lesson flow",
+            description:
+              "learning design principles applied so the experience is coherent, engaging, responsive and developmentally appropriate; adjusted to learner responses rather than rigidly following the plan.",
+          },
+          {
+            name: "Opportunities for integration and contextualization",
+            description:
+              "connections within and across learning areas, and real-life, cultural or community-based contexts.",
+          },
+        ],
       },
       {
         id: "assessing-learning",
         label: "A: Assessing Learning",
-        description: "Formative assessment during the lesson, instructional adjustments.",
+        description:
+          "Formative assessments: formative checks throughout the session to monitor understanding and progress toward the objectives, guide immediate instructional adjustments, and identify learners needing support.",
+        subItems: [
+          {
+            name: "Formative assessments",
+            description:
+              "formative checks throughout the session to monitor understanding and progress toward the objectives, guide immediate instructional adjustments, and identify learners needing support.",
+          },
+        ],
       },
       {
         id: "ways-forward",
         label: "W: Ways Forward",
-        description: "Reflection, extended learning, next steps such as remediation, reteaching or enrichment.",
+        description:
+          "Reflective practice (reflecting on teaching experience and evidence of learning at the end of each session to identify next steps like remediation, reteaching or enrichment) and extended learning opportunities (additional learning experiences within or beyond the classroom serving as enrichment or remediation).",
+        subItems: [
+          {
+            name: "Reflective practice",
+            description:
+              "reflect on the teaching experience and evidence of learning at the end of each session, then identify next steps such as remediation, reteaching or enrichment.",
+          },
+          {
+            name: "Extended learning opportunities",
+            description:
+              "additional learning experiences within or beyond the classroom, which may serve as enrichment or remediation.",
+          },
+        ],
       },
     ],
     shortDescription:
-      "DepEd's unified lesson planning framework. It removes the separate DLP and DLL formats. A plan is sufficient when intentions, learning experience, assessment and ways forward are clear and aligned. No single template is mandated.",
+      "DepEd's ILAW Framework: the four core elements teachers use in lesson planning. A lesson plan is sufficient when the learning intentions, learning experience, assessment approach and ways forward are evident and aligned. Teachers are not required to add components beyond the framework, and the sample guide is not a required national template.",
     originNote:
-      "DepEd unified planning framework removing DLP and DLL formats (DepEd Order No. 016, s. 2026).",
+      "DepEd Order No. 016, s. 2026, Section V.A (ILAW Framework). Four core elements for lesson planning.",
     sourceCitation:
-      "DepEd Order No. 016, s. 2026, Guidelines on Lesson Planning and Learning Design. Department of Education, Philippines, June 4, 2026.",
-    // TODO: replace the first link with the exact DO 016, s. 2026 permalink once confirmed on deped.gov.ph. Do not guess a URL.
+      "Department of Education (2026). DepEd Order No. 016, s. 2026, Guidelines on Lesson Planning and Learning Design, Section V.A (ILAW Framework). Full text attached to DepEd Gapan City Division Memorandum No. 217, s. 2026.",
     sourceLinks: [
+      {
+        label:
+          "DO 016, s. 2026 full text (attached to DepEd Gapan City Division Memo 217)",
+        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
+      },
       {
         label: "DepEd Orders (official list)",
         url: "https://www.deped.gov.ph/category/issuances/deped-orders/",
       },
-      {
-        label:
-          "DepEd Gapan City Division Memo 217, s. 2026 (DO 016 dissemination)",
-        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
-      },
     ],
+    sourceNote:
+      "Elements and items follow Section V.A of the Order. The Order's Annex B lesson planning guide is a reference tool only, not a required template.",
     aiAssistanceNote:
-      "Always check the latest text of DepEd Order No. 016, s. 2026 for current requirements, including any rules on declaring AI assistance.",
+      "AI use in lesson planning is covered by DepEd Order No. 003, s. 2026 (Foundational Guidelines on Artificial Intelligence in Basic Education), which DO 016 cites. Check the latest DepEd issuances before using AI tools.",
     stages: [
       {
         id: "intentions",
         name: "Intentions",
         purpose:
-          "Establish explicit learning targets, standards alignment, and clear success criteria for the session.",
+          "Target learning competencies contributing to progressive mastery, unpacked into clear, focused learning objectives aligned with learner readiness, instructional context, and available learning time.",
         teacherDoes: [
-          "States the targeted learning competency and unpacks specific lesson objectives.",
-          "Explains the criteria for mastery and connects the goals to learners' prior knowledge.",
+          "Identifies targeted learning competencies that contribute to progressive student mastery across sessions.",
+          "Unpacks, clusters, or sequences competencies into clear, focused, and manageable objectives aligned with learner readiness and learning time.",
         ],
         learnersDo: [
-          "Review and state the learning objectives in their own words.",
-          "Identify personal goals and questions they hope to answer during the lesson.",
+          "Understand session learning competencies and articulate specific lesson objectives in their own words.",
+          "Connect target objectives to their current readiness and personal learning goals.",
         ],
         writingTip:
-          "Write measurable objectives using clear action verbs that directly reflect the curricular standard.",
+          "Write measurable objectives that unpack targeted competencies into clear, student-centered milestones appropriate for available learning time.",
         guideQuestions: [
-          "What specific knowledge, skill, or attitude must learners demonstrate by the end of this session?",
-          "How will both teacher and learners recognize that the intended outcome has been achieved?",
+          "What competencies are targeted in this session, and how do they contribute to progressive mastery?",
+          "How are competencies unpacked into clear, focused objectives aligned with learner readiness, context, and time?",
         ],
       },
       {
         id: "learning-experience",
         name: "Learning Experience",
         purpose:
-          "Facilitate active student engagement through structured classroom activities, guided inquiry, and conceptual development.",
+          "Provide relevant learning resources, an introductory pre-lesson activity, a responsive lesson flow, and opportunities for integration and contextualization.",
         teacherDoes: [
-          "Facilitates hands-on activities, guiding questions, and cooperative tasks.",
-          "Scaffolds key concepts and provides timely feedback during student practice.",
+          "Prepares aligned learning resources (including alternative resources for home-based learning) and leads a brief pre-lesson activity to activate prior knowledge.",
+          "Applies responsive learning design principles across the lesson flow, adapting to learner responses and integrating cross-curricular and cultural contexts.",
         ],
         learnersDo: [
-          "Engage in investigations, collaborative discussions, and practical tasks.",
-          "Synthesize observations to construct conceptual understanding.",
+          "Participate in the pre-lesson routine and engage actively with learning resources throughout the coherent lesson flow.",
+          "Make meaningful connections across learning areas and apply concepts to real-life and community contexts.",
         ],
         writingTip:
-          "Outline clear transitions between teacher facilitation and active learner tasks so the instructional flow is evident.",
+          "Design a flexible, responsive lesson flow with clear pre-lesson activities, backup resources, and authentic cultural or community integration.",
         guideQuestions: [
-          "What concrete experiences will best help learners construct deep understanding of the topic?",
-          "How will learners interact with content, peers, and learning materials throughout the lesson?",
+          "What aligned resources (including alternative home-based resources) and pre-lesson activities prepare learners?",
+          "How does the lesson flow respond to learner responses while integrating cross-curricular and cultural or community contexts?",
         ],
       },
       {
         id: "assessing-learning",
         name: "Assessing Learning",
         purpose:
-          "Evaluate learner mastery and collect evidence of understanding against the lesson intentions.",
+          "Conduct formative checks throughout the session to monitor understanding and progress toward the objectives, guide immediate instructional adjustments, and identify learners needing support.",
         teacherDoes: [
-          "Administers formative assessment tasks, checks for understanding, or rubric-based performance evaluations.",
-          "Identifies common misconceptions and tallies learner mastery levels.",
+          "Conducts formative checks throughout the session to monitor understanding and progress toward the objectives.",
+          "Uses formative evidence to make immediate instructional adjustments and identify learners needing additional support.",
         ],
         learnersDo: [
-          "Complete assessment items, demonstrate skills, or conduct peer- and self-evaluations.",
-          "Demonstrate their level of competency independently or in small teams.",
+          "Engage in formative checks and demonstrate their emerging understanding against the objectives.",
+          "Respond to timely feedback and clarify misunderstandings during the session.",
         ],
         writingTip:
-          "Ensure every assessment item directly measures at least one objective specified in the Intentions stage.",
+          "Embed formative checks throughout the lesson to inform real-time instructional adjustments rather than waiting until the end.",
         guideQuestions: [
-          "What formative assessment tool or task will provide valid evidence of student mastery?",
-          "How will the assessment differentiate between complete mastery and emerging understanding?",
+          "What formative checks throughout the session monitor understanding and progress toward the objectives?",
+          "How will formative assessment evidence guide immediate instructional adjustments and identify learners needing support?",
         ],
       },
       {
         id: "ways-forward",
         name: "Ways Forward",
         purpose:
-          "Plan targeted next instructional steps including timely remediation, skill reinforcement, and enrichment activities.",
+          "Engage in reflective practice on teaching experience and learning evidence at the end of each session, and provide extended learning opportunities for remediation or enrichment.",
         teacherDoes: [
-          "Analyzes assessment results to assign remedial support or enrichment challenges.",
-          "Adjusts subsequent lesson pacing based on observed student needs.",
+          "Reflects on the teaching experience and evidence of learning at the end of the session to identify next instructional steps.",
+          "Designs extended learning opportunities (remediation, reteaching, or enrichment) within or beyond the classroom.",
         ],
         learnersDo: [
-          "Participate in guided remedial practice or higher-order extension tasks.",
-          "Reflect on their learning progress and identify personal next steps.",
+          "Reflect on their learning evidence and participate in targeted remediation, reteaching, or enrichment activities.",
+          "Engage in extended learning opportunities within or beyond the classroom.",
         ],
         writingTip:
-          "Provide concrete, actionable interventions for struggling students alongside meaningful enrichment for advanced learners.",
+          "Base next steps on concrete session evidence, clearly outlining reflective insights and tailored extended learning opportunities.",
         guideQuestions: [
-          "What specific remedial task will support learners who did not attain mastery?",
-          "How will proficient learners deepen or extend their learning beyond the core competency?",
+          "What next instructional steps (remediation, reteaching, or enrichment) does reflective practice indicate based on evidence of learning?",
+          "What extended learning opportunities within or beyond the classroom will support or enrich learner progress?",
         ],
       },
     ],

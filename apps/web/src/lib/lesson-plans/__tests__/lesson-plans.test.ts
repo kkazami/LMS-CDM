@@ -221,22 +221,32 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
       ["intentions", "learning-experience", "assessing-learning", "ways-forward"]
     );
     assert.ok(ilaw.sourceCitation.includes("DepEd Order No. 016, s. 2026"));
+    assert.ok(ilaw.sourceCitation.includes("Section V.A (ILAW Framework)"));
     assert.equal(ilaw.sourceLinks?.length, 2);
     assert.deepEqual(ilaw.sourceLinks, [
+      {
+        label:
+          "DO 016, s. 2026 full text (attached to DepEd Gapan City Division Memo 217)",
+        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
+      },
       {
         label: "DepEd Orders (official list)",
         url: "https://www.deped.gov.ph/category/issuances/deped-orders/",
       },
-      {
-        label:
-          "DepEd Gapan City Division Memo 217, s. 2026 (DO 016 dissemination)",
-        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
-      },
     ]);
     assert.ok(
-      ilaw.aiAssistanceNote?.includes("DepEd Order No. 016, s. 2026") &&
-        ilaw.aiAssistanceNote.includes("rules on declaring AI assistance")
+      ilaw.aiAssistanceNote?.includes("DepEd Order No. 003, s. 2026") &&
+        ilaw.aiAssistanceNote.includes(
+          "Foundational Guidelines on Artificial Intelligence in Basic Education"
+        )
     );
+    assert.ok(ilaw.sourceNote?.includes("Section V.A of the Order"));
+    assert.ok(
+      ilaw.shortDescription.includes(
+        "DepEd's ILAW Framework: the four core elements teachers use in lesson planning"
+      )
+    );
+    assert.ok(!JSON.stringify(ilaw.items).toLowerCase().includes("learner context"));
     assert.ok(!ilaw.sourceCitation.includes("Order 9"));
 
     // B) 4A's Framework

@@ -1,9 +1,15 @@
 export type FrameworkId = "ilaw" | "4as" | "5es" | "6es";
 
+export interface FrameworkSubItem {
+  name: string;
+  description: string;
+}
+
 export interface FrameworkItem {
   id: string;
   label: string;
   description: string;
+  subItems?: FrameworkSubItem[];
 }
 
 export interface StageGuide {
