@@ -36,12 +36,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       throw new HttpError(404, "Rubric file not found.");
     }
 
-    const { searchParams } = new URL(request.url);
-    const forceDownload = searchParams.get("download") === "1" || searchParams.get("download") === "true";
     const mime = placement.rubricMimeType || asset.mimeType;
     const name = placement.rubricFileName || asset.fileName;
     const bytes = Buffer.from(asset.content);
-    const headers = buildFileHeaders({ mime, name, length: bytes.byteLength }, !forceDownload);
+    const headers = buildFileHeaders({ mime, name, length: bytes.byteLength }, false);
 
     return new Response(new Uint8Array(bytes), { headers });
   } catch (err) {

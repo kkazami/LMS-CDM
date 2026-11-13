@@ -12,6 +12,7 @@ import {
   sanitizeRubricFileName,
   summarizeGroups,
   totalPendingReview,
+  validateRubricSignature,
   validateRubricUpload,
   type PlacementRole,
   type PlacementSummary,
@@ -192,8 +193,8 @@ export interface PreparedRubricUpload {
 }
 
 /**
- * Validates a rubric File on the server (extension, MIME type, non-empty size <= 10 MB,
- * safe file name) and prepares its binary payload for transactional storage in PrivateAsset.
+ * Validates a rubric File on the server (extension, MIME type, non-empty size <= RUBRIC_MAX_BYTES,
+ * magic-byte file signature, and safe file name) and prepares its binary payload for transactional storage.
  */
 export async function prepareRubricUpload(file: File): Promise<PreparedRubricUpload> {
   const ext = getExtension(file.name) as RubricExtension;
@@ -213,6 +214,11 @@ export async function prepareRubricUpload(file: File): Promise<PreparedRubricUpl
   const postCheck = validateRubricUpload(file.name, effectiveMime, bytes.byteLength);
   if (!postCheck.ok) {
     throw new HttpError(400, postCheck.reason);
+  }
+
+  const signatureCheck = validateRubricSignature(file.name, bytes);
+  if (!signatureCheck.ok) {
+    throw new HttpError(400, signatureCheck.reason);
   }
 
   const expectedMime = RUBRIC_MIME_BY_EXTENSION[ext];

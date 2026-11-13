@@ -68,10 +68,15 @@ export interface UploadRule {
   maxBytes: number;
 }
 
+export const RUBRIC_MAX_MB = 4;
+export const RUBRIC_MAX_BYTES = RUBRIC_MAX_MB * MB;
+
 export const RUBRIC_UPLOAD_RULE: UploadRule = {
   extensions: RUBRIC_EXTENSIONS,
-  maxBytes: 10 * MB,
+  maxBytes: RUBRIC_MAX_BYTES,
 };
+
+export const RUBRIC_HINT_TEXT = `PDF, DOC, DOCX, XLS or XLSX, up to ${RUBRIC_MAX_MB} MB`;
 
 export const UPLOAD_RULES: Record<SubmissionType, UploadRule> = {
   LESSON_PLAN: { extensions: ["pdf", "doc", "docx", "ppt", "pptx"], maxBytes: getMaxUploadMb() * MB },
@@ -151,8 +156,8 @@ export function sanitizeRubricFileName(fileName: string): string {
 }
 
 /**
- * Validates a placement rubric file (extension, MIME type, non-empty size <= 10 MB).
- * Allowed types: PDF, DOC, DOCX, XLS, XLSX. Max size: 10 MB.
+ * Validates a placement rubric file (extension, MIME type, non-empty size <= RUBRIC_MAX_BYTES).
+ * Allowed types: PDF, DOC, DOCX, XLS, XLSX.
  */
 export function validateRubricUpload(
   fileName: string,
@@ -160,6 +165,7 @@ export function validateRubricUpload(
   sizeBytes?: number | null
 ): RuleCheck {
   const allowedLabel = RUBRIC_EXTENSIONS.map((e) => e.toUpperCase()).join(", ");
+  const maxMb = Math.round((RUBRIC_MAX_BYTES / MB) * 10) / 10;
   const trimmedName = (fileName ?? "").trim();
   if (!trimmedName) {
     return { ok: false, reason: `Choose a valid rubric file (${allowedLabel}).` };
@@ -182,9 +188,52 @@ export function validateRubricUpload(
     if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
       return { ok: false, reason: "The file is empty." };
     }
-    if (sizeBytes > RUBRIC_UPLOAD_RULE.maxBytes) {
-      return { ok: false, reason: "File too large (max 10 MB)." };
+    if (sizeBytes > RUBRIC_MAX_BYTES) {
+      return { ok: false, reason: `File too large (max ${maxMb} MB).` };
     }
+  }
+
+  return { ok: true };
+}
+
+const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d] as const; // "%PDF-"
+const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04] as const; // "PK\x03\x04" (.docx, .xlsx)
+const OLE2_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] as const; // legacy .doc, .xls
+
+function startsWithBytes(bytes: Uint8Array, signature: readonly number[]): boolean {
+  if (bytes.byteLength < signature.length) return false;
+  for (let i = 0; i < signature.length; i++) {
+    if (bytes[i] !== signature[i]) return false;
+  }
+  return true;
+}
+
+/**
+ * Verifies that the first bytes of a rubric file match the magic-byte signature
+ * required for its extension (.pdf, .docx, .xlsx, .doc, .xls).
+ */
+export function validateRubricSignature(fileName: string, bytes: Uint8Array): RuleCheck {
+  const ext = getExtension(fileName ?? "");
+  if (!ext || !(RUBRIC_EXTENSIONS as readonly string[]).includes(ext)) {
+    const allowedLabel = RUBRIC_EXTENSIONS.map((e) => e.toUpperCase()).join(", ");
+    return { ok: false, reason: `Invalid file type. Allowed types: ${allowedLabel}.` };
+  }
+  if (!bytes || bytes.byteLength === 0) {
+    return { ok: false, reason: "The file is empty." };
+  }
+
+  const expectedSignature =
+    ext === "pdf"
+      ? PDF_SIGNATURE
+      : ext === "docx" || ext === "xlsx"
+        ? ZIP_SIGNATURE
+        : OLE2_SIGNATURE;
+
+  if (!startsWithBytes(bytes, expectedSignature)) {
+    return {
+      ok: false,
+      reason: `The file content does not match its .${ext.toUpperCase()} extension.`,
+    };
   }
 
   return { ok: true };

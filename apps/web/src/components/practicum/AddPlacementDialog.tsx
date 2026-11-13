@@ -7,6 +7,7 @@ import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { StudentPickerOption } from "@/lib/practicum/dto";
 import {
   RUBRIC_EXTENSIONS,
+  RUBRIC_HINT_TEXT,
   RUBRIC_MIME_BY_EXTENSION,
   formatBytes,
   getExtension,
@@ -358,7 +359,7 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
                     Choose a rubric file or drag and drop
                   </span>
                   <span className="text-xs text-slate-600 dark:text-[#94A3B8]">
-                    PDF, DOC, DOCX, XLS, XLSX · up to 10 MB
+                    {RUBRIC_HINT_TEXT}
                   </span>
                 </label>
               )}

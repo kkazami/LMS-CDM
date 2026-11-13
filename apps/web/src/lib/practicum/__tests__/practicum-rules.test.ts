@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  RUBRIC_MAX_BYTES,
   RUBRIC_MIME_BY_EXTENSION,
   UPLOAD_RULES,
   allowedContentTypes,
@@ -21,6 +22,7 @@ import {
   summarizeGroups,
   toYouTubeEmbedUrl,
   totalPendingReview,
+  validateRubricSignature,
   validateRubricUpload,
   validateUpload,
 } from "../rules";
@@ -269,7 +271,8 @@ describe("input schemas", () => {
 });
 
 describe("placement rubric validation", () => {
-  it("accepts PDF, DOC, DOCX, XLS, XLSX up to 10 MB", () => {
+  it("accepts PDF, DOC, DOCX, XLS, XLSX up to RUBRIC_MAX_BYTES (4 MB)", () => {
+    assert.equal(RUBRIC_MAX_BYTES, 4 * MB);
     assert.deepEqual(
       validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, 1 * MB),
       { ok: true }
@@ -279,15 +282,15 @@ describe("placement rubric validation", () => {
       { ok: true }
     );
     assert.deepEqual(
-      validateRubricUpload("rubric.DOCX", RUBRIC_MIME_BY_EXTENSION.docx, 5 * MB),
+      validateRubricUpload("rubric.DOCX", RUBRIC_MIME_BY_EXTENSION.docx, 3 * MB),
       { ok: true }
     );
     assert.deepEqual(
-      validateRubricUpload("rubric.xls", RUBRIC_MIME_BY_EXTENSION.xls, 3 * MB),
+      validateRubricUpload("rubric.xls", RUBRIC_MIME_BY_EXTENSION.xls, 2 * MB),
       { ok: true }
     );
     assert.deepEqual(
-      validateRubricUpload("rubric.XLSX", RUBRIC_MIME_BY_EXTENSION.xlsx, 10 * MB),
+      validateRubricUpload("rubric.XLSX", RUBRIC_MIME_BY_EXTENSION.xlsx, RUBRIC_MAX_BYTES),
       { ok: true }
     );
   });
@@ -302,10 +305,35 @@ describe("placement rubric validation", () => {
     assert.equal(validateRubricUpload("", "application/pdf", 1 * MB).ok, false);
   });
 
-  it("rejects files over 10 MB and empty (0-byte) files", () => {
-    assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, 10 * MB + 1).ok, false);
+  it("rejects files over RUBRIC_MAX_BYTES (4 MB) and empty (0-byte) files", () => {
+    assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, RUBRIC_MAX_BYTES + 1).ok, false);
     assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, 0).ok, false);
     assert.equal(validateRubricUpload("rubric.docx", RUBRIC_MIME_BY_EXTENSION.docx, -10).ok, false);
+  });
+
+  it("validates real magic-byte signatures for PDF, DOCX, XLSX, DOC and XLS, and rejects mismatched files", () => {
+    const validPdf = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]); // "%PDF-1.7"
+    const validZip = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00]); // "PK\x03\x04..."
+    const validOle2 = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00]); // OLE2 header
+    const plainText = new TextEncoder().encode("Hello world, this is plain text");
+
+    // Valid signatures pass
+    assert.deepEqual(validateRubricSignature("rubric.pdf", validPdf), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.docx", validZip), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.xlsx", validZip), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.doc", validOle2), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.xls", validOle2), { ok: true });
+
+    // A text file renamed .pdf fails
+    assert.equal(validateRubricSignature("rubric.pdf", plainText).ok, false);
+
+    // A .docx (ZIP) renamed .pdf fails
+    assert.equal(validateRubricSignature("rubric.pdf", validZip).ok, false);
+
+    // Cross-format mismatches and empty bytes fail
+    assert.equal(validateRubricSignature("rubric.docx", validPdf).ok, false);
+    assert.equal(validateRubricSignature("rubric.doc", validZip).ok, false);
+    assert.equal(validateRubricSignature("rubric.pdf", new Uint8Array(0)).ok, false);
   });
 
   it("sanitizes stored rubric file names safely", () => {
