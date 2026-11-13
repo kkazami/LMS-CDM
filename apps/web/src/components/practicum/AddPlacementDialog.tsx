@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { FileText, Loader2, Search, UploadCloud, X } from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { StudentPickerOption } from "@/lib/practicum/dto";
+import {
+  RUBRIC_EXTENSIONS,
+  RUBRIC_MIME_BY_EXTENSION,
+  formatBytes,
+  getExtension,
+  validateRubricUpload,
+  type RubricExtension,
+} from "@/lib/practicum/rules";
 import { practicumFetch } from "./shared";
 
 interface AddPlacementDialogProps {
@@ -41,7 +49,42 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
   const [schoolYear, setSchoolYear] = useState(suggestedSchoolYear);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [rubricFile, setRubricFile] = useState<File | null>(null);
+  const [rubricError, setRubricError] = useState<string | null>(null);
+  const [draggingRubric, setDraggingRubric] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const rubricInputRef = useRef<HTMLInputElement>(null);
+
+  const rubricAcceptAttr = RUBRIC_EXTENSIONS.map((ext) => `.${ext}`).join(",");
+
+  function handleSelectedRubric(picked: File | null) {
+    setRubricError(null);
+    if (!picked) {
+      setRubricFile(null);
+      return;
+    }
+    const ext = getExtension(picked.name) as RubricExtension;
+    const rawMime = (picked.type || "").trim().toLowerCase().split(";")[0];
+    const effectiveMime =
+      !rawMime || rawMime === "application/octet-stream"
+        ? RUBRIC_MIME_BY_EXTENSION[ext] ?? rawMime
+        : rawMime;
+
+    const check = validateRubricUpload(picked.name, effectiveMime || null, picked.size);
+    if (!check.ok) {
+      setRubricFile(null);
+      setRubricError(check.reason);
+      if (rubricInputRef.current) rubricInputRef.current.value = "";
+      return;
+    }
+    setRubricFile(picked);
+  }
+
+  function removeSelectedRubric() {
+    setRubricFile(null);
+    setRubricError(null);
+    if (rubricInputRef.current) rubricInputRef.current.value = "";
+  }
 
   // Debounced search against real ITE students (id and name only).
   useEffect(() => {
@@ -88,21 +131,46 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
       setError("End date must be on or after the start date.");
       return;
     }
+    if (rubricError) {
+      setError(rubricError);
+      return;
+    }
 
     setSaving(true);
     try {
-      await practicumFetch("/api/practicum/placements", {
-        method: "POST",
-        body: JSON.stringify({
-          studentId: student.id,
-          schoolName,
-          subject,
-          gradeLevel,
-          schoolYear,
-          startDate,
-          endDate,
-        }),
-      });
+      if (rubricFile) {
+        const formData = new FormData();
+        formData.append("studentId", student.id);
+        formData.append("schoolName", schoolName);
+        formData.append("subject", subject);
+        formData.append("gradeLevel", gradeLevel);
+        formData.append("schoolYear", schoolYear);
+        formData.append("startDate", startDate);
+        formData.append("endDate", endDate);
+        formData.append("rubric", rubricFile);
+
+        const response = await fetch("/api/practicum/placements", {
+          method: "POST",
+          body: formData,
+        });
+        const payload = (await response.json().catch(() => ({}))) as { message?: string };
+        if (!response.ok) {
+          throw new Error(payload.message ?? "Could not add the placement.");
+        }
+      } else {
+        await practicumFetch("/api/practicum/placements", {
+          method: "POST",
+          body: JSON.stringify({
+            studentId: student.id,
+            schoolName,
+            subject,
+            gradeLevel,
+            schoolYear,
+            startDate,
+            endDate,
+          }),
+        });
+      }
       toast.success("Placement added", `${student.name} can now submit practicum work.`);
       onCreated();
     } catch (err) {
@@ -137,115 +205,192 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
           </button>
         </div>
 
-        <form onSubmit={submit} className="space-y-4 overflow-y-auto px-5 py-4">
-          {/* Student picker */}
-          <div>
-            <span className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">Student teacher</span>
-            {student ? (
-              <div className="flex items-center justify-between rounded-xl border border-slate-300 px-3 py-2 dark:border-white/15">
-                <span className="text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{student.name}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStudent(null);
-                    setQuery("");
-                  }}
-                  className="cursor-pointer text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  Change
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="relative">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-[#94A3B8]"
-                    aria-hidden="true"
-                  />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className={`${inputClass} pl-9`}
-                    placeholder="Search ITE students by name"
-                    aria-label="Search ITE students by name"
-                    autoComplete="off"
-                  />
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <div className="space-y-4 overflow-y-auto px-5 py-4">
+            {/* Student picker */}
+            <div>
+              <span className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">Student teacher</span>
+              {student ? (
+                <div className="flex items-center justify-between rounded-xl border border-slate-300 px-3 py-2 dark:border-white/15">
+                  <span className="text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{student.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStudent(null);
+                      setQuery("");
+                    }}
+                    className="cursor-pointer text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    Change
+                  </button>
                 </div>
-                <ul
-                  aria-label="Matching students"
-                  className="mt-2 max-h-44 overflow-y-auto rounded-xl border border-slate-200 dark:border-white/10"
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-[#94A3B8]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className={`${inputClass} pl-9`}
+                      placeholder="Search ITE students by name"
+                      aria-label="Search ITE students by name"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <ul
+                    aria-label="Matching students"
+                    className="mt-2 max-h-44 overflow-y-auto rounded-xl border border-slate-200 dark:border-white/10"
+                  >
+                    {searching && (
+                      <li className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-[#94A3B8]">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Searching…
+                      </li>
+                    )}
+                    {!searching && options.length === 0 && (
+                      <li className="px-3 py-2 text-sm text-slate-600 dark:text-[#94A3B8]">No ITE students found.</li>
+                    )}
+                    {options.map((option) => (
+                      <li key={option.id}>
+                        <button
+                          type="button"
+                          onClick={() => setStudent(option)}
+                          className="w-full cursor-pointer px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-50 dark:text-[#F0F2F8] dark:hover:bg-white/5"
+                        >
+                          {option.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label htmlFor="pl-school" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  School name
+                </label>
+                <input id="pl-school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className={inputClass} maxLength={200} required />
+              </div>
+              <div>
+                <label htmlFor="pl-subject" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  Subject
+                </label>
+                <input id="pl-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} maxLength={120} required />
+              </div>
+              <div>
+                <label htmlFor="pl-grade" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  Grade level
+                </label>
+                <input id="pl-grade" value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} className={inputClass} maxLength={60} required />
+              </div>
+              <div>
+                <label htmlFor="pl-year" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  School year
+                </label>
+                <input id="pl-year" value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} className={inputClass} pattern="\d{4}-\d{4}" placeholder="2025-2026" required />
+              </div>
+              <div className="hidden sm:block" />
+              <div>
+                <label htmlFor="pl-start" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  Start date
+                </label>
+                <input id="pl-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+              </div>
+              <div>
+                <label htmlFor="pl-end" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                  End date
+                </label>
+                <input id="pl-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+              </div>
+            </div>
+
+            {/* Rubric file (optional) */}
+            <div>
+              <label htmlFor="pl-rubric" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                Rubric file <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>
+              </label>
+
+              {rubricFile ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 dark:border-white/15 dark:bg-[#1E2132]">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <FileText className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{rubricFile.name}</p>
+                      <p className="text-xs text-slate-600 dark:text-[#94A3B8]">{formatBytes(rubricFile.size)}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeSelectedRubric}
+                    disabled={saving}
+                    className="shrink-0 cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:border-white/15 dark:bg-[#141721] dark:text-[#F0F2F8] dark:hover:bg-white/10"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="pl-rubric"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (!saving) setDraggingRubric(true);
+                  }}
+                  onDragLeave={() => setDraggingRubric(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDraggingRubric(false);
+                    if (saving) return;
+                    const dropped = e.dataTransfer.files?.[0] ?? null;
+                    handleSelectedRubric(dropped);
+                  }}
+                  className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-dashed px-4 py-3.5 text-center transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
+                    draggingRubric
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-slate-300 bg-white hover:bg-slate-50 dark:border-white/15 dark:bg-[#1E2132] dark:hover:bg-white/5"
+                  }`}
                 >
-                  {searching && (
-                    <li className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-[#94A3B8]">
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Searching…
-                    </li>
-                  )}
-                  {!searching && options.length === 0 && (
-                    <li className="px-3 py-2 text-sm text-slate-600 dark:text-[#94A3B8]">No ITE students found.</li>
-                  )}
-                  {options.map((option) => (
-                    <li key={option.id}>
-                      <button
-                        type="button"
-                        onClick={() => setStudent(option)}
-                        className="w-full cursor-pointer px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-50 dark:text-[#F0F2F8] dark:hover:bg-white/5"
-                      >
-                        {option.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
+                  <UploadCloud className="h-5 w-5 text-slate-500 dark:text-[#94A3B8]" aria-hidden="true" />
+                  <span className="text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                    Choose a rubric file or drag and drop
+                  </span>
+                  <span className="text-xs text-slate-600 dark:text-[#94A3B8]">
+                    PDF, DOC, DOCX, XLS, XLSX · up to 10 MB
+                  </span>
+                </label>
+              )}
+
+              <input
+                ref={rubricInputRef}
+                id="pl-rubric"
+                type="file"
+                accept={rubricAcceptAttr}
+                onChange={(e) => handleSelectedRubric(e.target.files?.[0] ?? null)}
+                disabled={saving}
+                className="sr-only"
+              />
+
+              {rubricError && (
+                <p
+                  role="alert"
+                  className="mt-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-300"
+                >
+                  {rubricError}
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                {error}
+              </p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label htmlFor="pl-school" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                School name
-              </label>
-              <input id="pl-school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className={inputClass} maxLength={200} required />
-            </div>
-            <div>
-              <label htmlFor="pl-subject" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Subject
-              </label>
-              <input id="pl-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} maxLength={120} required />
-            </div>
-            <div>
-              <label htmlFor="pl-grade" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Grade level
-              </label>
-              <input id="pl-grade" value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} className={inputClass} maxLength={60} required />
-            </div>
-            <div>
-              <label htmlFor="pl-year" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                School year
-              </label>
-              <input id="pl-year" value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} className={inputClass} pattern="\d{4}-\d{4}" placeholder="2025-2026" required />
-            </div>
-            <div className="hidden sm:block" />
-            <div>
-              <label htmlFor="pl-start" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Start date
-              </label>
-              <input id="pl-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
-            </div>
-            <div>
-              <label htmlFor="pl-end" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                End date
-              </label>
-              <input id="pl-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
-            </div>
-          </div>
-
-          {error && (
-            <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
-              {error}
-            </p>
-          )}
-
-          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-200 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#141721] sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={requestClose}

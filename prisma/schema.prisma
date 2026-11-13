@@ -516,10 +516,11 @@ model User {
   riskAssessments RiskAssessment[] @relation("RiskAssessmentStudent")
 
   // ─── ITE Practicum relations ───
-  practicumPlacements PracticumPlacement[] @relation("PracticumStudent")
-  practicumSupervised PracticumPlacement[] @relation("PracticumSupervisor")
-  practicumFeedback   PracticumFeedback[]        @relation("PracticumFeedbackAuthor")
-  practicumFiles      PracticumLessonPlanFile[]  @relation("PracticumUploadedBy")
+  practicumPlacements      PracticumPlacement[]       @relation("PracticumStudent")
+  practicumSupervised      PracticumPlacement[]       @relation("PracticumSupervisor")
+  practicumRubricsUploaded PracticumPlacement[]       @relation("PracticumPlacementRubricUploader")
+  practicumFeedback        PracticumFeedback[]        @relation("PracticumFeedbackAuthor")
+  practicumFiles           PracticumLessonPlanFile[]  @relation("PracticumUploadedBy")
 
   // ─── ITE Focus Mode relations ───
   focusSessions FocusSession[]
@@ -1963,9 +1964,17 @@ model PracticumPlacement {
   status       PracticumPlacementStatus @default(ACTIVE)
   createdAt    DateTime                 @default(now())
 
-  student     User                  @relation("PracticumStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  supervisor  User                  @relation("PracticumSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
-  submissions PracticumSubmission[]
+  rubricStorageKey   String?
+  rubricFileName     String?
+  rubricMimeType     String?
+  rubricFileSize     Int?
+  rubricUploadedAt   DateTime?
+  rubricUploadedById String?
+
+  student          User                  @relation("PracticumStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor       User                  @relation("PracticumSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  rubricUploadedBy User?                 @relation("PracticumPlacementRubricUploader", fields: [rubricUploadedById], references: [id], onDelete: SetNull)
+  submissions      PracticumSubmission[]
 
   @@unique([studentId, schoolYear])
   @@index([supervisorId, status])

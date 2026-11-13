@@ -3,16 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, ChevronDown, GraduationCap, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronDown, FileText, GraduationCap, Loader2, MapPin, Pencil } from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import type { PlacementDTO, SubmissionDTO } from "@/lib/practicum/dto";
 import {
   SUBMISSION_TYPES,
   SUBMISSION_TYPE_LABELS,
+  formatBytes,
   statusAfterFeedback,
   type FeedbackDecision,
 } from "@/lib/practicum/rules";
+import EditPlacementDialog from "./EditPlacementDialog";
 import FeedbackThread from "./FeedbackThread";
 import { PlacementStatusBadge, SubmissionStatusBadge } from "./StatusBadges";
 import SubmissionPreview from "./SubmissionPreview";
@@ -232,6 +234,7 @@ export default function PlacementDetailClient({
   const router = useRouter();
   const [confirmStatus, setConfirmStatus] = useState<"COMPLETED" | "ACTIVE" | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   async function changeStatus(status: "COMPLETED" | "ACTIVE") {
     setUpdating(true);
@@ -272,8 +275,16 @@ export default function PlacementDetailClient({
               {placement.studentName}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <PlacementStatusBadge status={placement.status} />
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-white/15 dark:text-[#F0F2F8] dark:hover:bg-white/5"
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Edit placement
+            </button>
             {placement.status === "ACTIVE" ? (
               <button
                 type="button"
@@ -322,6 +333,26 @@ export default function PlacementDetailClient({
           </div>
         </dl>
 
+        {placement.rubricUrl && placement.rubricFileName && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <a
+              href={placement.rubricUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+            >
+              <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="font-semibold">Rubric:</span>
+              <span className="truncate">{placement.rubricFileName}</span>
+              {placement.rubricFileSize ? (
+                <span className="text-blue-600/80 dark:text-blue-300/80">
+                  ({formatBytes(placement.rubricFileSize)})
+                </span>
+              ) : null}
+            </a>
+          </div>
+        )}
+
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {SUBMISSION_TYPES.map((type) => {
             const s = placement.summary[type];
@@ -369,6 +400,17 @@ export default function PlacementDetailClient({
           </section>
         );
       })}
+
+      {editing && (
+        <EditPlacementDialog
+          placement={placement}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {confirmStatus && (
         <ConfirmDialog

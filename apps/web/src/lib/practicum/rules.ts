@@ -40,6 +40,8 @@ export const MIME_BY_EXTENSION: Record<string, string> = {
   pdf: "application/pdf",
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ppt: "application/vnd.ms-powerpoint",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   png: "image/png",
@@ -50,10 +52,26 @@ export const MIME_BY_EXTENSION: Record<string, string> = {
   mov: "video/quicktime",
 };
 
+export const RUBRIC_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx"] as const;
+export type RubricExtension = (typeof RUBRIC_EXTENSIONS)[number];
+
+export const RUBRIC_MIME_BY_EXTENSION: Record<RubricExtension, string> = {
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+};
+
 export interface UploadRule {
   extensions: readonly string[];
   maxBytes: number;
 }
+
+export const RUBRIC_UPLOAD_RULE: UploadRule = {
+  extensions: RUBRIC_EXTENSIONS,
+  maxBytes: 10 * MB,
+};
 
 export const UPLOAD_RULES: Record<SubmissionType, UploadRule> = {
   LESSON_PLAN: { extensions: ["pdf", "doc", "docx", "ppt", "pptx"], maxBytes: getMaxUploadMb() * MB },
@@ -111,6 +129,65 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < MB) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / MB).toFixed(1)} MB`;
+}
+
+/**
+ * Sanitizes a rubric file name for safe storage and Content-Disposition headers.
+ * Strips directory paths, control characters, and unsafe symbols while keeping the extension.
+ */
+export function sanitizeRubricFileName(fileName: string): string {
+  const base = (fileName.split(/[\\/]/).pop() ?? "")
+    .replace(/[\x00-\x1f\x7f]/g, "")
+    .trim();
+  const ext = getExtension(base);
+  const stemRaw = ext ? base.slice(0, -(ext.length + 1)) : base;
+  const cleanStem = stemRaw
+    .replace(/[^A-Za-z0-9._ -]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/^[._\s]+|[._\s]+$/g, "")
+    .slice(0, 150);
+  const safeStem = cleanStem || "rubric";
+  return ext ? `${safeStem}.${ext}` : safeStem;
+}
+
+/**
+ * Validates a placement rubric file (extension, MIME type, non-empty size <= 10 MB).
+ * Allowed types: PDF, DOC, DOCX, XLS, XLSX. Max size: 10 MB.
+ */
+export function validateRubricUpload(
+  fileName: string,
+  contentType?: string | null,
+  sizeBytes?: number | null
+): RuleCheck {
+  const allowedLabel = RUBRIC_EXTENSIONS.map((e) => e.toUpperCase()).join(", ");
+  const trimmedName = (fileName ?? "").trim();
+  if (!trimmedName) {
+    return { ok: false, reason: `Choose a valid rubric file (${allowedLabel}).` };
+  }
+
+  const ext = getExtension(trimmedName);
+  if (!ext || !(RUBRIC_EXTENSIONS as readonly string[]).includes(ext)) {
+    return { ok: false, reason: `Invalid file type. Allowed types: ${allowedLabel}.` };
+  }
+
+  const expectedMime = RUBRIC_MIME_BY_EXTENSION[ext as RubricExtension];
+  if (contentType !== undefined && contentType !== null && contentType.trim() !== "") {
+    const normalizedMime = contentType.trim().toLowerCase().split(";")[0];
+    if (normalizedMime !== expectedMime) {
+      return { ok: false, reason: `Invalid file type. Allowed types: ${allowedLabel}.` };
+    }
+  }
+
+  if (sizeBytes !== undefined && sizeBytes !== null) {
+    if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+      return { ok: false, reason: "The file is empty." };
+    }
+    if (sizeBytes > RUBRIC_UPLOAD_RULE.maxBytes) {
+      return { ok: false, reason: "File too large (max 10 MB)." };
+    }
+  }
+
+  return { ok: true };
 }
 
 // ─── Blob URL / pathname checks ────────────────────────────────────────────
@@ -257,6 +334,53 @@ export function placementRoleFor(
   if (role === "STUDENT" && user.id === placement.studentId) return "student";
   if (role === "INSTRUCTOR" && user.id === placement.supervisorId) return "supervisor";
   return null;
+}
+
+export type RubricAccessRole = "supervisor" | "admin" | "student";
+
+/**
+ * Who can upload, replace or remove a placement's rubric:
+ * - The ITE instructor who owns/supervises the placement (`supervisorId`)
+ * - Any ITE admin (`ADMIN`)
+ * Everyone else (students, other instructors, non-ITE users) is denied.
+ */
+export function canManagePlacementRubric(
+  user: { id: string; role: string; isIte?: boolean },
+  placement: { supervisorId: string }
+): boolean {
+  if (user.isIte === false) return false;
+  if (!user.id) return false;
+  const role = normalizeRole(user.role);
+  if (role === "ADMIN") return true;
+  if (role === "INSTRUCTOR" && user.id === placement.supervisorId) return true;
+  return false;
+}
+
+/**
+ * Determines how a user may view/download a placement's rubric:
+ * - The instructor who owns the placement (`supervisor`)
+ * - ITE admins (`admin`)
+ * - The student teacher assigned to that placement (`student`)
+ * Everyone else gets null (403 Forbidden).
+ */
+export function placementRubricAccessFor(
+  user: { id: string; role: string; isIte?: boolean },
+  placement: { studentId: string; supervisorId: string }
+): RubricAccessRole | null {
+  if (user.isIte === false) return null;
+  if (!user.id) return null;
+  const role = normalizeRole(user.role);
+  if (role === "ADMIN") return "admin";
+  if (role === "INSTRUCTOR" && user.id === placement.supervisorId) return "supervisor";
+  if (role === "STUDENT" && user.id === placement.studentId) return "student";
+  return null;
+}
+
+export function canViewPlacementRubric(
+  user: { id: string; role: string; isIte?: boolean },
+  placement: { studentId: string; supervisorId: string }
+): boolean {
+  return placementRubricAccessFor(user, placement) !== null;
 }
 
 // ─── Progress summaries ────────────────────────────────────────────────────
