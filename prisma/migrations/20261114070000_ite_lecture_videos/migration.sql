@@ -70,3 +70,15 @@ ALTER TABLE "IteLectureVideoProgress" ADD CONSTRAINT "IteLectureVideoProgress_le
 
 -- AddForeignKey
 ALTER TABLE "IteLectureVideoProgress" ADD CONSTRAINT "IteLectureVideoProgress_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Grant runtime table privileges to restricted application role when present
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'lms_web_runtime_v1') THEN
+    EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
+      public."IteLectureVideo",
+      public."IteLectureVideoProgress"
+    TO lms_web_runtime_v1';
+  END IF;
+END $$;
+
