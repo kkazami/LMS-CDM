@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
@@ -39,6 +40,7 @@ type ActiveTab = 'leaderboard' | 'badges';
 type BadgeCategoryFilter = 'ALL' | 'LEARNING' | 'STREAK' | 'EXCELLENCE' | 'LEVEL' | 'SPECIAL';
 
 export default function StudentLeaderboardScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -1019,7 +1021,7 @@ export default function StudentLeaderboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   screenInner: {
     flex: 1,
   },
@@ -1280,4 +1282,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     paddingHorizontal: 16,
   },
+});
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  badgeCard: { borderRadius: 22 },
+  badgeStatsCard: { borderRadius: 22 },
+  leaderboardRow: { borderRadius: 22 },
+  selfRankCard: { borderRadius: 22 },
+  categoryPill: { minHeight: 48, paddingHorizontal: 16 },
+  badgeTitle: { fontSize: 16, lineHeight: 24 },
+  rowName: { fontSize: 16, lineHeight: 24 },
+  screenInner: { width: '100%', maxWidth: 900, alignSelf: 'center' },
 });

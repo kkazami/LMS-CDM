@@ -38,5 +38,5 @@ export default async function KnowledgeExchangeLayout({
     redirect(`/${institute}`);
   }
 
-  return <>{children}</>;
+  return <div data-knowledge-exchange>{children}</div>;
 }

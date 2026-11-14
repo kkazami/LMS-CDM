@@ -56,6 +56,7 @@ export interface CourseGradesResponse {
 export interface ApiClientConfig {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
+  createUploadBody?: (uri: string, name: string, mimeType: string) => Promise<FormData>;
   timeoutMs?: number;
   onUnauthorized?: (token: string) => void;
   onRequestComplete?: (measurement: { path: string; durationMs: number; bytes: number; status: number }) => void;
@@ -73,9 +74,10 @@ interface GradebookPayload {
 export function createApiClient(config: ApiClientConfig) {
   const { baseUrl, getToken } = config;
 
-  async function request<T>(path: string, options: RequestInit = {}, timeoutMs = config.timeoutMs ?? 30000, rawText = false): Promise<T> {
+  async function request<T>(path: string, options: RequestInit = {}, timeoutMs = config.timeoutMs ?? 30000, rawText = false, expectedToken?: string | null): Promise<T> {
     const startedAt = Date.now();
     const requestToken = getToken ? await getToken() : null;
+    if (expectedToken !== undefined && requestToken !== expectedToken) throw new ApiClientError(0, 'Sign-in changed. Choose the file again.');
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: Record<string, string> = {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -194,6 +196,14 @@ export function createApiClient(config: ApiClientConfig) {
     },
 
     courses: {
+      updateCoverImages: (courseId: string, images: { coverImage?: string | null; mobileCoverImage?: string | null }) =>
+        request<{ coverImage?: string | null; mobileCoverImage?: string | null }>(`/api/courses/${encodeURIComponent(courseId)}`, {
+          method: 'PATCH', body: JSON.stringify(images),
+        }),
+      updateCover: (courseId: string, coverImage: string | null) =>
+        request<{ coverImage: string | null }>(`/api/courses/${encodeURIComponent(courseId)}`, {
+          method: 'PATCH', body: JSON.stringify({ coverImage }),
+        }),
       joinWithCode: (code: string) => request<{ courseId: string; redirectTo: string }>('/api/student/join-class', { method: 'POST', body: JSON.stringify({ code }) }),
       list: (instituteCode: string) =>
         request<{ courses: Course[] }>(`/api/courses?institute=${instituteCode}`),
@@ -520,17 +530,17 @@ export function createApiClient(config: ApiClientConfig) {
 
     upload: {
       file: async (fileUri: string, fileName: string, mimeType: string) => {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: fileUri,
-          name: fileName,
-          type: mimeType,
-        } as any);
+        const uploadToken = getToken ? await getToken() : null;
+        const formData = config.createUploadBody
+          ? await config.createUploadBody(fileUri, fileName, mimeType)
+          : new FormData();
+        if (!config.createUploadBody) formData.append('file', { uri: fileUri, name: fileName, type: mimeType } as any);
+        if (getToken && uploadToken !== await getToken()) throw new ApiClientError(0, 'Sign-in changed. Choose the file again.');
 
         return request<{ url: string; fileName: string; fileSize: number }>('/api/upload', {
           method: 'POST',
           body: formData,
-        }, 300000);
+        }, 300000, false, uploadToken);
       },
     },
 

@@ -1,5 +1,6 @@
+import { Text } from './Text';
 import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '../common/Button';
 import { useTheme } from '../../hooks/useTheme';
 

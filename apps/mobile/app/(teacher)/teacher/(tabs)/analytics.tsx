@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -64,6 +65,7 @@ interface ImportPreviewData {
 }
 
 export default function TeacherAnalyticsScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -1351,7 +1353,7 @@ export default function TeacherAnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   scrollContent: {
     paddingTop: 6,
   },
@@ -1575,4 +1577,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   commitBtnText: {},
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  distributionCard: { borderRadius: 22 },
+  kpiCard: { borderRadius: 22 },
+  matrixCard: { borderRadius: 22 },
+  pickerContainer: { borderRadius: 22 },
+  reviewModalContainer: { borderRadius: 22 },
+  coursePill: { minHeight: 48, paddingHorizontal: 16 },
+  actionBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  modalTitle: { fontSize: 16, lineHeight: 24 },
 });

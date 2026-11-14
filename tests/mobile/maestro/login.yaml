@@ -1,0 +1,13 @@
+appId: com.lumina.lms
+---
+- launchApp:
+    clearState: true
+- tapOn: "Email or Student ID"
+- inputText: "${EMAIL}"
+- tapOn: "Password"
+- inputText: "SyntheticPassword1"
+- hideKeyboard
+- tapOn: "I agree to the Terms and Conditions and acknowledge the Privacy Policy"
+- tapOn: "Sign In"
+- assertVisible:
+    id: "ics-dashboard-v2"

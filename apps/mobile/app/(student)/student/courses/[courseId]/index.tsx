@@ -1,11 +1,16 @@
+import { useIcsStyles } from '../../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../../src/components/ui/Text';
 import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
+import { CourseMeetingLinks } from '../../../../../src/components/institute/CourseMeetingLinks';
+import { HeaderIconButton } from '../../../../../src/components/ui/AppHeader';
+import { ScreenHeaderContainer } from '../../../../../src/components/common/ScreenWrapper';
+import { isIcsUser } from '../../../../../src/lib/ite-eligibility';
 import { getOnPrimaryColor } from '../../../../../src/lib/design-system';
 import { markUsefulContent, beginUsefulContent } from '../../../../../src/lib/performance';
 import { PagedContent } from '../../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -25,6 +30,7 @@ import {
   FileUp,
   Image as ImageIcon,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -55,6 +61,7 @@ import type {
 type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'ATTENDANCE' | 'GRADES';
 
 export default function StudentCourseHubScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const { courseId, tab } = useLocalSearchParams<{ courseId: string; tab?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
@@ -167,7 +174,16 @@ export default function StudentCourseHubScreen() {
       contentContainerStyle={styles.screenInner}
     >
       {/* Course Banner Topbar */}
-      <AppHeader
+      {isIcsUser(user) ? <ScreenHeaderContainer backgroundColor={theme.colors.background} style={styles.courseHeader}>
+        <View style={styles.courseHeaderRow} testID="course-page-header">
+          <HeaderIconButton accessibilityLabel="Go back" onPress={() => router.back()}><ArrowLeft size={20} color={theme.colors.text} /></HeaderIconButton>
+          <View style={styles.courseHeaderText}>
+            <Text style={[styles.courseHeaderCode, { color: theme.isDark ? '#FFAE79' : '#B84400' }]}>{course?.code || course?.courseCode || 'COURSE'}{course?.section ? ` · ${course.section}` : ''}</Text>
+            <Text accessibilityRole="header" style={[styles.courseHeaderTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>{course?.title || 'Course Hub'}</Text>
+            <Text style={[styles.courseHeaderInstructor, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>Instructor: {course?.instructorName || 'Faculty Instructor'}</Text>
+          </View>
+        </View>
+      </ScreenHeaderContainer> : <AppHeader
         showBack
         title={course?.title || 'Course Hub'}
         subtitle={`Instructor: ${course?.instructorName || 'Faculty Instructor'}`}
@@ -177,14 +193,10 @@ export default function StudentCourseHubScreen() {
             {course?.section ? <Badge label={course.section} variant="default" size="sm" /> : null}
           </View>
         }
-      />
-
-      {user?.institute.code.toLowerCase() === 'ics' && course && (
-        <Button title="Practical Labs" variant="outline" style={{ margin: 16 }} onPress={() => router.push({ pathname: '/student/practical-labs', params: { courseId } })} />
-      )}
+      />}
 
       {/* Course navigation */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }}>
       <View
         style={[
           styles.tabBar,
@@ -481,6 +493,7 @@ export default function StudentCourseHubScreen() {
                       >
                         {ann.content}
                       </Text>
+                      <CourseMeetingLinks content={ann.content} />
                     </View>
                   )}</PagedContent>
                 )}
@@ -1125,7 +1138,13 @@ export default function StudentCourseHubScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
+  courseHeader: { paddingHorizontal: 16, paddingBottom: 14, borderBottomWidth: 0 },
+  courseHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  courseHeaderText: { flex: 1, minWidth: 0, gap: 4 },
+  courseHeaderCode: { fontSize: 11, lineHeight: 16, fontWeight: '600' },
+  courseHeaderTitle: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
+  courseHeaderInstructor: { fontSize: 12, lineHeight: 18 },
   screenInner: {
     paddingBottom: 40,
   },
@@ -1195,6 +1214,8 @@ const styles = StyleSheet.create({
   annContent: {},
   filterScrollView: {
     flexDirection: 'row',
+    flexGrow: 0,
+    flexShrink: 0,
   },
   filterPill: {
     borderWidth: 1,
@@ -1408,4 +1429,53 @@ const styles = StyleSheet.create({
   gradedNoticeText: {
     fontWeight: '600',
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  "filterScrollView": {
+    "flexGrow": 0,
+    "flexShrink": 0
+  },
+  "broadcastCard": {
+    "borderRadius": 22
+  },
+  "classworkCard": {
+    "borderRadius": 22
+  },
+  "courseGradeSummaryCard": {
+    "borderRadius": 22
+  },
+  "dropZone": {
+    "borderRadius": 22
+  },
+  "feedbackBox": {
+    "borderRadius": 22
+  },
+  "gradeItemCard": {
+    "borderRadius": 22
+  },
+  "personCard": {
+    "borderRadius": 22
+  },
+  "streamCard": {
+    "borderRadius": 22
+  },
+  "tabBtn": {
+    "minHeight": 48,
+    "paddingHorizontal": 16
+  },
+  "filterPill": {
+    "minHeight": 48,
+    "paddingHorizontal": 16
+  },
+  "classworkTitle": {
+    "fontSize": 16,
+    "lineHeight": 24
+  },
+  "screenInner": {
+    "width": "100%",
+    "maxWidth": 900,
+    "alignSelf": "center"
+  }
 });

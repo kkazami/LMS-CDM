@@ -1,0 +1,30 @@
+appId: com.lumina.lms
+---
+# Android: push tests/mobile/maestro/synthetic-answer.txt to /sdcard/Download first.
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: student@example.invalid
+- tapOn: "Courses tab"
+- tapOn: "Open course Programming Fundamentals and Problem Solving"
+- tapOn: "Classwork item Practice 2, ASSIGNMENT"
+- scrollUntilVisible:
+    element: "Attach Document"
+    direction: DOWN
+- tapOn: "Attach Document"
+- tapOn: "synthetic-answer.txt"
+- assertVisible: "synthetic-answer.txt"
+- stopApp
+- launchApp
+- tapOn: "Courses tab"
+- tapOn: "Open course Programming Fundamentals and Problem Solving"
+- tapOn: "Classwork item Practice 2, ASSIGNMENT"
+- scrollUntilVisible:
+    element: "synthetic-answer.txt"
+    direction: DOWN
+- assertVisible: "synthetic-answer.txt"
+- scrollUntilVisible:
+    element: "Turn In Assignment"
+    direction: DOWN
+- tapOn: "Turn In Assignment"
+- assertVisible: "Submitted"

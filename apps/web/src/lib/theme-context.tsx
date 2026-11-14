@@ -23,6 +23,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const activeTransition = useRef<ViewTransition | null>(null);
 
   useEffect(() => {
+    const syncNative = () => {
+      if (document.documentElement.dataset.nativeFeature !== 'true') return;
+      const mode = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      requestedMode.current = mode;
+      setThemeModeState(mode);
+    };
+    window.addEventListener('lms:native-ready', syncNative);
+    return () => window.removeEventListener('lms:native-ready', syncNative);
+  }, []);
+
+  useEffect(() => {
     try {
       const saved = (localStorage.getItem("cdm-theme-mode") ||
         localStorage.getItem("lumina-theme-mode")) as ThemeMode | null;
@@ -76,7 +87,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = (event?: React.MouseEvent<HTMLButtonElement>) => {
     const nextMode = requestedMode.current === "light" ? "dark" : "light";
     const root = document.documentElement;
-    if (typeof document.startViewTransition !== "function" || typeof root.animate !== "function"
+    if (root.dataset.nativeFeature === 'true' || typeof document.startViewTransition !== "function" || typeof root.animate !== "function"
       || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setThemeMode(nextMode);
       return;

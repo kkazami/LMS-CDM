@@ -1,9 +1,9 @@
+import { Text } from '../../../../../../src/components/ui/Text';
 import { studentScope, scopeIsCurrent } from '../../../../../../src/lib/student-scope';
 import { setCachedData, getCachedData } from '../../../../../../src/lib/offline-storage';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,

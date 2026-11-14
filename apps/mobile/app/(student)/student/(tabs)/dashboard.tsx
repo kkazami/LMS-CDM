@@ -1,3 +1,4 @@
+import { Text } from '../../../../src/components/ui/Text';
 import { ContinueLearning } from '../../../../src/components/institute/ContinueLearning';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
 import { useAlertsStore } from '../../../../src/stores/alerts-store';
@@ -7,7 +8,6 @@ import { SkeletonBlock, AppHeader, HeaderIconButton } from '../../../../src/comp
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,

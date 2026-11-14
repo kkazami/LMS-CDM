@@ -140,7 +140,7 @@ export async function readPrivateUpload(actor: CourseActor, id: string) {
       db.attachment.findMany({ where: { url, syllabusItem: { course: { instituteId: actor.instituteId } } }, select: { syllabusItemId: true, syllabusItem: { select: { courseId: true, targetGroups: { select: { group: { select: { members: { where: { studentId: actor.id }, select: { studentId: true } } } } } } } } }, take: 101 }),
       db.submissionAttachment.findMany({ where: { url, submission: { studentId: meta.ownerId, status: { in: ['SUBMITTED', 'RETURNED'] }, syllabusItem: { course: { instituteId: actor.instituteId } } } }, select: { submission: { select: { syllabusItem: { select: { courseId: true } } } } }, take: 101 }),
       db.user.findFirst({ where: { id: meta.ownerId, instituteId: actor.instituteId, avatarUrl: url, isActive: true }, select: { id: true } }),
-      db.course.findMany({ where: { coverImage: url, instituteId: actor.instituteId }, select: { id: true }, take: 101 }),
+      db.course.findMany({ where: { OR: [{ coverImage: url }, { mobileCoverImage: url }], instituteId: actor.instituteId }, select: { id: true }, take: 101 }),
       db.formAttemptAnswer.findMany({ where: { fileUrl: url, attempt: { userId: meta.ownerId, status: { not: 'IN_PROGRESS' }, form: { course: { instituteId: actor.instituteId } } } }, select: { attempt: { select: { form: { select: { courseId: true } } } } }, take: 101 }),
     ]);
     if ([content, submissions, covers, answers].some(rows => rows.length > 100)) throw new AccessError(503, 'File references require reconciliation.');

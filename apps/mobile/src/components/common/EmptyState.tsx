@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { LucideIcon } from 'lucide-react-native';
 import { Button } from './Button';

@@ -833,3 +833,69 @@ button:active:not(:disabled),
   padding-left: 0 !important;
 }
 
+/* Fullscreen keeps the original editor mounted, including its selection/draft. */
+[data-editor-fullscreen="true"] {
+  position: fixed !important;
+  inset: var(--editor-top, 0px) 0 auto !important;
+  height: var(--editor-height, 100dvh) !important;
+  width: 100% !important;
+  z-index: 1000;
+}
+[data-editor-fullscreen="true"] > :not([data-editor-fullscreen-toolbar]):not([data-codelab-panels]) { display: none !important; }
+[data-editor-fullscreen="true"] [data-codelab-panels] { display: flex !important; }
+[data-editor-fullscreen="true"] [data-codelab-panels] > :not([data-codelab-editor]) { display: none !important; }
+[data-editor-fullscreen="true"] [data-codelab-editor] { display: flex !important; width: 100%; }
+/* Short landscape windows must still reach results below the action chrome. */
+@media (max-height: 600px) {
+  [data-editor-fullscreen="false"] { overflow-y: auto; }
+  [data-editor-fullscreen="false"] [data-codelab-panels] { flex-shrink: 0; min-height: 240px; }
+}
+html[data-native-feature="true"] [data-knowledge-exchange] :is(button, select) { min-width: 48px; min-height: 48px; }
+html[data-native-feature="true"] [data-kx-navigation] a { min-height: 48px; display: inline-flex; align-items: center; }
+html[data-native-feature="true"] [data-kx-comment] .group\/bubble > :last-child { opacity: 1; }
+html[data-native-feature="true"] [data-codelab-workspace] :is(button, select, header a) { min-height: 48px; }
+html[data-native-feature="true"] [data-codelab-workspace] button { min-width: 48px; }
+
+@media (max-width: 639px) {
+  [data-knowledge-exchange] { min-width: 0; overflow-wrap: anywhere; }
+  [data-kx-navigation] { display: block; padding-block: 0; }
+  [data-kx-navigation] > div { flex-wrap: nowrap; overflow-x: auto; gap: 16px; align-items: center; scrollbar-width: thin; }
+  [data-kx-navigation] a { display: inline-flex; flex-shrink: 0; align-items: center; min-height: 48px; white-space: nowrap; gap: 6px; }
+  [data-kx-navigation] > div:empty { display: none; }
+  [data-kx-filters] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  [data-kx-filters] > :first-child { min-width: 0; width: 100%; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+  [data-kx-filters] button { min-height: 48px; flex-shrink: 0; }
+  [data-kx-filters] > :last-child { margin-left: 0; justify-self: end; }
+  [data-kx-card-footer] { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  [data-kx-card-footer] > :first-child { grid-column: 1; grid-row: 2; }
+  [data-kx-card-footer] > :last-child { display: contents; }
+  [data-kx-card-footer] > :last-child > span { grid-column: 2; grid-row: 2; white-space: nowrap; }
+  [data-kx-card-footer] > :last-child > div { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+  [data-kx-detail] > .rounded-2xl { padding: 16px; }
+  [data-kx-author-actions] { align-items: flex-start; gap: 12px; }
+  [data-kx-author-actions] > :last-child { display: flex; width: 100%; gap: 4px 16px; }
+  [data-kx-author-actions] > :last-child > :is(a, button) { min-height: 48px; display: inline-flex; align-items: center; white-space: nowrap; }
+  [data-kx-post-body] > [data-kx-vote] { flex-direction: row; gap: 8px; align-self: flex-start; }
+  [data-kx-post-body] > [data-kx-vote] > span { padding: 0; min-width: 24px; }
+  [data-kx-comment] { min-width: 0; gap: 8px; }
+  [data-kx-comment] > :last-child { min-width: 0; flex: 1; }
+  [data-kx-comment] button { flex-shrink: 0; }
+  [data-kx-comment-actions] { padding-left: 0; gap: 4px 8px; }
+  [data-kx-comment] .group\/bubble { min-width: 0; max-width: 100%; }
+  [data-kx-comment] .group\/bubble { position: relative; display: block; width: 100%; }
+  [data-kx-comment] .group\/bubble > :first-child { width: 100%; }
+  [data-kx-comment] .group\/bubble > :first-child > :first-child { padding-right: 36px; }
+  [data-kx-comment] .group\/bubble > :last-child { position: absolute; top: 0; right: 0; padding-top: 0; }
+  [data-kx-comment] .group\/bubble > :last-child > div { left: auto; right: 0; }
+  [data-kx-editor-footer] { flex-wrap: wrap; gap: 4px 12px; }
+  [data-kx-editor-footer] > :last-child { white-space: nowrap; margin-left: auto; }
+  [data-kx-anonymous-toggle] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  [data-kx-anonymous-toggle] > :first-child,
+  [data-kx-anonymous-toggle] > :first-child > :last-child { display: contents; }
+  [data-kx-anonymous-toggle] > :first-child > :first-child { display: none; }
+  [data-kx-anonymous-toggle] p { grid-column: 1 / -1; grid-row: 2; }
+  [data-kx-anonymous-toggle] > button { grid-column: 2; grid-row: 1; }
+  [data-knowledge-exchange] :is(input, textarea, select) { font-size: 16px; }
+  html[data-native-feature="true"] [data-kx-feed] > :first-child h1 { display: none; }
+  html[data-native-feature="true"] [data-kx-feed] > :first-child { padding-bottom: 16px; }
+}

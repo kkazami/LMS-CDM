@@ -427,7 +427,7 @@ export default function KxRichTextEditor({
       )}
 
       {/* Footer info */}
-      <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 bg-slate-50/40 dark:bg-white/[0.01] px-4 py-2 text-[11px] text-slate-400 dark:text-slate-500">
+      <div data-kx-editor-footer className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 bg-slate-50/40 dark:bg-white/[0.01] px-4 py-2 text-[11px] text-slate-400 dark:text-slate-500">
         <span>Markdown, LaTeX ($...$), Code blocks, and Image attachments supported</span>
         <span>{value.length} characters</span>
       </div>

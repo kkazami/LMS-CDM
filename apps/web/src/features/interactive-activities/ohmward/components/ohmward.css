@@ -162,3 +162,19 @@
 .ohm-analytics-filters { align-items: flex-end; }
 .ohm-analytics-filters > .ohm-field { margin-bottom: 0; }
 .ohm-analytics-filters > [role=status] { flex-basis: 100%; margin: 0; }
+
+/* Embedded Expo workspaces keep the same lessons, with phone-sized controls. */
+html[data-native-feature=true] .ohmward { --action-bg: var(--institute-accent, #FF7517); --action-ink: #17202B; min-width: 0; width: 100%; overflow-wrap: anywhere; }
+html[data-native-feature=true] .ohmward :is(button, .ohm-button, input, select) { min-height: 48px; }
+html[data-native-feature=true] .ohmward :is(input, textarea, select) { font-size: 16px; }
+html[data-native-feature=true] .ohm-flow-canvas { overscroll-behavior: contain; }
+html[data-native-feature=true] .ohm-mark h1,
+html[data-native-feature=true] .ohm-mark-icon { display: none; }
+html[data-native-feature=true] .ohm-mark { gap: 0; }
+html[data-native-feature=true] .ohm-mark p { margin-top: 0; }
+html[data-native-feature=true] .ohm-banner { padding-top: 0; padding-bottom: 20px; gap: 12px; }
+@media(max-width:639px) {
+  .ohm-module-row { grid-template-columns: 32px minmax(0,1fr); }
+  .ohmward :is(.ohm-surface, .ohm-field, .ohm-editor-fields > *, .ohm-sensor-layout > *) { min-width: 0; }
+  .ohmward .ohm-button { max-width: 100%; white-space: normal; text-align: center; }
+}

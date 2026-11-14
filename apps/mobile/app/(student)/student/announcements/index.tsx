@@ -1,13 +1,13 @@
+import { TextInput } from '../../../../src/components/ui/TextInput';
+import { Text } from '../../../../src/components/ui/Text';
 import { PagedContent } from '../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {

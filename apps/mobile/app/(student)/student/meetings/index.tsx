@@ -1,7 +1,7 @@
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,

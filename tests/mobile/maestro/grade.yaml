@@ -1,0 +1,19 @@
+appId: com.lumina.lms
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: teacher@example.invalid
+- tapOn:
+    id: ics-queue-grading
+- tapOn: "Open gradebook for Programming Fundamentals and Problem Solving"
+- tapOn: "Grade Jamie Student on Practice 2"
+- assertVisible: "Grade Submission"
+- tapOn: "Score (Max 100)"
+- inputText: "88"
+- tapOn: "Private Feedback (Optional)"
+- inputText: "Synthetic grading feedback."
+- hideKeyboard
+- tapOn: "Return Grade & Notify Student"
+- assertNotVisible: "Grade Submission"
+- assertVisible: "88"

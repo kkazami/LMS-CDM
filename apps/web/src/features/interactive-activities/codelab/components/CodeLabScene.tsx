@@ -6,6 +6,7 @@ import Link from "next/link";
 import { marked } from "marked";
 import { CodeEditor } from "./CodeEditor";
 import HTMLPreviewEditor from "./HTMLPreviewEditor";
+import { useEditorFullscreen } from './useEditorFullscreen';
 import { ResizeDivider } from "./ResizeDivider";
 import {
   useCodeLabStore,
@@ -104,6 +105,7 @@ export default function CodeLabScene({
   executionMethod = "judge0",
   htmlTemplate = "",
 }: CodeLabSceneProps) {
+  const editor = useEditorFullscreen();
   const nativeOwner = useNativeDraftOwner();
   const initialize = useCodeLabStore((s) => s.initialize);
   const updateCode = useCodeLabStore((s) => s.updateCode);
@@ -624,7 +626,12 @@ export default function CodeLabScene({
   const langLabel = LANGUAGE_LABELS[fixedLanguage] || fixedLanguage;
 
   return (
-    <div className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+    <div ref={editor.root} data-editor-fullscreen={editor.fullscreen} className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+      <div data-editor-fullscreen-toolbar className="flex shrink-0 items-center justify-end border-b border-slate-200 bg-white px-3 dark:border-white/10 dark:bg-[#141721]">
+        <button ref={editor.trigger} type="button" aria-pressed={editor.fullscreen} className="min-h-12 rounded-lg px-3 text-sm font-semibold text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-orange-600" onClick={() => { setMobilePanel('editor'); editor.setFullscreen(value => !value); }}>
+          {editor.fullscreen ? 'Exit full screen' : 'Enter full screen'}
+        </button>
+      </div>
       {useCodeLabStore.getState().draftKey && <p role="status" className="px-4 py-2 text-sm text-slate-700 dark:text-slate-200">{useCodeLabStore.getState().draftSaveError ? 'Draft could not save on this device. Keep this screen open until you can submit.' : 'Code saved on this device · use Submit to send your work.'}</p>}
       {/* ──── Academic Integrity / Rejection Warning Modal ──── */}
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(

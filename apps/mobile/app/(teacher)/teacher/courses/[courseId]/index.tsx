@@ -1,14 +1,17 @@
+import { useIcsStyles } from '../../../../../src/hooks/useIcsStyles';
+import { CourseMeetingLinks } from '../../../../../src/components/institute/CourseMeetingLinks';
+import { useMobilePresentation } from '../../../../../src/components/presentation/MobilePresentation';
+import { TextInput } from '../../../../../src/components/ui/TextInput';
+import { Text } from '../../../../../src/components/ui/Text';
 import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
   Modal,
   Alert,
   Platform,
@@ -82,6 +85,8 @@ interface GradebookData {
 }
 
 export default function TeacherCourseDetailScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
+  const { isIcsV2 } = useMobilePresentation();
   const { courseId, initialTab } = useLocalSearchParams<{ courseId: string; initialTab?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
@@ -613,8 +618,8 @@ export default function TeacherCourseDetailScreen() {
               styles.backBtn,
               {
                 borderColor: theme.colors.border,
-                width: s(32),
-                height: s(32),
+                width: isIcsV2 ? 48 : s(32),
+                height: isIcsV2 ? 48 : s(32),
                 borderRadius: s(16),
               },
             ]}
@@ -661,7 +666,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'STREAM' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('STREAM')}
@@ -687,7 +692,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'CLASSWORK' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('CLASSWORK')}
@@ -713,7 +718,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'BROADCAST' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'BROADCAST' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('BROADCAST')}
@@ -739,7 +744,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'FORMS' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'FORMS' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('FORMS')}
@@ -765,7 +770,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'GRADEBOOK' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'GRADEBOOK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('GRADEBOOK')}
@@ -791,7 +796,7 @@ export default function TeacherCourseDetailScreen() {
             accessibilityState={{ selected: activeTab === 'PEOPLE' }}
             style={[
               styles.tabBtn,
-              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+              { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
               activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
             ]}
             onPress={() => setActiveTab('PEOPLE')}
@@ -819,7 +824,7 @@ export default function TeacherCourseDetailScreen() {
               accessibilityState={{ selected: activeTab === 'PARTICIPATION' }}
               style={[
                 styles.tabBtn,
-                { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: s(36) },
+                { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) },
                 activeTab === 'PARTICIPATION' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
               ]}
               onPress={() => setActiveTab('PARTICIPATION')}
@@ -842,9 +847,6 @@ export default function TeacherCourseDetailScreen() {
           )}
         </ScrollView>
       </ScreenHeaderContainer>
-      {user?.institute.code.toLowerCase() === 'ics' && course && (
-        <Button title="Practical Labs" variant="outline" style={{ marginHorizontal: 16, marginVertical: 8 }} onPress={() => router.push({ pathname: '/teacher/practical-labs', params: { courseId } })} />
-      )}
 
       {/* Main Tab Content */}
       <ScrollView
@@ -975,6 +977,7 @@ export default function TeacherCourseDetailScreen() {
                         <Text style={[styles.annContent, { color: theme.colors.text }]}>
                           {ann.content}
                         </Text>
+                        <CourseMeetingLinks content={ann.content} />
                       </View>
                     );
                   })
@@ -2135,7 +2138,7 @@ export default function TeacherCourseDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
@@ -2696,4 +2699,60 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  "cwCard": {
+    "borderRadius": 22
+  },
+  "kpiCard": {
+    "borderRadius": 22
+  },
+  "modalCard": {
+    "borderRadius": 22
+  },
+  "pendingCard": {
+    "borderRadius": 22
+  },
+  "postCard": {
+    "borderRadius": 22
+  },
+  "responseRowCard": {
+    "borderRadius": 22
+  },
+  "rosterCard": {
+    "borderRadius": 22
+  },
+  "streamCard": {
+    "borderRadius": 22
+  },
+  "tabBtn": {
+    "minHeight": 48,
+    "paddingHorizontal": 16
+  },
+  "typeBtn": {
+    "minHeight": 48,
+    "paddingHorizontal": 16
+  },
+  "backBtn": {
+    "minWidth": 48,
+    "minHeight": 48,
+    "alignItems": "center",
+    "justifyContent": "center"
+  },
+  "actionIconBtn": {
+    "minWidth": 48,
+    "minHeight": 48,
+    "alignItems": "center",
+    "justifyContent": "center"
+  },
+  "cwTitle": {
+    "fontSize": 16,
+    "lineHeight": 24
+  },
+  "modalTitle": {
+    "fontSize": 16,
+    "lineHeight": 24
+  }
 });

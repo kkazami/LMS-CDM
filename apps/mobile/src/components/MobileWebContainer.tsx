@@ -1,5 +1,6 @@
+import { Text } from './ui/Text';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, BackHandler, Platform, Linking } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, BackHandler, Platform, Linking } from 'react-native';
 import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';

@@ -91,7 +91,7 @@ export default function KxVoteButton({
   const iconClasses = size === "sm" ? "h-4 w-4" : "h-5 w-5";
 
   return (
-    <div
+    <div data-kx-vote={orientation}
       className={`flex items-center select-none ${
         isVertical
           ? "flex-col self-start shrink-0 justify-center rounded-xl bg-slate-100/70 dark:bg-white/5 p-1 border border-slate-200/60 dark:border-white/5"

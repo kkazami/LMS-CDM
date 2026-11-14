@@ -53,7 +53,7 @@ async function authStore(fetcher:typeof fetch, saved = true) {
   if(!bundledStore) bundledStore=(await build({entryPoints:['apps/mobile/src/stores/auth-store.ts'],bundle:true,write:false,format:'cjs',platform:'node',
     define:{'process.env.NODE_ENV':'"production"','__DEV__':'true'},
     alias:{'react-native':path.resolve('tmp/mobile-stability/react-native.cjs'),'expo-secure-store':path.resolve('tmp/mobile-stability/secure-store.cjs'),
-      'expo-constants':path.resolve('tmp/mobile-stability/expo-constants.cjs')},
+      'expo-constants':path.resolve('tmp/mobile-stability/expo-constants.cjs'),'expo-file-system':path.resolve('tmp/mobile-stability/file-system.cjs')},
     plugins:[{name:'notification-boundary',setup(b:any){b.onResolve({filter:/^\.\.\/lib\/notifications$/},()=>({path:path.resolve('tmp/mobile-stability/notifications.cjs')}));}}],
   })).outputFiles[0].text;
   const user={id:'synthetic',name:'Test Student',role:'STUDENT',institute:{code:'ics',name:'ICS'}};
@@ -73,6 +73,7 @@ fs.writeFileSync('tmp/mobile-stability/react-native.cjs',"exports.Platform={OS:'
 fs.writeFileSync('tmp/mobile-stability/secure-store.cjs',"exports.getItemAsync=exports.setItemAsync=exports.deleteItemAsync=()=>{throw Error('Native storage called on web');};");
 fs.writeFileSync('tmp/mobile-stability/expo-constants.cjs',"exports.default={expoConfig:{}};");
 fs.writeFileSync('tmp/mobile-stability/notifications.cjs',"exports.registerForPushNotificationsAsync=async()=>{};");
+fs.writeFileSync('tmp/mobile-stability/file-system.cjs',"exports.File=class {constructor(){throw Error('Native file called on web');}};");
 
 test('setup checks explain missing configuration without connecting to a database or printing credentials', () => {
   const root=fs.mkdtempSync(path.resolve('tmp/mobile-stability/setup-'));

@@ -1,5 +1,7 @@
+import { TextInput } from '../ui/TextInput';
+import { Text } from '../ui/Text';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 import type { AttendanceMode, CreateAttendanceSession } from '@lms/types';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from '../common/Button';

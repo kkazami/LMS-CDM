@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useEffect, useState } from "react";
-import { Text, type StyleProp, type TextStyle } from "react-native";
+import { type StyleProp, type TextStyle } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
 export function TypingText({

@@ -304,7 +304,7 @@ export default function KxPostDetail({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 pb-12">
+    <div data-kx-detail className="max-w-4xl mx-auto space-y-4 pb-12">
       {/* Back to Feed Button */}
       <div>
         <Link
@@ -424,7 +424,7 @@ export default function KxPostDetail({
         </h1>
 
         {/* Author Bar */}
-        <div className="flex items-center justify-between flex-wrap gap-4 pt-1 border-t border-slate-100 dark:border-white/5">
+        <div data-kx-author-actions className="flex items-center justify-between flex-wrap gap-4 pt-1 border-t border-slate-100 dark:border-white/5">
           <KxUserCard
             author={post.author}
             createdAt={post.createdAt}
@@ -476,7 +476,7 @@ export default function KxPostDetail({
         </div>
 
         {/* Body with Voting column */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-start pt-2">
+        <div data-kx-post-body className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-start pt-2">
           {/* Voting */}
           <KxVoteButton
             initialVoteCount={post.voteCount}

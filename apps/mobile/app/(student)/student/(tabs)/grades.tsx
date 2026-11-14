@@ -1,8 +1,9 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import { PagedContent } from '../../../../src/components/ui/PagedContent';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -67,6 +68,7 @@ function formatDate(iso: string): string {
 }
 
 export default function StudentGradesScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -1271,7 +1273,7 @@ export default function StudentGradesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   topHeader: {
     borderBottomWidth: 1,
   },
@@ -1747,4 +1749,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  chartCard: { borderRadius: 22 },
+  gradeRowCard: { borderRadius: 22 },
+  gwaRadialCard: { borderRadius: 22 },
+  milestonesCard: { borderRadius: 22 },
+  modalSheet: { borderRadius: 22 },
+  subjectProgressCard: { borderRadius: 22 },
+  subTabButton: { minHeight: 48, paddingHorizontal: 16 },
+  modalCloseBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  gradeRowTitle: { fontSize: 16, lineHeight: 24 },
+  modalTitle: { fontSize: 16, lineHeight: 24 },
 });

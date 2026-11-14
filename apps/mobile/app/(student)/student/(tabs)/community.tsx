@@ -1,5 +1,5 @@
+import { Text } from '../../../../src/components/ui/Text';
 import React from 'react';
-import { Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, AppHeader } from '../../../../src/components/ui';
 import { Button } from '../../../../src/components/common/Button';

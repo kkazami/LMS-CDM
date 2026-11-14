@@ -78,7 +78,12 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [nativeFeature, setNativeFeature] = useState<boolean | null>(null);
-  useEffect(() => { setNativeFeature(document.documentElement.dataset.nativeFeature === 'true'); }, []);
+  useEffect(() => {
+    const sync = () => setNativeFeature(document.documentElement.dataset.nativeFeature === 'true');
+    sync();
+    window.addEventListener('lms:native-ready', sync);
+    return () => window.removeEventListener('lms:native-ready', sync);
+  }, []);
 
   useEffect(() => {
     const prev = document.body.getAttribute("data-institute");

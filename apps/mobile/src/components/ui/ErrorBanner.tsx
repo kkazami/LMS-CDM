@@ -1,7 +1,7 @@
+import { Text } from './Text';
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   StyleProp,
@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { AlertCircle, RotateCcw, X } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
+import { useAnnouncement } from '../../hooks/useAnnouncement';
 import { useResponsive } from '../../hooks/useResponsive';
 import { radius, spacing } from '../../lib/theme';
 import { TOUCH_TARGET } from '../../lib/typography';
@@ -39,6 +41,8 @@ export function ErrorBanner({
   dismissAccessibilityLabel = 'Dismiss error',
 }: ErrorBannerProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
+  useAnnouncement(message, isIcsV2);
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   return (

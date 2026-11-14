@@ -27,13 +27,14 @@ export default function KxFilterBar({
   ];
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
+    <div data-kx-filters className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
       {/* Tabs */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
+            aria-pressed={activeTab === tab.key}
             onClick={() => onTabChange(tab.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === tab.key
@@ -50,6 +51,7 @@ export default function KxFilterBar({
       <div className="flex items-center gap-1.5 ml-auto text-xs">
         <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
         <select
+          aria-label="Sort questions"
           value={activeSort}
           onChange={(e) => onSortChange(e.target.value as SortOption)}
           className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#151924] px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none focus:ring-2 focus:ring-orange-500/20 cursor-pointer"

@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import type { MobileDashboard, LmsCalendarEvent } from '@lms/types';

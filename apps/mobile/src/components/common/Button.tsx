@@ -1,6 +1,8 @@
+import { Text } from '../ui/Text';
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { TouchableOpacity, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 import { LucideIcon } from 'lucide-react-native';
 import { getOnPrimaryColor } from '../../lib/design-system';
 
@@ -30,6 +32,7 @@ export function Button({
   textColor: explicitTextColor,
 }: ButtonProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
 
   const getContainerStyle = (): ViewStyle => {
     switch (variant) {
@@ -64,6 +67,7 @@ export function Button({
   const containerStyle = [
     styles.container,
     getContainerStyle(),
+    isIcsV2 && { borderRadius: 999, paddingHorizontal: 20, minHeight: 48 },
     disabled && styles.disabledContainer,
     style,
   ];

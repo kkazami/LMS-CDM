@@ -1,5 +1,6 @@
+import { Text } from '../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { LmsCalendarEvent } from '@lms/types';
 import { Screen, AppHeader, ErrorBanner, SkeletonBlock } from '../../../src/components/ui';
