@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
@@ -38,6 +39,7 @@ import { getCachedData, setCachedData } from '../../../../src/lib/offline-storag
 import type { TaskItem } from '@lms/types';
 
 export default function StudentTasksScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -566,7 +568,7 @@ export default function StudentTasksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   screenInner: {
     flex: 1,
   },
@@ -658,4 +660,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   prioBtnText: {},
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  taskCard: { borderRadius: 22 },
+  filterTab: { minHeight: 48, paddingHorizontal: 16 },
+  prioBtn: { minHeight: 48, paddingHorizontal: 16 },
+  deleteBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  checkboxTouch: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  taskTitle: { fontSize: 16, lineHeight: 24 },
+  screenInner: { width: '100%', maxWidth: 900, alignSelf: 'center' },
 });

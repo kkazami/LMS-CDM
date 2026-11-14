@@ -1,12 +1,13 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { TextInput } from '../../../../src/components/ui/TextInput';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  TextInput,
   Modal,
   Alert,
   ActivityIndicator,
@@ -66,6 +67,7 @@ const BROADCAST_CATEGORIES = [
 ];
 
 export default function TeacherAlertsScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -1097,7 +1099,7 @@ export default function TeacherAlertsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
@@ -1473,4 +1475,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  broadcastCard: { borderRadius: 22 },
+  modalCard: { borderRadius: 22 },
+  pickerModalSheet: { borderRadius: 22 },
+  studentPickerCard: { borderRadius: 22 },
+  coursePill: { minHeight: 48, paddingHorizontal: 16 },
+  categoryBtn: { minHeight: 48, paddingHorizontal: 16 },
+  scopeTabBtn: { minHeight: 48, paddingHorizontal: 16 },
+  pickerModalCloseBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  modalTitle: { fontSize: 16, lineHeight: 24 },
 });

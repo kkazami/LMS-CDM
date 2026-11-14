@@ -8,6 +8,7 @@ import { mobileFeaturePath } from '../../apps/web/src/lib/mobile-feature-path';
 
 test('ICS entry points preserve the course, assignment and discussion being opened', () => {
   assert.equal(icsFeaturePath('codelab'), '/ics/activities/codelab');
+  assert.equal(icsFeaturePath('ohmward'), '/ics/activities/ohmward');
   assert.equal(icsFeaturePath('knowledge-exchange', undefined, undefined, 'post_123'), '/ics/knowledge-exchange/post/post_123');
   assert.equal(icsFeaturePath('practical-labs', 'course_123'), '/ics/courses/course_123/labs');
   assert.equal(icsFeaturePath('practical-labs', 'course_123', 'lab_123'), '/ics/courses/course_123/labs/lab_123');
@@ -25,10 +26,10 @@ test('workspace navigation never trusts a lookalike host, another port or anothe
 });
 
 test('session bootstrap only redirects into existing ICS feature routes', () => {
-  for (const value of ['/ics/activities/codelab', '/ics/activities/codelab/python/1', '/ics/activities/codelab/instructor', '/ics/knowledge-exchange/ask', '/ics/knowledge-exchange/post/post_123', '/ics/courses/course_123/labs/lab_123?attemptId=attempt_123']) {
+  for (const value of ['/ics/activities/ohmward', '/ics/activities/ohmward/primer', '/ics/activities/ohmward/modules/circuitry', '/ics/activities/ohmward/levels/CIR-01', '/ics/activities/ohmward/sandbox', '/ics/activities/ohmward/progress', '/ics/activities/ohmward/instructor/students/student_123', '/ics/activities/codelab', '/ics/activities/codelab/python/1', '/ics/activities/codelab/instructor', '/ics/knowledge-exchange/ask', '/ics/knowledge-exchange/post/post_123', '/ics/courses/course_123/labs/lab_123?attemptId=attempt_123']) {
     assert.equal(mobileFeaturePath(value), value);
   }
-  for (const value of [null, '//evil.invalid/ics', 'https://evil.invalid', '/ibe/knowledge-exchange', '/ics/../ibe/knowledge-exchange', '/ics/activities/codelab/../../courses', '/ics/activities/codelab%2f..', '/ics/courses/course/labs/../../../admin', '/ics/knowledge-exchange\\@evil.invalid', '/api/auth/logout', '/ics/courses/course/gradebook']) {
+  for (const value of [null, '/ics/activities/ohmward/unknown', '/ics/activities/ohmward/levels/../../instructor', '/ics/activities/ohmward/instructor/students/a/permissions', '//evil.invalid/ics', 'https://evil.invalid', '/ibe/knowledge-exchange', '/ics/../ibe/knowledge-exchange', '/ics/activities/codelab/../../courses', '/ics/activities/codelab%2f..', '/ics/courses/course/labs/../../../admin', '/ics/knowledge-exchange\\@evil.invalid', '/api/auth/logout', '/ics/courses/course/gradebook']) {
     assert.equal(mobileFeaturePath(value), null);
   }
 });

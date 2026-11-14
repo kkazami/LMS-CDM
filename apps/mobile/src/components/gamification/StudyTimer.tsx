@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/auth-store';
 import { typography } from '../../lib/typography';

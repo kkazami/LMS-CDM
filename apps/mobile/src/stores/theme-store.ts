@@ -4,8 +4,6 @@ import { Appearance } from 'react-native';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ThemeOrigin = { x: number; y: number };
-let transition: ((origin?: ThemeOrigin) => Promise<void>) | null = null;
-export function registerThemeTransition(handler: typeof transition) { transition = handler; }
 
 interface ThemeState {
   themePreference: ThemePreference;
@@ -16,6 +14,7 @@ interface ThemeState {
 }
 
 const THEME_PREF_KEY = 'lumina_theme_pref';
+let preferenceWrite = Promise.resolve();
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   themePreference: 'system',
@@ -37,22 +36,13 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const systemDark = Appearance.getColorScheme() === 'dark';
     const isDark = pref === 'system' ? systemDark : pref === 'dark';
     set({ themePreference: pref, isDark });
-    try {
-      await storage.setItem(THEME_PREF_KEY, pref);
-    } catch {
-      // Fallback
-    }
+    // Rapid toggles paint immediately but persist in order, so a slower earlier
+    // write cannot restore the wrong preference on the next launch.
+    preferenceWrite = preferenceWrite.then(() => storage.setItem(THEME_PREF_KEY, pref)).catch(() => {});
+    await preferenceWrite;
   },
 
-  toggleTheme: async (origin) => {
-    if (transition) return transition(origin);
-    const nextDark = !get().isDark;
-    const pref: ThemePreference = nextDark ? 'dark' : 'light';
-    set({ themePreference: pref, isDark: nextDark });
-    try {
-      await storage.setItem(THEME_PREF_KEY, pref);
-    } catch {
-      // Fallback
-    }
-  },
+  // Paint immediately; capturing the entire screen before changing theme caused
+  // a noticeable pause on Android and blocked subsequent taps.
+  toggleTheme: () => get().setThemePreference(get().isDark ? 'light' : 'dark'),
 }));

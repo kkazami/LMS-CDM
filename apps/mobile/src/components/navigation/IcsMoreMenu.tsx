@@ -1,17 +1,21 @@
+import { Text } from '../ui/Text';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Archive, BarChart2, CheckSquare, ChevronRight, Code2, FlaskConical, Layers, LogOut, MessageSquare, Moon, Network, Sun, Trophy, UserRound, X } from 'lucide-react-native';
+import { Archive, BarChart2, CheckSquare, ChevronRight, Code2, CircuitBoard, FlaskConical, Layers, LogOut, MessageSquare, Moon, Network, Sun, Trophy, UserRound, X } from 'lucide-react-native';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 import { useAuthStore } from '../../stores/auth-store';
 import { useThemeStore } from '../../stores/theme-store';
 import { useTheme } from '../../hooks/useTheme';
 import { useReducedMotion } from '../../lib/design-system';
 import { ProfileEditModal } from '../profile/ProfileEditModal';
+import { IcsToolsMenu } from './IcsToolsMenu';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 
 export function IcsMoreMenu({ children, role, context: Context }: { children: React.ReactNode; role: 'STUDENT' | 'TEACHER'; context: React.Context<MoreMenuContextType> }) {
   const [isOpen, setOpen] = useState(false), [profile, setProfile] = useState(false);
+  const { isIcsV2 } = useMobilePresentation();
   const theme = useTheme(), router = useRouter(), insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const reduced = useReducedMotion();
@@ -20,7 +24,9 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
   const teacher = role === 'TEACHER';
   const base = teacher ? '/teacher' : '/student';
   const initials = (user?.name || 'ICS').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
+  const ohmward = { icon: CircuitBoard, title: 'Ohmward', description: 'Circuits, electronics & hands-on learning', route: `${base}/ohmward` };
   const items = teacher ? [
+    ohmward,
     { icon: Code2, title: 'CodeLab', description: 'Coding practice', route: `${base}/codelab` },
     { icon: BarChart2, title: 'CodeLab Analytics', description: 'Submissions and coding progress', route: `${base}/codelab?view=instructor` },
     { icon: MessageSquare, title: 'Knowledge Exchange', description: 'Questions & discussions', route: `${base}/knowledge-exchange` },
@@ -30,6 +36,7 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
     { icon: FlaskConical, title: 'Practical Labs', description: 'Assignments, evidence & feedback', route: `${base}/practical-labs` },
     { icon: Trophy, title: 'Leaderboard Manager', description: 'Manage seasons and rankings', route: `${base}/tools?tool=seasons` },
   ] : [
+    ohmward,
     { icon: Code2, title: 'CodeLab', description: 'Interactive coding labs', route: `${base}/codelab` },
     { icon: MessageSquare, title: 'Knowledge Exchange', description: 'Questions & discussions', route: `${base}/knowledge-exchange` },
     { icon: FlaskConical, title: 'Practical Labs', description: 'Practice with your courses', route: `${base}/practical-labs` },
@@ -39,6 +46,7 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
     { icon: Trophy, title: 'Achievements', description: 'Your learning milestones', route: `${base}/achievements` },
   ];
   function navigate(route: string) { setOpen(false); router.push(route as never); }
+  if (isIcsV2) return <IcsToolsMenu teacher={teacher} items={items} context={Context}>{children}</IcsToolsMenu>;
   return <Context.Provider value={{ isOpen, openMenu: () => setOpen(true), closeMenu: () => setOpen(false), toggleMenu: () => setOpen(value => !value) }}>
     {children}
     <Modal visible={isOpen} transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={() => setOpen(false)}>
@@ -66,7 +74,7 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
           </ScrollView>
           <View style={[styles.footer, { borderColor: theme.colors.border }]}>
             <Pressable accessibilityRole="button" style={[styles.signOut, { backgroundColor: theme.isDark ? '#401C29' : '#FFF1F2', borderColor: theme.isDark ? '#88334C' : '#FFB7C7' }]} onPress={() => { setOpen(false); void logout().then(() => router.replace('/(auth)/login')); }}>
-              <LogOut size={17} color={theme.isDark ? '#FDA4AF' : '#BE123C'} /><Text style={{ color: theme.isDark ? '#FDA4AF' : '#BE123C', fontSize: 14, fontWeight: '600' }}>Sign Out / Switch Account</Text>
+              <LogOut size={17} color={theme.isDark ? '#FDA4AF' : '#BE123C'} /><Text style={{ color: theme.isDark ? '#FDA4AF' : '#BE123C', fontSize: 14, fontWeight: '600' }}>Sign Out</Text>
             </Pressable>
           </View>
         </View>

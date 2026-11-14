@@ -1,3 +1,4 @@
+import { Text } from '../../../../../../src/components/ui/Text';
 import { useAssignmentUploads } from '../../../../../../src/hooks/useAssignmentUploads';
 import { API_BASE_URL } from '../../../../../../src/lib/constants';
 import { openSafeUrl } from '../../../../../../src/lib/open-link';
@@ -6,7 +7,6 @@ import { useAssignmentDraft } from '../../../../../../src/hooks/useAssignmentDra
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   RefreshControl,

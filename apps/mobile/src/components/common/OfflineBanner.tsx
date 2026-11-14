@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { WifiOff } from 'lucide-react-native';
 
@@ -35,7 +36,7 @@ export function OfflineBanner() {
       ]}
     >
       <WifiOff size={16} color="#92400E" />
-      <Text style={styles.text}>Offline — Showing cached academic data</Text>
+      <Text style={styles.text}>Offline â€” Showing cached academic data</Text>
     </Animated.View>
   );
 }

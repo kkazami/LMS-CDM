@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, HelpCircle, Layers, RotateCw, X, XCircle } from 'lucide-react-native';

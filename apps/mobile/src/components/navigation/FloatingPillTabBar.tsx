@@ -1,8 +1,8 @@
+import { Text } from '../ui/Text';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
-  Text,
   StyleSheet,
   Animated,
   Platform,

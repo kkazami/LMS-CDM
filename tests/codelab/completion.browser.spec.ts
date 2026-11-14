@@ -248,7 +248,8 @@ for (const viewport of [
       const bounds = (await button.boundingBox())!;
       expect(bounds.x).toBeGreaterThanOrEqual(0); expect(bounds.y).toBeGreaterThanOrEqual(56);
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width); expect(bounds.y + bounds.height).toBeLessThan(viewport.height - (viewport.width < 1024 ? 56 : 0));
-      expect(bounds.height).toBeGreaterThanOrEqual(44);
+      // Transformed completion surfaces can report 43.99998 for a 44px target.
+      expect(bounds.height).toBeGreaterThanOrEqual(44 - 0.01);
       expect(await button.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     }
     await withinViewport(run); await withinViewport(loading);

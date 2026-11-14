@@ -1,13 +1,14 @@
+import { Text } from './Text';
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ViewStyle,
   StyleProp,
 } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 import { useResponsive } from '../../hooks/useResponsive';
 import { radius, spacing } from '../../lib/theme';
 
@@ -43,6 +44,7 @@ export function Card({
   accessibilityLabel,
 }: CardProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
   const getBackgroundColor = () => {
@@ -65,6 +67,7 @@ export function Card({
           borderRadius: 16,
           shadowOpacity: theme.isDark ? 0.25 : 0.05,
         },
+        isIcsV2 && { borderRadius: 22, borderWidth: 0, shadowOpacity: theme.isDark ? 0 : 0.035, elevation: 1 },
         style,
       ]}
     >

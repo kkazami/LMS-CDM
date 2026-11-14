@@ -1,5 +1,6 @@
+import { Text } from '../components/ui/Text';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +18,7 @@ import { featureUrlIsTrusted, icsFeaturePath, type IcsFeature } from '../lib/ics
 import { PracticalLabsScreen } from './PracticalLabsScreen';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
-const TITLES: Record<IcsFeature, string> = { codelab: 'CodeLab', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
+const TITLES: Record<IcsFeature, string> = { codelab: 'CodeLab', ohmward: 'Ohmward', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
 
 export function IcsFeatureScreen({ feature }: { feature: IcsFeature }) {
   const { courseId, assignmentId, formId, postId, view } = useLocalSearchParams<{ courseId?: string; assignmentId?: string; formId?: string; postId?: string; view?: string }>();
@@ -40,6 +41,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
   const logout = useAuthStore(s => s.logout);
   const web = useRef<WebView>(null);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [editorFullscreen, setEditorFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -59,6 +61,11 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
   }
   const exitAction = useRef<'back' | 'close'>('close');
   function requestExit(action: 'back' | 'close') {
+    if (editorFullscreen) {
+      web.current?.injectJavaScript("window.dispatchEvent(new Event('lms:exit-editor-fullscreen')); true;");
+      setEditorFullscreen(false);
+      return;
+    }
     if (Platform.OS === 'web' || error || !allowed) { router.back(); return; }
     if (loading) {
       if (!ready.current) { router.back(); return; }
@@ -80,7 +87,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
       requestExit(canGoBack ? 'back' : 'close'); return true;
     });
     return () => listener.remove();
-  }, [canGoBack, error, loading, allowed]);
+  }, [canGoBack, error, loading, allowed, editorFullscreen]);
   useEffect(() => {
     if (Platform.OS === 'web' || !loading || !allowed) return;
     const timeout = setTimeout(() => { failed.current = true; setLoading(false); setError('This workspace is taking too long to load. Check your connection and try again.'); }, 30000);
@@ -112,9 +119,9 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
   useEffect(() => { web.current?.injectJavaScript(setup); }, [setup]);
 
   return <Screen maxWidth={0}>
-    <AppHeader title={title} titleNumberOfLines={2} showBack onBack={back} rightAction={
+    <View style={editorFullscreen && !error ? { display: 'none' } : undefined}><AppHeader title={title} titleNumberOfLines={2} showBack onBack={back} rightAction={
       <HeaderIconButton accessibilityLabel="Close workspace" onPress={() => requestExit('close')}><Text style={{ color: theme.colors.text, fontWeight: '600' }}>Done</Text></HeaderIconButton>
-    } />
+    } /></View>
     {!allowed || !hybridReady || error || feature === 'assessment' && (process.env.EXPO_PUBLIC_ICS_ASSESSMENTS_ENABLED === 'false' || isOffline && !ready.current) ? <View style={styles.state}>
       <Text accessibilityRole="header" style={[styles.stateTitle, { color: theme.colors.text }]}>{!allowed ? 'ICS workspace unavailable' : 'Unable to load workspace'}</Text>
       <Text accessibilityLiveRegion="polite" style={[styles.message, { color: theme.colors.textSecondary }]}>{!allowed ? 'Reconnect to verify your ICS sign-in and unlock this workspace. Saved drafts stay on this device.' : !hybridReady ? 'This workspace needs the updated web portal. Continue in your browser until the update is available.' : feature === 'assessment' && process.env.EXPO_PUBLIC_ICS_ASSESSMENTS_ENABLED === 'false' ? 'In-app assessments are temporarily unavailable. Continue in the web portal with your LMS sign-in.' : isOffline ? 'Assessments require a connection. Reconnect to resume the existing attempt; the server timer continues during interruptions.' : error}</Text>
@@ -126,7 +133,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
     </View> : Platform.OS === 'web' ? <View style={styles.state}>
       <Text style={[styles.message, { color: theme.colors.textSecondary }]}>Use the iOS or Android app for the in-app workspace. In this browser preview, continue in the web portal.</Text>
       <Button title={`Open ${title}`} onPress={() => { void openSafeUrl(`${API_BASE_URL}${path}`); }} />
-    </View> : <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+    </View> : <View style={{ flex: 1, paddingBottom: insets.bottom, paddingTop: editorFullscreen ? insets.top : 0 }}>
       <WebView key={attempt} ref={web} source={source}
         style={{ flex: 1, backgroundColor: theme.colors.background }}
         injectedJavaScriptBeforeContentLoaded={setup} injectedJavaScript={setup}
@@ -134,6 +141,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
           if (!featureUrlIsTrusted(event.nativeEvent.url, API_BASE_URL)) return;
           try {
             const message = JSON.parse(event.nativeEvent.data);
+            if (message.type === 'FEATURE_EDITOR_FULLSCREEN' && feature === 'codelab' && typeof message.fullscreen === 'boolean') { setEditorFullscreen(message.fullscreen); return; }
             if (message.type === 'FEATURE_AUTH_EXPIRED') { useAuthStore.getState().expireSession(); return; }
             if (message.type !== 'FEATURE_EXIT' || typeof message.safe !== 'boolean') return;
             const leave = () => { if (exitAction.current === 'back') web.current?.goBack(); else router.back(); };
@@ -144,6 +152,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
           } catch { /* Ignore messages outside the feature protocol. */ }
         }}
         onNavigationStateChange={state => {
+          if (state.url !== currentPage.current) setEditorFullscreen(false);
           currentPage.current = state.url;
           // Hide the session bootstrap from native Back history.
           setCanGoBack(state.canGoBack && state.url !== source.uri && ready.current);

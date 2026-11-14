@@ -1,4 +1,4 @@
-export type IcsFeature = 'codelab' | 'knowledge-exchange' | 'practical-labs' | 'assessment' | 'create-class' | 'archives' | 'organization' | 'seasons';
+export type IcsFeature = 'codelab' | 'ohmward' | 'knowledge-exchange' | 'practical-labs' | 'assessment' | 'create-class' | 'archives' | 'organization' | 'seasons';
 
 export function icsFeaturePath(feature: IcsFeature, courseId?: string, assignmentId?: string, postId?: string): string | null {
   const validId = (value?: string) => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
@@ -7,6 +7,7 @@ export function icsFeaturePath(feature: IcsFeature, courseId?: string, assignmen
   if (feature === 'organization') return '/ics/organization';
   if (feature === 'seasons') return '/ics/manage-leaderboard';
   if (feature === 'codelab') return '/ics/activities/codelab';
+  if (feature === 'ohmward') return '/ics/activities/ohmward';
   if (feature === 'knowledge-exchange') return validId(postId) ? `/ics/knowledge-exchange/post/${postId}` : '/ics/knowledge-exchange';
   if (feature === 'assessment') return validId(courseId) && validId(assignmentId) ? `/ics/courses/${courseId}/classwork/forms/${assignmentId}` : null;
   if (!validId(courseId) || assignmentId !== undefined && !validId(assignmentId)) return null;

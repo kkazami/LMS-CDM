@@ -1,11 +1,12 @@
 import React from 'react';
 import { useReducedMotion } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
+import { MobilePresentationProvider } from '../../../src/components/presentation/MobilePresentation';
 
 export default function StudentLayout() {
   const reducedMotion = useReducedMotion();
   return (
-    <Stack
+    <MobilePresentationProvider subtree="student"><Stack
       screenOptions={{
         headerShown: false,
         animation: reducedMotion ? 'fade' : 'slide_from_right',
@@ -19,6 +20,6 @@ export default function StudentLayout() {
       <Stack.Screen name="achievements/index" options={{ headerShown: false }} />
       <Stack.Screen name="meetings/index" options={{ headerShown: false }} />
       <Stack.Screen name="knowledge-exchange/index" options={{ headerShown: false, gestureEnabled: false }} />
-    </Stack>
+    </Stack></MobilePresentationProvider>
   );
 }

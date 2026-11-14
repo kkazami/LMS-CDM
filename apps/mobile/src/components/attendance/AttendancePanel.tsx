@@ -1,5 +1,7 @@
+import { TextInput } from '../ui/TextInput';
+import { Text } from '../ui/Text';
 import React, { useCallback, useRef, useState } from 'react';
-import { Alert, AppState, Image, Modal, Share, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, AppState, Image, Modal, Share, StyleSheet, Switch, View } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useFocusEffect } from 'expo-router';

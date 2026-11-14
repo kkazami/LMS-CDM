@@ -570,6 +570,7 @@ model Course {
   scheduleEndDate     DateTime?                  @db.Date
   description         String                     @default("")
   coverImage          String                     @default("")
+  mobileCoverImage    String?
   instructorId        String?
   instituteId         String
   isArchived          Boolean                    @default(false)

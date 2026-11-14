@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React, { useEffect, useRef } from 'react';
-import { AppState, Modal, StyleSheet, Text, View } from 'react-native';
+import { AppState, Modal, StyleSheet, View } from 'react-native';
 import { CameraView } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../common/Button';

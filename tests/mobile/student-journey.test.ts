@@ -34,6 +34,7 @@ test('account switching partitions disk data, clears memory and locks rather tha
   const fixture = { files: new Map(), storage: new Map(), nextUser: userA, unauthorized: false, clears: 0, unread: 4 };
   const app = await load(`export * from './apps/mobile/src/stores/auth-store'; export * from './apps/mobile/src/lib/offline-storage'; export * from './apps/mobile/src/lib/student-drafts';`, {
     zustand: zustandMock,
+    '../lib/upload-body': `export async function createUploadBody() { return new FormData(); }`,
     'expo-file-system/legacy': fileMock,
     'react-native': `export const Platform = { OS: 'android' };`,
     '../lib/storage': `export const storage = { getItem: async k => fixture.storage.get(k) ?? null, setItem: async (k,v) => fixture.storage.set(k,v), deleteItem: async k => fixture.storage.delete(k) };`,

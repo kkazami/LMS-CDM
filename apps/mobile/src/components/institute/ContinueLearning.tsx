@@ -1,5 +1,5 @@
+import { Text } from '../ui/Text';
 import React, { useCallback, useState } from 'react';
-import { Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';

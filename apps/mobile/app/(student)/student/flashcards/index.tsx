@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
@@ -36,6 +37,7 @@ import { getCachedData, setCachedData } from '../../../../src/lib/offline-storag
 import type { FlashcardDeck } from '@lms/types';
 
 export default function StudentFlashcardsListScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -460,7 +462,7 @@ export default function StudentFlashcardsListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   screenInner: {
     flex: 1,
   },
@@ -550,4 +552,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   selectedColorCircle: {},
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  deckCard: { borderRadius: 22 },
+  deckTitle: { fontSize: 16, lineHeight: 24 },
+  screenInner: { width: '100%', maxWidth: 900, alignSelf: 'center' },
 });

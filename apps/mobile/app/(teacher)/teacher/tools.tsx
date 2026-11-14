@@ -1,5 +1,5 @@
+import { Text } from '../../../src/components/ui/Text';
 import React from 'react';
-import { Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { IcsFeatureScreen } from '../../../src/screens/IcsFeatureScreen';
 import { AppHeader, Screen } from '../../../src/components/ui';

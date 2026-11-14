@@ -1,7 +1,7 @@
+import { Text } from '../ui/Text';
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,

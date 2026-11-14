@@ -18,7 +18,6 @@ import { studentReturnRoute } from '../src/lib/student-navigation';
 import { setCachedData } from '../src/lib/offline-storage';
 import { useAlertsStore } from '../src/stores/alerts-store';
 import { observeUsefulContent } from '../src/lib/performance';
-import { ThemeReveal } from '../src/components/motion/ThemeReveal';
 
 // Prevent splash from auto-hiding until we explicitly dismiss it
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -88,7 +87,6 @@ function RootLayout() {
             <OfflineNotice />
             <Slot />
             <Toaster />
-            <ThemeReveal />
           </View>
         </SafeAreaProvider>
       </QueryClientProvider>
