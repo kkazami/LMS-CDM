@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 260" role="img" aria-label="RJ45 modular crimping tool showing the 8P8C crimping slot, contact die teeth, built-in cutter, and ratchet handles">
+  <!-- Diagram Card Frame -->
+  <rect x="8" y="8" width="504" height="244" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+  <!-- Header Badge -->
+  <rect x="24" y="20" width="212" height="26" rx="6" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5" />
+  <text x="130" y="37" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#1e3a8a">
+    MODULAR CRIMPING TOOL
+  </text>
+
+  <!-- Steel Crimper Head (Left-Center) -->
+  <rect x="46" y="62" width="194" height="128" rx="12" fill="#334155" stroke="#0f172a" stroke-width="2.5" />
+
+  <!-- 8P8C (RJ45) Die Cavity inside Crimper Head -->
+  <rect x="74" y="82" width="96" height="58" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" />
+  <!-- Gold Die Teeth at top of 8P8C slot -->
+  <rect x="86" y="84" width="72" height="10" rx="2" fill="#eab308" stroke="#a16207" stroke-width="1.2" />
+  <text x="122" y="112" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#0f172a">
+    8P8C (RJ45)
+  </text>
+  <text x="122" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9.5" font-weight="700" fill="#1d4ed8">
+    Crimp Die Slot
+  </text>
+
+  <!-- Built-in Cutter/Stripper Blade Section -->
+  <rect x="184" y="92" width="38" height="72" rx="4" fill="#64748b" stroke="#0f172a" stroke-width="1.5" />
+  <line x1="190" y1="128" x2="216" y2="128" stroke="#f8fafc" stroke-width="2" />
+  <text x="143" y="176" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#e2e8f0">
+    Ratchet Pivot &amp; Cutter Blade
+  </text>
+
+  <!-- Upper & Lower High-Leverage Handles (Right) -->
+  <path d="M 240 78 L 468 58 C 482 58 486 82 470 86 L 240 112 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="2.2" />
+  <path d="M 240 174 L 468 194 C 482 194 486 170 470 166 L 240 140 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="2.2" />
+
+  <!-- Squeeze Direction Arrows -->
+  <path d="M 380 96 L 380 156" stroke="#1d4ed8" stroke-width="2.5" stroke-dasharray="4 3" />
+  <polygon points="380,114 374,102 386,102" fill="#1d4ed8" />
+  <polygon points="380,138 374,150 386,150" fill="#1d4ed8" />
+  <rect x="292" y="115" width="176" height="22" rx="5" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.2" />
+  <text x="380" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" font-weight="800" fill="#1e3a8a">
+    Squeeze Firmly to Crimp Plug
+  </text>
+
+  <!-- Footer Callout -->
+  <rect x="24" y="212" width="472" height="26" rx="6" fill="#e2e8f0" />
+  <text x="260" y="229" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">
+    Drives the 8 gold contacts into the wires and locks the strain-relief latch onto the jacket
+  </text>
+</svg>
+

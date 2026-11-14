@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Cable,
   CheckCircle2,
@@ -15,9 +15,19 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  Eye,
+  X,
 } from "lucide-react";
 import type { LanCableData, LanWire } from "@/lib/ict-lab/types";
-import { simulateCableTester } from "@/lib/ict-lab/rules";
+import {
+  buildLanToolImageAlt,
+  createInitialLanToolPreviewState,
+  getLanToolPreviewNeighbors,
+  getNextTrappedFocusIndex,
+  reduceLanToolPreviewState,
+  simulateCableTester,
+  type LanToolPreviewAction,
+} from "@/lib/ict-lab/rules";
 
 export interface LanCableGuideTabProps {
   data: LanCableData;
@@ -168,6 +178,93 @@ export default function LanCableGuideTab({ data }: LanCableGuideTabProps) {
   // ─── Section (c): Crimping Steps Stepper State ──────────────────────────────
   const [activeCrimpIdx, setActiveCrimpIdx] = useState<number>(0);
   const activeCrimpStep = data.crimpingSteps[activeCrimpIdx] ?? data.crimpingSteps[0]!;
+
+  // ─── Section (c): Required Tools & Materials Preview State & Focus Trap ─────
+  const [toolPreviewState, setToolPreviewState] = useState(() =>
+    createInitialLanToolPreviewState()
+  );
+  const toolButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const previewDialogRef = useRef<HTMLDivElement | null>(null);
+  const previewCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const dispatchToolPreview = useCallback(
+    (action: LanToolPreviewAction) => {
+      setToolPreviewState((prev) =>
+        reduceLanToolPreviewState(prev, action, data.tools.length)
+      );
+    },
+    [data.tools.length]
+  );
+
+  const activePreviewToolIndex = toolPreviewState.activeIndex;
+  const activePreviewTool =
+    activePreviewToolIndex !== null
+      ? (data.tools[activePreviewToolIndex] ?? null)
+      : null;
+
+  const activePreviewNeighbors = useMemo(() => {
+    if (activePreviewToolIndex === null) {
+      return { prevIndex: 0, nextIndex: 0 };
+    }
+    return getLanToolPreviewNeighbors(data.tools.length, activePreviewToolIndex);
+  }, [activePreviewToolIndex, data.tools.length]);
+
+  // Move focus into the dialog when opened, and return focus to the clicked item when closed
+  useEffect(() => {
+    if (activePreviewToolIndex !== null) {
+      previewCloseBtnRef.current?.focus();
+    } else if (toolPreviewState.restoreFocusIndex !== null) {
+      const targetBtn =
+        toolButtonRefs.current[toolPreviewState.restoreFocusIndex];
+      targetBtn?.focus();
+    }
+  }, [activePreviewToolIndex, toolPreviewState.restoreFocusIndex]);
+
+  // Handle Escape, ArrowLeft, ArrowRight, and Tab / Shift+Tab focus trap while preview is open
+  useEffect(() => {
+    if (activePreviewToolIndex === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dispatchToolPreview({ type: "KEYDOWN", key: "Escape" });
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        dispatchToolPreview({ type: "KEYDOWN", key: "ArrowLeft" });
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        dispatchToolPreview({ type: "KEYDOWN", key: "ArrowRight" });
+        return;
+      }
+      if (event.key === "Tab" && previewDialogRef.current) {
+        const focusable = Array.from(
+          previewDialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusable.length === 0) return;
+        const currentIdx = focusable.indexOf(
+          document.activeElement as HTMLElement
+        );
+        const nextIdx = getNextTrappedFocusIndex(
+          currentIdx,
+          focusable.length,
+          event.shiftKey
+        );
+        if (nextIdx >= 0 && focusable[nextIdx]) {
+          event.preventDefault();
+          focusable[nextIdx]!.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activePreviewToolIndex, dispatchToolPreview]);
 
   // ─── Section (d): Cable Tester Simulator State ──────────────────────────────
   const [endAPreset, setEndAPreset] = useState<"T568B" | "T568A" | "CUSTOM">("T568B");
@@ -787,18 +884,128 @@ export default function LanCableGuideTab({ data }: LanCableGuideTabProps) {
             Required Tools &amp; Materials ({data.tools.length})
           </h3>
           <ul className="mt-3 space-y-2.5">
-            {data.tools.map((tool) => (
-              <li
-                key={tool.id}
-                className="rounded-lg border border-theme bg-elevated p-3"
-              >
-                <p className="text-xs font-bold text-primary-theme">{tool.name}</p>
-                <p className="mt-0.5 text-xs text-secondary-theme">{tool.use}</p>
+            {data.tools.map((tool, idx) => (
+              <li key={tool.id}>
+                <button
+                  ref={(el) => {
+                    toolButtonRefs.current[idx] = el;
+                  }}
+                  type="button"
+                  onClick={() => dispatchToolPreview({ type: "OPEN", index: idx })}
+                  aria-haspopup="dialog"
+                  aria-expanded={activePreviewToolIndex === idx}
+                  className="group w-full cursor-pointer rounded-lg border border-theme bg-elevated p-3 text-left transition hover:border-blue-500/70 hover:bg-blue-50/60 dark:hover:bg-blue-500/15 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-xs font-bold text-primary-theme group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                      {tool.name}
+                    </span>
+                    {/* Hover/focus hint on pointer devices */}
+                    <span className="hidden shrink-0 items-center gap-1 rounded-md bg-blue-100/90 px-2 py-0.5 text-[10px] font-semibold text-blue-800 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-blue-500/20 dark:text-blue-200 [@media(hover:hover)]:inline-flex">
+                      <Eye className="h-3 w-3" aria-hidden="true" />
+                      Click to preview
+                    </span>
+                    {/* Persistent hint on touch devices where hover does not exist */}
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-100/90 px-2 py-0.5 text-[10px] font-semibold text-blue-800 dark:bg-blue-500/20 dark:text-blue-200 [@media(hover:hover)]:hidden">
+                      <Eye className="h-3 w-3" aria-hidden="true" />
+                      Tap to preview
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-secondary-theme">{tool.use}</p>
+                </button>
               </li>
             ))}
           </ul>
         </div>
       </section>
+
+      {/* ─── REQUIRED TOOLS & MATERIALS PREVIEW DIALOG ─── */}
+      {activePreviewTool && activePreviewToolIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-3 sm:p-4 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              dispatchToolPreview({ type: "BACKDROP_CLICK" });
+            }
+          }}
+        >
+          <div
+            ref={previewDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lan-tool-preview-title"
+            aria-describedby="lan-tool-preview-description"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-theme bg-surface p-4 sm:p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-theme pb-3">
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                  <Wrench className="h-3 w-3" aria-hidden="true" />
+                  Tool {activePreviewToolIndex + 1} of {data.tools.length}
+                </span>
+                <h4
+                  id="lan-tool-preview-title"
+                  className="mt-1.5 text-base sm:text-lg font-bold text-primary-theme"
+                >
+                  {activePreviewTool.name}
+                </h4>
+              </div>
+
+              <button
+                ref={previewCloseBtnRef}
+                type="button"
+                onClick={() => dispatchToolPreview({ type: "CLOSE" })}
+                aria-label="Close tool preview"
+                className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-theme bg-elevated text-secondary-theme transition hover:bg-slate-200/70 hover:text-primary-theme dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-xl border border-theme bg-elevated p-2 sm:p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activePreviewTool.image}
+                alt={buildLanToolImageAlt(activePreviewTool)}
+                className="mx-auto h-auto max-h-64 w-full rounded-lg object-contain"
+              />
+            </div>
+
+            <p
+              id="lan-tool-preview-description"
+              className="mt-4 rounded-xl border border-theme bg-elevated px-3.5 py-3 text-xs sm:text-sm leading-relaxed text-primary-theme"
+            >
+              {activePreviewTool.use}
+            </p>
+
+            <div className="mt-4 flex items-center justify-between gap-2 border-t border-theme pt-3">
+              <button
+                type="button"
+                onClick={() => dispatchToolPreview({ type: "PREV" })}
+                aria-label={`Previous tool: ${data.tools[activePreviewNeighbors.prevIndex]?.name ?? "Previous"}`}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme bg-elevated px-3 py-2 text-xs font-semibold text-primary-theme transition hover:bg-slate-200/70 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                <span>Previous</span>
+              </button>
+
+              <span className="text-[11px] font-medium text-secondary-theme">
+                {activePreviewToolIndex + 1} / {data.tools.length}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => dispatchToolPreview({ type: "NEXT" })}
+                aria-label={`Next tool: ${data.tools[activePreviewNeighbors.nextIndex]?.name ?? "Next"}`}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── SECTION (d): CABLE TESTER SIMULATOR ─── */}
       <section
