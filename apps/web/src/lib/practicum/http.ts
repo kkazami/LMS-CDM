@@ -23,15 +23,16 @@ function isStatusError(err: unknown): err is { status: number; message: string }
 /** Maps anything thrown inside a route handler to a JSON error response. */
 export function errorResponse(err: unknown): NextResponse {
   if (err instanceof HttpError || isStatusError(err)) {
-    return NextResponse.json({ message: err.message }, { status: err.status });
+    return NextResponse.json({ error: err.message, message: err.message }, { status: err.status });
   }
   if (err instanceof ZodError) {
     const first = err.issues[0];
     const where = first?.path.length ? `${first.path.join(".")}: ` : "";
-    return NextResponse.json({ message: `${where}${first?.message ?? "Invalid request."}` }, { status: 400 });
+    const msg = `${where}${first?.message ?? "Invalid request."}`;
+    return NextResponse.json({ error: msg, message: msg }, { status: 400 });
   }
   console.error("[PRACTICUM_API_ERROR]", err);
-  return NextResponse.json({ message: "Internal error." }, { status: 500 });
+  return NextResponse.json({ error: "Internal error.", message: "Internal error." }, { status: 500 });
 }
 
 export async function readJson(request: Request): Promise<unknown> {

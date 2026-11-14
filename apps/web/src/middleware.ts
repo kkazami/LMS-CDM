@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
     return runtime;
   }
   const api = pathname.startsWith('/api/');
-  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || pathname === '/ite-sw.js' || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
+  if (!api && (pathname.startsWith('/_next') || pathname.startsWith('/videos/') || pathname.startsWith('/images/') || pathname === '/offline.html' || /\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|eot|webp|json|map|txt|xml|mp4|webm|mp3|wav)$/i.test(pathname))) return NextResponse.next();
   const nonce = btoa(crypto.randomUUID());
   const security = getSecurityHeaders(nonce);
   const incoming = new Headers(request.headers);

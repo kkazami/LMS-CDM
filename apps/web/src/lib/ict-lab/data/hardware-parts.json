@@ -1,0 +1,109 @@
+{
+  "categories": [
+    { "id": "board", "label": "Main board" },
+    { "id": "processing", "label": "Processing" },
+    { "id": "memory", "label": "Memory" },
+    { "id": "storage", "label": "Storage" },
+    { "id": "power", "label": "Power" },
+    { "id": "cooling", "label": "Cooling" },
+    { "id": "connectivity", "label": "Connectivity" }
+  ],
+  "parts": [
+    {
+      "id": "motherboard",
+      "name": "Motherboard",
+      "category": "board",
+      "function": "Connects all components and lets them communicate.",
+      "description": "The main circuit board of the computer. The CPU, RAM, expansion cards and storage drives all plug into it or connect to it through cables. It also holds the chipset and the BIOS/UEFI firmware.",
+      "connectsTo": ["cpu", "ram", "gpu", "nic", "hdd", "ssd", "psu", "cmos-battery"]
+    },
+    {
+      "id": "cpu",
+      "name": "CPU (Central Processing Unit)",
+      "category": "processing",
+      "function": "Runs program instructions and does the calculations.",
+      "description": "Often called the brain of the computer. It fetches and executes instructions from programs. It sits in the CPU socket on the motherboard and gets hot while working, so it is covered by a heatsink and fan.",
+      "connectsTo": ["motherboard", "cpu-cooler"]
+    },
+    {
+      "id": "cpu-cooler",
+      "name": "CPU cooler (heatsink and fan)",
+      "category": "cooling",
+      "function": "Removes heat from the CPU.",
+      "description": "A metal heatsink pulls heat away from the CPU and a fan blows air across it. Thermal paste between the CPU and the heatsink helps the heat transfer. Without cooling, the CPU would overheat and slow down or shut off.",
+      "connectsTo": ["cpu", "motherboard"]
+    },
+    {
+      "id": "ram",
+      "name": "RAM (Random Access Memory)",
+      "category": "memory",
+      "function": "Holds the programs and data currently in use.",
+      "description": "Fast temporary memory. The CPU reads and writes data here while programs run. RAM is volatile, which means its contents are lost when the computer is turned off. It is installed in the DIMM slots of the motherboard.",
+      "connectsTo": ["motherboard"]
+    },
+    {
+      "id": "gpu",
+      "name": "Graphics card (GPU)",
+      "category": "processing",
+      "function": "Processes images and video for the display.",
+      "description": "An expansion card that handles graphics work such as games, video and 3D design. It is installed in a PCIe slot and has ports for monitors. Many computers also have graphics built into the CPU or motherboard instead.",
+      "connectsTo": ["motherboard", "psu"]
+    },
+    {
+      "id": "psu",
+      "name": "Power supply unit (PSU)",
+      "category": "power",
+      "function": "Converts wall power into the low-voltage power the parts need.",
+      "description": "Takes AC power from the wall outlet and converts it to the DC voltages used inside the computer. It has cables that connect to the motherboard, the CPU power connector, storage drives and the graphics card.",
+      "connectsTo": ["motherboard", "gpu", "hdd", "ssd"]
+    },
+    {
+      "id": "hdd",
+      "name": "Hard disk drive (HDD)",
+      "category": "storage",
+      "function": "Stores files and programs permanently on spinning disks.",
+      "description": "Storage that keeps data even when the power is off. It stores data magnetically on spinning platters, so it is slower and has moving parts, but it offers a lot of space for its price. It connects with a SATA data cable and a power cable.",
+      "connectsTo": ["motherboard", "psu", "sata-cable"]
+    },
+    {
+      "id": "ssd",
+      "name": "Solid-state drive (SSD)",
+      "category": "storage",
+      "function": "Stores files and programs permanently on flash memory.",
+      "description": "Storage that keeps data when the power is off, with no moving parts. It is faster than a hard disk drive. It may connect through a SATA cable or plug directly into an M.2 slot on the motherboard.",
+      "connectsTo": ["motherboard", "psu", "sata-cable"]
+    },
+    {
+      "id": "sata-cable",
+      "name": "SATA data cable",
+      "category": "connectivity",
+      "function": "Carries data between a storage drive and the motherboard.",
+      "description": "A thin flat cable with a small L-shaped connector on each end. One end plugs into a SATA port on the motherboard and the other into the drive. Power comes separately from the PSU.",
+      "connectsTo": ["motherboard", "hdd", "ssd"]
+    },
+    {
+      "id": "cmos-battery",
+      "name": "CMOS battery",
+      "category": "board",
+      "function": "Keeps the clock and BIOS settings when the computer is off.",
+      "description": "A small coin-cell battery on the motherboard (commonly a CR2032). It keeps the real-time clock running and saves the BIOS/UEFI settings. If it runs out, the date and time may reset.",
+      "connectsTo": ["motherboard"]
+    },
+    {
+      "id": "case-fan",
+      "name": "Case fan",
+      "category": "cooling",
+      "function": "Moves air through the computer case.",
+      "description": "Fans mounted on the case pull cool air in and push warm air out, which keeps all the components at a safe temperature. They usually plug into fan headers on the motherboard.",
+      "connectsTo": ["motherboard"]
+    },
+    {
+      "id": "nic",
+      "name": "Network interface card (NIC)",
+      "category": "connectivity",
+      "function": "Connects the computer to a network.",
+      "description": "Provides the RJ45 port where a LAN cable plugs in. Most motherboards have a NIC built in, but it can also be an expansion card. A wireless NIC connects to Wi-Fi instead of a cable.",
+      "connectsTo": ["motherboard"]
+    }
+  ]
+}

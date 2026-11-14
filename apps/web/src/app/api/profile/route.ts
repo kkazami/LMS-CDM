@@ -4,6 +4,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
+import { evaluateProfileDepartmentUpdate } from '@/lib/ite-programs/registration';
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,58 @@ export async function PUT(request: Request) {
       bannerImageUrl?: string;
     };
 
+    let departmentToPersist = department;
+    if (department !== undefined) {
+      const currentUser = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          role: true,
+          department: true,
+          section: true,
+          institute: { select: { code: true } },
+          programMemberships: {
+            where: { isActive: true },
+            select: {
+              isActive: true,
+              kind: true,
+              program: { select: { code: true, name: true } },
+            },
+          },
+          enrollments: {
+            where: { status: 'APPROVED' },
+            select: {
+              status: true,
+              course: {
+                select: {
+                  section: true,
+                  program: { select: { code: true, name: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!currentUser) {
+        return NextResponse.json({ message: 'User not found.' }, { status: 404 });
+      }
+
+      const deptDecision = evaluateProfileDepartmentUpdate({
+        instituteCode: currentUser.institute.code,
+        userRole: currentUser.role,
+        currentRecord: currentUser,
+        requestedDepartment: department,
+      });
+
+      if (!deptDecision.allowed) {
+        return NextResponse.json(
+          { message: deptDecision.message || 'Program cannot be changed.' },
+          { status: deptDecision.status ?? 403 }
+        );
+      }
+      departmentToPersist = deptDecision.departmentToPersist;
+    }
+
     let bannerPreferences: string | undefined;
     let previousPreferences: string | undefined;
     if (bannerImageUrl !== undefined) {
@@ -94,7 +147,7 @@ export async function PUT(request: Request) {
         ...(name ? { name } : {}),
         ...(bio !== undefined ? { bio } : {}),
         ...(phone !== undefined ? { phone } : {}),
-        ...(department !== undefined ? { department } : {}),
+        ...(departmentToPersist !== undefined ? { department: departmentToPersist } : {}),
         ...(yearLevel !== undefined ? { yearLevel } : {}),
         ...(coverColor !== undefined ? { coverColor } : {}),
       },

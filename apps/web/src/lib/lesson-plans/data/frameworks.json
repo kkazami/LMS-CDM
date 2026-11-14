@@ -1,0 +1,535 @@
+[
+  {
+    "id": "ilaw",
+    "name": "ILAW Framework",
+    "shortDescription": "DepEd unified lesson planning model organizing instruction into Intentions, Learning Experience, Assessing Learning, and Ways Forward.",
+    "originNote": "DepEd 2026 unified planning framework (replaces separate DLP and DLL). Follow your instructor's guidance and the latest DepEd issuance.",
+    "stages": [
+      {
+        "id": "intentions",
+        "name": "Intentions",
+        "purpose": "Establish explicit learning targets, standards alignment, and clear success criteria for the session.",
+        "teacherDoes": [
+          "States the targeted learning competency and unpacks specific lesson objectives.",
+          "Explains the criteria for mastery and connects the goals to learners' prior knowledge."
+        ],
+        "learnersDo": [
+          "Review and state the learning objectives in their own words.",
+          "Identify personal goals and questions they hope to answer during the lesson."
+        ],
+        "writingTip": "Write measurable objectives using clear action verbs that directly reflect the curricular standard.",
+        "guideQuestions": [
+          "What specific knowledge, skill, or attitude must learners demonstrate by the end of this session?",
+          "How will both teacher and learners recognize that the intended outcome has been achieved?"
+        ]
+      },
+      {
+        "id": "learning-experience",
+        "name": "Learning Experience",
+        "purpose": "Facilitate active student engagement through structured classroom activities, guided inquiry, and conceptual development.",
+        "teacherDoes": [
+          "Facilitates hands-on activities, guiding questions, and cooperative tasks.",
+          "Scaffolds key concepts and provides timely feedback during student practice."
+        ],
+        "learnersDo": [
+          "Engage in investigations, collaborative discussions, and practical tasks.",
+          "Synthesize observations to construct conceptual understanding."
+        ],
+        "writingTip": "Outline clear transitions between teacher facilitation and active learner tasks so the instructional flow is evident.",
+        "guideQuestions": [
+          "What concrete experiences will best help learners construct deep understanding of the topic?",
+          "How will learners interact with content, peers, and learning materials throughout the lesson?"
+        ]
+      },
+      {
+        "id": "assessing-learning",
+        "name": "Assessing Learning",
+        "purpose": "Evaluate learner mastery and collect evidence of understanding against the lesson intentions.",
+        "teacherDoes": [
+          "Administers formative assessment tasks, checks for understanding, or rubric-based performance evaluations.",
+          "Identifies common misconceptions and tallies learner mastery levels."
+        ],
+        "learnersDo": [
+          "Complete assessment items, demonstrate skills, or conduct peer- and self-evaluations.",
+          "Demonstrate their level of competency independently or in small teams."
+        ],
+        "writingTip": "Ensure every assessment item directly measures at least one objective specified in the Intentions stage.",
+        "guideQuestions": [
+          "What formative assessment tool or task will provide valid evidence of student mastery?",
+          "How will the assessment differentiate between complete mastery and emerging understanding?"
+        ]
+      },
+      {
+        "id": "ways-forward",
+        "name": "Ways Forward",
+        "purpose": "Plan targeted next instructional steps including timely remediation, skill reinforcement, and enrichment activities.",
+        "teacherDoes": [
+          "Analyzes assessment results to assign remedial support or enrichment challenges.",
+          "Adjusts subsequent lesson pacing based on observed student needs."
+        ],
+        "learnersDo": [
+          "Participate in guided remedial practice or higher-order extension tasks.",
+          "Reflect on their learning progress and identify personal next steps."
+        ],
+        "writingTip": "Provide concrete, actionable interventions for struggling students alongside meaningful enrichment for advanced learners.",
+        "guideQuestions": [
+          "What specific remedial task will support learners who did not attain mastery?",
+          "How will proficient learners deepen or extend their learning beyond the core competency?"
+        ]
+      }
+    ],
+    "samplePlan": {
+      "title": "Plant Roots and Water Absorption",
+      "subject": "Elementary Science",
+      "gradeLevel": "Grade 4",
+      "topic": "Parts and Functions of Plant Roots",
+      "learningCompetency": "Describe the specialized structures of terrestrial plants and their functions.",
+      "learningObjectives": "1. Identify the difference between taproot and fibrous root systems.\n2. Explain how root hairs absorb water and minerals from soil to sustain plant life.",
+      "materials": "Potted weed samples with washed roots, magnifying lenses, clear cups with dyed water and celery stalks, student observation worksheets.",
+      "sections": [
+        {
+          "stageId": "intentions",
+          "stageName": "Intentions",
+          "content": "Lesson Targets:\n- By the end of this 45-minute lesson, Grade 4 pupils will distinguish between taproots and fibrous roots with at least 80% accuracy on visual cards.\n- Pupils will explain the role of root hairs in absorbing moisture through an illustrated diagram.\n\nEssential Question:\nHow do plant roots keep plants firmly anchored while gathering water hidden beneath the soil?",
+          "annotation": "Clearly anchors the session to specific, observable targets and introduces an engaging essential question."
+        },
+        {
+          "stageId": "learning-experience",
+          "stageName": "Learning Experience",
+          "content": "Phase 1 - Root Gallery Observation (15 mins):\n- In groups of four, learners examine real plant samples (grass for fibrous, carrot/dandelion for taproot) using hand lenses.\n- Pupils record root thickness, branching patterns, and presence of tiny root hairs on their observation sheets.\n\nPhase 2 - Class Discovery & Guided Discussion (15 mins):\n- Teacher leads a whole-class synthesis connecting observed branching to stability in heavy soil.\n- Demonstration: Teacher shows a celery stalk immersed in red dye, showing colored xylem veins carrying moisture up from the base.",
+          "annotation": "Balances sensory investigation in small groups with teacher-guided conceptual development and live demonstration."
+        },
+        {
+          "stageId": "assessing-learning",
+          "stageName": "Assessing Learning",
+          "content": "Formative Check (10 mins):\n1. Quick-Sort Activity: Pupils sort 6 illustrated plant cards into Taproot vs. Fibrous Root categories on individual mini-boards.\n2. Exit Ticket Question: 'Why does grass pull out in clumps during weeding while a dandelion requires deeper digging? Explain using root types.'",
+          "annotation": "Pairs a rapid identification task with a short explanatory prompt measuring conceptual reasoning."
+        },
+        {
+          "stageId": "ways-forward",
+          "stageName": "Ways Forward",
+          "content": "Remediation (Emerging understanding):\n- Guided picture matching with the teacher using 3D plastic root models and simplified flashcards focusing on root thickness.\n\nEnrichment (Proficient learners):\n- Investigate aerial roots (e.g., mangrove and orchid roots) and draft a brief index-card report on how roots adapt to wetland or humid air environments.",
+          "annotation": "Differentiates instructional follow-up into a tactile remedial path and an authentic environmental inquiry extension."
+        }
+      ]
+    }
+  },
+  {
+    "id": "4as",
+    "name": "4A's Framework",
+    "shortDescription": "Inductive and experiential learning cycle progressing through Activity, Analysis, Abstraction, and Application.",
+    "originNote": "Classic constructivist model widely used in teacher education and student-centered curriculum delivery.",
+    "stages": [
+      {
+        "id": "activity",
+        "name": "Activity",
+        "purpose": "Engage learners in a concrete, hands-on, or interactive experience that elicits curiosity and activates prior knowledge.",
+        "teacherDoes": [
+          "Sets up materials, guidelines, and safety or procedural parameters for the task.",
+          "Circulates to observe learner dynamics and prompt collaborative exploration."
+        ],
+        "learnersDo": [
+          "Participate actively in the task, game, experiment, or simulation.",
+          "Record initial observations, data, or personal reactions."
+        ],
+        "writingTip": "Design an activity that directly seeds the mathematical, scientific, or conceptual pattern explored in subsequent stages.",
+        "guideQuestions": [
+          "What engaging task will allow learners to experience the concept concretely before formal terminology is introduced?",
+          "How will the activity generate meaningful data or questions for group reflection?"
+        ]
+      },
+      {
+        "id": "analysis",
+        "name": "Analysis",
+        "purpose": "Facilitate structured reflection where learners examine patterns, compare findings, and discuss activity outcomes.",
+        "teacherDoes": [
+          "Poses scaffolding questions that guide learners to process what happened during the activity.",
+          "Facilitates dialogue, highlights contrasting results, and records student observations."
+        ],
+        "learnersDo": [
+          "Share observations, compare results with peers, and explain unexpected findings.",
+          "Identify common patterns, anomalies, and underlying relationships."
+        ],
+        "writingTip": "Sequence analysis questions from simple descriptive observations to deeper analytical inquiries.",
+        "guideQuestions": [
+          "What specific questions will lead learners from raw observations to pattern recognition?",
+          "How will learners articulate the reasoning behind their observations?"
+        ]
+      },
+      {
+        "id": "abstraction",
+        "name": "Abstraction",
+        "purpose": "Formalize the general principle, definition, rule, or concept emerging from the analyzed experience.",
+        "teacherDoes": [
+          "Synthesizes student insights into formal terms, standard definitions, and general principles.",
+          "Provides visual summaries, formulas, or conceptual models."
+        ],
+        "learnersDo": [
+          "Connect their activity experience to the formal rule or generalized concept.",
+          "Formulate notes, diagrams, or conceptual summaries in their notebooks."
+        ],
+        "writingTip": "Ensure the generalized rule clearly derives from the data gathered during Activity and Analysis.",
+        "guideQuestions": [
+          "What is the key generalization, formula, or concept that learners must crystallize?",
+          "How will the teacher clarify definitions without resorting to passive lecturing?"
+        ]
+      },
+      {
+        "id": "application",
+        "name": "Application",
+        "purpose": "Provide meaningful opportunities for learners to transfer and apply their newly crystallized concept to new contexts or real-life problems.",
+        "teacherDoes": [
+          "Presents novel problems, authentic scenarios, or creative challenges.",
+          "Evaluates student transfer of learning and clarifies remaining edge cases."
+        ],
+        "learnersDo": [
+          "Solve independent or collaborative problems using the formal concept or rule.",
+          "Demonstrate practical utility and mastery in authentic situations."
+        ],
+        "writingTip": "Use authentic contexts (e.g., household situations, community problems) rather than mechanical textbook drills.",
+        "guideQuestions": [
+          "How will learners demonstrate that they can apply the generalization to an unfamiliar problem?",
+          "What authentic context shows the practical relevance of this concept in daily life?"
+        ]
+      }
+    ],
+    "samplePlan": {
+      "title": "Perimeter of Rectangles and Squares",
+      "subject": "Mathematics",
+      "gradeLevel": "Grade 5",
+      "topic": "Finding the Perimeter of Quadrilaterals",
+      "learningCompetency": "Find the perimeter of regular and irregular quadrilaterals.",
+      "learningObjectives": "1. Measure the boundary lengths of rectangular classroom objects accurately.\n2. Deduce and apply the perimeter formulas P = 2(l + w) and P = 4s in practical measurement problems.",
+      "materials": "Grid paper, meter sticks, 30cm rulers, index cards, real classroom objects (desk tops, book covers).",
+      "sections": [
+        {
+          "stageId": "activity",
+          "stageName": "Activity",
+          "content": "Classroom Border Walk (10 mins):\n- In pairs, pupils use yarn and rulers to trace and measure the exact outer edge of three flat objects: an index card, a textbook cover, and a study table.\n- Pupils record the length of each individual side and compute the total distance around each object by adding all four edges.",
+          "annotation": "Gives students a physical, tactile sense of perimeter as distance traveled around an enclosed boundary."
+        },
+        {
+          "stageId": "analysis",
+          "stageName": "Analysis",
+          "content": "Guided Discussion Questions (10 mins):\n1. 'What did you notice about the opposite sides of your book cover and index card?' (Pupils observe opposite sides have equal lengths).\n2. 'If opposite sides are identical, did you really need to measure four separate times?'\n3. 'How could you find the total distance using multiplication instead of adding four numbers?'",
+          "annotation": "Prompts students to notice geometric symmetry and discover shortcut operations before seeing the formula."
+        },
+        {
+          "stageId": "abstraction",
+          "stageName": "Abstraction",
+          "content": "Formalization of Formulas (10 mins):\n- General Definition: Perimeter (P) is the total continuous boundary length enclosing a two-dimensional shape.\n- For Rectangles: P = length + width + length + width = 2 × (length + width) or P = 2l + 2w.\n- For Squares: All 4 sides (s) are congruent, therefore P = 4 × s.\n- Visual board anchor: Color-coded diagram highlighting length in blue and width in orange.",
+          "annotation": "Crystallizes learner observations into standard mathematical notation with clear algebraic representation."
+        },
+        {
+          "stageId": "application",
+          "stageName": "Application",
+          "content": "Real-World Garden Fencing Challenge (15 mins):\n- Scenario: The school eco-club is building a rectangular vegetable garden measuring 8 meters long and 5 meters wide. Wire mesh costs 75 pesos per meter.\n- Task 1: Calculate the total perimeter of the fence.\n- Task 2: Calculate the total cost of fencing materials needed.\n- Independent practice: Solve 2 additional word problems from the practice worksheet.",
+          "annotation": "Applies the formula to an authentic budgeting and landscaping problem requiring unit conversion and multi-step reasoning."
+        }
+      ]
+    }
+  },
+  {
+    "id": "5es",
+    "name": "5E's Instructional Model",
+    "shortDescription": "Inquiry-based constructivist cycle progressing through Engage, Explore, Explain, Elaborate, and Evaluate.",
+    "originNote": "Developed by the Biological Sciences Curriculum Study (BSCS) for hands-on, minds-on science education.",
+    "stages": [
+      {
+        "id": "engage",
+        "name": "Engage",
+        "purpose": "Capture learner curiosity, uncover prior knowledge or misconceptions, and introduce the focus phenomenon.",
+        "teacherDoes": [
+          "Presents a puzzling phenomenon, short demonstration, or provocative inquiry question.",
+          "Collects initial student predictions without revealing whether they are correct."
+        ],
+        "learnersDo": [
+          "Express current ideas, make predictions, and ask exploratory questions.",
+          "Show curiosity and identify what they find puzzling."
+        ],
+        "writingTip": "Keep the engagement short and focused on a surprising observation rather than explaining theory upfront.",
+        "guideQuestions": [
+          "What discrepancy, discrepant event, or scenario will spark genuine student curiosity?",
+          "How will the opening question reveal existing student conceptions or misunderstandings?"
+        ]
+      },
+      {
+        "id": "explore",
+        "name": "Explore",
+        "purpose": "Provide hands-on experiences where learners interact directly with materials, gather data, and test hypotheses.",
+        "teacherDoes": [
+          "Provides lab materials, guiding prompts, and observation guidelines.",
+          "Acts as a facilitator, observing group trials and posing probing questions."
+        ],
+        "learnersDo": [
+          "Manipulate materials, conduct trials, record measurements, and test predictions.",
+          "Work cooperatively with peers to document evidence."
+        ],
+        "writingTip": "Avoid step-by-step cookbook recipes; give learners room to make decisions and observe genuine outcomes.",
+        "guideQuestions": [
+          "What investigation will provide students with concrete empirical evidence?",
+          "What specific observations or measurements will learners collect and record?"
+        ]
+      },
+      {
+        "id": "explain",
+        "name": "Explain",
+        "purpose": "Encourage learners to articulate explanations based on their evidence, followed by formal scientific clarification.",
+        "teacherDoes": [
+          "Invites student groups to present their findings and justify claims with evidence.",
+          "Introduces formal scientific terms, models, and conceptual explanations."
+        ],
+        "learnersDo": [
+          "Explain observations using data gathered during exploration.",
+          "Adopt and integrate formal scientific terminology into their conceptual understanding."
+        ],
+        "writingTip": "Have learners share their explanations first before the teacher introduces the technical vocabulary.",
+        "guideQuestions": [
+          "How will learners be guided to use their evidence to justify their explanations?",
+          "What precise scientific vocabulary must be introduced to clarify the phenomenon?"
+        ]
+      },
+      {
+        "id": "elaborate",
+        "name": "Elaborate",
+        "purpose": "Deepen student understanding by applying concepts to new situations, related phenomena, or broader contexts.",
+        "teacherDoes": [
+          "Introduces a new context, engineering challenge, or extension scenario.",
+          "Encourages learners to make cross-disciplinary or environmental connections."
+        ],
+        "learnersDo": [
+          "Apply conceptual models to solve new problems or explain unfamiliar situations.",
+          "Make connections between classroom science and real-world technologies."
+        ],
+        "writingTip": "Ensure the elaboration problem tests the same underlying principle in an unfamiliar setting.",
+        "guideQuestions": [
+          "What new scenario or related phenomenon will challenge learners to extend their concept?",
+          "How does this extension deepen conceptual understanding without introducing unrelated ideas?"
+        ]
+      },
+      {
+        "id": "evaluate",
+        "name": "Evaluate",
+        "purpose": "Assess learner conceptual mastery and allow learners to reflect on their learning journey.",
+        "teacherDoes": [
+          "Administers formal or informal assessment tasks aligned with target objectives.",
+          "Evaluates student ability to apply principles and explain evidence."
+        ],
+        "learnersDo": [
+          "Demonstrate mastery through problem-solving, diagramming, or written argumentation.",
+          "Reflect on how their thinking evolved from the Engage stage to the present."
+        ],
+        "writingTip": "Include assessment questions that check for the resolution of the misconception identified in Engage.",
+        "guideQuestions": [
+          "What assessment task will verify whether learners resolved earlier misconceptions?",
+          "How will students demonstrate both procedural proficiency and conceptual depth?"
+        ]
+      }
+    ],
+    "samplePlan": {
+      "title": "Thermal Conduction in Everyday Materials",
+      "subject": "Secondary Science",
+      "gradeLevel": "Grade 7",
+      "topic": "Heat Transfer by Conduction",
+      "learningCompetency": "Infer the conditions necessary for heat transfer to occur and describe conduction.",
+      "learningObjectives": "1. Explain the mechanism of heat transfer through solid materials at the molecular level.\n2. Classify common materials as thermal conductors or insulators based on experimental rates of heat transfer.",
+      "materials": "Metal spoon, wooden spoon, plastic spoon, hot water container, small butter pats, plastic beads, timer, safety goggles.",
+      "sections": [
+        {
+          "stageId": "engage",
+          "stageName": "Engage",
+          "content": "Puzzling Cookware Observation (5 mins):\n- Teacher displays a metal cooking pan with a wooden handle.\n- Prompt: 'Why do cooks prefer wooden handles on stainless steel pans when cooking over high flames?'\n- Learners write quick predictions on sticky notes regarding what happens to heat inside different materials.",
+          "annotation": "Hooks interest with a familiar domestic tool and surfaces pre-existing intuitions about thermal safety."
+        },
+        {
+          "stageId": "explore",
+          "stageName": "Explore",
+          "content": "Spoon Race Experiment (15 mins):\n- In groups of four, learners place equal-sized pats of butter on the handles of three identical-length spoons (metal, wood, plastic). A small bead is pressed into each butter pat.\n- The bowl ends of all three spoons are submerged simultaneously into a bowl of warm water (approx. 60°C).\n- Pupils time how long it takes for each bead to slide down as the butter melts.",
+          "annotation": "Provides a clean, fair-test laboratory experience with measurable dependent variables (time to slide)."
+        },
+        {
+          "stageId": "explain",
+          "stageName": "Explain",
+          "content": "Student Sharing & Scientific Terminology (10 mins):\n- Student groups present their timing data (metal: ~35 seconds; plastic: ~3 minutes; wood: bead remained in place after 5 mins).\n- Teacher facilitates explanation: Heat transfers through solids via particle collisions (conduction).\n- Key terms defined: Thermal Conductor (allows rapid thermal energy transfer via free electrons/lattice vibrations) vs. Thermal Insulator (resists thermal flow due to tightly bound electrons).",
+          "annotation": "Allows empirical evidence from student data to precede and support formal molecular explanations."
+        },
+        {
+          "stageId": "elaborate",
+          "stageName": "Elaborate",
+          "content": "Thermos Bottle Design Analysis (10 mins):\n- Learners examine a cross-sectional diagram of a double-walled vacuum flask.\n- Prompt: 'Why does the flask use an empty vacuum space between two walls instead of solid plastic or metal?'\n- Pupils write a 3-sentence explanation linking the absence of particles in a vacuum to the prevention of conduction.",
+          "annotation": "Tests whether students understand that conduction requires matter/particles by asking about an empty vacuum."
+        },
+        {
+          "stageId": "evaluate",
+          "stageName": "Evaluate",
+          "content": "Formative Mastery Quiz (5 mins):\n1. Conceptual Multiple Choice: Identifying why metals feel colder to touch at room temperature than wood.\n2. Short Constructed Response: Explaining why winter jackets use trapped air between down feathers to keep humans warm.",
+          "annotation": "Assesses both physical intuition and the practical application of insulation principles."
+        }
+      ]
+    }
+  },
+  {
+    "id": "6es",
+    "name": "6E's STEM Model",
+    "shortDescription": "Integrated STEM framework expanding the 5E cycle with explicit engineering design (Engineer) and enrichment (Enrich).",
+    "originNote": "Contemporary STEM/STEAM adaptation linking inquiry science, mathematical modeling, and engineering design.",
+    "stages": [
+      {
+        "id": "engage",
+        "name": "Engage",
+        "purpose": "Introduce a compelling real-world challenge or societal problem that stimulates interest and establishes need.",
+        "teacherDoes": [
+          "Presents a real community problem or technological challenge.",
+          "Facilitates student empathy and frames the scope of the design task."
+        ],
+        "learnersDo": [
+          "Discuss the problem's impact on communities and identify personal stakes.",
+          "Formulate inquiry questions and preliminary criteria for success."
+        ],
+        "writingTip": "Anchor the challenge in a relatable local context that demands a creative engineering solution.",
+        "guideQuestions": [
+          "What real-world societal or technological problem frames this learning experience?",
+          "How does the challenge connect to learners' everyday experiences or community needs?"
+        ]
+      },
+      {
+        "id": "explore",
+        "name": "Explore",
+        "purpose": "Investigate underlying scientific principles, test component materials, and benchmark existing solutions.",
+        "teacherDoes": [
+          "Provides diagnostic tests, testing apparatus, and reference resources.",
+          "Guides learners in systematic data collection and material analysis."
+        ],
+        "learnersDo": [
+          "Test material properties, analyze constraints, and evaluate failure modes.",
+          "Document quantitative data to inform subsequent engineering designs."
+        ],
+        "writingTip": "Frame exploration as material characterization and testing rather than random experimentation.",
+        "guideQuestions": [
+          "What scientific properties must learners investigate before attempting a design?",
+          "What baseline data will help learners select appropriate materials for their prototype?"
+        ]
+      },
+      {
+        "id": "explain",
+        "name": "Explain",
+        "purpose": "Crystallize the science and mathematical equations governing the behavior of the materials and systems.",
+        "teacherDoes": [
+          "Explains scientific principles, governing equations, and industry standards.",
+          "Helps learners map scientific mechanisms to engineering constraints."
+        ],
+        "learnersDo": [
+          "Articulate why certain materials behave differently under specific stresses or conditions.",
+          "Use scientific models and mathematical calculations to justify material choices."
+        ],
+        "writingTip": "Demonstrate clearly how scientific theories dictate engineering design trade-offs.",
+        "guideQuestions": [
+          "What fundamental scientific concepts explain the test results gathered during exploration?",
+          "How will mathematical reasoning or scientific models justify design decisions?"
+        ]
+      },
+      {
+        "id": "engineer",
+        "name": "Engineer",
+        "purpose": "Design, build, test, and iterate a functional prototype under explicit constraints and performance criteria.",
+        "teacherDoes": [
+          "Sets design constraints (budget, dimensions, available materials, deadlines).",
+          "Oversees prototype fabrication, ensures safety, and coordinates structured testing."
+        ],
+        "learnersDo": [
+          "Draft technical sketches, assemble functional prototypes, and execute performance tests.",
+          "Analyze failure points and iteratively modify their design to optimize performance."
+        ],
+        "writingTip": "Define clear, quantifiable testing criteria (e.g., flow rate, load capacity, cost limit) so success is measurable.",
+        "guideQuestions": [
+          "What measurable constraints and specifications govern the prototype?",
+          "How will learners test, document failure modes, and iterate their prototype design?"
+        ]
+      },
+      {
+        "id": "enrich",
+        "name": "Enrich",
+        "purpose": "Broaden the design's scope to address sustainability, economic scalability, or interdisciplinary connections.",
+        "teacherDoes": [
+          "Prompts learners to examine environmental impact, production costs, and cultural suitability.",
+          "Facilitates connections with ethical design and community implementation."
+        ],
+        "learnersDo": [
+          "Evaluate the lifecycle, carbon footprint, and community affordability of their design.",
+          "Propose adaptations for different community environments or scaling scenarios."
+        ],
+        "writingTip": "Push students to consider real-world factors beyond simple mechanical function, such as cost and ecology.",
+        "guideQuestions": [
+          "How can the prototype be made more sustainable, cost-effective, or accessible?",
+          "What societal, ethical, or environmental implications emerge from deploying this solution?"
+        ]
+      },
+      {
+        "id": "evaluate",
+        "name": "Evaluate",
+        "purpose": "Assess student mastery of both scientific concepts and engineering design competencies using rubrics.",
+        "teacherDoes": [
+          "Evaluates prototype performance, technical documentation, and design presentations.",
+          "Provides constructive feedback on technical accuracy and iterative resilience."
+        ],
+        "learnersDo": [
+          "Present prototype results, justify iterations, and reflect on team decision-making.",
+          "Evaluate peer prototypes against shared engineering criteria."
+        ],
+        "writingTip": "Use a balanced rubric that awards credit for rigorous iteration and scientific reasoning, not just aesthetic finish.",
+        "guideQuestions": [
+          "How does the assessment measure both scientific understanding and design thinking?",
+          "How will students communicate their design process, data, and lessons learned from failure?"
+        ]
+      }
+    ],
+    "samplePlan": {
+      "title": "Low-Cost Community Water Filtration Prototype",
+      "subject": "Science & Technology (STEM)",
+      "gradeLevel": "Grade 6",
+      "topic": "Designing a Multi-Layer Gravity Water Filter",
+      "learningCompetency": "Apply properties of mixtures and separation techniques to design a water purification device.",
+      "learningObjectives": "1. Explain the separation mechanisms (sedimentation, mechanical straining, absorption) in multi-layer filtration.\n2. Design and iterate a gravity water filter that reduces water turbidity under specified material constraints.",
+      "materials": "Clean plastic 1.5L bottles, fine sand, coarse sand, gravel, activated charcoal, coffee filters, cotton balls, turbid test water, clear measuring beakers, turbidity chart.",
+      "sections": [
+        {
+          "stageId": "engage",
+          "stageName": "Engage",
+          "content": "Emergency Water Scenario (5 mins):\n- Prompt: 'Following a typhoon, municipal water pipes are disrupted, and your barangay has only turbid river water available for non-drinking sanitation tasks.'\n- Problem Statement: How can we build an effective, low-cost gravity filter using locally accessible materials to clear suspended sediments?",
+          "annotation": "Creates immediate personal urgency through a familiar post-typhoon community scenario."
+        },
+        {
+          "stageId": "explore",
+          "stageName": "Explore",
+          "content": "Material Characterization Lab (15 mins):\n- Student groups test the flow rate and trapping efficiency of single materials: cotton ball, coarse gravel, fine sand, and charcoal.\n- Each team pours 100 mL of turbid water through individual test funnels and notes clarity change and elapsed drainage time.",
+          "annotation": "Enables teams to discover which layer traps coarse debris versus fine particulate before assembling their combined prototype."
+        },
+        {
+          "stageId": "explain",
+          "stageName": "Explain",
+          "content": "Filtration Mechanics & Particle Separation (10 mins):\n- Teacher and learners synthesize principles:\n  1. Mechanical Straining: Gravel and coarse sand trap large detritus without clogging.\n  2. Fine Particle Trapping: Compact sand catches microscopic suspended silt.\n  3. Adsorption: Porous activated charcoal captures odor and organic discoloration at the surface level.\n- Principle: Multi-stage gradient layering prevents premature clogging of fine layers.",
+          "annotation": "Clarifies the precise scientific phenomena (straining vs. adsorption) to ground engineering choices."
+        },
+        {
+          "stageId": "engineer",
+          "stageName": "Engineer",
+          "content": "Prototype Build & Iteration (20 mins):\n- Constraint: Teams receive one inverted 1.5L bottle and a maximum height of 15 cm of filtration media.\n- Test Run 1: Team measures effluent clarity (turbidity scale 1-5) and flow time for 250 mL turbid water.\n- Design Iteration: Teams adjust layer ordering or compacting density based on Run 1 failure modes (e.g., flow too slow or sand washed into output).",
+          "annotation": "Implements an explicit design-build-test-iterate cycle with quantitative performance feedback."
+        },
+        {
+          "stageId": "enrich",
+          "stageName": "Enrich",
+          "content": "Community Scalability & Solar Disinfection (SODIS) (10 mins):\n- Discussion: Clarified water is still not biologically potable. How can communities eliminate pathogens cheaply?\n- Extension: Introduction of SODIS (Solar Water Disinfection) using clear PET bottles exposed to UV sunlight for 6 hours.\n- Cost analysis: Calculating the price per liter of the gravity filter for an evacuation center.",
+          "annotation": "Extends pure physical filtration to public health, biochemical safety, and disaster relief economics."
+        },
+        {
+          "stageId": "evaluate",
+          "stageName": "Evaluate",
+          "content": "Engineering Showcase Rubric (10 mins):\n- Rubric Scoring: Clarity improvement (40%), Flow efficiency (20%), Iteration documentation (20%), Scientific explanation of layer sequence (20%).\n- Peer Review: Teams inspect neighbor devices and complete a constructive peer audit.",
+          "annotation": "Assesses both prototype performance metrics and the scientific justification of iterative choices."
+        }
+      ]
+    }
+  }
+]
+

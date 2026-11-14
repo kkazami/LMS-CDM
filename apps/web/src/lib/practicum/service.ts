@@ -121,10 +121,32 @@ export async function requirePlacementAccess(
   return { placement, role };
 }
 
-const submissionInclude = {
+const submissionSelect = {
+  id: true,
+  placementId: true,
+  type: true,
+  title: true,
+  description: true,
+  fileUrl: true,
+  fileName: true,
+  fileType: true,
+  fileSize: true,
+  videoLink: true,
+  status: true,
+  version: true,
+  submittedAt: true,
+  updatedAt: true,
   feedback: {
-    orderBy: { createdAt: "asc" },
-    include: { author: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" as const },
+    select: {
+      id: true,
+      authorId: true,
+      comment: true,
+      decision: true,
+      score: true,
+      createdAt: true,
+      author: { select: { id: true, name: true } },
+    },
   },
 } as const;
 
@@ -133,7 +155,7 @@ type SubmissionRow = Awaited<ReturnType<typeof findSubmissionRows>>[number];
 function findSubmissionRows(placementId: string) {
   return db.practicumSubmission.findMany({
     where: { placementId },
-    include: submissionInclude,
+    select: submissionSelect,
     orderBy: { submittedAt: "desc" },
   });
 }
@@ -145,8 +167,8 @@ export function toSubmissionDTO(row: SubmissionRow): SubmissionDTO {
     authorName: f.author.name,
     comment: f.comment,
     decision: f.decision,
-    score: f.score,
-    createdAt: f.createdAt.toISOString(),
+    score: f.score === null || f.score === undefined ? null : Number(f.score),
+    createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : String(f.createdAt),
   }));
 
   return {
@@ -158,12 +180,12 @@ export function toSubmissionDTO(row: SubmissionRow): SubmissionDTO {
     fileUrl: row.fileUrl,
     fileName: row.fileName,
     fileType: row.fileType,
-    fileSize: row.fileSize,
+    fileSize: row.fileSize === null || row.fileSize === undefined ? null : Number(row.fileSize),
     videoLink: row.videoLink,
     status: row.status as SubmissionStatus,
-    version: row.version,
-    submittedAt: row.submittedAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    version: Number(row.version),
+    submittedAt: row.submittedAt instanceof Date ? row.submittedAt.toISOString() : String(row.submittedAt),
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
     feedback,
   };
 }
@@ -176,7 +198,7 @@ export async function getPlacementSubmissions(placementId: string): Promise<Subm
 export async function getSubmissionDTO(submissionId: string): Promise<SubmissionDTO | null> {
   const row = await db.practicumSubmission.findUnique({
     where: { id: submissionId },
-    include: submissionInclude,
+    select: submissionSelect,
   });
   return row ? toSubmissionDTO(row) : null;
 }

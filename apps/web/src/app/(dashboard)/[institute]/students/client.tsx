@@ -41,6 +41,9 @@ import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import StudentParticipationCard from "@/components/institute/ite/StudentParticipationCard";
 import StudentFocusCard from "@/components/focus/StudentFocusCard";
 import StudentSuggestionsCard from "@/components/guidance/StudentSuggestionsCard";
+import IteStudentProgramSection, {
+  type IteStudentProgramDashboardData,
+} from "@/components/ite/IteStudentProgramSection";
 import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 import { classifyDueDate, splitOverdue, type DueStatus } from "@/lib/dashboard/due-dates";
 import { getWelcomeBannerPortalLabel } from "@/lib/ite/search/search-filter";
@@ -88,6 +91,7 @@ interface StudentDashboardClientProps {
   showCodeLab?: boolean;
   typingSessionKey?: string;
   greeting: string;
+  iteProgramData?: IteStudentProgramDashboardData | null;
 }
 
 /** Max overdue rows listed on the dashboard; the rest are reachable from the To-do page. */
@@ -118,6 +122,7 @@ export default function StudentDashboardClient({
   showCodeLab,
   typingSessionKey,
   greeting,
+  iteProgramData = null,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -235,6 +240,7 @@ export default function StudentDashboardClient({
   const unenrollTarget = confirmUnenroll ? courses.find((c) => c.id === confirmUnenroll) : null;
 
   const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
+  const isIte = instituteCode.toLowerCase() === "ite";
 
   // Quick action items for mobile and desktop quick navigation bar
   const quickActions = [
@@ -365,6 +371,13 @@ export default function StudentDashboardClient({
             </div>
           </div>
         </FadeIn>
+
+        {/* ─── 1b. ITE Student Program Section (One-time selector or "Your program" panel) ─── */}
+        {isIte && iteProgramData && (
+          <FadeIn y={16} duration={0.4}>
+            <IteStudentProgramSection data={iteProgramData} />
+          </FadeIn>
+        )}
 
         {/* ─── 2. Context-Aware Quick Action Cards Grid ─── */}
         <StaggerGroup className={`grid grid-cols-2 sm:grid-cols-3 ${isCodeLabVisible ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-3`}>
@@ -679,7 +692,7 @@ export default function StudentDashboardClient({
 
           {/* ─── 4. Right 1 Column: Due Soon / Pending Tasks & ITE Participation ─── */}
           <div className="space-y-6">
-            {instituteCode.toLowerCase() === "ite" && (
+            {isIte && (
               <>
                 <StudentSuggestionsCard theme={theme} instituteCode={instituteCode} />
                 <StudentFocusCard theme={theme} instituteCode={instituteCode} />
@@ -688,7 +701,7 @@ export default function StudentDashboardClient({
             )}
             <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-between gap-2.5">
                 <div
                   className="p-2 rounded-xl"
                   style={{
