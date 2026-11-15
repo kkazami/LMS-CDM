@@ -1,5 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
 import {
@@ -9,14 +12,19 @@ import {
   HARDWARE_PART_BOUNDING_BOXES,
   findOverlappingBoundingBoxes,
   assertAllHardwarePartsHaveSvgDrawing,
+  buildLanToolImageAlt,
   buildPlaygroundSrcdoc,
   classifyIteProgram,
   computeProjectByteSize,
+  createInitialLanToolPreviewState,
   generateHardwareQuizQuestions,
+  getLanToolPreviewNeighbors,
+  getNextTrappedFocusIndex,
   isBecedProgram,
   isBeedProgram,
   isBsedScienceProgram,
   isBtledIctProgram,
+  reduceLanToolPreviewState,
   simulateCableTester,
   validatePreviewMessageEvent,
 } from "../rules";
@@ -406,5 +414,126 @@ describe("BTLED ICT Lab - LAN Cable Tester Classification", () => {
     assert.equal(resShort.classification, "short");
     assert.equal(resShort.matchedFault?.id, "short");
     assert.deepEqual(resShort.shortedPins, [1, 2]);
+  });
+});
+
+describe("BTLED ICT Lab - Required Tools & Materials Data, SVG Assets & Preview Behavior", () => {
+  const lanData = loadLanCableData();
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const webPublicDir = path.resolve(testDir, "../../../../public");
+
+  it("ensures every tool item in lan-cable.json has a non-empty id, name, short description (use), and image path", () => {
+    assert.equal(lanData.tools.length, 6);
+
+    const expectedToolNames = [
+      "UTP cable",
+      "RJ45 connector (plug)",
+      "Cable stripper",
+      "Cutter or snips",
+      "Crimping tool",
+      "LAN cable tester",
+    ];
+    assert.deepEqual(
+      lanData.tools.map((t) => t.name),
+      expectedToolNames
+    );
+
+    const seenIds = new Set<string>();
+    const seenImages = new Set<string>();
+
+    for (const tool of lanData.tools) {
+      assert.ok(tool.id.trim().length > 0, "Tool id must be non-empty");
+      assert.ok(tool.name.trim().length > 0, "Tool name must be non-empty");
+      assert.ok(tool.use.trim().length > 0, "Tool short description (use) must be non-empty");
+      assert.ok(tool.image.trim().length > 0, "Tool image path must be non-empty");
+      assert.ok(
+        tool.image.startsWith("/images/ict-lab/tools/"),
+        `Tool image path ${tool.image} must be under /images/ict-lab/tools/`
+      );
+
+      assert.ok(!seenIds.has(tool.id), `Duplicate tool id: ${tool.id}`);
+      seenIds.add(tool.id);
+
+      assert.ok(!seenImages.has(tool.image), `Duplicate tool image: ${tool.image}`);
+      seenImages.add(tool.image);
+
+      const altText = buildLanToolImageAlt(tool);
+      assert.ok(altText.includes(tool.name));
+      assert.ok(altText.includes(tool.use));
+    }
+  });
+
+  it("verifies every referenced tool image file exists on disk under public/ and is a safe, non-empty SVG", () => {
+    for (const tool of lanData.tools) {
+      const relativePublicPath = tool.image.replace(/^\/+/, "");
+      const diskPath = path.join(webPublicDir, relativePublicPath);
+      assert.equal(
+        fs.existsSync(diskPath),
+        true,
+        `Referenced tool image does not exist on disk: ${diskPath}`
+      );
+
+      const content = fs.readFileSync(diskPath, "utf8");
+      assert.ok(content.trim().length > 100, `SVG file ${tool.image} is empty or too short`);
+      assert.ok(content.includes("<svg"), `File ${tool.image} must contain <svg`);
+      assert.ok(content.includes("</svg>"), `File ${tool.image} must contain </svg>`);
+      assert.equal(/<script\b/i.test(content), false, `SVG ${tool.image} must not contain <script>`);
+      assert.equal(
+        /<foreignObject\b/i.test(content),
+        false,
+        `SVG ${tool.image} must not contain <foreignObject>`
+      );
+      assert.equal(
+        /\bon[a-z]+\s*=/i.test(content),
+        false,
+        `SVG ${tool.image} must not contain inline event handlers`
+      );
+    }
+  });
+
+  it("opens preview on click, cycles Previous/Next across all 6 tools, closes on Esc/X/outside click, and restores focus to the clicked item", () => {
+    const total = lanData.tools.length;
+    let state = createInitialLanToolPreviewState();
+    assert.equal(state.activeIndex, null);
+
+    // Click item index 2 ("Cable stripper") -> opens preview at index 2
+    state = reduceLanToolPreviewState(state, { type: "OPEN", index: 2 }, total);
+    assert.equal(state.activeIndex, 2);
+    assert.equal(state.openedFromIndex, 2);
+    assert.equal(state.restoreFocusIndex, null);
+
+    // Next / ArrowRight moves to index 3, then Previous / ArrowLeft moves back to index 2
+    state = reduceLanToolPreviewState(state, { type: "NEXT" }, total);
+    assert.equal(state.activeIndex, 3);
+    assert.equal(state.openedFromIndex, 2, "openedFromIndex stays anchored to the originally clicked item");
+
+    state = reduceLanToolPreviewState(state, { type: "KEYDOWN", key: "ArrowRight" }, total);
+    assert.equal(state.activeIndex, 4);
+
+    // Press Escape -> closes preview and restores focus to originally clicked index 2
+    state = reduceLanToolPreviewState(state, { type: "KEYDOWN", key: "Escape" }, total);
+    assert.equal(state.activeIndex, null);
+    assert.equal(state.restoreFocusIndex, 2);
+
+    // Open at index 0 and wrap backwards with PREV to index 5
+    state = reduceLanToolPreviewState(state, { type: "OPEN", index: 0 }, total);
+    assert.equal(state.activeIndex, 0);
+    state = reduceLanToolPreviewState(state, { type: "PREV" }, total);
+    assert.equal(state.activeIndex, 5);
+    assert.deepEqual(getLanToolPreviewNeighbors(total, 5), {
+      prevIndex: 4,
+      nextIndex: 0,
+    });
+
+    // Backdrop click closes and restores focus to index 0
+    state = reduceLanToolPreviewState(state, { type: "BACKDROP_CLICK" }, total);
+    assert.equal(state.activeIndex, null);
+    assert.equal(state.restoreFocusIndex, 0);
+
+    // Focus trap cycling for Tab and Shift+Tab across 3 dialog buttons (Close, Previous, Next)
+    assert.equal(getNextTrappedFocusIndex(0, 3, false), 1);
+    assert.equal(getNextTrappedFocusIndex(2, 3, false), 0);
+    assert.equal(getNextTrappedFocusIndex(0, 3, true), 2);
+    assert.equal(getNextTrappedFocusIndex(1, 3, true), 0);
   });
 });

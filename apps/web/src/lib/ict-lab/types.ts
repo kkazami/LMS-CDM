@@ -49,6 +49,7 @@ export interface LanTool {
   id: string;
   name: string;
   use: string;
+  image: string;
 }
 
 export interface LanCrimpingStep {

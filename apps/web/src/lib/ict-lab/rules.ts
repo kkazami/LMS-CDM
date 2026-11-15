@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { HardwarePart, LanCableType, LanFault } from "./types";
+import type { HardwarePart, LanCableType, LanFault, LanTool } from "./types";
 
 // ─── ITE Program Matchers (Reusable across BTLEd ICT, BECEd, BEEd, BSEd Science) ───
 
@@ -678,4 +678,142 @@ export function simulateCableTester(params: {
     openPins: [],
     shortedPins: null,
   };
+}
+
+// ─── LAN Cable Guide: Required Tools & Materials Preview Helpers ─────────────
+
+export interface LanToolPreviewState {
+  activeIndex: number | null;
+  openedFromIndex: number | null;
+  restoreFocusIndex: number | null;
+}
+
+export type LanToolPreviewAction =
+  | { type: "OPEN"; index: number }
+  | { type: "CLOSE" }
+  | { type: "BACKDROP_CLICK" }
+  | { type: "PREV" }
+  | { type: "NEXT" }
+  | { type: "KEYDOWN"; key: string };
+
+export function createInitialLanToolPreviewState(): LanToolPreviewState {
+  return {
+    activeIndex: null,
+    openedFromIndex: null,
+    restoreFocusIndex: null,
+  };
+}
+
+/**
+ * Builds meaningful alt text for a tool illustration strictly from its config `name` and `use`
+ * short description (single source of truth).
+ */
+export function buildLanToolImageAlt(tool: Pick<LanTool, "name" | "use">): string {
+  return `${tool.name} — ${tool.use}`;
+}
+
+/**
+ * Returns wrapping previous and next indices for cycling through `totalCount` tools inside the preview.
+ */
+export function getLanToolPreviewNeighbors(
+  totalCount: number,
+  currentIndex: number
+): { prevIndex: number; nextIndex: number } {
+  if (totalCount <= 0) {
+    return { prevIndex: 0, nextIndex: 0 };
+  }
+  const normalized = ((currentIndex % totalCount) + totalCount) % totalCount;
+  return {
+    prevIndex: (normalized - 1 + totalCount) % totalCount,
+    nextIndex: (normalized + 1) % totalCount,
+  };
+}
+
+/**
+ * Pure state reducer for opening, navigating (Previous / Next / ArrowLeft / ArrowRight),
+ * and closing (Close X button / Escape key / Backdrop click) the Required Tools & Materials
+ * preview dialog, preserving `openedFromIndex` so focus returns to the clicked item on close.
+ */
+export function reduceLanToolPreviewState(
+  state: LanToolPreviewState,
+  action: LanToolPreviewAction,
+  totalCount: number
+): LanToolPreviewState {
+  if (totalCount <= 0) {
+    return createInitialLanToolPreviewState();
+  }
+
+  if (action.type === "OPEN") {
+    if (action.index < 0 || action.index >= totalCount) {
+      return state;
+    }
+    return {
+      activeIndex: action.index,
+      openedFromIndex: action.index,
+      restoreFocusIndex: null,
+    };
+  }
+
+  if (state.activeIndex === null) {
+    return state;
+  }
+
+  if (
+    action.type === "CLOSE" ||
+    action.type === "BACKDROP_CLICK" ||
+    (action.type === "KEYDOWN" && action.key === "Escape")
+  ) {
+    return {
+      activeIndex: null,
+      openedFromIndex: null,
+      restoreFocusIndex: state.openedFromIndex ?? state.activeIndex,
+    };
+  }
+
+  const { prevIndex, nextIndex } = getLanToolPreviewNeighbors(
+    totalCount,
+    state.activeIndex
+  );
+
+  if (
+    action.type === "PREV" ||
+    (action.type === "KEYDOWN" && action.key === "ArrowLeft")
+  ) {
+    return {
+      ...state,
+      activeIndex: prevIndex,
+      restoreFocusIndex: null,
+    };
+  }
+
+  if (
+    action.type === "NEXT" ||
+    (action.type === "KEYDOWN" && action.key === "ArrowRight")
+  ) {
+    return {
+      ...state,
+      activeIndex: nextIndex,
+      restoreFocusIndex: null,
+    };
+  }
+
+  return state;
+}
+
+/**
+ * Computes the next focusable element index when trapping Tab / Shift+Tab focus inside a modal.
+ */
+export function getNextTrappedFocusIndex(
+  currentFocusIndex: number,
+  focusableCount: number,
+  shiftKey: boolean
+): number {
+  if (focusableCount <= 0) return -1;
+  if (currentFocusIndex < 0 || currentFocusIndex >= focusableCount) {
+    return shiftKey ? focusableCount - 1 : 0;
+  }
+  if (shiftKey) {
+    return (currentFocusIndex - 1 + focusableCount) % focusableCount;
+  }
+  return (currentFocusIndex + 1) % focusableCount;
 }

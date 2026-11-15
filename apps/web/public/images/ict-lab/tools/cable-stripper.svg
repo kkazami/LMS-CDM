@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 260" role="img" aria-label="Rotary UTP cable stripper removing the outer cable jacket without cutting the inner twisted-pair wires">
+  <!-- Diagram Card Frame -->
+  <rect x="8" y="8" width="504" height="244" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+  <!-- Header Badge -->
+  <rect x="24" y="20" width="200" height="26" rx="6" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5" />
+  <text x="124" y="37" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#1e3a8a">
+    ROTARY CABLE STRIPPER
+  </text>
+
+  <!-- UTP Cable Passing Through Stripper Jaws -->
+  <rect x="34" y="102" width="176" height="32" rx="6" fill="#2563eb" stroke="#1e3a8a" stroke-width="2" />
+  <text x="114" y="122" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#ffffff">
+    Outer Jacket
+  </text>
+
+  <!-- Exposed Inner Wires on Right of Blade -->
+  <line x1="258" y1="108" x2="365" y2="104" stroke="#F58220" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="258" y1="115" x2="365" y2="113" stroke="#2E9B3F" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="258" y1="122" x2="365" y2="123" stroke="#1E6FD9" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="258" y1="129" x2="365" y2="132" stroke="#7A4B2A" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Removed Jacket Piece Sliding Off -->
+  <rect x="372" y="102" width="96" height="32" rx="6" fill="#60a5fa" stroke="#1d4ed8" stroke-width="1.8" stroke-dasharray="4 2" />
+  <text x="420" y="122" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#1e3a8a">
+    2–3 cm Jacket
+  </text>
+
+  <!-- Rotary Cable Stripper Body (Yellow/Slate Tool Housing) -->
+  <rect x="206" y="54" width="56" height="142" rx="10" fill="#facc15" stroke="#a16207" stroke-width="2.5" />
+  <!-- V-Notch & Depth-Set Scoring Blade -->
+  <polygon points="222,94 246,94 234,106" fill="#334155" />
+  <circle cx="234" cy="118" r="17" fill="none" stroke="#b45309" stroke-width="2.5" />
+  <!-- Finger Loop at Bottom of Stripper -->
+  <circle cx="234" cy="166" r="18" fill="#f8fafc" stroke="#a16207" stroke-width="3" />
+  <text x="234" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9.5" font-weight="800" fill="#713f12">
+    BLADE
+  </text>
+
+  <!-- Rotation Arrow Callout -->
+  <path d="M 184 74 A 36 22 0 0 1 284 74" fill="none" stroke="#1d4ed8" stroke-width="2" />
+  <polygon points="284,74 276,68 278,79" fill="#1d4ed8" />
+  <text x="370" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#1e3a8a">
+    Rotate 1–2 turns to score jacket only
+  </text>
+
+  <!-- Footer Callout -->
+  <rect x="24" y="212" width="472" height="26" rx="6" fill="#e2e8f0" />
+  <text x="260" y="229" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">
+    Preset blade depth scores the outer PVC jacket without nicking the copper wires
+  </text>
+</svg>
+
