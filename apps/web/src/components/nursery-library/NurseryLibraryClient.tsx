@@ -1789,27 +1789,35 @@ export default function NurseryLibraryClient({
               </span>
             </div>
 
-            <form onSubmit={handleCreatePlaylist} className="flex flex-col sm:flex-row items-stretch gap-3">
-              <input
-                type="text"
-                value={newPlaylistName}
-                onChange={(e) => {
-                  setNewPlaylistName(e.target.value);
-                  setPlaylistError(null);
-                }}
-                maxLength={40}
-                placeholder="e.g., Circle Time Greetings, Transition Rhymes..."
-                disabled={playlists.length >= MAX_PLAYLISTS}
-                className="flex-1 h-11 rounded-xl border border-theme bg-elevated px-3.5 text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-              />
-              <button
-                type="submit"
-                disabled={playlists.length >= MAX_PLAYLISTS || !newPlaylistName.trim()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-5 text-sm font-semibold text-white shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Create Playlist</span>
-              </button>
+            <form onSubmit={handleCreatePlaylist} className="space-y-1.5">
+              <label htmlFor="nursery-playlist-name" className="block text-xs font-bold text-primary-theme">
+                Playlist Name <span className="text-rose-500" aria-hidden="true">*</span>
+              </label>
+              <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                <input
+                  id="nursery-playlist-name"
+                  type="text"
+                  value={newPlaylistName}
+                  onChange={(e) => {
+                    setNewPlaylistName(e.target.value);
+                    setPlaylistError(null);
+                  }}
+                  maxLength={40}
+                  placeholder="e.g., Circle Time Greetings, Transition Rhymes..."
+                  required
+                  aria-required="true"
+                  disabled={playlists.length >= MAX_PLAYLISTS}
+                  className="flex-1 h-11 rounded-xl border border-theme bg-elevated px-3.5 text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                />
+                <button
+                  type="submit"
+                  disabled={playlists.length >= MAX_PLAYLISTS || !newPlaylistName.trim()}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-sky-700 hover:from-violet-700 hover:to-sky-800 px-5 text-sm font-semibold text-white shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Create Playlist</span>
+                </button>
+              </div>
             </form>
 
             {playlistError && (
@@ -1866,28 +1874,36 @@ export default function NurseryLibraryClient({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-4">
                     <div className="space-y-1">
                       {editingPlaylistId === activePlaylist.id ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={editPlaylistName}
-                            onChange={(e) => setEditPlaylistName(e.target.value)}
-                            maxLength={40}
-                            className="h-9 rounded-lg border border-theme bg-elevated px-2.5 text-sm font-bold text-primary-theme outline-none focus:border-sky-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRenamePlaylist(activePlaylist.id)}
-                            className="rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingPlaylistId(null)}
-                            className="rounded-lg border border-theme px-3 py-1.5 text-xs font-semibold text-secondary-theme cursor-pointer"
-                          >
-                            Cancel
-                          </button>
+                        <div className="space-y-1">
+                          <label htmlFor="nursery-rename-playlist" className="block text-xs font-bold text-primary-theme">
+                            Playlist Name <span className="text-rose-500" aria-hidden="true">*</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              id="nursery-rename-playlist"
+                              type="text"
+                              value={editPlaylistName}
+                              onChange={(e) => setEditPlaylistName(e.target.value)}
+                              maxLength={40}
+                              required
+                              aria-required="true"
+                              className="h-9 rounded-lg border border-theme bg-elevated px-2.5 text-sm font-bold text-primary-theme outline-none focus:border-sky-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRenamePlaylist(activePlaylist.id)}
+                              className="rounded-lg bg-gradient-to-r from-violet-600 to-sky-700 px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPlaylistId(null)}
+                              className="rounded-lg border border-theme px-3 py-1.5 text-xs font-semibold text-secondary-theme cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -2094,7 +2110,7 @@ export default function NurseryLibraryClient({
               {/* YouTube URL input */}
               <div className="space-y-1.5">
                 <label htmlFor="modal-yt-url" className="block text-xs font-bold text-primary-theme">
-                  YouTube Link <span className="text-rose-500">*</span>
+                  YouTube Link <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -2108,6 +2124,7 @@ export default function NurseryLibraryClient({
                     }}
                     placeholder="https://www.youtube.com/watch?v=... or youtu.be/..."
                     required
+                    aria-required="true"
                     className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                   />
                 </div>
@@ -2134,7 +2151,7 @@ export default function NurseryLibraryClient({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="modal-yt-title" className="block text-xs font-bold text-primary-theme">
-                    Video Title <span className="text-rose-500">*</span>
+                    Video Title <span className="text-rose-500" aria-hidden="true">*</span>
                   </label>
                   <span className="text-[10px] text-muted-theme">
                     {formTitle.length}/{MAX_CUSTOM_VIDEO_TITLE_LENGTH}
@@ -2151,6 +2168,7 @@ export default function NurseryLibraryClient({
                   maxLength={MAX_CUSTOM_VIDEO_TITLE_LENGTH}
                   placeholder="e.g., Bahay Kubo with Actions, Animal Sounds Song..."
                   required
+                  aria-required="true"
                   className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
