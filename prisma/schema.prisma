@@ -532,6 +532,10 @@ model User {
   createdMeetings ClassMeeting[] @relation("ClassMeetingCreatedBy")
   meetingJoins    MeetingJoin[]
 
+  // ─── ITE Lecture Videos relations ───
+  iteLectureVideosUploaded IteLectureVideo[]         @relation("IteLectureVideoUploader")
+  iteLectureVideoProgress  IteLectureVideoProgress[] @relation("IteLectureVideoStudentProgress")
+
   @@unique([id, instituteId])
 }
 
@@ -616,6 +620,9 @@ model Course {
   meetings  ClassMeeting[]
   programId String?
   program   AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
+  // ─── ITE Lecture Videos relations ───
+  iteLectureVideos IteLectureVideo[]
 
   @@unique([instituteId, termId, code, section])
   @@index([instituteId])
@@ -2662,3 +2669,53 @@ model OhmwardProgress {
   @@id([studentId, levelId])
   @@index([instituteId, firstPassedAt])
 }
+
+// ─── ITE Lecture Videos & Student Viewing Progress ───
+
+model IteLectureVideo {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?  @db.Text
+  courseId        String
+  sourceType      String   @default("UPLOAD")
+  externalVideoId String?
+  externalUrl     String?
+  storageUrl      String?
+  storagePathname String?
+  fileName        String?
+  mimeType        String?
+  fileSize        Int?
+  durationSeconds Float    @default(0)
+  uploadedById    String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  course     Course                    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  uploadedBy User                      @relation("IteLectureVideoUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  progress   IteLectureVideoProgress[]
+
+  @@index([courseId])
+  @@index([createdAt])
+  @@index([uploadedById])
+}
+
+model IteLectureVideoProgress {
+  id                  String    @id @default(cuid())
+  lectureId           String
+  studentId           String
+  lastPositionSeconds Float     @default(0)
+  watchedSeconds      Float     @default(0)
+  durationSeconds     Float     @default(0)
+  completedAt         DateTime?
+  lastWatchedAt       DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  lecture IteLectureVideo @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  student User            @relation("IteLectureVideoStudentProgress", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([lectureId, studentId])
+  @@index([lectureId, lastWatchedAt])
+  @@index([studentId])
+}
+
