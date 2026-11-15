@@ -337,37 +337,35 @@ export default function StudentDashboardClient({
                     <>
                       You have{" "}
                       <span
-                        className={
+                        className={`font-bold font-mono tabular-nums ${
                           courses.length > 0
                             ? "text-blue-700 dark:text-blue-400"
                             : "text-blue-700/75 dark:text-blue-400/75"
-                        }
+                        }`}
                       >
-                        <span className="font-bold font-mono tabular-nums">{courses.length}</span> active{" "}
-                        {courses.length === 1 ? "course" : "courses"}
-                      </span>
-                      ,{" "}
+                        {courses.length}
+                      </span>{" "}
+                      active {courses.length === 1 ? "course" : "courses"},{" "}
                       <span
-                        className={
+                        className={`font-bold font-mono tabular-nums ${
                           overdueItems.length > 0
                             ? "text-red-700 dark:text-red-400"
                             : "text-red-700/75 dark:text-red-400/75"
-                        }
+                        }`}
                       >
-                        <span className="font-bold font-mono tabular-nums">{overdueItems.length}</span> overdue
+                        {overdueItems.length}
                       </span>{" "}
-                      and{" "}
+                      overdue and{" "}
                       <span
-                        className={
+                        className={`font-bold font-mono tabular-nums ${
                           upcomingItems.length > 0
                             ? "text-green-700 dark:text-green-400"
                             : "text-green-700/75 dark:text-green-400/75"
-                        }
+                        }`}
                       >
-                        <span className="font-bold font-mono tabular-nums">{upcomingItems.length}</span> due in the next
-                        7 days
-                      </span>
-                      .
+                        {upcomingItems.length}
+                      </span>{" "}
+                      due in the next 7 days.
                     </>
                   ) : (
                     <>
