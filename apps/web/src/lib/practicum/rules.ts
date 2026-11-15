@@ -607,6 +607,54 @@ export function canViewPlacementRubric(
   return placementRubricAccessFor(user, placement) !== null;
 }
 
+/**
+ * Who can delete a practicum placement:
+ * - The ITE instructor who owns/supervises the placement (`supervisorId`)
+ * - Any ITE admin (`ADMIN`)
+ * Students, other instructors, and non-ITE users are denied.
+ */
+export function canDeletePlacement(
+  user: { id: string; role: string; isIte?: boolean },
+  placement: { supervisorId: string }
+): boolean {
+  return canManagePlacementRubric(user, placement);
+}
+
+export interface PlacementDeletionCounts {
+  lessonPlans: number;
+  portfolioEvidence: number;
+  demoVideos: number;
+  comments: number;
+  hasRubric: boolean;
+}
+
+/** Formats a human-readable summary of everything that will be deleted with a placement. */
+export function formatPlacementDeletionSummary(counts: PlacementDeletionCounts): string {
+  const parts: string[] = [];
+  if (counts.lessonPlans > 0) {
+    parts.push(`${counts.lessonPlans} ${counts.lessonPlans === 1 ? "lesson plan" : "lesson plans"}`);
+  }
+  if (counts.portfolioEvidence > 0) {
+    parts.push(`${counts.portfolioEvidence} portfolio evidence`);
+  }
+  if (counts.demoVideos > 0) {
+    parts.push(`${counts.demoVideos} ${counts.demoVideos === 1 ? "demo video" : "demo videos"}`);
+  }
+  if (counts.comments > 0) {
+    parts.push(`${counts.comments} ${counts.comments === 1 ? "comment" : "comments"}`);
+  }
+  if (counts.hasRubric) {
+    parts.push("the rubric");
+  }
+  if (parts.length === 0) {
+    return "This placement has no submissions, comments, or rubric.";
+  }
+  if (parts.length === 1) {
+    return `This will permanently delete ${parts[0]}.`;
+  }
+  return `This will permanently delete ${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}.`;
+}
+
 // ─── Progress summaries ────────────────────────────────────────────────────
 
 export interface TypeSummary {

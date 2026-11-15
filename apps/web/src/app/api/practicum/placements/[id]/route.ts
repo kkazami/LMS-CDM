@@ -9,11 +9,13 @@ import {
 } from "@/lib/practicum/http";
 import { updatePlacementSchema } from "@/lib/practicum/schemas";
 import {
+  deletePlacement,
   getPlacementDTO,
   prepareRubricUpload,
   requirePlacementRubricManageAccess,
   type PreparedRubricUpload,
 } from "@/lib/practicum/service";
+import { getClientIp } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -138,6 +140,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }, PRACTICUM_RUBRIC_TRANSACTION_OPTIONS);
 
     return NextResponse.json({ placement: await getPlacementDTO(id) });
+  } catch (err) {
+    return errorResponse(err);
+  }
+}
+
+/**
+ * DELETE /api/practicum/placements/[id]
+ * Owning supervisor or ITE admin: permanently deletes the placement and all owned
+ * submissions, feedback, and rubric asset in one transaction, then best-effort deletes
+ * any file-backed Blob URLs. Idempotent: returns 404 if already deleted.
+ */
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const actor = await requirePracticumActor(request, ["INSTRUCTOR", "ADMIN"]);
+    const result = await deletePlacement({
+      placementId: id,
+      actor,
+      ipAddress: getClientIp(request),
+    });
+    return NextResponse.json({ deleted: true, ...result });
   } catch (err) {
     return errorResponse(err);
   }

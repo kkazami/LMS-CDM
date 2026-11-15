@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+export const PRACTICUM_TRANSACTION_OPTIONS = {
+  maxWait: 5000,
+  timeout: 15000,
+} as const;
+
 export class HttpError extends Error {
   readonly status: number;
 
