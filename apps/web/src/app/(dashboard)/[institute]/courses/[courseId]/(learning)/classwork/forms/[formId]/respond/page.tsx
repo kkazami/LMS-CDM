@@ -142,7 +142,7 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
       fileName: ans.fileName,
       fileSizeBytes: ans.fileSizeBytes,
       isCorrect: form.showAnswersAfter ? ans.isCorrect : null,
-      pointsAwarded: form.showScoreAfter ? ans.pointsAwarded : null,
+      pointsAwarded: ans.pointsAwarded,
       autoGraded: ans.autoGraded,
       instructorGraded: ans.instructorGraded,
       feedback: form.showFeedbackAfter ? ans.feedback : null,
@@ -160,9 +160,9 @@ export default async function FormRespondPage({ params, searchParams }: PageProp
 
   const parsedAttempt: FormAttemptData = {
     ...attempt,
-    rawScore: form.showScoreAfter ? attempt.rawScore : null,
-    percentage: form.showScoreAfter ? attempt.percentage : null,
-    passed: form.showScoreAfter ? attempt.passed : null,
+    rawScore: attempt.rawScore,
+    percentage: attempt.percentage,
+    passed: attempt.passed,
     status: attempt.status as FormAttemptData["status"],
     answers: parsedAnswers,
   };

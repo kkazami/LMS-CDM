@@ -100,6 +100,8 @@ export async function executeJudge0Submission(sourceCode: string, languageId: nu
   try {
     if (Date.now() >= deadline) throw new CodeRunnerUnavailableError('Code evaluation timed out. Your progress has not changed.');
     const provider = process.env.CODELAB_RUNNER?.trim().toLowerCase() || "judge0";
+    // JDoodle's paid account settings can enable networking; this adapter cannot disable it per run.
+    if (process.env.NODE_ENV === "production" && provider === "jdoodle") throw new CodeRunnerUnavailableError('JDoodle is not enabled for production CodeLab. Configure OnlineCompiler or a reviewed Judge0 provider.');
     if (![54, 62, 51, 71, 93, 82].includes(languageId)) throw new CodeRunnerUnavailableError('This language is not configured for CodeLab.');
     if (provider === "jdoodle") return await executeJDoodle(sourceCode, languageId, stdin, deadline);
     if (provider !== "judge0" && provider !== "onlinecompiler") throw new CodeRunnerUnavailableError();
@@ -122,6 +124,7 @@ export async function executeJudge0Submission(sourceCode: string, languageId: nu
     // preserves Unicode and compiler output that isn't valid JSON text directly.
     let data = await request(`${base}/submissions?base64_encoded=true&wait=false`, {
       method: "POST",
+      // OnlineCompiler hard-disables network in its sandbox and rejects the enable_network field.
       body: JSON.stringify({ source_code: Buffer.from(sourceCode).toString("base64"), language_id: languageId,
         stdin: Buffer.from(stdin).toString("base64"), ...(online ? {} : { enable_network: false }) }),
     });

@@ -90,14 +90,14 @@ export async function syncAttemptScoreToGradebook({
           ...await academicProvenance('STARTED', tx),
           grade: finalGrade,
           submittedAt: new Date(),
-          isReturned: form.showScoreAfter,
+          isReturned: true,
         },
         update: {
           grade: finalGrade,
           status: "SUBMITTED",
           ...await academicProvenance('STARTED', tx),
           submittedAt: new Date(),
-          isReturned: form.showScoreAfter,
+          isReturned: true,
         },
       });
 
@@ -113,16 +113,13 @@ export async function syncAttemptScoreToGradebook({
       return saved;
     });
 
-    // Notify student if score visibility is enabled
-    if (form.showScoreAfter) {
-      await createNotification({
-        userId,
-        type: "GRADE",
-        title: `Grade Posted: ${form.title}`,
-        message: `Your score for ${form.title} has been recorded: ${finalGrade}/${maxPoints}.`,
-        link: `/${form.courseId}/classwork/${form.syllabusItemId}`,
-      });
-    }
+    await createNotification({
+      userId,
+      type: "GRADE",
+      title: `Grade Posted: ${form.title}`,
+      message: `Your score for ${form.title} has been recorded: ${finalGrade}/${maxPoints}.`,
+      link: `/${form.courseId}/classwork/${form.syllabusItemId}`,
+    });
 
     return submission;
   } catch (error) {

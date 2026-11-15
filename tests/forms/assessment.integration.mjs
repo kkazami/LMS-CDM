@@ -127,11 +127,12 @@ try{
   assert.equal((await call('start',{password:'room-secret'},actors.student)).status,403);
   assert.equal((await call('answer',{questionId:params.questionId,answerOptions:['opt_2']},actors.student)).status,400);
  });
- await check('hidden score/result settings survive reload and all attempt APIs',async()=>{
-  await call('settings',{showScoreAfter:false,showFeedbackAfter:false,showAnswersAfter:false});
-  const history=await (await call('history',undefined,actors.student)).json();assert.equal(history.attempts[0].rawScore,null);assert.equal(history.attempts[0].percentage,null);
-  const grades=await (await call('studentGrades',undefined,actors.student)).json();assert.ok(!JSON.stringify(grades).includes('\"score\":1'));
-  const response=await (await call('attempt',undefined,actors.student)).json();assert.equal(response.attempt.rawScore,null);assert.equal(response.attempt.answers[0].pointsAwarded,null);assert.equal('passwordHash' in response.attempt.form,false);
+ await check('scores stay visible while answer keys, feedback and password hashes remain protected',async()=>{
+  assert.equal((await call('settings',{showScoreAfter:false,showFeedbackAfter:false,showAnswersAfter:false})).status,200);
+  const form=await driver.db.form.findUniqueOrThrow({where:{id:future}});assert.equal(form.showScoreAfter,true);
+  const history=await (await call('history',undefined,actors.student)).json();assert.equal(history.attempts[0].rawScore,1);assert.equal(history.attempts[0].percentage,100);
+  const grades=await (await call('studentGrades',undefined,actors.student)).json();assert.equal(grades.items.find(item=>item.id===form.syllabusItemId).score,1);
+  const response=await (await call('attempt',undefined,actors.student)).json();assert.equal(response.attempt.rawScore,1);assert.equal(response.attempt.answers[0].pointsAwarded,1);assert.equal(response.attempt.answers[0].isCorrect,null);assert.equal(response.attempt.answers[0].feedback,null);assert.equal('passwordHash' in response.attempt.form,false);
  });
  await check('late answers are rejected and timeout submission grades only saved answers',async()=>{
   await call('settings',{maxAttempts:2});

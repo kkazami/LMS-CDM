@@ -28,7 +28,6 @@ export async function GET(request: Request, context: RouteContext) {
 
     const { courseId, formId } = await context.params;
     await requireFormAccess(session.user, courseId, formId, false);
-    const form = await db.form.findUniqueOrThrow({ where: { id: formId } });
     const attempts = await db.formAttempt.findMany({
       where: {
         formId,
@@ -37,7 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
       orderBy: { attemptNumber: "desc" },
     });
 
-    return NextResponse.json({ attempts: attempts.map(attempt => session.user.role.toUpperCase() === 'STUDENT' && !form.showScoreAfter ? { ...attempt, rawScore: null, percentage: null, passed: null } : attempt) });
+    return NextResponse.json({ attempts });
   } catch (error) {
     if (error instanceof AccessError) return accountErrorResponse(error);
     console.error("ATTEMPTS_GET_ERROR", error);

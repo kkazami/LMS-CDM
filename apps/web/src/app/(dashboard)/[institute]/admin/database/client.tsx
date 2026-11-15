@@ -236,7 +236,9 @@ export default function AdminDatabaseClient({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setParsedRestoreData(null);
     setRestoreFile(file);
+    if (file.size > 1024 * 1024) { toast.error("File too large", "Use a JSON export up to 1 MB."); return; }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -252,11 +254,20 @@ export default function AdminDatabaseClient({
           } else if (json[0]?.code !== undefined && json[0]?.title !== undefined) {
             detectedModel = "Course";
           }
-          setParsedRestoreData({ model: detectedModel, count: json.length, raw: json });
+          const writable: Record<string, string[]> = {
+            User: ['name', 'bio', 'phone', 'department', 'yearLevel'],
+            Course: ['title', 'description', 'subject', 'room'],
+            SyllabusItem: ['title', 'description'],
+          };
+          const model = Object.keys(writable).find(name => name.toLowerCase() === detectedModel.toLowerCase());
+          if (!model) { toast.error("Unsupported restore", "Restore supports existing User, Course and SyllabusItem records."); return; }
+          if (json.length < 1 || json.length > 500) { toast.error("Invalid record count", "Choose 1–500 existing records."); return; }
+          const records = json.map(record => ({ id: record.id, ...Object.fromEntries(writable[model].filter(field => record[field] !== undefined).map(field => [field, record[field]])) }));
+          setParsedRestoreData({ model, count: records.length, raw: records });
         } else if (json?.snapshot) {
-          setParsedRestoreData({ model: "System Snapshot", count: json.snapshot.recordsCount || 0, raw: json });
+          toast.error("Metadata only", "Snapshot summaries contain no restorable records. Choose a supported table export.");
         } else {
-          toast.error("Invalid Format", "JSON file must contain an array of database records or snapshot bundle.");
+          toast.error("Invalid Format", "JSON file must contain an array of existing database records.");
         }
       } catch (err) {
         toast.error("Parse Error", "Could not parse JSON file. Ensure it is valid JSON.");
@@ -269,9 +280,7 @@ export default function AdminDatabaseClient({
     if (!parsedRestoreData) return;
     setIsRestoring(true);
     try {
-      const payload = parsedRestoreData.model === "System Snapshot"
-        ? { snapshotId: parsedRestoreData.raw?.snapshot?.id }
-        : { model: parsedRestoreData.model, records: parsedRestoreData.raw };
+      const payload = { model: parsedRestoreData.model, records: parsedRestoreData.raw };
 
       const res = await fetch("/api/admin/database/restore", {
         method: "POST",
@@ -346,7 +355,7 @@ export default function AdminDatabaseClient({
             Database Management
           </h1>
           <p className="text-slate-500 dark:text-[#8B92A5] mt-1 text-sm">
-            Categorized data models, live row metrics, schema inspection, and automated recovery snapshots.
+            Inspect and export institute records, or restore supported fields on existing records.
           </p>
         </div>
 
@@ -812,7 +821,7 @@ export default function AdminDatabaseClient({
                 Automated & Manual Snapshots
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Create point-in-time database snapshots for disaster recovery, migrations, or local offline development.
+                Record institute database summaries. Download table exports to save supported record data.
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1023,7 +1032,7 @@ export default function AdminDatabaseClient({
                     Database Recovery & Restore
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    1-Click in-app recovery without needing terminal commands.
+                    Restore profile or descriptive fields on existing records in your institute.
                   </p>
                 </div>
               </div>
@@ -1053,7 +1062,7 @@ export default function AdminDatabaseClient({
                       {restoreFile ? restoreFile.name : "Click or drag your backup .json file here"}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Supports table JSON exports or full snapshot bundles
+                      Supports User, Course and SyllabusItem JSON exports (up to 500 records)
                     </p>
                   </div>
                 </div>
@@ -1083,7 +1092,7 @@ export default function AdminDatabaseClient({
               <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-200/80 dark:border-white/5 flex items-start gap-2.5 text-xs text-slate-500 dark:text-slate-400">
                 <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] leading-relaxed">
-                  <strong className="text-slate-800 dark:text-slate-200">Non-Destructive Recovery:</strong> Records are synchronized using safe upserts. Existing passwords and tokens will remain completely protected.
+                  <strong className="text-slate-800 dark:text-slate-200">Non-Destructive Recovery:</strong> Only allowed profile and descriptive fields are updated. New records, credentials, roles and ownership changes use their dedicated management tools.
                 </p>
               </div>
             </div>

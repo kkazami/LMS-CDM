@@ -46,6 +46,17 @@ export const activitySubmissionSchema = z.object({
 /** TypeScript type inferred from the Zod schema — use this for type-safe handling. */
 export type ActivitySubmissionPayload = z.infer<typeof activitySubmissionSchema>;
 
+const answerSubmissionSchema = activitySubmissionSchema.omit({ stateCheck: true, score: true, maxScore: true, passed: true, errorLog: true }).extend({
+  activityType: z.enum(['pc-build', 'arduino', 'server-rack', 'logic-gate']),
+  answers: z.unknown().refine(value => value !== undefined, 'Activity answers are required.'),
+}).strict();
+
+/** Client outcome fields remain compatible only with the existing CodeLab path. */
+export const activitySubmissionInputSchema = z.union([
+  activitySubmissionSchema.extend({ activityType: z.literal('codelab') }).strict(),
+  answerSubmissionSchema,
+]);
+
 /**
  * Validates an ActivityTemplate created by an instructor.
  * Used when instructors create/edit activity assignments.

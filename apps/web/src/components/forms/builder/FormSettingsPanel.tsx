@@ -46,7 +46,6 @@ export default function FormSettingsPanel({
   const [scoreToKeep, setScoreToKeep] = useState<ScoreToKeep>(form.scoreToKeep || "HIGHEST");
   const [shuffleQuestions, setShuffleQuestions] = useState(form.shuffleQuestions);
   const [shuffleOptions, setShuffleOptions] = useState(form.shuffleOptions);
-  const [showScoreAfter, setShowScoreAfter] = useState(form.showScoreAfter);
   const [showAnswersAfter, setShowAnswersAfter] = useState(form.showAnswersAfter);
   const [showFeedbackAfter, setShowFeedbackAfter] = useState(form.showFeedbackAfter);
   const [isProctored, setIsProctored] = useState(form.isProctored);
@@ -86,7 +85,7 @@ export default function FormSettingsPanel({
         scoreToKeep,
         shuffleQuestions,
         shuffleOptions,
-        showScoreAfter,
+        showScoreAfter: true,
         showAnswersAfter,
         showFeedbackAfter,
         isProctored,
@@ -255,18 +254,10 @@ export default function FormSettingsPanel({
                 </div>
               </label>
 
-              <label className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showScoreAfter}
-                  onChange={(e) => setShowScoreAfter(e.target.checked)}
-                  className="rounded border-slate-300 text-primary"
-                />
-                <div>
-                  <div className="font-semibold text-slate-800 dark:text-white">Show score after submission</div>
-                  <div className="text-[11px] text-slate-500">Display grade instantly upon submit</div>
-                </div>
-              </label>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                <div className="font-semibold text-slate-800 dark:text-white">Scores are visible after submission</div>
+                <div className="text-[11px] text-slate-500">Students see their own scores; instructors see scores in their courses.</div>
+              </div>
 
               <label className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 cursor-pointer">
                 <input

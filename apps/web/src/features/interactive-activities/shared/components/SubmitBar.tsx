@@ -6,7 +6,9 @@ import { Timer, Trophy, RotateCcw, Send, Loader2, AlertCircle, CheckCircle2 } fr
 
 interface SubmitBarProps {
   /** The specific type of activity being submitted */
-  activityType: "pc-build" | "arduino" | "server-rack" | "logic-gate" | "codelab";
+  activityType: "pc-build" | "arduino" | "server-rack" | "logic-gate";
+  /** Raw assembly/circuit/configuration answers; never a claimed grading result. */
+  getAnswers: () => unknown;
   /** The assignment ID being attempted */
   assignmentId: string;
   /** The authenticated student's ID */
@@ -42,8 +44,9 @@ export default function SubmitBar({
   maxScore = 100,
   manualGrading = false,
   onSuccess,
+  getAnswers,
 }: SubmitBarProps) {
-  const { elapsedSeconds, attempts, score, stateCheck, stopTimer } = useActivityStore();
+  const { elapsedSeconds, attempts, score, stopTimer } = useActivityStore();
   const { submit, isSubmitting, error, result } = useActivitySubmission();
 
   const handleSubmit = async () => {
@@ -61,10 +64,7 @@ export default function SubmitBar({
       startedAt,
       completionTimeSeconds: elapsedSeconds,
       attempts: currentAttempts,
-      stateCheck,
-      score,
-      maxScore,
-      passed: score >= (maxScore * 0.7), // Arbitrary passing threshold (70%)
+      answers: getAnswers(),
     });
 
     if (res && onSuccess) {

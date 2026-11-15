@@ -68,17 +68,14 @@ export default async function GradesPage({
   const enrolledCourses = enrollments.map((e) => e.course);
   const courseIds = enrolledCourses.map((c) => c.id);
 
-  // ── 2. Fetch GRADED submissions for this student ──
-  // Only rows where the instructor has actually assigned a grade:
-  //   status IN ("GRADED", "RETURNED") AND grade IS NOT NULL
-  // This covers both graded-in-place and returned-with-grade flows.
+  // Include completed forms with a server-computed grade as well as manual grades.
   const gradedSubmissions = courseIds.length === 0
     ? []
     : await db.studentSubmission.findMany({
         where: {
           studentId,
           grade: { not: null },
-          status: { in: ["GRADED", "RETURNED"] },
+          status: { in: ["SUBMITTED", "GRADED", "RETURNED"] },
           syllabusItem: {
             courseId: { in: courseIds },
             type: { not: "MATERIAL" }, // only ASSIGNMENT and QUIZ

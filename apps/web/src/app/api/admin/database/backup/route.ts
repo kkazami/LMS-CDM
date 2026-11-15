@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSessionFromRequest } from '@/lib/api-auth';
+import { databaseAdministrator, databaseCount } from '@/lib/admin-database';
+import { AccessError, accountErrorResponse, assertMutationOrigin } from '@/lib/super-user-v1/actor';
 
 export const dynamic = "force-dynamic";
 
 // In-memory snapshot logs stored during session / server lifetime
 const SNAPSHOTS: {
+  instituteId: string;
   id: string;
   name: string;
   timestamp: string;
@@ -14,39 +16,28 @@ const SNAPSHOTS: {
   recordsCount: number;
   status: string;
   adminName: string;
-}[] = [
-  {
-    id: "snap_init_auto",
-    name: "Automated Daily Snapshot",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 14).toISOString(),
-    sizeBytes: 1024 * 380, // ~380 KB
-    tablesIncluded: 28,
-    recordsCount: 4200,
-    status: "VERIFIED",
-    adminName: "System Automation",
-  },
-];
+}[] = [];
 
 export async function GET(request: Request) {
   try {
-    const session = await getSessionFromRequest(request);
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Forbidden: Admin access required.' }, { status: 403 });
-    }
+    const actor = await databaseAdministrator(request);
+    assertMutationOrigin(request);
+    const snapshots = SNAPSHOTS.filter(snapshot => snapshot.instituteId === actor.instituteId);
 
     const { searchParams } = new URL(request.url);
     const downloadId = searchParams.get('download');
 
     if (downloadId) {
-      const snap = SNAPSHOTS.find(s => s.id === downloadId) || SNAPSHOTS[0];
+      const snap = snapshots.find(s => s.id === downloadId);
+      if (!snap) throw new AccessError(404, 'Snapshot not found.');
       const payload = {
         snapshot: snap,
         exportedAt: new Date().toISOString(),
         engine: "PostgreSQL 16.x / Prisma 7",
-        instituteScope: (session.user as any).institute?.code || "ics",
+        instituteScope: actor.instituteId,
         modelsMonitored: snap.tablesIncluded || 28,
         checksum: "sha256_" + Buffer.from(snap.id).toString("hex"),
-        dataBundleNotice: "Full point-in-time model checkpoint and recovery baseline.",
+        dataBundleNotice: "Summary metadata only. Download table exports for record data.",
       };
 
       return new NextResponse(JSON.stringify(payload, null, 2), {
@@ -59,33 +50,31 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      snapshots: SNAPSHOTS,
+      snapshots,
       schedule: {
-        enabled: true,
-        frequency: "Daily at 02:00 AM",
+        enabled: false,
+        frequency: "Manual summaries only",
         retentionDays: 7,
-        lastRun: SNAPSHOTS[SNAPSHOTS.length - 1]?.timestamp || new Date().toISOString(),
+        lastRun: snapshots[snapshots.length - 1]?.timestamp || new Date().toISOString(),
         nextRun: new Date(Date.now() + 1000 * 60 * 60 * 9.2).toISOString(),
         storageTarget: "Encrypted Cloud Storage & Local Replica",
       },
     });
   } catch (error) {
-    console.error("DATABASE_BACKUP_GET_ERROR", error);
-    return NextResponse.json({ message: "Failed to fetch backups." }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionFromRequest(request);
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Forbidden: Admin access required.' }, { status: 403 });
-    }
+    const actor = await databaseAdministrator(request);
+    assertMutationOrigin(request);
+    const snapshots = SNAPSHOTS.filter(snapshot => snapshot.instituteId === actor.instituteId);
 
     const [userCount, courseCount, submissionCount] = await Promise.all([
-      db.user.count().catch(() => 0),
-      db.course.count().catch(() => 0),
-      db.studentSubmission.count().catch(() => 0),
+      databaseCount('User', actor.instituteId),
+      databaseCount('Course', actor.instituteId),
+      databaseCount('StudentSubmission', actor.instituteId),
     ]);
 
     const now = new Date();
@@ -93,14 +82,15 @@ export async function POST(request: Request) {
     const name = `Manual Snapshot - ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
 
     const newSnapshot = {
+      instituteId: actor.instituteId,
       id,
       name,
       timestamp: now.toISOString(),
-      sizeBytes: Math.floor(1024 * (120 + Math.random() * 200)),
-      tablesIncluded: 28,
+      sizeBytes: 0,
+      tablesIncluded: 3,
       recordsCount: userCount + courseCount + submissionCount,
       status: "COMPLETED",
-      adminName: session.user.name || "Administrator",
+      adminName: actor.name || "Administrator",
     };
 
     SNAPSHOTS.unshift(newSnapshot);
@@ -108,8 +98,8 @@ export async function POST(request: Request) {
     // Also record this in AuditLog if possible
     await db.auditLog.create({
       data: {
-        adminId: session.user.id,
-        targetId: session.user.id,
+        adminId: actor.id,
+        targetId: actor.id,
         action: "DATABASE_SNAPSHOT_CREATED",
         metadata: JSON.stringify({ snapshotId: id, name }),
       },
@@ -117,7 +107,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ snapshot: newSnapshot }, { status: 201 });
   } catch (error) {
-    console.error("DATABASE_BACKUP_POST_ERROR", error);
-    return NextResponse.json({ message: "Failed to create snapshot." }, { status: 500 });
+    return accountErrorResponse(error);
   }
 }

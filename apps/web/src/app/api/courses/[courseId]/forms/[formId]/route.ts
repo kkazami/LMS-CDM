@@ -116,7 +116,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = parseFormSettings(await request.json());
     checkFormSchedule({ opensAt: body.opensAt === undefined ? existing.opensAt : body.opensAt, closesAt: body.closesAt === undefined ? existing.closesAt : body.closesAt });
-    const updateData: Record<string, unknown> = {};
+    const updateData: Record<string, unknown> = { showScoreAfter: true };
 
     const allowedFields = [
       "title",
@@ -188,8 +188,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         });
       }
 
-      // Re-project completed scores immediately when the retention or visibility policy changes.
-      if (started && (body.scoreToKeep !== undefined || body.maxAttempts !== undefined || body.showScoreAfter !== undefined)) {
+      // Re-project completed scores when retention changes or a legacy hidden form is edited.
+      if (started && (body.scoreToKeep !== undefined || body.maxAttempts !== undefined || body.showScoreAfter !== undefined || !current.showScoreAfter)) {
         const item = await tx.syllabusItem.findUniqueOrThrow({ where: { id: form.syllabusItemId }, select: { maxPoints: true } });
         const attempts = await tx.formAttempt.findMany({ where: { formId, status: { in: ['SUBMITTED', 'TIMED_OUT'] }, rawScore: { not: null }, totalPoints: { not: null } }, select: { userId: true, rawScore: true, totalPoints: true }, orderBy: { attemptNumber: 'asc' } });
         const byStudent = new Map<string, number[]>();
@@ -200,7 +200,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
         for (const [studentId, scores] of byStudent) {
           const score = form.scoreToKeep === 'AVERAGE' ? scores.reduce((a, b) => a + b, 0) / scores.length : form.scoreToKeep === 'LATEST' ? scores[scores.length - 1] : Math.max(...scores);
-          await tx.studentSubmission.updateMany({ where: { syllabusItemId: form.syllabusItemId, studentId }, data: { grade: Math.round(score * 100) / 100, isReturned: form.showScoreAfter } });
+          await tx.studentSubmission.updateMany({ where: { syllabusItemId: form.syllabusItemId, studentId }, data: { grade: Math.round(score * 100) / 100, isReturned: true } });
         }
       }
       return form;
