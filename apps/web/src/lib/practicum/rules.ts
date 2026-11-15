@@ -287,26 +287,187 @@ export function blobPathnameFromUrl(urlString: string): string {
   return decodeURIComponent(new URL(urlString).pathname).replace(/^\/+/, "");
 }
 
-// ─── Video links ───────────────────────────────────────────────────────────
+// ─── External submission & video links ─────────────────────────────────────
 
-export type LinkCheck = { ok: true; url: string } | { ok: false; reason: string };
+export const SUBMISSION_LINK_MAX_LENGTH = 2048;
 
-/** A pasted demo video link must be a plain https URL. */
-export function parseVideoLink(raw: string): LinkCheck {
-  const trimmed = raw.trim();
-  if (trimmed.length === 0 || trimmed.length > 2048) {
-    return { ok: false, reason: "Enter a valid video link." };
+export const ACCEPTED_SUBMISSION_LINK_SITES_TEXT =
+  "Google Drive (drive.google.com), Google Docs/Sheets/Slides (docs.google.com), OneDrive (onedrive.live.com, 1drv.ms), SharePoint (*.sharepoint.com), Dropbox (dropbox.com), Canva (canva.com), or YouTube (youtube.com, youtu.be)";
+
+export type LinkCheck =
+  | { ok: true; url: string; siteName: string }
+  | { ok: false; reason: string };
+
+const SHAREPOINT_SUBDOMAIN_HOST =
+  /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.sharepoint\.com$/;
+
+/**
+ * Resolves the human-readable site label for an exact allowlisted hostname (+ pathname for Google Docs/Sheets/Slides),
+ * or null if the hostname is not on the allowlist.
+ */
+export function resolveAllowlistedLinkSite(hostname: string, pathname = "/"): string | null {
+  const host = hostname.toLowerCase();
+  if (!host || host.endsWith(".")) return null;
+
+  if (host === "drive.google.com") {
+    return "Google Drive";
   }
+  if (host === "docs.google.com") {
+    if (/^\/spreadsheets(\/|$)/i.test(pathname)) return "Google Sheets";
+    if (/^\/presentation(\/|$)/i.test(pathname)) return "Google Slides";
+    return "Google Docs";
+  }
+  if (host === "onedrive.live.com" || host === "1drv.ms") {
+    return "OneDrive";
+  }
+  if (SHAREPOINT_SUBDOMAIN_HOST.test(host)) {
+    return "SharePoint";
+  }
+  if (host === "dropbox.com" || host === "www.dropbox.com") {
+    return "Dropbox";
+  }
+  if (host === "canva.com" || host === "www.canva.com") {
+    return "Canva";
+  }
+  if (
+    host === "youtube.com" ||
+    host === "www.youtube.com" ||
+    host === "m.youtube.com" ||
+    host === "youtu.be" ||
+    host === "youtube-nocookie.com" ||
+    host === "www.youtube-nocookie.com"
+  ) {
+    return "YouTube";
+  }
+
+  return null;
+}
+
+/**
+ * Validates an external link for Practicum submissions (Lesson Plan, Portfolio Evidence, Demo Video).
+ * Enforces:
+ * - https:// only (rejects http:, javascript:, data:, etc.)
+ * - max length <= 2048 characters
+ * - no embedded credentials (user:pass@)
+ * - no custom/non-standard ports
+ * - exact hostname match against the Practicum allowlist (rejects look-alike domains such as drive.google.com.evil.com)
+ */
+export function parseSubmissionLink(raw: string, _type?: SubmissionType): LinkCheck {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed.length === 0) {
+    return {
+      ok: false,
+      reason: `Enter a valid https:// link. Accepted sites: ${ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.`,
+    };
+  }
+  if (trimmed.length > SUBMISSION_LINK_MAX_LENGTH) {
+    return {
+      ok: false,
+      reason: `The link must be at most ${SUBMISSION_LINK_MAX_LENGTH} characters.`,
+    };
+  }
+  if (/^(javascript|data|vbscript|file|blob):/i.test(trimmed)) {
+    return {
+      ok: false,
+      reason: `The link must start with https://. Accepted sites: ${ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.`,
+    };
+  }
+
   let url: URL;
   try {
     url = new URL(trimmed);
   } catch {
-    return { ok: false, reason: "Enter a valid video link." };
+    return {
+      ok: false,
+      reason: `Enter a valid https:// link. Accepted sites: ${ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.`,
+    };
   }
-  if (url.protocol !== "https:") return { ok: false, reason: "The video link must start with https://." };
-  if (url.username || url.password) return { ok: false, reason: "The video link must not contain credentials." };
-  if (!url.hostname.includes(".")) return { ok: false, reason: "Enter a valid video link." };
-  return { ok: true, url: url.toString() };
+
+  if (url.protocol !== "https:") {
+    return {
+      ok: false,
+      reason: `The link must start with https://. Accepted sites: ${ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.`,
+    };
+  }
+  if (url.username || url.password || /^https:\/\/[^/?#]*@/i.test(trimmed)) {
+    return { ok: false, reason: "The link must not contain credentials." };
+  }
+  if (url.port || /^https:\/\/[^/?#]*:\d+/i.test(trimmed)) {
+    return { ok: false, reason: "The link must not specify a custom port." };
+  }
+
+  const siteName = resolveAllowlistedLinkSite(url.hostname, url.pathname);
+  if (!siteName) {
+    return {
+      ok: false,
+      reason: `Unaccepted link site. Accepted sites: ${ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.`,
+    };
+  }
+
+  return { ok: true, url: url.toString(), siteName };
+}
+
+/** Alias used by existing demo video callers; enforces the same https + allowlist rules. */
+export function parseVideoLink(raw: string): LinkCheck {
+  return parseSubmissionLink(raw, "DEMO_VIDEO");
+}
+
+/** Returns the human-readable site name (e.g. "Google Drive") for a submission link. */
+export function getSubmissionLinkSiteName(rawUrl: string | null | undefined): string {
+  if (!rawUrl) return "External link";
+  const parsed = parseSubmissionLink(rawUrl);
+  return parsed.ok ? parsed.siteName : "External link";
+}
+
+/**
+ * Validates file vs. link attachment rules per submission type:
+ * - Never allows both a file and a link at the same time.
+ * - LESSON_PLAN (new): file or link is optional (either a file, a link, or neither).
+ * - PORTFOLIO_EVIDENCE, DEMO_VIDEO, and all resubmissions: require EITHER a file OR a link (not both).
+ */
+export function validateSubmissionAttachmentInput(args: {
+  type: SubmissionType;
+  isResubmit?: boolean;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  videoLink?: string | null;
+}): RuleCheck {
+  const hasFile = Boolean(args.fileUrl?.trim() || args.fileName?.trim());
+  const hasLink = Boolean(args.videoLink?.trim());
+
+  if (hasFile && hasLink) {
+    return { ok: false, reason: "Provide either an uploaded file or a link, not both." };
+  }
+
+  if (hasFile) {
+    if (!args.fileUrl?.trim() || !args.fileName?.trim()) {
+      return { ok: false, reason: "File name is required." };
+    }
+    return { ok: true };
+  }
+
+  if (hasLink) {
+    const parsed = parseSubmissionLink(args.videoLink ?? "", args.type);
+    if (!parsed.ok) return parsed;
+    return { ok: true };
+  }
+
+  if (!args.isResubmit && args.type === "LESSON_PLAN") {
+    return { ok: true };
+  }
+
+  return { ok: false, reason: "Provide either an uploaded file or a link." };
+}
+
+/**
+ * True only when deleting a submission should also delete its stored file record/blob.
+ * Link-only (or title-only) submissions must never touch file storage on delete.
+ */
+export function shouldDeleteStoredSubmissionFile(submission: {
+  fileUrl?: string | null;
+  videoLink?: string | null;
+}): boolean {
+  return Boolean(submission.fileUrl && submission.fileUrl.trim().length > 0);
 }
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;

@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { resolveSubmissionSource } from "../blob";
 import {
   RUBRIC_MAX_BYTES,
   RUBRIC_MIME_BY_EXTENSION,
@@ -13,12 +14,15 @@ import {
   canViewPlacementRubric,
   getBlobStoreId,
   getExtension,
+  getSubmissionLinkSiteName,
   isOwnBlobUrl,
   isValidUploadPathname,
+  parseSubmissionLink,
   parseVideoLink,
   placementRoleFor,
   placementRubricAccessFor,
   sanitizeRubricFileName,
+  shouldDeleteStoredSubmissionFile,
   statusAfterFeedback,
   statusAfterResubmit,
   summarizeGroups,
@@ -26,6 +30,7 @@ import {
   totalPendingReview,
   validateRubricSignature,
   validateRubricUpload,
+  validateSubmissionAttachmentInput,
   validateUpload,
 } from "../rules";
 import {
@@ -41,7 +46,12 @@ import {
   isPracticumMissingPrivilegesError,
   isPracticumTransactionTimeoutError,
 } from "../http";
-import { createPlacementSchema, createSubmissionSchema, feedbackSchema } from "../schemas";
+import {
+  createPlacementSchema,
+  createSubmissionSchema,
+  feedbackSchema,
+  resubmitSchema,
+} from "../schemas";
 
 const MB = 1024 * 1024;
 
@@ -533,6 +543,327 @@ describe("practicum placement transaction timeout & error classification", () =>
       assert.equal(logged[0][1], secretError);
     } finally {
       console.error = origError;
+    }
+  });
+});
+
+describe("practicum submission external links (allowlist, validation, creation, display, replacement & deletion)", () => {
+  it("accepts every allowlisted host and URL shape with the expected site name", () => {
+    const cases: Array<[string, string]> = [
+      ["https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/view?usp=sharing", "Google Drive"],
+      ["https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz", "Google Drive"],
+      ["https://docs.google.com/document/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit?usp=sharing", "Google Docs"],
+      ["https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit", "Google Sheets"],
+      ["https://docs.google.com/presentation/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit", "Google Slides"],
+      ["https://onedrive.live.com/?id=root&cid=12345", "OneDrive"],
+      ["https://1drv.ms/w/s!AbCdEfGhIjKlMnOp", "OneDrive"],
+      ["https://cdm.sharepoint.com/:w:/s/ITE/EaBcDeFgHiJkLmNo", "SharePoint"],
+      ["https://cdm-my.sharepoint.com/personal/student_cdm_edu_ph/Documents/LessonPlan.docx", "SharePoint"],
+      ["https://dropbox.com/scl/fi/abc123/lesson-plan.pdf?rlkey=xyz&dl=0", "Dropbox"],
+      ["https://www.dropbox.com/s/abc123/portfolio-evidence.pdf?dl=0", "Dropbox"],
+      ["https://canva.com/design/DAFx1234567/view", "Canva"],
+      ["https://www.canva.com/design/DAFx1234567/AbCdEfGh/view?utm_content=DAFx1234567", "Canva"],
+      ["https://youtube.com/watch?v=dQw4w9WgXcQ", "YouTube"],
+      ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "YouTube"],
+      ["https://m.youtube.com/watch?v=dQw4w9WgXcQ", "YouTube"],
+      ["https://youtu.be/dQw4w9WgXcQ", "YouTube"],
+    ];
+
+    for (const [url, expectedSite] of cases) {
+      const res = parseSubmissionLink(url);
+      assert.equal(res.ok, true, `Expected ${url} to be accepted`);
+      if (res.ok) {
+        assert.equal(res.siteName, expectedSite, `Expected siteName ${expectedSite} for ${url}`);
+        assert.equal(getSubmissionLinkSiteName(url), expectedSite);
+      }
+    }
+  });
+
+  it("rejects look-alike hosts, http://, credentials, javascript:, data:, custom ports, and over-length URLs with a clear accepted-sites message", () => {
+    const rejectedUrls = [
+      // Look-alike hosts
+      "https://drive.google.com.evil.com/file/d/123/view",
+      "https://evil-drive.google.com/file/d/123/view",
+      "https://docs.google.com.attacker.org/document/d/123",
+      "https://evilsharepoint.com/sites/ite",
+      "https://sharepoint.com.evil.com/sites/ite",
+      "https://sharepoint.com/sites/ite",
+      "https://onedrive.live.com.evil.com/view",
+      "https://evildropbox.com/s/123/a.pdf",
+      "https://canva.com.evil.com/design/123/view",
+      "https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ",
+      "https://youtu.be.evil.com/dQw4w9WgXcQ",
+      "https://example.com/lesson-plan.pdf",
+      // Non-https schemes
+      "http://drive.google.com/file/d/123/view",
+      "http://www.canva.com/design/123/view",
+      "javascript:alert(1)",
+      "JAVASCRIPT:alert(document.cookie)",
+      "data:text/html,<script>alert(1)</script>",
+      "vbscript:msgbox(1)",
+      "file:///etc/passwd",
+      // Embedded credentials
+      "https://user:pass@drive.google.com/file/d/123/view",
+      "https://user@docs.google.com/document/d/123/edit",
+      // Ports
+      "https://drive.google.com:8443/file/d/123/view",
+      "https://drive.google.com:443/file/d/123/view",
+      "https://www.canva.com:8080/design/123/view",
+      // Over-length & blank
+      `https://drive.google.com/file/d/${"a".repeat(2050)}`,
+      "   ",
+    ];
+
+    for (const bad of rejectedUrls) {
+      const res = parseSubmissionLink(bad);
+      assert.equal(res.ok, false, `Expected ${bad} to be rejected`);
+    }
+
+    const lookAlike = parseSubmissionLink("https://drive.google.com.evil.com/file/d/123/view");
+    assert.equal(lookAlike.ok, false);
+    if (!lookAlike.ok) {
+      assert.match(lookAlike.reason, /Google Drive/);
+      assert.match(lookAlike.reason, /OneDrive/);
+      assert.match(lookAlike.reason, /SharePoint/);
+      assert.match(lookAlike.reason, /Dropbox/);
+      assert.match(lookAlike.reason, /Canva/);
+      assert.match(lookAlike.reason, /YouTube/);
+    }
+  });
+
+  it("enforces attachment rules: portfolio evidence requires either a file or a link (not both); lesson plan keeps file/link optional on create", () => {
+    const driveUrl = "https://drive.google.com/file/d/12345/view";
+    const fileUrl = "https://store.public.blob.vercel-storage.com/practicum/pl_1/evidence.pdf";
+
+    // Portfolio evidence: requires either a file or a link, never both, never neither
+    assert.equal(
+      validateSubmissionAttachmentInput({ type: "PORTFOLIO_EVIDENCE" }).ok,
+      false
+    );
+    assert.equal(
+      validateSubmissionAttachmentInput({
+        type: "PORTFOLIO_EVIDENCE",
+        fileUrl,
+        fileName: "evidence.pdf",
+      }).ok,
+      true
+    );
+    assert.equal(
+      validateSubmissionAttachmentInput({
+        type: "PORTFOLIO_EVIDENCE",
+        videoLink: driveUrl,
+      }).ok,
+      true
+    );
+    assert.equal(
+      validateSubmissionAttachmentInput({
+        type: "PORTFOLIO_EVIDENCE",
+        fileUrl,
+        fileName: "evidence.pdf",
+        videoLink: driveUrl,
+      }).ok,
+      false
+    );
+
+    // Schema validation for PORTFOLIO_EVIDENCE and LESSON_PLAN
+    assert.equal(
+      createSubmissionSchema.safeParse({
+        placementId: "pl_1",
+        type: "PORTFOLIO_EVIDENCE",
+        title: "Portfolio Artifact",
+      }).success,
+      false
+    );
+    assert.equal(
+      createSubmissionSchema.safeParse({
+        placementId: "pl_1",
+        type: "PORTFOLIO_EVIDENCE",
+        title: "Portfolio Artifact",
+        videoLink: driveUrl,
+      }).success,
+      true
+    );
+    assert.equal(
+      createSubmissionSchema.safeParse({
+        placementId: "pl_1",
+        type: "PORTFOLIO_EVIDENCE",
+        title: "Portfolio Artifact",
+        fileUrl,
+        fileName: "evidence.pdf",
+        videoLink: driveUrl,
+      }).success,
+      false
+    );
+    assert.equal(
+      createSubmissionSchema.safeParse({
+        placementId: "pl_1",
+        type: "LESSON_PLAN",
+        title: "Lesson Plan via Canva",
+        videoLink: "https://www.canva.com/design/DAFx12345/view",
+      }).success,
+      true
+    );
+
+    // Lesson plan (new): file or link is optional as today, but never both
+    assert.equal(
+      validateSubmissionAttachmentInput({ type: "LESSON_PLAN", isResubmit: false }).ok,
+      true
+    );
+    assert.equal(
+      validateSubmissionAttachmentInput({
+        type: "LESSON_PLAN",
+        isResubmit: false,
+        videoLink: "https://docs.google.com/document/d/123/edit",
+      }).ok,
+      true
+    );
+    assert.equal(
+      validateSubmissionAttachmentInput({
+        type: "LESSON_PLAN",
+        isResubmit: false,
+        fileUrl,
+        fileName: "plan.pdf",
+        videoLink: "https://docs.google.com/document/d/123/edit",
+      }).ok,
+      false
+    );
+
+    // Resubmission requires a new file or a new link (not both)
+    assert.equal(
+      validateSubmissionAttachmentInput({ type: "LESSON_PLAN", isResubmit: true }).ok,
+      false
+    );
+    assert.equal(
+      resubmitSchema.safeParse({
+        title: "Revised Plan",
+        videoLink: "https://onedrive.live.com/?id=123",
+      }).success,
+      true
+    );
+    assert.equal(
+      resubmitSchema.safeParse({
+        title: "Revised Plan",
+        fileUrl,
+        fileName: "plan.pdf",
+        videoLink: "https://onedrive.live.com/?id=123",
+      }).success,
+      false
+    );
+  });
+
+  it("creates and replaces link submissions across LESSON_PLAN, PORTFOLIO_EVIDENCE, and DEMO_VIDEO via resolveSubmissionSource", async () => {
+    const lessonLink = await resolveSubmissionSource({
+      type: "LESSON_PLAN",
+      placementId: "pl_1",
+      videoLink: "https://docs.google.com/document/d/1AbCdEf/edit",
+    });
+    assert.deepEqual(lessonLink, {
+      fileUrl: null,
+      fileName: null,
+      fileType: null,
+      fileSize: null,
+      videoLink: "https://docs.google.com/document/d/1AbCdEf/edit",
+    });
+
+    const portfolioLink = await resolveSubmissionSource({
+      type: "PORTFOLIO_EVIDENCE",
+      placementId: "pl_1",
+      videoLink: "https://www.canva.com/design/DAFx999/view",
+    });
+    assert.deepEqual(portfolioLink, {
+      fileUrl: null,
+      fileName: null,
+      fileType: null,
+      fileSize: null,
+      videoLink: "https://www.canva.com/design/DAFx999/view",
+    });
+
+    // Replacing a link with another link clears file fields and updates videoLink
+    const replacedLink = await resolveSubmissionSource({
+      type: "PORTFOLIO_EVIDENCE",
+      placementId: "pl_1",
+      videoLink: "https://cdm.sharepoint.com/:b:/s/ITE/EvIdEnCe",
+    });
+    assert.deepEqual(replacedLink, {
+      fileUrl: null,
+      fileName: null,
+      fileType: null,
+      fileSize: null,
+      videoLink: "https://cdm.sharepoint.com/:b:/s/ITE/EvIdEnCe",
+    });
+
+    // Rejects passing both fileUrl and videoLink
+    await assert.rejects(
+      () =>
+        resolveSubmissionSource({
+          type: "PORTFOLIO_EVIDENCE",
+          placementId: "pl_1",
+          fileUrl: "https://store.public.blob.vercel-storage.com/practicum/pl_1/a.pdf",
+          fileName: "a.pdf",
+          videoLink: "https://drive.google.com/file/d/123/view",
+        }),
+      /not both/i
+    );
+  });
+
+  it("deleting a link-only submission does not touch stored file records", () => {
+    assert.equal(
+      shouldDeleteStoredSubmissionFile({
+        fileUrl: null,
+        videoLink: "https://drive.google.com/file/d/123/view",
+      }),
+      false
+    );
+    assert.equal(
+      shouldDeleteStoredSubmissionFile({
+        fileUrl: null,
+        videoLink: null,
+      }),
+      false
+    );
+    assert.equal(
+      shouldDeleteStoredSubmissionFile({
+        fileUrl: "https://store.public.blob.vercel-storage.com/practicum/pl_1/plan.pdf",
+        videoLink: null,
+      }),
+      true
+    );
+
+    const deleteRoute = fs.readFileSync(
+      path.resolve(__dirname, "../../../app/api/practicum/lesson-plans/[id]/route.ts"),
+      "utf8"
+    );
+    assert.match(deleteRoute, /shouldDeleteStoredSubmissionFile\(submission\)/);
+  });
+
+  it("renders link submissions safely with target='_blank' and rel='noopener noreferrer nofollow' and preserves UploadDialog accessibility and fallback notes", () => {
+    const compDir = path.resolve(__dirname, "../../../components/practicum");
+    const uploadDialog = fs.readFileSync(path.join(compDir, "UploadDialog.tsx"), "utf8");
+    const preview = fs.readFileSync(path.join(compDir, "SubmissionPreview.tsx"), "utf8");
+    const studentClient = fs.readFileSync(path.join(compDir, "StudentPracticumClient.tsx"), "utf8");
+    const supervisorClient = fs.readFileSync(path.join(compDir, "PlacementDetailClient.tsx"), "utf8");
+
+    // UploadDialog checks
+    assert.match(uploadDialog, /"Upload a file"/);
+    assert.match(uploadDialog, /"Paste a link"/);
+    assert.match(uploadDialog, /"Upload a video"/);
+    assert.match(uploadDialog, /"Paste a video link"/);
+    assert.match(
+      uploadDialog,
+      /File uploads are unavailable right now\. You can paste a link instead\./
+    );
+    assert.match(
+      uploadDialog,
+      /Make sure the link&apos;s sharing is set so your supervisor can open it\./
+    );
+    assert.match(uploadDialog, /aria-required="true"/);
+
+    // Safe external link rendering across student & supervisor views
+    for (const source of [preview, studentClient, supervisorClient]) {
+      assert.match(source, /target="_blank"/);
+      assert.match(source, /rel="noopener noreferrer nofollow"/);
+      assert.match(source, /Open link/);
+      assert.doesNotMatch(source, /dangerouslySetInnerHTML/);
     }
   });
 });

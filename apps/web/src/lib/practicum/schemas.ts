@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SUBMISSION_TYPES } from "./rules";
+import { SUBMISSION_TYPES, parseSubmissionLink } from "./rules";
 
 const trimmed = (max: number) => z.string().trim().min(1, "Required.").max(max, `Must be at most ${max} characters.`);
 
@@ -46,11 +46,27 @@ export const createSubmissionSchema = z
     fileName: z.string().trim().min(1).max(255).optional(),
     videoLink: z.string().trim().max(2048).optional(),
   })
-  .refine((v) => Boolean(v.fileUrl) !== Boolean(v.videoLink), {
-    message: "Provide either an uploaded file or a video link.",
+  .refine((v) => !(v.fileUrl && v.videoLink), {
+    message: "Provide either an uploaded file or a link, not both.",
     path: ["fileUrl"],
   })
-  .refine((v) => !v.fileUrl || Boolean(v.fileName), { message: "File name is required.", path: ["fileName"] });
+  .refine((v) => Boolean(v.fileUrl) !== Boolean(v.videoLink), {
+    message: "Provide either an uploaded file or a link.",
+    path: ["fileUrl"],
+  })
+  .refine((v) => !v.fileUrl || Boolean(v.fileName), { message: "File name is required.", path: ["fileName"] })
+  .superRefine((v, ctx) => {
+    if (v.videoLink) {
+      const check = parseSubmissionLink(v.videoLink, v.type);
+      if (!check.ok) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: check.reason,
+          path: ["videoLink"],
+        });
+      }
+    }
+  });
 
 export const resubmitSchema = z
   .object({
@@ -60,11 +76,27 @@ export const resubmitSchema = z
     fileName: z.string().trim().min(1).max(255).optional(),
     videoLink: z.string().trim().max(2048).optional(),
   })
-  .refine((v) => Boolean(v.fileUrl) !== Boolean(v.videoLink), {
-    message: "Provide either a new file or a new video link.",
+  .refine((v) => !(v.fileUrl && v.videoLink), {
+    message: "Provide either a new file or a new link, not both.",
     path: ["fileUrl"],
   })
-  .refine((v) => !v.fileUrl || Boolean(v.fileName), { message: "File name is required.", path: ["fileName"] });
+  .refine((v) => Boolean(v.fileUrl) !== Boolean(v.videoLink), {
+    message: "Provide either a new file or a new link.",
+    path: ["fileUrl"],
+  })
+  .refine((v) => !v.fileUrl || Boolean(v.fileName), { message: "File name is required.", path: ["fileName"] })
+  .superRefine((v, ctx) => {
+    if (v.videoLink) {
+      const check = parseSubmissionLink(v.videoLink);
+      if (!check.ok) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: check.reason,
+          path: ["videoLink"],
+        });
+      }
+    }
+  });
 
 export const feedbackSchema = z.object({
   comment: trimmed(4000),

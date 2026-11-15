@@ -3,7 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, ChevronDown, FileText, GraduationCap, Loader2, MapPin, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  Loader2,
+  MapPin,
+  Pencil,
+} from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import type { PlacementDTO, SubmissionDTO } from "@/lib/practicum/dto";
@@ -11,6 +21,7 @@ import {
   SUBMISSION_TYPES,
   SUBMISSION_TYPE_LABELS,
   formatBytes,
+  parseSubmissionLink,
   statusAfterFeedback,
   type FeedbackDecision,
 } from "@/lib/practicum/rules";
@@ -186,32 +197,52 @@ function FeedbackForm({ submission, onSaved }: { submission: SubmissionDTO; onSa
 function SubmissionCard({ submission, onChanged }: { submission: SubmissionDTO; onChanged: () => void }) {
   const [open, setOpen] = useState(submission.status === "SUBMITTED");
   const panelId = `submission-${submission.id}`;
+  const parsedLink = submission.videoLink ? parseSubmissionLink(submission.videoLink) : null;
 
   return (
     <li className="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-white/10 dark:bg-[#141721]">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/5"
-      >
-        <div className="min-w-0">
+      <div className="flex w-full items-center justify-between gap-3 rounded-2xl p-3 hover:bg-slate-50 dark:hover:bg-white/5">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((v) => !v)}
+          className="min-w-0 flex-1 cursor-pointer text-left"
+        >
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{submission.title}</p>
           <p className="mt-0.5 text-xs text-slate-600 dark:text-[#94A3B8]">
             Version {submission.version} · {formatDate(submission.submittedAt)}
             {submission.fileName && ` · ${submission.fileName}`}
+            {!submission.fileName && parsedLink?.ok && ` · ${parsedLink.siteName}`}
             {submission.feedback.length > 0 && ` · ${submission.feedback.length} feedback`}
           </p>
-        </div>
+        </button>
         <div className="flex shrink-0 items-center gap-2">
+          {parsedLink?.ok && (
+            <a
+              href={parsedLink.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="inline-flex items-center gap-1 rounded-xl border border-blue-500/25 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:underline dark:text-blue-300"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              Open link · {parsedLink.siteName}
+            </a>
+          )}
           <SubmissionStatusBadge status={submission.status} />
-          <ChevronDown
-            className={`h-4 w-4 text-slate-500 transition-transform dark:text-[#94A3B8] ${open ? "rotate-180" : ""}`}
-            aria-hidden="true"
-          />
+          <button
+            type="button"
+            aria-label={open ? "Collapse submission details" : "Expand submission details"}
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 dark:text-[#94A3B8]"
+          >
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
         </div>
-      </button>
+      </div>
 
       {open && (
         <div id={panelId} className="space-y-5 border-t border-slate-200 p-4 dark:border-white/10">
