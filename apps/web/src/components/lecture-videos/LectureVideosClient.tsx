@@ -654,11 +654,12 @@ export function LectureUploadDialog({
           {mode === "create" ? (
             <div className="space-y-1.5">
               <span className="block text-xs font-bold text-primary-theme">
-                Video Source <span className="text-rose-500">*</span>
+                Video Source <span className="text-rose-500" aria-hidden="true">*</span>
               </span>
               <div
                 role="radiogroup"
                 aria-label="Lecture video source"
+                aria-required="true"
                 className="grid grid-cols-3 gap-2"
               >
                 {(
@@ -737,7 +738,7 @@ export function LectureUploadDialog({
               htmlFor="lecture-subject-select"
               className="block text-xs font-bold text-primary-theme"
             >
-              Subject <span className="text-rose-500">*</span>
+              Subject <span className="text-rose-500" aria-hidden="true">*</span>
             </label>
             {hasCourses ? (
               <select
@@ -748,6 +749,7 @@ export function LectureUploadDialog({
                   setInlineError(null);
                 }}
                 required
+                aria-required="true"
                 disabled={submitting}
                 className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm font-semibold text-primary-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
               >
@@ -778,7 +780,7 @@ export function LectureUploadDialog({
                 htmlFor="lecture-title-input"
                 className="block text-xs font-bold text-primary-theme"
               >
-                Title <span className="text-rose-500">*</span>
+                Title <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               <span className="text-[10px] text-muted-theme">
                 {title.length}/{LECTURE_MAX_TITLE_LENGTH}
@@ -795,6 +797,7 @@ export function LectureUploadDialog({
               maxLength={LECTURE_MAX_TITLE_LENGTH}
               placeholder="e.g., Week 4: Principles of Learner-Centered Instruction"
               required
+              aria-required="true"
               disabled={submitting}
               className="w-full h-11 px-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
             />
@@ -835,7 +838,7 @@ export function LectureUploadDialog({
                 htmlFor="lecture-video-file"
                 className="block text-xs font-bold text-primary-theme"
               >
-                Video File <span className="text-rose-500">*</span>
+                Video File <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               <input
                 ref={fileInputRef}
@@ -843,6 +846,7 @@ export function LectureUploadDialog({
                 type="file"
                 accept={LECTURE_ACCEPT_ATTRIBUTE}
                 disabled={submitting || !hasCourses}
+                aria-required="true"
                 onChange={(e) => void handlePickFile(e.target.files?.[0] ?? null)}
                 className="hidden"
               />
@@ -908,7 +912,7 @@ export function LectureUploadDialog({
                   {sourceType === "YOUTUBE"
                     ? "YouTube Video Link"
                     : "Google Drive Video Link"}{" "}
-                  <span className="text-rose-500">*</span>
+                  <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <div className="relative">
                   <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-theme" />
@@ -926,6 +930,7 @@ export function LectureUploadDialog({
                         : "https://drive.google.com/file/d/.../view"
                     }
                     required
+                    aria-required="true"
                     disabled={submitting || !hasCourses}
                     className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-theme bg-elevated text-xs sm:text-sm text-primary-theme placeholder:text-muted-theme outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-50"
                   />
