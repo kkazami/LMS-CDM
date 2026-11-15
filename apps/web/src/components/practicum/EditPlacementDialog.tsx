@@ -157,6 +157,9 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className="space-y-4 overflow-y-auto px-5 py-4">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+              Fields marked with <span className="text-rose-500" aria-hidden="true">*</span> are required.
+            </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <span className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">Student teacher</span>
@@ -173,7 +176,7 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
 
               <div className="sm:col-span-2">
                 <label htmlFor="edit-pl-school" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  School name
+                  School name <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="edit-pl-school"
@@ -182,12 +185,13 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
                   className={inputClass}
                   maxLength={200}
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div>
                 <label htmlFor="edit-pl-subject" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Subject
+                  Subject <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="edit-pl-subject"
@@ -196,12 +200,13 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
                   className={inputClass}
                   maxLength={120}
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div>
                 <label htmlFor="edit-pl-grade" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Grade level
+                  Grade level <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="edit-pl-grade"
@@ -210,12 +215,13 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
                   className={inputClass}
                   maxLength={60}
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div>
                 <label htmlFor="edit-pl-start" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Start date
+                  Start date <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="edit-pl-start"
@@ -224,12 +230,13 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
                   onChange={(e) => setStartDate(e.target.value)}
                   className={inputClass}
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div>
                 <label htmlFor="edit-pl-end" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  End date
+                  End date <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="edit-pl-end"
@@ -239,6 +246,7 @@ export default function EditPlacementDialog({ placement, onClose, onSaved }: Edi
                   onChange={(e) => setEndDate(e.target.value)}
                   className={inputClass}
                   required
+                  aria-required="true"
                 />
               </div>
             </div>

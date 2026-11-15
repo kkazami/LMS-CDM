@@ -91,9 +91,12 @@ function FeedbackForm({ submission, onSaved }: { submission: SubmissionDTO; onSa
 
   return (
     <form onSubmit={submit} className="space-y-3">
+      <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+        Fields marked with <span className="text-rose-500" aria-hidden="true">*</span> are required.
+      </p>
       <div>
         <label htmlFor={`${id}-comment`} className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-          Feedback
+          Feedback <span className="text-rose-500" aria-hidden="true">*</span>
         </label>
         <textarea
           id={`${id}-comment`}
@@ -102,12 +105,16 @@ function FeedbackForm({ submission, onSaved }: { submission: SubmissionDTO; onSa
           rows={4}
           maxLength={4000}
           disabled={saving}
+          required
+          aria-required="true"
           className={inputClass}
         />
       </div>
 
       <fieldset>
-        <legend className="mb-1 text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">Decision</legend>
+        <legend className="mb-1 text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+          Decision <span className="text-rose-500" aria-hidden="true">*</span>
+        </legend>
         <div className="flex flex-wrap gap-2">
           {DECISION_OPTIONS.map((option) => {
             const allowed = statusAfterFeedback(submission.status, option.value).ok;

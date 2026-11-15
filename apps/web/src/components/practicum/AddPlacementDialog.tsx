@@ -208,9 +208,15 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className="space-y-4 overflow-y-auto px-5 py-4">
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+              Fields marked with <span className="text-rose-500" aria-hidden="true">*</span> are required.
+            </p>
+
             {/* Student picker */}
             <div>
-              <span className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">Student teacher</span>
+              <label htmlFor="pl-student-search" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                Student teacher <span className="text-rose-500" aria-hidden="true">*</span>
+              </label>
               {student ? (
                 <div className="flex items-center justify-between rounded-xl border border-slate-300 px-3 py-2 dark:border-white/15">
                   <span className="text-sm font-medium text-slate-900 dark:text-[#F0F2F8]">{student.name}</span>
@@ -233,11 +239,13 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
                       aria-hidden="true"
                     />
                     <input
+                      id="pl-student-search"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       className={`${inputClass} pl-9`}
                       placeholder="Search ITE students by name"
                       aria-label="Search ITE students by name"
+                      aria-required="true"
                       autoComplete="off"
                     />
                   </div>
@@ -272,40 +280,40 @@ export default function AddPlacementDialog({ onClose, onCreated }: AddPlacementD
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="pl-school" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  School name
+                  School name <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className={inputClass} maxLength={200} required />
+                <input id="pl-school" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className={inputClass} maxLength={200} required aria-required="true" />
               </div>
               <div>
                 <label htmlFor="pl-subject" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Subject
+                  Subject <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} maxLength={120} required />
+                <input id="pl-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} maxLength={120} required aria-required="true" />
               </div>
               <div>
                 <label htmlFor="pl-grade" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Grade level
+                  Grade level <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-grade" value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} className={inputClass} maxLength={60} required />
+                <input id="pl-grade" value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} className={inputClass} maxLength={60} required aria-required="true" />
               </div>
               <div>
                 <label htmlFor="pl-year" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  School year
+                  School year <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-year" value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} className={inputClass} pattern="\d{4}-\d{4}" placeholder="2025-2026" required />
+                <input id="pl-year" value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} className={inputClass} pattern="\d{4}-\d{4}" placeholder="2025-2026" required aria-required="true" />
               </div>
               <div className="hidden sm:block" />
               <div>
                 <label htmlFor="pl-start" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  Start date
+                  Start date <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+                <input id="pl-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required aria-required="true" />
               </div>
               <div>
                 <label htmlFor="pl-end" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                  End date
+                  End date <span className="text-rose-500" aria-hidden="true">*</span>
                 </label>
-                <input id="pl-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+                <input id="pl-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required aria-required="true" />
               </div>
             </div>
 
