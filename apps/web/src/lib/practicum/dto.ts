@@ -21,6 +21,11 @@ export interface PlacementDTO {
   endDate: string;
   status: "ACTIVE" | "COMPLETED";
   createdAt: string;
+  rubricFileName: string | null;
+  rubricMimeType: string | null;
+  rubricFileSize: number | null;
+  rubricUploadedAt: string | null;
+  rubricUrl: string | null;
   summary: PlacementSummary;
   pendingReview: number;
 }

@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { checkIteEligibility, isIteInstituteCode, requireIteUser } from "@/lib/ite/ite-eligibility";
 import { HttpError } from "./http";
 
-/** The only two roles Practicum knows: ITE student (student teacher) and ITE instructor (supervisor). */
-export type PracticumRole = "STUDENT" | "INSTRUCTOR";
+/** Roles recognized by Practicum: ITE student (student teacher), ITE instructor (supervisor), and ITE admin. */
+export type PracticumRole = "STUDENT" | "INSTRUCTOR" | "ADMIN";
 
 export interface PracticumActor {
   userId: string;
@@ -16,9 +16,8 @@ function toActor(
   result: { userId: string; role: string; session: { user: { instituteId: string; name: string } } },
   allowed: readonly PracticumRole[]
 ): PracticumActor | null {
-  // Admins are not part of Practicum; unknown roles never reach this point (normalizeRole).
   const role = result.role;
-  if (role !== "STUDENT" && role !== "INSTRUCTOR") return null;
+  if (role !== "STUDENT" && role !== "INSTRUCTOR" && role !== "ADMIN") return null;
   if (!allowed.includes(role)) return null;
   return {
     userId: result.userId,

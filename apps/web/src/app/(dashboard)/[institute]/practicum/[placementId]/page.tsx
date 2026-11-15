@@ -10,14 +10,14 @@ interface PlacementPageProps {
   params: Promise<{ institute: string; placementId: string }>;
 }
 
-/** Supervisor view of one student teacher. Only the placement's own supervisor can open it. */
+/** Supervisor/admin view of one student teacher. Only the placement's own supervisor or an ITE admin can open it. */
 export default async function PlacementDetailPage({ params }: PlacementPageProps) {
   const { institute, placementId } = await params;
-  const actor = await requirePracticumPageActor(institute, ["INSTRUCTOR"]);
+  const actor = await requirePracticumPageActor(institute, ["INSTRUCTOR", "ADMIN"]);
   const theme = getInstituteTheme(institute);
 
   const placement = await getPlacementDTO(placementId);
-  if (!placement || placement.supervisorId !== actor.userId) notFound();
+  if (!placement || (actor.role !== "ADMIN" && placement.supervisorId !== actor.userId)) notFound();
 
   const submissions = await getPlacementSubmissions(placement.id);
 

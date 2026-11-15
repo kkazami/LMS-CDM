@@ -314,9 +314,12 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
         </div>
 
         <form onSubmit={submit} className="space-y-4 overflow-y-auto px-5 py-4">
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+            Fields marked with <span className="text-rose-500" aria-hidden="true">*</span> are required.
+          </p>
           <div>
             <label htmlFor="practicum-title" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-              Title
+              Title <span className="text-rose-500" aria-hidden="true">*</span>
             </label>
             <input
               id="practicum-title"
@@ -327,6 +330,7 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
               className={inputClass}
               placeholder={`Title of your ${SINGULAR[type]}`}
               required
+              aria-required="true"
             />
           </div>
 
@@ -346,34 +350,39 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
           </div>
 
           {type === "DEMO_VIDEO" && (
-            <div role="radiogroup" aria-label="Video source" className="flex gap-2">
-              {(["file", "link"] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  role="radio"
-                  aria-checked={source === option}
-                  disabled={busy}
-                  onClick={() => {
-                    setSource(option);
-                    setError(null);
-                  }}
-                  className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium ${
-                    source === option
-                      ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:text-[#D1D5DB] dark:hover:bg-white/5"
-                  }`}
-                >
-                  {option === "file" ? "Upload a video" : "Paste a video link"}
-                </button>
-              ))}
+            <div>
+              <span className="mb-1.5 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+                Video source <span className="text-rose-500" aria-hidden="true">*</span>
+              </span>
+              <div role="radiogroup" aria-label="Video source" aria-required="true" className="flex gap-2">
+                {(["file", "link"] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={source === option}
+                    disabled={busy}
+                    onClick={() => {
+                      setSource(option);
+                      setError(null);
+                    }}
+                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium ${
+                      source === option
+                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                        : "border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:text-[#D1D5DB] dark:hover:bg-white/5"
+                    }`}
+                  >
+                    {option === "file" ? "Upload a video" : "Paste a video link"}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {source === "link" ? (
             <div>
               <label htmlFor="practicum-link" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Video link
+                Video link <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               <input
                 id="practicum-link"
@@ -384,6 +393,8 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
                 className={inputClass}
                 placeholder="https://www.youtube.com/watch?v=…"
                 inputMode="url"
+                required
+                aria-required="true"
               />
               <p className="mt-1 text-xs text-slate-600 dark:text-[#94A3B8]">
                 Use an unlisted link your supervisor can open. It must start with https://.
@@ -400,7 +411,12 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
           ) : (
             <div>
               <label htmlFor="practicum-file" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                File {fileOptional && <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>}
+                File{" "}
+                {fileOptional ? (
+                  <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>
+                ) : (
+                  <span className="text-rose-500" aria-hidden="true">*</span>
+                )}
               </label>
 
               {file ? (
@@ -454,6 +470,7 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
                 accept={acceptAttr}
                 onChange={onFileChange}
                 disabled={busy}
+                aria-required={!fileOptional}
                 className="sr-only"
               />
             </div>

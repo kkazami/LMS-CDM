@@ -1,13 +1,22 @@
+import { createHash, randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { HttpError } from "./http";
 import type { FeedbackDTO, PlacementDTO, SubmissionDTO } from "./dto";
 import {
+  RUBRIC_MIME_BY_EXTENSION,
+  canManagePlacementRubric,
+  canViewPlacementRubric,
+  getExtension,
   placementRoleFor,
+  sanitizeRubricFileName,
   summarizeGroups,
   totalPendingReview,
+  validateRubricSignature,
+  validateRubricUpload,
   type PlacementRole,
   type PlacementSummary,
+  type RubricExtension,
   type SubmissionStatus,
   type SubmissionType,
 } from "./rules";
@@ -54,6 +63,7 @@ async function summariesFor(placementIds: string[]): Promise<Map<string, Placeme
 }
 
 function toPlacementDTO(row: PlacementRow, summary: PlacementSummary): PlacementDTO {
+  const hasRubric = Boolean(row.rubricStorageKey && row.rubricFileName);
   return {
     id: row.id,
     studentId: row.studentId,
@@ -68,6 +78,12 @@ function toPlacementDTO(row: PlacementRow, summary: PlacementSummary): Placement
     endDate: row.endDate.toISOString(),
     status: row.status,
     createdAt: row.createdAt.toISOString(),
+    rubricFileName: hasRubric ? row.rubricFileName : null,
+    rubricMimeType: hasRubric ? row.rubricMimeType : null,
+    rubricFileSize: hasRubric && row.rubricFileSize !== null ? Number(row.rubricFileSize) : null,
+    rubricUploadedAt:
+      hasRubric && row.rubricUploadedAt ? row.rubricUploadedAt.toISOString() : null,
+    rubricUrl: hasRubric ? `/api/practicum/placements/${row.id}/rubric` : null,
     summary,
     pendingReview: totalPendingReview(summary),
   };
@@ -98,7 +114,19 @@ export async function getPlacementDTO(placementId: string): Promise<PlacementDTO
 export async function findPlacementOwnership(placementId: string) {
   return db.practicumPlacement.findUnique({
     where: { id: placementId },
-    select: { id: true, studentId: true, supervisorId: true, status: true, schoolName: true },
+    select: {
+      id: true,
+      studentId: true,
+      supervisorId: true,
+      status: true,
+      schoolName: true,
+      rubricStorageKey: true,
+      rubricFileName: true,
+      rubricMimeType: true,
+      rubricFileSize: true,
+      rubricUploadedAt: true,
+      rubricUploadedById: true,
+    },
   });
 }
 
@@ -119,6 +147,91 @@ export async function requirePlacementAccess(
     throw new HttpError(403, "You do not have access to this placement.");
   }
   return { placement, role };
+}
+
+/**
+ * Verifies the actor is allowed to upload, replace or remove the placement's rubric
+ * (the owning ITE instructor or an ITE admin; 403 for everyone else).
+ */
+export async function requirePlacementRubricManageAccess(
+  placementId: string,
+  actor: PracticumActor
+) {
+  const placement = await findPlacementOwnership(placementId);
+  if (!placement) throw new HttpError(404, "Placement not found.");
+
+  if (!canManagePlacementRubric({ id: actor.userId, role: actor.role, isIte: true }, placement)) {
+    throw new HttpError(403, "You do not have permission to manage the rubric for this placement.");
+  }
+  return placement;
+}
+
+/**
+ * Verifies the actor is allowed to view/download the placement's rubric
+ * (the owning ITE instructor, an ITE admin, or the assigned student teacher; 403 for everyone else).
+ */
+export async function requirePlacementRubricViewAccess(
+  placementId: string,
+  actor: PracticumActor
+) {
+  const placement = await findPlacementOwnership(placementId);
+  if (!placement) throw new HttpError(404, "Placement not found.");
+
+  if (!canViewPlacementRubric({ id: actor.userId, role: actor.role, isIte: true }, placement)) {
+    throw new HttpError(403, "You do not have access to this rubric.");
+  }
+  return placement;
+}
+
+export interface PreparedRubricUpload {
+  assetId: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  bytes: Uint8Array<ArrayBuffer>;
+  sha256: string;
+}
+
+/**
+ * Validates a rubric File on the server (extension, MIME type, non-empty size <= RUBRIC_MAX_BYTES,
+ * magic-byte file signature, and safe file name) and prepares its binary payload for transactional storage.
+ */
+export async function prepareRubricUpload(file: File): Promise<PreparedRubricUpload> {
+  const ext = getExtension(file.name) as RubricExtension;
+  const rawMime = (file.type || "").trim().toLowerCase().split(";")[0];
+  const effectiveMime =
+    !rawMime || rawMime === "application/octet-stream"
+      ? RUBRIC_MIME_BY_EXTENSION[ext] ?? rawMime
+      : rawMime;
+
+  const preCheck = validateRubricUpload(file.name, effectiveMime, file.size);
+  if (!preCheck.ok) {
+    throw new HttpError(400, preCheck.reason);
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  const postCheck = validateRubricUpload(file.name, effectiveMime, bytes.byteLength);
+  if (!postCheck.ok) {
+    throw new HttpError(400, postCheck.reason);
+  }
+
+  const signatureCheck = validateRubricSignature(file.name, bytes);
+  if (!signatureCheck.ok) {
+    throw new HttpError(400, signatureCheck.reason);
+  }
+
+  const expectedMime = RUBRIC_MIME_BY_EXTENSION[ext];
+  const safeName = sanitizeRubricFileName(file.name);
+
+  return {
+    assetId: randomUUID(),
+    fileName: safeName,
+    mimeType: expectedMime,
+    fileSize: bytes.byteLength,
+    bytes,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
 }
 
 const submissionSelect = {
