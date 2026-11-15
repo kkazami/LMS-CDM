@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requirePracticumActor } from "@/lib/practicum/guard";
-import { HttpError, errorResponse, readJson } from "@/lib/practicum/http";
+import {
+  HttpError,
+  PRACTICUM_RUBRIC_TRANSACTION_OPTIONS,
+  errorResponse,
+  readJson,
+} from "@/lib/practicum/http";
 import { updatePlacementSchema } from "@/lib/practicum/schemas";
 import {
   getPlacementDTO,
@@ -129,7 +134,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
               : {}),
         },
       });
-    });
+    }, PRACTICUM_RUBRIC_TRANSACTION_OPTIONS);
 
     return NextResponse.json({ placement: await getPlacementDTO(id) });
   } catch (err) {

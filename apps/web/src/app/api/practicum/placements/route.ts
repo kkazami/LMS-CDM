@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeRole } from "@/lib/admin-types";
 import { requirePracticumActor } from "@/lib/practicum/guard";
-import { HttpError, errorResponse, isUniqueViolation, readJson } from "@/lib/practicum/http";
+import {
+  HttpError,
+  PRACTICUM_RUBRIC_TRANSACTION_OPTIONS,
+  errorResponse,
+  isUniqueViolation,
+  readJson,
+} from "@/lib/practicum/http";
 import { createPlacementSchema } from "@/lib/practicum/schemas";
 import {
   getPlacementDTO,
@@ -94,24 +100,45 @@ export async function POST(request: Request) {
 
     let created: { id: string };
     try {
-      created = await db.$transaction(async (tx) => {
-        if (preparedRubric) {
+      if (preparedRubric) {
+        const rubric = preparedRubric;
+        created = await db.$transaction(async (tx) => {
           await tx.privateAsset.create({
             data: {
-              id: preparedRubric.assetId,
+              id: rubric.assetId,
               ownerId: actor.userId,
               instituteId: actor.instituteId,
-              fileName: preparedRubric.fileName,
-              mimeType: preparedRubric.mimeType,
-              size: preparedRubric.fileSize,
-              content: preparedRubric.bytes,
+              fileName: rubric.fileName,
+              mimeType: rubric.mimeType,
+              size: rubric.fileSize,
+              content: rubric.bytes,
               scanStatus: "UNSCANNED",
-              sha256: preparedRubric.sha256,
+              sha256: rubric.sha256,
             },
           });
-        }
 
-        return tx.practicumPlacement.create({
+          return tx.practicumPlacement.create({
+            data: {
+              studentId: student.id,
+              supervisorId: actor.userId,
+              schoolName: input.schoolName,
+              subject: input.subject,
+              gradeLevel: input.gradeLevel,
+              schoolYear: input.schoolYear,
+              startDate: input.startDate,
+              endDate: input.endDate,
+              rubricStorageKey: rubric.assetId,
+              rubricFileName: rubric.fileName,
+              rubricMimeType: rubric.mimeType,
+              rubricFileSize: rubric.fileSize,
+              rubricUploadedAt: new Date(),
+              rubricUploadedById: actor.userId,
+            },
+            select: { id: true },
+          });
+        }, PRACTICUM_RUBRIC_TRANSACTION_OPTIONS);
+      } else {
+        created = await db.practicumPlacement.create({
           data: {
             studentId: student.id,
             supervisorId: actor.userId,
@@ -121,20 +148,10 @@ export async function POST(request: Request) {
             schoolYear: input.schoolYear,
             startDate: input.startDate,
             endDate: input.endDate,
-            ...(preparedRubric
-              ? {
-                  rubricStorageKey: preparedRubric.assetId,
-                  rubricFileName: preparedRubric.fileName,
-                  rubricMimeType: preparedRubric.mimeType,
-                  rubricFileSize: preparedRubric.fileSize,
-                  rubricUploadedAt: new Date(),
-                  rubricUploadedById: actor.userId,
-                }
-              : {}),
           },
           select: { id: true },
         });
-      });
+      }
     } catch (err) {
       if (isUniqueViolation(err)) {
         throw new HttpError(409, "This student already has a placement for that school year.");
@@ -151,6 +168,6 @@ export async function POST(request: Request) {
     const placement = await getPlacementDTO(created.id);
     return NextResponse.json({ placement }, { status: 201 });
   } catch (err) {
-    return errorResponse(err);
+    return errorResponse(err, "[PRACTICUM_PLACEMENTS_POST_ERROR]");
   }
 }

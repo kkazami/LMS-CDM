@@ -206,14 +206,14 @@ export async function prepareRubricUpload(file: File): Promise<PreparedRubricUpl
 
   const preCheck = validateRubricUpload(file.name, effectiveMime, file.size);
   if (!preCheck.ok) {
-    throw new HttpError(400, preCheck.reason);
+    throw new HttpError(preCheck.reason.startsWith("File too large") ? 413 : 400, preCheck.reason);
   }
 
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
   const postCheck = validateRubricUpload(file.name, effectiveMime, bytes.byteLength);
   if (!postCheck.ok) {
-    throw new HttpError(400, postCheck.reason);
+    throw new HttpError(postCheck.reason.startsWith("File too large") ? 413 : 400, postCheck.reason);
   }
 
   const signatureCheck = validateRubricSignature(file.name, bytes);

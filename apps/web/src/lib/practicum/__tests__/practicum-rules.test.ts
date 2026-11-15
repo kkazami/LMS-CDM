@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import {
   RUBRIC_MAX_BYTES,
   RUBRIC_MIME_BY_EXTENSION,
@@ -26,7 +28,20 @@ import {
   validateRubricUpload,
   validateUpload,
 } from "../rules";
-import { createSubmissionSchema, feedbackSchema } from "../schemas";
+import {
+  HttpError,
+  PRACTICUM_DB_MISSING_PRIVILEGES_MESSAGE,
+  PRACTICUM_DB_NOT_MIGRATED_MESSAGE,
+  PRACTICUM_DB_TIMEOUT_MESSAGE,
+  PRACTICUM_INTERNAL_ERROR_MESSAGE,
+  PRACTICUM_RUBRIC_TRANSACTION_OPTIONS,
+  classifyPracticumApiError,
+  errorResponse,
+  isPracticumDatabaseNotMigratedError,
+  isPracticumMissingPrivilegesError,
+  isPracticumTransactionTimeoutError,
+} from "../http";
+import { createPlacementSchema, createSubmissionSchema, feedbackSchema } from "../schemas";
 
 const MB = 1024 * 1024;
 
@@ -379,5 +394,145 @@ describe("placement rubric authorization", () => {
     assert.equal(canViewPlacementRubric({ id: "prof-1", role: "PROFESSOR", isIte: false }, placement), false);
     assert.equal(canManagePlacementRubric({ id: "admin-1", role: "ADMIN", isIte: false }, placement), false);
     assert.equal(canViewPlacementRubric({ id: "stu-1", role: "STUDENT", isIte: false }, placement), false);
+  });
+});
+
+describe("practicum placement transaction timeout & error classification", () => {
+  it("configures interactive rubric transactions with a 30s timeout (>= 3x Prisma's 5s default) and applies it in placement routes", () => {
+    assert.equal(PRACTICUM_RUBRIC_TRANSACTION_OPTIONS.timeout, 30_000);
+    assert.equal(PRACTICUM_RUBRIC_TRANSACTION_OPTIONS.maxWait, 10_000);
+    assert.equal(PRACTICUM_RUBRIC_TRANSACTION_OPTIONS.timeout > 5_000, true);
+
+    const apiRoot = path.resolve(__dirname, "../../../app/api/practicum/placements");
+    const postRoute = fs.readFileSync(path.join(apiRoot, "route.ts"), "utf8");
+    const patchRoute = fs.readFileSync(path.join(apiRoot, "[id]/route.ts"), "utf8");
+    const rubricRoute = fs.readFileSync(path.join(apiRoot, "[id]/rubric/route.ts"), "utf8");
+
+    assert.match(postRoute, /PRACTICUM_RUBRIC_TRANSACTION_OPTIONS/);
+    assert.match(postRoute, /errorResponse\(err,\s*"\[PRACTICUM_PLACEMENTS_POST_ERROR\]"\)/);
+    assert.match(patchRoute, /PRACTICUM_RUBRIC_TRANSACTION_OPTIONS/);
+    assert.match(rubricRoute, /PRACTICUM_RUBRIC_TRANSACTION_OPTIONS/);
+  });
+
+  it("returns specific messages for validation, file too large, and wrong file type errors", () => {
+    const zodResult = createPlacementSchema.safeParse({
+      studentId: "",
+      schoolName: "School",
+      subject: "Math",
+      gradeLevel: "Grade 6",
+      schoolYear: "bad-year",
+      startDate: "2026-06-01",
+      endDate: "2026-10-01",
+    });
+    assert.equal(zodResult.success, false);
+    if (!zodResult.success) {
+      const classified = classifyPracticumApiError(zodResult.error);
+      assert.equal(classified.kind, "VALIDATION");
+      assert.equal(classified.status, 400);
+      assert.match(classified.message, /studentId|schoolYear/);
+    }
+
+    const tooLarge = classifyPracticumApiError(new HttpError(413, "File too large (max 4 MB)."));
+    assert.deepEqual(tooLarge, {
+      kind: "FILE_TOO_LARGE",
+      status: 413,
+      message: "File too large (max 4 MB).",
+    });
+
+    const wrongType = classifyPracticumApiError(
+      new HttpError(400, "Invalid file type. Allowed types: PDF, DOC, DOCX, XLS, XLSX.")
+    );
+    assert.deepEqual(wrongType, {
+      kind: "WRONG_FILE_TYPE",
+      status: 400,
+      message: "Invalid file type. Allowed types: PDF, DOC, DOCX, XLS, XLSX.",
+    });
+
+    const badSignature = classifyPracticumApiError(
+      new HttpError(400, "The file content does not match its .PDF extension.")
+    );
+    assert.deepEqual(badSignature, {
+      kind: "WRONG_FILE_TYPE",
+      status: 400,
+      message: "The file content does not match its .PDF extension.",
+    });
+  });
+
+  it("returns specific, safe messages for database-not-migrated, missing privileges, and transaction timeout errors", () => {
+    const missingColumn = {
+      name: "PrismaClientKnownRequestError",
+      code: "P2022",
+      message: 'The column `PracticumPlacement.rubricStorageKey` does not exist in the current database.',
+      meta: {
+        driverAdapterError: {
+          cause: {
+            originalCode: "42703",
+            kind: "ColumnDoesNotExist",
+          },
+        },
+      },
+    };
+    assert.equal(isPracticumDatabaseNotMigratedError(missingColumn), true);
+    assert.deepEqual(classifyPracticumApiError(missingColumn), {
+      kind: "DATABASE_NOT_MIGRATED",
+      status: 503,
+      message: PRACTICUM_DB_NOT_MIGRATED_MESSAGE,
+    });
+
+    const missingPrivileges = {
+      name: "PrismaClientUnknownRequestError",
+      message: 'permission denied for table "PrivateAsset"',
+      meta: {
+        driverAdapterError: {
+          cause: {
+            originalCode: "42501",
+            kind: "InsufficientPrivilege",
+          },
+        },
+      },
+    };
+    assert.equal(isPracticumMissingPrivilegesError(missingPrivileges), true);
+    assert.deepEqual(classifyPracticumApiError(missingPrivileges), {
+      kind: "MISSING_PRIVILEGES",
+      status: 503,
+      message: PRACTICUM_DB_MISSING_PRIVILEGES_MESSAGE,
+    });
+
+    const expiredTx = {
+      name: "PrismaClientKnownRequestError",
+      code: "P2028",
+      message:
+        "Transaction API error: A query cannot be executed on an expired transaction. The timeout for this transaction was 5000 ms, however 6748 ms passed since the start of the transaction.",
+    };
+    assert.equal(isPracticumTransactionTimeoutError(expiredTx), true);
+    assert.deepEqual(classifyPracticumApiError(expiredTx), {
+      kind: "TRANSACTION_TIMEOUT",
+      status: 503,
+      message: PRACTICUM_DB_TIMEOUT_MESSAGE,
+    });
+  });
+
+  it("logs the underlying error on the server while keeping truly unknown errors generic for the user", async () => {
+    const logged: unknown[][] = [];
+    const origError = console.error;
+    console.error = (...args: unknown[]) => {
+      logged.push(args);
+    };
+    try {
+      const secretError = new Error("unexpected socket crash on internal host");
+      const res = errorResponse(secretError, "[PRACTICUM_PLACEMENTS_POST_ERROR]");
+      assert.equal(res.status, 500);
+      const body = (await res.json()) as { error: string; message: string; code: string };
+      assert.deepEqual(body, {
+        error: PRACTICUM_INTERNAL_ERROR_MESSAGE,
+        message: PRACTICUM_INTERNAL_ERROR_MESSAGE,
+        code: "UNKNOWN",
+      });
+      assert.equal(logged.length, 1);
+      assert.equal(logged[0][0], "[PRACTICUM_PLACEMENTS_POST_ERROR]");
+      assert.equal(logged[0][1], secretError);
+    } finally {
+      console.error = origError;
+    }
   });
 });
