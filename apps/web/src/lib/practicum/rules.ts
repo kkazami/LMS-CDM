@@ -420,6 +420,20 @@ export function getSubmissionLinkSiteName(rawUrl: string | null | undefined): st
 }
 
 /**
+ * True when a file or link attachment is required for the submission:
+ * - LESSON_PLAN on initial creation (`isResubmit === false` / omitted): false (optional)
+ * - LESSON_PLAN on resubmission (`isResubmit === true`): true (required)
+ * - PORTFOLIO_EVIDENCE (create or resubmit): true (required)
+ * - DEMO_VIDEO (create or resubmit): true (required)
+ */
+export function isSubmissionAttachmentRequired(
+  type: SubmissionType,
+  isResubmit = false
+): boolean {
+  return Boolean(isResubmit) || type !== "LESSON_PLAN";
+}
+
+/**
  * Validates file vs. link attachment rules per submission type:
  * - Never allows both a file and a link at the same time.
  * - LESSON_PLAN (new): file or link is optional (either a file, a link, or neither).
@@ -452,7 +466,7 @@ export function validateSubmissionAttachmentInput(args: {
     return { ok: true };
   }
 
-  if (!args.isResubmit && args.type === "LESSON_PLAN") {
+  if (!isSubmissionAttachmentRequired(args.type, args.isResubmit)) {
     return { ok: true };
   }
 

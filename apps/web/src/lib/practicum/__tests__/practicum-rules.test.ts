@@ -16,6 +16,7 @@ import {
   getExtension,
   getSubmissionLinkSiteName,
   isOwnBlobUrl,
+  isSubmissionAttachmentRequired,
   isValidUploadPathname,
   parseSubmissionLink,
   parseVideoLink,
@@ -632,6 +633,15 @@ describe("practicum submission external links (allowlist, validation, creation, 
   });
 
   it("enforces attachment rules: portfolio evidence requires either a file or a link (not both); lesson plan keeps file/link optional on create", () => {
+    // Pure helper: LESSON_PLAN create = optional; LESSON_PLAN resubmit = required; PORTFOLIO_EVIDENCE = required; DEMO_VIDEO = required
+    assert.equal(isSubmissionAttachmentRequired("LESSON_PLAN", false), false);
+    assert.equal(isSubmissionAttachmentRequired("LESSON_PLAN"), false);
+    assert.equal(isSubmissionAttachmentRequired("LESSON_PLAN", true), true);
+    assert.equal(isSubmissionAttachmentRequired("PORTFOLIO_EVIDENCE", false), true);
+    assert.equal(isSubmissionAttachmentRequired("PORTFOLIO_EVIDENCE", true), true);
+    assert.equal(isSubmissionAttachmentRequired("DEMO_VIDEO", false), true);
+    assert.equal(isSubmissionAttachmentRequired("DEMO_VIDEO", true), true);
+
     const driveUrl = "https://drive.google.com/file/d/12345/view";
     const fileUrl = "https://store.public.blob.vercel-storage.com/practicum/pl_1/evidence.pdf";
 
@@ -856,6 +866,8 @@ describe("practicum submission external links (allowlist, validation, creation, 
       uploadDialog,
       /Make sure the link&apos;s sharing is set so your supervisor can open it\./
     );
+    assert.match(uploadDialog, /const attachmentRequired = isSubmissionAttachmentRequired\(type,\s*isResubmit\);/);
+    assert.match(uploadDialog, /aria-required=\{attachmentRequired \? "true" : undefined\}/);
     assert.match(uploadDialog, /aria-required="true"/);
 
     // Safe external link rendering across student & supervisor views

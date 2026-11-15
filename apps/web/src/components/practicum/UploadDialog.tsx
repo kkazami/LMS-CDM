@@ -12,6 +12,7 @@ import {
   UPLOAD_RULES,
   formatBytes,
   getExtension,
+  isSubmissionAttachmentRequired,
   parseSubmissionLink,
   practicumPathPrefix,
   validateUpload,
@@ -84,7 +85,8 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
 
   const acceptAttr = rule.extensions.map((e) => `.${e}`).join(",");
   const fileUnavailable = source === "file" && !uploadsConfigured;
-  const fileOptional = !isResubmit && type === "LESSON_PLAN";
+  const attachmentRequired = isSubmissionAttachmentRequired(type, isResubmit);
+  const fileOptional = !attachmentRequired;
 
   function handleSelectedFile(picked: File | null) {
     setError(null);
@@ -353,12 +355,16 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
           <div>
             <span className="mb-1.5 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
               {type === "DEMO_VIDEO" ? "Video source" : "Attachment source"}{" "}
-              <span className="text-rose-500" aria-hidden="true">*</span>
+              {attachmentRequired ? (
+                <span className="text-rose-500" aria-hidden="true">*</span>
+              ) : (
+                <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>
+              )}
             </span>
             <div
               role="radiogroup"
               aria-label={type === "DEMO_VIDEO" ? "Video source" : "Attachment source"}
-              aria-required="true"
+              aria-required={attachmentRequired ? "true" : undefined}
               className="flex flex-wrap gap-2"
             >
               {(["file", "link"] as const).map((option) => (

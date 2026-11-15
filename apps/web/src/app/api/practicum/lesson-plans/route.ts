@@ -6,6 +6,7 @@ import { requirePracticumActor } from "@/lib/practicum/guard";
 import { HttpError, errorResponse, isUniqueViolation } from "@/lib/practicum/http";
 import {
   SUBMISSION_TYPES,
+  isSubmissionAttachmentRequired,
   statusAfterResubmit,
   type SubmissionStatus,
   type SubmissionType,
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
         fileUrl: rawFileUrl || undefined,
         fileName: rawFileName || undefined,
       });
-    } else if (existingSubmission || submissionType !== "LESSON_PLAN") {
+    } else if (isSubmissionAttachmentRequired(submissionType, Boolean(existingSubmission))) {
       throw new HttpError(400, "Provide either an uploaded file or a link.");
     }
 
