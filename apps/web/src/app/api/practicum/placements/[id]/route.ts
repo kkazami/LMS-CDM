@@ -17,6 +17,7 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
  * PATCH /api/practicum/placements/[id]
