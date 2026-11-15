@@ -31,6 +31,7 @@ import {
   MessageSquareQuote,
   NotebookPen,
   Video,
+  Film,
   X,
   LifeBuoy,
   FileSpreadsheet,
@@ -112,12 +113,15 @@ export function getIteStudentNavLinks(
   options?: {
     isEligibleForPracticum?: boolean;
     isEligibleForMeetings?: boolean;
+    isEligibleForLectureVideos?: boolean;
     iteProgramTools?: IteSidebarProgramTool[];
   }
 ): NavLink[] {
   const base = getStudentLinks(code).map(({ key, ...item }) => item);
-  const includeMeetings = options?.isEligibleForMeetings ?? (code.toLowerCase() === "ite");
+  const isIte = code.toLowerCase() === "ite";
+  const includeMeetings = options?.isEligibleForMeetings ?? isIte;
   const includePracticum = options?.isEligibleForPracticum ?? true;
+  const includeLectureVideos = options?.isEligibleForLectureVideos ?? isIte;
   const list = [...base];
   if (includeMeetings) {
     list.push({ label: "Meetings", href: `/${code}/meetings`, icon: Video });
@@ -125,7 +129,10 @@ export function getIteStudentNavLinks(
   if (includePracticum) {
     list.push({ label: "Practicum", href: `/${code}/practicum`, icon: NotebookPen });
   }
-  if (code.toLowerCase() === "ite" && options?.iteProgramTools?.length) {
+  if (includeLectureVideos) {
+    list.push({ label: "Lecture Videos", href: `/${code}/lecture-videos`, icon: Film });
+  }
+  if (isIte && options?.iteProgramTools?.length) {
     for (const tool of options.iteProgramTools) {
       list.push({
         label: tool.title,
@@ -190,6 +197,7 @@ export default function Sidebar({
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
   const isProfessor = userRole.toUpperCase() === "PROFESSOR" || userRole.toUpperCase() === "TEACHER";
+  const isAdmin = userRole.toUpperCase() === "ADMIN";
   const isIte = instituteCode.toLowerCase() === "ite";
 
   // Build link list identically on both server and client (avoids hydration mismatch)
@@ -219,6 +227,13 @@ export default function Sidebar({
 
   if (isEligibleForPracticum && (isStudent || isProfessor)) {
     links = [...links, { label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen }];
+  }
+
+  if (isIte && (isStudent || isProfessor || isAdmin)) {
+    links = [
+      ...links,
+      { label: "Lecture Videos", href: `/${instituteCode}/lecture-videos`, icon: Film },
+    ];
   }
 
   if (isEligibleForKnowledgeExchange) {

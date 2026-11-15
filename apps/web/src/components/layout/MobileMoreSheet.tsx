@@ -23,6 +23,7 @@ import {
   LogOut,
   NotebookPen,
   Video,
+  Film,
   HardDrive,
   HelpCircle,
   ChevronRight,
@@ -164,6 +165,11 @@ export default function MobileMoreSheet({
       ? [{ label: "Practicum", href: `/${instituteCode}/practicum`, icon: NotebookPen, description: "Student teaching" }]
       : [];
 
+  const lectureVideosItems: NavItem[] =
+    instituteCode.toLowerCase() === "ite"
+      ? [{ label: "Lecture Videos", href: `/${instituteCode}/lecture-videos`, icon: Film, description: "Recorded lectures" }]
+      : [];
+
   const iteProgramToolItems: NavItem[] =
     isStudent && instituteCode.toLowerCase() === "ite"
       ? iteProgramTools.map((tool) => ({
@@ -187,10 +193,10 @@ export default function MobileMoreSheet({
           { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
         ] : []),
     ...(isStudent
-      ? [...studentItems, ...meetingsItems, ...practicumItems, ...iteProgramToolItems]
+      ? [...studentItems, ...meetingsItems, ...practicumItems, ...lectureVideosItems, ...iteProgramToolItems]
       : isProfessor
-        ? [...teacherItems, ...meetingsItems, ...practicumItems]
-        : adminItems),
+        ? [...teacherItems, ...meetingsItems, ...practicumItems, ...lectureVideosItems]
+        : [...adminItems, ...lectureVideosItems]),
   ];
 
   if (!isOpen) return null;
