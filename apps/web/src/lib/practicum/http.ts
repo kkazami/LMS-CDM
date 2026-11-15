@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+/** Interactive transaction options shared by rubric upload and placement delete. */
 export const PRACTICUM_TRANSACTION_OPTIONS = {
-  maxWait: 5000,
-  timeout: 15000,
+  maxWait: 10_000,
+  timeout: 30_000,
 } as const;
+
+export const PRACTICUM_RUBRIC_TRANSACTION_OPTIONS = PRACTICUM_TRANSACTION_OPTIONS;
 
 export class HttpError extends Error {
   readonly status: number;
@@ -15,11 +18,6 @@ export class HttpError extends Error {
     this.status = status;
   }
 }
-
-export const PRACTICUM_RUBRIC_TRANSACTION_OPTIONS = {
-  maxWait: 10_000,
-  timeout: 30_000,
-} as const;
 
 export const PRACTICUM_DB_NOT_MIGRATED_MESSAGE =
   "Practicum database tables or columns have not been migrated yet. Please ask the database administrator to apply the pending Prisma migrations.";
