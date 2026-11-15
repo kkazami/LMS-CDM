@@ -173,7 +173,7 @@ export default function IteStudentProgramSection({
                 htmlFor="ite-dashboard-program-select"
                 className="block text-xs font-semibold text-primary-theme mb-1.5"
               >
-                Select your ITE degree program
+                Select your ITE degree program <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               <select
                 id="ite-dashboard-program-select"
@@ -184,6 +184,7 @@ export default function IteStudentProgramSection({
                 }}
                 disabled={submitting || hasMissingConfig}
                 required
+                aria-required="true"
                 className="w-full h-11 rounded-xl border border-theme bg-surface px-3.5 text-sm text-primary-theme outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 [color-scheme:light] dark:[color-scheme:dark]"
               >
                 <option value="">Choose your program…</option>
