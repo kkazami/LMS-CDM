@@ -438,7 +438,6 @@ describe("BTLED ICT Lab - LAN Cable Tester Classification", () => {
   });
 });
 
-<<<<<<< HEAD
 describe("BTLED ICT Lab - Required Tools & Materials Data, SVG Assets & Preview Behavior", () => {
   const lanData = loadLanCableData();
   const testDir = path.dirname(fileURLToPath(import.meta.url));
