@@ -1,18 +1,17 @@
-import frameworksJson from "./data/frameworks.json";
+import {
+  LESSON_PLAN_FRAMEWORKS,
+  getFrameworkById,
+  getDefaultFramework,
+  isValidFrameworkId,
+} from "./lessonPlanFrameworks";
 import type { LessonPlanFramework, FrameworkId } from "./types";
 
-export const FRAMEWORKS: readonly LessonPlanFramework[] =
-  frameworksJson as unknown as LessonPlanFramework[];
+export const FRAMEWORKS: readonly LessonPlanFramework[] = LESSON_PLAN_FRAMEWORKS;
 
-export function getFrameworkById(id: string): LessonPlanFramework | undefined {
-  return FRAMEWORKS.find((f) => f.id === id);
-}
+export { getFrameworkById, getDefaultFramework, isValidFrameworkId };
 
-export function getDefaultFramework(): LessonPlanFramework {
-  return FRAMEWORKS[0]!;
-}
-
-export function isValidFrameworkId(id: string): id is FrameworkId {
-  return FRAMEWORKS.some((f) => f.id === id);
-}
-
+export {
+  parseLessonFramework,
+  VALID_FRAMEWORK_IDS,
+  isDraftNonEmpty,
+} from "./rules";
