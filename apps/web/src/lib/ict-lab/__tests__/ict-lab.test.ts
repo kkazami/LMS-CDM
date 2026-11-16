@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
 import {
+  HARDWARE_GENERAL_SAFETY,
+  HARDWARE_PROCEDURES,
+  getHardwareProcedure,
+} from "../hardware-procedures";
+import {
   MAX_PLAYGROUND_BYTES,
   PLAYGROUND_IFRAME_CSP,
   PLAYGROUND_POSTMESSAGE_SOURCE,
@@ -923,6 +928,73 @@ describe("BTLED ICT Lab - Hover State Machine & Flicker Immunity", () => {
     assert.equal(state.isFocused, false);
     assert.equal(state.isHovered, true);
     assert.equal(state.active, true);
+  });
+});
+
+describe("BTLED ICT Lab - Hardware Assembly & Disassembly Procedures", () => {
+  it("provides a complete procedure for every real hardware part id in hardware-parts.json", () => {
+    const hardware = loadHardwarePartsData();
+    assert.equal(hardware.parts.length, 12);
+
+    for (const part of hardware.parts) {
+      const proc = getHardwareProcedure(part.id);
+      assert.ok(proc, `Missing procedure for part id "${part.id}"`);
+      assert.strictEqual(HARDWARE_PROCEDURES[part.id], proc);
+
+      assert.ok(
+        proc.removeSteps.length >= 4,
+        `Expected >= 4 removeSteps for "${part.id}", got ${proc.removeSteps.length}`
+      );
+      assert.ok(
+        proc.installSteps.length >= 4,
+        `Expected >= 4 installSteps for "${part.id}", got ${proc.installSteps.length}`
+      );
+      assert.ok(proc.tools.length >= 1, `Expected >= 1 tool for "${part.id}"`);
+      assert.ok(proc.cautions.length >= 1, `Expected >= 1 caution for "${part.id}"`);
+      assert.ok(
+        proc.commonMistakes.length >= 1,
+        `Expected >= 1 common mistake for "${part.id}"`
+      );
+
+      for (const [listName, items] of [
+        ["tools", proc.tools],
+        ["removeSteps", proc.removeSteps],
+        ["installSteps", proc.installSteps],
+        ["cautions", proc.cautions],
+        ["commonMistakes", proc.commonMistakes],
+      ] as const) {
+        const seen = new Set<string>();
+        for (const item of items) {
+          assert.ok(
+            typeof item === "string" && item.trim().length > 0,
+            `Empty or whitespace-only string in ${part.id}.${listName}`
+          );
+          assert.ok(
+            !seen.has(item),
+            `Duplicate text in ${part.id}.${listName}: "${item}"`
+          );
+          seen.add(item);
+        }
+      }
+    }
+  });
+
+  it("defines non-empty HARDWARE_GENERAL_SAFETY items with no blank or duplicate entries", () => {
+    assert.ok(HARDWARE_GENERAL_SAFETY.length > 0);
+    const seen = new Set<string>();
+    for (const item of HARDWARE_GENERAL_SAFETY) {
+      assert.ok(typeof item === "string" && item.trim().length > 0);
+      assert.ok(!seen.has(item));
+      seen.add(item);
+    }
+  });
+
+  it("returns undefined from getHardwareProcedure for unknown or invalid part ids", () => {
+    assert.equal(getHardwareProcedure("non-existent-part"), undefined);
+    assert.equal(getHardwareProcedure(""), undefined);
+    assert.equal(getHardwareProcedure(null), undefined);
+    assert.equal(getHardwareProcedure(undefined), undefined);
+    assert.equal(getHardwareProcedure("toString"), undefined);
   });
 });
 

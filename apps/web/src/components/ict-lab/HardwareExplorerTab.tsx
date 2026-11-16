@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/lib/theme-context";
 import {
   Cpu,
@@ -12,6 +12,11 @@ import {
   Layers,
   MousePointerClick,
   ListChecks,
+  Wrench,
+  AlertTriangle,
+  ShieldAlert,
+  ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 import type { HardwarePart, HardwarePartsData } from "@/lib/ict-lab/types";
 import {
@@ -20,6 +25,10 @@ import {
   assertAllHardwarePartsHaveSvgDrawing,
   generateHardwareQuizQuestions,
 } from "@/lib/ict-lab/rules";
+import {
+  HARDWARE_GENERAL_SAFETY,
+  getHardwareProcedure,
+} from "@/lib/ict-lab/hardware-procedures";
 
 export const HARDWARE_SVG_PART_IDS = [
   "motherboard",
@@ -316,6 +325,29 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   const selectedPart = partsById.get(selectedPartId) ?? data.parts[0]!;
   const currentQuestion = questions[currentQuestionIdx] ?? null;
 
+  // Assembly & Disassembly Guide state (ephemeral, resets on part or tab change)
+  const [procedureMode, setProcedureMode] = useState<"remove" | "install">("remove");
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => new Set());
+  const [safetyOpen, setSafetyOpen] = useState<boolean>(false);
+
+  const selectedProcedure = getHardwareProcedure(selectedPart.id);
+
+  useEffect(() => {
+    setCompletedSteps(new Set());
+  }, [selectedPart.id, procedureMode]);
+
+  const toggleStepDone = (stepIndex: number) => {
+    setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(stepIndex)) {
+        next.delete(stepIndex);
+      } else {
+        next.add(stepIndex);
+      }
+      return next;
+    });
+  };
+
   const startQuiz = (mode: HardwareQuizMode) => {
     const generated = generateHardwareQuizQuestions(data.parts, mode, 10);
     setQuizMode(mode);
@@ -516,7 +548,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
       </div>
 
       {/* Main Content Grid: Left 2D Open Desktop Case SVG | Right Details or Quiz Panel */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
         {/* 2D Interactive SVG Open Desktop Computer Case (Side View) */}
         <div className="flex flex-col rounded-xl border border-theme bg-surface p-4 shadow-sm lg:col-span-7">
           <div className="mb-2 flex items-center justify-between">
@@ -1062,6 +1094,237 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                     {selectedPart.description}
                   </p>
                 </div>
+
+                {selectedProcedure && (
+                  <section
+                    aria-labelledby="hardware-guide-heading"
+                    className="space-y-3 rounded-xl border border-theme bg-elevated/60 p-3.5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4
+                        id="hardware-guide-heading"
+                        className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary-theme"
+                      >
+                        <Wrench className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        Assembly &amp; Disassembly Guide
+                      </h4>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                        <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                        Power off and unplug first
+                      </span>
+                    </div>
+
+                    {/* General Safety Disclosure (collapsed by default) */}
+                    <div className="rounded-lg border border-theme bg-surface">
+                      <button
+                        type="button"
+                        aria-expanded={safetyOpen}
+                        aria-controls="hardware-safety-checklist"
+                        onClick={() => setSafetyOpen((prev) => !prev)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-semibold text-primary-theme transition hover:bg-slate-100/70 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <ShieldAlert className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                          Safety checklist before you start
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 shrink-0 text-secondary-theme transition-transform ${
+                            safetyOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {safetyOpen && (
+                        <ul
+                          id="hardware-safety-checklist"
+                          className="space-y-1.5 border-t border-theme px-3 py-2.5 text-xs leading-relaxed text-secondary-theme list-disc pl-7"
+                        >
+                          {HARDWARE_GENERAL_SAFETY.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Segmented Toggle: Disassemble (Remove) / Assemble (Install) */}
+                    <div
+                      role="tablist"
+                      aria-label="Procedure mode"
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setProcedureMode((prev) =>
+                            prev === "remove" ? "install" : "remove"
+                          );
+                        }
+                      }}
+                      className="grid grid-cols-2 gap-1 rounded-lg border border-theme bg-surface p-1"
+                    >
+                      <button
+                        id="tab-disassemble"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "remove"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("remove")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "remove"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Disassemble (Remove)
+                      </button>
+                      <button
+                        id="tab-assemble"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "install"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("install")}
+                        className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "install"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Assemble (Install)
+                      </button>
+                    </div>
+
+                    {/* Active Tab Panel */}
+                    {(() => {
+                      const activeSteps =
+                        procedureMode === "remove"
+                          ? selectedProcedure.removeSteps
+                          : selectedProcedure.installSteps;
+                      const doneCount = activeSteps.filter((_, idx) =>
+                        completedSteps.has(idx)
+                      ).length;
+
+                      return (
+                        <div
+                          id="panel-hardware-procedure"
+                          role="tabpanel"
+                          aria-labelledby={
+                            procedureMode === "remove"
+                              ? "tab-disassemble"
+                              : "tab-assemble"
+                          }
+                          className="space-y-3"
+                        >
+                          {/* Tools needed */}
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-theme">
+                              Tools needed
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {selectedProcedure.tools.map((tool) => (
+                                <span
+                                  key={tool}
+                                  className="inline-flex items-center rounded-md border border-theme bg-surface px-2 py-0.5 text-xs font-medium text-primary-theme"
+                                >
+                                  {tool}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Progress + Reset */}
+                          <div className="flex items-center justify-between gap-2 border-t border-theme pt-2.5">
+                            <span className="text-xs font-semibold text-primary-theme">
+                              {doneCount} of {activeSteps.length} steps
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setCompletedSteps(new Set())}
+                              disabled={doneCount === 0}
+                              className="inline-flex items-center gap-1 rounded-md border border-theme bg-surface px-2 py-1 text-[11px] font-semibold text-secondary-theme transition hover:text-primary-theme disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              Reset
+                            </button>
+                          </div>
+
+                          {/* Numbered Step List with Practice Checkboxes */}
+                          <ol className="space-y-2">
+                            {activeSteps.map((stepText, idx) => {
+                              const isDone = completedSteps.has(idx);
+                              const checkboxId = `step-${selectedPart.id}-${procedureMode}-${idx}`;
+                              return (
+                                <li
+                                  key={checkboxId}
+                                  className={`flex items-start gap-2.5 rounded-lg border p-2.5 transition ${
+                                    isDone
+                                      ? "border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-500/10"
+                                      : "border-theme bg-surface"
+                                  }`}
+                                >
+                                  <span
+                                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                      isDone
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                                    }`}
+                                  >
+                                    {idx + 1}
+                                  </span>
+                                  <label
+                                    htmlFor={checkboxId}
+                                    className={`flex-1 cursor-pointer text-sm leading-relaxed ${
+                                      isDone
+                                        ? "text-secondary-theme line-through"
+                                        : "text-primary-theme"
+                                    }`}
+                                  >
+                                    {stepText}
+                                  </label>
+                                  <input
+                                    id={checkboxId}
+                                    type="checkbox"
+                                    checked={isDone}
+                                    onChange={() => toggleStepDone(idx)}
+                                    aria-label={`Mark step ${idx + 1} done`}
+                                    className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-theme accent-blue-600 focus:ring-2 focus:ring-blue-500"
+                                  />
+                                </li>
+                              );
+                            })}
+                          </ol>
+
+                          {/* Cautions Callout (amber) */}
+                          <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-3">
+                            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              Cautions
+                            </p>
+                            <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-amber-900 dark:text-amber-200 list-disc pl-4">
+                              {selectedProcedure.cautions.map((caution) => (
+                                <li key={caution}>{caution}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Common Mistakes Callout */}
+                          <div className="rounded-lg border border-theme bg-surface p-3">
+                            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-secondary-theme">
+                              <AlertCircle className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                              Common mistakes
+                            </p>
+                            <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-secondary-theme list-disc pl-4">
+                              {selectedProcedure.commonMistakes.map((mistake) => (
+                                <li key={mistake}>{mistake}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <p className="text-[11px] italic text-secondary-theme">
+                      General guidance only. Real parts and cases differ; always follow the manufacturer&apos;s manual.
+                    </p>
+                  </section>
+                )}
 
                 <div>
                   <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-secondary-theme">
