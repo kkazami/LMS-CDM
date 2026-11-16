@@ -324,6 +324,13 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
 
   const selectedPart = partsById.get(selectedPartId) ?? data.parts[0]!;
   const currentQuestion = questions[currentQuestionIdx] ?? null;
+  const activeCategoryParts = useMemo(
+    () =>
+      selectedCategory === "all"
+        ? []
+        : data.parts.filter((part) => part.category === selectedCategory),
+    [data.parts, selectedCategory]
+  );
 
   // Assembly & Disassembly Guide state (ephemeral, resets on part or tab change)
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
@@ -332,6 +339,18 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   const [safetyOpen, setSafetyOpen] = useState<boolean>(false);
 
   const selectedProcedure = getHardwareProcedure(selectedPart.id);
+
+  const handleSelectCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === "all") return;
+    const matchingParts = data.parts.filter((part) => part.category === categoryId);
+    if (matchingParts.length > 0) {
+      if (!matchingParts.some((part) => part.id === selectedPartId)) {
+        setSelectedPartId(matchingParts[0]!.id);
+      }
+      setGuideOpen(true);
+    }
+  };
 
   useEffect(() => {
     setCompletedSteps(new Set());
@@ -486,7 +505,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
           <button
             type="button"
             disabled={isQuizActive}
-            onClick={() => setSelectedCategory("all")}
+            onClick={() => handleSelectCategory("all")}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               selectedCategory === "all"
                 ? "bg-blue-600 text-white shadow-sm"
@@ -502,7 +521,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 key={cat.id}
                 type="button"
                 disabled={isQuizActive}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => handleSelectCategory(cat.id)}
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   active
                     ? "bg-blue-600 text-white shadow-sm"
@@ -1097,6 +1116,31 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
               >
                 <div className="overflow-hidden">
                   <div className="space-y-3 border-t border-theme p-3.5">
+                    {activeCategoryParts.length > 1 && (
+                      <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-theme bg-surface p-2">
+                        <span className="mr-1 text-[11px] font-semibold text-secondary-theme">
+                          Parts in {categoriesById.get(selectedCategory) ?? selectedCategory}:
+                        </span>
+                        {activeCategoryParts.map((part) => {
+                          const isCurrent = part.id === selectedPart.id;
+                          return (
+                            <button
+                              key={part.id}
+                              type="button"
+                              onClick={() => setSelectedPartId(part.id)}
+                              className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                isCurrent
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
+                              }`}
+                            >
+                              {part.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* General Safety Disclosure (collapsed by default) */}
                     <div className="rounded-lg border border-theme bg-surface">
                       <button
