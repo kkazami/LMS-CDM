@@ -19,7 +19,7 @@ interface SubmitBarProps {
   startedAt: string;
   /** Max possible score for this activity */
   maxScore?: number;
-  /** Whether this activity is graded manually by the instructor */
+  /** Hide provisional browser scores for activities evaluated on submission. */
   manualGrading?: boolean;
   /** Called after a successful submission */
   onSuccess?: () => void;
@@ -108,9 +108,7 @@ export default function SubmitBar({
         <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs px-3 py-2 rounded-xl flex items-start gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
           <p>
-            {manualGrading 
-              ? "Submitted successfully! Awaiting instructor grading." 
-              : `Submitted successfully! Score: ${result.score}%`}
+            {`Submitted successfully! Score: ${result.score} / ${result.maxScore}.`}
           </p>
         </div>
       )}
@@ -134,7 +132,7 @@ export default function SubmitBar({
         ) : (
           <>
             <Send className="w-4 h-4" />
-            <span>{manualGrading ? "Submit for Grading" : "Submit Activity"}</span>
+            <span>Submit Activity</span>
           </>
         )}
       </button>

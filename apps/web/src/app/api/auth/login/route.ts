@@ -5,6 +5,7 @@ import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
 import { createSession, SessionAdmissionError } from "@/lib/auth-session";
+import { AdminMfaError } from '@/lib/admin-mfa-crypto';
 import { canonicalRole, mayAdmitAccount, supportedInstitute } from '@/lib/super-user-v1/capabilities';
 import { processLoginReward } from "@/lib/gamification/login-rewards";
 import {
@@ -222,6 +223,8 @@ export async function POST(request: Request) {
       { status: 200, headers: responseHeaders() }
     );
   } catch (error: unknown) {
+    if (error instanceof SessionAdmissionError && error.status === 202 && 'enrollment' in error) return NextResponse.json({ mfaRequired: true, enrollment: error.enrollment, redirect: '/mfa', message: error.message }, { status: 202, headers: { ...corsHeaders, 'Cache-Control': 'private, no-store' } });
+    if (error instanceof AdminMfaError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
     if (error instanceof AccessError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
     if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, {
       status: error.status,

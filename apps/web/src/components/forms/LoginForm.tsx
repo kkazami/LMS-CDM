@@ -93,6 +93,11 @@ export default function LoginForm({
 
       const data = await response.json();
 
+      if (response.status === 202 && data.mfaRequired === true) {
+        window.location.href = '/mfa';
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.errors?.acceptedPolicies?.[0] || data.message || "Unable to sign in.");
       }

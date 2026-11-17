@@ -8,6 +8,7 @@ import { canonicalRole, mayAdmitAccount, privilegedRole } from './super-user-v1/
 import { applicationWriterQualified } from './super-user-v1/provisioning';
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, SESSION_TOUCH_MS, sessionExpired, sessionActivity } from './session-policy';
 import { needsClassEnrollment } from './student-access';
+import { beginAdminMfa, consumeAdminMfa, saveAdminMfaSession, validAdminMfaSession, ADMIN_MFA_COOKIE, ADMIN_MFA_COOKIE_PATH, ADMIN_MFA_TTL_SECONDS } from './admin-mfa';
 
 /**
  * Computes a SHA-256 digest of an opaque bearer token.
@@ -27,6 +28,10 @@ export class SessionAdmissionError extends Error {
   constructor(public readonly status: number, message: string, public readonly retryAfterSeconds?: number) { super(message); }
 }
 
+export class AdminMfaRequiredError extends SessionAdmissionError {
+  constructor(public readonly enrollment: boolean) { super(202, 'Verify your administrator authenticator to continue.'); }
+}
+
 function sessionTransactionUnavailable(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const failure = error as { code?: string; meta?: { code?: string; driverAdapterError?: { cause?: { originalCode?: string } } } };
@@ -43,7 +48,8 @@ export async function createSession(
   userId: string,
   metadata?: { userAgent?: string; ipAddress?: string },
   expectedPasswordHash?: string,
-  expectedIdentity?: { role: string; instituteId: string; credentialProvisioningState: string | null; googleSubject?: string | null }
+  expectedIdentity?: { role: string; instituteId: string; credentialProvisioningState: string | null; googleSubject?: string | null },
+  adminMfaProof?: string
 ): Promise<CreateSessionResult> {
   // 7-day session validity
   const expiresAt = new Date(Date.now() + SESSION_ABSOLUTE_MS);
@@ -58,21 +64,27 @@ export async function createSession(
     await tx.$queryRaw`SELECT set_config('lock_timeout', '5s', true), set_config('statement_timeout', '10s', true)`;
     // Lock and re-read the admission fields together; this is the same single-user
     // lock used by account writers, without a second remote database round trip.
-    const [user] = await tx.$queryRaw<Array<Pick<User, 'password' | 'role' | 'instituteId' | 'credentialProvisioningState' | 'googleSubject' | 'isActive' | 'activationStatus'>>>`
-      SELECT password, role, "instituteId", "credentialProvisioningState", "googleSubject", "isActive", "activationStatus"
+    const [user] = await tx.$queryRaw<Array<Pick<User, 'email' | 'password' | 'role' | 'instituteId' | 'credentialProvisioningState' | 'googleSubject' | 'isActive' | 'activationStatus'>>>`
+      SELECT email, password, role, "instituteId", "credentialProvisioningState", "googleSubject", "isActive", "activationStatus"
       FROM public."User" WHERE id = ${userId} FOR UPDATE`;
     if (!user || (expectedPasswordHash !== undefined && user.password !== expectedPasswordHash)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
     if (expectedIdentity && (user.role !== expectedIdentity.role || user.instituteId !== expectedIdentity.instituteId || user.credentialProvisioningState !== expectedIdentity.credentialProvisioningState)) throw new SessionAdmissionError(401, 'Invalid email, password, or institute.');
     if (expectedIdentity && 'googleSubject' in expectedIdentity && user.googleSubject !== expectedIdentity.googleSubject) throw new SessionAdmissionError(401, 'Google account connection changed. Sign in again.');
     if (!mayAdmitAccount(user)) throw new SessionAdmissionError(403, 'Your account has been deactivated. Please contact administration.');
     if (privilegedRole(user.role) && !await applicationWriterQualified(tx)) throw new SessionAdmissionError(503, 'Authentication unavailable.');
-    return tx.session.create({ data: {
+    if (privilegedRole(user.role) && !adminMfaProof) {
+      return { kind: 'mfa' as const, mfa: await beginAdminMfa(tx, userId, user, metadata?.userAgent) };
+    }
+    const proof = privilegedRole(user.role) ? await consumeAdminMfa(tx, userId, user, adminMfaProof!, metadata?.userAgent) : null;
+    const created = await tx.session.create({ data: {
       tokenHash,
       userId,
       expiresAt,
       userAgent: metadata?.userAgent,
       ipAddress: metadata?.ipAddress,
     } });
+    if (proof) await saveAdminMfaSession(tx, created.id, userId, proof);
+    return { kind: 'session' as const, created };
   }, { maxWait: 5000, timeout: 15000 }).catch((error: unknown) => {
     if (sessionTransactionUnavailable(error)) {
       throw new SessionAdmissionError(503, 'Sign-in is temporarily busy. Please try again in a few seconds.', 5);
@@ -81,6 +93,15 @@ export async function createSession(
   });
 
   const cookieStore = await cookies();
+  if (session.kind === 'mfa') {
+    cookieStore.delete('lumina_session');
+    cookieStore.set(ADMIN_MFA_COOKIE, session.mfa.rawToken, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict',
+      path: ADMIN_MFA_COOKIE_PATH, maxAge: ADMIN_MFA_TTL_SECONDS,
+    });
+    throw new AdminMfaRequiredError(session.mfa.enrollment);
+  }
+  cookieStore.set(ADMIN_MFA_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: ADMIN_MFA_COOKIE_PATH, maxAge: 0 });
   cookieStore.set("lumina_session", rawToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -90,7 +111,7 @@ export async function createSession(
   });
 
   return {
-    sessionId: session.id,
+    sessionId: session.created.id,
     token: rawToken,
     expiresAt,
   };
@@ -182,6 +203,7 @@ export async function validateSessionToken(rawToken: string, touch = true) {
       return null;
     }
     if (privilegedRole(session.user.role) && !await applicationWriterQualified(db)) return null;
+    if (privilegedRole(session.user.role) && !await validAdminMfaSession(session.id, session.userId, session.user)) return null;
 
     if (touch && Date.now() - session.lastSeenAt.getTime() >= SESSION_TOUCH_MS) {
       const now = new Date();
@@ -209,6 +231,7 @@ export async function deleteSession() {
   try {
     const cookieStore = await cookies();
     cookieStore.delete("lumina_session");
+    cookieStore.set(ADMIN_MFA_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: ADMIN_MFA_COOKIE_PATH, maxAge: 0 });
   } catch {
     // Non-cookie environment
   }

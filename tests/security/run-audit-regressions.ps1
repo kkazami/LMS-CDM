@@ -8,12 +8,12 @@ $fixtureRoot = Join-Path $scratchRoot 'fixture'
 New-Item -ItemType Directory -Force -Path $sourceRoot,$fixtureRoot | Out-Null
 
 # Copy only code/config needed by the fixture. No dotenv files or host credentials enter containers.
-foreach ($relative in @('apps/web/src','packages/types/src','prisma/super-user-v1')) {
+foreach ($relative in @('apps/web/src','packages/types/src','packages/api-client/src','prisma/super-user-v1','prisma/admin-mfa','prisma/migrations/20261115010000_admin_mfa')) {
   $destination = Join-Path $sourceRoot $relative
   New-Item -ItemType Directory -Force -Path (Split-Path $destination) | Out-Null
   Copy-Item -LiteralPath (Join-Path $repoRoot $relative) -Destination $destination -Recurse
 }
-foreach ($relative in @('tests/security/audit-loader.cjs','tests/security/audit-regressions.test.cjs','tests/security/activity-grading.test.ts','tests/security/arduino-preview.test.ts','scripts/install-super-user-boundary.mjs')) {
+foreach ($relative in @('tests/security/audit-loader.cjs','tests/security/audit-regressions.test.cjs','tests/security/activity-grading.test.ts','tests/security/arduino-preview.test.ts','tests/security/admin-mfa.test.cjs','scripts/install-super-user-boundary.mjs')) {
   $destination = Join-Path $sourceRoot $relative
   New-Item -ItemType Directory -Force -Path (Split-Path $destination) | Out-Null
   Copy-Item -LiteralPath (Join-Path $repoRoot $relative) -Destination $destination
@@ -86,7 +86,7 @@ try {
     '--workdir','/app','--entrypoint','/usr/bin/env','node:22-bookworm-slim','-i',
     'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/scratch','TMPDIR=/tmp','NODE_ENV=test','AUDIT_DISPOSABLE=1',
     'DATABASE_URL=postgresql://audit_app:dummy_fixture_only@127.0.0.1:5432/audit_regression',
-    'DATABASE_POOL_MAX=4','NEXT_TELEMETRY_DISABLED=1','timeout','180s','node','--require','./tests/security/audit-loader.cjs','--test','--test-concurrency=1','tests/security/audit-regressions.test.cjs','tests/security/activity-grading.test.ts','tests/security/arduino-preview.test.ts')
+    'DATABASE_POOL_MAX=4','ADMIN_MFA_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=','NEXT_TELEMETRY_DISABLED=1','timeout','180s','node','--require','./tests/security/audit-loader.cjs','--test','--test-concurrency=1','tests/security/audit-regressions.test.cjs','tests/security/activity-grading.test.ts','tests/security/arduino-preview.test.ts','tests/security/admin-mfa.test.cjs')
   $output = & docker @arguments 2>&1
   $exitCode = $LASTEXITCODE
   $output | ForEach-Object { Write-Output $_ }

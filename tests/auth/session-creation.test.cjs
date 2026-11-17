@@ -26,10 +26,13 @@ async function loadSession(state) {
 }
 
 test('session creation bounds transaction waits, revalidates under lock, and withholds cookies on failure', async () => {
-  const state = { qualified: true, events: [], cookiesWritten: 0, inserts: 0 };
+  const state = { qualified: true, events: [], cookiesWritten: 0, cookieChanges: [], inserts: 0 };
   const user = { id: 'synthetic-student', password: 'synthetic-hash', role: 'STUDENT', instituteId: 'ics', credentialProvisioningState: null, isActive: true, activationStatus: 'ACTIVE' };
   state.user = { ...user };
-  state.cookies = { set() { state.events.push('cookie'); state.cookiesWritten++; } };
+  state.cookies = { set(name, value, options) {
+    state.events.push(`cookie:${name}`); state.cookieChanges.push({ name, value, options });
+    if (name === 'lumina_session') state.cookiesWritten++;
+  } };
   const tx = {
     async $queryRaw(parts) {
       if (parts.join('?').includes('set_config')) { state.events.push('limits'); return []; }
@@ -48,11 +51,17 @@ test('session creation bounds transaction waits, revalidates under lock, and wit
   const create = () => session.createSession(user.id, undefined, user.password, user);
   try {
     await create();
-    assert.deepEqual(state.events, ['limits', 'locked-recheck', 'insert', 'commit', 'cookie']);
+    assert.deepEqual(state.events, ['limits', 'locked-recheck', 'insert', 'commit', 'cookie:lumina_admin_mfa', 'cookie:lumina_session']);
+    assert.equal(state.cookieChanges[0].value, '');
+    assert.equal(state.cookieChanges[0].options.maxAge, 0, 'Successful ordinary admission clears stale MFA challenges');
+    assert.equal(state.cookieChanges[0].options.path, '/api/auth/mfa');
+    assert.equal(state.cookieChanges[1].options.httpOnly, true);
+    assert.equal(state.cookieChanges[1].options.path, '/');
     for (const change of [{ password: 'changed' }, { instituteId: 'foreign' }, { role: 'ADMIN' }, { credentialProvisioningState: 'COMPLETE' }, { isActive: false }, { activationStatus: 'PENDING_ACTIVATION' }]) {
       state.user = { ...user, ...change };
       await assert.rejects(create(), error => error instanceof session.SessionAdmissionError && [401, 403].includes(error.status));
       assert.equal(state.inserts, 1); assert.equal(state.cookiesWritten, 1);
+      assert.equal(state.cookieChanges.length, 2, 'Failed admission must not write either cookie');
     }
     state.user = { ...user };
     for (const error of [
@@ -63,9 +72,11 @@ test('session creation bounds transaction waits, revalidates under lock, and wit
       state.error = error;
       await assert.rejects(create(), failure => failure instanceof session.SessionAdmissionError && failure.status === 503 && failure.retryAfterSeconds === 5);
       assert.equal(state.inserts, 1); assert.equal(state.cookiesWritten, 1);
+      assert.equal(state.cookieChanges.length, 2, 'Failed transactions must not write either cookie');
     }
     state.error = Object.assign(new Error('synthetic unexpected database error'), { code: 'P2022' });
     await assert.rejects(create(), error => error === state.error);
     assert.equal(state.cookiesWritten, 1);
+    assert.equal(state.cookieChanges.length, 2);
   } finally { delete globalThis.__sessionCreationTest; }
 });

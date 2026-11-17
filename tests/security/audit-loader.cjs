@@ -41,13 +41,26 @@ Module._load = function (name, parent, isMain) {
   return load.call(this, name, parent, isMain);
 };
 globalThis.fetch = async () => { throw new Error('External fetch forbidden by audit fixture'); };
-async function invoke(handler, token, url, method = 'GET', body, params = {}) {
+async function invoke(handler, token, url, method = 'GET', body, params = {}, options = {}) {
   const headers = new Headers({ authorization: `Bearer ${token}`, host: 'localhost:3000',
     origin: 'http://localhost:3000', 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' });
+  for (const [name, value] of Object.entries(options.headers || {})) headers.set(name, value);
+  const jar = options.cookieJar;
+  const visible = name => {
+    const row = jar?.get(name);
+    if (!row || !new URL(url, 'http://localhost:3000').pathname.startsWith(row.options?.path || '/')) return undefined;
+    return { name, value: row.value };
+  };
+  if (jar) headers.set('cookie', [...jar.keys()].map(visible).filter(Boolean).map(row => `${row.name}=${row.value}`).join('; '));
+  const cookieStore = {
+    get: visible,
+    set(name, value, attributes = {}) { if (!jar) return; if (attributes.maxAge === 0) jar.delete(name); else jar.set(name, { value, options: attributes }); },
+    delete(name) { jar?.delete(name); },
+  };
   const request = new Request(`http://localhost:3000${url}`, {
     method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  return context.run({ headers: request.headers, cookies: { get() {}, set() {}, delete() {} } },
+  return context.run({ headers: request.headers, cookies: cookieStore },
     () => handler(request, { params: Promise.resolve(params) }));
 }
 module.exports = { invoke, provider };

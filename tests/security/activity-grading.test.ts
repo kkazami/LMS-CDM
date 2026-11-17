@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { gradeActivity, ActivityGradingError } from '../../apps/web/src/features/interactive-activities/shared/grade-activity';
 import { activitySubmissionInputSchema } from '../../apps/web/src/features/interactive-activities/shared/schemas';
 
@@ -69,6 +70,22 @@ test('logic grading recomputes all input permutations and ignores forged live ga
   assert.throws(() => grade('logic-gate', logic), ActivityGradingError);
   assert.throws(() => grade('logic-gate', { ...logic, wires: [{ id: 'cycle', fromPin: 'g-123-out', toPin: 'g-123-in0', state: true }] }, config), ActivityGradingError);
   assert.throws(() => grade('logic-gate', { ...logic, gates: { ...logic.gates, 'g-123': { ...logic.gates['g-123'], type: 'D_FF' } } }, config), ActivityGradingError);
+});
+
+test('the exact instructor default OR assessment grades the circuit offered by the logic toolbox', () => {
+  const editor = readFileSync('apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/activities/logic-gate/new/page.tsx', 'utf8');
+  const configured = /const defaultTruthTable = `([\s\S]*?)`;/.exec(editor)?.[1];
+  assert.ok(configured, 'The fixture must exercise the actual instructor target');
+  const gate = (id: string, type: string) => ({ id, type, position: [0, 0, 0], state: false });
+  const gates = { inA: gate('inA', 'INPUT'), inB: gate('inB', 'INPUT'), 'g-default': gate('g-default', 'OR'), outY: gate('outY', 'OUTPUT') };
+  const wires = [
+    { id: 'w1', fromPin: 'inA-out', toPin: 'g-default-in0', state: false },
+    { id: 'w2', fromPin: 'inB-out', toPin: 'g-default-in1', state: false },
+    { id: 'w3', fromPin: 'g-default-out', toPin: 'outY-in0', state: false },
+  ];
+  const result = grade('logic-gate', { gates, wires }, { ...template, variables: JSON.stringify({ targetTruthTable: JSON.parse(configured) }) });
+  assert.equal(result.score, 100);
+  assert.equal(result.passed, true);
 });
 
 test('mixed-case logic IDs map truth-table inputs and outputs by the solver order', () => {

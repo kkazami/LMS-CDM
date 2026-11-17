@@ -171,11 +171,14 @@ export function createApiClient(config: ApiClientConfig) {
       resetPassword: (email: string, otp: string, newPassword: string) => request<{ message: string }>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) }),
       register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>
         request<LoginResponse>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
-      login: (data: LoginRequest) =>
-        request<LoginResponse>('/api/auth/login', {
+      login: async (data: LoginRequest) => {
+        const result = await request<LoginResponse | { mfaRequired: true }>('/api/auth/login', {
           method: 'POST',
           body: JSON.stringify(data),
-        }),
+        });
+        if ('mfaRequired' in result) throw new ApiClientError(403, 'Administrator sign-in requires an authenticator. Use the secure web portal to continue.');
+        return result;
+      },
 
       me: () => request<{ user: AuthUser; mobileCapabilities?: LoginResponse['mobileCapabilities'] }>('/api/auth/me'),
 

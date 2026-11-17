@@ -24,6 +24,7 @@ before(async () => {
   assert.deepEqual(identity, { db: 'audit_regression', host: '127.0.0.1' });
   assert.equal((await owner.query('SELECT count(*)::int n FROM information_schema.tables WHERE table_schema=\'public\'')).rows[0].n, 0);
   await owner.query(fs.readFileSync('/fixture/schema.sql', 'utf8'));
+  await owner.query(fs.readFileSync('prisma/admin-mfa/revocation.sql', 'utf8'));
   // Fixture-owner provisioning happens before the production guard is installed.
   await owner.query(`
     INSERT INTO "Institute"(id,code,name) VALUES ('ics','ics','Dummy Computing'),('ite','ite','Dummy Education');
@@ -32,7 +33,9 @@ before(async () => {
     ('teacher','Dummy Teacher','teacher@example.invalid',NULL,'PROFESSOR','ics'),
     ('teacher-b','Dummy Foreign Teacher','teacher-b@example.invalid',NULL,'PROFESSOR','ite'),
     ('student','Dummy Student','student@example.invalid',NULL,'STUDENT','ics'),
-    ('foreign-student','Dummy Foreign Student','foreign@example.invalid',NULL,'STUDENT','ite');
+    ('foreign-student','Dummy Foreign Student','foreign@example.invalid',NULL,'STUDENT','ite'),
+    ('mfa-admin-peer','Dummy MFA Administrator','mfa-peer@example.invalid',NULL,'ADMIN','ics'),
+    ('mfa-foreign-admin','Dummy Foreign MFA Administrator','mfa-foreign@example.invalid',NULL,'ADMIN','ite');
     INSERT INTO "Course"(id,code,"courseCode",title,"instituteId","instructorId","updatedAt") VALUES
     ('course-a','A','DUMMY-A','Enrolled course','ics','teacher',now()),
     ('course-b','B','DUMMY-B','Unenrolled course','ics','teacher',now()),
@@ -59,6 +62,22 @@ before(async () => {
   for (const successor of ['administrator-consolidation.sql', 'administrator-credentials.sql', 'student-program-assignment.sql']) {
     await owner.query(fs.readFileSync(path.join('prisma/super-user-v1', successor), 'utf8'));
   }
+  // Provision the synthetic Super User through the real operator-only lifecycle.
+  // Preseeding a Super User would correctly make the boundary installer refuse setup.
+  const operator = new Client({ host: '127.0.0.1', port: 5432, user: 'audit_operator', database: 'audit_regression', connectionTimeoutMillis: 5000 });
+  await operator.connect();
+  try {
+    const { hashSync } = require('bcryptjs');
+    const initial = hashSync('DummyFixtureOnly!2026', 4), replacement = hashSync('DummyReplacementOnly!2026', 4);
+    const attempt = 'dummy_bootstrap_attempt_01', receipt = 'a'.repeat(64), approval = 'synthetic-local-fixture-only';
+    const result = await operator.query('SELECT super_user_security.bootstrap_super_user($1,$2,$3,$4,$5,$6,$7,$8) AS id',
+      ['cdm_super_user_01', 'Dummy MFA Super User', 'mfa-super@example.invalid', 'ics', initial, attempt, receipt, approval]);
+    const id = result.rows[0].id;
+    await operator.query('SELECT super_user_security.complete_handoff($1,$2,$3,$4,$5,$6,$7)',
+      [id, 'ics', initial, replacement, 'dummy_handoff_attempt_01', 'b'.repeat(64), approval]);
+    await operator.query('SELECT super_user_security.activate_new_bootstrap($1,$2,$3,$4,$5,$6)',
+      [id, 'ics', attempt, 'dummy_activation_attempt_01', 'c'.repeat(64), approval]);
+  } finally { await operator.end(); }
   db = require('../../apps/web/src/lib/db.ts').db;
   assert.equal(await require('../../apps/web/src/lib/super-user-v1/provisioning.ts').applicationWriterQualified(db), true,
     'A failed privileged-principal qualification must not masquerade as authorization success');
@@ -66,6 +85,15 @@ before(async () => {
     id: `session-${userId}`, userId, tokenHash: createHash('sha256').update(token).digest('hex'),
     expiresAt: new Date(Date.now() + 3600000), lastSeenAt: new Date(),
   } });
+  // The positive administrator control is genuinely MFA-qualified, not an auth bypass stub.
+  const administrator = await db.user.findUniqueOrThrow({ where: { id: 'admin' } });
+  const { adminMfaIdentityHash } = require('../../apps/web/src/lib/admin-mfa.ts');
+  const { encryptTotpSecret } = require('../../apps/web/src/lib/admin-mfa-crypto.ts');
+  const factorVersion = 'dummy-fixture-mfa-v1';
+  await owner.query('INSERT INTO "AdminMfaFactor" ("userId","encryptedSecret","recoveryHashes",version) VALUES ($1,$2,$3,$4)',
+    ['admin', encryptTotpSecret('admin', 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'), '[]', factorVersion]);
+  await owner.query('INSERT INTO "AdminMfaSession" ("sessionId","userId","factorVersion","identityHash") VALUES ($1,$2,$3,$4)',
+    ['session-admin', 'admin', factorVersion, adminMfaIdentityHash(administrator)]);
   for (const [userId, token] of Object.entries(tokens)) {
     const session = await require('../../apps/web/src/lib/auth-session.ts').validateSessionToken(token, false);
     assert.equal(session?.userId, userId, 'Control: each dummy bearer must pass real session admission');
@@ -235,4 +263,8 @@ test('valid raw activity answers are server-graded and normalized to coursework 
     assert.equal(result.submission.passed, paste);
     assert.equal((await db.studentSubmission.findUniqueOrThrow({ where: { id: 'existing-grade' } })).grade, expectedGrade);
   }
+});
+
+test('administrator MFA enrollment, session proofs and concurrent replay remain mandatory', { timeout: 30000 }, async () => {
+  await require('./admin-mfa-cases.cjs')(db, invoke);
 });

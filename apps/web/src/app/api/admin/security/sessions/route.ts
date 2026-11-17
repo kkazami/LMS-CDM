@@ -2,13 +2,33 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createAuditLog, getClientIp } from '@/lib/rbac';
 import { requireSecurityAdmin } from '@/lib/security-guard';
-import { canonicalRole } from '@/lib/super-user-v1/capabilities';
+import { canonicalRole, mayAdmitAccount } from '@/lib/super-user-v1/capabilities';
 import { assertMutationOrigin } from '@/lib/super-user-v1/actor';
-import { SESSION_IDLE_MS } from '@/lib/session-policy';
+import { SESSION_IDLE_MS, sessionExpired } from '@/lib/session-policy';
 import { AUDIT_ACTIONS, normalizeRole } from '@/lib/admin-types';
 import { persistentLimit } from '@/lib/roster/rate-limit';
+import { validAdminMfaSession } from '@/lib/admin-mfa';
+import type { SecurityAdminSession } from '@/lib/security-guard';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
+
+async function revokeAllSignIns(actor: SecurityAdminSession, scope: Prisma.UserWhereInput, preserveSession?: string) {
+  return db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT set_config('lock_timeout', '3s', true), set_config('statement_timeout', '5s', true)`;
+    const selected = await tx.user.findMany({ where: scope, select: { id: true } });
+    const ids = [...new Set([actor.user.id, ...selected.map(user => user.id)])].sort();
+    await tx.$queryRaw(Prisma.sql`SELECT id FROM public."User" WHERE id IN (${Prisma.join(ids)}) ORDER BY id FOR UPDATE`);
+    const current = await tx.session.findUnique({ where: { id: actor.sessionId }, include: { user: true } });
+    if (!current || current.userId !== actor.user.id || current.user.role !== actor.user.role || current.user.instituteId !== actor.user.instituteId
+      || sessionExpired(current) || !mayAdmitAccount(current.user) || !await validAdminMfaSession(current.id, current.userId, current.user, tx)) throw { status: 401, message: 'Administrator verification changed. Sign in again.' };
+    const targets = await tx.user.findMany({ where: { AND: [scope, { id: { in: selected.map(user => user.id) } }] }, select: { id: true } });
+    const userId = { in: targets.map(user => user.id) };
+    const canceled = await tx.adminMfaChallenge.deleteMany({ where: { userId } });
+    const revoked = await tx.session.deleteMany({ where: { userId, ...(preserveSession ? { id: { not: preserveSession } } : {}) } });
+    return { count: revoked.count, pendingChallenges: canceled.count };
+  }, { maxWait: 5000, timeout: 15000 });
+}
 
 export async function GET(request: Request) {
   assertMutationOrigin(request);
@@ -181,15 +201,8 @@ export async function DELETE(request: Request) {
 
       // Revoke all sessions in the institute, EXCLUDING the admin's own current session
       // and preserving any SUPER_USER sessions if acting admin is not a super user
-      const where: Record<string, unknown> = {
-        id: { not: session.sessionId },
-        user: {
-          instituteId: targetInstituteId,
-          ...(isSuperUser ? {} : { role: { not: 'SUPER_USER' } }),
-        },
-      };
-
-      const result = await db.session.deleteMany({ where });
+      const result = await revokeAllSignIns(session, { instituteId: targetInstituteId,
+        ...(isSuperUser ? {} : { NOT: { role: { equals: 'SUPER_USER', mode: 'insensitive' } } }) }, session.sessionId);
 
       await createAuditLog({
         adminId: session.user.id,
@@ -200,13 +213,15 @@ export async function DELETE(request: Request) {
           scope: 'INSTITUTE',
           instituteId: targetInstituteId,
           revokedCount: result.count,
+          pendingMfaChallengesRevoked: result.pendingChallenges,
           preservedSessionId: session.sessionId,
         },
       });
 
       return NextResponse.json({
-        message: `Successfully revoked ${result.count} active sessions. Your current session remains active.`,
+        message: `Revoked ${result.count} active sessions and canceled ${result.pendingChallenges} pending sign-ins. Your current session remains active.`,
         revokedCount: result.count,
+        pendingMfaChallengesRevoked: result.pendingChallenges,
       });
     }
 
@@ -241,9 +256,8 @@ export async function DELETE(request: Request) {
         );
       }
 
-      const result = await db.session.deleteMany({
-        where: { userId: targetUserId },
-      });
+      const result = await revokeAllSignIns(session, { id: targetUserId,
+        ...(isSuperUser ? {} : { instituteId: session.user.instituteId, NOT: { role: { equals: 'SUPER_USER', mode: 'insensitive' } } }) });
 
       await createAuditLog({
         adminId: session.user.id,
@@ -255,12 +269,14 @@ export async function DELETE(request: Request) {
           targetUserId,
           targetEmail: targetUser.email,
           revokedCount: result.count,
+          pendingMfaChallengesRevoked: result.pendingChallenges,
         },
       });
 
       return NextResponse.json({
-        message: `Revoked all ${result.count} sessions for ${targetUser.name}.`,
+        message: `Revoked ${result.count} sessions and canceled ${result.pendingChallenges} pending sign-ins for ${targetUser.name}.`,
         revokedCount: result.count,
+        pendingMfaChallengesRevoked: result.pendingChallenges,
       });
     }
 

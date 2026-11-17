@@ -32,6 +32,7 @@ export class ArduinoSimulation {
     this.isRunning = true;
     useArduinoStore.getState().startSimulation();
     const modes: Record<number, string> = Object.create(null);
+    let serialLines = 0, serialBytes = 0, serialTruncated = false;
     const play = async (instructions: SketchInstruction[]) => {
       for (const instruction of instructions) {
         if (!this.active(generation)) return false;
@@ -41,6 +42,15 @@ export class ArduinoSimulation {
         } else if (instruction.op === 'write') {
           if (modes[instruction.pin] !== 'OUTPUT') throw new Error('Set OUTPUT mode before writing HIGH or LOW.');
           useArduinoStore.getState().setPinVoltage('uno-' + instruction.pin, instruction.value);
+        } else if (instruction.op === 'serial-line') {
+          if (serialLines < 128 && serialBytes + instruction.message.length <= 16384) {
+            useArduinoStore.getState().logSerial(instruction.message);
+            serialLines++;
+            serialBytes += instruction.message.length;
+          } else if (!serialTruncated) {
+            useArduinoStore.getState().logSerial('[Serial output truncated]');
+            serialTruncated = true;
+          }
         }
         if (!await this.wait(instruction.op === 'wait' ? instruction.ms : 1, generation)) return false;
       }
