@@ -261,7 +261,7 @@ export default function AdminDatabaseClient({
           };
           const model = Object.keys(writable).find(name => name.toLowerCase() === detectedModel.toLowerCase());
           if (!model) { toast.error("Unsupported restore", "Restore supports existing User, Course and SyllabusItem records."); return; }
-          if (json.length < 1 || json.length > 500) { toast.error("Invalid record count", "Choose 1–500 existing records."); return; }
+          if (json.length < 1 || json.length > 500) { toast.error("Invalid record count", "Choose 1-500 existing records."); return; }
           const records = json.map(record => ({ id: record.id, ...Object.fromEntries(writable[model].filter(field => record[field] !== undefined).map(field => [field, record[field]])) }));
           setParsedRestoreData({ model, count: records.length, raw: records });
         } else if (json?.snapshot) {
