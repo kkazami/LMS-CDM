@@ -1,5 +1,17 @@
 # Security remediation follow-up
 
+## Partial audit continuation — 18 November 2026
+
+The existing run2 was resumed at the unchanged clean source target `5dc0a42963b241ca0bbaa1711ad6318fe0b9f202`. The six initially covered units were preserved by exact record hashes and were not re-reviewed. All 17 selected review attempts in 14 groups are now accounted for, with seven batch coverage checks and no global final-clean claim.
+
+Current ledger: **14 source-covered, 6 candidate units awaiting validation, 6 blocked, 51 deferred; 77 total**. The candidate queue has 10 unvalidated source fingerprints; none has been promoted into findings.json. The two upload/private-asset entries remain blocked for **platform safeguard**. Forms, attendance and the two engineering provider/runner entries are blocked for **account usage limit**. None was retried or rephrased.
+
+Interruption reconciliation corrected stale in-progress entries, recorded the successfully completed approval/signer review, and replaced an obsolete 73-unit validator-status field with fresh 77-unit/0-finalized-findings receipts. The independent bookkeeping check initially rejected that stale field, then passed the correction. The six frozen records, candidate links, selected queue, historical test/browser receipts and clean pinned source passed mechanical reconciliation. The older native command-summary file is only the later encoding check; complete historical results remain in FINAL.json and detailed logs. An empty findings array is not a clean security verdict.
+
+The source-only continuation changed no application code and ran no application tests, provider calls, real database actions or deployment. Docker was restarted only for cached offline format validators. Detailed per-unit status and whole-plan reconciliation are retained in the existing external run2 directory as COVERAGE-STATUS.md, REPORT.md and PLAN-STATUS.md; local continuation pointers are in tmp/security-followup/RESUME-1.md.
+
+The original plan still has outstanding independent candidate validation, deferred/global re-audit coverage, historical grade incident/data-integrity triage, dependency remediation/update process, current production/provider/native-build facts, the administrator release notice, actual MFA schema/key/device rollout and deployment. This partial continuation does not mark those items complete. The dated observations below remain historical.
+
 ## Status on 17 November 2026
 
 The follow-up MFA/compatibility/CI changes are committed as `6c37f288e987af5596b4fd47cd93bfe3d18fba11`. The clean full re-audit target is now `5dc0a42963b241ca0bbaa1711ad6318fe0b9f202`, tagged `security-audit-target-2026-11-17-r2`. It includes a one-byte correction found during the real local browser check: the database restore page contained a Windows-1252 en dash that Next/SWC could not compile. Replacing it with an ASCII hyphen changes no authorization logic. The web typecheck passes afterward; strict decoding of 1,846 tracked code/config files finds no invalid UTF-8.
