@@ -1,7 +1,8 @@
 import { prepareGoogleMobile } from '@/lib/google-mobile';
 import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse } from 'next/server';
-import { hash, compare } from 'bcryptjs';
+import { hash } from 'bcryptjs';
+import { verifyAccountPassword } from '@/lib/password-hashing';
 import { db } from '@/lib/db';
 import { studentRegistrationSchema, googleLinkSchema } from '@/lib/auth-schema';
 import { createSession } from '@/lib/auth-session';
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         if (!current || current.email.toLowerCase() !== profile.email) throw new AccessError(409, 'Your existing account changed. Start Google sign-in again.');
         if (canonicalRole(current.role) !== 'STUDENT' || !mayAdmitAccount(current) || !current.password) throw new AccessError(403, 'This account cannot connect to Google. Contact your Instructor or Program Head.');
         if (current.instituteId !== institute.id || current.institute.code !== profile.instituteCode) throw new AccessError(403, 'Your account belongs to a different institute. Select your existing institute and start Google sign-in again.');
-        if (!await compare(data.password, current.password)) throw new AccessError(401, 'Your LMS password is incorrect. Try again or reset your password before connecting Google.');
+        if (!await verifyAccountPassword(data.password, current.password)) throw new AccessError(401, 'Your LMS password is incorrect. Try again or reset your password before connecting Google.');
         if (current.googleSubject && current.googleSubject !== profile.sub) throw new AccessError(409, 'This account is connected to a different Google account. Contact your Instructor or Program Head.');
         const existingIteProgram = institute.code === 'ite' ? resolveIteStudentProgramFromRecord(current) : null;
         return tx.user.update({

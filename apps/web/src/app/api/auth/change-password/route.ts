@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth-session';
 import { compare, hash } from 'bcryptjs';
+import { verifyAccountPassword } from '@/lib/password-hashing';
 import { passwordSchema } from '@/lib/auth-schema';
+import { SESSION_COOKIE_NAMES, sessionCookieAttributes } from '@/lib/session-cookie';
 import { lockAccounts } from '@/lib/super-user-v1/account-lock';
 
 export async function POST(req: Request) {
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
       where: { id: session.userId },
       select: { password: true, securityPin: true },
     });
-    if (!user?.password || !(await compare(body.currentPassword, user.password))) {
+    if (!user?.password || !(await verifyAccountPassword(body.currentPassword, user.password))) {
       return NextResponse.json({ error: 'Incorrect current password' }, { status: 400 });
     }
     // Verify PIN if set
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
     });
     if (!changed) return NextResponse.json({ error: 'Your session or password changed. Sign in again.' }, { status: 409 });
     const response = NextResponse.json({ success: true, message: 'Password updated. Sign in again on your devices.' });
-    response.cookies.set('lumina_session', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 0 });
+    for (const name of SESSION_COOKIE_NAMES) response.cookies.set(name, '', { ...sessionCookieAttributes(name), maxAge: 0 });
     return response;
   } catch {
     return NextResponse.json({ error: 'Unable to change password.' }, { status: 400 });

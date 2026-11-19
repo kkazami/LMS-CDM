@@ -3,7 +3,11 @@ import os,sys,json,subprocess,hashlib,uuid,threading,shutil,time,re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=ROOT/'tmp/security-sprint-2'
 DEPS=HERE/'dependency-workspace';TOOLS=HERE/'linux-tools'
-TESTS=json.loads((ROOT/'tests/sprint-2/allowed-tests.json').read_text())['testFiles']
+TEST_MANIFESTS = [json.loads((ROOT / name).read_text()) for name in (
+ 'tests/sprint-2/allowed-tests.json', 'tests/sprint-3/allowed-tests.json', 'tests/sprint-4/allowed-tests.json',
+)]
+TESTS = [file for manifest in TEST_MANIFESTS for file in manifest['testFiles']]
+EXPECTED_TESTS = sum(manifest['expectedTestCount'] for manifest in TEST_MANIFESTS)
 BLOCKED=['tests/forms/','tests/attendance/','tests/harness/runner','tests/harness-integration/','tests/security/audit-regressions','tests/security/admin-mfa-cases','tests/web-quality/security.test','tests/mobile/upload','tests/mobile/kx-upload']
 def bounded(argv,timeout=45,max_bytes=262144):
  p=subprocess.Popen(argv,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);tail=bytearray()
@@ -59,7 +63,7 @@ def main(label,mode='tests',network='none',fixture=None):
  elif mode=='web-types':argv=['sh','-c','node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next typegen && node node_modules/typescript/bin/tsc --noEmit --incremental false']
  elif mode=='mobile-types':argv=['sh','-c','node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false']
  elif mode=='mobile-export':argv=['sh','-c','cd apps/mobile && node node_modules/expo/bin/cli export --platform android --platform ios --output-dir /scratch/mobile-export --max-workers 2']
- elif mode=='web-build':argv=['sh','-c','node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s "$x" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack']
+ elif mode=='web-build':argv=['sh','-c','node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s "$x" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf "Build ID: " && cat .next/BUILD_ID']
  elif mode=='web-runtimes':argv=['sh','-c','node scripts/prepare-codelab-runtimes.mjs && test -s apps/web/public/codelab-runtime/pyodide-314.0.7/pyodide.asm.wasm && test -s apps/web/public/codelab-runtime/sql.js-1.15.2/sql-wasm.wasm']
  elif mode=='sbom':argv=['node','scripts/security/sbom.cjs','/deps',subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'-']
  elif mode=='desktop-package':argv=['sh','-c','cd apps/desktop && node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json && node node_modules/electron-builder/out/cli/cli.js --dir --win --x64 --publish never -c.electronDist=/tools/electron-win -c.win.signAndEditExecutable=false && node ../../scripts/security/inspect-package.cjs']
@@ -96,7 +100,7 @@ def main(label,mode='tests',network='none',fixture=None):
   inspectcode,state=bounded(['docker','inspect','--format','{{json .State}}',name]);assert inspectcode==0 and not json.loads(state)['Running']
   counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped|todo) (\d+)$',out,re.M)} if mode in ['tests','staging'] else {}
   if code==0 and mode in ['tests','staging']:
-   expected=1 if mode=='staging' else json.loads((ROOT/'tests/sprint-2/allowed-tests.json').read_text())['expectedTestCount']
+   expected=1 if mode=='staging' else EXPECTED_TESTS
    assert counts.get('tests')==counts.get('pass')==expected and all(counts.get(k)==0 for k in ['fail','cancelled','skipped','todo']), 'Missing, skipped or unexpected test results'
   receipt={'label':label,'mode':mode,'exit':code,'counts':counts,'seconds':round(time.monotonic()-start,2),'argv':argv,'tests':selected if mode in ['tests','staging'] else [],'safe_environment':env,'limits':{'network':network,'read_only_source_and_tools':True,'scratch_bytes':scratch_mb*1024*1024,'memory_bytes':6442450944 if mode=='web-build' else 4294967296 if mode in ['web-types','web-build','mobile-export'] else 2415919104,'cpus':2,'pids':128,'file_bytes':536870912,'seconds':seconds},'lock_sha256':hashlib.sha256((DEPS/'pnpm-lock.yaml').read_bytes()).hexdigest(),'source_hashes':{str(p.relative_to(source)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()},'terminated':True}
   if mode=='sbom' and code==0:

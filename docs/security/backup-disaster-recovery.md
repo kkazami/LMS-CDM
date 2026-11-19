@@ -8,17 +8,17 @@ The LMS administrator database “backup” functionality stores **metadata summ
 
 A recoverable service requires a consistent database recovery point **plus** matching private objects/files, schema/migrations and guard functions/grants, server-secret/key custody, application/build/runtime dependencies and deployment configuration. A database restored without object data or MFA/GitHub wrapping keys can still be unusable. Git is an application-source record, not a student-record backup.
 
-## Proposed objectives — awaiting institutional approval
+## Approved Sprint 4 planning objectives
 
-| Item | Proposed starting objective | Unverified prerequisite |
+| Item | Planning objective | Unverified prerequisite |
 |---|---|---|
-| Academic/identity database | RPO <= 24 hours; RTO <= 8 hours; improve RPO using provider PITR if approved and available | Size, backup duration, provider restore window and plan costs |
+| Academic/identity database | RPO ≤24 hours and RTO ≤4 hours. Use PITR where supported by the approved infrastructure. | Size, backup duration, provider restore window and plan costs |
 | Student file/object data | RPO <= 24 hours, consistent enough with DB references to identify every missing object | Existing versioning/snapshot/export facilities and institutional retention policy; no blocked asset validation |
 | Keys/configuration | Recover the exact protected versions needed for every retained database recovery point | Separate custody, restore access and expiration policy |
-| Independent backups | Daily encrypted copy, 7 daily and 4 weekly points as a proposal only | Institution-approved retention/deletion/legal holds, destination/capacity and access model |
-| Recovery rehearsal | Before first production readiness sign-off, then quarterly and after major schema/key changes | Isolated environment, synthetic/sanitized inputs and staffed operator review |
+| Independent backups | Daily encrypted copies under independent custody, retained for 30 days | Institution-approved retention/deletion/legal holds, destination/capacity and access model |
+| Recovery rehearsal | Before first production readiness sign-off, monthly and after major schema/key changes | Isolated environment, synthetic/sanitized inputs and staffed operator review |
 
-These targets are proposals, not achieved SLOs or an automatic retention rule. Prefer approved existing infrastructure; present alternatives and costs before introducing a paid service. Shorter RPO may be required during enrollment/exam periods.
+The owner approved these planning targets in Sprint 4. Scheduling, retention settings and measured production readiness require separate approval and evidence. Use approved existing infrastructure and identify costs before adding any service. Assess a shorter RPO during enrollment and exam periods with the academic owner. [Sprint 4 synthetic recovery](sprint-4-staging-verification.md)
 
 ## Layers and ownership
 

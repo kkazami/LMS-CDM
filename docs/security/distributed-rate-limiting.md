@@ -1,0 +1,12 @@
+# Distributed rate limiting
+
+The existing PostgreSQL `RateLimitBucket` remains the shared store. Its single UPSERT is the decision point. The new bounds reject invalid policies and saturate a counter just past its threshold. Count and expiry use one PostgreSQL statement timestamp so both reset together when the window expires. A 250-row indexed cleanup batch uses an advisory lease and skips locked rows. The authenticated operation helper opportunistically prunes after successful admission, no more than once per minute per process. Counter failures reject the protected operation. Cleanup failures are logged without bucket values and do not change the already evaluated decision.
+
+| Operation | Dimension and state |
+|---|---|
+| Self-session revocation | Verified server account, 20 per minute. Newly attached to the persistent store. |
+| CodeLab server run | Verified server account, shared existing 30 per five minutes. Moves to the named policy without changing its limit. |
+| Login, registration, roster activation, administrator MFA and other existing persistent consumers | Current operation budgets and keys retained. Runtime policy bounds, saturation and expiry accounting apply to the common store. |
+| Password recovery, general API, expensive operations and remaining administrator operations | Some existing counters are per-instance or operation-specific. Complete the inventory and require trusted origin/address configuration before a broader switch. Previously blocked validation remains excluded. |
+
+The new session operation keys quotas by the resolved account ID. Existing ingress header trust needs deployment-owner evidence. Review policy naming, indexes, expiry backlog, database lock timing and Neon connection totals with a representative synthetic workload before a wider rollout. Avoid persistent hard account locks. Distinguish confirmed `429` budget decisions from store outage responses. Four PostgreSQL clients completed 100 synthetic transactions across two shared keys, averaging 0.475 ms, with zero failures. Saturation and expiry reset passed. This benchmark covers local SQL contention only. [Sprint 4 receipts](sprint-4-verification.json)

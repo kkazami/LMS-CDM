@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import PrivacyClient from "./client";
+import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, sessionDeadline } from '@/lib/session-policy';
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +28,13 @@ export default async function PrivacySettingsPage({
   const hasSecurityPin = !!user?.securityPin;
 
   // Fetch active sessions for the user, ordered by most recent first
+  const now = new Date();
   const activeSessions = await db.session.findMany({
     where: {
       userId: session.user.id,
-      expiresAt: {
-        gt: new Date(), // Only get non-expired sessions
-      },
+      expiresAt: { gt: now },
+      createdAt: { gt: new Date(now.getTime() - SESSION_ABSOLUTE_MS) },
+      lastSeenAt: { gt: new Date(now.getTime() - SESSION_IDLE_MS) },
     },
     orderBy: {
       createdAt: "desc",
@@ -59,7 +61,7 @@ export default async function PrivacySettingsPage({
         sessions={activeSessions.map(s => ({
           ...s,
           createdAt: s.createdAt.toISOString(),
-          expiresAt: s.expiresAt.toISOString(),
+          expiresAt: sessionDeadline(s).toISOString(),
         }))} 
         currentSessionId={session.id} // Pass current session to prevent self-revocation accidentally
         hasSecurityPin={hasSecurityPin}

@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["officeparser", "pg", "@prisma/adapter-pg"],
+  serverExternalPackages: ["officeparser", "pg", "@prisma/adapter-pg", "@node-rs/argon2"],
   async headers() {
     return [
       {

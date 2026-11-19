@@ -77,9 +77,9 @@ export async function denyLegacyApi(request: Request, _operation: string): Promi
   if (legacy(session.user.role)) return null;
   return Response.json({error:{code:'FORBIDDEN',message:'Forbidden.'}},{status:403});
 }
-export async function requireLegacyActor(_operation: string, scope?: AdministratorScope | (() => AdministratorScope)) {
+export async function requireLegacyActor(_operation: string, scope?: AdministratorScope | (() => AdministratorScope), request?: Request) {
   const page = _operation.endsWith('/page.tsx');
-  const session=await getSession(undefined, { allowUnenrolled: page });
+  const session = await getSession(request, { allowUnenrolled: page });
   if (page && session && await needsClassEnrollment(session.user)) redirect('/join-class');
   if (!session && page) redirect('/login');
   if(!session) throw new AccessError(401,'Authentication required.');

@@ -1,7 +1,7 @@
 import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse, after } from "next/server";
 import { getInstituteName } from "@lms/types";
-import { compare } from "bcryptjs";
+import { verifyAccountPassword } from "@/lib/password-hashing";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
 import { createSession, SessionAdmissionError } from "@/lib/auth-session";
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
     // 4. Verify password hash
     stage = "password-check";
-    const passwordMatches = await timed('password-check', () => compare(password, user.password!));
+    const passwordMatches = await timed('password-check', () => verifyAccountPassword(password, user.password!));
     if (!passwordMatches) {
       return NextResponse.json(
         { message: "Invalid email, password, or institute." },

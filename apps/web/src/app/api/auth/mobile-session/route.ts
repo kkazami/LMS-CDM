@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { bearerToken, validateSessionToken } from '@/lib/auth-session';
 import { needsClassEnrollment } from '@/lib/student-access';
 import { mobileFeaturePath } from '@/lib/mobile-feature-path';
+import { currentSessionCookiePolicy, sessionCookieAttributes, SESSION_COOKIE_NAMES } from '@/lib/session-cookie';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer', Vary: 'Authorization' };
@@ -22,8 +23,10 @@ export async function GET(request: Request) {
   // Every destination still enforces its own role, institute and course access.
   const response = NextResponse.redirect(new URL(target, request.url), 303);
   for (const [key, value] of Object.entries(headers)) response.headers.set(key, value);
-  response.cookies.set('lumina_session', token, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: session.expiresAt,
-  });
+  const { write } = currentSessionCookiePolicy();
+  for (const name of SESSION_COOKIE_NAMES) {
+    if (name !== write) response.cookies.set(name, '', { ...sessionCookieAttributes(name), maxAge: 0 });
+  }
+  response.cookies.set(write, token, { ...sessionCookieAttributes(write), expires: session.expiresAt });
   return response;
 }

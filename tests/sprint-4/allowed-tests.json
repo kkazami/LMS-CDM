@@ -1,0 +1,5 @@
+{
+  "purpose": "Ordinary mobile compatibility and isolated identity policy verification",
+  "testFiles": ["tests/sprint-4/identity.test.cjs"],
+  "expectedTestCount": 7
+}

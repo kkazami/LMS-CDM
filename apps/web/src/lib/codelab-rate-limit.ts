@@ -1,10 +1,10 @@
-import { persistentLimit } from '@/lib/roster/rate-limit';
+import { limitAuthenticatedOperation } from '@/lib/authenticated-rate-limits';
 import { AccessError } from '@/lib/super-user-v1/actor';
 
 /** One shared bucket across execution endpoints and serverless instances. */
 export async function limitCodeLabRuns(userId: string): Promise<Response | null> {
   try {
-    await persistentLimit(`codelab:${userId}`, 30, 5 * 60 * 1000);
+    await limitAuthenticatedOperation('codeLabRun', userId);
     return null;
   } catch (error) {
     if (error instanceof AccessError && error.status === 429) {
