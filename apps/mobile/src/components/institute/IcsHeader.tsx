@@ -16,7 +16,7 @@ import { useMobilePresentation } from '../presentation/MobilePresentation';
 export function IcsHeader({ teacher, title }: { teacher: boolean; title?: string }) {
   const theme = useTheme(), insets = useSafeAreaInsets(), router = useRouter();
   const { isIcsV2, toolsReturnFocus } = useMobilePresentation();
-  const accountButton = useRef<View>(null);
+  const accountButton = useRef<React.ComponentRef<typeof View>>(null);
   const user = useAuthStore(s => s.user), toggleTheme = useThemeStore(s => s.toggleTheme);
   const unread = useAlertsStore(s => s.unreadCount), { openMenu } = useMoreMenu();
   const initials = (user?.name || 'ICS').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();

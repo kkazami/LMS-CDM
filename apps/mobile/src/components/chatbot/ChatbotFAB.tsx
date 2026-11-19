@@ -82,7 +82,7 @@ export function ChatbotFAB() {
     });
   }, [user?.name, user?.role]);
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const inputRef = useRef<TextInput>(null);
 
   // Auto-scroll to latest message

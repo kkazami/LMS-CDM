@@ -260,7 +260,7 @@ export default function StudentAlertsScreen() {
                   onDismiss={() => setErrorMessage(null)}
                 />
               </View>
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <Card style={styles.emptyCard}>

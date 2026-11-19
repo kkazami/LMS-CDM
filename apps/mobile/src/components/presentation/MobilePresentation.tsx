@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { studentScope } from '../../lib/student-scope';
 import { selectMobilePresentation } from '../../lib/mobile-presentation';
 
-const Context = createContext({ isIcsV2: false, fontsReady: false, toolsReturnFocus: { current: null as View | null } });
+const Context = createContext({ isIcsV2: false, fontsReady: false, toolsReturnFocus: { current: null as React.ComponentRef<typeof View> | null } });
 let fontLoad: Promise<void> | undefined;
 
 export function MobilePresentationProvider({ children, subtree }: { children: React.ReactNode; subtree: 'student' | 'teacher' }) {
@@ -13,7 +13,7 @@ export function MobilePresentationProvider({ children, subtree }: { children: Re
   const eligible = selectMobilePresentation(auth, subtree, process.env.EXPO_PUBLIC_ICS_UI_V2 === 'true') === 'ics';
   const isIcsV2 = eligible;
   const [fontsReady, setFontsReady] = useState(false);
-  const toolsReturnFocus = useRef<View | null>(null);
+  const toolsReturnFocus = useRef<React.ComponentRef<typeof View> | null>(null);
   useEffect(() => {
     if (!eligible) return;
     let current = true;

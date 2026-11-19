@@ -16,7 +16,7 @@ import { ProfileEditModal } from '../profile/ProfileEditModal';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 
 type Item = { icon: LucideIcon; title: string; description: string; route: string };
-function focus(target: View | null) {
+function focus(target: React.ComponentRef<typeof View> | null) {
   if (!target) return;
   if (Platform.OS === 'web') target.focus();
   else { const handle = findNodeHandle(target); if (handle) AccessibilityInfo.setAccessibilityFocus(handle); }
