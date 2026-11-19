@@ -4,15 +4,16 @@
   "version": "1.0.0",
   "productName": "CdM LMS Admin Console",
   "description": "Administrator desktop console for CdM LMS.",
-  "main": "electron/main.ts",
+  "main": "dist/electron/main.js",
   "scripts": {
     "dev": "electron -r tsx electron/main.ts",
-    "build": "electron-builder --config electron-builder.json",
-    "pack": "electron-builder --dir --config electron-builder.json"
+    "build": "pnpm compile && electron-builder --config electron-builder.json",
+    "pack": "pnpm compile && electron-builder --dir --config electron-builder.json",
+    "compile": "node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json"
   },
   "devDependencies": {
-    "electron": "^41.10.7",
-    "electron-builder": "^25.1.8",
+    "electron": "^42.11.18",
+    "electron-builder": "^26.18.0",
     "tsx": "^4.19.0"
   }
 }

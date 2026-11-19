@@ -2,10 +2,10 @@
   "appId": "com.lumina.lms.admin",
   "productName": "CdM LMS Admin",
   "directories": {
-    "output": "dist"
+    "output": "dist/packages"
   },
   "files": [
-    "electron/**/*",
+    "dist/electron/**/*.js",
     "renderer/**/*",
     "assets/**/*",
     "!node_modules"

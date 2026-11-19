@@ -1,9 +1,10 @@
-import { DM_Serif_Display } from "next/font/google";
+import localFont from "next/font/local";
 
-export const publicDisplay = DM_Serif_Display({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+export const publicDisplay = localFont({
+  src: [
+    { path: "../fonts/DMSerifDisplay-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../fonts/DMSerifDisplay-Italic.ttf", weight: "400", style: "italic" },
+  ],
   display: "swap",
   variable: "--font-public-display",
 });

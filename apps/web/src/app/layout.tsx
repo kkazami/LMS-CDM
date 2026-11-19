@@ -1,14 +1,16 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { headers } from 'next/headers';
-import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import ServiceWorkerRegister from "@/components/common/ServiceWorkerRegister";
 import OfflineBanner from "@/components/common/OfflineBanner";
 import PageTransition from "@/components/common/PageTransition";
 import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
-const manrope = Manrope({
-  subsets: ["latin"],
+const manrope = localFont({
+  src: "../fonts/Manrope.ttf",
+  weight: "200 800",
+  style: "normal",
   display: "swap",
   variable: "--font-cdm-body",
 });

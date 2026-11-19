@@ -1,0 +1,1108 @@
+{
+  "date": "2026-11-19",
+  "status": "local implementation completed; release gates remain open",
+  "base_revision": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+  "tested_revision": "uncommitted Sprint 2 working tree on b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+  "branch": "codex/security-remediation-2026-11-15",
+  "sprint_1_checkpoint": {
+    "commit": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+    "files": 22,
+    "owner_approval": "Approve the frozen Sprint 1 commit",
+    "pushed": false
+  },
+  "audit_target_preserved": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+  "run2_counts_unchanged": {
+    "covered": 14,
+    "candidate": 4,
+    "blocked": 8,
+    "deferred": 51,
+    "total": 77
+  },
+  "historical_evidence": {
+    "unchanged_files": 186,
+    "preservation_manifest_sha256": "5267e96b88106f00dccc344740423fe5721c98276b4c60c724edfd048f801afc"
+  },
+  "production_access": false,
+  "deployment_performed": false,
+  "blocked_validation_executed": false,
+  "full_suite_executed": false,
+  "hosted_CI_executed": false,
+  "native_GUI_or_signed_device_verification": false,
+  "ASVS_requirement_passes_added": 0,
+  "node": "22.23.3",
+  "pnpm": "10.32.1",
+  "prisma": "7.9.1",
+  "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+  "source_hashes": {
+    ".github/dependabot.yml": "649180112127536d1069864a8be3b1219fe8a4a1d2a09d0542a696c2f82b8a1f",
+    ".github/workflows/harness.yml": "eb0ff1a6d1d00f0f7c63a84c4779ae6ba9c20ee8cb9d5a30cd51e5371e96476f",
+    ".github/workflows/security.yml": "a45546f635069cdb65be51d3c932c4d1b2d42857796b8339cd65c3d518217a67",
+    ".github/workflows/web-quality.yml": "41ca1e2047a37ad3e98882a992c0e9a7612560472891ef911bd87ad0c4582531",
+    "apps/desktop/electron-builder.json": "a3271d257dfa21f228565591eaa659b37c09eb1632d96b76ecbf7b3d44bb6971",
+    "apps/desktop/electron/ipc/handlers.ts": "e0b19222cef6c263ad0a99cb919074d91a343ca9689a744fb6dc92dd24ed75e0",
+    "apps/desktop/electron/main.ts": "bcbaf9f9697a72ce8d876bec0c8b28028078766507f1b2f6a2fb2c638e550d1d",
+    "apps/desktop/electron/security.ts": "a3eae5cec35adab3e7a6a586ea93a09684c1a2bf821ef1c4e26620f88ed596f1",
+    "apps/desktop/package.json": "a4b70dee6bd245ffe0e1cbb95f25ac3b596c1a4c7a20377f97e3cb7e0a7aa90f",
+    "apps/desktop/renderer/index.html": "c26783633ee9db08b693457caa4658b9e0d91596ad7ff0ff9aea4e88aa6af3b0",
+    "apps/desktop/renderer/offline.css": "4ff15f4a74cf47c83bed88e6f2f91b6f841015a46b96bae649ff23e3d4dac9d1",
+    "apps/desktop/renderer/offline.js": "a61b03d308ddf5999367a36e58de9cf8f0e15e0cec3de383002da727ea774c5a",
+    "apps/desktop/renderer/splash.css": "0204e9721a1d714e5c176222f5ca40a2a50548f837e709ee57975f17369f8848",
+    "apps/desktop/renderer/splash.html": "3c0cc28c31fd6bf9b5cfb1184ac377c4c65b2b4c87d1719a58e45b1c9d563972",
+    "apps/desktop/tsconfig.build.json": "f4e310210ba1ae4eef5e91d261eaf8570c8e754f377fbf0e980b3d3cbaa21dca",
+    "apps/mobile/package.json": "3f5263f6f55d8511deeabc7f9948e256c9b129c91aa8827cb04b01978778312f",
+    "apps/web/src/app/layout.tsx": "e8374ecccda20e38c700601306907d056656ecdc12d56a55c046877b03a874fc",
+    "apps/web/src/fonts/DMSerifDisplay-Italic.ttf": "df74c0ac387baeaeb0fe4f2324e1668e6a3ed8c09cd9796fe162c71753e19e45",
+    "apps/web/src/fonts/DMSerifDisplay-OFL.txt": "a3e5cdd67d4571dd0a24fcc968de0efde7ae97ef752daf0906e4767619dd7231",
+    "apps/web/src/fonts/DMSerifDisplay-Regular.ttf": "8cc3643535edf039aa5d95440a8542735e9197e4f4b8d9303e980fefbf5ab616",
+    "apps/web/src/fonts/Manrope-OFL.txt": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+    "apps/web/src/fonts/Manrope.ttf": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+    "apps/web/src/fonts/SOURCES.json": "a91e50af9d1aba8c92a4a12c324808d11a665a31145a493724f2893750b5af4d",
+    "apps/web/src/lib/public-fonts.ts": "b343d9a750de297e26d28d443d88e6eb6da7446e1944638f9e506d514d451699",
+    "package.json": "24acf528a667d3321e7d409fb957ea333826dded448857dc9089440d047f9009",
+    "pnpm-lock.yaml": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+    "scripts/security/.gitignore": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b",
+    "scripts/security/assess.py": "745aea089c7320379cfd77bc885c4a1a2b149a95d4a101b91282663321a1909e",
+    "scripts/security/dependency-review.py": "1b74b65f1a61e58b1f404059ec1e82011f9e3f5f72a8f446d209a3a8fdbc5799",
+    "scripts/security/inspect-package.cjs": "9f03fbb246fd1b32fdb1e1af7432d9cd7bdf9633b3e1b220d29f4c87295dbc72",
+    "scripts/security/prepare.py": "5bcc58f47d52e9d50acf4e692bf071458b4be55a589006914dbba0b1bff5ebb2",
+    "scripts/security/run-scanners.py": "5adbbde01cc40dcd9bc4b6122e5840c3f05543aaca2bb95a0e1dd5bcfedeb6f0",
+    "scripts/security/run-scoped.py": "4df8491b63850233296dc49fbca98673796b462fb5f1841f55cb4e137ef67e70",
+    "scripts/security/run-staging.py": "2fc41bd13bef721e2a78f3f51bc48dcff58e2838dfe64dbf9c73f545b8c9964c",
+    "scripts/security/sbom.cjs": "8f39fa0b00899430e49525da20d42d833df32ce11e345066cafebfd4e225c6eb",
+    "scripts/security/scan-scope.json": "bbc180bfb447c30cf773a51e8e6457abe9b9e88b2c6e5fbab54c9a69a09aa474",
+    "scripts/security/scanner-entry.py": "57f8fe1b01cd437ac869c56aa71e306701b05d462eda57ad9d05fc07d0e87217",
+    "scripts/security/semgrep.yml": "fa1268e9800ef55f1914388530fdd7e286d2a7735b2c7f4a3a87ca1921f1a531",
+    "scripts/security/tools.json": "c24cfdfb336139fb78a1f5cabc3dd00a738c50ac4ece1fefe74a4ef3760efe49",
+    "tests/sprint-2/README.md": "f4e8bd67cd7ad7f0d00342148e1daa75cb69ba340181a43c19096633b2116566",
+    "tests/sprint-2/allowed-tests.json": "11de03b3577ac5392d3b7efe0791e78ae1ddf76584b1ef64b8f1038ca6170eeb",
+    "tests/sprint-2/dependency-compatibility.test.cjs": "36cd7983340848e390bdf13cea6dedecdcacb65b34663a1ab7b3427110f1c3bf",
+    "tests/sprint-2/desktop-security.test.cjs": "c70f03b9c9253999bb0f1538c005cc8903d924ef339da2196c6a6f957c03f11a",
+    "tests/sprint-2/mobile-compatibility.test.cjs": "6c89ec7ea38721237bc4a472d19c80a55bddc71885564db4171bbb64f5cd222b",
+    "tests/sprint-2/semgrep/client.ts": "2bddf4289c2dedc1b0707d83f4d41ae5951ba69422cfd876f878745697c0917a",
+    "tests/sprint-2/staging.test.cjs": "13d6941c1619b184433cb7868135a8e01d5d7ac55f9772f668b4a154f0bc7ab1",
+    "tests/sprint-2/tooling_test.py": "2b09c3d7f4820c41c5d28f0c970c0295077b4819cb249004f4e40ef36911b2e0"
+  },
+  "checks": [
+    {
+      "label": "verified-final-regressions",
+      "mode": "tests",
+      "exit": 0,
+      "counts": {
+        "tests": 102,
+        "pass": 102,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 121.37,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "60b385d2b0c0f5d29a4e3de967f6b45f0128344e617193bca9bf2ad51be4d8ae",
+      "receipt_path": "tmp/security-sprint-2/verified-final-regressions/receipt.json",
+      "receipt_sha256": "1b1602c1c35020e6bcbd954ff977109a700e5ba174447d59541f3d5271fdc79b",
+      "output_sha256": "ceb8cc5fee019cb00675dee45c603ea7512ef93780feeb2c9ea2ad973f203fd8"
+    },
+    {
+      "label": "web-typecheck",
+      "mode": "web-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 185.48,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next typegen && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=3072",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "68e21de8618fda6abc0a202213b2c6cc3bf1334a3e2711339f50f5cac1c985df",
+      "receipt_path": "tmp/security-sprint-2/web-typecheck/receipt.json",
+      "receipt_sha256": "5ff756d4af652ff7f4d32e1b3e7c7144683498de3918a2b3adb7ae2c4e96b4ab",
+      "output_sha256": "b82dd230cea6121ed6adbca193afa1baa0afdcbb4fc7d3a154ab0627398a3079"
+    },
+    {
+      "label": "mobile-typecheck",
+      "mode": "mobile-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 101.18,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "68e21de8618fda6abc0a202213b2c6cc3bf1334a3e2711339f50f5cac1c985df",
+      "receipt_path": "tmp/security-sprint-2/mobile-typecheck/receipt.json",
+      "receipt_sha256": "ce30585bc914a70ecb58933f058fea5e1bb8e1bff3837ced0b01bcc446bbf2ec",
+      "output_sha256": "d3e58be809c83e0966919d765a61d6ff877900d2eca0ac378749d9ebc3577622"
+    },
+    {
+      "label": "desktop-typecheck",
+      "mode": "desktop-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 29.81,
+      "command": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "b8bd3cca79ebc6f6058a45b32bc359d9f7491df516acbd5fb53583a325190260",
+      "receipt_path": "tmp/security-sprint-2/desktop-typecheck/receipt.json",
+      "receipt_sha256": "27d35c87487bb699a7daea8e5db1ea7a3c0f0b916444e2dcee55df010067af00",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "harness-typecheck",
+      "mode": "harness-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 75.5,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node node_modules/typescript/bin/tsc --noEmit --incremental false --project scripts/harness/tsconfig.json"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "38ba48cc188d0dc2acc84841f7a9b64b11fa1a65ba74170209696db11b066f23",
+      "receipt_path": "tmp/security-sprint-2/harness-typecheck/receipt.json",
+      "receipt_sha256": "dac598b01c78b258b7f1caf6dc77ecc85eb93d9d602623f6a7d4109a23c3c291",
+      "output_sha256": "a2619caa0cbbfeb31f5736a054dd0dd2414cd212ba14f0d2c83de04859eb7b1e"
+    },
+    {
+      "label": "verified-final-package",
+      "mode": "desktop-package",
+      "exit": 0,
+      "counts": {},
+      "seconds": 136.94,
+      "command": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json && node node_modules/electron-builder/out/cli/cli.js --dir --win --x64 --publish never -c.electronDist=/tools/electron-win -c.win.signAndEditExecutable=false && node ../../scripts/security/inspect-package.cjs"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "77304f52d5a369737275ee0302606aca8c5e4ad65008c8251bdf1f442069d5e5",
+      "receipt_path": "tmp/security-sprint-2/verified-final-package/receipt.json",
+      "receipt_sha256": "44f6fc23d23430d0af7629ab2d298f77dcab4468943fe7ca8170decf1e33043c",
+      "output_sha256": "0773f97db9e141c9913d338a7499bd95f4854f2a8bd663c3f514bcb5faa38329"
+    },
+    {
+      "label": "web-build-local-fonts",
+      "mode": "web-build",
+      "exit": 0,
+      "counts": {},
+      "seconds": 577.16,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next build --webpack"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=4096",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "d25a66291eafd78a17583096a90e5645db1d52ce9e847d1b49d465d1bd545ef0",
+      "receipt_path": "tmp/security-sprint-2/web-build-local-fonts/receipt.json",
+      "receipt_sha256": "d184daebca0d253e724f68ef6696adf598bf5f1eb29ceca5defeea5b2fe34988",
+      "output_sha256": "d8543edcb8a7d361f47b93589475eb518d26b3ad44cbca138b054b48c1c218dd"
+    },
+    {
+      "label": "mobile-bundle-complete-inputs",
+      "mode": "mobile-export",
+      "exit": 0,
+      "counts": {},
+      "seconds": 359.77,
+      "command": [
+        "sh",
+        "-c",
+        "cd apps/mobile && node node_modules/expo/bin/cli export --platform android --platform ios --output-dir /scratch/mobile-export --max-workers 2"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=3072",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "16ac049fd6df90b98b8b4ca9b11cbf2430e071cfddf5c221b7e42f65de4a71ba",
+      "receipt_path": "tmp/security-sprint-2/mobile-bundle-complete-inputs/receipt.json",
+      "receipt_sha256": "0647add30b5d029fdb103caff355bd7f58d698f1ace085e13e78fef8923904d8",
+      "output_sha256": "5997e77bbe776c9b4aa3b79eda9f2f537e7aafd524786e9e7385bc0256937447"
+    },
+    {
+      "label": "browser-runtime-preparation",
+      "mode": "web-runtimes",
+      "exit": 0,
+      "counts": {},
+      "seconds": 26.11,
+      "command": [
+        "sh",
+        "-c",
+        "node scripts/prepare-codelab-runtimes.mjs && test -s apps/web/public/codelab-runtime/pyodide-314.0.7/pyodide.asm.wasm && test -s apps/web/public/codelab-runtime/sql.js-1.15.2/sql-wasm.wasm"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "77304f52d5a369737275ee0302606aca8c5e4ad65008c8251bdf1f442069d5e5",
+      "receipt_path": "tmp/security-sprint-2/browser-runtime-preparation/receipt.json",
+      "receipt_sha256": "4a835d065df60ed2fcd3c7c4cc688475e24e562ca7b5751bb5d7be7a7b078c9e",
+      "output_sha256": "eda349d835c4148a6534169deda79ffc81d2cdc05c906394bcf80dfb3fedf797"
+    },
+    {
+      "label": "synthetic-recovery",
+      "mode": "staging",
+      "exit": 0,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 81.02,
+      "command": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-2/staging.test.cjs"
+      ],
+      "safe_environment": [
+        "SPRINT2_DISPOSABLE=1",
+        "ADMIN_MFA_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://sprint_app:dummy_fixture_only@127.0.0.1:5432/sprint2_staging",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "container:lms-sprint2-pg-4c63ed495d03404eb09b1a60315eafd8",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "0e399e7c56b20e0b6f0f88c62296f1838758d2bbcefee742ed7013d694da174b",
+      "receipt_path": "tmp/security-sprint-2/synthetic-recovery/receipt.json",
+      "receipt_sha256": "7a97cdc4de5489cb828323f9f0e1acfb01d872296f779636a418eceed408c1f2",
+      "output_sha256": "60ca818663e12618864f4837f1bdf861ea3a6a3047102eeae37e4163449419e2"
+    },
+    {
+      "label": "sbom-inventory",
+      "mode": "sbom",
+      "exit": 0,
+      "counts": {},
+      "seconds": 30.71,
+      "command": [
+        "node",
+        "scripts/security/sbom.cjs",
+        "/deps",
+        "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+        "-"
+      ],
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "source_snapshot_sha256": "b8bd3cca79ebc6f6058a45b32bc359d9f7491df516acbd5fb53583a325190260",
+      "receipt_path": "tmp/security-sprint-2/sbom-inventory/receipt.json",
+      "receipt_sha256": "ec9617f2cc4c42c9146d41f7d79e03d544a610bbb8a79588526cfa67f2ee535f",
+      "output_sha256": "ff3c71076a130e3d268f5df016d3b21e6318bb1528bdea4b7996d1ec93065f22"
+    }
+  ],
+  "scanners": [
+    {
+      "mode": "static",
+      "exit": 0,
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "network": "none",
+      "scratch_bytes": 268435456,
+      "memory_bytes": 2147483648,
+      "cpus": 2,
+      "pids": 128,
+      "seconds": 180,
+      "receipt_path": "tmp/security-sprint-2/scan-static-375fc66d/receipt.json",
+      "summary": {
+        "scanner": "semgrep",
+        "assessment_self_tests": 6,
+        "static_rule_fixtures": "passed",
+        "scanned": [
+          "apps/desktop/electron/ipc/handlers.ts",
+          "apps/desktop/electron/main.ts",
+          "apps/desktop/electron/menu.ts",
+          "apps/desktop/electron/preload.ts",
+          "apps/desktop/electron/security.ts",
+          "apps/desktop/electron/web-url.ts",
+          "apps/desktop/renderer/offline.js",
+          "apps/mobile/src/lib/api-url.ts",
+          "apps/mobile/src/lib/google-login-validation.ts",
+          "apps/mobile/src/lib/student-navigation.ts"
+        ],
+        "findings": [],
+        "exit": 0
+      },
+      "receipt_sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b"
+    },
+    {
+      "mode": "secrets",
+      "exit": 0,
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "network": "none",
+      "scratch_bytes": 268435456,
+      "memory_bytes": 2147483648,
+      "cpus": 2,
+      "pids": 128,
+      "seconds": 180,
+      "receipt_path": "tmp/security-sprint-2/scan-secrets-5de9eb91/receipt.json",
+      "summary": {
+        "scanner": "gitleaks",
+        "scope": "explicit scan-scope.json files only, no Git history",
+        "findings": [],
+        "exit": 0
+      },
+      "receipt_sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18"
+    }
+  ],
+  "all_execution_attempts": [
+    {
+      "label": "browser-runtime-preparation",
+      "mode": "web-runtimes",
+      "exit": 0,
+      "receipt_sha256": "4a835d065df60ed2fcd3c7c4cc688475e24e562ca7b5751bb5d7be7a7b078c9e"
+    },
+    {
+      "label": "compatibility",
+      "mode": "tests",
+      "exit": 1,
+      "receipt_sha256": "b46f7a4f31cefab4a99749558b6f1d566c82f4b02efe2b1698080673df30b7a7"
+    },
+    {
+      "label": "compatibility-corrected",
+      "mode": "tests",
+      "exit": 0,
+      "receipt_sha256": "ef638b7c3287e33826a1eb9da152019da0d1279bd7f0e7d4d443fdfb18f47cea"
+    },
+    {
+      "label": "compatibility-final",
+      "mode": "tests",
+      "exit": 0,
+      "receipt_sha256": "c5f020ef3275b18fe6bb0b98e500b5b8757d445ac70461f6d04cbe280a2a5103"
+    },
+    {
+      "label": "desktop-build",
+      "mode": "desktop-package",
+      "exit": 0,
+      "receipt_sha256": "bc3bd8f5cf5676c629d8065725d75738db689c375845591174751426f1f828ee"
+    },
+    {
+      "label": "desktop-build-final",
+      "mode": "desktop-package",
+      "exit": 0,
+      "receipt_sha256": "9f4a2264ecd0ac44bff2b09b32075fbd4acc7375337e3a98a6dc3df5c6cb8a9b"
+    },
+    {
+      "label": "desktop-compile",
+      "mode": "desktop-compile",
+      "exit": 0,
+      "receipt_sha256": "8e00476a8b18db1a2a7075aa8788abe3938f8cd4c8d45c4593a7ab65dfe912be"
+    },
+    {
+      "label": "desktop-typecheck",
+      "mode": "desktop-types",
+      "exit": 0,
+      "receipt_sha256": "27d35c87487bb699a7daea8e5db1ea7a3c0f0b916444e2dcee55df010067af00"
+    },
+    {
+      "label": "fixture-synthetic-recovery",
+      "mode": null,
+      "exit": 0,
+      "receipt_sha256": "d1550cc2ec78eeb815eec96eb0bc42037fd2eb3d0c3b57a6ccc1820724707bc0"
+    },
+    {
+      "label": "fixture-synthetic-workflows",
+      "mode": null,
+      "exit": 0,
+      "receipt_sha256": "d37bc50600493212ecb59ecbe5c6de9f1fbad18b2d7f1e91397c4ce598e54f8a"
+    },
+    {
+      "label": "harness-typecheck",
+      "mode": "harness-types",
+      "exit": 0,
+      "receipt_sha256": "dac598b01c78b258b7f1caf6dc77ecc85eb93d9d602623f6a7d4109a23c3c291"
+    },
+    {
+      "label": "mobile-bundle",
+      "mode": "mobile-export",
+      "exit": 7,
+      "receipt_sha256": "46bbf7c87fc36eaf2a3139ebeea9f2f172743358c0860972631d4b7a01e535d3"
+    },
+    {
+      "label": "mobile-bundle-complete-inputs",
+      "mode": "mobile-export",
+      "exit": 0,
+      "receipt_sha256": "0647add30b5d029fdb103caff355bd7f58d698f1ace085e13e78fef8923904d8"
+    },
+    {
+      "label": "mobile-bundle-fd4096",
+      "mode": "mobile-export",
+      "exit": 1,
+      "receipt_sha256": "1053f7a0188d2d1cdd1be1290b1d8b61cc5f17a9335e44ec4844dd985bbe52e2"
+    },
+    {
+      "label": "mobile-typecheck",
+      "mode": "mobile-types",
+      "exit": 0,
+      "receipt_sha256": "ce30585bc914a70ecb58933f058fea5e1bb8e1bff3837ced0b01bcc446bbf2ec"
+    },
+    {
+      "label": "sbom-inventory",
+      "mode": "sbom",
+      "exit": 0,
+      "receipt_sha256": "ec9617f2cc4c42c9146d41f7d79e03d544a610bbb8a79588526cfa67f2ee535f"
+    },
+    {
+      "label": "scan-secrets-5b88c405",
+      "mode": "secrets",
+      "exit": 1,
+      "receipt_sha256": "715717ab3e30d06a4774fd1c878c75f42bfd743476d4d5fcde605270a027f2fe"
+    },
+    {
+      "label": "scan-secrets-5de9eb91",
+      "mode": "secrets",
+      "exit": 0,
+      "receipt_sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18"
+    },
+    {
+      "label": "scan-secrets-77d578a6",
+      "mode": "secrets",
+      "exit": 0,
+      "receipt_sha256": "d12d1dc08bb0ed1129dd69f7e5df8a49da74b2eea8ab83a97da50fe65cda8b7b"
+    },
+    {
+      "label": "scan-secrets-79972a60",
+      "mode": "secrets",
+      "exit": 0,
+      "receipt_sha256": "934cdf7e99909313bcba2caf02586a8ca669949d97aa1ded3dc89c6da4049688"
+    },
+    {
+      "label": "scan-secrets-9acbc482",
+      "mode": "secrets",
+      "exit": 0,
+      "receipt_sha256": "d12d1dc08bb0ed1129dd69f7e5df8a49da74b2eea8ab83a97da50fe65cda8b7b"
+    },
+    {
+      "label": "scan-secrets-fbd24fdf",
+      "mode": "secrets",
+      "exit": 153,
+      "receipt_sha256": "1e4f7298acfd35e3f6ab339fe91c659ff1022ff31c84e5eafb836631f0fad16f"
+    },
+    {
+      "label": "scan-static-027910e4",
+      "mode": "static",
+      "exit": 0,
+      "receipt_sha256": "1d74552c5e141c09a0290463c14592bd0b01b2dad58455f48a0e2d8cb530601b"
+    },
+    {
+      "label": "scan-static-036e0555",
+      "mode": "static",
+      "exit": 1,
+      "receipt_sha256": "5e1d02f9fff3e697c2fd5029036d87aa6e712d69e8c019390b8c7b5aebe08c83"
+    },
+    {
+      "label": "scan-static-1a27e2f0",
+      "mode": "static",
+      "exit": 0,
+      "receipt_sha256": "e518a05e5c267ed3dcfcb7e2cd394197df0c5ea2add768f56476a0efa2ac722c"
+    },
+    {
+      "label": "scan-static-375fc66d",
+      "mode": "static",
+      "exit": 0,
+      "receipt_sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b"
+    },
+    {
+      "label": "scan-static-3d410227",
+      "mode": "static",
+      "exit": 1,
+      "receipt_sha256": "5e1d02f9fff3e697c2fd5029036d87aa6e712d69e8c019390b8c7b5aebe08c83"
+    },
+    {
+      "label": "scan-static-a2f69196",
+      "mode": "static",
+      "exit": 0,
+      "receipt_sha256": "e518a05e5c267ed3dcfcb7e2cd394197df0c5ea2add768f56476a0efa2ac722c"
+    },
+    {
+      "label": "scan-static-a83b2a5a",
+      "mode": "static",
+      "exit": 153,
+      "receipt_sha256": "ee5b79681bb73fa52fce82e52a75978015a940fb44ea7d3fd43655e6fd0455bc"
+    },
+    {
+      "label": "scan-static-cb28053b",
+      "mode": "static",
+      "exit": 1,
+      "receipt_sha256": "6e2f40e69ee906df7f49345214c172b20930d36b7e233ff20bbd54084e6a3f05"
+    },
+    {
+      "label": "synthetic-recovery",
+      "mode": "staging",
+      "exit": 0,
+      "receipt_sha256": "7a97cdc4de5489cb828323f9f0e1acfb01d872296f779636a418eceed408c1f2"
+    },
+    {
+      "label": "synthetic-workflows",
+      "mode": "staging",
+      "exit": 0,
+      "receipt_sha256": "f47b0427c02086f0ce72ca82595570b926beae1437fc5b41051fa72ca76965d8"
+    },
+    {
+      "label": "verified-final-package",
+      "mode": "desktop-package",
+      "exit": 0,
+      "receipt_sha256": "44f6fc23d23430d0af7629ab2d298f77dcab4468943fe7ca8170decf1e33043c"
+    },
+    {
+      "label": "verified-final-regressions",
+      "mode": "tests",
+      "exit": 0,
+      "receipt_sha256": "1b1602c1c35020e6bcbd954ff977109a700e5ba174447d59541f3d5271fdc79b"
+    },
+    {
+      "label": "web-build",
+      "mode": "web-build",
+      "exit": 1,
+      "receipt_sha256": "ddc2f9b7b92fe2d5d4b4bd15975086a221106158d739b083d1426d0e850e640a"
+    },
+    {
+      "label": "web-build-local-fonts",
+      "mode": "web-build",
+      "exit": 0,
+      "receipt_sha256": "d184daebca0d253e724f68ef6696adf598bf5f1eb29ceca5defeea5b2fe34988"
+    },
+    {
+      "label": "web-typecheck",
+      "mode": "web-types",
+      "exit": 0,
+      "receipt_sha256": "5ff756d4af652ff7f4d32e1b3e7c7144683498de3918a2b3adb7ae2c4e96b4ab"
+    }
+  ],
+  "synthetic_backup_recovery": {
+    "exit": 0,
+    "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+    "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+    "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+    "data": "3 dummy users, 1 dummy institute and course; no production data",
+    "network": "isolated loopback namespace, no published ports",
+    "durable_volume": false,
+    "recovery": {
+      "format": "pg_dump custom / pg_restore",
+      "verified_counts": {
+        "users": 3,
+        "courses": 1,
+        "enrollments": 1,
+        "export_events": 1
+      },
+      "production_restore": false,
+      "role_grants_objects_keys_and_cross_cluster_recovery": "not established"
+    }
+  },
+  "dependency_assessment": {
+    "production": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 1,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "id": "1147955",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>expo-router>query-string>decode-uri-component"
+          ],
+          "patched": ">=0.5.0",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+        },
+        {
+          "id": "1243857",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "paths": [
+            "apps__mobile>expo-router>query-string>decode-uri-component"
+          ],
+          "patched": ">=0.5.1",
+          "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f"
+        },
+        {
+          "id": "1244623",
+          "package": "minimatch",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>expo>@expo/fingerprint>minimatch"
+          ],
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+        }
+      ],
+      "passed": false
+    },
+    "all": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 1,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "id": "1119441",
+          "package": "uuid",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>@expo/ngrok>uuid"
+          ],
+          "patched": ">=11.1.1",
+          "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+        },
+        {
+          "id": "1147955",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>expo-router>query-string>decode-uri-component"
+          ],
+          "patched": ">=0.5.0",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+        },
+        {
+          "id": "1243857",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "paths": [
+            "apps__mobile>expo-router>query-string>decode-uri-component"
+          ],
+          "patched": ">=0.5.1",
+          "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f"
+        },
+        {
+          "id": "1244623",
+          "package": "minimatch",
+          "severity": "moderate",
+          "paths": [
+            "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch",
+            "apps__desktop>electron-builder>app-builder-lib>minimatch"
+          ],
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+        }
+      ],
+      "passed": false
+    },
+    "gate_exit_codes": {
+      "production": 1,
+      "all": 1
+    },
+    "base_head_review": {
+      "mode": "pull-request-base-comparison",
+      "new_advisory_paths": [],
+      "passed": true
+    }
+  },
+  "SBOM": {
+    "format": "CycloneDX 1.6 lockfile inventory",
+    "components": 1476,
+    "dependency_nodes": 1477,
+    "path": "tmp/security-sprint-2/sbom-inventory/sbom.json",
+    "sha256": "dc3cf63d2cfbead3a0ad140927b64870a32654edfd55c355caccad13ea68f6f9",
+    "formal_schema_validation": false,
+    "license_and_shipped_binary_completeness": false
+  },
+  "fixture_and_baseline_notes": [
+    "First compatibility attempt:99/101 passed; new fixtures referenced retired socks path and wrong CodeLab path. Historical fixtures unchanged. Final102/102 includes added ordinary API contract.",
+    "Scanner setup attempts retained: BusyBox timeout syntax, scanner-binary file-size cap, Semgrep built-in fixture path bug. Final JSON rule/line fixtures, assessment self-tests, exact static-file scope and redacted secret scans pass.",
+    "First mobile export hit EMFILE at512 descriptors. Second passed descriptor phase but lacked five existing banner inputs.4096-descriptor complete-input export passes Android/iOS.",
+    "First offline web build failed at Google font fetching and1GiB scratch. Owner-approved same-family local fonts plus6GiB RAM/4GiB scratch compile/typecheck/build pass.",
+    "Successful web build used direct Next/Prisma fixture commands. Existing CodeLab browser runtime preparation passes separately; production database/bootstrap wrapper was not executed.",
+    "Next middleware deprecation, file-type dynamic-import warning, bounded webpack cache EFBIG warning, Prisma OpenSSL-detection warning, missing Sentry project configuration and retained lucide peer warning remain. Warnings are not labelled security findings; no blocked upload/assets investigation.",
+    "The host root node_modules remains untouched; installation and verification used the disposable frozen workspace.",
+    "Unsigned desktop package was built and inspected then discarded; actual Windows GUI runtime unavailable. Source/renderer policy units do not prove OS integration."
+  ],
+  "owner_approvals": [
+    "Electron42/builder26 and compatible dependency changes (Sprint2 request)",
+    "Frozen22-file Sprint1 commit",
+    "Puppeteer25 compatible update with internal Zod3-to4 change",
+    "Self-host the same Manrope/DMSerifDisplay open-source fonts"
+  ],
+  "release_gates": [
+    "Remaining high mobile decoder advisory;4 moderate matches",
+    "Native GUI/signed Android/iOS and real staged identity checks",
+    "Observe hosted CI and configure required checks/review/alert ownership",
+    "Production revision/config/database least privilege/MFA key and device rollout/provider isolation/monitoring/recoverable backups require operator evidence",
+    "Previously blocked audit units remain blocked; no full-coverage or ASVS-compliance claim"
+  ],
+  "final_reconciliation": {
+    "source_hashes_current": 47,
+    "modified_and_added_files_documented": 55,
+    "historical_evidence_unchanged": 186,
+    "local_document_links": "passed",
+    "workflow_yaml_sha_pins_read_permissions_aggregate_guards": "passed",
+    "git_diff_check": "passed",
+    "sprint2_owned_containers_remaining": 0,
+    "diff_self_review": "completed; desktop and CI callers/guards, exact scopes, dependency changes and documented evidence limits reviewed",
+    "ASVS_classifications_unchanged": true,
+    "sprint2_commit_created": false
+  }
+}
