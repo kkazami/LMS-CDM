@@ -11,7 +11,7 @@
     "pack": "electron-builder --dir --config electron-builder.json"
   },
   "devDependencies": {
-    "electron": "^41.0.3",
+    "electron": "^41.10.7",
     "electron-builder": "^25.1.8",
     "tsx": "^4.19.0"
   }

@@ -1,0 +1,383 @@
+{
+  "date": "2026-11-19",
+  "base_revision": "331e25e7a04e0021215206e85c6e6631a7f34386",
+  "audit_target_preserved": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+  "scope": "Sprint 1 implementation and compatibility checks, not a full audit",
+  "node_container_version": "22.23.3",
+  "node_container_image": "sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c",
+  "registry_tool_host_node": "25.8.0",
+  "pnpm": "10.32.1",
+  "prisma": "7.9.1",
+  "lock_sha256": "c2752589fc67da45d60f7d97da2a90e0b2fd6fb20ec950556e940783bb9f27fb",
+  "preserved_existing_audit_regression_remediation_files": 186,
+  "preservation_manifest_sha256": "5267e96b88106f00dccc344740423fe5721c98276b4c60c724edfd048f801afc",
+  "production_access": false,
+  "deployment_performed": false,
+  "blocked_validation_executed": false,
+  "full_suite_executed": false,
+  "fixture_adjustments": [
+    "Current Prisma schema copied with only generator output relocated into scratch; no migration/database connection.",
+    "TypeScript/Node/Esbuild resolve freshly generated Prisma through fixture-only paths and runtime dependency links.",
+    "Integrity-verified matching Linux esbuild 0.28.1 and Next SWC 16.4.6, prepared before no-network execution.",
+    "Source/tools/dependencies mounted read-only; source copied to bounded scratch for Next/Prisma/typecheck output.",
+    "No dotenv or real secrets; provider and persistence boundaries in units explicitly mocked."
+  ],
+  "checks": [
+    {
+      "label": "baseline-before-complete",
+      "mode": "baseline",
+      "exit": 1,
+      "counts": {
+        "tests": 29,
+        "pass": 25,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts"
+      ],
+      "testFiles": [
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "0e730bc6cb64c6a9c4a40b09ae7d4dbeaebd32458f4942ade5b569c2648841e7",
+      "receipt_sha256": "7845f53466a31d32ae692526302227a7c4dea55af97480bd17be7a32bb7d3844"
+    },
+    {
+      "label": "export-before-valid",
+      "mode": "before-audit",
+      "exit": 1,
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "argv": [
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs"
+      ],
+      "testFiles": [
+        "tests/security/admin-database-export-audit.test.cjs"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "8d48474af867ae111b3a29b9fef4c932fa1bd3f1037070898fd9a2da48a40a6f",
+      "receipt_sha256": "d084de44cfc6a4c04b7cba63ea398f3d4e92ca025f28a175e24d7ab1bea21938"
+    },
+    {
+      "label": "scoped-verified",
+      "mode": "tests",
+      "exit": 0,
+      "counts": {
+        "tests": 92,
+        "pass": 92,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-1/dependency-compatibility.test.cjs"
+      ],
+      "testFiles": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-1/dependency-compatibility.test.cjs"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "d3b2cab13e40c06ed44d6b5b7a69b7f5fb9dc21cc7e49edfbe650666d24d2837",
+      "receipt_sha256": "df5a6f764427770f36af44a337ef6c8599cd933bb25e859dff71b080c7e0c7a1"
+    },
+    {
+      "label": "web-types-complete",
+      "mode": "web-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next typegen && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "testFiles": [],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 300
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=3072",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "15f373e4084fa4f5e1e5655188fc880cebe46a345e4a1ec6ab5843b265225191",
+      "receipt_sha256": "0bb3bca0fa335b9acc07089eae1306dfd9f70436f7b1b7e58f202f21ec9bebbd"
+    },
+    {
+      "label": "mobile-types-verified",
+      "mode": "mobile-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "testFiles": [],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "0d222b96bee636154ab5ddaae6a65c078743785da6d154801f09c883b088e8cb",
+      "receipt_sha256": "ffbce4ce58cb0ec21a3797f1185ff3255e7a98d99c06254d892943553697bf9d"
+    },
+    {
+      "label": "desktop-types-final",
+      "mode": "desktop-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "testFiles": [],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sha256": "4b85f0cae8e1f21aa74649cfc058e26ca0a7a02c3e1ce50eab5cbdedbe252d1c"
+    },
+    {
+      "label": "harness-types-verified",
+      "mode": "harness-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node node_modules/typescript/bin/tsc --noEmit --incremental false --project scripts/harness/tsconfig.json"
+      ],
+      "testFiles": [],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 536870912,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 33554432,
+        "seconds": 180
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint1_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json"
+      ],
+      "terminated": true,
+      "output_sha256": "c105799180bb625f5927e974190495571426adb1ce3b32c38fd72cadbba73cee",
+      "receipt_sha256": "77f8d31f7c1701c4bfa9c9b5676a392de008c8bc7d51e0adac51463aa56ad2ff"
+    }
+  ],
+  "tested_source_hashes": {
+    "tests/security/admin-database-export-audit.test.cjs": "a468609fb8fcdecaaf4c9b730dbad74e7efe94c6dd3685b8193535de82c3b9f7",
+    "tests/calendar/dashboard-calendar-data.test.cjs": "f564864329180cd798969a0ba133e70bf7786cd05f3924995acab8d0b62a0b11",
+    "tests/leaderboard/activity.test.cjs": "aa89b21ac77560c3712985ddca90ae07ae7881635a21cb1e6214c4c183779649",
+    "tests/navigation/data.test.cjs": "9f244f5451d1cf62e2dd12a2033b744940aada841cbcb10fc97f4fb5bc5febb7",
+    "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts": "2572ea07e2ee7f1b6696a980c549c63504b361451aa6668dbbc6a6a936bf9a60",
+    "tests/labs/authoring.test.ts": "c4e353e30501879c91706575b78a96ddd829b1fa7792c11fdc0550e34fd93bee",
+    "tests/roster/activation-email.test.ts": "2ca545ccf7d1d4eb9a1fb9dc28dbbd117abde1f54e4480bd75e00323e18f9c4c",
+    "tests/security/activity-grading.test.ts": "643a7589b09621cb4ed1a9b9f13cdaa811922ccb9cd0b2fb5d1845a13e7a5ae0",
+    "tests/security/arduino-preview.test.ts": "f7ac469cef1c2c360a6af45b4898baeb8d6d94c74f5f35e844e593d8327293c3",
+    "tests/security/admin-mfa.test.cjs": "b3811794e571e2d3ff56a1a0b0dc1684be4cea448423fce79450456cfe58b499",
+    "tests/codelab/runner.test.cjs": "c322b8c12f8897a68b94fdce65a1c31b501d3e3205610ad712b64873e8a4a69b",
+    "tests/codelab/completion.test.cjs": "95dc86b3e2c95150bff566fb78555146af5d38eeeeb4d9b44d0bdc6732f5f1be",
+    "tests/sprint-1/dependency-compatibility.test.cjs": "04f22e0a35fc8aa1b5e223f101d12f2a202292a5af0cc6af9a92e9f5b52ddd4d",
+    "apps/web/src/app/api/admin/database/export/route.ts": "c4691d6de6684b02fc4e5b19c868c455e04551ae37a9856bf7f3041dbd9c58de"
+  },
+  "superseded_attempts": [
+    "before-baseline: esbuild executable mount denied; no product verdict.",
+    "baseline-before-valid: relocated Prisma runtime incomplete for calendar bundling; superseded by baseline-before-complete.",
+    "scoped-final: calendar generated-runtime dependency link and duplicate peer-context smoke setup errors; superseded by scoped-verified.",
+    "web-types-attempt: missing Linux SWC; owned container stopped.",
+    "web-types-final: default Node heap exhausted; no typecheck verdict.",
+    "web-types-verified: relocated generated-runtime dependency link caused two unknown-type diagnostics; corrected without source changes.",
+    "mobile-types-final: fixture-only baseUrl caused TypeScript 6 deprecation diagnostic; removed without source changes.",
+    "harness-types-final: source copy omitted parent Playwright config; corrected without source changes."
+  ]
+}

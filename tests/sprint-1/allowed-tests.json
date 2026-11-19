@@ -1,0 +1,20 @@
+{
+  "purpose": "Sprint 1 compatibility, baseline repair and metadata-only export auditing; not a full audit",
+  "testFiles": [
+    "tests/security/admin-database-export-audit.test.cjs",
+    "tests/calendar/dashboard-calendar-data.test.cjs",
+    "tests/leaderboard/activity.test.cjs",
+    "tests/navigation/data.test.cjs",
+    "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+    "tests/labs/authoring.test.ts",
+    "tests/roster/activation-email.test.ts",
+    "tests/security/activity-grading.test.ts",
+    "tests/security/arduino-preview.test.ts",
+    "tests/security/admin-mfa.test.cjs",
+    "tests/codelab/runner.test.cjs",
+    "tests/codelab/completion.test.cjs",
+    "tests/sprint-1/dependency-compatibility.test.cjs"
+  ],
+  "blockedValidationSuitesExcluded": true,
+  "fullSuiteRunAuthorized": false
+}
