@@ -1,6 +1,6 @@
 # CdM LMS security roadmap and release readiness
 
-**Current checkpoint — 19 November 2026:** Sprint 1 is committed locally as `b8f5d4b7da704f76d2abeae8748d012d0115a7ba` after owner approval of the frozen 22-file inventory/diff. Sprint 2 is implemented in the uncommitted working tree on that base, with no push/deployment. See [results](docs/security/sprint-2-results.md), [dependencies](docs/security/sprint-2-dependencies.md), [verification](docs/security/sprint-2-verification.json), [automation](docs/security/automated-security-checks.md) and [client/staging release gates](docs/security/client-release-security.md). Historical sections below retain their original scope. Release remains gated by one high dependency advisory and outstanding native/production/operator evidence; no full security, audit coverage or ASVS compliance claim.
+**Current checkpoint on 19 November 2026.** Sprint 1 is committed locally at `b8f5d4b`. The reviewed Sprint 2 snapshot awaits checkpoint approval. Sprint 3 adds scoped authorization and CI changes and documents the SDK 58, IAM and database decisions. The mobile advisory and hosted/native/production verification remain release gates. [Sprint 3 results](docs/security/sprint-3-results.md) · [Sprint 2 evidence](docs/security/sprint-2-results.md)
 
 
 Last reconciled: **19 November 2026**. Owner: project developer; coordinating role: application security engineer. This is the central hardening, implementation and evidence index; it does not replace the audit ledgers or attest production security.
@@ -99,6 +99,19 @@ All 186 historical protected evidence files remain byte-identical. Run2 remains 
 | Baseline / client builds | 102 scoped Node tests, six assessment self-tests and exact static-rule fixtures pass. Four typechecks, desktop compilation/package, web build and Android/iOS bundles pass offline. Approved same fonts now bundled with licenses/hashes. | No full-suite, native device, browser E2E or production claim; warnings and earlier fixture failures retained. |
 
 The existing [MFA rollout](docs/security/admin-mfa-production-rollout.md), [operator checklist](docs/security/production-operator-checklist.md) and [infrastructure DR strategy](docs/security/backup-disaster-recovery.md) remain production gates. No configured production database inspection, real MFA enrollment or production operation occurred. Owner approved the internal Puppeteer Zod change and local copies of the same fonts. No academic rules, schema, paid service or execution-provider architecture changed.
+
+## Sprint 3 — identity, authorization and remaining dependencies
+
+| Control | Current work | Next decision |
+|---|---|---|
+| GOV-02 | Frozen 55-file Sprint 2 review prepared from `b8f5d4b`. Full patch, 47 retained source hashes and 186 historical file hashes reconciled. | Local Sprint 2 checkpoint requires owner approval. |
+| AUTH-01/02/05/06/07/08 | Concrete identity proposal covers existing pathways, phased MFA and recovery, backward-compatible Argon2id, session/cookie migration and distributed limits. [IAM proposal](docs/security/identity-access-management.md) | Approve policy, performance and client compatibility acceptance before implementing. |
+| AZ-01/02/05 and API-01 | Administrator account detail and course gradebook export enforce actor, role, resource, institute and projection decisions server-side. Six focused tests and the existing gradebook calculation regression add scoped ASVS evidence. [Authorization matrix](docs/security/authorization-matrix.md) | Production and broader endpoint enforcement remain open. |
+| DB-01/02 | Compared application predicates, grants, RLS and combinations. [Database proposal](docs/security/database-security-architecture.md) | Verify effective grants and pool behavior with operator evidence before any role or RLS changes. |
+| SUP-01/03 | Fresh audits retain **3 production and 5 overall**, one high and no critical. SDK 58 router removes the flagged path in published dependency metadata. [Dependency options](docs/security/remaining-dependency-remediation.md) | Coordinated mobile SDK migration requires approval. Advisory gate stays red. |
+| CI-01/03 and release | Added seven checks to the explicitly scoped runner for **109 total**, with zero skipped or missing accepted. [Sprint 3 results](docs/security/sprint-3-results.md) · [Verification](docs/security/sprint-3-verification.json) | Owner verifies hosted checks, reviews, staging, native signing and production operations. |
+
+The ASVS v5.0.0 Level 2 register records evidence for seven authorization requirements in the scoped changes. No requirement classification was elevated. MASVS guides signed native device acceptance. Run2 was preserved with 14 covered, 4 candidate, 8 blocked and 51 deferred units.
 
 ## Control work packages
 

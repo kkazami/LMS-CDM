@@ -8,7 +8,8 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
  * DELETE /api/admin/users/[userId] — Deactivate user
  */
 
-import { administratorInstitute } from '@/lib/administrator-scope';
+import { administratorInstitute, administratorTarget } from '@/lib/administrator-scope';
+import { getSessionFromRequest } from '@/lib/api-auth';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resolveAdminStudentDepartmentSync } from '@/lib/ite-programs/registration';
@@ -31,15 +32,19 @@ type RouteContext = {
 };
 
 export async function GET(request: Request, context: RouteContext) {
-  const ceilingDenial = await denyLegacyApi(request, "GET admin/users/[userId]/route.ts");
-  if (ceilingDenial) return ceilingDenial;
-
   try {
-    await requireAdmin();
+    const session = await getSessionFromRequest(request);
+    if (!session) throw new AccessError(401, 'Authentication required.');
+    const institute = await administratorInstitute(session.user);
     const { userId } = await context.params;
+    await administratorTarget(session.user, userId);
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    const user = await db.user.findFirst({
+      where: {
+        id: userId,
+        instituteId: institute.id,
+        role: { in: ['STUDENT', 'PROFESSOR', 'TEACHER', 'INSTRUCTOR'], mode: 'insensitive' },
+      },
       select: {
         id: true,
         name: true,
@@ -70,12 +75,11 @@ export async function GET(request: Request, context: RouteContext) {
         instituteCode: user.institute.code,
         instituteName: getInstituteName(user.institute.code, user.institute.name),
       },
-    });
+    }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (err) {
-    const error = err as { status?: number; message?: string };
     return NextResponse.json(
-      { message: error.message ?? 'Internal server error.' },
-      { status: error.status ?? 500 }
+      { message: err instanceof AccessError ? err.message : 'Operation unavailable.' },
+      { status: err instanceof AccessError ? err.status : 503 }
     );
   }
 }
