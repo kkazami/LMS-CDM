@@ -4,6 +4,7 @@ The existing PostgreSQL `RateLimitBucket` remains the shared store. Its single U
 
 | Operation | Dimension and state |
 |---|---|
+| Authenticated self-service password change | Sprint 5 admits six syntactically valid attempts per five minutes by verified account. The persistent store is called before current-password verification and hashing. Budget exhaustion returns 429 and backing store failure closes the operation with a generic 503. Other account-recovery and address-based policies remain unchanged. |
 | Self-session revocation | Verified server account, 20 per minute. Newly attached to the persistent store. |
 | CodeLab server run | Verified server account, shared existing 30 per five minutes. Moves to the named policy without changing its limit. |
 | Login, registration, roster activation, administrator MFA and other existing persistent consumers | Current operation budgets and keys retained. Runtime policy bounds, saturation and expiry accounting apply to the common store. |

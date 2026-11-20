@@ -16,9 +16,10 @@ interface PrivacyClientProps {
   sessions: SessionInfo[];
   currentSessionId: string;
   hasSecurityPin?: boolean;
+  passwordPilot: boolean;
 }
 
-export default function PrivacyClient({ sessions, currentSessionId, hasSecurityPin = false }: PrivacyClientProps) {
+export default function PrivacyClient({ sessions, currentSessionId, hasSecurityPin = false, passwordPilot }: PrivacyClientProps) {
   const router = useRouter();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
@@ -47,7 +48,9 @@ export default function PrivacyClient({ sessions, currentSessionId, hasSecurityP
       if (res.ok) {
         router.refresh();
       } else {
-        alert("Failed to revoke session. Please try again.");
+        alert(res.status === 403
+          ? 'Sign out on this device and sign back in before ending another session.'
+          : 'Failed to revoke session. Please try again.');
       }
     } catch (err) {
       alert("An error occurred while revoking the session.");
@@ -184,7 +187,8 @@ export default function PrivacyClient({ sessions, currentSessionId, hasSecurityP
         </div>
       </section>
 
-      <ChangePasswordModal 
+      <ChangePasswordModal
+        passwordPilot={passwordPilot}
         isOpen={isPasswordModalOpen} 
         onClose={() => setIsPasswordModalOpen(false)} 
         hasSecurityPin={hasSecurityPin}

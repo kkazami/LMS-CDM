@@ -1,6 +1,8 @@
 # CdM LMS security roadmap and release readiness
 
-**Current checkpoint on 19 November 2026.** Sprint 2 is committed locally at `0452a5d`. Sprint 3 has a separately frozen review snapshot. Sprint 4's isolated `codex/security-sprint-4` branch contains the SDK 58 checkpoint `4ddff68` and the combined local candidate. The mobile high advisory is cleared. Identity migration writes, ordinary-role MFA, Prisma/Neon RLS compatibility, hosted CI, native releases and recovery readiness remain open. [Sprint 4 results](docs/security/sprint-4-results.md) · [Verification](docs/security/sprint-4-verification.json) · [Release gates](docs/security/production-release-gates.md)
+**Current Sprint 5 candidate.** The approved local checkpoints are Sprint 3 `9e4b6b1` and Sprint 4 `4986f1d`, with the independent Expo commit retained. Sprint 5 qualifies the ordinary synthetic password writer, selected session controls and real Prisma/PostgreSQL RLS transactions. The owner has held the review-branch push. See the [Sprint 5 results](docs/security/sprint-5-results.md), [requirement-specific evidence](docs/security/sprint-5-verification.json) and [release decision](docs/security/release-readiness-assessment.md).
+
+**Sprint 4 checkpoint on 19 November 2026.** Sprint 2 was committed locally at `0452a5d`. Sprint 3 and the combined Sprint 4 candidate were frozen for review. The isolated Sprint 4 branch contains SDK 58 checkpoint `4ddff68`. The mobile high advisory was cleared. [Sprint 4 results](docs/security/sprint-4-results.md) · [Verification](docs/security/sprint-4-verification.json) · [Release gates](docs/security/production-release-gates.md)
 
 | Sprint 4 control | Evidence and next gate |
 |---|---|

@@ -2,7 +2,7 @@ name: Security engineering
 on:
   pull_request:
   push:
-    branches: [main, master]
+    branches: [main, master, 'codex/security-*']
   schedule:
     - cron: '23 3 * * 1'
   workflow_dispatch:

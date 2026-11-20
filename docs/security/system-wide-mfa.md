@@ -1,5 +1,7 @@
 # System-wide MFA implementation boundary
 
+Sprint 5 intentionally retains the current assurance boundary until the shared completion step is qualified for browser, federation and native pathways. [Qualification and owner pilot](identity-rollout-qualification.md)
+
 Administrators and Super Users retain their required TOTP, encrypted factor state, challenge-to-session transition and recovery codes. The existing `admin-mfa` code and migrations remain authoritative. Sprint 4 adds a recent completed session requirement to self-service sign-out from all devices. No instructor or student enrollment and enforcement was activated. Existing local administrator tests are retained. [Administrator rollout](admin-mfa-production-rollout.md)
 
 The ordinary-role pilot is held at the authentication contract prerequisite. Today the challenge and proof flow assumes a privileged account. The student Google callback/native exchange completes a separate handoff. Extending the role check alone can either lock those users out or leave an unenforced admission path. The rollout needs browser and native challenge responses and sign-in completion before ordinary-role enrollment or mandatory policy can be enabled. The existing challenge store also binds credential changes, which requires coordination with Argon2id writes.

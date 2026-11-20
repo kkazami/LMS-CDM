@@ -1,5 +1,7 @@
 # Recoverable backups and disaster recovery
 
+Sprint 5 extends local evidence to current-schema data, RLS definitions, restricted grants and separate synthetic encrypted object/configuration and test-key recovery. The approved operational objectives remain unchanged. [Sprint 5 staging and evidence](sprint-5-staging-results.md)
+
 Sprint 1, 19 November 2026. Tracks DR-01/02 and DATA-01 in [the roadmap](../../SECURITY-ROADMAP.md). **Strategy prepared; no production backup, restore, database operation, subscription or disaster-recovery drill was performed.** Owner approval is required for the actual target, costs, retention, recovery objectives and every destructive/cutover operation.
 
 ## What is and is not a backup

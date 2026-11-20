@@ -1,5 +1,7 @@
 # PostgreSQL defense and isolated RLS implementation
 
+Sprint 5 exercised the current Course/Enrollment schema with the real Prisma PostgreSQL adapter, a reused connection, restricted read/write/job grants and a same-cluster restore. [Prisma qualification](prisma-rls-qualification.md)
+
 Sprint 4 implements a disposable `pilot.course` read policy. The fixture models institutes, assigned instructors and approved student enrollment. A restricted runtime principal receives course SELECT and policy-function EXECUTE. It receives no object ownership, grant administration, bypass flag, write privilege or enrollment table permission. The function fixes its search path and qualifies the referenced enrollment relation. Context-free reads produce no rows. The fixture demonstrates transaction reset, role decisions and schema/data recovery. [Policy fixture](../../tests/sprint-4/rls-pilot.sql) · [Policy checks](../../tests/sprint-4/rls-checks.sql)
 
 The application must derive identity, role and institute from trusted session admission before provisioning every transaction. A Prisma pilot should use parameterized `set_config` calls with `is_local = true` inside the same interactive transaction as the protected operations. Every ORM query must use that transaction client. The database role can set custom variables, so RLS under a shared principal protects against missing application predicates and has limited strength under full runtime compromise. Production Prisma/Neon pooling, query plans, maintenance and write policies need independent staging evidence.

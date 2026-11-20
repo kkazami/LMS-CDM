@@ -10,7 +10,9 @@ export function sessionCookiePolicy({ production, cutover, now = Date.now() }: {
   now?: number;
 }) {
   const start = cutover === undefined ? undefined : Date.parse(cutover);
-  if (start !== undefined && !Number.isFinite(start)) throw new Error('SESSION_HOST_COOKIE_CUTOVER must be an ISO timestamp.');
+  if (start !== undefined && (!Number.isFinite(start) || new Date(start).toISOString() !== cutover?.replace(/(T\d{2}:\d{2}:\d{2})Z$/, '$1.000Z'))) {
+    throw new Error('SESSION_HOST_COOKIE_CUTOVER must be a valid UTC ISO timestamp.');
+  }
   const modern = production && start !== undefined && now >= start;
   const acceptLegacy = !modern || now - start < SESSION_ABSOLUTE_MS;
   return {

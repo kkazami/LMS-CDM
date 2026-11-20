@@ -1,5 +1,7 @@
 # Password hashing migration
 
+Sprint 5 connects the shared writer and local policy to the synthetic self-service change path for ordinary roles. Production mode retains the existing policy and prevents downgrade of stored Argon2id credentials through this route. Other writer families, reviewed corpus coverage and rollback qualification remain release prerequisites. [Writer qualification](identity-rollout-qualification.md)
+
 Sprint 4 adds dual verification to password login, self-service password change authentication, Google-link password confirmation, administrator password confirmation and the protected institute-administrator reauthentication reader. The shared Node service accepts existing bcrypt and the supported Argon2id profile. Older passwords retain their established bcrypt behavior. The helper uses NFC for new-format credentials, a random 16-byte salt, a 32-byte output, 19 MiB memory, two passes and parallelism one. It allows two concurrent Argon2id jobs per Node process, validates the stored PHC profile before native work and rejects oversize Argon inputs. Benchmark the total memory and contention across deployed functions before enabling writes. [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 
 | Stage | State | Release requirement |

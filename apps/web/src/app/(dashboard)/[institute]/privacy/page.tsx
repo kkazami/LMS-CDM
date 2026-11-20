@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import PrivacyClient from "./client";
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, sessionDeadline } from '@/lib/session-policy';
+import { passwordWritePilotEnabled } from '@/lib/password-write-pilot';
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,7 @@ export default async function PrivacySettingsPage({
         }))} 
         currentSessionId={session.id} // Pass current session to prevent self-revocation accidentally
         hasSecurityPin={hasSecurityPin}
+        passwordPilot={passwordWritePilotEnabled(session.user.role)}
       />
     </div>
   );
