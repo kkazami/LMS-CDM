@@ -7,6 +7,8 @@ import {
 } from "@/lib/mock-interview/access";
 import { ensureMockInterviewTablesAndContent } from "@/lib/mock-interview/server-db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const access = await requireMockInterviewStudent(request);
   if (!access.ok) return denied(access);

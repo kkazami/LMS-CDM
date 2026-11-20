@@ -9,7 +9,8 @@ export type LearningProviderId =
   | "HUBSPOT_ACADEMY"
   | "OPENLEARN"
   | "SANTANDER_OPEN_ACADEMY"
-  | "ALISON";
+  | "ALISON"
+  | "TESDA_ONLINE_PROGRAM";
 
 export type IbeSubjectCategory =
   | "Entrepreneurship and Business Planning"
@@ -86,6 +87,10 @@ export interface ExternalCourseEntry {
   isInitialSeed: boolean;
   /** Search keywords for fast discovery. */
   keywords: string[];
+  /** Course availability status shown on course cards (e.g., "Available Online (Self-Paced)" or "Official General Catalog Link"). */
+  availabilityStatus?: string;
+  /** Appropriate NC or PQF qualification level when applicable (e.g., "NC II", "NC III", "PQF Level III", or "Non-NC (Certificate of Completion)"). */
+  qualificationLevel?: string | null;
 }
 
 export interface StudentLearningRecord {

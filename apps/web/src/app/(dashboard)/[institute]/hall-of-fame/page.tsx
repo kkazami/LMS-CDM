@@ -1,6 +1,12 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { isHallOfFameEligible } from "@/lib/hall-of-fame/eligibility";
+import { getProfileById } from "@/lib/hall-of-fame/catalog";
+import {
+  canIbeProgramAccessFeature,
+  getHallOfFameCategoryForIbeProgram,
+} from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import HallOfFameClient from "@/components/hall-of-fame/HallOfFameClient";
 import type { HallOfFameCategory } from "@/lib/hall-of-fame/types";
 
@@ -27,24 +33,43 @@ export default async function IbeHallOfFamePage({
     notFound();
   }
 
-  const rawCategory = (resolvedSearchParams.category ?? "").toUpperCase();
-  const initialCategory: HallOfFameCategory | null =
-    rawCategory === "ENTREPRENEUR" || rawCategory === "HR_LEADER"
-      ? (rawCategory as HallOfFameCategory)
-      : null;
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (
+    !resolvedProgram ||
+    !canIbeProgramAccessFeature(resolvedProgram.programCode, "hall-of-fame")
+  ) {
+    redirect("/ibe/students");
+  }
 
-  const initialProfileId =
+  const lockedCategory = getHallOfFameCategoryForIbeProgram(
+    resolvedProgram.programCode
+  )!;
+
+  const rawCategory = (resolvedSearchParams.category ?? "").toUpperCase();
+  const initialCategory: HallOfFameCategory = lockedCategory;
+  void rawCategory;
+
+  const requestedProfileId =
     typeof resolvedSearchParams.profile === "string"
       ? resolvedSearchParams.profile.trim()
       : null;
+  const matchedProfile = requestedProfileId
+    ? getProfileById(requestedProfileId)
+    : undefined;
+  const initialProfileId =
+    matchedProfile && matchedProfile.category === lockedCategory
+      ? matchedProfile.id
+      : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <HallOfFameClient
         studentId={session.user.id}
         studentName={session.user.name || "IBE Student"}
         initialCategory={initialCategory}
         initialProfileId={initialProfileId}
+        lockedCategory={lockedCategory}
+        programCode={resolvedProgram.programCode}
       />
     </div>
   );

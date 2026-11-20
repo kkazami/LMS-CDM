@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "../api-auth";
 import { db } from "../db";
 import { isBusinessPlanEligible, BUSINESS_PLAN_INSTITUTE_CODE } from "./eligibility";
+import { canIbeProgramAccessFeature } from "../ibe-programs/features";
+import { resolveIbeStudentProgram } from "../ibe-programs/registration";
 import {
   BUSINESS_PLAN_ID,
   toBusinessPlanRecord,
@@ -33,6 +35,14 @@ export async function requireBusinessPlanStudent(request?: Request): Promise<Stu
       ok: false,
       status: 403,
       message: "The Business Plan Guide and Builder is available to authenticated IBE students only.",
+    };
+  }
+  const resolvedProgram = await resolveIbeStudentProgram(user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "business-plan")) {
+    return {
+      ok: false,
+      status: 403,
+      message: "The Business Plan Guide and Builder is restricted to BS ENTREP students.",
     };
   }
   return {
@@ -121,7 +131,7 @@ export async function ensureBusinessPlanTable(): Promise<void> {
       // Ignore individual constraint/grant failures on restricted DB roles
     }
   }
-  businessPlanTableVerified = true;
+  try { await db.businessPlan.count({ take: 1 }); businessPlanTableVerified = true; } catch { /* retry next call if table still missing */ }
 }
 
 export async function loadOwnedBusinessPlan(id: string, studentId: string) {

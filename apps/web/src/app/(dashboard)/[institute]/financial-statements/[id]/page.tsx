@@ -1,6 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { isFinancialEligible, loadOwnedStatement } from "@/lib/financial-statements/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import { toDetail } from "@/lib/financial-statements/server";
 import { isStatementType } from "@/lib/financial-statements/types";
 import { validateStatement } from "@/lib/financial-statements/validate";
@@ -25,6 +27,11 @@ export default async function FinancialStatementDetailPage({
     notFound();
   }
 
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "financial-statements")) {
+    redirect("/ibe/students");
+  }
+
   // Strictly enforce student ownership: will return null if statement belongs to another student
   const row = await loadOwnedStatement(id, session.user.id);
   if (!row || !isStatementType(row.statementType)) {
@@ -35,7 +42,7 @@ export default async function FinancialStatementDetailPage({
   const issues = validateStatement(statement.statementType, statement.data);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <FinancialStatementEditorClient
         instituteCode={institute}
         initialStatement={statement}

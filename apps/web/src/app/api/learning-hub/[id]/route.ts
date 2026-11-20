@@ -9,95 +9,120 @@ import {
 } from "@/lib/learning-hub/access";
 import { validateLearningRecordInput } from "@/lib/learning-hub/validation";
 
+export const dynamic = "force-dynamic";
+
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(request: Request, context: RouteContext) {
-  const access = await requireLearningHubStudent(request);
-  if (!access.ok) return denied(access);
+  try {
+    const access = await requireLearningHubStudent(request);
+    if (!access.ok) return denied(access);
 
-  const { id } = await context.params;
-  const owned = await loadOwnedLearningRecord(id, access.userId);
-  if (!owned) {
+    const { id } = await context.params;
+    const owned = await loadOwnedLearningRecord(id, access.userId);
+    if (!owned) {
+      return NextResponse.json(
+        { message: "Learning record not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ record: toStudentLearningRecord(owned) });
+  } catch (error) {
+    console.error("GET_LEARNING_HUB_ID_ERROR", error);
     return NextResponse.json(
-      { message: "Learning record not found." },
-      { status: 404 }
+      { message: "Failed to load learning record." },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ record: toStudentLearningRecord(owned) });
 }
 
 export async function PUT(request: Request, context: RouteContext) {
-  const csrf = sameOriginViolation(request);
-  if (csrf) return csrf;
-
-  const access = await requireLearningHubStudent(request);
-  if (!access.ok) return denied(access);
-
-  const { id } = await context.params;
-  const owned = await loadOwnedLearningRecord(id, access.userId);
-  if (!owned) {
-    return NextResponse.json(
-      { message: "Learning record not found." },
-      { status: 404 }
-    );
-  }
-
-  let body: unknown;
   try {
-    body = await request.json();
-  } catch {
+    const csrf = sameOriginViolation(request);
+    if (csrf) return csrf;
+
+    const access = await requireLearningHubStudent(request);
+    if (!access.ok) return denied(access);
+
+    const { id } = await context.params;
+    const owned = await loadOwnedLearningRecord(id, access.userId);
+    if (!owned) {
+      return NextResponse.json(
+        { message: "Learning record not found." },
+        { status: 404 }
+      );
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { message: "Invalid JSON request body." },
+        { status: 400 }
+      );
+    }
+
+    const validated = validateLearningRecordInput(body, owned);
+    if (!validated.ok) {
+      return NextResponse.json({ message: validated.message }, { status: 400 });
+    }
+
+    const { status, completedAt, certificateUrl, notes, markOpened } =
+      validated.data;
+
+    const updated = await db.ibeLearningRecord.update({
+      where: { id: owned.id },
+      data: {
+        status,
+        completedAt,
+        certificateUrl,
+        notes,
+        verificationType: "SELF_REPORTED",
+        ...(markOpened ? { lastOpenedAt: new Date() } : {}),
+      },
+    });
+
+    return NextResponse.json({ record: toStudentLearningRecord(updated) });
+  } catch (error) {
+    console.error("PUT_LEARNING_HUB_ID_ERROR", error);
     return NextResponse.json(
-      { message: "Invalid JSON request body." },
-      { status: 400 }
+      { message: "Failed to update learning record." },
+      { status: 500 }
     );
   }
-
-  const validated = validateLearningRecordInput(body, owned);
-  if (!validated.ok) {
-    return NextResponse.json({ message: validated.message }, { status: 400 });
-  }
-
-  const { status, completedAt, certificateUrl, notes, markOpened } =
-    validated.data;
-
-  const updated = await db.ibeLearningRecord.update({
-    where: { id: owned.id },
-    data: {
-      status,
-      completedAt,
-      certificateUrl,
-      notes,
-      verificationType: "SELF_REPORTED",
-      ...(markOpened ? { lastOpenedAt: new Date() } : {}),
-    },
-  });
-
-  return NextResponse.json({ record: toStudentLearningRecord(updated) });
 }
 
 export async function DELETE(request: Request, context: RouteContext) {
-  const csrf = sameOriginViolation(request);
-  if (csrf) return csrf;
+  try {
+    const csrf = sameOriginViolation(request);
+    if (csrf) return csrf;
 
-  const access = await requireLearningHubStudent(request);
-  if (!access.ok) return denied(access);
+    const access = await requireLearningHubStudent(request);
+    if (!access.ok) return denied(access);
 
-  const { id } = await context.params;
-  const owned = await loadOwnedLearningRecord(id, access.userId);
-  if (!owned) {
+    const { id } = await context.params;
+    const owned = await loadOwnedLearningRecord(id, access.userId);
+    if (!owned) {
+      return NextResponse.json(
+        { message: "Learning record not found." },
+        { status: 404 }
+      );
+    }
+
+    await db.ibeLearningRecord.delete({
+      where: { id: owned.id },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE_LEARNING_HUB_ID_ERROR", error);
     return NextResponse.json(
-      { message: "Learning record not found." },
-      { status: 404 }
+      { message: "Failed to delete learning record." },
+      { status: 500 }
     );
   }
-
-  await db.ibeLearningRecord.delete({
-    where: { id: owned.id },
-  });
-
-  return NextResponse.json({ ok: true });
 }
-
