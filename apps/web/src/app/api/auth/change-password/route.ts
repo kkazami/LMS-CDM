@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth-session';
 import { compare, hash } from 'bcryptjs';
-import { hashArgonPassword, newPasswordIssue, verifyAccountPassword } from '@/lib/password-hashing';
+import { hashArgonPassword, ordinaryPasswordPolicyError, verifyAccountPassword } from '@/lib/password-hashing';
 import { passwordPilotBlocklist, passwordWritePilotEnabled } from '@/lib/password-write-pilot';
 import { passwordSchema } from '@/lib/auth-schema';
 import { SESSION_COOKIE_NAMES, sessionCookieAttributes } from '@/lib/session-cookie';
@@ -34,9 +34,8 @@ export async function POST(req: Request) {
     }
     const pilot = passwordWritePilotEnabled(session.user.role);
     if (pilot) {
-      const issue = newPasswordIssue(body.newPassword, false, await passwordPilotBlocklist());
-      if (issue === 'length') return reject('Use 15 to 128 characters and at most 512 UTF-8 bytes.', 400);
-      if (issue === 'compromised') return reject('Choose a password that is uncommon and has not appeared in a breach.', 400);
+      const message = ordinaryPasswordPolicyError(body.newPassword, await passwordPilotBlocklist());
+      if (message) return reject(message, 400);
     } else {
       const parsed = passwordSchema.safeParse(body.newPassword);
       if (!parsed.success) return reject(parsed.error.issues[0].message, 400);

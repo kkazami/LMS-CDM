@@ -1,5 +1,7 @@
 # Recoverable backups and disaster recovery
 
+Sprint 6 verifies least-privilege Course backup, a same-cluster restore of role ownership and ACLs, and restoration of a dummy MFA wrapping key against the actual crypto helper. Before operation, approve a recovery-point manifest covering DB snapshot/log position, schema and privilege export, matching independent object versions, configuration revision and protected key identifiers. Rebuild a separate isolated destination with reviewed identities, verify checksums/counts and key decryptability, and record start/end and achieved RPO/RTO. Confirm named backup and key custodians and rehearse alert escalation. [Release and operator checklist](final-release-readiness-assessment.md)
+
 Sprint 5 extends local evidence to current-schema data, RLS definitions, restricted grants and separate synthetic encrypted object/configuration and test-key recovery. The approved operational objectives remain unchanged. [Sprint 5 staging and evidence](sprint-5-staging-results.md)
 
 Sprint 1, 19 November 2026. Tracks DR-01/02 and DATA-01 in [the roadmap](../../SECURITY-ROADMAP.md). **Strategy prepared; no production backup, restore, database operation, subscription or disaster-recovery drill was performed.** Owner approval is required for the actual target, costs, retention, recovery objectives and every destructive/cutover operation.

@@ -40,3 +40,10 @@ export function newPasswordIssue(password: string, mandatoryMfa: boolean, blocke
   if (blockedDigests.size === 0) throw new Error('Password blocklist is unavailable.');
   return blockedDigests.has(createHash('sha256').update(normalized).digest('hex')) ? 'compromised' : null;
 }
+
+export function ordinaryPasswordPolicyError(password: string, blockedDigests: ReadonlySet<string>) {
+  const issue = newPasswordIssue(password, false, blockedDigests);
+  if (issue === 'length') return 'Use 15 to 128 characters and at most 512 UTF-8 bytes.';
+  if (issue === 'compromised') return 'Choose a password that is uncommon and has not appeared in a breach.';
+  return null;
+}

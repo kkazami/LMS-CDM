@@ -1,0 +1,19 @@
+# Remaining risks and dependency treatment
+
+Status on 20 November 2026. Fix and review dates below are proposed service targets. The release owner confirms accountable people and escalation contacts. The current dependency gate blocks high and critical matches without exceptions.
+
+| Match | Relevance and compatible update availability | Treatment, owner and trigger |
+|---|---|---|
+| High · `prisma > @prisma/config > effect@3.20.0` | Appears in both inventory modes through Prisma configuration tooling. LMS runtime reachability is unverified. Patched Effect starts at 3.22.1. Published Prisma config 7.10.1 still pins 3.20.0. | Release blocked. Dependency owner reviews supported Prisma releases daily, targets resolution by 27 Nov and reruns Prisma generation, matched advisory gates and production build on the exact replacement. Keep Prisma tooling on approved inputs in bounded builds. [Advisory](https://github.com/advisories/GHSA-7589-6fvf-x4pw) |
+| Moderate · `mobile > @sentry/react-native > @sentry/bundler-plugins > glob@13.0.7` | Production graph through build tooling. Signed-client presence unverified. Sentry 8.36.0 keeps bundler 10.78.0, which requests glob 13. Bundler 11.15.0 accepts patched glob 14 but needs a compatible native parent. | Mobile dependency owner checks supported Expo/Sentry parent at next version release and by 4 Dec. Execute bundling only on reviewed source in isolated jobs. Treat or record expiry by 20 Dec. [Advisory](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) |
+| Moderate · `desktop > electron-builder > app-builder-lib > minimatch@10.2.6` | Packaging path present in the production graph. Builder 26.18.0 still requests minimatch 10. The patched line starts at 11.0.1. | Desktop release owner reviews each compatible builder update and by 4 Dec. Limit packaging identities and inputs. Treat or record expiry by 20 Dec. [Advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249) |
+| Moderate · `desktop > electron-builder > app-builder-lib > @electron/universal > minimatch@9.0.9` | macOS universal packaging. Universal 3.0.6 drops the edge, while the stable app-builder-lib contract pins Universal 2.0.3. | Desktop owner adopts only a supported parent and verifies signed package compatibility. Review next builder release and by 4 Dec. Treat or record expiry by 20 Dec. [Advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249) |
+| Moderate · `mobile > @expo/ngrok > uuid@3.4.0` | Development-only tunnel path. The latest parent still requests uuid 3, and the fix requires 11.1.1 or later. | Mobile owner keeps this tooling out of production release procedures, reviews a supported tunnel replacement by 4 Dec and treats or records expiry by 20 Dec. [Advisory](https://github.com/advisories/GHSA-w5hq-g745-h8pq) |
+
+| Other risk | Owner and evidence needed |
+|---|---|
+| Hosting isolation and actual hosted gates | Release owner confirms exact branch, projects, integrations and credential exclusion. Retain workflow and Vercel receipts after separate approval. |
+| Identity and session rollout | Identity owner qualifies remaining writers, password corpus, challenge completion and current client pathways. Obtain deployment benchmarks and rollback proof. |
+| Database and recovery | DBA qualifies approved synthetic Neon target, role/recovery separation and consistency of full database, object and key recovery. |
+| Native distribution | Client owners record installed Android, iOS and Electron runs, signed release and runtime-specific rollback. |
+| Audit scope gaps | Security owner retains the original ledger, immutable target and exclusion reasons. Any independent permitted review needs scoped approval and its own evidence. No Sprint 6 coverage claim supersedes the ledger. |

@@ -43,8 +43,9 @@ def main(label, fixture_directory, mode='staging'):
         if code == 0:
             # Both databases are disposable and contain synthetic records only. Never export the dump.
             start = time.monotonic()
-            restore = ['pg_restore','-h','127.0.0.1','-U','postgres','--exit-on-error','--no-owner']
-            if mode != 'rls-staging': restore += ['--no-acl']
+            restore = ['pg_restore','-h','127.0.0.1','-U','postgres','--exit-on-error']
+            if mode != 'rls-principals': restore += ['--no-owner']
+            if mode not in ('rls-staging', 'rls-principals'): restore += ['--no-acl']
             verify_sql = """SELECT (SELECT count(*) FROM "User"), (SELECT count(*) FROM "Course"), (SELECT count(*) FROM "Enrollment"), (SELECT count(*) FROM "AuditLog" WHERE action='DATABASE_TABLE_EXPORTED');"""
             if mode == 'rls-staging':
                 verify_sql = """SELECT (SELECT count(*) FROM "Course"),
@@ -57,20 +58,35 @@ def main(label, fixture_directory, mode='staging'):
                 verify_sql = """SELECT (SELECT count(*) FROM "User" WHERE password LIKE '$argon2id$%'),
                   (SELECT count(*) FROM "Session"),
                   (SELECT count(*) FROM "AuditLog" WHERE action='SELF_PASSWORD_CHANGED');"""
+            elif mode == 'rls-principals':
+                verify_sql = """SELECT (SELECT count(*) FROM "Course"),
+                  (SELECT count(*) FROM pg_policies WHERE tablename='Course'),
+                  pg_get_userbyid((SELECT proowner FROM pg_proc WHERE oid='sprint5_context.can_read(text,text,text)'::regprocedure)),
+                  pg_get_userbyid((SELECT relowner FROM pg_class WHERE oid='public."Course"'::regclass)),
+                  has_table_privilege('sprint6_backup','public."Course"','SELECT'),
+                  has_table_privilege('sprint6_backup','public."Course"','UPDATE');"""
+            elif mode == 'instructor-staging':
+                verify_sql = """SELECT (SELECT count(*) FROM "User" WHERE role='PROFESSOR' AND password LIKE '$argon2id$%'),
+                  (SELECT count(*) FROM "AuditLog" WHERE action='ACCOUNT_CREATED');"""
             commands = [
                 ['pg_dump','-h','127.0.0.1','-U','postgres','-Fc','-f','/scratch/synthetic.dump','sprint2_staging'],
                 ['createdb','-h','127.0.0.1','-U','postgres','sprint2_recovery'],
                 [*restore,'-d','sprint2_recovery','/scratch/synthetic.dump'],
                 ['psql','-h','127.0.0.1','-U','postgres','-d','sprint2_recovery','-Atc',
                  verify_sql]]
+            if mode == 'rls-principals':
+                commands.insert(0, ['pg_dump','-h','127.0.0.1','-U','sprint6_backup','--data-only','--enable-row-security',
+                    '--table=public."Course"','-Fc','-f','/scratch/course-backup.dump','sprint2_staging'])
             for arguments in commands:
                 recovery_code, recovery_output = runner.bounded(['docker','exec',name,*arguments], timeout=45)
                 if recovery_code: raise RuntimeError('Synthetic recovery command failed: '+arguments[0])
-            expected = {'staging':'3|1|1|1', 'rls-staging':'3|2|3|t|f|f', 'writer-staging':'1|0|1'}[mode]
+            expected = {'staging':'3|1|1|1', 'rls-staging':'3|2|3|t|f|f', 'writer-staging':'1|0|1',
+                'rls-principals':'3|4|sprint6_policy|sprint6_course_owner|t|f', 'instructor-staging':'1|1'}[mode]
             if recovery_output.strip() != expected: raise RuntimeError('Synthetic recovery assertions failed')
             recovery = {'format':'pg_dump custom / pg_restore','verified_summary':expected,'seconds':round(time.monotonic()-start,3),
                 'production_restore':False,'cluster_roles_reprovisioned':False,
-                'same_cluster_role_grants_preserved':mode == 'rls-staging'}
+                'same_cluster_role_grants_preserved':mode in ('rls-staging','rls-principals'),
+                'restricted_course_backup_completed':mode == 'rls-principals'}
         (base/'receipt.json').write_text(json.dumps({'exit':code,'image':pins['postgresImage'],
             'schema_sha256':hashlib.sha256(schema.read_bytes()).hexdigest(),'ddl_sha256':hashlib.sha256(sql).hexdigest(),
             'data':'Current-schema dummy accounts, courses and institutes; no production data','profile':mode,

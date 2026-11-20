@@ -1,5 +1,7 @@
 # Security incident response
 
+Sprint 6 makes the instructor `ACCOUNT_CREATED` event atomic with provisioning. The event keeps actor and target identifiers, timestamp, institute, normalized role and outcome. The payload excludes email and credential values. Proposed security-event retention, responder coverage and escalation are in the [maintenance policy](continuous-security-maintenance.md).
+
 ## Ownership and intake
 
 The release owner receives security reports through a private administrative channel and assigns an incident lead. The security maintainer verifies and triages, the database/storage operators contain access and handle recovery, and the authorized institutional privacy and academic leads decide notifications and academic reconciliation. Keep reports private and use synthetic examples in public issues.

@@ -1,0 +1,31 @@
+# Sprint 6 results and operational qualification
+
+**20 November 2026. Release decision: not ready.** The candidate advanced local identity, session, database and restore evidence. A new high dependency match blocks release, and hosted isolation and operational acceptance remain open. Use this [verification record](sprint-6-verification.json) with the [release assessment](final-release-readiness-assessment.md).
+
+## Checkpoint and reviewed changes
+
+The 36-file Sprint 5 checkpoint remains uncommitted on its prior worktree. Its base is `4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5`, reviewed tree `6dd243923a5233d4f9a3ada7b2c40e0bf1827136` and patch SHA-256 `cb9af42ee373e186158cd31d7ff6e3983e6b6257c8074bc4234a74082dcf6a5a`. The patch, source hashes and Git blobs reconciled and the replay matched the expected tree. Sprint 6 is a separate local worktree, branch `codex/security-review-sprint-6`, with a review patch relative to that frozen Sprint 5 tree. No Sprint 5 or Sprint 6 commit was created.
+
+All 186 historical file hashes matched. The immutable audit target `5dc0a42963b241ca0bbaa1711ad6318fe0b9f202`, Sprint 2–4 history, independent Expo commit, audit ledgers, original checkout edits and Vercel branch rules were preserved. The verification record inventories the changed files and snapshot hashes. The original blocked validations stayed excluded.
+
+## Implemented work
+
+| Change | Observed evidence |
+|---|---|
+| Instructor credential provisioning | The established institute-scoped route reuses the ordinary password policy, bcrypt-compatible readers and gated Argon2id writer. It rejects overlength bcrypt inputs, applies an actor-keyed PostgreSQL quota and makes account creation/audit atomic. The authenticated synthetic admin flow returned 201, persisted a verifiable Argon2id hash and recorded one redacted audit entry. The documented production bcrypt path is still the default. |
+| Error and cache behavior | The credential-bearing response is private/no-store. Controlled failure returned a generic 503. Existing student enrollment, broader administration and privileged MFA policies were kept. |
+| Session transition | Synthetic rehearsal used `2026-12-01T09:00:00Z` and `2026-12-08T09:00:00Z`, verified the serialized host-prefixed cookie and exact legacy deadline and confirmed idle and absolute expiration. Actual client delivery and production cutover remain open. |
+| Rate limiting | Twenty instructor provisioning attempts per five minutes per authenticated admin. Local PostgreSQL rerun tested 100 transactions with four clients, average 0.762 ms, zero failures and observed saturation and reset. Long-run cleanup, Neon sizing and hosting cost need separate qualification. |
+| Prisma RLS and backup | The non-login definer and Course owner, dedicated backup role and concurrent synthetic admitted transactions passed. A Course-only backup completed under the limited role. The full isolated same-cluster restore took 4.826 seconds and retained three courses, four policies, both expected owners and the expected backup ACLs. |
+| Recovery and MFA primitives | A synthetic recovered MFA encryption key restored the factor, preserved counter handling and retained recovery-code subject binding. Privileged tests remained in the allowlist. Complete ordinary-role enrollment, replacement and admission remain open at cross-client challenge compatibility. |
+
+## Verification and open qualifications
+
+- **126 allowlisted regressions passed** with zero failures or skips. Five cases were added. The first run reached all 121 prior checks but the new file could not resolve Next.js from the test directory. Resolving it from the web workspace fixed the setup error. The four current-schema cases passed across the writer and Prisma fixtures.
+- **Supply chain:** both local scanner scopes passed with zero findings. The production and full audit gates each returned 1 because of the new Effect advisory. Production inventory has one high and two moderate matches. The full graph has one high and four moderate. Critical remains zero. Current upstream Prisma and the relevant moderate parent contracts provide no qualifying supported replacement. [Treatment and sources](remaining-risk-register.md)
+- **Build and native:** the web production build exited 0 in 505.46 seconds, build ID `A0eS5c9BDP6y8UK0FqFt2`. It verified TypeScript, all 40 static pages and required runtime artifacts/file tracing. Mobile, desktop and harness typechecks passed. The unchanged client graph retains earlier Expo bundle and Electron compile receipts. Physical devices and signed release evidence remain open. [Build receipts](sprint-6-verification.json)
+- **Identity:** the native microbenchmark timed 12 serial jobs at 390 ms, 12 two-at-a-time jobs at 184 ms and a process peak of 172 MiB including the test harness. The 49,233-entry digest-only corpus candidate contains just 41 entries meeting the 15-character minimum. The checksum and source licensing are documented. Remaining writer families, complete blocklist, deployment sizing and rollback-artifact qualification keep production writes off. [Writer and corpus qualification](identity-rollout-qualification.md)
+- **Hosted and operational:** no hosted jobs ran. Pending owner confirmation includes hosting-side credential isolation, the exact push, synthetic Neon and independently held backup/keys. Same-cluster restores and a Course backup do not establish full external recovery. [Hosted gates](hosted-ci-verification.md) · [Recovery](backup-disaster-recovery.md)
+- **ASVS:** 12 exact requirements received partial evidence with observed outcome, tested base tree, source hashes, environment and limitations. All 253 pre-existing rows and classifications were preserved. No new full requirement pass is claimed.
+
+A narrow reader-compatible maintenance update can be reviewed once the high dependency issue, hosting, client and recovery gates close. Interactive deployments, identity activation, privileged enrollment, native distribution and database changes each retain separate approval and rollback prerequisites. [Rollout](production-rollout-plan.md) · [Rollback](production-rollback-plan.md) · [Continuous maintenance](continuous-security-maintenance.md)

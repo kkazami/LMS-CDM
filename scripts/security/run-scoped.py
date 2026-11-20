@@ -4,7 +4,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=ROOT/'tmp/security-sprint-2'
 DEPS=HERE/'dependency-workspace';TOOLS=HERE/'linux-tools'
 TEST_MANIFESTS = [json.loads((ROOT / name).read_text()) for name in (
- 'tests/sprint-2/allowed-tests.json', 'tests/sprint-3/allowed-tests.json', 'tests/sprint-4/allowed-tests.json', 'tests/sprint-5/allowed-tests.json',
+ 'tests/sprint-2/allowed-tests.json', 'tests/sprint-3/allowed-tests.json', 'tests/sprint-4/allowed-tests.json',
+ 'tests/sprint-5/allowed-tests.json', 'tests/sprint-6/allowed-tests.json',
 )]
 TESTS = [file for manifest in TEST_MANIFESTS for file in manifest['testFiles']]
 EXPECTED_TESTS = sum(manifest['expectedTestCount'] for manifest in TEST_MANIFESTS)
@@ -12,6 +13,8 @@ STAGING_TESTS = {
  'staging':'tests/sprint-2/staging.test.cjs',
  'rls-staging':'tests/sprint-5/prisma-rls.test.cjs',
  'writer-staging':'tests/sprint-5/password-writer-staging.test.cjs',
+ 'rls-principals':'tests/sprint-6/rls-principals.test.cjs',
+ 'instructor-staging':'tests/sprint-6/instructor-provisioning.test.cjs',
 }
 BLOCKED=['tests/forms/','tests/attendance/','tests/harness/runner','tests/harness-integration/','tests/security/audit-regressions','tests/security/admin-mfa-cases','tests/web-quality/security.test','tests/mobile/upload','tests/mobile/kx-upload']
 def bounded(argv,timeout=45,max_bytes=262144):
@@ -40,7 +43,7 @@ def stage(folder):
  for f in ['tsconfig.base.json','package.json','pnpm-lock.yaml','pnpm-workspace.yaml','prisma/schema.prisma','prisma/admin-mfa/revocation.sql','prisma/migrations/20261115010000_admin_mfa/migration.sql','apps/web/tsconfig.json','apps/web/next-env.d.ts','apps/web/next.config.ts','apps/web/package.json','apps/mobile/tsconfig.json','apps/mobile/package.json','apps/mobile/expo-env.d.ts','apps/mobile/app.json','apps/mobile/metro.config.js','apps/desktop/tsconfig.json','apps/desktop/tsconfig.build.json','apps/desktop/electron-builder.json','apps/desktop/package.json','scripts/harness/tsconfig.json','.orchestra/harness/playwright.config.ts','.orchestra/playwright.config.ts','playwright.config.ts']:
   if (ROOT/f).exists():copy(ROOT/f,folder/f)
  for p in (ROOT/'prisma/super-user-v1').glob('*.sql'):copy(p,folder/p.relative_to(ROOT))
- for f in TESTS+list(STAGING_TESTS.values())+['tests/security/typescript-register.cjs','tests/sprint-2/allowed-tests.json','tests/sprint-5/prisma-course-rls.sql']:
+ for f in TESTS+list(STAGING_TESTS.values())+['tests/security/typescript-register.cjs','tests/sprint-2/allowed-tests.json','tests/sprint-5/prisma-course-rls.sql','tests/sprint-6/rls-principals.sql']:
   if (ROOT/f).exists():copy(ROOT/f,folder/f)
  for name in ['programming','database','networking','webdev','cybersecurity']:
   p=ROOT/f'apps/web/public/course-banners/mobile/{name}.svg'
@@ -106,7 +109,7 @@ def main(label,mode='tests',network='none',fixture=None):
   inspectcode,state=bounded(['docker','inspect','--format','{{json .State}}',name]);assert inspectcode==0 and not json.loads(state)['Running']
   counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped|todo) (\d+)$',out,re.M)} if testing else {}
   if code==0 and testing:
-   expected=1 if mode in STAGING_TESTS else EXPECTED_TESTS
+   expected=2 if mode=='rls-principals' else 1 if mode in STAGING_TESTS else EXPECTED_TESTS
    assert counts.get('tests')==counts.get('pass')==expected and all(counts.get(k)==0 for k in ['fail','cancelled','skipped','todo']), 'Missing, skipped or unexpected test results'
   receipt={'label':label,'mode':mode,'exit':code,'counts':counts,'seconds':round(time.monotonic()-start,2),'argv':argv,'tests':selected,'safe_environment':env,'limits':{'network':network,'read_only_source_and_tools':True,'scratch_bytes':scratch_mb*1024*1024,'memory_bytes':6442450944 if mode=='web-build' else 4294967296 if mode in ['web-types','web-build','mobile-export'] else 2415919104,'cpus':2,'pids':128,'file_bytes':536870912,'seconds':seconds},'lock_sha256':hashlib.sha256((DEPS/'pnpm-lock.yaml').read_bytes()).hexdigest(),'source_hashes':{str(p.relative_to(source)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()},'terminated':True}
   if mode=='sbom' and code==0:

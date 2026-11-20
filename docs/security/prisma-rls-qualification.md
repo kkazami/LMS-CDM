@@ -1,5 +1,13 @@
 # Prisma RLS qualification
 
+Sprint 6 separately qualifies a non-login policy definer with only the eligibility lookup columns, a non-login Course owner, and a separate Course backup role. An isolated backup completed under that role. A separate full same-cluster restore reproduced the policy and table owners, four policies and expected grant vector. These fixtures do not create deployment migrations.
+
+### Exact synthetic Neon proposal
+
+The owner must approve a distinct, empty nonproduction Neon project and branch created without copying production, and provide only project/branch identifiers and authorization scope in review. The operator provisions TLS-verified pooled and direct endpoints with isolated credentials, a restricted Prisma runtime, a non-login migration and policy owner, and separate jobs and backup roles. Record effective grants and verify no production secrets or project connections before any connection. Use the direct endpoint for migration and backup principals. Use the pooled endpoint for two concurrent admitted Prisma transactions, followed by scoped reads, rollback and transaction-context reset. Test one dedicated job and a restricted backup, then reprovision roles and restore in a separate synthetic destination. Record revisions, durations, observed rows/permissions, failures and rollback receipts. [Neon pooling](https://neon.com/docs/connect/connection-pooling)
+
+Review the role/grant proposal independently before the Course RLS policy proposal. The checked-in [principal overlay](../../tests/sprint-6/rls-principals.sql) is disposable. Production ownership, grant changes and policy activation require separate written approval. A Course-only backup is a scope check. Full recovery requires the complete approved data and role inventory.
+
 The current LMS schema was loaded into disposable PostgreSQL 17 with synthetic institutes, courses, enrollments and users. The pilot uses the same Prisma package and `PrismaPg` driver as the application, with a locally bounded single-connection `pg` pool. Interactive transactions set parameters from synthetic admitted actors with `set_config(..., true)` and query through the transaction client. The test confirmed the same backend PID on reuse and observed zero rows without context after commit and rollback.
 
 | Boundary | Observed result |

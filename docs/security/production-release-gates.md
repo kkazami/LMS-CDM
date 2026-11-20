@@ -1,5 +1,7 @@
 # Production release gates
 
+Sprint 6 review remains local. The new Effect advisory and the hosted, identity, database and operational prerequisites keep release open. See the [current assessment](final-release-readiness-assessment.md) and [independent rollout stages](production-rollout-plan.md).
+
 The current release decision and owner evidence checklist are in the [Sprint 5 readiness assessment](release-readiness-assessment.md).
 
 Sprint 4 is a local candidate. The owner approves each environment change, migration and distribution release separately. Record the exact Git revision, lock/source hashes, build ID and evidence receipts against every sign-off.

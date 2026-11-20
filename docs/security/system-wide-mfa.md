@@ -1,5 +1,9 @@
 # System-wide MFA implementation boundary
 
+Sprint 6 verified restoration of a synthetic MFA wrapping key with the actual factor encryption helper. The restored factor recognized a deterministic code and rejected its recorded counter. Recovery-code verification remained bound to the subject. This exercises shared cryptographic behavior, while enrollment, replacement and admission for ordinary roles remain open.
+
+Before accepting ordinary-role factors, require each supported admission path to transition from a verified password or Google assertion to a bounded, purpose-limited challenge. Only successful completion may issue an application session or native handoff token. Enrollment status and reminders must be based on the admitted account and must convey no assurance until factor confirmation. Recovery and replacement require separately verified support entitlement, rotation of factor version and recovery material, and transactional revocation. Keep privileged MFA mandatory and rehearse an accessible recovery option before widening cohorts.
+
 Sprint 5 intentionally retains the current assurance boundary until the shared completion step is qualified for browser, federation and native pathways. [Qualification and owner pilot](identity-rollout-qualification.md)
 
 Administrators and Super Users retain their required TOTP, encrypted factor state, challenge-to-session transition and recovery codes. The existing `admin-mfa` code and migrations remain authoritative. Sprint 4 adds a recent completed session requirement to self-service sign-out from all devices. No instructor or student enrollment and enforcement was activated. Existing local administrator tests are retained. [Administrator rollout](admin-mfa-production-rollout.md)

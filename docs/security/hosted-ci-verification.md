@@ -1,5 +1,7 @@
 # Hosted CI verification
 
+Sprint 6 preserves the Vercel exclusion and workflow trigger for `codex/security-review-sprint-6`. The owner confirmation required for a push remains outstanding. Local results and the current red dependency gate are recorded in [Sprint 6 verification](sprint-6-verification.json).
+
 Sprint 5 local branch is `codex/security-review-sprint-5`. The owner selected **keep the branch local for now**. There is no hosted job receipt for this revision.
 
 Both repository-root and web-project Vercel configuration set `git.deploymentEnabled["codex/security-*"]` to `false`. Existing cron entries and deployment defaults for other branches are preserved. The Security engineering workflow accepts this review branch on push. Its jobs use read-only contents permissions and declare no deployment environment. Repository source cannot establish the actual Vercel project root, production branch, branch overrides, linked projects or environment-variable assignments. [Vercel Git configuration](https://vercel.com/docs/project-configuration/git-configuration)
