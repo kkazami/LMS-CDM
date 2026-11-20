@@ -3,15 +3,29 @@
  * Kept free of server imports so it is unit-testable and safe to share.
  */
 
-import { createManilaMidnight, getManilaDateString } from "@/lib/ite/focus/manila-calendar";
+import { createManilaMidnight, getManilaDateString } from "../ite/focus/manila-calendar";
 import {
   AI_COOLDOWN_SECONDS,
   AI_DAILY_LIMIT,
   AI_MAX_CHARS,
   AI_MIN_WORDS,
+  AI_TEXT_DAILY_LIMIT,
+  AI_VOICE_DAILY_LIMIT,
+  AI_VOICE_MAX_CHARS,
+  AI_VOICE_MAX_SECONDS,
+  type AiInputMode,
 } from "./ai-types";
 
-export { AI_COOLDOWN_SECONDS, AI_DAILY_LIMIT, AI_MAX_CHARS, AI_MIN_WORDS };
+export {
+  AI_COOLDOWN_SECONDS,
+  AI_DAILY_LIMIT,
+  AI_MAX_CHARS,
+  AI_MIN_WORDS,
+  AI_TEXT_DAILY_LIMIT,
+  AI_VOICE_DAILY_LIMIT,
+  AI_VOICE_MAX_CHARS,
+  AI_VOICE_MAX_SECONDS,
+};
 
 // ---------------------------------------------------------------------------
 // Answer validation
@@ -50,7 +64,7 @@ const REPEATED_RUN = /(\p{L})\1{7,}/u; // same letter 8+ times in a row ("aaaaaa
  * obvious junk (single repeated letters, near-zero word variety, symbol spam, keyboard mash),
  * not short vocabulary, technical terms, names or non-native English.
  */
-export function validateAnswer(raw: unknown): AnswerValidation {
+export function validateAnswer(raw: unknown, maxChars: number = AI_MAX_CHARS): AnswerValidation {
   if (typeof raw !== "string") {
     return { ok: false, code: "EMPTY", message: "Please write an answer before requesting an evaluation." };
   }
@@ -58,11 +72,11 @@ export function validateAnswer(raw: unknown): AnswerValidation {
   if (!answer) {
     return { ok: false, code: "EMPTY", message: "Please write an answer before requesting an evaluation." };
   }
-  if (answer.length > AI_MAX_CHARS) {
+  if (answer.length > maxChars) {
     return {
       ok: false,
       code: "TOO_LONG",
-      message: `Your answer is too long. Please keep it within ${AI_MAX_CHARS} characters.`,
+      message: `Your answer is too long. Please keep it within ${maxChars} characters.`,
     };
   }
 
@@ -124,32 +138,66 @@ export function getManilaDayRange(now: Date = new Date()): { startOfDay: Date; n
   return { startOfDay, nextMidnight: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000) };
 }
 
+export interface UsageEntry {
+  id?: string;
+  createdAt: Date;
+  mode?: AiInputMode;
+}
+
+export function inferModeFromRequestId(id?: string, explicitMode?: AiInputMode): AiInputMode {
+  if (explicitMode === "voice" || explicitMode === "text") return explicitMode;
+  if (typeof id === "string" && id.startsWith("voice_")) return "voice";
+  return "text";
+}
+
 export type UsageDecision =
-  | { allowed: true; countToday: number; remainingToday: number; resetAt: string }
   | {
-      allowed: false;
-      reason: "DAILY_LIMIT_EXCEEDED" | "COOLDOWN_ACTIVE";
+      allowed: true;
       countToday: number;
       remainingToday: number;
+      remainingTextToday: number;
+      remainingVoiceToday: number;
+      resetAt: string;
+    }
+  | {
+      allowed: false;
+      reason: "DAILY_LIMIT_EXCEEDED" | "MODE_LIMIT_EXCEEDED" | "COOLDOWN_ACTIVE";
+      countToday: number;
+      remainingToday: number;
+      remainingTextToday: number;
+      remainingVoiceToday: number;
       retryAfterSeconds: number;
       resetAt: string;
     };
 
 /**
- * Decides whether another AI evaluation is allowed given previous reservation timestamps.
- * Daily limit is evaluated first; the cooldown applies to the most recent reservation.
+ * Decides whether another AI evaluation is allowed given previous reservation timestamps/entries.
+ * Supports both shared daily limit and per-mode daily limits (5 Option A Text + 5 Option B Voice).
  */
 export function decideUsage(
-  createdAts: Date[],
+  entries: ReadonlyArray<Date | UsageEntry>,
   now: Date = new Date(),
   limit: number = AI_DAILY_LIMIT,
-  cooldownSeconds: number = AI_COOLDOWN_SECONDS
+  cooldownSeconds: number = AI_COOLDOWN_SECONDS,
+  requestedMode?: AiInputMode
 ): UsageDecision {
   const { startOfDay, nextMidnight } = getManilaDayRange(now);
-  const today = createdAts.filter((d) => d >= startOfDay && d < nextMidnight);
+  const normalized: Array<{ createdAt: Date; mode: AiInputMode }> = entries.map((e) =>
+    e instanceof Date
+      ? { createdAt: e, mode: "text" }
+      : { createdAt: e.createdAt, mode: inferModeFromRequestId(e.id, e.mode) }
+  );
+
+  const today = normalized.filter((e) => e.createdAt >= startOfDay && e.createdAt < nextMidnight);
   const countToday = today.length;
+  const textUsedToday = today.filter((e) => e.mode === "text").length;
+  const voiceUsedToday = today.filter((e) => e.mode === "voice").length;
+
   const remainingToday = Math.max(0, limit - countToday);
+  const remainingTextToday = Math.min(remainingToday, Math.max(0, AI_TEXT_DAILY_LIMIT - textUsedToday));
+  const remainingVoiceToday = Math.min(remainingToday, Math.max(0, AI_VOICE_DAILY_LIMIT - voiceUsedToday));
   const resetAt = nextMidnight.toISOString();
+  const secondsUntilReset = Math.max(1, Math.ceil((nextMidnight.getTime() - now.getTime()) / 1000));
 
   if (countToday >= limit) {
     return {
@@ -157,12 +205,43 @@ export function decideUsage(
       reason: "DAILY_LIMIT_EXCEEDED",
       countToday,
       remainingToday: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((nextMidnight.getTime() - now.getTime()) / 1000)),
+      remainingTextToday: 0,
+      remainingVoiceToday: 0,
+      retryAfterSeconds: secondsUntilReset,
       resetAt,
     };
   }
 
-  const latest = createdAts.reduce<Date | null>((acc, d) => (!acc || d > acc ? d : acc), null);
+  if (requestedMode === "text" && textUsedToday >= AI_TEXT_DAILY_LIMIT) {
+    return {
+      allowed: false,
+      reason: "MODE_LIMIT_EXCEEDED",
+      countToday,
+      remainingToday,
+      remainingTextToday: 0,
+      remainingVoiceToday,
+      retryAfterSeconds: secondsUntilReset,
+      resetAt,
+    };
+  }
+
+  if (requestedMode === "voice" && voiceUsedToday >= AI_VOICE_DAILY_LIMIT) {
+    return {
+      allowed: false,
+      reason: "MODE_LIMIT_EXCEEDED",
+      countToday,
+      remainingToday,
+      remainingTextToday,
+      remainingVoiceToday: 0,
+      retryAfterSeconds: secondsUntilReset,
+      resetAt,
+    };
+  }
+
+  const latest = normalized.reduce<Date | null>(
+    (acc, e) => (!acc || e.createdAt > acc ? e.createdAt : acc),
+    null
+  );
   if (latest) {
     const elapsedMs = now.getTime() - latest.getTime();
     const cooldownMs = cooldownSeconds * 1000;
@@ -172,12 +251,21 @@ export function decideUsage(
         reason: "COOLDOWN_ACTIVE",
         countToday,
         remainingToday,
+        remainingTextToday,
+        remainingVoiceToday,
         retryAfterSeconds: Math.max(1, Math.ceil((cooldownMs - elapsedMs) / 1000)),
         resetAt,
       };
     }
   }
 
-  return { allowed: true, countToday, remainingToday, resetAt };
+  return {
+    allowed: true,
+    countToday,
+    remainingToday,
+    remainingTextToday,
+    remainingVoiceToday,
+    resetAt,
+  };
 }
 

@@ -44,10 +44,22 @@ export interface MockInterviewAiEvaluation {
 /** Evaluation limits shared by the UI (display/validation hints) and the server (enforcement). */
 export const AI_MIN_WORDS = 15;
 export const AI_MAX_CHARS = 1500;
-export const AI_DAILY_LIMIT = 10;
+export const AI_VOICE_MAX_CHARS = 3000;
+export const AI_VOICE_MAX_SECONDS = 180; // 3 minutes max per voice recording
+export const AI_TEXT_DAILY_LIMIT = 10;
+export const AI_VOICE_DAILY_LIMIT = 10;
+export const AI_DAILY_LIMIT = 10; // 10 voice AI evaluations per Manila day
 export const AI_COOLDOWN_SECONDS = 5;
 /** Score at or above which an AI-evaluated answer meets the passing standard. */
 export const AI_PROGRESS_THRESHOLD = 60;
+
+export type AiInputMode = "text" | "voice";
+
+export interface AiModeQuota {
+  remainingTotal: number;
+  remainingText: number;
+  remainingVoice: number;
+}
 
 export function ratingForScore(score: number): AiRating {
   if (score >= 85) return "Excellent";
@@ -84,6 +96,10 @@ export interface AiEvaluateResponse {
   attemptId: string;
   evaluation: MockInterviewAiEvaluation | null;
   remainingToday: number;
+  remainingTextToday?: number;
+  remainingVoiceToday?: number;
+  transcribedAnswer?: string;
+  inputMode?: AiInputMode;
   reused?: boolean;
   message?: string;
 }

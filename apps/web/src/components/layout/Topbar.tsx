@@ -11,6 +11,7 @@ import UserAvatar from "@/components/common/UserAvatar";
 import NotificationBell from "@/components/layout/NotificationBell";
 import SearchModal from "@/components/layout/SearchModal";
 import TopbarFocusButton from "@/components/focus/TopbarFocusButton";
+import type { IbeStudentProgramCode } from "@/lib/ibe-programs/features";
 
 
 import { useTheme } from "@/lib/theme-context";
@@ -29,6 +30,7 @@ type TopbarProps = {
   isEligibleForActivities?: boolean;
   isEligibleForPracticum?: boolean;
   isEligibleForMeetings?: boolean;
+  ibeProgramCode?: IbeStudentProgramCode | null;
   enrolledCourses?: { id: string; title: string; code: string }[];
 };
 
@@ -44,6 +46,7 @@ export default function Topbar({
   isEligibleForActivities,
   isEligibleForPracticum,
   isEligibleForMeetings,
+  ibeProgramCode,
   enrolledCourses,
 }: TopbarProps) {
   const pathname = usePathname();
@@ -164,7 +167,10 @@ export default function Topbar({
     "learning-hub": "Learning Hub",
     "hall-of-fame": "Hall of Fame",
     "mock-interview": "Mock Interview",
+    wordwise: "IBE WordWise",
     "financial-statements": "Financial Statements",
+    consultation: "Consultation & Scheduling",
+    "consultation-management": "Consultation Management",
     arena: "Quiz Arena",
     notifications: "Notifications",
   };
@@ -428,6 +434,7 @@ export default function Topbar({
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForMeetings={isEligibleForMeetings}
         isEligibleForPracticum={isEligibleForPracticum}
+        ibeProgramCode={ibeProgramCode}
       />
     </header>
   );

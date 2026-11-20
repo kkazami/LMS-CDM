@@ -6,7 +6,11 @@ import { ArrowLeft, ArrowRight, BookOpen, KeyRound, UserRoundPlus, LoaderCircle 
 import { PolicyLink } from '@/components/legal/PolicyNavigation';
 import { INSTITUTES } from '@/components/common/InstituteSelector';
 import Input from '@/components/common/Input';
-import { webGoogleLinkSchema, webStudentRegistrationSchema } from '@/lib/auth-schema';
+import {
+  webGoogleLinkSchema,
+  webStudentRegistrationSchema,
+  type IbeStudentProgramCode,
+} from '@/lib/ibe-programs/features';
 import { getInstituteTheme } from '@/lib/get-institute-theme';
 import type { IteStudentProgramCode } from '@/lib/ite-programs/features';
 import { syncSessionToNative } from '@/lib/mobile-bridge';
@@ -20,6 +24,12 @@ export interface IteProgramOption {
   name: string;
 }
 
+export interface IbeProgramOption {
+  id: string;
+  code: IbeStudentProgramCode;
+  name: string;
+}
+
 type Props = {
   instituteCode: string;
   googleEnabled: boolean;
@@ -29,6 +39,8 @@ type Props = {
   googleExpired?: boolean;
   itePrograms?: IteProgramOption[];
   missingItePrograms?: IteStudentProgramCode[];
+  ibePrograms?: IbeProgramOption[];
+  missingIbePrograms?: IbeStudentProgramCode[];
 };
 
 export default function RegisterForm({
@@ -40,6 +52,8 @@ export default function RegisterForm({
   googleExpired = false,
   itePrograms = [],
   missingItePrograms = [],
+  ibePrograms = [],
+  missingIbePrograms = [],
 }: Props) {
   const [institute, setInstitute] = useState(instituteCode);
   const [program, setProgram] = useState('');
@@ -49,7 +63,14 @@ export default function RegisterForm({
   const [error, setError] = useState('');
   const busy = saving || googleBusy;
   const isIte = institute === 'ite';
+  const isIbe = institute === 'ibe';
+  const requiresProgramSelection = isIte || isIbe;
   const hasMissingIteConfig = isIte && missingItePrograms.length > 0;
+  const hasMissingIbeConfig = isIbe && missingIbePrograms.length > 0;
+  const hasMissingProgramConfig = hasMissingIteConfig || hasMissingIbeConfig;
+  const activePrograms = isIte ? itePrograms : isIbe ? ibePrograms : [];
+  const activeMissingPrograms = isIte ? missingItePrograms : isIbe ? missingIbePrograms : [];
+  const activeInstituteLabel = isIte ? 'ITE' : 'IBE';
   const theme = getInstituteTheme(institute);
   const instituteStyle = {
     '--login-institute': theme.colors.primary,
@@ -58,9 +79,7 @@ export default function RegisterForm({
 
   function handleSelectInstitute(nextInstitute: string) {
     setInstitute(nextInstitute);
-    if (nextInstitute !== 'ite') {
-      setProgram('');
-    }
+    setProgram('');
     setError('');
   }
 
@@ -68,9 +87,9 @@ export default function RegisterForm({
     event.preventDefault();
     setError('');
 
-    if (hasMissingIteConfig) {
+    if (hasMissingProgramConfig) {
       setError(
-        `ITE registration is unavailable because the following academic program(s) are missing in the database: ${missingItePrograms.join(', ')}.`
+        `${activeInstituteLabel} registration is unavailable because the following academic program(s) are missing in the database: ${activeMissingPrograms.join(', ')}.`
       );
       return;
     }
@@ -82,9 +101,9 @@ export default function RegisterForm({
       instituteCode: institute,
       google: Boolean(googleProfile),
       acceptedPolicies,
-      ...(isIte ? { program } : {}),
+      ...(requiresProgramSelection ? { program } : {}),
     };
-    if (!isIte) {
+    if (!requiresProgramSelection) {
       delete payload.program;
     }
 
@@ -148,7 +167,7 @@ export default function RegisterForm({
               <p className={styles.instituteName} id="register-institute-name" aria-live="polite">{theme.name}{linking ? ' · Your existing institute' : ''}</p>
             </div>
             <div className={register.details}>
-              {isIte && (
+              {requiresProgramSelection && (
                 <div className={`${styles.field} ${register.field} ${register.fullWidth}`}>
                   <div className="grid gap-1.5">
                     <label htmlFor="register-program" className="text-xs font-semibold text-slate-700 dark:text-[#8B92A5]">
@@ -163,12 +182,14 @@ export default function RegisterForm({
                         setError('');
                       }}
                       required
-                      disabled={busy || hasMissingIteConfig}
+                      disabled={busy || hasMissingProgramConfig}
                       aria-describedby="register-program-hint"
                       className={register.selectControl}
                     >
-                      <option value="">Select your ITE academic program</option>
-                      {itePrograms.map(item => (
+                      <option value="">
+                        Select your {activeInstituteLabel} academic program
+                      </option>
+                      {activePrograms.map(item => (
                         <option key={item.id} value={item.code}>
                           {item.code} — {item.name}
                         </option>
@@ -176,11 +197,11 @@ export default function RegisterForm({
                     </select>
                   </div>
                   <span id="register-program-hint" className={register.hint}>
-                    Your program customizes your ITE student dashboard and tools, and is locked after registration.
+                    Your program customizes your {activeInstituteLabel} student dashboard and tools, and is locked after registration.
                   </span>
-                  {hasMissingIteConfig && (
+                  {hasMissingProgramConfig && (
                     <p role="alert" className={styles.error}>
-                      Configuration error: Required ITE program(s) missing in database ({missingItePrograms.join(', ')}). Please contact an administrator.
+                      Configuration error: Required {activeInstituteLabel} program(s) missing in database ({activeMissingPrograms.join(', ')}). Please contact an administrator.
                     </p>
                   )}
                 </div>
@@ -198,7 +219,7 @@ export default function RegisterForm({
               <label htmlFor="register-policies">I agree to the <PolicyLink href="/terms">Terms and Conditions</PolicyLink> and acknowledge the <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.</label>
             </div>
             {error && <p role="alert" className={styles.error}>{error}</p>}
-            <button type="submit" className={styles.submit} disabled={busy || hasMissingIteConfig}>{saving ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}{saving ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
+            <button type="submit" className={styles.submit} disabled={busy || hasMissingProgramConfig}>{saving ? <LoaderCircle className={styles.spinner} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}{saving ? 'Saving your account…' : linking ? 'Connect Google and sign in' : 'Create account'}</button>
             {!googleProfile && googleEnabled && <GoogleSignIn instituteCode={institute} acceptedPolicies={acceptedPolicies} disabled={busy} onBusyChange={setGoogleBusy} onError={setError} />}
             <div className={styles.accountHelp}><span>Already have an account?</span><Link href={`/login?institute=${institute}`}>Sign in</Link></div>
           </form>

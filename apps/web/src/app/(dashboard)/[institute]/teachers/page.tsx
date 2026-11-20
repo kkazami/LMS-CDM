@@ -9,6 +9,7 @@ import { getDashboardCalendar } from "@/lib/student-calendar-data";
 import { schoolDateKey } from "@/lib/student-calendar";
 import TeacherDashboardClient from "./client";
 import { getDashboardGreeting } from "@/lib/dashboard-greeting";
+import { loadIbeInstructorTopGrades } from "@/lib/ibe-leaderboard/top-grades";
 
 export const dynamic = "force-dynamic";
 
@@ -199,7 +200,20 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
   }));
 
   const typingSessionKey = `cdm_typed_${teacherId.slice(0, 8)}`;
-  const calendar = await calendarPromise;
+  const isIbe = instituteRecord.code.toLowerCase() === "ibe";
+  const [calendar, ibeTopGrades] = await Promise.all([
+    calendarPromise,
+    isIbe
+      ? loadIbeInstructorTopGrades(
+          taughtCourses.map((c) => ({
+            id: c.id,
+            code: c.code,
+            title: c.title,
+            section: c.section,
+          }))
+        )
+      : Promise.resolve(null),
+  ]);
 
   return (
     <TeacherDashboardClient
@@ -217,6 +231,7 @@ export default async function TeacherDashboardPage({ params }: TeacherDashboardP
       showCodeLab={isEligibleInstituteCode(user.institute?.code ?? "")}
       typingSessionKey={typingSessionKey}
       greeting={getDashboardGreeting(user.name, new Date(), teacherId)}
+      ibeTopGrades={ibeTopGrades}
     />
   );
 }

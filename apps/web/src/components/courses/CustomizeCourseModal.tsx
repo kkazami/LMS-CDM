@@ -17,12 +17,21 @@ interface CustomizeCourseModalProps {
   onSuccess?: (newCoverImage: string) => void;
 }
 
-const PRESET_BANNERS = [
+const ICS_PRESET_BANNERS = [
   { id: "programming", title: "Programming", url: "/course-banners/programming.svg", bg: "#1E293B" },
   { id: "database", title: "Database Systems", url: "/course-banners/database.svg", bg: "#0F4C81" },
   { id: "networking", title: "Networking", url: "/course-banners/networking.svg", bg: "#1B4D3E" },
   { id: "webdev", title: "Web Development", url: "/course-banners/webdev.svg", bg: "#4C1D95" },
   { id: "cybersecurity", title: "Cybersecurity", url: "/course-banners/cybersecurity.svg", bg: "#0F2942" },
+];
+
+const IBE_PRESET_BANNERS = [
+  { id: "ibe-entrepreneurship", title: "Entrepreneurship & Innovation", url: "/course-banners/ibe-entrepreneurship.svg", bg: "#451A03" },
+  { id: "ibe-hrm", title: "Human Resource Management", url: "/course-banners/ibe-hrm.svg", bg: "#064E3B" },
+  { id: "ibe-finance", title: "Financial Management & Accounting", url: "/course-banners/ibe-finance.svg", bg: "#1E3A8A" },
+  { id: "ibe-marketing", title: "Marketing & Brand Strategy", url: "/course-banners/ibe-marketing.svg", bg: "#4C0519" },
+  { id: "ibe-operations", title: "Operations & Supply Chain", url: "/course-banners/ibe-operations.svg", bg: "#1E1B4B" },
+  { id: "ibe-business-law", title: "Business Law & Corporate Ethics", url: "/course-banners/ibe-business-law.svg", bg: "#27272A" },
 ];
 
 export default function CustomizeCourseModal({
@@ -35,7 +44,10 @@ export default function CustomizeCourseModal({
   instituteCode,
   onSuccess,
 }: CustomizeCourseModalProps) {
-  const isIte = instituteCode?.toLowerCase() === "ite";
+  const lowerInstitute = instituteCode?.toLowerCase() ?? "";
+  const isIte = lowerInstitute === "ite";
+  const isIbe = lowerInstitute === "ibe";
+  const presetBanners = isIbe ? IBE_PRESET_BANNERS : ICS_PRESET_BANNERS;
   const [activeTab, setActiveTab] = useState<"presets" | "custom">("presets");
   const [selectedCover, setSelectedCover] = useState<string>(currentCoverImage);
   const [customImageUrl, setCustomImageUrl] = useState<string>("");
@@ -175,10 +187,10 @@ export default function CustomizeCourseModal({
             /* ─── Preset Banners ─── */
             <div className="space-y-3">
               <label className="text-xs font-bold text-slate-700 dark:text-[#F0F2F8] uppercase tracking-wider block">
-                Select a Subject Banner
+                {isIbe ? "Select an IBE Business & Management Banner" : "Select a Subject Banner"}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {PRESET_BANNERS.map((preset) => {
+                {presetBanners.map((preset) => {
                   const isSelected = selectedCover === preset.url;
                   return (
                     <div
@@ -188,7 +200,9 @@ export default function CustomizeCourseModal({
                         isSelected
                           ? isIte
                             ? "border-blue-600 ring-2 ring-blue-500/20"
-                            : "border-orange-500 ring-2 ring-orange-500/20"
+                            : isIbe
+                              ? "border-amber-500 ring-2 ring-amber-500/20"
+                              : "border-orange-500 ring-2 ring-orange-500/20"
                           : "border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
                       }`}
                     >
@@ -201,7 +215,7 @@ export default function CustomizeCourseModal({
                         <div className="flex justify-end">
                           {isSelected && (
                             <span className={`flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md ${
-                              isIte ? "bg-blue-600" : "bg-[#F97316]"
+                              isIte ? "bg-blue-600" : isIbe ? "bg-amber-500" : "bg-[#F97316]"
                             }`}>
                               <Check className="h-3.5 w-3.5" />
                             </span>

@@ -7,6 +7,8 @@ import {
   toStudentLearningRecord,
   type RawIbeLearningRecordRow,
 } from "@/lib/learning-hub/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import LearningHubClient from "@/components/learning-hub/LearningHubClient";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +29,11 @@ export default async function IbeLearningHubPage({
   // Instructors, admins, and other institutes cannot access this feature.
   if (!isLearningHubEligible(session.user) || institute.toLowerCase() !== "ibe") {
     notFound();
+  }
+
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "learning-hub")) {
+    redirect("/ibe/students");
   }
 
   let rows: RawIbeLearningRecordRow[] = [];

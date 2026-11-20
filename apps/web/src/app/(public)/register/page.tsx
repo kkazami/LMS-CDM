@@ -6,6 +6,10 @@ import {
   ITE_STUDENT_PROGRAM_CODES,
   inspectIteDatabasePrograms,
 } from '@/lib/ite-programs/features';
+import {
+  IBE_STUDENT_PROGRAM_CODES,
+  inspectIbeDatabasePrograms,
+} from '@/lib/ibe-programs/features';
 import { supportedInstitute } from '@/lib/super-user-v1/capabilities';
 
 export const dynamic = 'force-dynamic';
@@ -27,22 +31,39 @@ export default async function RegisterPage({
       })
     : null;
 
-  const rawItePrograms = await db.academicProgram.findMany({
-    where: {
-      institute: { code: 'ite' },
-      isActive: true,
-      code: { in: [...ITE_STUDENT_PROGRAM_CODES] },
-    },
-    select: {
-      id: true,
-      code: true,
-      name: true,
-      isActive: true,
-    },
-  });
+  const [rawItePrograms, rawIbePrograms] = await Promise.all([
+    db.academicProgram.findMany({
+      where: {
+        institute: { code: 'ite' },
+        isActive: true,
+        code: { in: [...ITE_STUDENT_PROGRAM_CODES] },
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        isActive: true,
+      },
+    }),
+    db.academicProgram.findMany({
+      where: {
+        institute: { code: 'ibe' },
+        isActive: true,
+        code: { in: [...IBE_STUDENT_PROGRAM_CODES] },
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        isActive: true,
+      },
+    }),
+  ]);
 
   const { programs: itePrograms, missingCodes: missingItePrograms } =
     inspectIteDatabasePrograms(rawItePrograms);
+  const { programs: ibePrograms, missingCodes: missingIbePrograms } =
+    inspectIbeDatabasePrograms(rawIbePrograms);
 
   return (
     <div className={publicDisplay.variable}>
@@ -64,6 +85,8 @@ export default async function RegisterPage({
         studentNumber={existing?.studentNumber || existing?.uniqueId || ''}
         itePrograms={itePrograms}
         missingItePrograms={missingItePrograms}
+        ibePrograms={ibePrograms}
+        missingIbePrograms={missingIbePrograms}
       />
     </div>
   );

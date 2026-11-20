@@ -16,12 +16,14 @@ import {
   computeScoreFromCriteria,
   ratingForScore,
   type AiAnswerStatus,
+  type AiInputMode,
   type MockInterviewAiEvaluation,
 } from "./ai-types";
 import type { InterviewQuestionItem } from "./types";
 
 export const AI_TOTAL_TIMEOUT_MS = 20_000;
 const GEMINI_TIMEOUT_MS = 12_000;
+const WHISPER_TIMEOUT_MS = 8_000;
 const GEMINI_MAX_OUTPUT_TOKENS = 1100;
 const GROQ_MAX_OUTPUT_TOKENS = 1400;
 
@@ -245,6 +247,96 @@ export class ProductionModelCaller implements ModelCaller {
   }
 }
 
+function extensionForAudioMime(mimeType: string): string {
+  const lower = mimeType.toLowerCase();
+  if (lower.includes("mp4") || lower.includes("m4a") || lower.includes("aac")) return "m4a";
+  if (lower.includes("ogg")) return "ogg";
+  if (lower.includes("wav")) return "wav";
+  if (lower.includes("mpeg") || lower.includes("mp3")) return "mp3";
+  return "webm";
+}
+
+/**
+ * Transcribes a short recorded interview answer into plain text.
+ * Uses Groq Whisper (`whisper-large-v3-turbo`) first (separate audio quota bucket, ~1-2s),
+ * and falls back to Gemini audio transcription if Groq is unavailable.
+ */
+export async function transcribeApplicantAudio({
+  audioBase64,
+  mimeType = "audio/webm",
+  timeoutMs = WHISPER_TIMEOUT_MS,
+}: {
+  audioBase64: string;
+  mimeType?: string;
+  timeoutMs?: number;
+}): Promise<{ ok: true; text: string } | { ok: false }> {
+  const cleanMime = mimeType.split(";")[0].trim() || "audio/webm";
+  const gKey = groqKey();
+
+  if (gKey) {
+    try {
+      const buffer = Buffer.from(audioBase64, "base64");
+      const ext = extensionForAudioMime(cleanMime);
+      const file = new File([buffer], `interview-answer.${ext}`, { type: cleanMime });
+      const groq = new Groq({ apiKey: gKey });
+      const transcription = await withTimeout(
+        groq.audio.transcriptions.create({
+          file,
+          model: process.env.GROQ_WHISPER_MODEL || "whisper-large-v3-turbo",
+          language: "en",
+          temperature: 0,
+        }),
+        timeoutMs
+      );
+      const text = (transcription?.text || "").trim();
+      if (text) return { ok: true, text };
+    } catch (err) {
+      const reason = err instanceof Error && err.message === "AI_TIMEOUT" ? "timeout" : "error";
+      console.warn(`[MockInterviewAI] Groq Whisper transcription failed (${reason}).`);
+    }
+  }
+
+  const gemKey = geminiKey();
+  if (gemKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: gemKey });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: "Transcribe the spoken job interview answer verbatim in English. Return ONLY the plain transcript text with no commentary.",
+                },
+                {
+                  inlineData: {
+                    mimeType: cleanMime,
+                    data: audioBase64,
+                  },
+                },
+              ],
+            },
+          ],
+          config: {
+            temperature: 0.1,
+            maxOutputTokens: 1200,
+          },
+        }),
+        timeoutMs
+      );
+      const text = (response.text || "").trim();
+      if (text) return { ok: true, text };
+    } catch (err) {
+      const reason = err instanceof Error && err.message === "AI_TIMEOUT" ? "timeout" : "error";
+      console.warn(`[MockInterviewAI] Gemini audio transcription fallback failed (${reason}).`);
+    }
+  }
+
+  return { ok: false };
+}
+
 /**
  * Evaluates an answer. Gemini first (one attempt); Groq only if Gemini errors, times out, or
  * returns output that fails validation (one attempt). Never throws and never leaks provider errors.
@@ -252,15 +344,17 @@ export class ProductionModelCaller implements ModelCaller {
 export async function evaluateApplicantAnswer({
   question,
   answer,
+  inputMode = "text",
   caller = new ProductionModelCaller(),
   totalTimeoutMs = AI_TOTAL_TIMEOUT_MS,
 }: {
   question: InterviewQuestionItem;
   answer: string;
+  inputMode?: AiInputMode;
   caller?: ModelCaller;
   totalTimeoutMs?: number;
 }): Promise<EvaluationOutcome> {
-  const userPrompt = buildEvaluationPrompt(question, answer);
+  const userPrompt = buildEvaluationPrompt(question, answer, inputMode);
   const deadline = Date.now() + totalTimeoutMs;
 
   const attempts: Array<{ provider: AiProviderName; configured: boolean; budgetMs: number }> = [

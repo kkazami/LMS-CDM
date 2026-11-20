@@ -10,7 +10,6 @@ import {
   Briefcase,
   Building2,
   Compass,
-  ExternalLink,
   RotateCcw,
   Search,
   Sparkles,
@@ -37,6 +36,8 @@ interface HallOfFameClientProps {
   studentName: string;
   initialCategory?: HallOfFameCategory | null;
   initialProfileId?: string | null;
+  lockedCategory?: HallOfFameCategory | null;
+  programCode?: string | null;
 }
 
 type ViewMode = "LANDING" | "CATEGORY" | "PROFILE";
@@ -690,24 +691,36 @@ export default function HallOfFameClient({
   studentName,
   initialCategory = null,
   initialProfileId = null,
+  lockedCategory = null,
+  programCode = null,
 }: HallOfFameClientProps) {
-  const initialProfile = initialProfileId
+  const rawInitialProfile = initialProfileId
     ? getProfileById(initialProfileId) ?? null
     : null;
+  const initialProfile =
+    rawInitialProfile &&
+    (!lockedCategory || rawInitialProfile.category === lockedCategory)
+      ? rawInitialProfile
+      : null;
+
+  const resolvedInitialCategory = lockedCategory ?? initialCategory;
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (initialProfile) return "PROFILE";
-    if (initialCategory) return "CATEGORY";
+    if (resolvedInitialCategory) return "CATEGORY";
     return "LANDING";
   });
   const [activeCategory, setActiveCategory] = useState<HallOfFameCategory>(
-    initialProfile?.category ?? initialCategory ?? "ENTREPRENEUR"
+    lockedCategory ??
+      initialProfile?.category ??
+      initialCategory ??
+      "ENTREPRENEUR"
   );
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(
     initialProfile?.id ?? null
   );
   const [previousView, setPreviousView] = useState<"LANDING" | "CATEGORY">(
-    initialCategory ? "CATEGORY" : "LANDING"
+    resolvedInitialCategory ? "CATEGORY" : "LANDING"
   );
 
   // Category search & filter state
@@ -764,7 +777,8 @@ export default function HallOfFameClient({
     category: HallOfFameCategory,
     presetOrigin: ProfileOrigin | "ALL" = "ALL"
   ) {
-    setActiveCategory(category);
+    const targetCategory = lockedCategory ?? category;
+    setActiveCategory(targetCategory);
     setOriginFilter(presetOrigin);
     setSubjectFilter("ALL");
     setSearchQuery("");
@@ -774,8 +788,9 @@ export default function HallOfFameClient({
   }
 
   function openProfile(profile: HallOfFameProfile, fromView: "LANDING" | "CATEGORY") {
+    if (lockedCategory && profile.category !== lockedCategory) return;
     setPreviousView(fromView);
-    setActiveCategory(profile.category);
+    setActiveCategory(lockedCategory ?? profile.category);
     setSelectedProfileId(profile.id);
     setViewMode("PROFILE");
     markProfileExplored(profile.id);
@@ -789,21 +804,46 @@ export default function HallOfFameClient({
     setOnlyBookmarked(false);
   }
 
-  const activeProfile = useMemo(
-    () => (selectedProfileId ? getProfileById(selectedProfileId) ?? null : null),
-    [selectedProfileId]
-  );
+  const effectiveCategory = lockedCategory ?? activeCategory;
+
+  const activeProfile = useMemo(() => {
+    if (!selectedProfileId) return null;
+    const found = getProfileById(selectedProfileId) ?? null;
+    if (found && lockedCategory && found.category !== lockedCategory) {
+      return null;
+    }
+    return found;
+  }, [selectedProfileId, lockedCategory]);
 
   const categoryProfiles = useMemo(() => {
     const base = filterHallOfFameProfiles({
-      category: activeCategory,
+      category: effectiveCategory,
       origin: originFilter,
       subject: subjectFilter,
       search: searchQuery,
     });
     if (!onlyBookmarked) return base;
     return base.filter((p) => bookmarkedIds.includes(p.id));
-  }, [activeCategory, originFilter, subjectFilter, searchQuery, onlyBookmarked, bookmarkedIds]);
+  }, [effectiveCategory, originFilter, subjectFilter, searchQuery, onlyBookmarked, bookmarkedIds]);
+
+  const allowedProfiles = useMemo(() => {
+    if (lockedCategory === "ENTREPRENEUR") return ENTREPRENEUR_PROFILES;
+    if (lockedCategory === "HR_LEADER") return HR_LEADER_PROFILES;
+    return HALL_OF_FAME_PROFILES;
+  }, [lockedCategory]);
+
+  const allowedProfileIds = useMemo(
+    () => new Set(allowedProfiles.map((p) => p.id)),
+    [allowedProfiles]
+  );
+  const scopedExploredCount = useMemo(
+    () => exploredIds.filter((id) => allowedProfileIds.has(id)).length,
+    [exploredIds, allowedProfileIds]
+  );
+  const scopedBookmarkedCount = useMemo(
+    () => bookmarkedIds.filter((id) => allowedProfileIds.has(id)).length,
+    [bookmarkedIds, allowedProfileIds]
+  );
 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
@@ -819,35 +859,53 @@ export default function HallOfFameClient({
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                IBE Hall of Fame
+                {lockedCategory
+                  ? CATEGORY_META[lockedCategory].title
+                  : "IBE Hall of Fame"}
               </h1>
+              {programCode && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  IBE • {programCode}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
                 <Award className="w-3.5 h-3.5 text-amber-500" />
-                20 Curated Biographies
+                {lockedCategory
+                  ? "10 Curated Biographies"
+                  : "20 Curated Biographies"}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>. Explore 10 Entrepreneur Founders and 10 HR Leaders across the Philippines and the world. Click any portrait to study their biography, major achievements, and career timeline.
+              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>.{" "}
+              {lockedCategory === "HR_LEADER"
+                ? "Explore the 10 Famous HR Leaders across the Philippines and the world. Click any portrait to study their biography, major achievements, and career timeline."
+                : lockedCategory === "ENTREPRENEUR"
+                ? "Explore the 10 Famous Entrepreneurs across the Philippines and the world. Click any portrait to study their biography, major achievements, and career timeline."
+                : "Explore 10 Entrepreneur Founders and 10 HR Leaders across the Philippines and the world. Click any portrait to study their biography, major achievements, and career timeline."}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => openCategory("ENTREPRENEUR")}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1E2B] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-            >
-              <Briefcase className="w-3.5 h-3.5 text-amber-500" />
-              Entrepreneurs ({ENTREPRENEUR_PROFILES.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => openCategory("HR_LEADER")}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D97706] hover:bg-amber-700 text-white transition-colors cursor-pointer"
-            >
-              <Users className="w-3.5 h-3.5" />
-              HR Leaders ({HR_LEADER_PROFILES.length})
-            </button>
+            {(!lockedCategory || lockedCategory === "ENTREPRENEUR") && (
+              <button
+                type="button"
+                onClick={() => openCategory("ENTREPRENEUR")}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1E2B] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+                Entrepreneurs ({ENTREPRENEUR_PROFILES.length})
+              </button>
+            )}
+            {(!lockedCategory || lockedCategory === "HR_LEADER") && (
+              <button
+                type="button"
+                onClick={() => openCategory("HR_LEADER")}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D97706] hover:bg-amber-700 text-white transition-colors cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5" />
+                HR Leaders ({HR_LEADER_PROFILES.length})
+              </button>
+            )}
           </div>
         </div>
 
@@ -858,7 +916,7 @@ export default function HallOfFameClient({
               Total Leaders
             </div>
             <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
-              {HALL_OF_FAME_PROFILES.length}
+              {allowedProfiles.length}
             </div>
           </div>
           <div className="px-4 py-3 sm:px-6">
@@ -866,9 +924,9 @@ export default function HallOfFameClient({
               Profiles Explored
             </div>
             <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
-              {exploredIds.length}{" "}
+              {scopedExploredCount}{" "}
               <span className="text-xs font-normal text-slate-400">
-                / {HALL_OF_FAME_PROFILES.length}
+                / {allowedProfiles.length}
               </span>
             </div>
           </div>
@@ -877,7 +935,7 @@ export default function HallOfFameClient({
               Bookmarked
             </div>
             <div className="mt-0.5 text-lg sm:text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
-              {bookmarkedIds.length}
+              {scopedBookmarkedCount}
             </div>
           </div>
         </div>
@@ -898,34 +956,38 @@ export default function HallOfFameClient({
           }`}
         >
           <Compass className="w-4 h-4" />
-          <span>Portrait Gallery (20)</span>
+          <span>Portrait Gallery ({allowedProfiles.length})</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => openCategory("ENTREPRENEUR")}
-          className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
-            viewMode === "CATEGORY" && activeCategory === "ENTREPRENEUR"
-              ? "border-amber-500 text-amber-600 dark:text-amber-400"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          <Briefcase className="w-4 h-4" />
-          <span>Entrepreneurs ({ENTREPRENEUR_PROFILES.length})</span>
-        </button>
+        {(!lockedCategory || lockedCategory === "ENTREPRENEUR") && (
+          <button
+            type="button"
+            onClick={() => openCategory("ENTREPRENEUR")}
+            className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+              viewMode === "CATEGORY" && effectiveCategory === "ENTREPRENEUR"
+                ? "border-amber-500 text-amber-600 dark:text-amber-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            <Briefcase className="w-4 h-4" />
+            <span>Entrepreneurs ({ENTREPRENEUR_PROFILES.length})</span>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => openCategory("HR_LEADER")}
-          className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
-            viewMode === "CATEGORY" && activeCategory === "HR_LEADER"
-              ? "border-amber-500 text-amber-600 dark:text-amber-400"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>HR Leaders ({HR_LEADER_PROFILES.length})</span>
-        </button>
+        {(!lockedCategory || lockedCategory === "HR_LEADER") && (
+          <button
+            type="button"
+            onClick={() => openCategory("HR_LEADER")}
+            className={`inline-flex items-center gap-2 py-3 text-xs sm:text-sm font-semibold border-b-2 -mb-0.5 whitespace-nowrap transition-colors cursor-pointer ${
+              viewMode === "CATEGORY" && effectiveCategory === "HR_LEADER"
+                ? "border-amber-500 text-amber-600 dark:text-amber-400"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>HR Leaders ({HR_LEADER_PROFILES.length})</span>
+          </button>
+        )}
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -934,86 +996,90 @@ export default function HallOfFameClient({
       {viewMode === "LANDING" && (
         <div className="space-y-8">
           {/* 1. WING A: 10 ENTREPRENEURS PORTRAIT GALLERY */}
-          <section aria-labelledby="entrepreneurs-gallery-heading" className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Wing I • 5 Filipino & 5 International Founders
-                </span>
-                <h2
-                  id="entrepreneurs-gallery-heading"
-                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
+          {(!lockedCategory || lockedCategory === "ENTREPRENEUR") && (
+            <section aria-labelledby="entrepreneurs-gallery-heading" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Wing I • 5 Filipino & 5 International Founders
+                  </span>
+                  <h2
+                    id="entrepreneurs-gallery-heading"
+                    className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
+                  >
+                    Entrepreneur Hall of Fame (10)
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openCategory("ENTREPRENEUR")}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
                 >
-                  Entrepreneur Hall of Fame (10)
-                </h2>
+                  <span>Search & Filter Entrepreneurs Wing</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => openCategory("ENTREPRENEUR")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-              >
-                <span>Search & Filter Entrepreneurs Wing</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {ENTREPRENEUR_PROFILES.map((profile) => (
-                <ClickablePortraitCard
-                  key={profile.id}
-                  profile={profile}
-                  isBookmarked={bookmarkedIds.includes(profile.id)}
-                  isExplored={exploredIds.includes(profile.id)}
-                  onSelect={() => openProfile(profile, "LANDING")}
-                  onToggleBookmark={(e) => {
-                    e.stopPropagation();
-                    toggleBookmark(profile.id);
-                  }}
-                />
-              ))}
-            </div>
-          </section>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {ENTREPRENEUR_PROFILES.map((profile) => (
+                  <ClickablePortraitCard
+                    key={profile.id}
+                    profile={profile}
+                    isBookmarked={bookmarkedIds.includes(profile.id)}
+                    isExplored={exploredIds.includes(profile.id)}
+                    onSelect={() => openProfile(profile, "LANDING")}
+                    onToggleBookmark={(e) => {
+                      e.stopPropagation();
+                      toggleBookmark(profile.id);
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* 2. WING B: 10 HR LEADERS PORTRAIT GALLERY */}
-          <section aria-labelledby="hr-leaders-gallery-heading" className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Wing II • 5 Filipino & 5 International People Pioneers
-                </span>
-                <h2
-                  id="hr-leaders-gallery-heading"
-                  className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
+          {(!lockedCategory || lockedCategory === "HR_LEADER") && (
+            <section aria-labelledby="hr-leaders-gallery-heading" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Wing II • 5 Filipino & 5 International People Pioneers
+                  </span>
+                  <h2
+                    id="hr-leaders-gallery-heading"
+                    className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-0.5"
+                  >
+                    HR Leaders Hall of Fame (10)
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openCategory("HR_LEADER")}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
                 >
-                  HR Leaders Hall of Fame (10)
-                </h2>
+                  <span>Search & Filter HR Leaders Wing</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => openCategory("HR_LEADER")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
-              >
-                <span>Search & Filter HR Leaders Wing</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {HR_LEADER_PROFILES.map((profile) => (
-                <ClickablePortraitCard
-                  key={profile.id}
-                  profile={profile}
-                  isBookmarked={bookmarkedIds.includes(profile.id)}
-                  isExplored={exploredIds.includes(profile.id)}
-                  onSelect={() => openProfile(profile, "LANDING")}
-                  onToggleBookmark={(e) => {
-                    e.stopPropagation();
-                    toggleBookmark(profile.id);
-                  }}
-                />
-              ))}
-            </div>
-          </section>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {HR_LEADER_PROFILES.map((profile) => (
+                  <ClickablePortraitCard
+                    key={profile.id}
+                    profile={profile}
+                    isBookmarked={bookmarkedIds.includes(profile.id)}
+                    isExplored={exploredIds.includes(profile.id)}
+                    onSelect={() => openProfile(profile, "LANDING")}
+                    onToggleBookmark={(e) => {
+                      e.stopPropagation();
+                      toggleBookmark(profile.id);
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
@@ -1028,15 +1094,15 @@ export default function HallOfFameClient({
               <div className="space-y-1.5 max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold uppercase tracking-wider">
-                    {CATEGORY_META[activeCategory].badgeLabel}
+                    {CATEGORY_META[effectiveCategory].badgeLabel}
                   </span>
                 </div>
 
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                  {CATEGORY_META[activeCategory].title}
+                  {CATEGORY_META[effectiveCategory].title}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {CATEGORY_META[activeCategory].subtitle}
+                  {CATEGORY_META[effectiveCategory].subtitle}
                 </p>
               </div>
             </div>
@@ -1094,7 +1160,7 @@ export default function HallOfFameClient({
                   align="right"
                   options={[
                     { value: "ALL", label: "All Subjects" },
-                    ...CATEGORY_META[activeCategory].subjects.map((subj) => ({
+                    ...CATEGORY_META[effectiveCategory].subjects.map((subj) => ({
                       value: subj,
                       label: subj,
                     })),
@@ -1111,7 +1177,7 @@ export default function HallOfFameClient({
                   <strong className="font-mono text-slate-900 dark:text-white">
                     {categoryProfiles.length}
                   </strong>{" "}
-                  of 10 portraits in {CATEGORY_META[activeCategory].title}
+                  of 10 portraits in {CATEGORY_META[effectiveCategory].title}
                 </span>
 
                 <button
@@ -1401,20 +1467,13 @@ export default function HallOfFameClient({
                       {achievement.explanation}
                     </p>
 
-                    <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        Source: {achievement.sourceLabel}
-                      </span>
-                      <a
-                        href={achievement.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline shrink-0"
-                      >
-                        <span>Verify Source</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
+                    {achievement.sourceLabel && (
+                      <div className="pt-2 border-t border-slate-200 dark:border-white/10">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block">
+                          Source: {achievement.sourceLabel}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

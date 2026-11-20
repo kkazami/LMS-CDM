@@ -6,7 +6,10 @@ import {
   countWords,
   getManilaDayRange,
   AI_DAILY_LIMIT,
+  AI_TEXT_DAILY_LIMIT,
+  AI_VOICE_DAILY_LIMIT,
   AI_MAX_CHARS,
+  AI_VOICE_MAX_CHARS,
 } from "../ai-limits";
 import {
   parseEvaluation,
@@ -181,6 +184,31 @@ describe("decideUsage (Manila day, quota and cooldown)", () => {
     const lateUtc = new Date("2026-11-03T17:00:00Z");
     assert.equal(getManilaDayRange(lateUtc).startOfDay.toISOString(), "2026-11-03T16:00:00.000Z");
   });
+
+  test("allows 10 voice evaluations per day and blocks the 11th", () => {
+    const nineVoiceUses = Array.from({ length: AI_VOICE_DAILY_LIMIT - 1 }, (_, i) => ({
+      id: `voice_req_${i}`,
+      createdAt: new Date(now.getTime() - (60 + i) * 60_000),
+    }));
+
+    const tenthDecision = decideUsage(nineVoiceUses, now, AI_DAILY_LIMIT, undefined, "voice");
+    assert.equal(tenthDecision.allowed, true);
+    if (tenthDecision.allowed) {
+      assert.equal(tenthDecision.remainingVoiceToday, 1);
+      assert.equal(tenthDecision.remainingToday, 1);
+    }
+
+    const tenVoiceUses = [
+      ...nineVoiceUses,
+      { id: "voice_req_9", createdAt: new Date(now.getTime() - 120_000) },
+    ];
+    const eleventhDecision = decideUsage(tenVoiceUses, now, AI_DAILY_LIMIT, undefined, "voice");
+    assert.equal(eleventhDecision.allowed, false);
+    if (!eleventhDecision.allowed) {
+      assert.equal(eleventhDecision.remainingVoiceToday, 0);
+      assert.equal(eleventhDecision.remainingToday, 0);
+    }
+  });
 });
 
 describe("evaluation parsing and server-side scoring", () => {
@@ -284,6 +312,14 @@ describe("prompt safety", () => {
     assert.ok(!cleaned.includes("<<<END_STUDENT_ANSWER>>>"));
     const prompt = buildEvaluationPrompt(question, hostile);
     assert.equal(prompt.split("<<<END_STUDENT_ANSWER>>>").length - 1, 1);
+  });
+
+  test("voice mode prompt includes spoken transcript guidance and accepts up to AI_VOICE_MAX_CHARS", () => {
+    const voicePrompt = buildEvaluationPrompt(question, GOOD_ANSWER, "voice");
+    assert.ok(voicePrompt.includes("SPOKEN INTERVIEW ANSWER"));
+    const longerSpoken = `${GOOD_ANSWER} `.repeat(12); // > 1500 chars, <= 4500 chars
+    assert.equal(validateAnswer(longerSpoken, AI_MAX_CHARS).ok, false);
+    assert.equal(validateAnswer(longerSpoken, AI_VOICE_MAX_CHARS).ok, true);
   });
 });
 

@@ -5,12 +5,15 @@ import {
   Award,
   BookOpen,
   Building2,
+  CheckCircle2,
   ExternalLink,
   Filter,
   Globe,
   GraduationCap,
+  Info,
   Layers,
   Search,
+  ShieldCheck,
   Tag,
 } from "lucide-react";
 import {
@@ -204,6 +207,60 @@ function ProviderLogo({
           </svg>
         </div>
       );
+
+    case "TESDA_ONLINE_PROGRAM":
+      return (
+        <div
+          className={`${dimensions} shrink-0 flex items-center justify-center bg-[#0038A8] text-white shadow-xs overflow-hidden`}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 48 48" className="w-full h-full">
+            <rect width="48" height="48" fill="#0038A8" />
+            {/* TESDA 8-tooth gold gear */}
+            <g fill="#FCD116">
+              <rect x="21" y="3.5" width="6" height="5" rx="1" />
+              <rect x="21" y="29.5" width="6" height="5" rx="1" />
+              <rect x="8" y="16" width="5" height="6" rx="1" />
+              <rect x="35" y="16" width="5" height="6" rx="1" />
+              <rect x="11.5" y="7.5" width="5" height="5" rx="1" transform="rotate(-45 14 10)" />
+              <rect x="31.5" y="7.5" width="5" height="5" rx="1" transform="rotate(45 34 10)" />
+              <rect x="11.5" y="25.5" width="5" height="5" rx="1" transform="rotate(45 14 28)" />
+              <rect x="31.5" y="25.5" width="5" height="5" rx="1" transform="rotate(-45 34 28)" />
+            </g>
+            {/* Gear ring & worker/compass silhouette */}
+            <circle cx="24" cy="19" r="12.5" fill="#0038A8" stroke="#FFFFFF" strokeWidth="2.2" />
+            <circle cx="24" cy="19" r="9.5" fill="#0B4EA2" stroke="#FCD116" strokeWidth="1" />
+            <circle cx="24" cy="13.8" r="2.2" fill="#FCD116" />
+            <path
+              d="M17 17.5C19.5 18.7 21.5 19 24 19C26.5 19 28.5 18.7 31 17.5"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <path
+              d="M24 19V23.8M24 23.8L20 27.2M24 23.8L28 27.2"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {/* TESDA nameplate */}
+            <rect x="5" y="35.5" width="38" height="9.5" rx="2" fill="#FFFFFF" />
+            <text
+              x="24"
+              y="42.6"
+              textAnchor="middle"
+              fill="#0038A8"
+              fontFamily="system-ui, sans-serif"
+              fontWeight="900"
+              fontSize="7.8"
+              letterSpacing="0.9"
+            >
+              TESDA
+            </text>
+          </svg>
+        </div>
+      );
   }
 }
 
@@ -245,6 +302,9 @@ export default function LearningHubClient({
           course.providerName,
           course.subject,
           course.description,
+          course.qualificationLevel ?? "",
+          course.availabilityStatus ?? "",
+          course.certificateConditionLabel,
           ...course.keywords,
         ]
           .join(" ")
@@ -266,10 +326,25 @@ export default function LearningHubClient({
   const subjectCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const s of IBE_SUBJECT_CATEGORIES) {
-      counts[s] = EXTERNAL_COURSE_CATALOG.filter((c) => c.subject === s).length;
+      counts[s] = EXTERNAL_COURSE_CATALOG.filter((c) => {
+        if (c.subject !== s) return false;
+        if (selectedProvider !== "ALL" && c.providerId !== selectedProvider) return false;
+        if (selectedCertFilter !== "ALL" && c.certificateAvailability !== selectedCertFilter) return false;
+        if (selectedLinkFilter !== "ALL" && c.linkType !== selectedLinkFilter) return false;
+        return true;
+      }).length;
     }
     return counts;
-  }, []);
+  }, [selectedProvider, selectedCertFilter, selectedLinkFilter]);
+
+  const totalProviderFilteredCourses = useMemo(() => {
+    return EXTERNAL_COURSE_CATALOG.filter((c) => {
+      if (selectedProvider !== "ALL" && c.providerId !== selectedProvider) return false;
+      if (selectedCertFilter !== "ALL" && c.certificateAvailability !== selectedCertFilter) return false;
+      if (selectedLinkFilter !== "ALL" && c.linkType !== selectedLinkFilter) return false;
+      return true;
+    }).length;
+  }, [selectedProvider, selectedCertFilter, selectedLinkFilter]);
 
   function handleBrowseProviderCourses(providerId: LearningProviderId) {
     setSelectedProvider(providerId);
@@ -311,7 +386,7 @@ export default function LearningHubClient({
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>. Explore verified global business academies (HP LIFE, Saylor University, HubSpot Academy, OpenLearn, Santander Open Academy, Alison) mapped to your 12 IBE subjects.
+              Welcome, <span className="font-semibold text-slate-800 dark:text-slate-200">{studentName}</span>. Explore verified national and global business academies (TESDA Online Program, HP LIFE, Saylor University, HubSpot Academy, OpenLearn, Santander Open Academy, and Alison) mapped to your 12 IBE subjects.
             </p>
           </div>
 
@@ -568,7 +643,7 @@ export default function LearningHubClient({
                       : "bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
                   }`}
                 >
-                  All Subjects ({EXTERNAL_COURSE_CATALOG.length})
+                  All Subjects ({totalProviderFilteredCourses})
                 </button>
                 {IBE_SUBJECT_CATEGORIES.map((subject) => {
                   const active = selectedSubject === subject;
@@ -590,6 +665,23 @@ export default function LearningHubClient({
               </div>
             </div>
           </div>
+
+          {/* TESDA Certification & Qualification Distinction Notice */}
+          {(selectedProvider === "ALL" || selectedProvider === "TESDA_ONLINE_PROGRAM") && (
+            <div className="rounded-xl border border-sky-500/25 bg-sky-50/70 dark:bg-sky-950/20 p-4 flex flex-col sm:flex-row sm:items-start gap-3">
+              <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+              <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                <div className="font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+                  <span>TESDA Online Program (TOP) Certification & Qualification Distinction</span>
+                </div>
+                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
+                  <strong>Free Online Learning:</strong> All TESDA TOP modules are free and self-paced.{" "}
+                  <strong>Certificate of Completion:</strong> Awarded electronically upon finishing an online module.{" "}
+                  <strong>National Certificate (NC I / NC II / NC III) &amp; PQF Level III:</strong> Completing an online module does <em>not</em> automatically award an NC or PQF Level qualification—earning a National Certificate requires passing a separate in-person competency assessment at a TESDA-accredited assessment center.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Results Summary Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
@@ -633,71 +725,123 @@ export default function LearningHubClient({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCourses.map((course: ExternalCourseEntry) => (
-                <div
-                  key={course.id}
-                  className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-white/25 transition-colors"
-                >
-                  <div className="space-y-3">
-                    {/* Top Badges */}
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-semibold">
-                        <ProviderLogo providerId={course.providerId} size="sm" />
-                        {course.providerName}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                          course.certificateAvailability === "FREE_VERIFIED"
-                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
-                            : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10"
-                        }`}
-                      >
-                        {course.pricingLabel}
-                      </span>
-                    </div>
+              {filteredCourses.map((course: ExternalCourseEntry) => {
+                const isCatalogFallbackLink = course.linkType !== "VERIFIED_COURSE";
+                const availabilityText =
+                  course.availabilityStatus ??
+                  (course.linkType === "VERIFIED_COURSE"
+                    ? "Available Online (Self-Paced)"
+                    : "General Catalog Link (Official Portal)");
 
-                    {/* Subject & Title */}
-                    <div className="space-y-1">
-                      <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        <Tag className="w-3 h-3 shrink-0" />
-                        {course.subject}
-                      </div>
-                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
-                        {course.title}
-                      </h3>
-                    </div>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {course.description}
-                    </p>
-
-                    {/* Keywords Chips */}
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {course.keywords.slice(0, 4).map((kw) => (
-                        <span
-                          key={kw}
-                          className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-medium"
-                        >
-                          {kw}
+                return (
+                  <div
+                    key={course.id}
+                    className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 dark:hover:border-white/25 transition-colors"
+                  >
+                    <div className="space-y-3">
+                      {/* Top Badges */}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-semibold">
+                          <ProviderLogo providerId={course.providerId} size="sm" />
+                          {course.providerName}
                         </span>
-                      ))}
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                            course.certificateAvailability === "FREE_VERIFIED"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                              : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10"
+                          }`}
+                        >
+                          {course.pricingLabel}
+                        </span>
+                      </div>
+
+                      {/* Subject & Title */}
+                      <div className="space-y-1">
+                        <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Tag className="w-3 h-3 shrink-0" />
+                          {course.subject}
+                        </div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug">
+                          {course.title}
+                        </h3>
+                      </div>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {course.description}
+                      </p>
+
+                      {/* Availability, Qualification Level & Certificate Details */}
+                      <div className="rounded-lg bg-slate-50/80 dark:bg-[#10131B] border border-slate-200/80 dark:border-white/10 p-2.5 space-y-1.5 text-[11px]">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5">
+                          <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            {availabilityText}
+                          </span>
+                          {isCatalogFallbackLink && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-semibold">
+                              General Catalog Link
+                            </span>
+                          )}
+                        </div>
+
+                        {course.qualificationLevel && (
+                          <div className="flex items-start gap-1.5 text-sky-700 dark:text-sky-300 font-semibold">
+                            <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <span>{course.qualificationLevel}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400 leading-snug">
+                          <Award className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                          <span>{course.certificateConditionLabel}</span>
+                        </div>
+                      </div>
+
+                      {/* Keywords Chips */}
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {course.keywords.slice(0, 4).map((kw) => (
+                          <span
+                            key={kw}
+                            className="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-[#10131B] text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10 text-[11px] font-medium"
+                          >
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+                      <a
+                        href={course.officialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs transition-colors"
+                      >
+                        {isCatalogFallbackLink
+                          ? `Open Official ${course.providerName} Catalog`
+                          : `Open Course on ${course.providerName}`}
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      {course.providerId === "TESDA_ONLINE_PROGRAM" && !isCatalogFallbackLink && (
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-0.5">
+                          <span>Verified TESDA course page</span>
+                          <a
+                            href={course.fallbackUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-medium text-sky-600 dark:text-sky-400 hover:underline"
+                          >
+                            TESDA Course Catalog
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {/* Card Footer */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-white/10">
-                    <a
-                      href={course.officialUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs transition-colors"
-                    >
-                      Open Course on {course.providerName}
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -24,6 +24,7 @@ import {
   FileSpreadsheet,
   NotebookPen,
   Library,
+  BookOpen,
 } from "lucide-react";
 import StudentCalendar from "@/components/calendar/StudentCalendar";
 import type { CalendarEvent } from "@/lib/lms-types";
@@ -47,6 +48,13 @@ import StudentSuggestionsCard from "@/components/guidance/StudentSuggestionsCard
 import IteStudentProgramSection, {
   type IteStudentProgramDashboardData,
 } from "@/components/ite/IteStudentProgramSection";
+import IbeStudentProgramSection, {
+  type IbeStudentProgramDashboardData,
+} from "@/components/ibe/IbeStudentProgramSection";
+import {
+  canIbeProgramAccessFeature,
+  getIbeWelcomeBannerPortalLabel,
+} from "@/lib/ibe-programs/features";
 import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 import { classifyDueDate, splitOverdue, type DueStatus } from "@/lib/dashboard/due-dates";
 import { getWelcomeBannerPortalLabel } from "@/lib/ite/search/search-filter";
@@ -95,6 +103,7 @@ interface StudentDashboardClientProps {
   typingSessionKey?: string;
   greeting: string;
   iteProgramData?: IteStudentProgramDashboardData | null;
+  ibeProgramData?: IbeStudentProgramDashboardData | null;
 }
 
 /** Max overdue rows listed on the dashboard; the rest are reachable from the To-do page. */
@@ -126,6 +135,7 @@ export default function StudentDashboardClient({
   typingSessionKey,
   greeting,
   iteProgramData = null,
+  ibeProgramData = null,
 }: StudentDashboardClientProps) {
   const [courses, setCourses] = useState<EnrolledCourse[]>(initialCourses);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -244,6 +254,8 @@ export default function StudentDashboardClient({
 
   const isCodeLabVisible = instituteCode.toLowerCase() === "ics";
   const isIte = instituteCode.toLowerCase() === "ite";
+  const isIbe = instituteCode.toLowerCase() === "ibe";
+  const ibeProgramCode = ibeProgramData?.resolvedProgram?.code ?? null;
 
   // Quick action items for mobile and desktop quick navigation bar
   const quickActions = [
@@ -281,20 +293,64 @@ export default function StudentDashboardClient({
     ...(instituteCode.toLowerCase() === "ibe"
       ? [
           {
-            label: "Mock Interview",
-            icon: Briefcase,
-            href: `/${instituteCode}/mock-interview`,
+            label: "Consultation & Scheduling",
+            icon: Clock,
+            href: `/${instituteCode}/consultation`,
           },
-          {
-            label: "IBE Learning Hub",
-            icon: GraduationCap,
-            href: `/${instituteCode}/learning-hub`,
-          },
-          {
-            label: "Hall of Fame",
-            icon: Sparkles,
-            href: `/${instituteCode}/hall-of-fame`,
-          },
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  label: "Mock Interview",
+                  icon: Briefcase,
+                  href: `/${instituteCode}/mock-interview`,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  label: "IBE WordWise",
+                  icon: BookOpen,
+                  href: `/${instituteCode}/wordwise`,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  label: "Financial Statements",
+                  icon: FileSpreadsheet,
+                  href: `/${instituteCode}/financial-statements`,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  label: "Business Plan Guide",
+                  icon: Briefcase,
+                  href: `/${instituteCode}/business-plan`,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  label: "IBE Learning Hub",
+                  icon: GraduationCap,
+                  href: `/${instituteCode}/learning-hub`,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  label: "Hall of Fame",
+                  icon: Sparkles,
+                  href: `/${instituteCode}/hall-of-fame`,
+                },
+              ]
+            : []),
         ]
       : []),
     {
@@ -320,7 +376,9 @@ export default function StudentDashboardClient({
                   >
                     <Sparkles className="h-3.5 w-3.5 text-slate-400" />
                     <span>
-                      {getWelcomeBannerPortalLabel(instituteCode, instituteName, false)}
+                      {isIbe && ibeProgramCode
+                        ? getIbeWelcomeBannerPortalLabel(instituteCode, instituteName, false, ibeProgramCode)
+                        : getWelcomeBannerPortalLabel(instituteCode, instituteName, false)}
                     </span>
                   </span>
                 </div>
@@ -379,6 +437,13 @@ export default function StudentDashboardClient({
         {isIte && iteProgramData && (
           <FadeIn y={16} duration={0.4}>
             <IteStudentProgramSection data={iteProgramData} />
+          </FadeIn>
+        )}
+
+        {/* ─── 1c. IBE Student Program Section (One-time selector or "Your program" panel) ─── */}
+        {isIbe && ibeProgramData && (
+          <FadeIn y={16} duration={0.4}>
+            <IbeStudentProgramSection data={ibeProgramData} />
           </FadeIn>
         )}
 
@@ -446,7 +511,8 @@ export default function StudentDashboardClient({
               color={theme.colors.primary}
             />
           </StaggerItem>
-          {instituteCode.toLowerCase() === "ibe" && (
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "financial-statements") && (
             <StaggerItem>
               <QuickActionCard
                 icon={FileSpreadsheet}
@@ -457,7 +523,8 @@ export default function StudentDashboardClient({
               />
             </StaggerItem>
           )}
-          {instituteCode.toLowerCase() === "ibe" && (
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "mock-interview") && (
             <StaggerItem>
               <QuickActionCard
                 icon={Briefcase}
@@ -468,7 +535,20 @@ export default function StudentDashboardClient({
               />
             </StaggerItem>
           )}
-          {instituteCode.toLowerCase() === "ibe" && (
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "wordwise") && (
+            <StaggerItem>
+              <QuickActionCard
+                icon={BookOpen}
+                label="IBE WordWise"
+                href={`/${instituteCode}/wordwise`}
+                sublabel="Vocabulary & Language Hub"
+                color={theme.colors.primary}
+              />
+            </StaggerItem>
+          )}
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "learning-hub") && (
             <StaggerItem>
               <QuickActionCard
                 icon={Library}
@@ -479,18 +559,24 @@ export default function StudentDashboardClient({
               />
             </StaggerItem>
           )}
-          {instituteCode.toLowerCase() === "ibe" && (
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame") && (
             <StaggerItem>
               <QuickActionCard
                 icon={GraduationCap}
                 label="Hall of Fame"
                 href={`/${instituteCode}/hall-of-fame`}
-                sublabel="Business & HR leaders"
+                sublabel={
+                  ibeProgramCode === "BSBA HRM"
+                    ? "10 Famous HR Leaders"
+                    : "10 Famous Entrepreneurs"
+                }
                 color={theme.colors.primary}
               />
             </StaggerItem>
           )}
-          {instituteCode.toLowerCase() === "ibe" && (
+          {instituteCode.toLowerCase() === "ibe" &&
+            canIbeProgramAccessFeature(ibeProgramCode, "business-plan") && (
             <StaggerItem>
               <QuickActionCard
                 icon={Briefcase}

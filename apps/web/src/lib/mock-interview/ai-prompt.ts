@@ -3,9 +3,15 @@
  */
 
 import type { InterviewQuestionItem } from "./types";
+import type { AiInputMode } from "./ai-types";
 
 const ANSWER_OPEN = "<<<STUDENT_ANSWER>>>";
 const ANSWER_CLOSE = "<<<END_STUDENT_ANSWER>>>";
+
+const VOICE_TRANSCRIPT_NOTE =
+  "Delivery mode: SPOKEN INTERVIEW ANSWER (speech-to-text transcript). " +
+  "Do NOT penalize missing punctuation, capitalization, natural spoken phrasing, or minor phonetic speech-to-text transcription slips. " +
+  "Evaluate the substance, clarity of thought, examples, and interview communication.";
 
 export const EVALUATION_SYSTEM_INSTRUCTION = `You are an expert, supportive career interview coach for college business students practicing job interviews.
 You provide structured, educational coaching feedback. You are NOT an official grader.
@@ -75,7 +81,11 @@ export function sanitizeForPrompt(text: string): string {
   return text.split(ANSWER_OPEN).join("").split(ANSWER_CLOSE).join("");
 }
 
-export function buildEvaluationPrompt(question: InterviewQuestionItem, answer: string): string {
+export function buildEvaluationPrompt(
+  question: InterviewQuestionItem,
+  answer: string,
+  inputMode: AiInputMode = "text"
+): string {
   const criteria = question.evaluationCriteria.length
     ? question.evaluationCriteria.map((c) => `- ${c}`).join("\n")
     : "- (none provided)";
@@ -87,6 +97,7 @@ export function buildEvaluationPrompt(question: InterviewQuestionItem, answer: s
     `Competency being practiced: ${question.competency || "General"}`,
     question.situation ? `Scenario context: ${question.situation}` : "",
     question.interviewTip ? `Coaching tip for this question: ${question.interviewTip}` : "",
+    inputMode === "voice" ? VOICE_TRANSCRIPT_NOTE : "",
     `Reference points of a strong answer:\n${criteria}`,
     `Reference model answer (one valid example, not the only one):\n${question.modelAnswer}`,
     "",

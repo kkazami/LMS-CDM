@@ -1,12 +1,18 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { isMockInterviewEligible } from "@/lib/mock-interview/eligibility";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import { applicantAttemptDetails, loadApplicantAttempts } from "@/lib/mock-interview/attempts";
 import { isAiEvaluationEnabled, isAiProviderConfigured } from "@/lib/mock-interview/ai-evaluate";
-import { getRemainingToday } from "@/lib/mock-interview/ai-usage";
-import { AI_DAILY_LIMIT } from "@/lib/mock-interview/ai-types";
+import { getRemainingQuotaToday } from "@/lib/mock-interview/ai-usage";
+import {
+  AI_DAILY_LIMIT,
+  AI_TEXT_DAILY_LIMIT,
+  AI_VOICE_DAILY_LIMIT,
+} from "@/lib/mock-interview/ai-types";
 import { PREDEFINED_QUESTIONS, PREDEFINED_SCENARIOS } from "@/lib/mock-interview/content-bank";
 import MockInterviewHubClient from "@/components/mock-interview/MockInterviewHubClient";
 import type { StoredAttemptItem } from "@/components/mock-interview/AttemptReviewModal";
@@ -31,6 +37,11 @@ export default async function MockInterviewPage({
     notFound();
   }
 
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "mock-interview")) {
+    redirect("/ibe/students");
+  }
+
   const theme = getInstituteTheme(institute);
   const aiEnabled = isAiEvaluationEnabled() && isAiProviderConfigured();
 
@@ -38,6 +49,8 @@ export default async function MockInterviewPage({
   let initialAttempts: StoredAttemptItem[] = [];
   let initialSavedQuestionIds: string[] = [];
   let initialRemainingAiToday = AI_DAILY_LIMIT;
+  let initialRemainingTextAiToday = AI_TEXT_DAILY_LIMIT;
+  let initialRemainingVoiceAiToday = AI_VOICE_DAILY_LIMIT;
 
   try {
     if (
@@ -46,7 +59,7 @@ export default async function MockInterviewPage({
       "mockInterviewQuizAttempt" in db &&
       "mockInterviewSavedQuestion" in db
     ) {
-      const [applicantAttempts, recruiterAttempts, quizAttempts, saved, remainingAi] = await Promise.all([
+      const [applicantAttempts, recruiterAttempts, quizAttempts, saved, remainingQuota] = await Promise.all([
         loadApplicantAttempts(session.user.id),
         db.mockInterviewRecruiterAttempt.findMany({
           where: { studentId: session.user.id },
@@ -62,11 +75,19 @@ export default async function MockInterviewPage({
           where: { studentId: session.user.id },
           select: { questionId: true },
         }),
-        aiEnabled ? getRemainingToday(session.user.id) : Promise.resolve(AI_DAILY_LIMIT),
+        aiEnabled
+          ? getRemainingQuotaToday(session.user.id)
+          : Promise.resolve({
+              remainingTotal: AI_DAILY_LIMIT,
+              remainingText: AI_TEXT_DAILY_LIMIT,
+              remainingVoice: AI_VOICE_DAILY_LIMIT,
+            }),
       ]);
 
       initialSavedQuestionIds = saved.map((s) => s.questionId);
-      initialRemainingAiToday = remainingAi;
+      initialRemainingAiToday = remainingQuota.remainingTotal;
+      initialRemainingTextAiToday = remainingQuota.remainingText;
+      initialRemainingVoiceAiToday = remainingQuota.remainingVoice;
 
       const formattedApplicant = applicantAttempts.map((a) => {
         const q = PREDEFINED_QUESTIONS.find((item) => item.id === a.questionId);
@@ -133,6 +154,8 @@ export default async function MockInterviewPage({
         initialSavedQuestionIds={initialSavedQuestionIds}
         aiEvaluationEnabled={aiEnabled}
         initialRemainingAiToday={initialRemainingAiToday}
+        initialRemainingTextAiToday={initialRemainingTextAiToday}
+        initialRemainingVoiceAiToday={initialRemainingVoiceAiToday}
       />
     </div>
   );

@@ -32,8 +32,13 @@ import {
   NotebookPen,
   FileSpreadsheet,
   Briefcase,
+  CalendarDays,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import {
+  canIbeProgramAccessFeature,
+  type IbeStudentProgramCode,
+} from "@/lib/ibe-programs/features";
 import {
   filterSearchItems,
   getSearchFocusRingColor,
@@ -50,6 +55,7 @@ interface SearchModalProps {
   isEligibleForActivities?: boolean;
   isEligibleForMeetings?: boolean;
   isEligibleForPracticum?: boolean;
+  ibeProgramCode?: IbeStudentProgramCode | null;
 }
 
 interface SearchItem {
@@ -71,6 +77,7 @@ export default function SearchModal({
   isEligibleForActivities,
   isEligibleForMeetings,
   isEligibleForPracticum,
+  ibeProgramCode = null,
 }: SearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -298,6 +305,19 @@ export default function SearchModal({
             },
           ]
         : []),
+      ...(instituteCode.toLowerCase() === "ibe"
+        ? [
+            {
+              id: "prof-ibe-consultation-management",
+              title: "Consultation Management",
+              subtitle:
+                "Publish consultation availability, review student requests, and manage appointments",
+              category: "Navigation" as const,
+              href: `/${instituteCode}/consultation-management`,
+              icon: CalendarDays,
+            },
+          ]
+        : []),
       {
         id: "prof-settings",
         title: "Account Settings",
@@ -444,50 +464,94 @@ export default function SearchModal({
     !isAdmin && !isProfessor && instituteCode.toLowerCase() === "ibe"
       ? [
           {
-            id: "nav-ibe-financial-statements",
-            title: "Financial Statement Generator",
+            id: "nav-ibe-consultation",
+            title: "Consultation & Scheduling",
             subtitle:
-              "Prepare, validate, and export Income Statement, Balance Sheet, Cash Flow, and Equity reports",
-            category: "Activities",
-            href: `/${instituteCode}/financial-statements`,
-            icon: FileSpreadsheet,
+              "Request formal academic consultations with your enrolled subject instructors and track appointments",
+            category: "Navigation" as const,
+            href: `/${instituteCode}/consultation`,
+            icon: CalendarDays,
           },
-          {
-            id: "nav-ibe-mock-interview",
-            title: "Mock Interview",
-            subtitle:
-              "AI interview coach, 36 sample answers, Recruiter Mode simulation, and readiness quiz",
-            category: "Activities",
-            href: `/${instituteCode}/mock-interview`,
-            icon: Briefcase,
-          },
-          {
-            id: "nav-ibe-business-plan",
-            title: "Business Plan Guide",
-            subtitle:
-              "14 sequential entrepreneurship guide lessons, sample templates, and guided venture builder",
-            category: "Activities",
-            href: `/${instituteCode}/business-plan`,
-            icon: NotebookPen,
-          },
-          {
-            id: "nav-ibe-learning-hub",
-            title: "IBE Learning Hub",
-            subtitle:
-              "Curated free external business courses & certificates (HP LIFE, Saylor, HubSpot, OpenLearn, Santander, Alison)",
-            category: "Activities",
-            href: `/${instituteCode}/learning-hub`,
-            icon: Library,
-          },
-          {
-            id: "nav-ibe-hall-of-fame",
-            title: "Hall of Fame",
-            subtitle:
-              "Biographies and career timelines of 20 Filipino & international Entrepreneurs and HR Leaders",
-            category: "Activities",
-            href: `/${instituteCode}/hall-of-fame`,
-            icon: GraduationCap,
-          },
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  id: "nav-ibe-financial-statements",
+                  title: "Financial Statement Generator",
+                  subtitle:
+                    "Prepare, validate, and export Income Statement, Balance Sheet, Cash Flow, and Equity reports",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/financial-statements`,
+                  icon: FileSpreadsheet,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  id: "nav-ibe-mock-interview",
+                  title: "Mock Interview",
+                  subtitle:
+                    "AI interview coach, 36 sample answers, Recruiter Mode simulation, and readiness quiz",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/mock-interview`,
+                  icon: Briefcase,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  id: "nav-ibe-wordwise",
+                  title: "IBE WordWise",
+                  subtitle:
+                    "Vocabulary & Academic Language Hub — universal dictionary, formal writing replacements, and pronunciation",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/wordwise`,
+                  icon: BookOpen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  id: "nav-ibe-business-plan",
+                  title: "Business Plan Guide",
+                  subtitle:
+                    "14 sequential entrepreneurship guide lessons, sample templates, and guided venture builder",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/business-plan`,
+                  icon: NotebookPen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  id: "nav-ibe-learning-hub",
+                  title: "IBE Learning Hub",
+                  subtitle:
+                    "Curated free external business courses & certificates (HP LIFE, Saylor, HubSpot, OpenLearn, Santander, Alison)",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/learning-hub`,
+                  icon: Library,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  id: "nav-ibe-hall-of-fame",
+                  title: "Hall of Fame",
+                  subtitle:
+                    ibeProgramCode === "BSBA HRM"
+                      ? "Biographies and career timelines of 10 Famous HR Leaders (5 Filipino & 5 International)"
+                      : "Biographies and career timelines of 10 Famous Entrepreneurs (5 Filipino & 5 International)",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/hall-of-fame`,
+                  icon: GraduationCap,
+                },
+              ]
+            : []),
         ]
       : [];
 

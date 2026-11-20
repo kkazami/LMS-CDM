@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { ensureFinancialStatementTable, isFinancialEligible } from "@/lib/financial-statements/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import { MAX_STATEMENTS_PER_STUDENT, toSummary } from "@/lib/financial-statements/server";
 import { isStatementType } from "@/lib/financial-statements/types";
 import FinancialStatementsHubClient from "@/components/financial-statements/FinancialStatementsHubClient";
@@ -24,6 +26,11 @@ export default async function FinancialStatementsHubPage({
   // Instructors, admins, and other institutes cannot access this feature.
   if (!isFinancialEligible(session.user) || institute.toLowerCase() !== "ibe") {
     notFound();
+  }
+
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "financial-statements")) {
+    redirect("/ibe/students");
   }
 
   // Load student's own statements

@@ -33,6 +33,8 @@ import { INTERVIEW_CATEGORIES } from "@/lib/mock-interview/types";
 import { ResponsiveSelect } from "@/components/ui/ResponsiveSelect";
 import {
   AI_DAILY_LIMIT,
+  AI_TEXT_DAILY_LIMIT,
+  AI_VOICE_DAILY_LIMIT,
   AI_PROGRESS_THRESHOLD,
   checklistFromEvaluation,
   type MockInterviewAiEvaluation,
@@ -60,6 +62,8 @@ interface MockInterviewHubClientProps {
   aiEvaluationEnabled?: boolean;
   /** Remaining AI evaluations for today (Manila calendar day). */
   initialRemainingAiToday?: number;
+  initialRemainingTextAiToday?: number;
+  initialRemainingVoiceAiToday?: number;
 }
 
 type TabKey = "PRACTICE" | "QUESTION_BANK" | "HISTORY";
@@ -81,9 +85,13 @@ export default function MockInterviewHubClient({
   initialSavedQuestionIds = [],
   aiEvaluationEnabled = false,
   initialRemainingAiToday = AI_DAILY_LIMIT,
+  initialRemainingTextAiToday = AI_TEXT_DAILY_LIMIT,
+  initialRemainingVoiceAiToday = AI_VOICE_DAILY_LIMIT,
 }: MockInterviewHubClientProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("PRACTICE");
   const [remainingAiToday, setRemainingAiToday] = useState<number>(initialRemainingAiToday);
+  const [remainingTextAiToday, setRemainingTextAiToday] = useState<number>(initialRemainingTextAiToday);
+  const [remainingVoiceAiToday, setRemainingVoiceAiToday] = useState<number>(initialRemainingVoiceAiToday);
 
   // Question Bank & Answer Guide filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -1145,7 +1153,13 @@ export default function MockInterviewHubClient({
         onSaveAttempt={handleSaveApplicantAttempt}
         aiEvaluationEnabled={aiEvaluationEnabled}
         remainingAiToday={remainingAiToday}
+        remainingTextAiToday={remainingTextAiToday}
+        remainingVoiceAiToday={remainingVoiceAiToday}
         onRemainingAiChange={setRemainingAiToday}
+        onRemainingModeAiChange={({ remainingText, remainingVoice }) => {
+          setRemainingTextAiToday(remainingText);
+          setRemainingVoiceAiToday(remainingVoice);
+        }}
         onOpenAnswerGuide={(q) => setSelectedQuestionForDetail(q)}
         onEvaluated={handleApplicantEvaluated}
         theme={theme}

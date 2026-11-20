@@ -40,6 +40,8 @@ import { StatPill } from "@/components/dashboard/StatPill";
 import { QuickActionCard } from "@/components/dashboard/QuickActionCard";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import InstructorAtRiskWidget from "@/components/institute/ite/InstructorAtRiskWidget";
+import IbeTopGradesWidget from "@/components/ibe/IbeTopGradesWidget";
+import type { IbeInstructorTopGradesData } from "@/lib/ibe-leaderboard/top-grades";
 import { getWelcomeBannerPortalLabel } from "@/lib/ite/search/search-filter";
 
 interface TaughtCourse {
@@ -96,6 +98,7 @@ interface TeacherDashboardClientProps {
   showCodeLab?: boolean;
   typingSessionKey?: string;
   greeting: string;
+  ibeTopGrades?: IbeInstructorTopGradesData | null;
 }
 
 export default function TeacherDashboardClient({
@@ -113,6 +116,7 @@ export default function TeacherDashboardClient({
   showCodeLab,
   typingSessionKey,
   greeting,
+  ibeTopGrades,
 }: TeacherDashboardClientProps) {
   const router = useRouter();
   const [approveError, setApproveError] = useState<string | null>(null);
@@ -425,6 +429,17 @@ export default function TeacherDashboardClient({
                 />
               </StaggerItem>
             )}
+            {instituteCode.toLowerCase() === "ibe" && (
+              <StaggerItem>
+                <QuickActionCard
+                  icon={Clock}
+                  label="Consultation Management"
+                  sublabel="Availability & requests"
+                  href={`/${instituteCode}/consultation-management`}
+                  color="#D97706"
+                />
+              </StaggerItem>
+            )}
           </StaggerGroup>
         </div>
 
@@ -685,10 +700,17 @@ export default function TeacherDashboardClient({
             )}
           </div>
 
-          {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests & ITE At-Risk Widget ─── */}
+          {/* ─── 3. Right 1 Column: Pending Work & Pending Enrollment Requests & ITE At-Risk / IBE Top 10 Grades Widget ─── */}
           <div className="min-w-0 space-y-6">
             {instituteCode.toLowerCase() === "ite" && (
               <InstructorAtRiskWidget theme={theme} instituteCode={instituteCode} />
+            )}
+            {instituteCode.toLowerCase() === "ibe" && ibeTopGrades && (
+              <IbeTopGradesWidget
+                data={ibeTopGrades}
+                instituteCode={instituteCode}
+                theme={theme}
+              />
             )}
             {/* ─── 3a. Pending Work by Class Widget ─── */}
             <div className="space-y-4" id="pending-work">

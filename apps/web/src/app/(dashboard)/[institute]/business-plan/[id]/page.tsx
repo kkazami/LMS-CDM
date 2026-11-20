@@ -5,6 +5,8 @@ import {
   loadOwnedBusinessPlan,
   toBusinessPlanRecord,
 } from "@/lib/business-plan/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import BusinessPlanEditorClient from "@/components/business-plan/BusinessPlanEditorClient";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,11 @@ export default async function BusinessPlanEditorPage({
   // Strictly enforce: Student role only, and IBE institute only.
   if (!isBusinessPlanEligible(session.user) || institute.toLowerCase() !== "ibe") {
     notFound();
+  }
+
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "business-plan")) {
+    redirect("/ibe/students");
   }
 
   let owned = null;

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "../api-auth";
 import { db } from "../db";
 import { isLearningHubEligible, LEARNING_HUB_INSTITUTE_CODE } from "./eligibility";
+import { canIbeProgramAccessFeature } from "../ibe-programs/features";
+import { resolveIbeStudentProgram } from "../ibe-programs/registration";
 import {
   LEARNING_RECORD_ID,
   toStudentLearningRecord,
@@ -33,6 +35,14 @@ export async function requireLearningHubStudent(
       ok: false,
       status: 403,
       message: "The IBE Learning Hub is available to authenticated IBE students only.",
+    };
+  }
+  const resolvedProgram = await resolveIbeStudentProgram(user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "learning-hub")) {
+    return {
+      ok: false,
+      status: 403,
+      message: "Please select your IBE academic program (BSBA HRM or BS ENTREP) to access the IBE Learning Hub.",
     };
   }
   return {

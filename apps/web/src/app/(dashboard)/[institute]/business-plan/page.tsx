@@ -7,6 +7,8 @@ import {
   toBusinessPlanSummary,
   type RawBusinessPlanRow,
 } from "@/lib/business-plan/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import BusinessPlanHubClient from "@/components/business-plan/BusinessPlanHubClient";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +29,11 @@ export default async function BusinessPlanHubPage({
   // Instructors, admins, and other institutes cannot access this feature.
   if (!isBusinessPlanEligible(session.user) || institute.toLowerCase() !== "ibe") {
     notFound();
+  }
+
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "business-plan")) {
+    redirect("/ibe/students");
   }
 
   let rows: RawBusinessPlanRow[] = [];
