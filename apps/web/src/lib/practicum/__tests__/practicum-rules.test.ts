@@ -1,21 +1,29 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  RUBRIC_MAX_BYTES,
+  RUBRIC_MIME_BY_EXTENSION,
   UPLOAD_RULES,
   allowedContentTypes,
   blobPathnameFromUrl,
+  canManagePlacementRubric,
   canResubmit,
+  canViewPlacementRubric,
   getBlobStoreId,
   getExtension,
   isOwnBlobUrl,
   isValidUploadPathname,
   parseVideoLink,
   placementRoleFor,
+  placementRubricAccessFor,
+  sanitizeRubricFileName,
   statusAfterFeedback,
   statusAfterResubmit,
   summarizeGroups,
   toYouTubeEmbedUrl,
   totalPendingReview,
+  validateRubricSignature,
+  validateRubricUpload,
   validateUpload,
 } from "../rules";
 import { createSubmissionSchema, feedbackSchema } from "../schemas";
@@ -259,5 +267,117 @@ describe("input schemas", () => {
     assert.equal(feedbackSchema.safeParse({ comment: "Good", decision: "COMMENT", score: 80.5 }).success, false);
     assert.equal(feedbackSchema.safeParse({ comment: "   ", decision: "COMMENT" }).success, false);
     assert.equal(feedbackSchema.safeParse({ comment: "x", decision: "MAYBE" }).success, false);
+  });
+});
+
+describe("placement rubric validation", () => {
+  it("accepts PDF, DOC, DOCX, XLS, XLSX up to RUBRIC_MAX_BYTES (4 MB)", () => {
+    assert.equal(RUBRIC_MAX_BYTES, 4 * MB);
+    assert.deepEqual(
+      validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, 1 * MB),
+      { ok: true }
+    );
+    assert.deepEqual(
+      validateRubricUpload("rubric.doc", RUBRIC_MIME_BY_EXTENSION.doc, 2 * MB),
+      { ok: true }
+    );
+    assert.deepEqual(
+      validateRubricUpload("rubric.DOCX", RUBRIC_MIME_BY_EXTENSION.docx, 3 * MB),
+      { ok: true }
+    );
+    assert.deepEqual(
+      validateRubricUpload("rubric.xls", RUBRIC_MIME_BY_EXTENSION.xls, 2 * MB),
+      { ok: true }
+    );
+    assert.deepEqual(
+      validateRubricUpload("rubric.XLSX", RUBRIC_MIME_BY_EXTENSION.xlsx, RUBRIC_MAX_BYTES),
+      { ok: true }
+    );
+  });
+
+  it("rejects wrong extensions and mismatched MIME types", () => {
+    assert.equal(validateRubricUpload("photo.png", "image/png", 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("slides.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation", 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("video.mp4", "video/mp4", 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("rubric.pdf.exe", "application/pdf", 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("rubric.pdf", "text/html", 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.xlsx, 1 * MB).ok, false);
+    assert.equal(validateRubricUpload("", "application/pdf", 1 * MB).ok, false);
+  });
+
+  it("rejects files over RUBRIC_MAX_BYTES (4 MB) and empty (0-byte) files", () => {
+    assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, RUBRIC_MAX_BYTES + 1).ok, false);
+    assert.equal(validateRubricUpload("rubric.pdf", RUBRIC_MIME_BY_EXTENSION.pdf, 0).ok, false);
+    assert.equal(validateRubricUpload("rubric.docx", RUBRIC_MIME_BY_EXTENSION.docx, -10).ok, false);
+  });
+
+  it("validates real magic-byte signatures for PDF, DOCX, XLSX, DOC and XLS, and rejects mismatched files", () => {
+    const validPdf = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]); // "%PDF-1.7"
+    const validZip = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00]); // "PK\x03\x04..."
+    const validOle2 = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00]); // OLE2 header
+    const plainText = new TextEncoder().encode("Hello world, this is plain text");
+
+    // Valid signatures pass
+    assert.deepEqual(validateRubricSignature("rubric.pdf", validPdf), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.docx", validZip), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.xlsx", validZip), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.doc", validOle2), { ok: true });
+    assert.deepEqual(validateRubricSignature("rubric.xls", validOle2), { ok: true });
+
+    // A text file renamed .pdf fails
+    assert.equal(validateRubricSignature("rubric.pdf", plainText).ok, false);
+
+    // A .docx (ZIP) renamed .pdf fails
+    assert.equal(validateRubricSignature("rubric.pdf", validZip).ok, false);
+
+    // Cross-format mismatches and empty bytes fail
+    assert.equal(validateRubricSignature("rubric.docx", validPdf).ok, false);
+    assert.equal(validateRubricSignature("rubric.doc", validZip).ok, false);
+    assert.equal(validateRubricSignature("rubric.pdf", new Uint8Array(0)).ok, false);
+  });
+
+  it("sanitizes stored rubric file names safely", () => {
+    assert.equal(sanitizeRubricFileName("C:\\fakepath\\My Grading Rubric (2026).pdf"), "My Grading Rubric _2026.pdf");
+    assert.equal(sanitizeRubricFileName("../../etc/passwd.docx"), "passwd.docx");
+    assert.equal(sanitizeRubricFileName("   .pdf"), "rubric.pdf");
+  });
+});
+
+describe("placement rubric authorization", () => {
+  const placement = { studentId: "stu-1", supervisorId: "prof-1" };
+
+  it("allows the owning instructor to manage and view the rubric", () => {
+    assert.equal(canManagePlacementRubric({ id: "prof-1", role: "PROFESSOR" }, placement), true);
+    assert.equal(canManagePlacementRubric({ id: "prof-1", role: "INSTRUCTOR" }, placement), true);
+    assert.equal(canViewPlacementRubric({ id: "prof-1", role: "PROFESSOR" }, placement), true);
+    assert.equal(placementRubricAccessFor({ id: "prof-1", role: "PROFESSOR" }, placement), "supervisor");
+  });
+
+  it("allows ITE admins to manage and view the rubric", () => {
+    assert.equal(canManagePlacementRubric({ id: "admin-1", role: "ADMIN" }, placement), true);
+    assert.equal(canViewPlacementRubric({ id: "admin-1", role: "ADMIN" }, placement), true);
+    assert.equal(placementRubricAccessFor({ id: "admin-1", role: "ADMIN" }, placement), "admin");
+  });
+
+  it("allows the assigned student teacher to view the rubric read-only, but not manage it", () => {
+    assert.equal(canViewPlacementRubric({ id: "stu-1", role: "STUDENT" }, placement), true);
+    assert.equal(placementRubricAccessFor({ id: "stu-1", role: "STUDENT" }, placement), "student");
+    assert.equal(canManagePlacementRubric({ id: "stu-1", role: "STUDENT" }, placement), false);
+  });
+
+  it("denies another student and another instructor from viewing or managing the rubric", () => {
+    assert.equal(canViewPlacementRubric({ id: "stu-2", role: "STUDENT" }, placement), false);
+    assert.equal(placementRubricAccessFor({ id: "stu-2", role: "STUDENT" }, placement), null);
+    assert.equal(canManagePlacementRubric({ id: "stu-2", role: "STUDENT" }, placement), false);
+
+    assert.equal(canViewPlacementRubric({ id: "prof-2", role: "PROFESSOR" }, placement), false);
+    assert.equal(placementRubricAccessFor({ id: "prof-2", role: "PROFESSOR" }, placement), null);
+    assert.equal(canManagePlacementRubric({ id: "prof-2", role: "PROFESSOR" }, placement), false);
+  });
+
+  it("denies non-ITE users even if their role or id would otherwise match", () => {
+    assert.equal(canViewPlacementRubric({ id: "prof-1", role: "PROFESSOR", isIte: false }, placement), false);
+    assert.equal(canManagePlacementRubric({ id: "admin-1", role: "ADMIN", isIte: false }, placement), false);
+    assert.equal(canViewPlacementRubric({ id: "stu-1", role: "STUDENT", isIte: false }, placement), false);
   });
 });

@@ -1,9 +1,10 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import { useAlertsStore } from '../../../../src/stores/alerts-store';
 import { studentNotificationRoute } from '../../../../src/lib/student-navigation';
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
@@ -25,6 +26,7 @@ import { getOnPrimaryColor } from '../../../../src/lib/design-system';
 import type { AppNotification } from '@lms/types';
 
 export default function StudentAlertsScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const api = useAuthStore((s) => s.api);
@@ -342,7 +344,7 @@ export default function StudentAlertsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
@@ -488,4 +490,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     lineHeight: 18,
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  notificationCard: { borderRadius: 22 },
+  filterTab: { minHeight: 48, paddingHorizontal: 16 },
+  deleteBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  actionBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 });

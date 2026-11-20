@@ -1,12 +1,12 @@
+import { TextInput } from '../ui/TextInput';
+import { Text } from '../ui/Text';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Modal,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   Dimensions,

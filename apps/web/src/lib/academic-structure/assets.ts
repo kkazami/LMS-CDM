@@ -49,7 +49,7 @@ async function authorizedLegacyUrl(tx:Tx,actor:AcademicActor,url:string){
 }
 export async function authorizeStoredUrl(tx: Tx, actor: AcademicActor, url: string, assetOwnerId?: string) {
     if(url.startsWith('/uploads/'))return authorizedLegacyUrl(tx,actor,url);
-    const covers=await tx.course.findMany({where:{coverImage:url,instituteId:actor.instituteId,isArchived:false},select:{id:true,instructorId:true},take:101});
+    const covers=await tx.course.findMany({where:{OR:[{coverImage:url},{mobileCoverImage:url}],instituteId:actor.instituteId,isArchived:false},select:{id:true,instructorId:true},take:101});
     if(covers.length>100)throw new AccessError(503,'File references need reconciliation.');
     for(const c of covers)if((!assetOwnerId||c.instructorId===assetOwnerId)&&await canReadCourse(tx,actor,c.id))return true;
     const content = await tx.attachment.findMany({ where: { url, syllabusItem: { course: { instituteId: actor.instituteId } } }, select: { syllabusItemId: true, syllabusItem: { select: { course: { select: { instructorId: true } } } } }, take: 101 });

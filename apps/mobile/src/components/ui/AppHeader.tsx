@@ -1,7 +1,7 @@
+import { Text } from './Text';
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   StyleProp,
@@ -12,6 +12,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useResponsive } from '../../hooks/useResponsive';
 import { TOUCH_TARGET } from '../../lib/typography';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 
 export interface HeaderIconButtonProps {
   onPress: () => void;
@@ -34,6 +35,8 @@ export function HeaderIconButton({
   style,
   disabled = false,
 }: HeaderIconButtonProps) {
+  const { isIcsV2 } = useMobilePresentation();
+  const theme = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -43,7 +46,7 @@ export function HeaderIconButton({
       accessibilityLabel={accessibilityLabel}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       activeOpacity={0.7}
-      style={[styles.iconButton, style]}
+      style={[styles.iconButton, isIcsV2 && { minWidth: 48, minHeight: 48, borderRadius: 24, backgroundColor: theme.colors.cardSecondary }, style]}
     >
       {children}
     </TouchableOpacity>
@@ -80,6 +83,7 @@ export function AppHeader({
   backAccessibilityLabel = 'Go back',
 }: AppHeaderProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
   const router = useRouter();
   const { s, font, headerPaddingTop, maxFontSizeMultiplier } = useResponsive();
 
@@ -96,10 +100,11 @@ export function AppHeader({
       style={[
         styles.container,
         {
-          backgroundColor: backgroundColor || theme.colors.card,
+          backgroundColor: backgroundColor || (isIcsV2 ? theme.colors.background : theme.colors.card),
           paddingTop: headerPaddingTop,
           borderBottomColor: theme.colors.border,
         },
+        isIcsV2 && { borderBottomWidth: 0 },
         style,
       ]}
     >
@@ -124,7 +129,8 @@ export function AppHeader({
                 lineHeight: font(26),
               },
             ]}
-            numberOfLines={titleNumberOfLines}
+            accessibilityRole="header"
+            numberOfLines={isIcsV2 ? undefined : titleNumberOfLines}
             maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             {title}

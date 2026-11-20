@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 interface LoadingSpinnerProps {

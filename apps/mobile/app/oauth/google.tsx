@@ -1,5 +1,6 @@
+import { Text } from '../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useTheme } from '../../src/hooks/useTheme';

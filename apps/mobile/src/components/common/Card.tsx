@@ -1,6 +1,8 @@
+import { Text } from '../ui/Text';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 
 interface CardProps {
   title?: string;
@@ -13,22 +15,24 @@ interface CardProps {
 
 export function Card({ title, subtitle, children, onPress, style, themedBorder = false }: CardProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
 
   const CardContent = (
     <View
       style={[
         styles.card,
         { backgroundColor: theme.colors.card, borderColor: themedBorder ? theme.colors.primary : theme.colors.border },
+        isIcsV2 && { borderRadius: 22, borderWidth: 0, shadowOpacity: theme.isDark ? 0 : 0.035, shadowRadius: 10, elevation: 1 },
         style,
       ]}
     >
       {(title || subtitle) && (
-        <View style={styles.header}>
+        <View style={[styles.header, isIcsV2 && { padding: 20, borderBottomColor: theme.colors.border }]}>
           {title && <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>}
-          {subtitle && <Text style={[styles.subtitle, { color: theme.colors.sidebarMuted }]}>{subtitle}</Text>}
+          {subtitle && <Text style={[styles.subtitle, { color: isIcsV2 ? theme.colors.textSecondary : theme.colors.sidebarMuted }]}>{subtitle}</Text>}
         </View>
       )}
-      <View style={styles.content}>{children}</View>
+      <View style={[styles.content, isIcsV2 && { padding: 20 }]}>{children}</View>
     </View>
   );
 

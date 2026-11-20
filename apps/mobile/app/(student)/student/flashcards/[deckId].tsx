@@ -1,8 +1,9 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlashcardPractice } from '../../../../src/components/institute/FlashcardPractice';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -37,6 +38,7 @@ import type { FlashcardCard } from '@lms/types';
 import { queueCardReview, queueCardCompletion, syncCardQueue } from '../../../../src/lib/flashcard-queue';
 
 export default function StudentFlashcardStudyScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const { deckId, deckTitle } = useLocalSearchParams<{ deckId: string; deckTitle?: string }>();
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
@@ -384,7 +386,7 @@ export default function StudentFlashcardStudyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   screenInner: {
     flex: 1,
   },
@@ -512,4 +514,12 @@ const styles = StyleSheet.create({
   respBtnText: {
     fontWeight: '700',
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  flashcard: { borderRadius: 22 },
+  hintBox: { borderRadius: 22 },
+  statsCard: { borderRadius: 22 },
+  screenInner: { width: '100%', maxWidth: 900, alignSelf: 'center' },
 });

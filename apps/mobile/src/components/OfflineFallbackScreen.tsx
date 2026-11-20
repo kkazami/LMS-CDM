@@ -1,5 +1,7 @@
+import { TextInput } from './ui/TextInput';
+import { Text } from './ui/Text';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { WifiOff, RefreshCw, Settings, Check, AlertCircle, Server } from 'lucide-react-native';
 import { storage } from '../lib/storage';
 import { normalizeApiUrl } from '../lib/api-url';

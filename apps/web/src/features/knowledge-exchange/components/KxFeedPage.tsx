@@ -117,7 +117,7 @@ export default function KxFeedPage({
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-16">
+    <div data-kx-feed className="max-w-5xl mx-auto space-y-6 pb-16">
       {/* Top Hero Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
         <div>
@@ -146,7 +146,7 @@ export default function KxFeedPage({
       </div>
 
       {/* Sub Navigation Bar */}
-      <div className="flex items-center justify-between flex-wrap gap-2 text-xs font-medium border-b border-slate-200/80 dark:border-white/5 pb-2">
+      <nav aria-label="Knowledge Exchange sections" data-kx-navigation className="flex items-center justify-between flex-wrap gap-2 text-xs font-medium border-b border-slate-200/80 dark:border-white/5 pb-2">
         <div className="flex items-center gap-4 flex-wrap">
           <Link
             href={`/${instituteCode}/knowledge-exchange`}
@@ -195,7 +195,7 @@ export default function KxFeedPage({
             </Link>
           )}
         </div>
-      </div>
+      </nav>
 
       {/* Search Bar */}
       <div className="flex items-center gap-3">

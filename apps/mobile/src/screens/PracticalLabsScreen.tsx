@@ -1,5 +1,7 @@
+import { useIcsStyles } from '../hooks/useIcsStyles';
+import { Text } from '../components/ui/Text';
 import React from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, FlaskConical } from 'lucide-react-native';
@@ -12,6 +14,7 @@ import { isIcsUser } from '../lib/ite-eligibility';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function PracticalLabsScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -39,9 +42,14 @@ export function PracticalLabsScreen() {
       />}
   </Screen>;
 }
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   list: { padding: 16, gap: 12 }, center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
   description: { fontSize: 16, lineHeight: 24, marginBottom: 12, padding: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, borderWidth: 1, borderRadius: 16, minHeight: 96 },
   title: { fontSize: 17, lineHeight: 24, fontWeight: '700', marginVertical: 4 }, code: { fontSize: 13, lineHeight: 20 },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  row: { borderRadius: 22 },
 });

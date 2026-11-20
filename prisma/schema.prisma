@@ -552,10 +552,11 @@ model User {
   riskAssessments RiskAssessment[] @relation("RiskAssessmentStudent")
 
   // ─── ITE Practicum relations ───
-  practicumPlacements PracticumPlacement[]      @relation("PracticumStudent")
-  practicumSupervised PracticumPlacement[]      @relation("PracticumSupervisor")
-  practicumFeedback   PracticumFeedback[]       @relation("PracticumFeedbackAuthor")
-  practicumFiles      PracticumLessonPlanFile[] @relation("PracticumUploadedBy")
+  practicumPlacements      PracticumPlacement[]      @relation("PracticumStudent")
+  practicumSupervised      PracticumPlacement[]      @relation("PracticumSupervisor")
+  practicumRubricsUploaded PracticumPlacement[]      @relation("PracticumPlacementRubricUploader")
+  practicumFeedback        PracticumFeedback[]       @relation("PracticumFeedbackAuthor")
+  practicumFiles           PracticumLessonPlanFile[] @relation("PracticumUploadedBy")
 
   // ─── ITE Focus Mode relations ───
   focusSessions FocusSession[]
@@ -566,6 +567,10 @@ model User {
   // ─── ITE Meetings relations ───
   createdMeetings ClassMeeting[] @relation("ClassMeetingCreatedBy")
   meetingJoins    MeetingJoin[]
+
+  // ─── ITE Lecture Videos relations ───
+  iteLectureVideosUploaded IteLectureVideo[]         @relation("IteLectureVideoUploader")
+  iteLectureVideoProgress  IteLectureVideoProgress[] @relation("IteLectureVideoStudentProgress")
 
   // ─── IBE Consultation & Appointment Scheduling relations ───
   consultationAvailabilities InstructorAvailability[] @relation("InstructorConsultationAvailabilities")
@@ -613,6 +618,7 @@ model Course {
   scheduleEndDate        DateTime?                  @db.Date
   description            String                     @default("")
   coverImage             String                     @default("")
+  mobileCoverImage       String?
   instructorId           String?
   instituteId            String
   isArchived             Boolean                    @default(false)
@@ -657,6 +663,9 @@ model Course {
   meetings  ClassMeeting[]
   programId String?
   program   AcademicProgram? @relation(fields: [programId, instituteId], references: [id, instituteId], onDelete: Restrict)
+
+  // ─── ITE Lecture Videos relations ───
+  iteLectureVideos IteLectureVideo[]
 
   // ─── IBE Consultation & Appointment Scheduling relations ───
   consultationAppointments Appointment[] @relation("CourseConsultationAppointments")
@@ -2008,9 +2017,17 @@ model PracticumPlacement {
   status       PracticumPlacementStatus @default(ACTIVE)
   createdAt    DateTime                 @default(now())
 
-  student     User                  @relation("PracticumStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  supervisor  User                  @relation("PracticumSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
-  submissions PracticumSubmission[]
+  rubricStorageKey   String?
+  rubricFileName     String?
+  rubricMimeType     String?
+  rubricFileSize     Int?
+  rubricUploadedAt   DateTime?
+  rubricUploadedById String?
+
+  student          User                  @relation("PracticumStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor       User                  @relation("PracticumSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  rubricUploadedBy User?                 @relation("PracticumPlacementRubricUploader", fields: [rubricUploadedById], references: [id], onDelete: SetNull)
+  submissions      PracticumSubmission[]
 
   @@unique([studentId, schoolYear])
   @@index([supervisorId, status])
@@ -2976,4 +2993,53 @@ model AppointmentMessage {
 
   @@index([appointmentId, createdAt])
   @@index([senderId])
+}
+
+// ─── ITE Lecture Videos & Student Viewing Progress ───
+
+model IteLectureVideo {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?  @db.Text
+  courseId        String
+  sourceType      String   @default("UPLOAD")
+  externalVideoId String?
+  externalUrl     String?
+  storageUrl      String?
+  storagePathname String?
+  fileName        String?
+  mimeType        String?
+  fileSize        Int?
+  durationSeconds Float    @default(0)
+  uploadedById    String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  course     Course                    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  uploadedBy User                      @relation("IteLectureVideoUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  progress   IteLectureVideoProgress[]
+
+  @@index([courseId])
+  @@index([createdAt])
+  @@index([uploadedById])
+}
+
+model IteLectureVideoProgress {
+  id                  String    @id @default(cuid())
+  lectureId           String
+  studentId           String
+  lastPositionSeconds Float     @default(0)
+  watchedSeconds      Float     @default(0)
+  durationSeconds     Float     @default(0)
+  completedAt         DateTime?
+  lastWatchedAt       DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  lecture IteLectureVideo @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  student User            @relation("IteLectureVideoStudentProgress", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([lectureId, studentId])
+  @@index([lectureId, lastWatchedAt])
+  @@index([studentId])
 }

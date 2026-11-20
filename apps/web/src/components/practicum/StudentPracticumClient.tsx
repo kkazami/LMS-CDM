@@ -404,6 +404,26 @@ export default function StudentPracticumClient({
             </div>
           </div>
         </dl>
+
+        {placement.rubricUrl && placement.rubricFileName && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <a
+              href={placement.rubricUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+            >
+              <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="font-semibold">Rubric:</span>
+              <span className="truncate">{placement.rubricFileName}</span>
+              {placement.rubricFileSize ? (
+                <span className="text-blue-600/80 dark:text-blue-300/80">
+                  ({formatBytes(placement.rubricFileSize)})
+                </span>
+              ) : null}
+            </a>
+          </div>
+        )}
       </section>
 
       {/* Progress summary (from real database submissions) */}

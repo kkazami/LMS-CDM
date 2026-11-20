@@ -383,6 +383,7 @@ export default function KxCommentThread({
             return (
               <div
                 key={c.id}
+                data-kx-comment
                 className="flex items-start gap-2.5 text-xs group/comment"
               >
                 {/* Circular Avatar on Left */}
@@ -486,7 +487,7 @@ export default function KxCommentThread({
                     </div>
 
                     {/* 3-Dot More Menu (...) on hover */}
-                    <div className="relative shrink-0 opacity-0 group-hover/bubble:opacity-100 group-focus-within/bubble:opacity-100 transition-opacity pt-1">
+                    <div className="relative shrink-0 opacity-100 sm:opacity-0 group-hover/bubble:opacity-100 group-focus-within/bubble:opacity-100 transition-opacity pt-1">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -495,6 +496,8 @@ export default function KxCommentThread({
                         }}
                         className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors cursor-pointer"
                         title="Options"
+                        aria-label="Comment options"
+                        aria-expanded={activeMenuId === c.id}
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </button>
@@ -566,7 +569,7 @@ export default function KxCommentThread({
                   )}
 
                   {/* Action Row: Up/Down Vote · Reply · Time */}
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
+                  <div data-kx-comment-actions className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400 pl-3 pt-1 select-none font-medium">
                     {/* Upvote & Downvote Control */}
                     <div className="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-white/5 p-0.5 border border-slate-200/60 dark:border-white/5">
                       <button

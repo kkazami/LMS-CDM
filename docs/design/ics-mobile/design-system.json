@@ -1,0 +1,626 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T03:43:29Z",
+  "title": "Design System: ICS native presentation",
+  "extensions": {
+    "platform": "Expo / React Native — iOS and Android",
+    "units": "React Native logical units and native font scaling; embedded web measurements explicitly use CSS pixels",
+    "scope": {
+      "flag": "EXPO_PUBLIC_ICS_UI_V2",
+      "enabledValue": "true",
+      "defaultEnabled": false,
+      "selector": "apps/mobile/src/lib/mobile-presentation.ts#selectMobilePresentation",
+      "provider": "apps/mobile/src/components/presentation/MobilePresentation.tsx",
+      "requirements": [
+        "hydration complete",
+        "authenticated with token",
+        "ICS",
+        "matching student or teacher subtree",
+        "STUDENT or PROFESSOR/TEACHER respectively"
+      ],
+      "resetKey": "user id, institute, role, student scope epoch",
+      "fontEligibility": "Flag-enabled authenticated matching ICS role retains Manrope via Text/TextInput",
+      "authorization": false,
+      "courseRoutesUseEligiblePresentation": true,
+      "courseRouteGate": "Mistaken route exclusion removed; normal auth/institute/role/hydration/flag selection applies to course interiors and shared components",
+      "previewOverride": "Approved Expo/ngrok preview enabled through ignored .env.development.local only; code/example/production defaults remain false"
+    },
+    "latestCourseDirection": {
+      "authority": "Latest explicit user clarification: original fourth screenshot for card; exact earlier first-phase handoff for course interiors",
+      "cardReference": "User attachment ending f891: left 58x64 image, title right, metadata/links below, soft 22-radius card",
+      "interiorCheckpointLocator": "Earlier handoff naming Manrope/DM Serif, 39 tests, CMake/Ninja failure and flag off; historical identifiers, not current outcomes",
+      "rejectedInteriorReference": "User capture ending 9b3e belongs to preceding rejected packet",
+      "superseded": "Intervening old-Git card restoration, course-route exclusion, its reviewer disposition and 46-test/guard-test claims are historical",
+      "preserve": [
+        "Confirmed thumbnail composition",
+        "Exact recovered student/professor icsStyles",
+        "Instructor-only image customization",
+        "Safe authenticated image source",
+        "Manrope and DM Serif welcome"
+      ],
+      "extraction": {
+        "bundle": "tmp/ics-ui-final/_expo/static/js/web/entry-0240d0fe9a97e760a6bfbb4f5bcb54b6.js",
+        "script": "tmp/restore-39-test-course-styles.cjs",
+        "report": "tmp/course-checkpoint-restoration.json",
+        "exactCheckpointStyleValues": true,
+        "application": "Both course index screens useIcsStyles; professor inline tabs/back now explicitly retain 48-unit v2 minimums and legacy dimensions when disabled"
+      },
+      "guard": "No old-Git geometry, top banner, overlaid white title, course-route exclusion or new interpretation of confirmed checkpoint",
+      "review": "Checkpoint source and six supplementary previews passed review; user accepted baseline cards/interiors in Expo Go. Later three-repair amendment passed source/preview review with no phone appearance certification"
+    },
+    "functionalFollowup": {
+      "date": "2026-11-04",
+      "brief": "docs/design/ics-mobile/BRIEF.md#later-authorized-scope--4-november-2026",
+      "scope": "Later authorized repairs, cover customization, and existing Ohmward integration also work with the existing ICS presentation; they do not change the default-off visual flag",
+      "schemaOrAuthProtocolChanges": false,
+      "deployment": "Updated web portal/backend is required for embedded layouts, Ohmward bootstrap and cover saving; no deployment performed",
+      "newConceptsOrRasterAssets": false,
+      "theme": {
+        "nativeSource": "apps/mobile/src/stores/theme-store.ts",
+        "embeddedSource": "apps/web/src/lib/theme-context.tsx",
+        "behavior": "Paint immediately, persist preference writes in order, synchronize embedded context on lms:native-ready, skip web snapshot transitions in Expo",
+        "nativeThemeReveal": "removed"
+      },
+      "courseCover": {
+        "endpoint": "PATCH /api/courses/[courseId]",
+        "guard": "Legacy-entry guard, current authenticated actor, teaching/course access, owned-upload and image MIME checks",
+        "acceptedWrites": {
+          "web": "Five existing banner presets, owned private image or removal",
+          "mobile": "Five exact square mobile banner presets, owned private image or null inheritance reset"
+        },
+        "presets": [
+          "Programming",
+          "Database",
+          "Networking",
+          "Web development",
+          "Cybersecurity"
+        ],
+        "displaySources": "Bundled square mobile presets, relative wide presets, existing data photos and owned private assets; bearer only for private assets on configured portal origin",
+        "sessionSafety": "Ignore late picker/upload results after account change; shared SDK rechecks token after preparing multipart body",
+        "cardPresentation": "Confirmed left 58x64 thumbnail, title/code right, metadata/links below, 22-radius soft card; no top banner or overlaid white title",
+        "previewOnly": "CourseCover aspect 3.2 is Web cover preview only; Mobile thumbnail previews accepted 58x64 tile/title composition",
+        "errorPlacement": "Sticky action footer beside Save/Cancel",
+        "androidPickerLifecycle": "Unregistered ActivityResultLauncher after density/activity recreation asks close/reopen; cold restart picker success verified, underlying Expo lifecycle issue not declared fixed",
+        "uploadBody": {
+          "source": "apps/mobile/src/lib/upload-body.ts",
+          "native": "Intact Expo File multipart part",
+          "web": "Blob part",
+          "integration": "Shared SDK injected createUploadBody factory with token recheck"
+        },
+        "fields": {
+          "mobile": "Course.mobileCoverImage",
+          "web": "Course.coverImage",
+          "tileSource": "mobileCoverImage || coverImage"
+        },
+        "independentEditor": "Class images: Mobile thumbnail default, Web cover separate; drafts retained across tabs and only changed fields saved/response-confirmed",
+        "liveStatus": "Nullable live column applied and exact migration recorded; backend deployment and live-save acceptance pending"
+      },
+      "codelabFullscreen": {
+        "source": "apps/web/src/features/interactive-activities/codelab/components/useEditorFullscreen.ts",
+        "nativeSource": "apps/mobile/src/screens/IcsFeatureScreen.tsx",
+        "behavior": "CSS fullscreen retains the editor and WebView mounts; visual viewport follows keyboard; header hides; Escape/Android Back exits fullscreen before history or unsaved-work flow",
+        "bridgeMessages": [
+          "FEATURE_EDITOR_FULLSCREEN",
+          "lms:exit-editor-fullscreen"
+        ]
+      },
+      "ohmward": {
+        "routes": [
+          "/student/ohmward",
+          "/teacher/ohmward"
+        ],
+        "workspace": "/ics/activities/ohmward",
+        "behavior": "Existing authenticated web lessons, progress, sandbox and instructor analytics with original access checks and narrowly allowlisted bootstrap paths",
+        "embeddedActionFill": "Institute orange accent",
+        "onBrandToken": "ohmward-on-brand"
+      },
+      "originalSchemaStatementScope": "Initial 4 November scope only; later independent thumbnail adds nullable mobileCoverImage through separately authorized additive migration, now applied"
+    },
+    "colorMeta": {
+      "brand-light": {
+        "role": "primary",
+        "displayName": "ICS orange fill"
+      },
+      "brand-dark": {
+        "role": "primary",
+        "displayName": "Dark appearance orange fill"
+      },
+      "accent-ink-light": {
+        "role": "accent foreground",
+        "displayName": "Burnt orange ink"
+      },
+      "accent-ink-dark": {
+        "role": "accent foreground",
+        "displayName": "Pale orange ink"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "purpose": "Welcome only; 1.3 scale cap, replaced by scalable Manrope above 1.3"
+      },
+      "body": {
+        "purpose": "Observed dashboard summary role; local text roles vary"
+      }
+    },
+    "fontAssets": {
+      "directory": "apps/mobile/assets/fonts",
+      "manropeWeights": [
+        400,
+        500,
+        600,
+        700,
+        800
+      ],
+      "loading": "Local static instances registered under explicit family aliases; system fallback on failure",
+      "provenance": "apps/mobile/assets/fonts/README.md"
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "nativeStyle": {
+          "shadowColor": "#000",
+          "shadowOffset": {
+            "width": 0,
+            "height": 2
+          },
+          "shadowRadius": 6,
+          "elevation": 1
+        },
+        "lightOpacity": 0.035,
+        "darkOpacity": 0,
+        "purpose": "Active v2 shared Card, including eligible course content"
+      }
+    ],
+    "motion": [
+      {
+        "name": "surface-press",
+        "durationMs": 120,
+        "pressedScale": 0.98,
+        "reducedMotion": "No press scale"
+      },
+      {
+        "name": "welcome",
+        "durationMs": 220,
+        "translateY": 6,
+        "reducedMotion": "Immediately visible without translation"
+      },
+      {
+        "name": "tools-modal",
+        "nativeAnimation": "slide",
+        "reducedMotion": "none"
+      }
+    ],
+    "layout": {
+      "dashboardMaxWidth": 760,
+      "toolsMaxWidth": 640,
+      "dashboardGutter": 20,
+      "dashboardTopPadding": 12,
+      "minimumControlTarget": {
+        "sharedV2AndCourseCard": 48,
+        "checkpointCourseIndexes": "Recovered roles with explicit professor inline v2 tabs minimum 48 and back 48x48; previous inline conflict resolved"
+      },
+      "toolsAppearanceSwitchMinimum": {
+        "width": 48,
+        "height": 48
+      },
+      "commonInputMinimumHeight": 52,
+      "v2TabLabel": {
+        "numberOfLines": 1,
+        "fontSizeBelowWidth360": 11,
+        "fontSizeOtherwise": 12,
+        "lineHeight": 16,
+        "adjustsFontSizeToFit": true,
+        "minimumFontScale": 0.85,
+        "maxFontSizeMultiplier": 1.2,
+        "largeTextAcceptance": "pending"
+      },
+      "virtualization": {
+        "component": "FlatList",
+        "initialNumToRender": 4,
+        "maxToRenderPerBatch": 6,
+        "windowSize": 5
+      },
+      "bottomClearance": "Existing tab-height and safe-area helper",
+      "courseEditorPreview": {
+        "webAspectRatio": 3.2,
+        "mobile": "Accepted58x64 tile/title composition",
+        "scope": "Target-specific editor previews only; no card-layout change"
+      },
+      "courseContent": "Recovered first-phase student/professor index icsStyles via useIcsStyles; shared eligible Card/Button/AppHeader/modal presentation restored",
+      "shortLandscapeCodeLab": {
+        "viewportMaximumHeightCssPx": 600,
+        "scope": "non-fullscreen only",
+        "rootOverflowY": "auto",
+        "panelsMinimumHeightCssPx": 240,
+        "panelsFlexShrink": 0,
+        "purpose": "Keep results reachable below toolbar at short landscape sizes including 667x375; fullscreen unchanged"
+      },
+      "embeddedKnowledgeExchange": {
+        "navigation": "One aligned horizontal scrolling row",
+        "filters": "Contained horizontal scroll; selected states and labeled sorting",
+        "details": "Horizontal voting, wrapping author actions, readable comments with reachable options, responsive anonymous settings and editor footer",
+        "controlMinimumCssPx": 48
+      },
+      "embeddedOhmward": {
+        "controlMinimumHeightCssPx": 48,
+        "formTextCssPx": 16,
+        "canvasScroll": "contained",
+        "content": "Responsive bounded existing lessons/workspaces"
+      },
+      "confirmedCourseCard": {
+        "borderRadius": 22,
+        "outerBorderWidth": 0,
+        "headingPadding": 16,
+        "headingGap": 14,
+        "thumbnail": {
+          "width": 58,
+          "height": 64,
+          "borderRadius": 16,
+          "presetSizing": "contain",
+          "photoSizing": "cover",
+          "fallback": "Gradient with BookOpen"
+        },
+        "composition": "Thumbnail left, code/title right, metadata and links below",
+        "linkMinimumWidth": 48,
+        "linkMinimumHeight": 48,
+        "reorderSize": 48,
+        "reorderRadius": 14,
+        "customizeActionMinimumHeight": 48,
+        "footerGap": 8,
+        "pressFeedback": "Restored checkpoint SurfacePressable behavior; no visual redesign",
+        "imageSource": "mobileCoverImage || coverImage; accepted 58x64 geometry unchanged"
+      },
+      "studentCourseCheckpoint": {
+        "cardAndGroupRadius": 22,
+        "controlRoleMinimumHeight": 48,
+        "controlHorizontalPadding": 16,
+        "classworkTitleSize": 16,
+        "classworkTitleLineHeight": 24,
+        "contentMaxWidth": 900,
+        "contentAlignment": "center",
+        "filterScrollStyle": {
+          "flexGrow": 0,
+          "flexShrink": 0
+        }
+      },
+      "professorCourseCheckpoint": {
+        "cardAndModalRadius": 22,
+        "controlRoleMinimumHeight": 48,
+        "controlHorizontalPadding": 16,
+        "backAndActionRoleMinimumSize": 48,
+        "titleSize": 16,
+        "titleLineHeight": 24,
+        "scope": "Recovered objects plus explicit inline v2 minimum48 for tabs and back48x48; legacy dimensions retained when disabled"
+      },
+      "classImagesLocalModalMaximumHeight": "Math.max(0, height - insets.top - insets.bottom - 32); local editor only"
+    },
+    "verification": {
+      "source": "inspected",
+      "expoWebFixtures": "Latest full synthetic student/professor journey passed; source/card captures in tmp/course-checkpoint-review",
+      "implementationChecks": "Latest square-banner amendment: 46 mobile tests, both TypeScript checks and full synthetic preview passed, including five preset decode/selection and independent save/photo/reset",
+      "boundedReview": "Fresh checkpoint_course_review ship for source and all six supplementary preview captures; documentation fix resolved; no native appearance certification",
+      "nativeExports": "Historical all-platform exports passed; latest checkpoint restoration has Expo Web export only",
+      "browserSuites": "Historical CodeLab 33/33 and embedded 6/6 passed; latest full synthetic student/professor journey passed",
+      "webProductionBuild": "Final independent-image web production build passed",
+      "androidApkBuild": "Historical APK passed using local SDK CMake 3.31.6/Ninja 1.12.1 and process-only Gradle property; no current phone acceptance",
+      "androidEmulator": {
+        "evidence": "tmp/mobile-native-review - historical before latest checkpoint restoration",
+        "visualAuthority": "Not current phone acceptance; card/interior authority is latest confirmed screenshot and recovered first-phase styles",
+        "transport": "Synthetic fixture transport, not live authenticated backend acceptance",
+        "captures": "Both roles, both themes, 320-dp dashboards/tools; professor 768-dp checkpoint",
+        "interactions": [
+          "CodeLab fullscreen with Gboard and Android Back preserves code",
+          "Knowledge Exchange feed/detail/Back",
+          "Ohmward primer",
+          "Sign out",
+          "Cover preset save",
+          "Real OS photo selection/cropping/upload/private-image loading",
+          "Photo picker success after cold restart"
+        ]
+      },
+      "iphoneAcceptance": "pending — no iPhone exercised",
+      "liveAuthenticatedAcceptance": "pending",
+      "nativeTabletAcceptance": "Earlier professor 768-dp checkpoint is historical; latest checkpoint, 768-point iPad and specified 800-dp Android acceptance pending",
+      "nativeAccessibilityAndGestures": "Earlier Android emulator checkpoint is historical; current checkpoint gestures, VoiceOver/TalkBack, large text, permission denial/cancel, interruptions, activity recreation and circuit gestures pending",
+      "databaseChanges": {
+        "applied": "Only nullable Course.mobileCoverImage migration and targeted migration record",
+        "unrelatedMigrations": false,
+        "arenaTablesPresent": 6
+      },
+      "deploymentPerformed": false,
+      "physicalPerformance": "pending — Pixel 6a measurements required by BRIEF.md",
+      "releaseAcceptance": "pending",
+      "runtimeSource": "Latest approved tunnel matches all nine Android source modules; source agreement is not physical-device appearance acceptance",
+      "checkpointCoursePhoneAcceptance": "Baseline accepted by user in Expo Go; amendment still pending",
+      "phoneAppearance": "Accepted baseline retained; amendment phone appearance pending",
+      "baselineVisualAcceptance": "User accepted cards and course interior in Expo Go; latest three-repair amendment has no phone appearance acceptance yet",
+      "latestImageEditorReview": "Final disposition ship for source and supplementary previews after Class images title correction; native/live-backend acceptance pending",
+      "liveIndependentImageSaving": "Additive migration applied; backend deployment and live saving acceptance pending",
+      "sourceSchemaMigration": "Only nullable mobileCoverImage migration applied and exact migration recorded afterward; verified nullable TEXT/no default/permissions/checksum",
+      "latestMobileBannerReview": "No material UI issue; sole fix finding was stale design documentation, now corrected; no later ship verdict inferred"
+    },
+    "acceptedCourseBaseline": {
+      "userAcceptance": "Kirby confirmed in Expo Go on 5 November: Cards and course interior are correct",
+      "scope": "Confirmed thumbnail cards and recovered interiors are accepted visual baseline; later amendment preserves cards/classwork",
+      "evidence": "docs/quality/course-checkpoint-restoration.md",
+      "broaderReleaseAcceptance": "pending"
+    },
+    "courseAmendment": {
+      "date": "2026-11-05",
+      "authority": "User authorizes exactly three repairs to accepted baseline",
+      "unchanged": "Accepted small-thumbnail cards and classwork geometry",
+      "studentHeader": {
+        "scope": "ICS student course page only; other institutes retain AppHeader fallback; no global AppHeader change",
+        "safeArea": true,
+        "enabledPreviewBackSize": 48,
+        "composition": "Back beside remaining-width column; code/section above full title then instructor, no right-side chips",
+        "codeSize": 11,
+        "codeLineHeight": 16,
+        "titleSize": 18,
+        "titleLineHeight": 24,
+        "instructorSize": 12,
+        "instructorLineHeight": 18,
+        "backSizeWhenDisabled": 44
+      },
+      "practicalLabs": "Top action removed on student/professor course pages; existing tools/routes and classwork destinations retained",
+      "meetingLinks": {
+        "source": "apps/mobile/src/components/institute/CourseMeetingLinks.tsx",
+        "parser": "apps/mobile/src/lib/links.ts#googleMeetLinks",
+        "webParitySource": "apps/web/src/lib/academic-structure/meeting-links.ts",
+        "scope": "Announcement content, both roles",
+        "destinations": "HTTPS exact meet.google.com room-code or lookup paths, same web helper validation; no credentials or lookalike hosts",
+        "deduplication": true,
+        "opener": "Existing openSafeUrl / React Native Linking",
+        "error": "Inline announced error",
+        "actualMeetingJoined": false
+      },
+      "apiAuthDatabaseChanges": false,
+      "newConceptsOrImages": false,
+      "verification": {
+        "mobileTypeScript": "passed",
+        "parserParitySecurityTest": "passed",
+        "fullSyntheticPreview": "Full exported preview passed for student/professor, including all six stream states",
+        "streamMatrix": "320/390/768 in both themes",
+        "assertions": [
+          "Header below 140 CSS pixels in fixtures",
+          "No page overflow",
+          "No top Labs action",
+          "One Meet button for valid posted destination only",
+          "Stubbed window.open verifies target; no real meeting joined"
+        ],
+        "evidence": "tmp/course-meet-header-review/course-stream-{light,dark}-{320,390,768}.png and teacher-course-restored-390.png",
+        "publicAndroidBundle": "Six current files match; checkpoint flag enabled",
+        "review": "course_meet_header_review returned ship for native source and supplementary previews, no material fixes; no current phone appearance or native OS launch certification",
+        "phoneAppearance": "pending for this amendment; prior accepted baseline preserved",
+        "diffCheck": "passed",
+        "qualityReport": "docs/quality/course-stream-header-meet.md"
+      }
+    },
+    "independentMobileImage": {
+      "authority": "Narrow independent Expo class-thumbnail feature; accepted card/interior baseline unchanged",
+      "modalTitle": "Class images",
+      "defaultTab": "Mobile thumbnail",
+      "secondTab": "Web cover",
+      "mobile": {
+        "field": "Course.mobileCoverImage",
+        "fallback": "Course.coverImage",
+        "preview": "Accepted58x64 tile beside course title",
+        "requestedNativeCrop": "1:1",
+        "resetLabel": "Use web cover on mobile",
+        "resetMeaning": "Null mobile override restores inheritance",
+        "presets": "Five dedicated square Programming/Database/Networking/Web development/Cybersecurity banners",
+        "presetSelection": "Two-column image grid, labels, selected border/check and accessibility state; choosing preset clears pending mobile photo"
+      },
+      "web": {
+        "field": "Course.coverImage",
+        "previewAspectRatio": 3.2,
+        "requestedNativeCrop": "16:5",
+        "presets": "Five existing web banners",
+        "removeLabel": "Remove web cover",
+        "removalMeaning": "Leaves separate mobile image intact"
+      },
+      "editing": {
+        "draftsRetainedAcrossTabs": true,
+        "saveLabel": "Save changes",
+        "changedFieldsOnly": true,
+        "savedResponseConfirmed": true,
+        "noChangeSaveDisabled": true,
+        "errors": "Sticky action footer",
+        "oldBackend": "Missing mobileCoverImage property shows LMS-update warning and disables mobile saves; web-only changes remain available"
+      },
+      "authorization": "Existing teaching/course guard, owned private image checks, resource-scoped student reads and stale-account rejection; both changes validate before one course update",
+      "cardGeometryChanged": false,
+      "newRoutesRolesOrAuthFlow": false,
+      "database": {
+        "field": "Nullable public.Course.mobileCoverImage TEXT",
+        "migration": "prisma/migrations/20261105000000_course_mobile_cover/migration.sql",
+        "status": "applied successfully using explicitly authorized owner access; targeted Prisma resolve recorded exact migration afterward",
+        "liveColumn": "TEXT, nullable, no default; verified through normal-principal read-only query",
+        "runtimeCanAlterCourse": false,
+        "databaseWritePerformed": true,
+        "requirement": "Backend deployment and live-save acceptance still required; see docs/quality/mobile-course-images.md",
+        "writeScope": "Only the additive mobileCoverImage migration and its exact migration record; no unrelated migration",
+        "runtimeSelectAndUpdate": true,
+        "checksum": "Migration checksum matches recorded migration",
+        "arenaTables": "All six Arena-prefixed tables remain present",
+        "temporaryOwnerFile": "removed"
+      },
+      "deploymentPerformed": false,
+      "verification": {
+        "mobileTests": "46 passed",
+        "resourceTests": "15 passed",
+        "typechecks": "Mobile and web passed",
+        "syntheticPreview": "Final full student/professor preview passed with independent edits, removal/reset, drafts and no-change save",
+        "captures": "Twelve editor states: both targets at 320/390/768, light/dark; tmp/mobile-cover-review/teacher-image-{mobile,web}-{light,dark}-{320,390,768}.png",
+        "titleFix": "Former long title truncated at 320; final title Class images",
+        "finalShortTitleRecapture": "passed",
+        "scopedVerdict": "ship for source and supplementary previews; native/live-backend acceptance pending",
+        "nativeCropPhotoLibrary": "pending for this feature",
+        "liveSaving": "pending backend deployment and live acceptance; migration applied",
+        "hardwareAccessibilityPerformanceAndIos": "pending",
+        "qualityReport": "docs/quality/mobile-course-images.md",
+        "webBuild": "passed: compilation, TypeScript, static pages and traces"
+      }
+    },
+    "mobileBannerAmendment": {
+      "authority": "User requests mobile presets like web but square; accepted thumbnail card/interior baseline preserved",
+      "labels": [
+        "Programming",
+        "Database",
+        "Networking",
+        "Web development",
+        "Cybersecurity"
+      ],
+      "artwork": {
+        "format": "SVG",
+        "width": 256,
+        "height": 256,
+        "directory": "apps/web/public/course-banners/mobile",
+        "provenance": "Existing banner palettes and large centered subject symbols recomposed for square mobile tile",
+        "registry": "apps/mobile/src/lib/mobile-course-banners.ts",
+        "rendering": "Expo static bundles for preview and saved presets; no web asset deployment or bearer credential needed"
+      },
+      "picker": {
+        "heading": "Mobile class banners",
+        "columns": 2,
+        "tileWidth": "48%",
+        "artworkSize": 64,
+        "tileRadius": 12,
+        "gap": 8,
+        "labels": true,
+        "selection": "Border, check and announced selected state",
+        "chooseAction": "Clear pending mobile photo and change mobile draft only"
+      },
+      "editorHeight": {
+        "scope": "CourseCoverEditor local FormModal style only; shared FormModal unchanged",
+        "maximum": "Math.max(0, height - insets.top - insets.bottom - 32)",
+        "purpose": "Scroll longer body while header and actions remain reachable"
+      },
+      "persistence": {
+        "field": "Course.mobileCoverImage",
+        "exactPresetPaths": "/course-banners/mobile/{programming,database,networking,webdev,cybersecurity}.svg",
+        "validation": "Separate exact mobile/web allowlists; unknown/cross-target paths and external URLs rejected; existing owned-private-photo checks retained",
+        "additionalDatabaseChange": false,
+        "deployment": "Backend deployment and live-save acceptance pending"
+      },
+      "verification": {
+        "mobileTests": "46 passed",
+        "typechecks": "Mobile and web passed",
+        "syntheticPreview": "Full flow passed: all five assets decode/select, mobile preset save leaves web unchanged, then photo replacement and reset",
+        "captures": "Twelve editor states at 320/390/768 in light/dark; tmp/mobile-banner-review",
+        "review": "Fresh review found no material UI issue; initial fix concerned only stale BRIEF/DESIGN descriptions; final scored disposition ship after documentation update",
+        "nativeHardware": "pending",
+        "liveSave": "pending backend deployment and acceptance",
+        "qualityReport": "docs/quality/mobile-course-images.md",
+        "androidSource": "All nine Android source modules match approved tunnel; physical-device appearance unconfirmed"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button-primary-light",
+      "source": "apps/mobile/src/components/common/Button.tsx",
+      "description": "Eligible v2 pill with native opacity feedback and loading/disabled semantics, including course content; no course-route exclusion."
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "source": "apps/mobile/src/components/common/Input.tsx",
+      "description": "Eligible v2 52-minimum field and scoped Manrope TextInput typography, including course content."
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card-container",
+      "source": "apps/mobile/src/components/ui/Card.tsx",
+      "description": "Eligible v2 soft 22-radius shared surface including course content; no mistaken route exclusion."
+    },
+    {
+      "name": "Header",
+      "kind": "nav",
+      "source": "apps/mobile/src/components/institute/IcsHeader.tsx",
+      "description": "Safe-area institutional header with 48-unit actions and account trigger focus reference."
+    },
+    {
+      "name": "Tabs",
+      "kind": "nav",
+      "source": "apps/mobile/src/components/navigation/IcsTabBar.tsx",
+      "description": "Five role-specific destinations, selected state, stronger text, underline, unread hint and safe-area padding. V2 labels fit one line at compact width with local scale limits; large-text acceptance pending."
+    },
+    {
+      "name": "Confirmed course card and class images",
+      "kind": "card",
+      "sources": [
+        "apps/mobile/src/components/institute/IcsCourseCard.tsx",
+        "apps/mobile/src/components/institute/CourseCover.tsx",
+        "apps/mobile/src/components/institute/CourseCoverEditor.tsx"
+      ],
+      "description": "Accepted 22-radius / 58x64 thumbnail card unchanged; source now mobileCoverImage || coverImage. Instructor Class images editor defaults to Mobile thumbnail with separate Web cover, retained drafts and changed-only save. Mobile reset inherits web; additive migration applied; backend deployment and live saving acceptance pending. Mobile tab adds five bundled square presets in a labeled two-column grid; accepted card geometry unchanged."
+    },
+    {
+      "name": "Dashboard overview",
+      "kind": "custom",
+      "source": "apps/mobile/src/components/institute/IcsDashboardOverview.tsx",
+      "description": "Serif welcome followed by real student pending tasks or professor grading/enrollment queues."
+    },
+    {
+      "name": "Tools sheet",
+      "kind": "custom",
+      "source": "apps/mobile/src/components/navigation/IcsToolsMenu.tsx",
+      "description": "Bounded scrolling native modal with grouped learning destinations including Ohmward, 48-unit minimum appearance switch, Sign out confirmation and platform-specific focus restoration. Switch Account UI is removed."
+    },
+    {
+      "name": "Checkpoint course workspace",
+      "kind": "custom",
+      "sources": [
+        "apps/mobile/app/(student)/student/courses/[courseId]/index.tsx",
+        "apps/mobile/app/(teacher)/teacher/courses/[courseId]/index.tsx"
+      ],
+      "description": "Exact recovered first-phase student/professor icsStyles and normal eligible shared presentation; user accepted baseline in Expo Go. Later local student header, top Labs removal and announcement Meet actions preserve cards/classwork. Amendment phone appearance remains pending."
+    },
+    {
+      "name": "Authenticated embedded workspace",
+      "kind": "custom",
+      "source": "apps/mobile/src/screens/IcsFeatureScreen.tsx",
+      "description": "Trusted authenticated WebView for real CodeLab, Knowledge Exchange and Ohmward functionality. Theme sync and native-ready chrome cleanup; CodeLab mounted-editor fullscreen; responsive Knowledge Exchange and Ohmward controls. Expo Web offers portal continuation. Android fixture-backed runtime checkpoint exists; iPhone, physical and live authenticated acceptance remain pending."
+    }
+  ],
+  "narrative": {
+    "northStar": "A calmer learning space",
+    "overview": "Source-derived specification for the ICS Expo / React Native presentation and later authorized mobile workspace follow-up. It extends the shared campus design within the native and embedded scope; orange primary fills and the serif welcome are intentional local exceptions. The original visual flag stays off by default; later functional additions do not change its scope.",
+    "keyCharacteristics": [
+      "Manrope interface type with one welcoming serif moment.",
+      "Orange identity, readable accent ink, and quiet light/dark surfaces.",
+      "Pending academic work before courses, tools, and calendar.",
+      "Soft cards, comfortable controls, and restrained motion."
+    ],
+    "rules": [
+      {
+        "name": "The Confirmed Course Checkpoint Rule",
+        "body": "Latest user clarification selects original fourth screenshot for thumbnail card and exact first-phase handoff for interiors. Preserve recovered styles and instructor customization; old-Git restoration and route exclusion are superseded.",
+        "section": "layout"
+      },
+      {
+        "name": "The Fill and Ink Rule",
+        "body": "Brand orange is a fill or indicator; small accent text uses separate light/dark accent ink in eligible presentation, including course content.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do keep the native presentation behind its shared auth-derived context and default-off build flag.",
+      "Do use accent ink for small orange foregrounds and validate actual light/dark contrast pairs.",
+      "Do preserve live API values, native controls, safe areas, offline behavior, recovery, and existing route semantics.",
+      "Do verify large type, both themes, native gestures, and assistive technology on the declared devices before acceptance."
+    ],
+    "donts": [
+      "Don't extend these native exceptions into authentication, onboarding, other institutes, unsupported roles, or the shared web design system.",
+      "Don't mutate global Text/defaultProps, invent course art, or import illustrative concept data.",
+      "Don't replace the confirmed thumbnail card or recovered interior checkpoint with old Git geometry, a top banner, a route exclusion, or a new visual interpretation.",
+      "Don't report browser fixtures or successful compilation as native accessibility or performance evidence.",
+      "Don't expand the authorized student-header, top-Labs-removal and announcement-Meet amendment into another card or classwork redesign."
+    ]
+  }
+}

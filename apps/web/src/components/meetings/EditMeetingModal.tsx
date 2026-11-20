@@ -171,7 +171,7 @@ export default function EditMeetingModal({
           {/* Meeting Title */}
           <div>
             <label htmlFor="edit-meeting-title-input" className="block font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
-              Meeting Title <span className="text-rose-500">*</span>
+              Meeting Title <span className="text-rose-500" aria-hidden="true">*</span>
             </label>
             <input
               id="edit-meeting-title-input"
@@ -181,6 +181,7 @@ export default function EditMeetingModal({
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-xs"
               required
+              aria-required="true"
             />
           </div>
 
@@ -188,7 +189,7 @@ export default function EditMeetingModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label htmlFor="edit-meeting-url" className="block font-semibold text-slate-700 dark:text-slate-300">
-                Meeting Link (https://) <span className="text-rose-500">*</span>
+                Meeting Link (https://) <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               {joinUrl.trim() && <ProviderBadge provider={detectedProvider} />}
             </div>
@@ -200,6 +201,7 @@ export default function EditMeetingModal({
               onChange={(e) => setJoinUrl(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-xs"
               required
+              aria-required="true"
             />
           </div>
 
@@ -221,7 +223,7 @@ export default function EditMeetingModal({
           {/* Scheduled Date and Time (Manila Time) */}
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
             <span className="block font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Scheduled Date & Time (Asia/Manila)
+              Scheduled Date & Time (Asia/Manila) <span className="text-slate-400 font-normal">(Optional)</span>
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>

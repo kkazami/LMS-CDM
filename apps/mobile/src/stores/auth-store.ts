@@ -7,6 +7,7 @@ import { queryClient } from '../lib/query-client';
 import { setStudentScope, studentOwner } from '../lib/student-scope';
 import { useAlertsStore } from './alerts-store';
 import { recordRequest } from '../lib/performance';
+import { createUploadBody } from '../lib/upload-body';
 
 const TOKEN_KEY = 'lumina_auth_token';
 const USER_KEY = 'lumina_user';
@@ -66,6 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
   const api = createApiClient({
     baseUrl: API_BASE_URL,
     getToken: async () => get().token,
+    createUploadBody,
     onUnauthorized: token => { if (get().token === token) expireSession(); },
     onRequestComplete: recordRequest,
   });

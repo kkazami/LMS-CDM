@@ -70,12 +70,12 @@
     "Standard 10/100 Mbps Ethernet uses pins 1, 2, 3 and 6. Gigabit Ethernet uses all 8 pins."
   ],
   "tools": [
-    { "id": "utp-cable", "name": "UTP cable", "use": "The unshielded twisted-pair cable that carries the network signal." },
-    { "id": "rj45", "name": "RJ45 connector (plug)", "use": "The 8-pin plug that is crimped onto the end of the cable." },
-    { "id": "stripper", "name": "Cable stripper", "use": "Removes the outer jacket without cutting the wires inside." },
-    { "id": "cutter", "name": "Cutter or snips", "use": "Cuts the cable end clean and trims the wires to an even length." },
-    { "id": "crimper", "name": "Crimping tool", "use": "Presses the RJ45 contacts into the wires and clamps the plug onto the cable jacket." },
-    { "id": "tester", "name": "LAN cable tester", "use": "Checks that each of the 8 wires connects to the correct pin at the other end." }
+    { "id": "utp-cable", "name": "UTP cable", "use": "The unshielded twisted-pair cable that carries the network signal.", "image": "/images/ict-lab/tools/utp-cable.svg" },
+    { "id": "rj45", "name": "RJ45 connector (plug)", "use": "The 8-pin plug that is crimped onto the end of the cable.", "image": "/images/ict-lab/tools/rj45-connector.svg" },
+    { "id": "stripper", "name": "Cable stripper", "use": "Removes the outer jacket without cutting the wires inside.", "image": "/images/ict-lab/tools/cable-stripper.svg" },
+    { "id": "cutter", "name": "Cutter or snips", "use": "Cuts the cable end clean and trims the wires to an even length.", "image": "/images/ict-lab/tools/cutter-snips.svg" },
+    { "id": "crimper", "name": "Crimping tool", "use": "Presses the RJ45 contacts into the wires and clamps the plug onto the cable jacket.", "image": "/images/ict-lab/tools/crimping-tool.svg" },
+    { "id": "tester", "name": "LAN cable tester", "use": "Checks that each of the 8 wires connects to the correct pin at the other end.", "image": "/images/ict-lab/tools/lan-cable-tester.svg" }
   ],
   "crimpingSteps": [
     { "step": 1, "title": "Prepare the cable", "detail": "Cut the end of the cable clean and straight with the cutter." },

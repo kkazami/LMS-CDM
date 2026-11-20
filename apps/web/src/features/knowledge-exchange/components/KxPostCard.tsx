@@ -242,7 +242,7 @@ export default function KxPostCard({
           })()}
 
           {/* Bottom Row: Author & Mobile Stats */}
-          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-white/5 text-xs">
+          <div data-kx-card-footer className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-white/5 text-xs">
             {/* Mobile Answer Count Badge */}
             <div className="flex sm:hidden items-center gap-2 text-slate-500 text-[11px]">
               <span

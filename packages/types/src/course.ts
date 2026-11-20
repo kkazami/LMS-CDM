@@ -13,6 +13,7 @@ export interface Course {
   enrolledCount?: number;
   displayOrderIndex?: number;
   coverImage?: string | null;
+  mobileCoverImage?: string | null;
 }
 
 export interface CourseDetail extends Course {

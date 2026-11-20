@@ -17,7 +17,7 @@ export default function KxAnonymousToggle({
   const labelId = useId();
   const descriptionId = useId();
   return (
-    <div className="flex items-start justify-between gap-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+    <div data-kx-anonymous-toggle className="flex items-start justify-between gap-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
           className={`p-2 rounded-lg shrink-0 transition-colors ${

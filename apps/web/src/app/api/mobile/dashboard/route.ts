@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const [courses, calendar] = await Promise.all([
       db.course.findMany({ where: scope, orderBy: { createdAt: 'desc' }, select: {
         id: true, code: true, courseCode: true, title: true, description: true, section: true, subject: true,
-        room: true, coverImage: true, instructor: { select: { name: true } },
+        room: true, coverImage: true, mobileCoverImage: true, instructor: { select: { name: true } },
         _count: { select: { enrollments: { where: { status: 'APPROVED' } } } },
       } }),
       getDashboardCalendar(user, 'ics'),

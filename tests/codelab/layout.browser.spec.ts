@@ -48,6 +48,10 @@ test.beforeAll(async () => {
   css = (await web('postcss')([web('@tailwindcss/postcss')({base:path.resolve('apps/web')})])
     .process(await fs.readFile('apps/web/src/app/globals.css','utf8'),{from:path.resolve('apps/web/src/app/globals.css')})).css;
   await fs.mkdir(shots,{recursive:true});
+  const nativeFixture = path.resolve('tmp/native-embedded-fixtures');
+  await fs.mkdir(nativeFixture, { recursive: true });
+  await fs.writeFile(path.join(nativeFixture, 'codelab.js'), script);
+  await fs.writeFile(path.join(nativeFixture, 'codelab.css'), css);
 });
 
 async function mount(page: Page, language: 'html'|'css', width: number, height=900, dark=false, mode='workspace') {
@@ -84,6 +88,33 @@ async function drag(page:Page, handle:Locator, x:number, y=0) {
   await page.mouse.move(box.x+box.width/2+x,box.y+box.height/2+y,{steps:12}); await page.mouse.up();
   await expect(page.locator('[data-codelab-resize-shield]')).toHaveCount(0);
 }
+
+for (const width of [320, 390, 768]) test(`fullscreen preserves the live editor, draft and native Back protocol at ${width}px`, async ({ page }) => {
+  await mount(page, 'html', width, 844, width === 390);
+  await page.evaluate(() => {
+    document.documentElement.dataset.nativeFeature = 'true';
+    (window as any).messages = [];
+    (window as any).ReactNativeWebView = { postMessage: (value: string) => (window as any).messages.push(JSON.parse(value)) };
+    window.dispatchEvent(new Event('lms:native-ready'));
+  });
+  await page.getByRole('button', { name: 'Enter full screen', exact: true }).click();
+  const editor = page.getByRole('textbox').first();
+  await editor.fill('<h1>My preserved fullscreen draft</h1>');
+  await editor.evaluate(node => (window as any).liveEditor = node);
+  const pane = page.locator('[data-codelab-editor]');
+  expect((await pane.boundingBox())!.height).toBeGreaterThan(690);
+  await expect(page.getByRole('button', { name: 'Run Tests', exact: true })).toBeHidden();
+  await page.screenshot({ path: path.join(shots, `fullscreen-${width}.png`) });
+  await page.evaluate(() => window.dispatchEvent(new Event('lms:exit-editor-fullscreen')));
+  await expect(page.getByRole('button', { name: 'Enter full screen', exact: true })).toBeVisible();
+  await expect(editor).toHaveValue('<h1>My preserved fullscreen draft</h1>');
+  expect(await editor.evaluate(node => node === (window as any).liveEditor)).toBe(true);
+  expect(await page.evaluate(() => (window as any).messages.map((message: any) => message.fullscreen))).toEqual([true, false]);
+  await page.getByRole('button', { name: 'Enter full screen', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Enter full screen', exact: true })).toBeFocused();
+  await expect(editor).toHaveValue('<h1>My preserved fullscreen draft</h1>');
+});
 
 test('all four desktop columns fit, resize, and preserve width when tutorial is restored',async({page})=>{
   await mount(page,'html',1920,1000);

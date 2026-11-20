@@ -1,8 +1,8 @@
+import { Text } from './Text';
 import React from 'react';
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
@@ -15,6 +15,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useResponsive } from '../../hooks/useResponsive';
 import { radius, spacing } from '../../lib/theme';
 import { HeaderIconButton } from './AppHeader';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
+import { useReducedMotion } from '../../lib/design-system';
 
 export interface FormModalProps {
   visible: boolean;
@@ -49,13 +51,15 @@ export function FormModal({
   closeAccessibilityLabel = 'Close modal',
 }: FormModalProps) {
   const theme = useTheme();
+  const { isIcsV2 } = useMobilePresentation();
+  const reduced = useReducedMotion();
   const { s, font, maxFontSizeMultiplier, isLargePhone } = useResponsive();
 
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="fade"
+      animationType={isIcsV2 && reduced ? 'none' : 'fade'}
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -64,12 +68,13 @@ export function FormModal({
           style={styles.keyboardAvoider}
         >
           <View
+            accessibilityViewIsModal={isIcsV2 || undefined}
             style={[
               styles.card,
               {
                 backgroundColor: theme.colors.card,
                 borderColor: theme.colors.border,
-                borderRadius: radius.xl,
+                borderRadius: isIcsV2 ? 24 : radius.xl,
               },
               isLargePhone && styles.cardTablet,
               style,

@@ -168,7 +168,7 @@ export default function NewMeetingModal({
           {/* Course Picker */}
           <div>
             <label htmlFor="meeting-course" className="block font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
-              Course <span className="text-rose-500">*</span>
+              Course <span className="text-rose-500" aria-hidden="true">*</span>
             </label>
             <select
               id="meeting-course"
@@ -176,6 +176,7 @@ export default function NewMeetingModal({
               onChange={(e) => setCourseId(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
               required
+              aria-required="true"
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id} className="bg-white dark:bg-[#161922] text-slate-900 dark:text-slate-100">
@@ -188,7 +189,7 @@ export default function NewMeetingModal({
           {/* Meeting Title */}
           <div>
             <label htmlFor="meeting-title" className="block font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
-              Meeting Title <span className="text-rose-500">*</span>
+              Meeting Title <span className="text-rose-500" aria-hidden="true">*</span>
             </label>
             <input
               id="meeting-title"
@@ -199,6 +200,7 @@ export default function NewMeetingModal({
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-xs"
               required
+              aria-required="true"
             />
           </div>
 
@@ -206,7 +208,7 @@ export default function NewMeetingModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label htmlFor="meeting-url" className="block font-semibold text-slate-700 dark:text-slate-300">
-                Meeting Link (https://) <span className="text-rose-500">*</span>
+                Meeting Link (https://) <span className="text-rose-500" aria-hidden="true">*</span>
               </label>
               {joinUrl.trim() && <ProviderBadge provider={detectedProvider} />}
             </div>
@@ -219,6 +221,7 @@ export default function NewMeetingModal({
               onChange={(e) => setJoinUrl(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-xs"
               required
+              aria-required="true"
             />
             <p className="mt-1 text-[11px] text-slate-400">
               Supported: Google Meet, Zoom, Google Classroom, Microsoft Teams, or any valid https link.
@@ -244,7 +247,7 @@ export default function NewMeetingModal({
           {/* Scheduled Date and Time (Manila Time) */}
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
             <span className="block font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Schedule for Later (Asia/Manila Time)
+              Schedule for Later (Asia/Manila Time) <span className="text-slate-400 font-normal">(Optional)</span>
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>

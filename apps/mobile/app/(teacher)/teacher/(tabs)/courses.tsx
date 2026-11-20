@@ -1,14 +1,14 @@
+import { TextInput } from '../../../../src/components/ui/TextInput';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
 import { isIcsUser } from '../../../../src/lib/ite-eligibility';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';

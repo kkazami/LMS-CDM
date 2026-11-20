@@ -1,12 +1,12 @@
+import { TextInput } from '../../../../src/components/ui/TextInput';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  TextInput,
   Switch,
   Linking,
   ActivityIndicator,

@@ -12,6 +12,9 @@ import {
   buildPrintSections,
   buildPrintablePlanData,
   MAX_FIELD_LENGTH,
+  parseLessonFramework,
+  isDraftNonEmpty,
+  VALID_FRAMEWORK_IDS,
 } from "../rules";
 import { evaluateLessonPlanAccess } from "../guard";
 import {
@@ -205,6 +208,148 @@ describe("Lesson Plan Builder - Frameworks Data Integrity", () => {
         assert.ok(section.annotation.length > 10);
       }
     }
+  });
+
+  it("verifies unitLabel, count, items, and citations match pedagogical requirements", () => {
+    // A) ILAW Framework
+    const ilaw = getFrameworkById("ilaw")!;
+    assert.equal(ilaw.unitLabel, "Elements");
+    assert.equal(ilaw.count, 4);
+    assert.equal(ilaw.items.length, 4);
+    assert.deepEqual(
+      ilaw.items.map((it) => it.id),
+      ["intentions", "learning-experience", "assessing-learning", "ways-forward"]
+    );
+    assert.ok(ilaw.sourceCitation.includes("DepEd Order No. 016, s. 2026"));
+    assert.ok(ilaw.sourceCitation.includes("Section V.A (ILAW Framework)"));
+    assert.equal(ilaw.sourceLinks?.length, 2);
+    assert.deepEqual(ilaw.sourceLinks, [
+      {
+        label:
+          "DO 016, s. 2026 full text (attached to DepEd Gapan City Division Memo 217)",
+        url: "https://region3.deped.gov.ph/gapan/deped-gapan-city-division-memorandum-no-217-s-2026/",
+      },
+      {
+        label: "DepEd Orders (official list)",
+        url: "https://www.deped.gov.ph/category/issuances/deped-orders/",
+      },
+    ]);
+    assert.ok(
+      ilaw.aiAssistanceNote?.includes("DepEd Order No. 003, s. 2026") &&
+        ilaw.aiAssistanceNote.includes(
+          "Foundational Guidelines on Artificial Intelligence in Basic Education"
+        )
+    );
+    assert.ok(ilaw.sourceNote?.includes("Section V.A of the Order"));
+    assert.ok(
+      ilaw.shortDescription.includes(
+        "DepEd's ILAW Framework: the four core elements teachers use in lesson planning"
+      )
+    );
+    assert.ok(!JSON.stringify(ilaw.items).toLowerCase().includes("learner context"));
+    assert.ok(!ilaw.sourceCitation.includes("Order 9"));
+
+    // B) 4A's Framework
+    const fourAs = getFrameworkById("4as")!;
+    assert.equal(fourAs.unitLabel, "Stages");
+    assert.equal(fourAs.count, 4);
+    assert.equal(fourAs.items.length, 4);
+    assert.deepEqual(
+      fourAs.items.map((it) => it.id),
+      ["activity", "analysis", "abstraction", "application"]
+    );
+    assert.ok(
+      fourAs.sourceCitation.includes(
+        "Department of Education, Philippines. ALS-EST Handbook for Implementers"
+      )
+    );
+    assert.ok(
+      fourAs.sourceCitation.includes(
+        "adopted from the ALS Manual of Operations"
+      )
+    );
+    assert.ok(!/aquino|nacario|jimczville|prentice|kolb,\s*d/i.test(fourAs.sourceCitation));
+    assert.equal(fourAs.sourceLinks?.length, 1);
+    assert.deepEqual(fourAs.sourceLinks, [
+      {
+        label:
+          "DepEd ALS-EST Handbook, Chapter 6: Learning Delivery (PDF)",
+        url: "https://www.deped.gov.ph/als-est/PDF/ALS-EST_Handbook_Chapter06.pdf",
+      },
+    ]);
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "DepEd's ALS-EST Handbook presents the 4A's (Activity, Analysis, Abstraction, Application)"
+      )
+    );
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "often compared to Kolb's experiential learning cycle"
+      )
+    );
+    assert.ok(
+      fourAs.sourceNote?.includes(
+        "It is not a lesson plan format prescribed by DepEd Order No. 016, s. 2026."
+      )
+    );
+    assert.equal(
+      fourAs.shortDescription,
+      "Experiential, constructivist lesson sequence: Activity, Analysis, Abstraction, Application. Learners build knowledge through experience and repeat the cycle."
+    );
+    assert.equal(
+      fourAs.items[0]?.description,
+      "learners gain new knowledge and skills through a hands-on learning experience."
+    );
+    assert.equal(
+      fourAs.items[1]?.description,
+      "learners process the experience and link it to what they already know."
+    );
+    assert.equal(
+      fourAs.items[2]?.description,
+      "learners generalize and draw out new understanding from the experience."
+    );
+    assert.equal(
+      fourAs.items[3]?.description,
+      "learners try out and apply the new skills; successful application starts a new 4A cycle."
+    );
+    assert.ok(!fourAs.sourceCitation.includes("42, s. 2016"));
+
+    // C) 5E's Framework
+    const fiveEs = getFrameworkById("5es")!;
+    assert.equal(fiveEs.unitLabel, "Stages");
+    assert.equal(fiveEs.count, 5);
+    assert.equal(fiveEs.items.length, 5);
+    assert.deepEqual(
+      fiveEs.items.map((it) => it.id),
+      ["engage", "explore", "explain", "elaborate", "evaluate"]
+    );
+    assert.ok(fiveEs.sourceCitation.includes("Bybee, R. W. (2015)"));
+    assert.equal(fiveEs.sourceLinks?.length, 1);
+    assert.deepEqual(fiveEs.sourceLinks, [
+      {
+        label: "BSCS report: Origins and Effectiveness (2006)",
+        url: "https://bscs.org/reports/the-bscs",
+      },
+    ]);
+
+    // D) 6E's Framework
+    const sixEs = getFrameworkById("6es")!;
+    assert.equal(sixEs.unitLabel, "Stages");
+    assert.equal(sixEs.count, 6);
+    assert.equal(sixEs.items.length, 6);
+    assert.deepEqual(
+      sixEs.items.map((it) => it.id),
+      ["engage", "explore", "explain", "engineer", "enrich", "evaluate"]
+    );
+    assert.ok(sixEs.sourceCitation.includes("Burke, B. N. (2014)"));
+    assert.equal(sixEs.sourceLinks?.length, 1);
+    assert.deepEqual(sixEs.sourceLinks, [
+      {
+        label: "Official Link",
+        url: "https://www.iteea.org/6e-learning-bydesign",
+      },
+    ]);
+    assert.ok(!sixEs.items.some((it) => it.label.toLowerCase().includes("e-search")));
   });
 });
 
@@ -454,3 +599,127 @@ describe("Lesson Plan Builder - Logic, Formatting & Validation", () => {
     assert.equal(customPlanData.sections[0]?.content, "State targets");
   });
 });
+
+describe("Lesson Plan Builder - Framework Query Parsing & Hub Logic", () => {
+  it("parseLessonFramework validates and normalizes all 4 standard framework IDs", () => {
+    assert.equal(parseLessonFramework("ilaw"), "ilaw");
+    assert.equal(parseLessonFramework("4as"), "4as");
+    assert.equal(parseLessonFramework("5es"), "5es");
+    assert.equal(parseLessonFramework("6es"), "6es");
+
+    // Case insensitivity
+    assert.equal(parseLessonFramework("ILAW"), "ilaw");
+    assert.equal(parseLessonFramework("4As"), "4as");
+    assert.equal(parseLessonFramework("5ES"), "5es");
+    assert.equal(parseLessonFramework("6Es"), "6es");
+
+    // Trims whitespace
+    assert.equal(parseLessonFramework("  ilaw  "), "ilaw");
+    assert.equal(parseLessonFramework("\t4as\n"), "4as");
+    assert.equal(parseLessonFramework("   5es   "), "5es");
+    assert.equal(parseLessonFramework("  6es "), "6es");
+  });
+
+  it("parseLessonFramework returns null for missing, empty, or whitespace-only inputs", () => {
+    assert.equal(parseLessonFramework(null), null);
+    assert.equal(parseLessonFramework(undefined), null);
+    assert.equal(parseLessonFramework(""), null);
+    assert.equal(parseLessonFramework("   "), null);
+    assert.equal(parseLessonFramework("\t\n"), null);
+  });
+
+  it("parseLessonFramework safely rejects malicious and garbage values with null", () => {
+    const garbageValues = [
+      "garbage",
+      "unknown",
+      "null",
+      "undefined",
+      "7es",
+      "3as",
+      "dlp",
+      "dll",
+      "../../../etc/passwd",
+      "<script>alert(1)</script>",
+      "ilaw?param=1",
+      "4as/preview",
+      "5es-custom",
+      "6es-invalid",
+    ];
+
+    for (const val of garbageValues) {
+      assert.equal(
+        parseLessonFramework(val),
+        null,
+        `Expected null for garbage value: ${val}`
+      );
+    }
+
+    // Non-string arguments
+    assert.equal(parseLessonFramework(123 as unknown as string), null);
+    assert.equal(parseLessonFramework({} as unknown as string), null);
+    assert.equal(parseLessonFramework(true as unknown as string), null);
+  });
+
+  it("parseLessonFramework supports custom allowlist arrays", () => {
+    const customList = ["custom-a", "custom-b"] as const;
+    assert.equal(parseLessonFramework("custom-a", customList), "custom-a");
+    assert.equal(parseLessonFramework("CUSTOM-B", customList), "custom-b");
+    assert.equal(parseLessonFramework("ilaw", customList), null);
+    assert.equal(parseLessonFramework("other", customList), null);
+  });
+
+  it("isDraftNonEmpty accurately detects whether a draft contains user entered work", () => {
+    assert.equal(isDraftNonEmpty(null), false);
+    assert.equal(isDraftNonEmpty(undefined), false);
+
+    // Empty draft with default metadata only
+    const emptyDraft: LessonPlanFormValues = {
+      frameworkId: "ilaw",
+      headers: {
+        subject: "",
+        gradeLevel: "",
+        topic: "",
+        learningCompetency: "",
+        learningObjectives: "",
+        materials: "",
+        date: "2026-11-12",
+        preparedBy: "Student Name",
+      },
+      stages: {},
+    };
+    assert.equal(isDraftNonEmpty(emptyDraft), false);
+
+    // Draft with topic only
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        headers: { ...emptyDraft.headers, topic: "Water Cycle" },
+      }),
+      true
+    );
+
+    // Draft with stage content only
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        stages: { intentions: "Define outcomes clearly." },
+      }),
+      true
+    );
+
+    // Draft with whitespace-only stage content
+    assert.equal(
+      isDraftNonEmpty({
+        ...emptyDraft,
+        stages: { intentions: "   \n\t  " },
+      }),
+      false
+    );
+  });
+
+  it("confirms VALID_FRAMEWORK_IDS matches all FRAMEWORKS data IDs exactly", () => {
+    const frameworkIds = FRAMEWORKS.map((f) => f.id);
+    assert.deepEqual(VALID_FRAMEWORK_IDS, frameworkIds);
+  });
+});
+

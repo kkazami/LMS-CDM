@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, NotebookPen, Plus, Search } from "lucide-react";
+import { ChevronRight, FileText, NotebookPen, Plus, Search } from "lucide-react";
 import type { PlacementDTO } from "@/lib/practicum/dto";
 import AddPlacementDialog from "./AddPlacementDialog";
 import { PlacementStatusBadge } from "./StatusBadges";
@@ -102,12 +102,12 @@ export default function SupervisorPracticumClient({
       ) : (
         <ul className="space-y-3">
           {filtered.map((p) => (
-            <li key={p.id}>
-              <Link
-                href={`/${instituteCode}/practicum/${p.id}`}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-[#141721] dark:hover:bg-white/5"
-              >
-                <div className="min-w-0">
+            <li
+              key={p.id}
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-[#141721] dark:hover:bg-white/5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <Link href={`/${instituteCode}/practicum/${p.id}`} className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{p.studentName}</p>
                     <PlacementStatusBadge status={p.status} />
@@ -123,9 +123,29 @@ export default function SupervisorPracticumClient({
                   <p className="mt-0.5 text-xs text-slate-600 dark:text-[#94A3B8]">
                     {formatDate(p.startDate)} – {formatDate(p.endDate)}
                   </p>
+                </Link>
+                <Link
+                  href={`/${instituteCode}/practicum/${p.id}`}
+                  aria-label={`Open placement for ${p.studentName}`}
+                  className="shrink-0 text-slate-500 dark:text-[#94A3B8]"
+                >
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </div>
+              {p.rubricUrl && p.rubricFileName && (
+                <div className="mt-2.5 flex items-center">
+                  <a
+                    href={p.rubricUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-blue-500/25 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span className="font-semibold">Rubric:</span>
+                    <span className="truncate">{p.rubricFileName}</span>
+                  </a>
                 </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-slate-500 dark:text-[#94A3B8]" aria-hidden="true" />
-              </Link>
+              )}
             </li>
           ))}
         </ul>

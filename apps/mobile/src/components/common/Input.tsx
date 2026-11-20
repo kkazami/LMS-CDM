@@ -1,6 +1,9 @@
+import { TextInput } from '../ui/TextInput';
+import { Text } from '../ui/Text';
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { View, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useMobilePresentation } from '../presentation/MobilePresentation';
 
 import type { InstituteTheme } from '../../lib/theme';
 
@@ -13,6 +16,7 @@ interface InputProps extends TextInputProps {
 
 export function Input({ label, error, ringColor, theme: propTheme, ...props }: InputProps) {
   const hookTheme = useTheme();
+  const { isIcsV2, fontsReady } = useMobilePresentation();
   const theme = propTheme || hookTheme;
   const [isFocused, setIsFocused] = useState(false);
 
@@ -30,6 +34,7 @@ export function Input({ label, error, ringColor, theme: propTheme, ...props }: I
             borderColor: error ? '#EF4444' : isFocused ? activeBorder : theme.colors.border,
             color: theme.colors.text,
             backgroundColor: theme.isDark ? theme.colors.surfaceAlt : theme.colors.surface,
+            ...(isIcsV2 ? { borderRadius: 16, minHeight: 52, paddingHorizontal: 16, ...(fontsReady ? { fontFamily: 'Manrope-Regular' } : {}) } : {}),
           },
         ]}
         placeholderTextColor={theme.colors.textSecondary}

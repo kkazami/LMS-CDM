@@ -331,3 +331,17 @@ export function parseLinksFromText(content: string): TextSegment[] {
 
   return segments;
 }
+
+/** Match the web announcement's posted Google Meet destinations. */
+export function googleMeetLinks(content: string): string[] {
+  const links = new Set<string>();
+  for (const segment of parseLinksFromText(content)) {
+    if (!segment.isLink || !segment.url) continue;
+    try {
+      const url = new URL(segment.url);
+      if (url.protocol === 'https:' && url.hostname === 'meet.google.com' && !url.port && !url.username && !url.password
+        && /^\/(?:[a-z]{3}-[a-z]{4}-[a-z]{3}|lookup\/[a-z\d_-]+)\/?$/i.test(url.pathname)) links.add(url.href);
+    } catch { /* Malformed pasted links remain announcement text. */ }
+  }
+  return [...links];
+}

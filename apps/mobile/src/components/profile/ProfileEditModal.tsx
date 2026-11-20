@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../hooks/useIcsStyles';
+import { Text } from '../ui/Text';
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
@@ -27,6 +28,7 @@ interface ProfileEditModalProps {
 }
 
 export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditModalProps) {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const api = useAuthStore((s) => s.api);
@@ -189,7 +191,7 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
@@ -240,4 +242,10 @@ const styles = StyleSheet.create({
   saveBtn: {
     flex: 2,
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  modalCard: { borderRadius: 22 },
+  closeBtn: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 });

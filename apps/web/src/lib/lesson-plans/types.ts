@@ -1,5 +1,17 @@
 export type FrameworkId = "ilaw" | "4as" | "5es" | "6es";
 
+export interface FrameworkSubItem {
+  name: string;
+  description: string;
+}
+
+export interface FrameworkItem {
+  id: string;
+  label: string;
+  description: string;
+  subItems?: FrameworkSubItem[];
+}
+
 export interface StageGuide {
   id: string;
   name: string;
@@ -28,11 +40,23 @@ export interface SamplePlan {
   sections: SamplePlanSection[];
 }
 
+export interface FrameworkSourceLink {
+  label: string;
+  url: string;
+}
+
 export interface LessonPlanFramework {
   id: FrameworkId;
   name: string;
+  unitLabel: "Elements" | "Stages";
+  count: number;
+  items: FrameworkItem[];
   shortDescription: string;
   originNote: string;
+  sourceCitation: string;
+  sourceLinks?: Array<{ label: string; url: string }>;
+  sourceNote?: string;
+  aiAssistanceNote?: string;
   stages: StageGuide[];
   samplePlan: SamplePlan;
 }
@@ -59,4 +83,3 @@ export interface StoredLessonPlanDraft {
   updatedAt: string;
   formValues: LessonPlanFormValues;
 }
-

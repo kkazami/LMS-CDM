@@ -149,18 +149,20 @@ describe("getIteStudentNavLinks: shared student navigation list", () => {
       "Leaderboards",
       "Meetings",
       "Practicum",
+      "Lecture Videos",
     ]);
 
     assert.equal(links[0].href, "/ite/students");
     assert.equal(links[1].href, "/ite/courses");
     assert.equal(links[8].href, "/ite/meetings");
     assert.equal(links[9].href, "/ite/practicum");
+    assert.equal(links[10].href, "/ite/lecture-videos");
   });
 
   it("respects practicum exclusion option", () => {
     const links = getIteStudentNavLinks("ite", { isEligibleForPracticum: false });
     const labels = links.map((l) => l.label);
     assert.ok(!labels.includes("Practicum"));
-    assert.equal(links.length, 9);
+    assert.equal(links.length, 10);
   });
 });

@@ -1,7 +1,7 @@
+import { Text } from '../ui/Text';
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   StyleProp,

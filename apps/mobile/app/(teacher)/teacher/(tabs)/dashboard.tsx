@@ -1,8 +1,8 @@
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
 import {
   View,
-  Text,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,

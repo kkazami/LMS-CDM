@@ -1,0 +1,41 @@
+appId: com.lumina.lms
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: student@example.invalid
+- assertVisible: "A fresh day, Jamie."
+- takeScreenshot: student-dashboard-light
+- tapOn: "More tab"
+- assertVisible:
+    id: ics-tools-sheet-v2
+- takeScreenshot: student-tools-light
+- tapOn: "Close tools menu"
+- scrollUntilVisible:
+    element: "Join Class"
+    direction: DOWN
+- tapOn: "Join Class"
+- tapOn: "Class code"
+- inputText: "SYNTHETIC"
+- hideKeyboard
+- tapOn: "Join Class"
+- assertVisible: "Your class request was sent. Approved classes will appear here."
+- tapOn: "Courses tab"
+- tapOn: "Move Programming Fundamentals and Problem Solving down"
+- assertVisible: "Introduction to System Administration"
+- tapOn: "Dashboard tab"
+- tapOn: "Use dark appearance"
+- takeScreenshot: student-dashboard-dark
+- tapOn: "More tab"
+- takeScreenshot: student-tools-dark
+- assertNotVisible: "Switch account"
+- tapOn: "Sign out"
+- assertVisible: "Sign out of CdM LMS?"
+- tapOn: "Cancel"
+- assertVisible:
+    id: ics-tools-sheet-v2
+- tapOn: "Sign out"
+- tapOn: "Confirm sign out"
+- assertVisible: "Welcome back."
+- assertNotVisible:
+    id: ics-dashboard-v2

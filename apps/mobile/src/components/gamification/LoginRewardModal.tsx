@@ -1,5 +1,6 @@
+import { Text } from '../ui/Text';
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { typography, TOUCH_TARGET } from '../../lib/typography';
 import { Flame, Zap } from 'lucide-react-native';

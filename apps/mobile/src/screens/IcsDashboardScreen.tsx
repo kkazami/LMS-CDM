@@ -1,5 +1,9 @@
+import { SurfacePressable as Pressable } from '../components/motion/SurfacePressable';
+import { IcsDashboardOverview } from '../components/institute/IcsDashboardOverview';
+import { useMobilePresentation } from '../components/presentation/MobilePresentation';
+import { Text } from '../components/ui/Text';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarChart2, BookOpen, CheckSquare, ClipboardCheck, ClipboardList, Code2, Compass, Flame, GraduationCap, Plus, Share2, Sparkles, Trophy, UserCheck, Users } from 'lucide-react-native';
@@ -19,6 +23,7 @@ import { markUsefulContent } from '../lib/performance';
 import { dashboardErrorMessage } from '../lib/dashboard-error';
 
 export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { teacher?: boolean; coursesOnly?: boolean }) {
+  const { isIcsV2 } = useMobilePresentation();
   const theme = useTheme(), router = useRouter(), client = useQueryClient();
   const user = useAuthStore(s => s.user), api = useAuthStore(s => s.api);
   const reward = useAuthStore(s => s.rewardReceipt), clearReward = useAuthStore(s => s.clearRewardReceipt);
@@ -72,7 +77,9 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
     } catch (error) { setJoinError(error instanceof Error ? error.message : 'Unable to join this class. Check the code and try again.'); }
     finally { setJoinBusy(false); }
   }
+  const ohmwardAction = { label: 'Ohmward', description: 'Circuits & electronics', icon: Compass, press: () => navigate(`/${teacher ? 'teacher' : 'student'}/ohmward`), badge: 0 };
   const actions = teacher ? [
+    ohmwardAction,
     { label: 'Add Class', description: 'Provision course', icon: Plus, press: () => navigate('/teacher/tools?tool=create-class'), badge: 0 },
     { label: 'To Grade', description: 'Pending submissions', icon: GraduationCap, press: () => setQueue('grading'), badge: pendingWork },
     { label: 'Requests', description: 'Jump to enrollment queue', icon: UserCheck, press: () => setQueue('requests'), badge: requests },
@@ -80,6 +87,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
     { label: 'Broadcast', description: 'Send notice', icon: Share2, press: () => navigate('/teacher/(tabs)/alerts'), badge: 0 },
     { label: 'CodeLab Hub', description: 'Lab workspace', icon: Compass, press: () => navigate('/teacher/codelab'), badge: 0 },
   ] : [
+    ohmwardAction,
     { label: 'Join Class', description: 'Enter code', icon: Plus, press: () => { setJoinError(''); setJoining(true); }, badge: 0 },
     { label: 'Assignments', description: data?.overdue ? 'Overdue work' : 'Upcoming work', icon: ClipboardList, press: () => navigate('/student/assignments'), badge: data?.overdue || 0 },
     { label: 'Flashcards', description: 'Study decks', icon: Flame, press: () => navigate('/student/flashcards'), badge: 0 },
@@ -87,10 +95,42 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
     { label: 'CodeLab', description: 'Interactive labs', icon: Code2, press: () => navigate('/student/codelab'), badge: 0 },
     { label: 'Leaderboards', description: 'Top rankings', icon: Trophy, press: () => navigate('/student/leaderboard'), badge: 0 },
   ];
+  const notices = <>
+      {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}
+      {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="Dismiss class request confirmation" onPress={() => setNotice('')} style={[styles.notice, { backgroundColor: theme.colors.successBg }]}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.success }}>{notice}</Text></Pressable>}
+  </>;
   return <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
     <IcsHeader teacher={teacher} title={coursesOnly ? teacher ? 'My Classes' : 'My Courses' : undefined} />
     {teacher && coursesOnly && <Button title="Attendance helper assignments" variant="outline" onPress={() => router.push('/teacher/attendance')} style={{ marginHorizontal: 16, marginVertical: 8 }} />}
-    <Screen scroll contentContainerStyle={[styles.content, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
+    {isIcsV2 ? <FlatList
+      testID="ics-dashboard-v2" data={courses} keyExtractor={course => course.id}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: contentPaddingBottom, width: '100%', maxWidth: 760, alignSelf: 'center' }}
+      initialNumToRender={4} maxToRenderPerBatch={6} windowSize={5}
+      keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}
+      ListHeaderComponent={<>
+        {notices}
+        {!coursesOnly && <IcsDashboardOverview teacher={teacher} data={data} onQueue={setQueue} />}
+        <View style={styles.courseHeading}>
+          <View style={{ flex: 1 }}><Text accessibilityRole="header" style={[styles.sectionTitle, ink]}>{teacher ? 'My Classes' : 'My Courses'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Your assigned classes, in one place.' : 'Pick up where you left off.'}</Text></View>
+          <Text style={[styles.count, { color: accent, backgroundColor: theme.isDark ? '#382419' : '#FFF0E5' }]}>{data ? courses.length : '—'}</Text>
+        </View>
+        {courses.length > 1 && <Text accessibilityLiveRegion="polite" style={[styles.reorderHint, muted]}>{saving ? 'Saving course order…' : 'Arrange your courses with the arrow buttons.'}</Text>}
+        {!!orderError && <ErrorBanner message={orderError} onDismiss={() => setOrderError('')} />}
+      </>}
+      renderItem={({ item, index }) => <IcsCourseCard course={item} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />}
+      ListEmptyComponent={query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={160} width="100%" /><SkeletonBlock height={160} width="100%" /></View> : !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={accent} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : null}
+      ListFooterComponent={!coursesOnly ? <View>
+        <Text accessibilityRole="header" style={[styles.sectionTitle, ink, { marginTop: 16, marginBottom: 16 }]}>{teacher ? 'Teaching shortcuts' : 'Your learning tools'}</Text>
+        <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, { backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 0, minHeight: 100 }]}>
+          <item.icon size={21} strokeWidth={1.7} color={accent} accessible={false} />
+          <Text style={[styles.actionLabel, ink, { marginTop: 10 }]}>{item.label}</Text>
+          <Text style={[styles.copy, muted]}>{item.description}{item.badge > 0 ? ` · ${item.badge}` : ''}</Text>
+        </Pressable>)}</View>
+        {data && <IcsCalendar calendar={data.calendar} teacher={teacher} />}
+      </View> : null}
+    /> : <>
+    <Screen scroll contentContainerStyle={[styles.content, isIcsV2 && { paddingHorizontal: 20, paddingTop: 12 }, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
       {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}
       {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="Dismiss class request confirmation" onPress={() => setNotice('')} style={[styles.notice, { backgroundColor: theme.colors.successBg }]}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.success }}>{notice}</Text></Pressable>}
       {!coursesOnly && <>
@@ -122,6 +162,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
       {!!orderError && <ErrorBanner message={orderError} onDismiss={() => setOrderError('')} />}
       {query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={240} width="100%" /><SkeletonBlock height={240} width="100%" /></View> : !courses.length && !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={theme.colors.textSecondary} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : courses.map((course, index) => <IcsCourseCard key={course.id} course={course} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />)}
     </Screen>
+    </>}
     <FormModal visible={!!queue} onClose={() => setQueue(null)} title={queue === 'grading' ? 'To Grade' : 'Enrollment requests'}>
       {!data && (query.isPending ? <ActivityIndicator accessibilityLabel="Loading classes" color={theme.colors.primary} /> : <ErrorBanner message="Your classes could not load. Please retry." onRetry={() => { void query.refetch(); }} />)}
       {courses.filter(course => queue === 'grading' ? course.pendingWorkCount > 0 : course.pendingCount > 0).map(course => <Pressable key={course.id} accessibilityRole="button" accessibilityLabel={`Open ${queue === 'grading' ? 'gradebook' : 'enrollment requests'} for ${course.title}`} onPress={() => { const tab = queue === 'grading' ? 'GRADEBOOK' : 'PEOPLE'; setQueue(null); navigate(`/teacher/courses/${course.id}?initialTab=${tab}`); }} style={[styles.queueItem, { borderColor: theme.colors.border }]}><Text style={[styles.actionLabel, ink]}>{course.title}</Text><Text style={[styles.copy, muted]}>{queue === 'grading' ? `${course.pendingWorkCount} submissions to grade` : `${course.pendingCount} enrollment requests`}</Text></Pressable>)}

@@ -1,7 +1,8 @@
+import { useIcsStyles } from '../../../../src/hooks/useIcsStyles';
+import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   RefreshControl,
@@ -68,6 +69,7 @@ const CATEGORIES: Array<{ id: CategoryFilter; label: string }> = [
 ];
 
 export default function StudentAchievementsScreen() {
+  const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
@@ -599,7 +601,7 @@ export default function StudentAchievementsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const incumbentStyles = StyleSheet.create({
   screenRoot: {
     flex: 1,
   },
@@ -736,4 +738,14 @@ const styles = StyleSheet.create({
   emptyDesc: {
     textAlign: 'center',
   },
+});
+
+const styles = incumbentStyles;
+const icsStyles = StyleSheet.create({
+  badgeCard: { borderRadius: 22 },
+  criteriaBox: { borderRadius: 22 },
+  overviewCard: { borderRadius: 22 },
+  categoryPill: { minHeight: 48, paddingHorizontal: 16 },
+  statusTabBtn: { minHeight: 48, paddingHorizontal: 16 },
+  badgeTitle: { fontSize: 16, lineHeight: 24 },
 });

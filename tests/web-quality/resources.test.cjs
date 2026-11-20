@@ -114,6 +114,41 @@ test('private files require ownership or persisted resource access, including ta
   await assert.rejects(api.readPrivateUpload({ ...student, role: 'SUPER_USER' }, 'file'), error => error.status === 403);
   await assert.rejects(api.requireOwnedUpload({ privateAsset: { findFirst: async () => null } }, student, '/api/assets/foreign'), error => error.status === 403);
 });
+test('mobile-only course images retain enrollment, institute and persisted-reference access checks', async () => {
+  let referenced = true, enrolled = true;
+  const image = '/api/assets/mobile-square';
+  const course = { id: 'c', instituteId: 'ics', instructorId: 'teacher', isArchived: false };
+  const db = {
+    $queryRaw: async () => [{ tables: 10, columns: 2 }],
+    labEvidence: { findUnique: async () => null }, labStep: { findMany: async () => [] },
+    privateAsset: { findFirst: async () => ({ id: 'mobile-square', ownerId: 'teacher' }), findUniqueOrThrow: async () => ({ content: Buffer.from('image'), mimeType: 'image/png', fileName: 'square.png' }) },
+    attachment: { findMany: async () => [] }, submissionAttachment: { findMany: async () => [] },
+    user: { findFirst: async () => null }, formAttemptAnswer: { findMany: async () => [] },
+    course: {
+      findMany: async ({ where }) => {
+        assert.deepEqual(where.OR, [{ coverImage: image }, { mobileCoverImage: image }]);
+        return referenced && where.instituteId === 'ics' ? [course] : [];
+      },
+      findUnique: async () => course,
+      findFirst: async ({ where }) => where.instituteId === 'ics' ? course : null,
+    },
+    enrollment: { findUnique: async () => enrolled ? { status: 'APPROVED' } : null },
+  };
+  const api = await compile(sources + `export { authorizeStoredUrl } from './apps/web/src/lib/academic-structure/assets';`, { db });
+  const actor = { ...student, instituteCode: 'ics' };
+  assert.equal((await api.readPrivateUpload(actor, 'mobile-square')).name, 'square.png');
+  assert.equal(await api.authorizeStoredUrl(db, actor, image, 'teacher'), true);
+  assert.equal(await api.authorizeStoredUrl(db, actor, image, 'other-instructor'), false);
+  for (const denied of [{ ...actor, instituteId: 'ibe' }, actor]) {
+    if (denied === actor) enrolled = false;
+    await assert.rejects(api.readPrivateUpload(denied, 'mobile-square'), error => error.status === 404);
+    assert.equal(await api.authorizeStoredUrl(db, denied, image, 'teacher'), false);
+  }
+  enrolled = true; referenced = false;
+  await assert.rejects(api.readPrivateUpload(actor, 'mobile-square'), error => error.status === 404);
+  assert.equal(await api.authorizeStoredUrl(db, actor, image, 'teacher'), false);
+});
+
 test('gradebook reads only the requested students, preserves every assignment and avoids inline file content', async () => {
   let enrollmentQuery, submissionQuery, assignmentCount = 100;
   const db = { $queryRaw: async () => [{ tables: 10, columns: 2 }], course: { findUnique: async () => ({ id: 'c', title: 'Synthetic', code: 'TEST', instituteId: 'ics', instructorId: 't' }) }, enrollment: { count: async () => 400, findMany: async query => { enrollmentQuery = query; return Array.from({ length: 50 }, (_, i) => ({ student: { id: `s${query.skip + i}`, name: `Student ${i}`, email: 'synthetic@example.invalid' } })); } }, syllabusItem: { findMany: async query => Array.from({ length: Math.min(assignmentCount, query.take) }, (_, i) => ({ id: 'a' + i, title: 'Assignment ' + i, type: 'ASSIGNMENT', maxPoints: 100, dueDate: null })) }, gradingPolicy: { findUnique: async () => ({ weights: [{ category: 'ASSIGNMENT', weightPercentage: 100 }] }) }, studentSubmission: { findMany: async query => { submissionQuery = query; return [{ id: 'sub', studentId: query.where.studentId.in[0], syllabusItemId: 'a0', grade: 90, status: 'RETURNED', isReturned: true, submittedAt: new Date(), attachments: [{ id: 'f', type: 'FILE', fileName: 'answer.txt' }] }]; } } };

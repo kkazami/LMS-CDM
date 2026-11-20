@@ -50,13 +50,13 @@ export default function UnsupportedRoleScreen() {
         <View style={[styles.infoBox, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}>
           <Laptop size={20} color={theme.colors.primary} style={styles.infoIcon} />
           <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-            Students and Instructors can continue using CdM LMS Mobile. If you have a separate student or faculty account, please switch accounts below.
+            Students and Instructors can continue using CdM LMS Mobile. Sign out to use a student or faculty account.
           </Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
-            title="Sign Out & Switch Account"
+            title="Sign Out"
             onPress={handleLogout}
             variant="danger"
             icon={LogOut}

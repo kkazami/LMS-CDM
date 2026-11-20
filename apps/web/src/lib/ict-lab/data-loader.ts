@@ -52,6 +52,7 @@ const lanToolSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   use: z.string().min(1),
+  image: z.string().min(1),
 });
 
 const lanCrimpingStepSchema = z.object({
