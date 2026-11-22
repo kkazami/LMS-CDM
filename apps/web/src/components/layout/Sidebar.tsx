@@ -634,11 +634,6 @@ export default function Sidebar({
             aria-label="Program tools"
             className="mt-2 pt-2 border-t border-slate-200/80 dark:border-white/5 flex flex-col gap-1"
           >
-            {!isCollapsed && (
-              <span className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#8B92A5]">
-                Program tools
-              </span>
-            )}
             {visibleProgramTools.map((tool) => {
               const Icon = tool.icon;
               const active = activeLink?.href === tool.href;

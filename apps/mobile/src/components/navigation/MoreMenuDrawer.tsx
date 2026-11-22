@@ -26,6 +26,7 @@ import {
   Shield,
   ExternalLink,
   Video,
+  Film,
   Layers,
   CheckSquare,
   MessageSquare,
@@ -384,21 +385,53 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
 
               {role === 'STUDENT' ? (
                 <>
-                  <TouchableOpacity style={styles.menuRow} accessibilityRole="button" onPress={() => handleNavigate('/student/calendar')}><Text style={[styles.rowLabel, { color: menuTextColor }]}>Agenda and deadlines</Text><ChevronRight size={18} color={menuIconColor} /></TouchableOpacity>
+                  {!isIteUser(user) && (
+                    <TouchableOpacity style={styles.menuRow} accessibilityRole="button" onPress={() => handleNavigate('/student/calendar')}><Text style={[styles.rowLabel, { color: menuTextColor }]}>Agenda and deadlines</Text><ChevronRight size={18} color={menuIconColor} /></TouchableOpacity>
+                  )}
                   {isIteUser(user) && (
-                    <TouchableOpacity
-                      style={styles.menuRow}
-                      onPress={() => handleNavigate('/student/meetings')}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel="Class Meetings"
-                    >
-                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
-                        <Video size={16} color={menuIconColor} />
-                      </View>
-                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Class Meetings</Text>
-                      <ChevronRight size={14} color={menuSecondaryTextColor} />
-                    </TouchableOpacity>
+                    <>
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleNavigate('/student/tasks')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Tasks & Calendar"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <CheckSquare size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Tasks & Calendar</Text>
+                        <ChevronRight size={14} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleNavigate('/student/meetings')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Class Meetings"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <Video size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Class Meetings</Text>
+                        <ChevronRight size={14} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleNavigate('/student/lecture-videos')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Lecture Videos"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <Film size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Lecture Videos</Text>
+                        <ChevronRight size={14} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+                    </>
                   )}
 
                   <TouchableOpacity
@@ -415,19 +448,21 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                     <ChevronRight size={14} color={menuSecondaryTextColor} />
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.menuRow}
-                    onPress={() => handleNavigate('/student/tasks')}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel="Workspace Planner"
-                  >
-                    <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
-                      <CheckSquare size={16} color={menuIconColor} />
-                    </View>
-                    <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Workspace Planner</Text>
-                    <ChevronRight size={14} color={menuSecondaryTextColor} />
-                  </TouchableOpacity>
+                  {!isIteUser(user) && (
+                    <TouchableOpacity
+                      style={styles.menuRow}
+                      onPress={() => handleNavigate('/student/tasks')}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel="Workspace Planner"
+                    >
+                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                        <CheckSquare size={16} color={menuIconColor} />
+                      </View>
+                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Workspace Planner</Text>
+                      <ChevronRight size={14} color={menuSecondaryTextColor} />
+                    </TouchableOpacity>
+                  )}
 
                   {isIcsUser(user) && (
                     <TouchableOpacity style={styles.menuRow} onPress={() => handleNavigate('/student/codelab')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="CodeLab">
@@ -478,19 +513,35 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
               ) : (
                 <>
                   {isIteUser(user) && (
-                    <TouchableOpacity
-                      style={styles.menuRow}
-                      onPress={() => handleNavigate('/teacher/meetings')}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel="Class Meetings"
-                    >
-                      <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
-                        <Video size={16} color={menuIconColor} />
-                      </View>
-                      <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Class Meetings</Text>
-                      <ChevronRight size={14} color={menuSecondaryTextColor} />
-                    </TouchableOpacity>
+                    <>
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleNavigate('/teacher/meetings')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Class Meetings"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <Video size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Class Meetings</Text>
+                        <ChevronRight size={14} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleNavigate('/teacher/lecture-videos')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Lecture Videos"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <Film size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Lecture Videos</Text>
+                        <ChevronRight size={14} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+                    </>
                   )}
 
                   <TouchableOpacity

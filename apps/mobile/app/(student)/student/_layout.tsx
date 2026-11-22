@@ -19,6 +19,7 @@ export default function StudentLayout() {
       <Stack.Screen name="announcements/index" options={{ headerShown: false }} />
       <Stack.Screen name="achievements/index" options={{ headerShown: false }} />
       <Stack.Screen name="meetings/index" options={{ headerShown: false }} />
+      <Stack.Screen name="lecture-videos/index" options={{ headerShown: false }} />
       <Stack.Screen name="knowledge-exchange/index" options={{ headerShown: false, gestureEnabled: false }} />
     </Stack></MobilePresentationProvider>
   );
