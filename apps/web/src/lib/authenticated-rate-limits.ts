@@ -4,6 +4,7 @@ export const authenticatedRateLimits = {
   sessionRevocation: { prefix: 'self-session-revoke', requests: 20, windowMs: 60_000 },
   passwordChange: { prefix: 'self-password-change', requests: 6, windowMs: 5 * 60_000 },
   instructorProvisioning: { prefix: 'instructor-provisioning', requests: 20, windowMs: 5 * 60_000 },
+  adminPasswordReset: { prefix: 'admin-password-reset', requests: 10, windowMs: 5 * 60_000 },
   codeLabRun: { prefix: 'codelab', requests: 30, windowMs: 5 * 60_000 },
 } as const;
 

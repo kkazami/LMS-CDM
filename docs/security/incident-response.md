@@ -1,5 +1,7 @@
 # Security incident response
 
+The stabilization administrator reset event persists actor/target identifiers, institute, outcome and generation method in the same transaction as the credential and session update. The reset route returns only a generic service failure on internal exceptions. Review this event alongside instructor provisioning and self-service changes when qualifying monitoring and retention.
+
 Sprint 6 makes the instructor `ACCOUNT_CREATED` event atomic with provisioning. The event keeps actor and target identifiers, timestamp, institute, normalized role and outcome. The payload excludes email and credential values. Proposed security-event retention, responder coverage and escalation are in the [maintenance policy](continuous-security-maintenance.md).
 
 ## Ownership and intake

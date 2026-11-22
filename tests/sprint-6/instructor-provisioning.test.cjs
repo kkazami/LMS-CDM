@@ -10,7 +10,7 @@ const { Client } = require('pg');
 
 const digest = text => createHash('sha256').update(text).digest('hex');
 
-test('MFA-qualified admin provisions a synthetic instructor with one atomic audit event', { timeout: 60_000 }, async t => {
+test('MFA-qualified admin provisions and resets a synthetic instructor with scoped audit events', { timeout: 60_000 }, async t => {
   assert.equal(process.env.SPRINT2_DISPOSABLE, '1');
   assert.equal(process.env.DATABASE_URL, 'postgresql://sprint_app:dummy_fixture_only@127.0.0.1:5432/sprint2_staging');
   const owner = new Client({ host: '127.0.0.1', port: 5432, database: 'sprint2_staging', user: 'postgres', connectionTimeoutMillis: 5000 });
@@ -36,6 +36,7 @@ test('MFA-qualified admin provisions a synthetic instructor with one atomic audi
   let requestHeaders;
   const original = Module._load;
   let POST;
+  let reset;
   let adminMfaIdentityHash;
   Module._load = function (name, ...args) {
     if (name === 'next/headers') return {
@@ -46,6 +47,7 @@ test('MFA-qualified admin provisions a synthetic instructor with one atomic audi
   };
   try {
     ({ POST } = require('../../apps/web/src/app/api/admin/users/route.ts'));
+    ({ POST: reset } = require('../../apps/web/src/app/api/admin/users/[userId]/reset-password/route.ts'));
     ({ adminMfaIdentityHash } = require('../../apps/web/src/lib/admin-mfa.ts'));
   } finally { Module._load = original; }
   const { encryptTotpSecret } = require('../../apps/web/src/lib/admin-mfa-crypto.ts');
@@ -80,4 +82,33 @@ test('MFA-qualified admin provisions a synthetic instructor with one atomic audi
   const events = await db.auditLog.findMany({ where: { adminId: admin.id, targetId: instructor.id } });
   assert.equal(events.length, 1);
   assert.deepEqual(JSON.parse(events[0].metadata), { instituteId: 'ics', role: 'INSTRUCTOR', outcome: 'CREATED' });
+
+  await db.session.create({ data: { userId: instructor.id, tokenHash: digest(randomBytes(32)), expiresAt: new Date(Date.now() + 3600_000) } });
+  const resetPassword = newPassword => {
+    requestHeaders = new Headers({ 'content-type': 'application/json', origin: 'https://staging.example.invalid',
+      host: 'staging.example.invalid', cookie: 'lumina_session=' + token });
+    return reset(new Request(`https://staging.example.invalid/api/admin/users/${instructor.id}/reset-password`, {
+      method: 'POST', headers: requestHeaders, body: JSON.stringify({ newPassword }),
+    }), { params: Promise.resolve({ userId: instructor.id }) });
+  };
+  process.env.LMS_SYNTHETIC_PASSWORD_PILOT = '0';
+  const disabled = await resetPassword(undefined);
+  assert.equal(disabled.status, 503);
+  assert.equal(await db.session.count({ where: { userId: instructor.id } }), 1);
+  assert.equal((await db.user.findUniqueOrThrow({ where: { id: instructor.id } })).password, instructor.password);
+
+  process.env.LMS_SYNTHETIC_PASSWORD_PILOT = '1';
+  const resetResponse = await resetPassword(undefined);
+  assert.equal(resetResponse.status, 200);
+  assert.equal(resetResponse.headers.get('cache-control'), 'private, no-store');
+  const { temporaryPassword } = await resetResponse.json();
+  assert.match(temporaryPassword, /^[A-Za-z0-9_-]{24}$/);
+  const newHash = (await db.user.findUniqueOrThrow({ where: { id: instructor.id } })).password;
+  assert.match(newHash, /^\$argon2id\$/);
+  assert.equal(await verifyAccountPassword(temporaryPassword, newHash), true);
+  assert.equal(await verifyAccountPassword(password, newHash), false);
+  assert.equal(await db.session.count({ where: { userId: instructor.id } }), 0);
+  const resets = await db.auditLog.findMany({ where: { adminId: admin.id, targetId: instructor.id, action: 'PASSWORD_RESET' } });
+  assert.equal(resets.length, 1);
+  assert.deepEqual(JSON.parse(resets[0].metadata), { instituteId: 'ics', outcome: 'RESET', method: 'auto-generated' });
 });

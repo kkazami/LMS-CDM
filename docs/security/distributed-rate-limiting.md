@@ -4,6 +4,7 @@ The existing PostgreSQL `RateLimitBucket` remains the shared store. Its single U
 
 | Operation | Dimension and state |
 |---|---|
+| Institute administrator temporary-password reset | Stabilization adds ten requests per five minutes by admitted admin account, before hashing. Database outage fails closed. The target session and metadata changes commit with the password. |
 | Instructor provisioning | Sprint 6 adds a persistent budget of 20 requests per five minutes keyed to the admitted institute administrator. Approved roster onboarding is separate and keeps its current path. |
 | Authenticated self-service password change | Sprint 5 admits six syntactically valid attempts per five minutes by verified account. The persistent store is called before current-password verification and hashing. Budget exhaustion returns 429 and backing store failure closes the operation with a generic 503. Other account-recovery and address-based policies remain unchanged. |
 | Self-session revocation | Verified server account, 20 per minute. Newly attached to the persistent store. |

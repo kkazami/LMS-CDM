@@ -1,5 +1,9 @@
 # Remaining risks and dependency treatment
 
+Release closure rechecked the official Prisma stable 7.x package metadata, upstream releases, and both local inventories. The latest stable CLI and config are 7.10.1, whose exact dependency remains Effect 3.20.0. The published 8.x prerelease is a distinct upgrade and is outside this stabilization change. Prisma's configuration dependency appears in the production graph and is loaded during Prisma CLI generation. The web runtime imports Prisma Client and the PostgreSQL adapter. Dependency presence and CLI execution leave request-time reachability of the affected Effect code unverified.
+
+Use a supported Prisma 7.x update or a maintainer-published backport that resolves to Effect 3.22.1 or newer. Verify the published package contract, keep the coherent Prisma client/adapter/tooling versions, and qualify the exact lockfile. Keep builds limited to reviewed input while waiting. The high/critical gate remains enforced and the full inventory remains enabled. [Prisma releases](https://github.com/prisma/orm/releases) · [Reviewed Effect advisory](https://github.com/advisories/GHSA-7589-6fvf-x4pw)
+
 Status on 20 November 2026. Fix and review dates below are proposed service targets. The release owner confirms accountable people and escalation contacts. The current dependency gate blocks high and critical matches without exceptions.
 
 | Match | Relevance and compatible update availability | Treatment, owner and trigger |
