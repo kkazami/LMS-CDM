@@ -40,7 +40,7 @@ const createPrismaClient = () => {
       connectionString: target.toString(),
       // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
       // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
-      max: configuredMax === undefined ? (isProduction ? 2 : 5) : Number(configuredMax),
+      max: configuredMax === undefined ? (isProduction ? 2 : 15) : Number(configuredMax),
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: isProduction ? 10000 : 20000,
       keepAlive: true,
