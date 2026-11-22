@@ -1,4 +1,3 @@
-import { labsAvailable } from '@/lib/labs/readiness';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Gradebook Exporter Skill
@@ -25,8 +24,8 @@ export interface GradebookExportResult {
   assignmentCount: number;
 }
 
-export async function exportGradebookSkill(courseId: string): Promise<GradebookExportResult> {
-  const actor = await requireLegacyActor("apps/web/src/lib/skills/gradebook-exporter.ts#exportGradebookSkill", { courseId });
+export async function exportGradebookSkill(courseId: string, request?: Request): Promise<GradebookExportResult> {
+  const actor = await requireLegacyActor("apps/web/src/lib/skills/gradebook-exporter.ts#exportGradebookSkill", { courseId }, request);
 
   if (canonicalRole(actor.role) === 'ADMIN') await administratorCourse(actor, courseId);
   else await requireCourseRelationship(actor, courseId, true);
@@ -36,7 +35,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       select: { title: true, code: true },
     }),
     db.enrollment.findMany({
-      where: { courseId, status: "APPROVED" },
+      where: { courseId, status: "APPROVED", student: { instituteId: actor.instituteId } },
       include: { student: { select: { id: true, name: true, email: true } } },
       orderBy: { student: { name: "asc" } },
     }),
@@ -46,7 +45,7 @@ export async function exportGradebookSkill(courseId: string): Promise<GradebookE
       orderBy: { orderIndex: "asc" },
     }),
     db.studentSubmission.findMany({
-      where: { syllabusItem: { courseId } },
+      where: { syllabusItem: { courseId }, student: { instituteId: actor.instituteId } },
       select: { syllabusItemId: true, studentId: true, grade: true, status: true },
     }),
     readPeriodConfiguration(courseId),

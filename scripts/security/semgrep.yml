@@ -1,0 +1,23 @@
+rules:
+  - id: desktop-disabled-isolation
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Renderer isolation and sandboxing must remain enabled.
+    pattern-either:
+      - pattern: "{..., contextIsolation: false, ...}"
+      - pattern: "{..., sandbox: false, ...}"
+      - pattern: "{..., nodeIntegration: true, ...}"
+      - pattern: "{..., webSecurity: false, ...}"
+      - pattern: "{..., allowRunningInsecureContent: true, ...}"
+  - id: client-dynamic-code
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Do not evaluate dynamic code in the privileged client shell.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: desktop-certificate-bypass
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Certificate failures must not be bypassed in the desktop shell.
+    pattern: $APP.commandLine.appendSwitch('ignore-certificate-errors', ...)

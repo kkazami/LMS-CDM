@@ -1,7 +1,8 @@
 import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
-import { canonicalRole, mayAdmitAccount, supportedInstitute, type KnownRole } from './capabilities';
+import { canonicalRole, mayAdmitAccount, privilegedRole, supportedInstitute, type KnownRole } from './capabilities';
+import { validAdminMfaSession } from '@/lib/admin-mfa';
 import { lockAccounts } from './account-lock';
 import { applicationWriterQualified } from './provisioning';
 
@@ -41,6 +42,7 @@ export async function revalidateActor(tx: Prisma.TransactionClient, actor: Actor
     throw new AccessError(401, 'Authentication required.');
   }
   if (!roles.includes(canonicalRole(session.user.role) as KnownRole)) throw new AccessError(403, 'Forbidden.');
+  if (privilegedRole(session.user.role) && !await validAdminMfaSession(session.id, session.userId, session.user, tx)) throw new AccessError(401, 'Administrator MFA verification required.');
   if (!await applicationWriterQualified(tx)) throw new AccessError(503, 'Writer boundary unavailable.');
   return session.user;
 }

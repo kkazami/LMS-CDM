@@ -1,39 +1,24 @@
 import { ipcMain, BrowserWindow, dialog, Notification } from 'electron';
 import * as fs from 'fs';
-
-/**
- * Validates that an incoming IPC message originates from an authorized frame
- * (either a local file:// renderer asset or the trusted LMS origin).
- */
-function isAuthorizedSender(
-  event: Electron.IpcMainInvokeEvent | Electron.IpcMainEvent,
-  trustedBaseUrl: string
-): boolean {
-  try {
-    const senderUrl = event.senderFrame?.url;
-    if (!senderUrl) return false;
-    // Allow local renderer html files
-    if (senderUrl.startsWith('file://')) return true;
-
-    const sender = new URL(senderUrl);
-    const trusted = new URL(trustedBaseUrl);
-    return sender.protocol === trusted.protocol && sender.host === trusted.host;
-  } catch {
-    return false;
-  }
-}
+import { isTrustedIpc } from '../security';
 
 export function registerIpcHandlers(mainWindow: BrowserWindow, trustedWebUrl: string) {
+  const isAuthorizedSender = (event: Electron.IpcMainInvokeEvent | Electron.IpcMainEvent) =>
+    isTrustedIpc(event, mainWindow.webContents, trustedWebUrl);
   // ─── 1. Export Data as File (CSV, JSON, TXT) ───
-  ipcMain.handle('admin:export-file', async (event, { fileName, content, fileType }: {
+  ipcMain.handle('admin:export-file', async (event, args: {
     fileName: string;
     content: string;
     fileType: 'csv' | 'json' | 'txt';
   }) => {
-    if (!isAuthorizedSender(event, trustedWebUrl)) {
-      console.warn('Blocked admin:export-file from unauthorized frame:', event.senderFrame?.url);
+    if (!isAuthorizedSender(event)) {
       return { success: false, error: 'Unauthorized IPC origin' };
     }
+    if (!args || typeof args.fileName !== 'string' || !args.fileName || /[\\/\x00-\x1f]/.test(args.fileName) ||
+      typeof args.content !== 'string' || !['csv', 'json', 'txt'].includes(args.fileType)) {
+      return { success: false, error: 'Invalid export arguments' };
+    }
+    const { fileName, content, fileType } = args;
 
     const extensions: Record<string, string[]> = {
       csv: ['csv'],
@@ -56,8 +41,7 @@ export function registerIpcHandlers(mainWindow: BrowserWindow, trustedWebUrl: st
 
   // ─── 2. Print Current Page to PDF ───
   ipcMain.handle('admin:print-pdf', async (event) => {
-    if (!isAuthorizedSender(event, trustedWebUrl)) {
-      console.warn('Blocked admin:print-pdf from unauthorized frame:', event.senderFrame?.url);
+    if (!isAuthorizedSender(event)) {
       return { success: false, error: 'Unauthorized IPC origin' };
     }
 
@@ -80,11 +64,12 @@ export function registerIpcHandlers(mainWindow: BrowserWindow, trustedWebUrl: st
   });
 
   // ─── 3. Show Native OS Notification ───
-  ipcMain.on('admin:notify', (event, { title, body }: { title: string; body: string }) => {
-    if (!isAuthorizedSender(event, trustedWebUrl)) {
-      console.warn('Blocked admin:notify from unauthorized frame:', event.senderFrame?.url);
+  ipcMain.on('admin:notify', (event, args: { title: string; body: string }) => {
+    if (!isAuthorizedSender(event)) {
       return;
     }
+    if (!args || typeof args.title !== 'string' || typeof args.body !== 'string') return;
+    const { title, body } = args;
 
     if (Notification.isSupported()) {
       new Notification({ title, body }).show();
@@ -93,8 +78,7 @@ export function registerIpcHandlers(mainWindow: BrowserWindow, trustedWebUrl: st
 
   // ─── 4. Get App Info (Omit sensitive local filesystem paths) ───
   ipcMain.handle('admin:get-app-info', (event) => {
-    if (!isAuthorizedSender(event, trustedWebUrl)) {
-      console.warn('Blocked admin:get-app-info from unauthorized frame:', event.senderFrame?.url);
+    if (!isAuthorizedSender(event)) {
       return null;
     }
 

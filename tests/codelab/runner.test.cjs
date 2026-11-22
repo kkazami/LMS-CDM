@@ -1,11 +1,13 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const path = require("node:path");
 const vm = require("node:vm");
-const { transformSync } = require(require.resolve("esbuild", { paths: [path.dirname(require.resolve("tsx"))] }));
+const ts = require("typescript");
 
-const code = transformSync(fs.readFileSync("apps/web/src/features/interactive-activities/codelab/utils/judge0-config.ts", "utf8"), { loader: "ts", format: "cjs" }).code;
+const code = ts.transpileModule(fs.readFileSync("apps/web/src/features/interactive-activities/codelab/utils/judge0-config.ts", "utf8"), {
+  fileName: "judge0-config.ts",
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
 const encoded = text => Buffer.from(text).toString("base64");
 function runner(replies, env = { JUDGE0_RAPIDAPI_KEY: 'synthetic-key' }, clock) {
   const module = { exports: {} }, calls = [];
@@ -93,6 +95,60 @@ test('the dedicated CodeLab key takes precedence over the legacy RapidAPI alias'
 
 const jdoodleEnv = {CODELAB_RUNNER:'jdoodle',JDOODLE_CLIENT_ID:'synthetic-client',JDOODLE_CLIENT_SECRET:'synthetic-secret'};
 const onlineEnv = { CODELAB_RUNNER: 'onlinecompiler', ONLINECOMPILER_API_KEY: 'online-only', JUDGE0_RAPIDAPI_KEY: 'never-send', JDOODLE_CLIENT_SECRET: 'never-send' };
+test('production rejects JDoodle and unknown selectors before sending code even when all providers have credentials', async () => {
+  for (const provider of ['jdoodle', 'typo']) {
+    const r = runner([], { ...onlineEnv, ...jdoodleEnv, NODE_ENV: 'production', CODELAB_RUNNER: provider });
+    await assert.rejects(r.api.executeJudge0Submission('private student code', 71), error => error instanceof r.api.CodeRunnerUnavailableError);
+    assert.equal(r.calls.length, 0);
+  }
+});
+
+test('production managed submissions contain only code, input, language and the supported network restriction', async () => {
+  for (const provider of ['onlinecompiler', 'judge0']) {
+    const r = runner([{ body: { status: { id: 3 }, stdout: encoded('ok') } }], {
+      ...onlineEnv, ...jdoodleEnv, NODE_ENV: 'production', CODELAB_RUNNER: provider,
+      JUDGE0_RAPIDAPI_KEY: 'judge-only', DATABASE_URL: 'never-send-database-secret',
+    });
+    const source = 'print("synthetic source")';
+    const input = JSON.stringify({ enable_network: true, env: { SECRET: 'caller-value' }, callback_url: 'https://attacker.invalid', headers: { Authorization: 'caller-value' } });
+    // Extra JS arguments must not become provider options; stdin remains an opaque string.
+    const result = await r.api.executeJudge0Submission(source, 71, input, Infinity, { enable_network: true, env: { SECRET: 'caller-value' } });
+    assert.equal(result.stdout, 'ok');
+    const { url, options } = r.calls[0];
+    const payload = JSON.parse(options.body);
+    assert.deepEqual(Object.keys(payload).sort(), provider === 'judge0'
+      ? ['enable_network', 'language_id', 'source_code', 'stdin'] : ['language_id', 'source_code', 'stdin']);
+    assert.equal(Buffer.from(payload.source_code, 'base64').toString(), source);
+    assert.equal(Buffer.from(payload.stdin, 'base64').toString(), input);
+    assert.equal(payload.enable_network, provider === 'judge0' ? false : undefined);
+    assert.equal(options.redirect, 'error');
+    assert.ok(!options.body.includes('never-send-database-secret'));
+    assert.ok(!options.body.includes('synthetic-secret'));
+    assert.ok(!options.body.includes('judge-only'));
+    assert.ok(!options.body.includes('online-only'));
+    if (provider === 'onlinecompiler') {
+      assert.equal(new URL(url).origin, 'https://api.onlinecompiler.io');
+      assert.equal(options.headers['X-Auth-Token'], 'online-only');
+      assert.equal(options.headers['X-RapidAPI-Key'], undefined);
+    } else {
+      assert.equal(new URL(url).origin, 'https://judge0-ce.p.rapidapi.com');
+      assert.equal(options.headers['X-RapidAPI-Key'], 'judge-only');
+      assert.equal(options.headers['X-Auth-Token'], undefined);
+    }
+  }
+});
+
+test('production provider failure neither exposes secrets nor falls back when other credentials are configured', async () => {
+  for (const provider of ['onlinecompiler', 'judge0']) {
+    const r = runner([{ http: 503, body: { error: 'synthetic-secret' } }], {
+      ...onlineEnv, ...jdoodleEnv, NODE_ENV: 'production', CODELAB_RUNNER: provider,
+    });
+    await assert.rejects(r.api.executeJudge0Submission('private student code', 71), error =>
+      error instanceof r.api.CodeRunnerUnavailableError && !error.message.includes('synthetic-secret'));
+    assert.equal(r.calls.length, 1);
+  }
+});
+
 test('OnlineCompiler uses its fixed path, own key, base64 and asynchronous polling for every track', async () => {
   for (const language of [54, 62, 51, 71, 93, 82]) {
     const r = runner([{ body: { token: 'job-123' } }, { body: { status: { id: 2 } } },

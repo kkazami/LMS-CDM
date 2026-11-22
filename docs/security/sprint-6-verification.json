@@ -1,0 +1,1008 @@
+{
+  "date": "2026-11-20",
+  "branch": "codex/security-review-sprint-6",
+  "base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+  "release_decision": "not ready",
+  "sprint_5_review": {
+    "tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+    "file_count": 36,
+    "patch_sha256": "cb9af42ee373e186158cd31d7ff6e3983e6b6257c8074bc4234a74082dcf6a5a",
+    "commit_pending_approval": true
+  },
+  "preservation": {
+    "record_count": 186,
+    "audit_target": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+    "blocked_validations_retried": false
+  },
+  "audits": {
+    "prod": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 1,
+        "critical": 0
+      },
+      "passed": false,
+      "gate_exit": 1,
+      "gate_artifact_sha256": "bdc2a21b702808455f6bec57007326c43a24df8141d3cba23534723d7e371799",
+      "artifact": "tmp/security-sprint-6/after-sprint6-prod.stdout.log",
+      "sha256": "730325e22e0d88fb3e6c8117e1043910f4ac1cf7b6b50c1363c90d2e18f00678",
+      "advisories": [
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "patched": ">=14.0.2",
+          "findings": [
+            {
+              "version": "13.0.7",
+              "paths": [
+                "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "patched": ">=11.0.1",
+          "findings": [
+            {
+              "version": "10.2.6",
+              "paths": [
+                "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob>minimatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7589-6fvf-x4pw",
+          "package": "effect",
+          "severity": "high",
+          "patched": ">=3.22.1",
+          "findings": [
+            {
+              "version": "3.20.0",
+              "paths": [
+                ".>@prisma/client>prisma>@prisma/config>effect"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "all": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 1,
+        "critical": 0
+      },
+      "passed": false,
+      "gate_exit": 1,
+      "gate_artifact_sha256": "a1e50b37253d7983449032fcb0889bf014daad9fb1cad88f821c20d192b88737",
+      "artifact": "tmp/security-sprint-6/after-sprint6-all.stdout.log",
+      "sha256": "216c404d888bc762bea0695de45eeb186c5572f42d8233071d08d7536436ee6e",
+      "advisories": [
+        {
+          "id": "GHSA-w5hq-g745-h8pq",
+          "package": "uuid",
+          "severity": "moderate",
+          "patched": ">=11.1.1",
+          "findings": [
+            {
+              "version": "3.4.0",
+              "paths": [
+                "apps__mobile>@expo/ngrok>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "patched": ">=14.0.2",
+          "findings": [
+            {
+              "version": "13.0.7",
+              "paths": [
+                "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "patched": ">=11.0.1",
+          "findings": [
+            {
+              "version": "9.0.9",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+              ]
+            },
+            {
+              "version": "10.2.6",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7589-6fvf-x4pw",
+          "package": "effect",
+          "severity": "high",
+          "patched": ">=3.22.1",
+          "findings": [
+            {
+              "version": "3.20.0",
+              "paths": [
+                ".>prisma>@prisma/config>effect"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "parent_contracts_sha256": "d104cf0b889af19ae895f54d0857c5ea138056295744e0825f61aa068681b852",
+  "verification": {
+    "scoped-final": {
+      "mode": "tests",
+      "exit": 1,
+      "seconds": 92.29,
+      "counts": {
+        "tests": 122,
+        "pass": 121,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs",
+        "tests/sprint-6/qualification.test.cjs"
+      ],
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs",
+        "tests/sprint-6/qualification.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-6/scoped-final/receipt.json",
+      "sha256": "61cc3e03f365929a7dd0afe2c2b8ce01d168fcfc6f8a0e12305d2e2b1c2fcb2a",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/qualification.test.cjs": "fcf07f23c4e3db6c0cc8b75e646456c5f2871aff261d8dd192118946226258f1",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "dfd80cbca00c598a2a9e8ba4ea8ebb43c6befa046e7a1fc46e0a6689dd02a0c9"
+    },
+    "scoped-release": {
+      "mode": "tests",
+      "exit": 0,
+      "seconds": 100.55,
+      "counts": {
+        "tests": 126,
+        "pass": 126,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs",
+        "tests/sprint-6/qualification.test.cjs"
+      ],
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs",
+        "tests/sprint-6/qualification.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-6/scoped-release/receipt.json",
+      "sha256": "2a33c047e88a818e24c0016def8f5cf3ec937c5a11070d98bc651fb6a67b893d",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "4b963eaa1c5e8cb5e9bb0e96a0059f1dbcd7eebbac1e291c811ac03c4c0b428a"
+    },
+    "web-build-final": {
+      "mode": "web-build",
+      "exit": 0,
+      "seconds": 505.46,
+      "counts": {},
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf \"Build ID: \" && cat .next/BUILD_ID"
+      ],
+      "tests": [],
+      "artifact": "tmp/security-sprint-6/web-build-final/receipt.json",
+      "sha256": "e7d9633115a8991e56efcc7fe9bec98197c8ec134a10fe0f55f9d70428323442",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/qualification.test.cjs": "fcf07f23c4e3db6c0cc8b75e646456c5f2871aff261d8dd192118946226258f1",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "fee2528a1ea49d38dd4154c94a344b2df841d78d5baaf2678cd7d59850aa658a",
+      "build_id": "A0eS5c9BDP6y8UK0FqFt2"
+    },
+    "mobile-types-final": {
+      "mode": "mobile-types",
+      "exit": 0,
+      "seconds": 93.84,
+      "counts": {},
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "tests": [],
+      "artifact": "tmp/security-sprint-6/mobile-types-final/receipt.json",
+      "sha256": "aeb92d2a32325c87d08090f31128f7b83e7375fe574580f0e6bc6b648c7f5281",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "363fa3ed5e8db2fcf26bbb2775f92213b6b6b2567d40ebdf766190a08fd3abaf"
+    },
+    "desktop-types-final": {
+      "mode": "desktop-types",
+      "exit": 0,
+      "seconds": 57.94,
+      "counts": {},
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "tests": [],
+      "artifact": "tmp/security-sprint-6/desktop-types-final/receipt.json",
+      "sha256": "05a4e8be6f415e31ed249ddedb612b145ddf341c8148f6f2fba6eda7ab9558c1",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "harness-types-final": {
+      "mode": "harness-types",
+      "exit": 0,
+      "seconds": 82.29,
+      "counts": {},
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node node_modules/typescript/bin/tsc --noEmit --incremental false --project scripts/harness/tsconfig.json"
+      ],
+      "tests": [],
+      "artifact": "tmp/security-sprint-6/harness-types-final/receipt.json",
+      "sha256": "cf592d7436694225b82b4fc113a54cce221a73686981671b4b8c3ec9fbc04f96",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "2bada24216c49920529eba281682e790babc6e8e217efbf73089292cbd48b439"
+    },
+    "rls-principals-final": {
+      "mode": "rls-principals",
+      "exit": 0,
+      "seconds": 60.92,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "container:lms-sprint2-pg-6ed060de0f3549fcaff14b7ff9ba7823",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-6/rls-principals.test.cjs"
+      ],
+      "tests": [
+        "tests/sprint-6/rls-principals.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-6/rls-principals-final/receipt.json",
+      "sha256": "a5223c446cd00b68d26ff7b02b04154d204c8ef29f8f7ef767dc5b57367b344d",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/qualification.test.cjs": "fcf07f23c4e3db6c0cc8b75e646456c5f2871aff261d8dd192118946226258f1",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "1524af4665dfc0ab8d09736d8026862842161aebcf17803c37f4c0c970372b8e"
+    },
+    "fixture-rls-principals-final": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "rls-principals",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "3|4|sprint6_policy|sprint6_course_owner|t|f",
+        "seconds": 4.826,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": true,
+        "restricted_course_backup_completed": true
+      },
+      "artifact": "tmp/security-sprint-6/fixture-rls-principals-final/receipt.json",
+      "sha256": "db09b705e702c56516ebb41e09d4f370b8b0932921f624840b49011a666af281"
+    },
+    "instructor-final": {
+      "mode": "instructor-staging",
+      "exit": 0,
+      "seconds": 96.46,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "container:lms-sprint2-pg-5e1eb2d0ab504ec1a912f72552f02f8f",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-6/instructor-provisioning.test.cjs"
+      ],
+      "tests": [
+        "tests/sprint-6/instructor-provisioning.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-6/instructor-final/receipt.json",
+      "sha256": "2242c5bfd560b2e1afa807ba331e52e6ab9034b1cd76bba3844e983f66259f1f",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "a966c8437d904c2bd1498bc324bb6a41fa11ac4e19ab30c50506f92c87866e06"
+    },
+    "fixture-instructor-final": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "instructor-staging",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "1|1",
+        "seconds": 2.31,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": false,
+        "restricted_course_backup_completed": false
+      },
+      "artifact": "tmp/security-sprint-6/fixture-instructor-final/receipt.json",
+      "sha256": "895955bae4343b801b8c9d599b9c81642236debf466b5593d1af50c2611819b0"
+    },
+    "writer-final": {
+      "mode": "writer-staging",
+      "exit": 0,
+      "seconds": 98.44,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "limits": {
+        "network": "container:lms-sprint2-pg-c6d79d978ba74ae093dfb5dd6d1737d8",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "tests": [
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-6/writer-final/receipt.json",
+      "sha256": "771a5b6fec2ffa18945879cba6d2154777a02ae8bb414b0fbb78fd0b84335cce",
+      "sprint_6_snapshot_hashes": {
+        "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+        "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+        "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+        "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+        "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+        "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+      },
+      "log_sha256": "8f3ece28211d3b985c1edbf7210729d6adddcea1fcbf96c5c51374097f34edd0"
+    },
+    "fixture-writer-final": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "writer-staging",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "1|0|1",
+        "seconds": 2.311,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": false,
+        "restricted_course_backup_completed": false
+      },
+      "artifact": "tmp/security-sprint-6/fixture-writer-final/receipt.json",
+      "sha256": "328c43b029afd66fd26f33004c378d0feee037d2aba185ee2583212a38a1541c"
+    },
+    "static": {
+      "mode": "static",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "artifact": "tmp/security-sprint-6/scan-static-9fa2d241/receipt.json",
+      "sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b",
+      "log_sha256": "2ccec512a3d9d2ce1e89d9e685ff3729c39777da557714652be8f77819a0cfc3"
+    },
+    "secrets": {
+      "mode": "secrets",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "artifact": "tmp/security-sprint-6/scan-secrets-127b8d96/receipt.json",
+      "sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18",
+      "log_sha256": "a8df20c275ade2c2a3203ed64d13be6a869b695ed6d02514cafe0bc0b3f47301"
+    }
+  },
+  "benchmarks": {
+    "native_process": [
+      "# After native writer sequence: 692 ms; RSS delta 30 MiB; process peak RSS 164 MiB",
+      "# Synthetic configuration, object and test-key recovery: 11 ms",
+      "# Argon2id 12 serial native jobs: 390 ms; 12 two-at-a-time native jobs: 184 ms; process peak RSS 172 MiB"
+    ],
+    "limiter_receipt_sha256": "cb8d80f0c0a61d7c6b62dda2d4172cdce7e333502af9ae29ce9eb466e078a0a1",
+    "local_sql_client_count": 4,
+    "transactions": 100,
+    "mean_ms": 0.762,
+    "failures": 0
+  },
+  "corpus_review": {
+    "package": "@zxcvbn-ts/language-common",
+    "version": "4.2.0",
+    "source": "https://registry.npmjs.org/@zxcvbn-ts/language-common/-/language-common-4.2.0.tgz",
+    "source_integrity": "sha512-LPcIu73i+ZV2fYPRDAd/JfaBblFUMVXSjupxkr0NU04wViVkYuzZ6ncw6pDgUdm7MMM5llMMzkbzhKrwXgv1tg==",
+    "upstream_member": "package/src/passwords.json",
+    "source_dictionary_sha256": "f422773d94d630f27e08b26d7017e847bb1feb2a84809340e9c0b0c47b33e3f1",
+    "license": "MIT package; upstream password-only data attributed by maintainer to Mark Burnett public-domain release",
+    "raw_passwords_retained": false,
+    "corpus_sha256": "9aec9d39af79a2f33e0429584c88a0e2fd224391b9c64735d9fc157e49ea1c83",
+    "total_unique": 49233,
+    "matches_ordinary_length_policy": 41,
+    "approval": "pending; local candidate only"
+  },
+  "asvs": {
+    "baseline_requirements": 253,
+    "new_full_passes": 0,
+    "scoped_assessments": [
+      {
+        "id": "v5.0.0-2.4.1",
+        "applicability": "Instructor provisioning",
+        "implementation": "authenticated-rate-limits.ts",
+        "expected": "Limit expensive provisioning against the admitted administrator account.",
+        "observed": "Route fixture calls the correct named quota with its resolved admin ID. Local SQL contention benchmark completed 100/100 at 0.762 ms mean.",
+        "receipt": "scoped-release and limiter.stdout.log",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input; separate PostgreSQL benchmark",
+        "limit": "Broader endpoint coverage and Neon sizing open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-3.3.3",
+        "applicability": "Browser session cookies",
+        "implementation": "session-cookie.ts and NextResponse",
+        "expected": "Only the host-prefixed production cookie is written after the scheduled cutover.",
+        "observed": "The two names were readable until the exact seven-day boundary. Host name serialized with Path=/, Secure, HttpOnly and SameSite=Lax without Domain.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "The fixture exercised the session cookie, with real client acceptance and production cutover open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-6.2.4",
+        "applicability": "Common-list coverage for ordinary password setters",
+        "implementation": "password-write-pilot.ts; corpus-review.json",
+        "expected": "Check a licensed and pinned corpus with at least 3,000 qualifying common choices.",
+        "observed": "49,233 unique entries were transformed into local digests, of which 41 meet the ordinary length policy.",
+        "receipt": "corpus-review.json",
+        "environment": "Offline transformed dictionary from an integrity-verified public npm package",
+        "limit": "Corpus remains insufficient. Actual corpus approval and production activation open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-6.3.3",
+        "applicability": "Role-aware MFA",
+        "implementation": "admin-mfa-crypto.ts and system-wide-mfa.md",
+        "expected": "Keep mandatory privileged assurance and require compatible multi-factor admission for enrolled ordinary accounts.",
+        "observed": "Scoped privileged tests and synthetic key/factor recovery passed. Ordinary application enrollment and admission remain incomplete.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "No new ordinary-role assurance or real device result. Prior blocked validation remains excluded.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-6.5.1",
+        "applicability": "Authenticator code consumption",
+        "implementation": "admin-mfa-crypto.ts",
+        "expected": "Reject a TOTP code already recorded at its counter.",
+        "observed": "Restored factor recognized the valid synthetic code and rejected the same counter when marked consumed.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "Selected crypto-helper check only. No new ordinary-role factor flow.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-7.3.1",
+        "applicability": "Opaque-session idle expiry",
+        "implementation": "session-policy.ts",
+        "expected": "The 30-minute server deadline expires a session independently of cookie-deprecation schedule.",
+        "observed": "Session was expired at the exact idle threshold during the synthetic rehearsal.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "Actual browser and remote staging observables remain open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-7.3.2",
+        "applicability": "Opaque-session absolute expiry",
+        "implementation": "session-policy.ts",
+        "expected": "Keep the seven-day session limit regardless of the legacy cookie acceptance window.",
+        "observed": "An active synthetic session still expired at the absolute threshold during rehearsal.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "Actual deployment coverage remains open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-8.2.3",
+        "applicability": "Course and enrollment field privileges",
+        "implementation": "tests/sprint-6/rls-principals.sql",
+        "expected": "Keep minimal eligible-enrollment reads and prevent backup writes.",
+        "observed": "The definer saw only granted lookup fields, and the Course backup principal had SELECT and lacked UPDATE and enrollment reads.",
+        "receipt": "rls-principals-final",
+        "environment": "Disposable PostgreSQL 17 and PrismaPg; exact schema and synthetic data",
+        "limit": "Local scoped Course policy only. Production rights, role lineage and other tables are open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-8.4.1",
+        "applicability": "Institutional isolation of Course rows",
+        "implementation": "tests/sprint-6/rls-principals.test.cjs",
+        "expected": "Isolate concurrently admitted Prisma actor contexts and clear them on reuse.",
+        "observed": "Student and admin read only their fixture scope and a subsequent context-free query returned zero rows.",
+        "receipt": "rls-principals-final",
+        "environment": "Disposable PostgreSQL 17 and PrismaPg; exact schema and synthetic data",
+        "limit": "Neon transaction pooling and production policy coverage remain unverified.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-11.4.2",
+        "applicability": "New password storage",
+        "implementation": "password-hashing.ts; admin/users/route.ts; change-password/route.ts",
+        "expected": "Use the bounded Argon2id writer for selected nonproduction ordinary account operations and retain bcrypt-reader compatibility.",
+        "observed": "Actual self-service and instructor fixture writes round-tripped; the legacy generated bcrypt credential verified in a handler fixture.",
+        "receipt": "instructor-final, writer-final and scoped-release",
+        "environment": "Disposable PostgreSQL 17 and PrismaPg; exact schema and synthetic data; local native implementation",
+        "limit": "Other writers, approved corpus, deployment benchmark and all rollback artifacts remain open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-16.2.5",
+        "applicability": "Instructor provisioning audit",
+        "implementation": "admin/users/route.ts",
+        "expected": "Create one transactional event without submitted information or credential values.",
+        "observed": "Current-schema fixture observed exactly one event with institute, normalized role and outcome.",
+        "receipt": "instructor-final",
+        "environment": "Disposable PostgreSQL 17 and PrismaPg; exact schema and synthetic data",
+        "limit": "Other event sinks, retention and operational alerting open.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      },
+      {
+        "id": "v5.0.0-16.5.1",
+        "applicability": "Provisioning failure response",
+        "implementation": "admin/users/route.ts",
+        "expected": "Return a generic failure without internal persistence details.",
+        "observed": "Synthetic storage failure returned 503 and the generic account-creation service message.",
+        "receipt": "scoped-release",
+        "environment": "Bounded offline Node 22/Next.js container; synthetic input",
+        "limit": "Selected handler fault only. Other endpoints are outside the test.",
+        "outcome": "partial evidence",
+        "tested_base_tree": "6dd243923a5233d4f9a3ada7b2c40e0bf1827136",
+        "source_identity": "See receipt source hashes."
+      }
+    ]
+  },
+  "scope": {
+    "hosted_workflow": "not run: owner isolation confirmation pending",
+    "pushed": false,
+    "deployed": false,
+    "production_database_contacted": false,
+    "neon_remote_contacted": false,
+    "real_client_or_signed_release": false,
+    "production_writer_or_cookie_activation": false,
+    "ordinary_role_enrollment_enabled": false
+  },
+  "changed_file_hashes": {
+    "SECURITY-ROADMAP.md": "2b8bb4b181ccc8f6d0dfe26ad77fde4f8f84eaad1272b6da110569169dcd6e3f",
+    "apps/web/src/app/api/admin/users/route.ts": "948a5983a35888d79cd33a06ae36ec152c1545d019d57b6720ed2febbe800a87",
+    "apps/web/src/app/api/auth/change-password/route.ts": "8fea204df22e4bb5bf4c8f9e2917e7379103f87acde9a906f3d90b10524d0bfe",
+    "apps/web/src/lib/authenticated-rate-limits.ts": "8d9a69cd5dcea668d2e6d9e589e36c2da9e025b5ef24d47da037886e3547b9cd",
+    "apps/web/src/lib/password-hashing.ts": "65532d6b631bf68ca2dc14bdc0fb94259691a55d701270f0eadd9178f19076d3",
+    "docs/security/asvs-5.0-level2-register.csv": "40f94cb696aca11006926c4935b90c5e1204ac2e3f87d979f822b377e5db1f2a",
+    "docs/security/automated-security-checks.md": "d53fd720c162692fa06cb1709429d8c4c2d52fd0162668117819ef9c09d85807",
+    "docs/security/backup-disaster-recovery.md": "4a21fde4327d8d45a5d3fd79ddb27e8c7d17e6f23f31e73442d6f4e800655c6e",
+    "docs/security/continuous-security-maintenance.md": "7997f9ac6aae36786cf8a3e1cd2fae16996d0804083852b61ed66c324965ebd0",
+    "docs/security/distributed-rate-limiting.md": "eac9c862d04b95205201ef3307e5240e2c1d25cbbb5b5e95195202e6c9440cd2",
+    "docs/security/final-release-readiness-assessment.md": "0b0a68876af7b08e09c95cd716b1c14543f7ba745a156312160f49088fd7bbf2",
+    "docs/security/final-security-inventory.md": "cd9067dd683dabb9edeaeac001d41c7a1ab67b3540c9db024fa9f1c3e63e0b46",
+    "docs/security/hosted-ci-verification.md": "95568d06384adc42ae6c929dd2fb46dd0e2333f5a5db72280b79e4263dfc6ae9",
+    "docs/security/identity-rollout-qualification.md": "c2098d8ebdf87d5d7e20a3b85e4146c33cef1a44ceae4a0741a4224fe6112764",
+    "docs/security/incident-response.md": "82838c9b8f80337168af6178f53e010d6cbee564489c402981ff717f34545e50",
+    "docs/security/prisma-rls-qualification.md": "07dbd2e403bf631da84dd17e9135744479b55b0d86de937de096632449db785e",
+    "docs/security/production-release-gates.md": "b136fd81bf35e83d05fe8947c3ad77e4e5f276f3b5fca73e0901269ba3b5b452",
+    "docs/security/production-rollback-plan.md": "f334cef77506373962cdda1d356f60e5a73f5b8605591dbc6aee721ed9e8d3ca",
+    "docs/security/production-rollout-plan.md": "6508c35edff0c9ee004db37fd5cb4023e9f57ef6c56363d35618e6ac387af039",
+    "docs/security/remaining-risk-register.md": "29075fd008a238ccd14178383c9122e2f3850676a3abe1d5067c954b46087c9a",
+    "docs/security/sprint-6-results.md": "64f478633a927bd271f5dc75cd68a381e7c275beae16be75622d1cb8d80e2ff7",
+    "docs/security/system-wide-mfa.md": "b249c4050bb0e845fb7ba119e8dba26df0a4005311392deddd7eb66fd66b4ae8",
+    "scripts/security/run-scoped.py": "7353cd6690d84bba1bb73cb322d046e981100bc4e3c65ea650c7e664083b476f",
+    "scripts/security/run-staging.py": "fbd5bfa28baec6f5ef1253a97f9bc9a7ea9a2413e3f1f3a7f78d6ba097de68ad",
+    "tests/sprint-6/allowed-tests.json": "1b74a0d6837a5c4fa9da0d1953f054732acf05b1c202b7e04395780bbd4ed539",
+    "tests/sprint-6/instructor-provisioning.test.cjs": "e38beb0b166fe9fe4d835be18912249af499ddef5beace41fb996c533049fb4a",
+    "tests/sprint-6/qualification.test.cjs": "a273941915ccf9218a85969f7c072339c8d7b4415424fdec41243e5c59818722",
+    "tests/sprint-6/rls-principals.sql": "8a11da005a60c018c2b9995e69bdbebb8bcf22958654579df810b48efba6e4a2",
+    "tests/sprint-6/rls-principals.test.cjs": "644b08957da71bf3326f3dda980b38955c39778c4c155ec81fa4384248343f99"
+  }
+}

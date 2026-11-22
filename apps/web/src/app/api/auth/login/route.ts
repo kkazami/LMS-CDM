@@ -1,10 +1,11 @@
 import { mobileCapabilities } from '@/lib/mobile-capabilities';
 import { NextResponse, after } from "next/server";
 import { getInstituteName } from "@lms/types";
-import { compare } from "bcryptjs";
+import { verifyAccountPassword } from "@/lib/password-hashing";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/auth-schema";
 import { createSession, SessionAdmissionError } from "@/lib/auth-session";
+import { AdminMfaError } from '@/lib/admin-mfa-crypto';
 import { canonicalRole, mayAdmitAccount, supportedInstitute } from '@/lib/super-user-v1/capabilities';
 import { processLoginReward } from "@/lib/gamification/login-rewards";
 import {
@@ -141,7 +142,7 @@ export async function POST(request: Request) {
 
     // 4. Verify password hash
     stage = "password-check";
-    const passwordMatches = await timed('password-check', () => compare(password, user.password!));
+    const passwordMatches = await timed('password-check', () => verifyAccountPassword(password, user.password!));
     if (!passwordMatches) {
       return NextResponse.json(
         { message: "Invalid email, password, or institute." },
@@ -257,6 +258,8 @@ export async function POST(request: Request) {
       { status: 200, headers: responseHeaders() }
     );
   } catch (error: unknown) {
+    if (error instanceof SessionAdmissionError && error.status === 202 && 'enrollment' in error) return NextResponse.json({ mfaRequired: true, enrollment: error.enrollment, redirect: '/mfa', message: error.message }, { status: 202, headers: { ...corsHeaders, 'Cache-Control': 'private, no-store' } });
+    if (error instanceof AdminMfaError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
     if (error instanceof AccessError) return NextResponse.json({ message: error.message }, { status: error.status, headers: corsHeaders });
     if (error instanceof SessionAdmissionError) return NextResponse.json({ message: error.message }, {
       status: error.status,

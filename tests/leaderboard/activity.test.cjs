@@ -74,8 +74,12 @@ function fixture(role = "STUDENT", id = "alice") {
     submission("alice", 99, "DRAFT", false, "assignment"), submission("bob", 18, "GRADED", false, "assignment"),
     submission("alice", 100, "RETURNED", true, "other"),
   ];
-  const f = { session: { user: { id, role, instituteId: "ics" } }, courses, items, submissions, writes: [] };
+  const f = { session: { user: { id, role, instituteId: "ics" } }, courses, items, submissions, writes: [], transactions: 0 };
   f.db = {
+    $transaction: async callback => { f.transactions++; return callback(f.db); },
+    $queryRaw: async (query, itemId) => query.join('').includes('information_schema')
+      ? [{ tables: 0, columns: 0 }]
+      : items.filter(item => item.id === itemId).map(item => ({ id: item.id })),
     course: { findMany: async ({ where }) => courses.filter(c => matches(c, where)) },
     syllabusItem: {
       findFirst: async ({ where }) => items.find(i => matches(i, where)) ?? null,
@@ -149,6 +153,7 @@ test("management validates rewards and saves settings and rewards together withi
   const f = fixture("INSTRUCTOR", "teacher"), api = await load(f);
   const settings = { syllabusItemId: "quiz", leaderboardEnabled: true, rewardTiers: [{ placement: 1, rewardLabel: "Winner", bonusExp: 10 }] };
   const saved = await api.PATCH(patch(settings)); assert.equal(saved.status, 200);
+  assert.equal(f.transactions, 1);
   assert.equal(f.writes.length, 1); assert.deepEqual(f.writes[0].data.leaderboardRewards, { deleteMany: {}, create: settings.rewardTiers });
   for (const rewardTiers of [[{ placement: -1, rewardLabel: "", bonusExp: 0 }], [...settings.rewardTiers, ...settings.rewardTiers]]) {
     assert.equal((await api.PATCH(patch({ ...settings, rewardTiers }))).status, 400);
@@ -157,4 +162,5 @@ test("management validates rewards and saves settings and rewards together withi
   assert.equal((await api.PATCH(patch({ ...settings, syllabusItemId: "foreign-item" }))).status, 404);
   f.session.user.role = "STUDENT"; assert.equal((await api.PATCH(patch(settings))).status, 403);
   assert.equal(f.writes.length, 1);
+  assert.equal(f.transactions, 1, 'invalid or unauthorized requests must not start a write transaction');
 });

@@ -13,9 +13,9 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useFloatingTabBarHeight } from '../../lib/design-system';
 
 const icons = { dashboard: LayoutDashboard, courses: BookOpen, analytics: BarChart2, grades: Trophy, alerts: Megaphone, more: MoreHorizontal };
-export function IcsTabBar({ state, descriptors, navigation }: FloatingPillTabBarProps) {
+export function IcsTabBar({ state, descriptors, emitter, navigateToTab }: FloatingPillTabBarProps) {
   const { isIcsV2, toolsReturnFocus } = useMobilePresentation();
-  const tabRefs = useRef<Record<string, View | null>>({});
+  const tabRefs = useRef<Record<string, React.ComponentRef<typeof View> | null>>({});
   const theme = useTheme(), insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { barHeight } = useFloatingTabBarHeight();
@@ -26,16 +26,16 @@ export function IcsTabBar({ state, descriptors, navigation }: FloatingPillTabBar
   return <View testID={isIcsV2 ? 'ics-tab-bar-v2' : undefined} style={[styles.bar, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, paddingBottom: insets.bottom }, isIcsV2 && { borderTopWidth: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 8, paddingTop: 6 }]}>
     {state.routes.map((route, index) => {
       const options = descriptors[route.key].options;
-      if (options.href === null || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
+      if (options.hidden || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
       const active = route.name === 'more' ? isOpen : !isOpen && state.index === index;
       const color = active ? theme.isDark ? '#FFAE79' : '#B84400' : theme.colors.textSecondary;
       const Icon = icons[route.name as keyof typeof icons] || MoreHorizontal;
       const label = options.title || route.name;
       return <Pressable key={route.key} ref={node => { tabRefs.current[route.key] = node; }} accessibilityRole="tab" accessibilityLabel={`${label} tab`} accessibilityHint={route.name === 'alerts' ? `${unread} unread notifications` : undefined} accessibilityState={{ selected: active }} style={[styles.tab, { minHeight: barHeight }]} onPress={() => {
         if (route.name === 'more') { if (isIcsV2) toolsReturnFocus.current = tabRefs.current[route.key]; openMenu(); return; }
-        const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-        if (!event.defaultPrevented) navigation.navigate(route.name);
-      }} onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}>
+        const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+        if (!event.defaultPrevented) navigateToTab(route.key);
+      }} onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}>
         <View><Icon size={21} color={color} strokeWidth={1.7} />{route.name === 'alerts' && unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text></View>}</View>
         <Text numberOfLines={isIcsV2 ? 1 : undefined} adjustsFontSizeToFit={isIcsV2 || undefined} minimumFontScale={isIcsV2 ? 0.85 : undefined} maxFontSizeMultiplier={isIcsV2 ? 1.2 : undefined}
           style={[styles.label, { color }, isIcsV2 && { fontSize: width < 360 ? 11 : 12 }, isIcsV2 && active && { fontWeight: '700' }]}>{label}</Text>

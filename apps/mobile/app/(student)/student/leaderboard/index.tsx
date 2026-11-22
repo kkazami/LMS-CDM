@@ -965,7 +965,7 @@ export default function StudentLeaderboardScreen() {
                     Complete assignments and practice on CodeLab to earn EXP!
                   </Text>
                 </Card>
-              ) : null
+              ) : undefined
             }
           />
         ) : (

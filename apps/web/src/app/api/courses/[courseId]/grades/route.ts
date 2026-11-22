@@ -45,7 +45,6 @@ export async function GET(request: Request, context: RouteContext) {
           type: true,
           maxPoints: true,
           dueDate: true,
-          form: { select: { showScoreAfter: true } },
           labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
         },
         orderBy: { dueDate: 'asc' },
@@ -94,7 +93,7 @@ export async function GET(request: Request, context: RouteContext) {
       const sub = subMap.get(item.id);
       const lab = currentLabAttempt(item.labAssignment);
       const maxPts = item.maxPoints || 100;
-      const score = item.form?.showScoreAfter === false ? null : typeof sub?.grade === 'number' ? sub.grade : null;
+      const score = typeof sub?.grade === 'number' ? sub.grade : null;
       const isSubmitted = sub?.status === 'SUBMITTED' || sub?.status === 'GRADED';
       const effectiveDue = lab?.status === 'NEEDS_REVISION' ? lab.revisionDueAt : item.dueDate;
       const isPastDue = effectiveDue ? new Date(effectiveDue) < new Date() : false;

@@ -1,6 +1,12 @@
 export const SESSION_ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000;
 export const SESSION_IDLE_MS = 30 * 60 * 1000;
 export const SESSION_TOUCH_MS = 60 * 1000;
+export const SENSITIVE_SESSION_AGE_MS = 5 * 60 * 1000;
+
+export function recentlyAuthenticated(createdAt: Date, now = Date.now()) {
+  const age = now - createdAt.getTime();
+  return age >= 0 && age < SENSITIVE_SESSION_AGE_MS;
+}
 
 export function sessionDeadline(session: { createdAt: Date; expiresAt: Date }) {
   return new Date(Math.min(session.expiresAt.getTime(), session.createdAt.getTime() + SESSION_ABSOLUTE_MS));

@@ -25,7 +25,7 @@ describe('Admin Security Tools API Suite', async () => {
         name: 'security-boundaries',
         setup(b) {
           b.onResolve(
-            { filter: /(^|\/)db$|(^|\/)auth-session$|^next\/(server|navigation|cache)$|^@\/lib\/roster\/rate-limit$/ },
+            { filter: /(^|\/)db$|(^|\/)auth-session$|(^|\/)admin-mfa$|^next\/(server|navigation|cache)$|^@\/lib\/roster\/rate-limit$/ },
             ({ path: name }) => ({ path: name, namespace: 'test-boundary' })
           );
           b.onLoad({ filter: /.*/, namespace: 'test-boundary' }, ({ path: name }) => ({
@@ -38,6 +38,8 @@ describe('Admin Security Tools API Suite', async () => {
                 ? 'export const db = new Proxy({}, { get: (_, p) => globalThis.__securityTestDb[p] });'
                 : /(^|\/)auth-session$/.test(name)
                 ? 'export async function getSession() { return globalThis.__securityTestSession; }'
+                : /(^|\/)admin-mfa$/.test(name)
+                ? 'export async function validAdminMfaSession(id){ globalThis.__securityMfaChecks.push(id); return globalThis.__securityMfaProofs.has(id); }'
                 : 'export async function persistentLimit() {}',
           }));
         },
@@ -140,6 +142,17 @@ describe('Admin Security Tools API Suite', async () => {
   ];
 
   const auditEntries = [];
+  globalThis.__securityMfaChecks = [];
+  globalThis.__securityMfaProofs = new Set(['sess-admin-ics', 'sess-admin-ite', 'sess-admin-ibe', 'sess-super-user']);
+  let pendingChallenges = [{ userId: 'admin-ics' }, { userId: 'student-ics' }, { userId: 'admin-ite' }, { userId: 'super-user' }];
+  function matchesUser(user, where = {}) {
+    if (where.AND && !where.AND.every(part => matchesUser(user, part))) return false;
+    if (where.NOT && matchesUser(user, where.NOT)) return false;
+    if (where.id && (typeof where.id === 'string' ? user.id !== where.id : !where.id.in.includes(user.id))) return false;
+    if (where.instituteId && user.instituteId !== where.instituteId) return false;
+    if (where.role?.equals && user.role.toUpperCase() !== where.role.equals.toUpperCase()) return false;
+    return true;
+  }
 
   // Mock DB implementation
   globalThis.__securityTestDb = {
@@ -153,6 +166,7 @@ describe('Admin Security Tools API Suite', async () => {
       },
     },
     user: {
+      findMany: async ({ where = {} }) => users.filter(user => matchesUser(user, where)).map(user => ({ id: user.id })),
       findUnique: async ({ where }) => {
         return users.find((u) => u.id === where.id) || null;
       },
@@ -217,13 +231,7 @@ describe('Admin Security Tools API Suite', async () => {
         if (!s) return null;
         return {
           ...s,
-          user: {
-            id: s.user.id,
-            name: s.user.name,
-            email: s.user.email,
-            role: s.user.role,
-            instituteId: s.user.instituteId,
-          },
+          user: { ...s.user },
         };
       },
       delete: async ({ where }) => {
@@ -234,6 +242,7 @@ describe('Admin Security Tools API Suite', async () => {
       deleteMany: async ({ where = {} }) => {
         const initialCount = sessions.length;
         sessions = sessions.filter((s) => {
+          if (where.userId?.in) return !where.userId.in.includes(s.userId) || s.id === where.id?.not;
           if (where.userId && s.userId === where.userId) return false;
           if (where.id && where.id.not && s.id === where.id.not) return true;
           if (where.user && where.user.instituteId && s.user.instituteId === where.user.instituteId) {
@@ -244,6 +253,18 @@ describe('Admin Security Tools API Suite', async () => {
         });
         return { count: initialCount - sessions.length };
       },
+    },
+    adminMfaChallenge: { deleteMany: async ({ where }) => {
+      const before = pendingChallenges.length;
+      pendingChallenges = pendingChallenges.filter(challenge => !where.userId.in.includes(challenge.userId));
+      return { count: before - pendingChallenges.length };
+    } },
+    $queryRaw: async (query) => {
+      if (Array.isArray(query) && query.join('').includes('set_config')) return [];
+      assert.match(query.sql, /ORDER BY id FOR UPDATE/);
+      assert.ok(query.values.includes('admin-ics'), 'Revoke-all must lock the acting account');
+      assert.ok(!query.values.includes('admin-ite') && !query.values.includes('super-user'), 'Institute admin must not lock foreign or superior targets');
+      return query.values.map(id => ({ id }));
     },
     auditLog: {
       count: async () => 3,
@@ -385,6 +406,16 @@ describe('Admin Security Tools API Suite', async () => {
   });
 
   // ─── TEST 5: Institute-wide emergency lockout requires typed confirmation and preserves acting session ───
+  test('Institute-wide revocation rejects a revoked MFA proof before deleting sessions or pending logins', async () => {
+    setSession('admin-ics', 'sess-admin-ics');
+    const sessionCount = sessions.length, challengeCount = pendingChallenges.length;
+    globalThis.__securityMfaProofs.delete('sess-admin-ics');
+    try {
+      const response = await api.deleteSessions(req('/api/admin/security/sessions', 'DELETE', { instituteWide: true, confirmation: 'REVOKE ALL' }));
+      assert.equal(response.status, 401);
+      assert.equal(sessions.length, sessionCount); assert.equal(pendingChallenges.length, challengeCount);
+    } finally { globalThis.__securityMfaProofs.add('sess-admin-ics'); }
+  });
   test('Institute-wide revocation requires typed confirmation and preserves current admin session', async () => {
     setSession('admin-ics', 'sess-admin-ics');
 
@@ -395,10 +426,15 @@ describe('Admin Security Tools API Suite', async () => {
     // With typed confirmation 'REVOKE ALL'
     const goodRes = await api.deleteSessions(req('/api/admin/security/sessions', 'DELETE', { instituteWide: true, confirmation: 'REVOKE ALL' }));
     assert.equal(goodRes.status, 200);
+    assert.equal((await goodRes.json()).pendingMfaChallengesRevoked, 2);
+    assert.ok(globalThis.__securityMfaChecks.includes('sess-admin-ics'));
+    assert.deepEqual(pendingChallenges.map(row => row.userId).sort(), ['admin-ite', 'super-user']);
 
     // Verify ICS student session was deleted, but acting admin session remains
     assert.ok(!sessions.some((s) => s.id === 'sess-student-ics'));
     assert.ok(sessions.some((s) => s.id === 'sess-admin-ics'), 'Acting admin session must be preserved');
+    assert.ok(sessions.some((s) => s.id === 'sess-admin-ite'));
+    assert.ok(sessions.some((s) => s.id === 'sess-super-user'));
   });
 
   // ─── TEST 6: Super user can inspect and operate across institutes ───

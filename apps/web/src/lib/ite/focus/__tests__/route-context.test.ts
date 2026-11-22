@@ -134,7 +134,7 @@ describe("resolveFocusContextFromPath: pure route to focus context resolution", 
 });
 
 describe("getIteStudentNavLinks: shared student navigation list", () => {
-  it("includes all 10 standard ITE student destinations", () => {
+  it("includes all 11 standard ITE student destinations", () => {
     const links = getIteStudentNavLinks("ite");
     const labels = links.map((l) => l.label);
 
@@ -144,7 +144,7 @@ describe("getIteStudentNavLinks: shared student navigation list", () => {
       "Learning Materials",
       "Announcements",
       "Grades",
-      "Tasks",
+      "Tasks & Calendar",
       "Flashcards",
       "Leaderboards",
       "Meetings",

@@ -1,3 +1,4 @@
+import { boundedJson } from '@/lib/roster/policy';
 import { academicProvenance } from '@/lib/labs/readiness';
 import { assertOrdinaryClasswork, markAcademicWorkStarted } from '@/lib/academic-task';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
@@ -19,7 +20,9 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 
 import { NextResponse } from "next/server";
 import { checkActivityEligibility } from "@/lib/activity-eligibility";
-import { activitySubmissionSchema } from "@/features/interactive-activities/shared/schemas";
+import { activitySubmissionInputSchema } from "@/features/interactive-activities/shared/schemas";
+import { ActivityGradingError, gradeActivity } from '@/features/interactive-activities/shared/grade-activity';
+import { requireCourseAccess } from '@/lib/course-access';
 import { db } from "@/lib/db";
 import { processGamificationEvent } from "@/features/interactive-activities/gamification/engine";
 import { CodeLabCompletionError, getCodeLabCompletion, getCodeLabReward, saveCodeLabCompletion } from "@/lib/codelab-completion";
@@ -53,8 +56,8 @@ export async function POST(request: Request) {
     }
 
     // 2. Parse and validate the submission payload
-    const body: unknown = await request.json();
-    const parsed = activitySubmissionSchema.safeParse(body);
+    const body: unknown = await boundedJson(request, 512 * 1024);
+    const parsed = activitySubmissionInputSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -105,13 +108,25 @@ export async function POST(request: Request) {
     }
     if (template.activityType !== payload.activityType) return NextResponse.json({ message: "Incorrect activity type." }, { status: 400 });
 
-    const submission = await db.$transaction(async tx => {
+    await requireCourseAccess(eligibility.session.user, template.courseId);
+    const { submission, outcome } = await db.$transaction(async tx => {
       if (template.syllabusItemId) {
         await assertOrdinaryClasswork(tx, template.syllabusItemId);
         await markAcademicWorkStarted(tx, template.syllabusItemId, payload.studentId);
       }
-      const currentTemplate = await tx.activityTemplate.findUnique({ where: { id: template.id }, select: { syllabusItemId: true } });
-      if (!currentTemplate || currentTemplate.syllabusItemId !== template.syllabusItemId) throw new AccessError(409, 'Activity linkage changed. Retry.');
+      await tx.$queryRaw`SELECT id FROM "ActivityTemplate" WHERE id = ${template.id} FOR UPDATE`;
+      const currentTemplate = await tx.activityTemplate.findUnique({ where: { id: template.id } });
+      if (!currentTemplate || currentTemplate.syllabusItemId !== template.syllabusItemId || currentTemplate.courseId !== template.courseId || currentTemplate.activityType !== payload.activityType) throw new AccessError(409, 'Activity linkage changed. Retry.');
+      await requireCourseAccess(eligibility.session.user, currentTemplate.courseId, false, tx);
+      let gradeMaximum = 100;
+      if (currentTemplate.syllabusItemId) {
+        const item = await tx.syllabusItem.findFirst({ where: { id: currentTemplate.syllabusItemId, courseId: currentTemplate.courseId }, select: { id: true, maxPoints: true } });
+        if (!item) throw new AccessError(409, 'Activity coursework does not belong to this course.');
+        gradeMaximum = item.maxPoints ?? 100;
+        if (gradeMaximum < 0) throw new AccessError(409, 'Activity points need reconciliation.');
+      }
+      const computed = gradeActivity(payload.activityType, payload.answers, currentTemplate, payload.variantSeed);
+      const grade = Math.round(computed.score / computed.maxScore * gradeMaximum * 100) / 100;
       // 5. Write the submission to the database
       const saved = await tx.activitySubmission.create({
         data: {
@@ -122,11 +137,11 @@ export async function POST(request: Request) {
           startedAt: new Date(payload.startedAt),
           completionTimeSeconds: payload.completionTimeSeconds,
           attempts: payload.attempts,
-          stateCheck: JSON.stringify(payload.stateCheck),
-          score: payload.score,
-          maxScore: payload.maxScore,
-          passed: payload.passed,
-          errorLog: JSON.stringify(payload.errorLog ?? []),
+          stateCheck: JSON.stringify({ answers: payload.answers, ...computed.stateCheck }),
+          score: computed.score,
+          maxScore: computed.maxScore,
+          passed: computed.passed,
+          errorLog: '[]',
         },
         select: {
           id: true,
@@ -159,7 +174,7 @@ export async function POST(request: Request) {
               },
             },
             update: {
-              grade: payload.score,
+              grade,
               ...await academicProvenance('STARTED', tx),
               status: "GRADED",
               submittedAt: new Date(),
@@ -167,7 +182,7 @@ export async function POST(request: Request) {
             create: {
               syllabusItemId: template.syllabusItemId,
               studentId: payload.studentId,
-              grade: payload.score,
+              grade,
               ...await academicProvenance('STARTED', tx),
               status: "GRADED",
               submittedAt: new Date(),
@@ -175,9 +190,9 @@ export async function POST(request: Request) {
           });
       }
 
-      return saved;
+      return { submission: saved, outcome: { ...payload, ...computed } };
     });
-    try { await processGamificationEvent(payload, template.courseId); }
+    try { await processGamificationEvent(outcome, template.courseId); }
     catch { console.warn('GAMIFICATION_UNAVAILABLE'); }
 
     return NextResponse.json(
@@ -194,6 +209,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof ActivityGradingError) return NextResponse.json({ message: error.message }, { status: 400 });
     if (error instanceof AccessError) return accountErrorResponse(error);
     if (error instanceof CodeLabCompletionError) return NextResponse.json({ message: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("ACTIVITY_SUBMIT_ERROR", error);

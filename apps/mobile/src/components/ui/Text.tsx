@@ -4,11 +4,11 @@ import { useMobilePresentation } from '../presentation/MobilePresentation';
 import { useThemeStore } from '../../stores/theme-store';
 import { icsTextInk } from '../../lib/mobile-presentation';
 
-export type Text = NativeText;
+export type Text = React.ComponentRef<typeof NativeText>;
 const InheritedTypography = createContext<{ fontWeight?: string | number; fontFamily?: string }>({});
 
 /** A scoped typeface, never a global Text/defaultProps mutation. */
-export const Text = forwardRef<NativeText, TextProps>(function Text({ style, ...props }, ref) {
+export const Text = forwardRef<Text, TextProps>(function Text({ style, ...props }, ref) {
   const { isIcsV2, fontsReady } = useMobilePresentation();
   const dark = useThemeStore(s => s.isDark);
   const flattened = StyleSheet.flatten(style);

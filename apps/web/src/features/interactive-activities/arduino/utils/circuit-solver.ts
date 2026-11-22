@@ -1,4 +1,4 @@
-import { WireData, CircuitComponent, PinState } from "../stores/arduino-store";
+import type { WireData, CircuitComponent, PinState } from "../stores/arduino-store";
 
 /**
  * circuit-solver.ts
