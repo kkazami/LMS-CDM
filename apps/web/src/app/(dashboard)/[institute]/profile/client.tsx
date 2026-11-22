@@ -69,6 +69,10 @@ interface ProfileEditClientProps {
     code: string;
     name: string;
   } | null;
+  lockedIbeProgram?: {
+    code: string;
+    name: string;
+  } | null;
 }
 
 const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Irregular"];
@@ -99,10 +103,12 @@ export default function ProfileEditClient({
   instituteCode,
   theme,
   lockedIteProgram = null,
+  lockedIbeProgram = null,
 }: ProfileEditClientProps) {
   const router = useRouter();
   const { avatarUrl } = useAvatar();
   const isIte = instituteCode?.toLowerCase() === "ite";
+  const isIbe = instituteCode?.toLowerCase() === "ibe";
 
   // Form state
   const [name, setName] = useState(user.name);
@@ -120,6 +126,9 @@ export default function ProfileEditClient({
 
   const isStudent = user.role.toUpperCase() === "STUDENT";
   const isIteStudentLocked = isIte && isStudent;
+  const isIbeStudentLocked = isIbe && isStudent;
+  const isProgramLocked = isIteStudentLocked || isIbeStudentLocked;
+  const lockedProgram = lockedIteProgram ?? lockedIbeProgram;
   const courses = isStudent
     ? user.enrollments.map((e) => e.course)
     : user.taughtCourses;
@@ -172,7 +181,7 @@ export default function ProfileEditClient({
         yearLevel,
         coverColor,
         bannerImageUrl,
-        ...(isIteStudentLocked ? {} : { department }),
+        ...(isProgramLocked ? {} : { department }),
       };
       const res = await fetch("/api/profile", {
         method: "PUT",
@@ -308,7 +317,7 @@ export default function ProfileEditClient({
             <label htmlFor="profile-department" className="text-xs font-semibold text-slate-700 dark:text-[#F0F2F8]">
               Program
             </label>
-            {isIteStudentLocked ? (
+            {isProgramLocked ? (
               <div className="space-y-1.5">
                 <div className="relative">
                   <input
@@ -317,8 +326,8 @@ export default function ProfileEditClient({
                     readOnly
                     disabled
                     value={
-                      lockedIteProgram
-                        ? `${lockedIteProgram.code} — ${lockedIteProgram.name}`
+                      lockedProgram
+                        ? `${lockedProgram.code} — ${lockedProgram.name}`
                         : department || "Not selected yet (choose on your student dashboard)"
                     }
                     className="w-full rounded-xl border border-slate-200 dark:border-[#3D4460] bg-slate-100/80 dark:bg-[#1A1D2B] px-3 py-2 pr-9 text-sm text-slate-700 dark:text-[#C8CEE0] outline-none cursor-not-allowed"
@@ -329,7 +338,9 @@ export default function ProfileEditClient({
                   />
                 </div>
                 <p className="text-xs text-slate-500 dark:text-[#8B92A5]">
-                  Your ITE academic program is locked after selection. Contact an ITE administrator if a correction is needed.
+                  {isIte
+                    ? "Your ITE academic program is locked after selection. Contact an ITE administrator if a correction is needed."
+                    : "Your IBE academic program is locked after selection. Contact an IBE administrator if a correction is needed."}
                 </p>
               </div>
             ) : (

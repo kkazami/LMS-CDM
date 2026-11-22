@@ -31,6 +31,7 @@ import {
   MessageSquareQuote,
   FileSpreadsheet,
   Briefcase,
+  GraduationCap,
   Cpu,
   FlaskConical,
   Music,
@@ -39,6 +40,10 @@ import {
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
+import {
+  canIbeProgramAccessFeature,
+  type IbeStudentProgramCode,
+} from "@/lib/ibe-programs/features";
 
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
@@ -55,6 +60,7 @@ interface MobileMoreSheetProps {
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
   iteProgramTools?: IteSidebarProgramTool[];
+  ibeProgramCode?: IbeStudentProgramCode | null;
 }
 
 interface NavItem {
@@ -76,6 +82,7 @@ export default function MobileMoreSheet({
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   iteProgramTools = [],
+  ibeProgramCode = null,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -127,6 +134,9 @@ export default function MobileMoreSheet({
     { label: "Archived Classes", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Review previous classes" },
     { label: "Calendar", href: `/${instituteCode}/tasks`, icon: CalendarDays, description: "Class schedule and personal events" },
     ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
+    ...(instituteCode.toLowerCase() === "ibe"
+      ? [{ label: "Consultation Management", href: `/${instituteCode}/consultation-management`, icon: CalendarDays, description: "Manage student consultation requests & availability" }]
+      : []),
     { label: "Student Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Class progress and performance" },
     { label: "Manage Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage institute rankings" },
     { label: "Create Tasks", href: `/${instituteCode}/create-tasks`, icon: PlusSquare, description: "Assign activities" },
@@ -208,8 +218,75 @@ export default function MobileMoreSheet({
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
       ? [
-          { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },
-          { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
+          {
+            label: "Consultation & Scheduling",
+            href: `/${instituteCode}/consultation`,
+            icon: CalendarDays,
+            description: "Request appointments with your instructors",
+          },
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  label: "Financial Statement Generator",
+                  href: `/${instituteCode}/financial-statements`,
+                  icon: FileSpreadsheet,
+                  description: "Create and manage accounting reports",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  label: "Mock Interview",
+                  href: `/${instituteCode}/mock-interview`,
+                  icon: Briefcase,
+                  description: "Practice job interviews and recruiter evaluations",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  label: "IBE WordWise",
+                  href: `/${instituteCode}/wordwise`,
+                  icon: BookOpen,
+                  description: "Vocabulary & academic language hub",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  label: "Business Plan Guide",
+                  href: `/${instituteCode}/business-plan`,
+                  icon: NotebookPen,
+                  description: "Guided lessons and venture builder",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  label: "IBE Learning Hub",
+                  href: `/${instituteCode}/learning-hub`,
+                  icon: Library,
+                  description: "Free external business courses",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  label: "Hall of Fame",
+                  href: `/${instituteCode}/hall-of-fame`,
+                  icon: GraduationCap,
+                  description:
+                    ibeProgramCode === "BSBA HRM"
+                      ? "10 Famous HR Leader biographies"
+                      : "10 Famous Entrepreneur biographies",
+                },
+              ]
+            : []),
         ] : []),
     ...(isStudent
       ? [...studentItems, ...meetingsItems, ...practicumItems, ...lectureVideosItems, ...iteProgramToolItems]

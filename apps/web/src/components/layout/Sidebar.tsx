@@ -42,6 +42,10 @@ import {
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
+import {
+  canIbeProgramAccessFeature,
+  type IbeStudentProgramCode,
+} from "@/lib/ibe-programs/features";
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 
@@ -79,6 +83,8 @@ interface SidebarProps {
   isEligibleForMeetings?: boolean;
   /** Available program-specific tools for the ITE student ("Program tools" group). */
   iteProgramTools?: IteSidebarProgramTool[];
+  /** Resolved IBE student program code ("BSBA HRM" | "BS ENTREP" | null) for program-scoped sidebar links. */
+  ibeProgramCode?: IbeStudentProgramCode | null;
   /** Enrolled courses for the student to render under the "My Courses" accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
 }
@@ -98,6 +104,20 @@ function getProgramToolIcon(toolId: string): ComponentType<{ className?: string 
     case "interactive-educational-charts":
     case "visual-kit":
       return FlaskConical;
+    case "lesson-plan-builder":
+      return BookOpen;
+    case "financial-statements":
+      return FileSpreadsheet;
+    case "mock-interview":
+      return Briefcase;
+    case "wordwise":
+      return BookOpen;
+    case "business-plan":
+      return NotebookPen;
+    case "learning-hub":
+      return Library;
+    case "hall-of-fame":
+      return GraduationCap;
     default:
       return BookOpen;
   }
@@ -160,6 +180,9 @@ const getProfessorLinks = (code: string): (NavLink & { key?: string })[] => [
   { label: "Archived Classes", href: `/${code}/courses/archived`, icon: Archive },
   { label: "Calendar", href: `/${code}/tasks`, icon: CalendarDays },
   ...(code === "ics" ? [{ label: "Organizational Chart", href: `/${code}/organization`, icon: Network }] : []),
+  ...(code.toLowerCase() === "ibe"
+    ? [{ label: "Consultation Management", href: `/${code}/consultation-management`, icon: CalendarDays }]
+    : []),
 
   { label: "Student Analytics", href: `/${code}/analytics`, icon: BarChart2 },
   { label: "Manage Leaderboard", href: `/${code}/manage-leaderboard`, icon: Trophy },
@@ -199,6 +222,7 @@ export default function Sidebar({
   isEligibleForPracticum,
   isEligibleForMeetings,
   iteProgramTools,
+  ibeProgramCode,
   enrolledCourses,
 }: SidebarProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
@@ -260,34 +284,14 @@ export default function Sidebar({
     links = [
       ...links,
       {
-        label: "Financial Statement Generator",
-        href: `/${instituteCode}/financial-statements`,
-        icon: FileSpreadsheet,
-      },
-      {
-        label: "Mock Interview",
-        href: `/${instituteCode}/mock-interview`,
-        icon: Briefcase,
-      },
-      {
-        label: "Business Plan Guide",
-        href: `/${instituteCode}/business-plan`,
-        icon: NotebookPen,
-      },
-      {
-        label: "IBE Learning Hub",
-        href: `/${instituteCode}/learning-hub`,
-        icon: Library,
-      },
-      {
-        label: "Hall of Fame",
-        href: `/${instituteCode}/hall-of-fame`,
-        icon: GraduationCap,
+        label: "Consultation & Scheduling",
+        href: `/${instituteCode}/consultation`,
+        icon: CalendarDays,
       },
     ];
   }
 
-  const visibleProgramTools =
+  const iteVisibleProgramTools =
     isStudent && isIte && iteProgramTools && iteProgramTools.length > 0
       ? iteProgramTools.map((tool) => ({
           id: tool.id,
@@ -296,6 +300,77 @@ export default function Sidebar({
           icon: getProgramToolIcon(tool.id),
         }))
       : [];
+
+  const ibeVisibleProgramTools =
+    isStudent && instituteCode.toLowerCase() === "ibe"
+      ? [
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  id: "mock-interview",
+                  label: "Mock Interview",
+                  href: `/${instituteCode}/mock-interview`,
+                  icon: Briefcase,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  id: "wordwise",
+                  label: "IBE WordWise",
+                  href: `/${instituteCode}/wordwise`,
+                  icon: BookOpen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  id: "financial-statements",
+                  label: "Financial Statement Generator",
+                  href: `/${instituteCode}/financial-statements`,
+                  icon: FileSpreadsheet,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  id: "business-plan",
+                  label: "Business Plan Guide",
+                  href: `/${instituteCode}/business-plan`,
+                  icon: NotebookPen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  id: "hall-of-fame",
+                  label: "Hall of Fame",
+                  href: `/${instituteCode}/hall-of-fame`,
+                  icon: GraduationCap,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  id: "learning-hub",
+                  label: "IBE Learning Hub",
+                  href: `/${instituteCode}/learning-hub`,
+                  icon: Library,
+                },
+              ]
+            : []),
+        ]
+      : [];
+
+  const visibleProgramTools =
+    iteVisibleProgramTools.length > 0
+      ? iteVisibleProgramTools
+      : ibeVisibleProgramTools;
 
   // Find the active link by getting the longest href that matches the current pathname
   const allMatchableLinks = [...links, ...visibleProgramTools];
@@ -552,7 +627,7 @@ export default function Sidebar({
           );
         })}
 
-        {/* ITE Student "Program tools" group — shown ONLY when the student's program has available tools */}
+        {/* Student "Program tools" group — shown for ITE and IBE when the student's program has available tools */}
         {visibleProgramTools.length > 0 && (
           <div
             role="group"

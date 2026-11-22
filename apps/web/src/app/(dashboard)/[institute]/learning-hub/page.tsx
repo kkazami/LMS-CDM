@@ -7,6 +7,8 @@ import {
   toStudentLearningRecord,
   type RawIbeLearningRecordRow,
 } from "@/lib/learning-hub/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import LearningHubClient from "@/components/learning-hub/LearningHubClient";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,11 @@ export default async function IbeLearningHubPage({
     notFound();
   }
 
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "learning-hub")) {
+    redirect("/ibe/students");
+  }
+
   let rows: RawIbeLearningRecordRow[] = [];
   try {
     await ensureLearningHubTable();
@@ -44,7 +51,7 @@ export default async function IbeLearningHubPage({
   const initialRecords = rows.map(toStudentLearningRecord);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <LearningHubClient
         instituteCode={institute}
         initialRecords={initialRecords}

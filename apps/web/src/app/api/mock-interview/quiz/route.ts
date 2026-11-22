@@ -8,6 +8,8 @@ import {
 import { PREDEFINED_QUIZ_QUESTIONS } from "@/lib/mock-interview/content-bank";
 import { ensureMockInterviewTablesAndContent } from "@/lib/mock-interview/server-db";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET: Returns quiz questions with answer choices, but STRIPS OUT correctAnswer
  * and explanation to protect the integrity of the quiz prior to submission.

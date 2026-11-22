@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, BookOpen, Trophy, Megaphone, MoreHorizontal, BarChart2, Users } from "lucide-react";
 import MobileMoreSheet from "@/components/layout/MobileMoreSheet";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
+import type { IbeStudentProgramCode } from "@/lib/ibe-programs/features";
 
 import { triggerNativeHaptic } from "@/lib/mobile-bridge";
 import { getNavigationPath } from "@/lib/navigation-path";
@@ -20,6 +21,7 @@ interface MobileBottomNavProps {
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
   iteProgramTools?: IteSidebarProgramTool[];
+  ibeProgramCode?: IbeStudentProgramCode | null;
 }
 
 export default function MobileBottomNav({
@@ -32,6 +34,7 @@ export default function MobileBottomNav({
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   iteProgramTools = [],
+  ibeProgramCode = null,
 }: MobileBottomNavProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -150,6 +153,7 @@ export default function MobileBottomNav({
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
         iteProgramTools={iteProgramTools}
+        ibeProgramCode={ibeProgramCode}
       />
     </>
   );

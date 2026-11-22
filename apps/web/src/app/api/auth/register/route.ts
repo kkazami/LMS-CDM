@@ -7,10 +7,12 @@ import { studentRegistrationSchema, googleLinkSchema } from '@/lib/auth-schema';
 import { createSession } from '@/lib/auth-session';
 import { clearGoogleProfile, readGoogleProfile } from '@/lib/google-auth';
 import { resolveIteStudentProgramFromRecord } from '@/lib/ite-programs/features';
+import { loadActiveIteStudentProgramsFromDb } from '@/lib/ite-programs/registration';
+import { resolveIbeStudentProgramFromRecord } from '@/lib/ibe-programs/features';
 import {
-  loadActiveIteStudentProgramsFromDb,
+  loadActiveIbeStudentProgramsFromDb,
   resolveRegistrationDepartmentForInstitute,
-} from '@/lib/ite-programs/registration';
+} from '@/lib/ibe-programs/registration';
 import { needsClassEnrollment } from '@/lib/student-access';
 import { mutationOriginAllowed } from '@/lib/request-security';
 import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
@@ -43,9 +45,10 @@ export async function POST(request: Request) {
       instituteId: institute.id,
       rawProgram: body?.program,
       loadItePrograms: loadActiveIteStudentProgramsFromDb,
+      loadIbePrograms: loadActiveIbeStudentProgramsFromDb,
     });
     if (!programValidation.ok) throw new AccessError(programValidation.status, programValidation.message);
-    const validatedIteProgramCode = programValidation.department;
+    const validatedProgramCode = programValidation.department;
     const registration = registrationResult?.success ? registrationResult.data : null;
     const password = registration ? await hash(registration.password, 12) : null;
     const user = await db.$transaction(async tx => {
@@ -72,12 +75,17 @@ export async function POST(request: Request) {
         if (current.instituteId !== institute.id || current.institute.code !== profile.instituteCode) throw new AccessError(403, 'Your account belongs to a different institute. Select your existing institute and start Google sign-in again.');
         if (!await compare(data.password, current.password)) throw new AccessError(401, 'Your LMS password is incorrect. Try again or reset your password before connecting Google.');
         if (current.googleSubject && current.googleSubject !== profile.sub) throw new AccessError(409, 'This account is connected to a different Google account. Contact your Instructor or Program Head.');
-        const existingIteProgram = institute.code === 'ite' ? resolveIteStudentProgramFromRecord(current) : null;
+        const existingProgram =
+          institute.code === 'ite'
+            ? resolveIteStudentProgramFromRecord(current)
+            : institute.code === 'ibe'
+              ? resolveIbeStudentProgramFromRecord(current)
+              : null;
         return tx.user.update({
           where: { id: current.id },
           data: {
             googleSubject: profile.sub,
-            ...(validatedIteProgramCode && !existingIteProgram ? { department: validatedIteProgramCode } : {}),
+            ...(validatedProgramCode && !existingProgram ? { department: validatedProgramCode } : {}),
           },
         });
       }
@@ -94,7 +102,7 @@ export async function POST(request: Request) {
           googleSubject: profile?.sub ?? null,
           role: 'STUDENT',
           instituteId: institute.id,
-          ...(validatedIteProgramCode ? { department: validatedIteProgramCode } : {}),
+          ...(validatedProgramCode ? { department: validatedProgramCode } : {}),
           isActive: true,
           activationStatus: 'ACTIVE',
           activatedAt: new Date(),

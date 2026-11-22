@@ -13,6 +13,7 @@ import { ChatbotProvider } from "@/lib/chatbot-context";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import type { InstituteTheme } from "@/lib/theme";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
+import type { IbeStudentProgramCode } from "@/lib/ibe-programs/features";
 
 const ChatbotWidget = dynamic(() => import("@/components/common/ChatbotWidget"));
 const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"));
@@ -42,6 +43,8 @@ interface DashboardLayoutProps {
   isEligibleForFocusMode?: boolean;
   /** Available program-specific tools for the ITE student ("Program tools" sidebar group). */
   iteProgramTools?: IteSidebarProgramTool[];
+  /** Resolved IBE student program code ("BSBA HRM" | "BS ENTREP" | null) for program-scoped nav & search. */
+  ibeProgramCode?: IbeStudentProgramCode | null;
   /** Enrolled courses for student sidebar accordion. */
   enrolledCourses?: EnrolledCourseSummary[];
   /** Gamification total EXP for LevelBadge */
@@ -69,6 +72,7 @@ export default function DashboardLayout({
   isEligibleForMeetings,
   isEligibleForFocusMode,
   iteProgramTools,
+  ibeProgramCode,
   enrolledCourses,
   exp = 0,
   streakCurrent = 0,
@@ -124,6 +128,7 @@ export default function DashboardLayout({
           isEligibleForOhmward={isEligibleForOhmward}
           isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
           iteProgramTools={iteProgramTools}
+          ibeProgramCode={ibeProgramCode}
           isEligibleForPracticum={isEligibleForPracticum}
           isEligibleForMeetings={isEligibleForMeetings}
           enrolledCourses={enrolledCourses}
@@ -144,6 +149,7 @@ export default function DashboardLayout({
             isEligibleForActivities={isEligibleForActivities}
             isEligibleForPracticum={isEligibleForPracticum}
             isEligibleForMeetings={isEligibleForMeetings}
+            ibeProgramCode={ibeProgramCode}
             enrolledCourses={enrolledCourses}
           />
 
@@ -170,6 +176,7 @@ export default function DashboardLayout({
         isEligibleForActivities={isEligibleForActivities}
         isEligibleForKnowledgeExchange={isEligibleForKnowledgeExchange}
         iteProgramTools={iteProgramTools}
+        ibeProgramCode={ibeProgramCode}
       />
       </div>
 

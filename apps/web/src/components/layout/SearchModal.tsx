@@ -20,7 +20,6 @@ import {
   LayoutDashboard,
   Users,
   Shield,
-  ShieldCheck,
   HardDrive,
   FileText,
   Library,
@@ -31,8 +30,15 @@ import {
   Terminal,
   Video,
   NotebookPen,
+  FileSpreadsheet,
+  Briefcase,
+  CalendarDays,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import {
+  canIbeProgramAccessFeature,
+  type IbeStudentProgramCode,
+} from "@/lib/ibe-programs/features";
 import {
   filterSearchItems,
   getSearchFocusRingColor,
@@ -49,6 +55,7 @@ interface SearchModalProps {
   isEligibleForActivities?: boolean;
   isEligibleForMeetings?: boolean;
   isEligibleForPracticum?: boolean;
+  ibeProgramCode?: IbeStudentProgramCode | null;
 }
 
 interface SearchItem {
@@ -70,6 +77,7 @@ export default function SearchModal({
   isEligibleForActivities,
   isEligibleForMeetings,
   isEligibleForPracticum,
+  ibeProgramCode = null,
 }: SearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -297,6 +305,19 @@ export default function SearchModal({
             },
           ]
         : []),
+      ...(instituteCode.toLowerCase() === "ibe"
+        ? [
+            {
+              id: "prof-ibe-consultation-management",
+              title: "Consultation Management",
+              subtitle:
+                "Publish consultation availability, review student requests, and manage appointments",
+              category: "Navigation" as const,
+              href: `/${instituteCode}/consultation-management`,
+              icon: CalendarDays,
+            },
+          ]
+        : []),
       {
         id: "prof-settings",
         title: "Account Settings",
@@ -439,7 +460,102 @@ export default function SearchModal({
       }))
     : [];
 
-  const rawItems = [...defaultItems, ...courseItems];
+  const ibeStudentItems: SearchItem[] =
+    !isAdmin && !isProfessor && instituteCode.toLowerCase() === "ibe"
+      ? [
+          {
+            id: "nav-ibe-consultation",
+            title: "Consultation & Scheduling",
+            subtitle:
+              "Request formal academic consultations with your enrolled subject instructors and track appointments",
+            category: "Navigation" as const,
+            href: `/${instituteCode}/consultation`,
+            icon: CalendarDays,
+          },
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  id: "nav-ibe-financial-statements",
+                  title: "Financial Statement Generator",
+                  subtitle:
+                    "Prepare, validate, and export Income Statement, Balance Sheet, Cash Flow, and Equity reports",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/financial-statements`,
+                  icon: FileSpreadsheet,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  id: "nav-ibe-mock-interview",
+                  title: "Mock Interview",
+                  subtitle:
+                    "AI interview coach, 36 sample answers, Recruiter Mode simulation, and readiness quiz",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/mock-interview`,
+                  icon: Briefcase,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  id: "nav-ibe-wordwise",
+                  title: "IBE WordWise",
+                  subtitle:
+                    "Vocabulary & Academic Language Hub — universal dictionary, formal writing replacements, and pronunciation",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/wordwise`,
+                  icon: BookOpen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  id: "nav-ibe-business-plan",
+                  title: "Business Plan Guide",
+                  subtitle:
+                    "14 sequential entrepreneurship guide lessons, sample templates, and guided venture builder",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/business-plan`,
+                  icon: NotebookPen,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  id: "nav-ibe-learning-hub",
+                  title: "IBE Learning Hub",
+                  subtitle:
+                    "Curated free external business courses & certificates (HP LIFE, Saylor, HubSpot, OpenLearn, Santander, Alison)",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/learning-hub`,
+                  icon: Library,
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  id: "nav-ibe-hall-of-fame",
+                  title: "Hall of Fame",
+                  subtitle:
+                    ibeProgramCode === "BSBA HRM"
+                      ? "Biographies and career timelines of 10 Famous HR Leaders (5 Filipino & 5 International)"
+                      : "Biographies and career timelines of 10 Famous Entrepreneurs (5 Filipino & 5 International)",
+                  category: "Activities" as const,
+                  href: `/${instituteCode}/hall-of-fame`,
+                  icon: GraduationCap,
+                },
+              ]
+            : []),
+        ]
+      : [];
+
+  const rawItems = [...defaultItems, ...ibeStudentItems, ...courseItems];
   const eligibleItems = filterSearchItems({
     items: rawItems,
     instituteCode,
@@ -512,7 +628,7 @@ export default function SearchModal({
         {/* Search Header Bar */}
         {/* Search Header Bar */}
         <div
-          className="relative flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] sm:rounded-t-2xl transition-all focus-within:ring-2 focus-within:ring-inset"
+          className="relative flex items-center gap-3 px-4 py-3 sm:py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 sm:rounded-t-2xl transition-all focus-within:ring-2 focus-within:ring-inset"
           style={{
             "--tw-ring-color": focusRingColor,
           } as React.CSSProperties}
@@ -593,7 +709,7 @@ export default function SearchModal({
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group cursor-pointer min-h-12 ${
                     isSelected
-                      ? "bg-slate-100 dark:bg-white/[0.08] border-slate-300 dark:border-white/20"
+                      ? "bg-slate-100 dark:bg-white/8 border-slate-300 dark:border-white/20"
                       : "hover:bg-slate-100 dark:hover:bg-white/5 border-transparent hover:border-slate-200 dark:hover:border-white/5"
                   }`}
                 >
@@ -643,7 +759,7 @@ export default function SearchModal({
         </div>
 
         {/* Footer info on desktop */}
-        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="hidden sm:flex items-center justify-between px-4 py-2.5 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2 text-[11px] text-slate-400 dark:text-slate-500">
           <span>{getSearchFooterText(instituteCode)}</span>
           <span>Press ESC to exit</span>
         </div>

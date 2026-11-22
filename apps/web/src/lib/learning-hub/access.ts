@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "../api-auth";
 import { db } from "../db";
 import { isLearningHubEligible, LEARNING_HUB_INSTITUTE_CODE } from "./eligibility";
+import { canIbeProgramAccessFeature } from "../ibe-programs/features";
+import { resolveIbeStudentProgram } from "../ibe-programs/registration";
 import {
   LEARNING_RECORD_ID,
   toStudentLearningRecord,
@@ -33,6 +35,14 @@ export async function requireLearningHubStudent(
       ok: false,
       status: 403,
       message: "The IBE Learning Hub is available to authenticated IBE students only.",
+    };
+  }
+  const resolvedProgram = await resolveIbeStudentProgram(user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "learning-hub")) {
+    return {
+      ok: false,
+      status: 403,
+      message: "Please select your IBE academic program (BSBA HRM or BS ENTREP) to access the IBE Learning Hub.",
     };
   }
   return {
@@ -120,11 +130,16 @@ export async function ensureLearningHubTable(): Promise<void> {
   for (const sql of statements) {
     try {
       await db.$executeRawUnsafe(sql);
-    } catch {
-      // Ignore individual constraint/grant failures on restricted DB roles
+    } catch (err) {
+      console.warn("[ensureLearningHubTable] DDL warning:", err instanceof Error ? err.message : String(err));
     }
   }
-  learningHubTableVerified = true;
+  try {
+    await db.ibeLearningRecord.count({ take: 1 });
+    learningHubTableVerified = true;
+  } catch (err) {
+    console.error("[ensureLearningHubTable] Table still unavailable after DDL:", err instanceof Error ? err.message : String(err));
+  }
 }
 
 export async function loadOwnedLearningRecord(id: string, studentId: string) {

@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { ensureFinancialStatementTable, isFinancialEligible } from "@/lib/financial-statements/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import { MAX_STATEMENTS_PER_STUDENT, toSummary } from "@/lib/financial-statements/server";
 import { isStatementType } from "@/lib/financial-statements/types";
 import FinancialStatementsHubClient from "@/components/financial-statements/FinancialStatementsHubClient";
@@ -26,6 +28,11 @@ export default async function FinancialStatementsHubPage({
     notFound();
   }
 
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "financial-statements")) {
+    redirect("/ibe/students");
+  }
+
   // Load student's own statements
   await ensureFinancialStatementTable().catch(() => {});
   const statements = await db.financialStatement.findMany({
@@ -39,7 +46,7 @@ export default async function FinancialStatementsHubPage({
     .map(toSummary);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <FinancialStatementsHubClient
         instituteCode={institute}
         initialStatements={formattedStatements}

@@ -13,6 +13,8 @@ import { STATEMENT_ID } from "./server";
  */
 
 import { isFinancialEligible, FINANCIAL_INSTITUTE_CODE } from "./eligibility";
+import { canIbeProgramAccessFeature } from "../ibe-programs/features";
+import { resolveIbeStudentProgram } from "../ibe-programs/registration";
 
 export { isFinancialEligible, FINANCIAL_INSTITUTE_CODE };
 
@@ -26,6 +28,10 @@ export async function requireFinancialStudent(request?: Request): Promise<Studen
   const user = session.user;
   if (!isFinancialEligible(user)) {
     return { ok: false, status: 403, message: "The Financial Statement Generator is available to IBE students only." };
+  }
+  const resolvedProgram = await resolveIbeStudentProgram(user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "financial-statements")) {
+    return { ok: false, status: 403, message: "The Financial Statement Generator is restricted to BS ENTREP students." };
   }
   return { ok: true, userId: user.id, instituteId: user.instituteId, name: user.name };
 }
