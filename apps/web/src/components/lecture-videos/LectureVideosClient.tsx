@@ -38,6 +38,7 @@ import {
   LECTURE_MIME_BY_EXTENSION,
   LECTURE_SAVE_INTERVAL_MS,
   LECTURE_SOURCE_LABELS,
+  LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
   accumulateWatchedStep,
   buildLectureBlobPathname,
   filterAndSortFacultyProgressRows,
@@ -523,9 +524,7 @@ export function LectureUploadDialog({
 
     // Uploaded video source type
     if (!uploadsConfigured) {
-      setInlineError(
-        "File uploads are not configured (missing BLOB_READ_WRITE_TOKEN)."
-      );
+      setInlineError(LECTURE_UPLOADS_UNAVAILABLE_MESSAGE);
       return;
     }
 
@@ -2063,7 +2062,7 @@ export default function LectureVideosClient({
               <span>Institute of Teacher Education • Lecture Videos</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Recorded Lecture Videos
+              Lecture Videos
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
               {isFacultyOrAdmin

@@ -35,6 +35,8 @@ export const LECTURE_ACCEPT_ATTRIBUTE = ".mp4,.webm,video/mp4,video/webm";
 export const LECTURE_MAX_MB = 300;
 export const LECTURE_MAX_BYTES = LECTURE_MAX_MB * 1024 * 1024;
 export const LECTURE_HINT_TEXT = `MP4 or WebM, up to ${LECTURE_MAX_MB} MB`;
+export const LECTURE_UPLOADS_UNAVAILABLE_MESSAGE =
+  "Video uploads aren\u2019t available right now. Please contact your administrator.";
 
 export const LECTURE_MAX_TITLE_LENGTH = 140;
 export const LECTURE_MAX_DESCRIPTION_LENGTH = 1000;

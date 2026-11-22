@@ -9,8 +9,8 @@ import {
 } from "@/lib/lecture-videos/lectures";
 import {
   LectureVideosHttpError,
+  assertLectureUploadsConfigured,
   cleanupUncommittedLectureBlob,
-  lectureUploadsConfigured,
 } from "@/lib/lecture-videos/service";
 
 export const dynamic = "force-dynamic";
@@ -49,12 +49,7 @@ export async function POST(request: Request) {
       "ADMIN",
     ]);
 
-    if (!lectureUploadsConfigured()) {
-      throw new LectureVideosHttpError(
-        503,
-        "File uploads are not configured."
-      );
-    }
+    assertLectureUploadsConfigured();
 
     let body: HandleUploadBody;
     try {

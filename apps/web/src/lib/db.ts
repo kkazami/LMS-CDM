@@ -40,10 +40,11 @@ const createPrismaClient = () => {
       connectionString: target.toString(),
       // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
       // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
-      max: configuredMax === undefined ? (isProduction ? 2 : 15) : Number(configuredMax),
-      idleTimeoutMillis: isProduction ? 30000 : 120000,
-      connectionTimeoutMillis: 10000,
+      max: configuredMax === undefined ? (isProduction ? 2 : 5) : Number(configuredMax),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: isProduction ? 10000 : 20000,
       keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
       // pg parses sslrootcert from the URL when a private certificate authority is required.
       ssl: !isLocalhost ? { rejectUnauthorized: true } : undefined,
     };

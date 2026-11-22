@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/lib/theme-context";
 import {
   Cpu,
@@ -333,9 +333,10 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   );
 
   // Assembly & Disassembly Guide state (ephemeral, resets on part or tab change)
+  const guideRef = useRef<HTMLDivElement>(null);
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
-  const [procedureMode, setProcedureMode] = useState<"remove" | "install">("remove");
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => new Set());
+  const [procedureMode, setProcedureMode] = useState<"remove" | "install" | "both">("remove");
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(() => new Set());
   const [safetyOpen, setSafetyOpen] = useState<boolean>(false);
 
   const selectedProcedure = getHardwareProcedure(selectedPart.id);
@@ -348,7 +349,17 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
       if (!matchingParts.some((part) => part.id === selectedPartId)) {
         setSelectedPartId(matchingParts[0]!.id);
       }
+      setProcedureMode("both");
       setGuideOpen(true);
+      requestAnimationFrame(() => {
+        const reduceMotion =
+          typeof window !== "undefined" &&
+          window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        guideRef.current?.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "nearest",
+        });
+      });
     }
   };
 
@@ -356,13 +367,13 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
     setCompletedSteps(new Set());
   }, [selectedPart.id, procedureMode]);
 
-  const toggleStepDone = (stepIndex: number) => {
+  const toggleStepDone = (stepKey: string) => {
     setCompletedSteps((prev) => {
       const next = new Set(prev);
-      if (next.has(stepIndex)) {
-        next.delete(stepIndex);
+      if (next.has(stepKey)) {
+        next.delete(stepKey);
       } else {
-        next.add(stepIndex);
+        next.add(stepKey);
       }
       return next;
     });
@@ -496,21 +507,22 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   return (
     <div className="space-y-4">
       {/* Top Bar: Category Filter Chips & Quiz Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-theme bg-surface p-3.5 shadow-sm">
+      <div className="flex flex-col gap-3 rounded-xl border border-theme bg-surface p-3.5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter hardware parts by category">
-          <span className="mr-1 inline-flex items-center gap-1 text-xs font-semibold text-secondary-theme">
+          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary-theme">
             <Layers className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-            Category:
+            Categories
           </span>
           <button
             type="button"
             disabled={isQuizActive}
+            aria-pressed={selectedCategory === "all"}
             onClick={() => handleSelectCategory("all")}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               selectedCategory === "all"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
-            } disabled:opacity-50`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             All ({data.parts.length})
           </button>
@@ -521,12 +533,13 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 key={cat.id}
                 type="button"
                 disabled={isQuizActive}
+                aria-pressed={active}
                 onClick={() => handleSelectCategory(cat.id)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   active
                     ? "bg-blue-600 text-white shadow-sm"
                     : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
-                } disabled:opacity-50`}
+                } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 {cat.label}
               </button>
@@ -1077,7 +1090,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
           </div>
 
           {selectedProcedure && (
-            <div className="mt-3 rounded-xl border border-theme bg-elevated/60">
+            <div ref={guideRef} className="mt-3 rounded-xl border border-theme bg-elevated/60">
               <button
                 id="hardware-guide-heading"
                 type="button"
@@ -1172,19 +1185,26 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                       )}
                     </div>
 
-                    {/* Segmented Toggle: Disassemble (Remove) / Assemble (Install) */}
+                    {/* Segmented Toggle: Disassemble (Remove) / Assemble (Install) / Both */}
                     <div
                       role="tablist"
                       aria-label="Procedure mode"
                       onKeyDown={(e) => {
-                        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                        const modes: Array<"remove" | "install" | "both"> = [
+                          "remove",
+                          "install",
+                          "both",
+                        ];
+                        const idx = modes.indexOf(procedureMode);
+                        if (e.key === "ArrowRight") {
                           e.preventDefault();
-                          setProcedureMode((prev) =>
-                            prev === "remove" ? "install" : "remove"
-                          );
+                          setProcedureMode(modes[(idx + 1) % modes.length]!);
+                        } else if (e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setProcedureMode(modes[(idx + modes.length - 1) % modes.length]!);
                         }
                       }}
-                      className="grid grid-cols-2 gap-1 rounded-lg border border-theme bg-surface p-1"
+                      className="grid grid-cols-3 gap-1 rounded-lg border border-theme bg-surface p-1"
                     >
                       <button
                         id="tab-disassemble"
@@ -1193,7 +1213,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                         aria-selected={procedureMode === "remove"}
                         aria-controls="panel-hardware-procedure"
                         onClick={() => setProcedureMode("remove")}
-                        className={`cursor-pointer rounded-md px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           procedureMode === "remove"
                             ? "bg-blue-600 text-white shadow-sm"
                             : "text-secondary-theme hover:text-primary-theme"
@@ -1208,7 +1228,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                         aria-selected={procedureMode === "install"}
                         aria-controls="panel-hardware-procedure"
                         onClick={() => setProcedureMode("install")}
-                        className={`cursor-pointer rounded-md px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           procedureMode === "install"
                             ? "bg-blue-600 text-white shadow-sm"
                             : "text-secondary-theme hover:text-primary-theme"
@@ -1216,17 +1236,69 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                       >
                         Assemble (Install)
                       </button>
+                      <button
+                        id="tab-both"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "both"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("both")}
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "both"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Both
+                      </button>
                     </div>
 
                     {/* Active Tab Panel */}
                     {(() => {
-                      const activeSteps =
-                        procedureMode === "remove"
-                          ? selectedProcedure.removeSteps
-                          : selectedProcedure.installSteps;
-                      const doneCount = activeSteps.filter((_, idx) =>
-                        completedSteps.has(idx)
-                      ).length;
+                      const sections: Array<{
+                        modeKey: "remove" | "install";
+                        heading: string;
+                        steps: string[];
+                      }> =
+                        procedureMode === "both"
+                          ? [
+                              {
+                                modeKey: "remove",
+                                heading: "Disassemble (Remove)",
+                                steps: selectedProcedure.removeSteps,
+                              },
+                              {
+                                modeKey: "install",
+                                heading: "Assemble (Install)",
+                                steps: selectedProcedure.installSteps,
+                              },
+                            ]
+                          : [
+                              {
+                                modeKey: procedureMode,
+                                heading:
+                                  procedureMode === "remove"
+                                    ? "Disassemble (Remove)"
+                                    : "Assemble (Install)",
+                                steps:
+                                  procedureMode === "remove"
+                                    ? selectedProcedure.removeSteps
+                                    : selectedProcedure.installSteps,
+                              },
+                            ];
+
+                      const totalSteps = sections.reduce(
+                        (sum, section) => sum + section.steps.length,
+                        0
+                      );
+                      const doneCount = sections.reduce(
+                        (sum, section) =>
+                          sum +
+                          section.steps.filter((_, idx) =>
+                            completedSteps.has(`${section.modeKey}-${idx}`)
+                          ).length,
+                        0
+                      );
 
                       return (
                         <div
@@ -1235,7 +1307,9 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                           aria-labelledby={
                             procedureMode === "remove"
                               ? "tab-disassemble"
-                              : "tab-assemble"
+                              : procedureMode === "install"
+                                ? "tab-assemble"
+                                : "tab-both"
                           }
                           className="space-y-3"
                         >
@@ -1259,7 +1333,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                           {/* Progress + Reset */}
                           <div className="flex items-center justify-between gap-2 border-t border-theme pt-2.5">
                             <span className="text-xs font-semibold text-primary-theme">
-                              {doneCount} of {activeSteps.length} steps
+                              {doneCount} of {totalSteps} steps
                             </span>
                             <button
                               type="button"
@@ -1272,51 +1346,63 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                             </button>
                           </div>
 
-                          {/* Numbered Step List with Practice Checkboxes (full width) */}
-                          <ol className="space-y-2">
-                            {activeSteps.map((stepText, idx) => {
-                              const isDone = completedSteps.has(idx);
-                              const checkboxId = `step-${selectedPart.id}-${procedureMode}-${idx}`;
-                              return (
-                                <li
-                                  key={checkboxId}
-                                  className={`flex items-start gap-2.5 rounded-lg border p-2.5 transition ${
-                                    isDone
-                                      ? "border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-500/10"
-                                      : "border-theme bg-surface"
-                                  }`}
-                                >
-                                  <span
-                                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                      isDone
-                                        ? "bg-emerald-600 text-white"
-                                        : "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300"
-                                    }`}
-                                  >
-                                    {idx + 1}
-                                  </span>
-                                  <label
-                                    htmlFor={checkboxId}
-                                    className={`flex-1 cursor-pointer text-sm leading-relaxed ${
-                                      isDone
-                                        ? "text-secondary-theme line-through"
-                                        : "text-primary-theme"
-                                    }`}
-                                  >
-                                    {stepText}
-                                  </label>
-                                  <input
-                                    id={checkboxId}
-                                    type="checkbox"
-                                    checked={isDone}
-                                    onChange={() => toggleStepDone(idx)}
-                                    aria-label={`Mark step ${idx + 1} done`}
-                                    className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-theme accent-blue-600 focus:ring-2 focus:ring-blue-500"
-                                  />
-                                </li>
-                              );
-                            })}
-                          </ol>
+                          {/* Numbered Step List(s) with Practice Checkboxes */}
+                          <div className="space-y-4">
+                            {sections.map((section) => (
+                              <div key={section.modeKey} className="space-y-2">
+                                {procedureMode === "both" && (
+                                  <h5 className="text-xs font-bold uppercase tracking-wider text-primary-theme">
+                                    {section.heading}
+                                  </h5>
+                                )}
+                                <ol className="space-y-2">
+                                  {section.steps.map((stepText, idx) => {
+                                    const stepKey = `${section.modeKey}-${idx}`;
+                                    const isDone = completedSteps.has(stepKey);
+                                    const checkboxId = `step-${selectedPart.id}-${section.modeKey}-${idx}`;
+                                    return (
+                                      <li
+                                        key={checkboxId}
+                                        className={`flex items-start gap-2.5 rounded-lg border p-2.5 transition ${
+                                          isDone
+                                            ? "border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-500/10"
+                                            : "border-theme bg-surface"
+                                        }`}
+                                      >
+                                        <span
+                                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                            isDone
+                                              ? "bg-emerald-600 text-white"
+                                              : "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                                          }`}
+                                        >
+                                          {idx + 1}
+                                        </span>
+                                        <label
+                                          htmlFor={checkboxId}
+                                          className={`flex-1 cursor-pointer text-sm leading-relaxed ${
+                                            isDone
+                                              ? "text-secondary-theme line-through"
+                                              : "text-primary-theme"
+                                          }`}
+                                        >
+                                          {stepText}
+                                        </label>
+                                        <input
+                                          id={checkboxId}
+                                          type="checkbox"
+                                          checked={isDone}
+                                          onChange={() => toggleStepDone(stepKey)}
+                                          aria-label={`Mark ${section.heading} step ${idx + 1} done`}
+                                          className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-theme accent-blue-600 focus:ring-2 focus:ring-blue-500"
+                                        />
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              </div>
+                            ))}
+                          </div>
 
                           {/* Cautions & Common Mistakes Callouts (side by side from md breakpoint) */}
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -1368,9 +1454,14 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-2 border-b border-theme pb-3">
                   <div>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory(selectedPart.category)}
+                      aria-label={`View ${categoriesById.get(selectedPart.category) ?? selectedPart.category} category procedures`}
+                      className="inline-flex cursor-pointer items-center rounded-full bg-blue-50 dark:bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
                       {categoriesById.get(selectedPart.category) ?? selectedPart.category}
-                    </span>
+                    </button>
                     <h3 className="mt-1.5 text-lg font-bold text-primary-theme">
                       {selectedPart.name}
                     </h3>

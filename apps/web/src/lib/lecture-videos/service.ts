@@ -5,6 +5,7 @@ import type { LectureVideosActor } from "./guard";
 import {
   APPROVED_ENROLLMENT_STATUS,
   LECTURE_SOURCE_LABELS,
+  LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
   buildFacultyLectureProgressReport,
   buildGoogleDriveLectureEmbedUrl,
   buildYouTubeLectureEmbedUrl,
@@ -47,6 +48,15 @@ export function lectureUploadsConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
+export function assertLectureUploadsConfigured(): void {
+  if (!lectureUploadsConfigured()) {
+    console.error(
+      "[lecture-videos] File upload rejected: BLOB_READ_WRITE_TOKEN is not configured on the server."
+    );
+    throw new LectureVideosHttpError(503, LECTURE_UPLOADS_UNAVAILABLE_MESSAGE);
+  }
+}
+
 function normalizeSourceType(raw: unknown): LectureSourceType {
   if (raw === "YOUTUBE" || raw === "DRIVE") {
     return raw;
@@ -87,9 +97,7 @@ export async function verifyAndResolveLectureBlob(args: {
   if (!fileUrl || !fileName) {
     throw new LectureVideosHttpError(400, "Please upload a lecture video file.");
   }
-  if (!lectureUploadsConfigured()) {
-    throw new LectureVideosHttpError(503, "File uploads are not configured.");
-  }
+  assertLectureUploadsConfigured();
 
   const storeId = getLectureBlobStoreId(process.env.BLOB_READ_WRITE_TOKEN);
   if (!isOwnLectureBlobUrl(fileUrl, storeId, uploaderId)) {
