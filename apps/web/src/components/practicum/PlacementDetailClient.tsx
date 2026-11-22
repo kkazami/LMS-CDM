@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, ChevronDown, FileText, GraduationCap, Loader2, MapPin, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  Loader2,
+  MapPin,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { PlacementDTO, SubmissionDTO } from "@/lib/practicum/dto";
 import {
   SUBMISSION_TYPES,
   SUBMISSION_TYPE_LABELS,
   formatBytes,
+  formatPlacementDeletionSummary,
+  parseSubmissionLink,
   statusAfterFeedback,
   type FeedbackDecision,
 } from "@/lib/practicum/rules";
@@ -25,6 +39,7 @@ interface PlacementDetailClientProps {
   placement: PlacementDTO;
   submissions: SubmissionDTO[];
   primaryColor: string;
+  canDelete?: boolean;
 }
 
 const DECISION_OPTIONS: { value: FeedbackDecision; label: string }[] = [
@@ -186,32 +201,52 @@ function FeedbackForm({ submission, onSaved }: { submission: SubmissionDTO; onSa
 function SubmissionCard({ submission, onChanged }: { submission: SubmissionDTO; onChanged: () => void }) {
   const [open, setOpen] = useState(submission.status === "SUBMITTED");
   const panelId = `submission-${submission.id}`;
+  const parsedLink = submission.videoLink ? parseSubmissionLink(submission.videoLink) : null;
 
   return (
     <li className="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-white/10 dark:bg-[#141721]">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/5"
-      >
-        <div className="min-w-0">
+      <div className="flex w-full items-center justify-between gap-3 rounded-2xl p-3 hover:bg-slate-50 dark:hover:bg-white/5">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((v) => !v)}
+          className="min-w-0 flex-1 cursor-pointer text-left"
+        >
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{submission.title}</p>
           <p className="mt-0.5 text-xs text-slate-600 dark:text-[#94A3B8]">
             Version {submission.version} · {formatDate(submission.submittedAt)}
             {submission.fileName && ` · ${submission.fileName}`}
+            {!submission.fileName && parsedLink?.ok && ` · ${parsedLink.siteName}`}
             {submission.feedback.length > 0 && ` · ${submission.feedback.length} feedback`}
           </p>
-        </div>
+        </button>
         <div className="flex shrink-0 items-center gap-2">
+          {parsedLink?.ok && (
+            <a
+              href={parsedLink.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="inline-flex items-center gap-1 rounded-xl border border-blue-500/25 bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:underline dark:text-blue-300"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              Open link · {parsedLink.siteName}
+            </a>
+          )}
           <SubmissionStatusBadge status={submission.status} />
-          <ChevronDown
-            className={`h-4 w-4 text-slate-500 transition-transform dark:text-[#94A3B8] ${open ? "rotate-180" : ""}`}
-            aria-hidden="true"
-          />
+          <button
+            type="button"
+            aria-label={open ? "Collapse submission details" : "Expand submission details"}
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 dark:text-[#94A3B8]"
+          >
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
         </div>
-      </button>
+      </div>
 
       {open && (
         <div id={panelId} className="space-y-5 border-t border-slate-200 p-4 dark:border-white/10">
@@ -232,16 +267,168 @@ function SubmissionCard({ submission, onChanged }: { submission: SubmissionDTO; 
   );
 }
 
+function DeletePlacementDialog({
+  placement,
+  submissions,
+  deleting,
+  error,
+  onClose,
+  onConfirm,
+}: {
+  placement: PlacementDTO;
+  submissions: SubmissionDTO[];
+  deleting: boolean;
+  error: string | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const [confirmText, setConfirmText] = useState("");
+
+  useDialogA11y(true, () => !deleting && onClose(), panelRef, { autoFocus: false });
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+  }, []);
+
+  const hasSubmissions = submissions.length > 0;
+  const lessonPlans = submissions.filter((s) => s.type === "LESSON_PLAN").length;
+  const portfolioEvidence = submissions.filter((s) => s.type === "PORTFOLIO_EVIDENCE").length;
+  const demoVideos = submissions.filter((s) => s.type === "DEMO_VIDEO").length;
+  const comments = submissions.reduce((sum, s) => sum + s.feedback.length, 0);
+  const summaryText = formatPlacementDeletionSummary({
+    lessonPlans,
+    portfolioEvidence,
+    demoVideos,
+    comments,
+    hasRubric: Boolean(placement.rubricFileName),
+  });
+
+  const normalizedInput = confirmText.trim();
+  const isConfirmed =
+    !hasSubmissions ||
+    normalizedInput === placement.studentName.trim() ||
+    normalizedInput === "DELETE";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+        onClick={() => !deleting && onClose()}
+        aria-hidden="true"
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-placement-title"
+        aria-describedby="delete-placement-description"
+        tabIndex={-1}
+        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl outline-none dark:border-white/10 dark:bg-[#1C2030] dark:text-[#F1F5F9]"
+      >
+        <h3 id="delete-placement-title" className="mb-2 text-lg font-bold">
+          Delete placement for {placement.studentName}?
+        </h3>
+        <div id="delete-placement-description" className="mb-4 space-y-2 text-xs text-slate-600 dark:text-[#94A3B8]">
+          <p>
+            Placement: <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">{placement.schoolName}</span>{" "}
+            ({placement.subject} · {placement.gradeLevel} · {placement.schoolYear})
+          </p>
+          <p>{summaryText}</p>
+          <p className="font-semibold text-red-700 dark:text-red-300">This cannot be undone.</p>
+        </div>
+
+        {hasSubmissions && (
+          <div className="mb-4">
+            <label
+              htmlFor="delete-placement-confirm-input"
+              className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-[#D1D5DB]"
+            >
+              Type <span className="font-semibold text-slate-900 dark:text-[#F0F2F8]">{placement.studentName}</span> or{" "}
+              <span className="font-mono font-semibold text-slate-900 dark:text-[#F0F2F8]">DELETE</span> to confirm
+            </label>
+            <input
+              id="delete-placement-confirm-input"
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              disabled={deleting}
+              placeholder={placement.studentName}
+              className={inputClass}
+            />
+          </div>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-300"
+          >
+            {error}
+          </p>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            ref={cancelRef}
+            type="button"
+            onClick={onClose}
+            disabled={deleting}
+            className="min-h-11 flex-1 cursor-pointer rounded-xl border border-slate-200 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting || !isConfirmed}
+            className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-red-600 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+            {deleting ? "Deleting…" : "Delete placement"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PlacementDetailClient({
   instituteCode,
   placement,
   submissions,
   primaryColor,
+  canDelete = false,
 }: PlacementDetailClientProps) {
   const router = useRouter();
   const [confirmStatus, setConfirmStatus] = useState<"COMPLETED" | "ACTIVE" | null>(null);
   const [updating, setUpdating] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await practicumFetch(`/api/practicum/placements/${placement.id}`, {
+        method: "DELETE",
+      });
+      toast.success("Placement deleted", `Removed ${placement.studentName}'s placement.`);
+      setConfirmDelete(false);
+      router.push(`/${instituteCode}/practicum`);
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not delete the placement.";
+      setDeleteError(msg);
+      toast.error("Could not delete the placement", msg);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function changeStatus(status: "COMPLETED" | "ACTIVE") {
     setUpdating(true);
@@ -307,6 +494,19 @@ export default function PlacementDetailClient({
                 className="min-h-11 cursor-pointer rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-white/15 dark:text-[#F0F2F8] dark:hover:bg-white/5"
               >
                 Reopen
+              </button>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmDelete(true);
+                }}
+                className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-500/20 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/20"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                Delete placement
               </button>
             )}
           </div>
@@ -448,6 +648,17 @@ export default function PlacementDetailClient({
             </button>
           </div>
         </ConfirmDialog>
+      )}
+
+      {canDelete && confirmDelete && (
+        <DeletePlacementDialog
+          placement={placement}
+          submissions={submissions}
+          deleting={deleting}
+          error={deleteError}
+          onClose={() => !deleting && setConfirmDelete(false)}
+          onConfirm={handleDelete}
+        />
       )}
     </div>
   );

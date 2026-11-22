@@ -25,6 +25,7 @@ import {
   canDeleteSubmission,
   canResubmit,
   formatBytes,
+  parseSubmissionLink,
   summarizeGroups,
   type SubmissionType,
 } from "@/lib/practicum/rules";
@@ -100,7 +101,12 @@ function DeleteLessonPlanDialog({
         );
       }
 
-      toast.success("Lesson plan deleted", "The lesson plan and its file have been removed.");
+      toast.success(
+        "Lesson plan deleted",
+        submission.fileUrl
+          ? "The lesson plan and its file have been removed."
+          : "The lesson plan has been removed."
+      );
       onDeleted(submission.id);
     } catch (err) {
       setError(
@@ -144,7 +150,9 @@ function DeleteLessonPlanDialog({
         </p>
 
         <p className="mt-3 text-sm text-slate-700 dark:text-[#94A3B8]">
-          This will also remove its attached file. This cannot be undone.
+          {submission.fileUrl
+            ? "This will also remove its attached file. This cannot be undone."
+            : "This will remove this lesson plan submission. This cannot be undone."}
         </p>
 
         {error && (
@@ -575,6 +583,29 @@ export default function StudentPracticumClient({
                           </a>
                         </div>
                       )}
+
+                      {s.videoLink &&
+                        (() => {
+                          const parsedLink = parseSubmissionLink(s.videoLink);
+                          if (!parsedLink.ok) return null;
+                          return (
+                            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs dark:border-white/10 dark:bg-[#181B26]">
+                              <span className="font-medium text-slate-800 dark:text-[#D1D5DB]">
+                                {parsedLink.siteName}
+                              </span>
+                              <a
+                                href={parsedLink.url}
+                                target="_blank"
+                                rel="noopener noreferrer nofollow"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                                Open link · {parsedLink.siteName}
+                              </a>
+                            </div>
+                          );
+                        })()}
 
                       <SubmissionStatusBadge status={s.status} />
 

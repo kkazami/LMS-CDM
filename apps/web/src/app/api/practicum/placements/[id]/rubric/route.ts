@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildFileHeaders } from "@/lib/ite/media-preview";
 import { requirePracticumActor } from "@/lib/practicum/guard";
-import { HttpError, errorResponse } from "@/lib/practicum/http";
+import {
+  HttpError,
+  PRACTICUM_RUBRIC_TRANSACTION_OPTIONS,
+  errorResponse,
+} from "@/lib/practicum/http";
 import {
   getPlacementDTO,
   prepareRubricUpload,
@@ -12,6 +16,7 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
  * GET /api/practicum/placements/[id]/rubric
@@ -101,7 +106,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           rubricUploadedById: actor.userId,
         },
       });
-    });
+    }, PRACTICUM_RUBRIC_TRANSACTION_OPTIONS);
 
     return NextResponse.json({ placement: await getPlacementDTO(id) });
   } catch (err) {
@@ -137,7 +142,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
           rubricUploadedById: null,
         },
       });
-    });
+    }, PRACTICUM_RUBRIC_TRANSACTION_OPTIONS);
 
     return NextResponse.json({ placement: await getPlacementDTO(id) });
   } catch (err) {

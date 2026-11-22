@@ -1,0 +1,372 @@
+{
+  "categories": [
+    {
+      "id": "filipino-folk-songs",
+      "name": "Filipino Folk Songs",
+      "description": "Traditional Filipino folk songs that celebrate heritage, livelihood, and community life."
+    },
+    {
+      "id": "counting-and-numbers",
+      "name": "Counting and Numbers",
+      "description": "Engaging rhymes and songs reinforcing early numeracy, number recognition, and sequencing."
+    },
+    {
+      "id": "alphabet-and-letters",
+      "name": "Alphabet and Letters",
+      "description": "Foundational literacy and phonics tunes introducing letter shapes and sounds."
+    },
+    {
+      "id": "animals-and-nature",
+      "name": "Animals and Nature",
+      "description": "Playful melodies exploring animal characteristics, habitats, sounds, and natural wonders."
+    },
+    {
+      "id": "body-parts-and-movement",
+      "name": "Body Parts and Movement",
+      "description": "Action rhymes and movement games promoting physical coordination and body awareness."
+    },
+    {
+      "id": "daily-routines-and-good-habits",
+      "name": "Daily Routines and Good Habits",
+      "description": "Guidance songs highlighting healthy hygiene, kindness, manners, and classroom transitions."
+    },
+    {
+      "id": "lullabies-and-bedtime",
+      "name": "Lullabies and Bedtime",
+      "description": "Gentle, soothing melodies fostering emotional security, calm, and peaceful rest."
+    },
+    {
+      "id": "educational-videos",
+      "name": "Educational Videos",
+      "description": "Visual learning media introducing colors, shapes, community helpers, feelings, and the calendar."
+    }
+  ],
+  "items": [
+    {
+      "id": "bahay-kubo",
+      "title": "Bahay Kubo",
+      "type": "song",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "3-4",
+      "learningFocus": ["Philippine Culture", "Vegetable Names", "Healthy Eating"],
+      "suggestedActivity": "Display real vegetables or picture cards and invite learners to identify each one as it is sung.",
+      "durationHint": "2-3 mins",
+      "youtubeId": null,
+      "searchQuery": "Bahay Kubo traditional folk song for kids"
+    },
+    {
+      "id": "leron-leron-sinta",
+      "title": "Leron Leron Sinta",
+      "type": "song",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "4-5",
+      "learningFocus": ["Folk Tradition", "Rhythm and Beat", "Storytelling"],
+      "suggestedActivity": "Lead the class in rhythmic clapping or swaying to develop gross motor coordination and musical tempo.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "Leron Leron Sinta traditional folk song for kids"
+    },
+    {
+      "id": "paruparong-bukid",
+      "title": "Paruparong Bukid",
+      "type": "song",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "4-5",
+      "learningFocus": ["Expressive Movement", "Costumes", "Philippine Folklore"],
+      "suggestedActivity": "Have children flutter colorful fabric scarves like butterfly wings while dancing gently around the circle.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "Paruparong Bukid traditional song for kids"
+    },
+    {
+      "id": "sitsiritsit",
+      "title": "Sitsiritsit",
+      "type": "song",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "3-4",
+      "learningFocus": ["Humor in Song", "Rhythm Sticks", "Vocal Expression"],
+      "suggestedActivity": "Pass out wooden rhythm sticks or tap fingertips together to echo the fast, cheerful cadence of the verses.",
+      "durationHint": "1-2 mins",
+      "youtubeId": null,
+      "searchQuery": "Sitsiritsit Alibangbang traditional song for kids"
+    },
+    {
+      "id": "magtanim-ay-di-biro",
+      "title": "Magtanim Ay Di Biro",
+      "type": "song",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "4-5",
+      "learningFocus": ["Community Appreciation", "Agriculture", "Physical Endurance"],
+      "suggestedActivity": "Conduct a pretend-planting dramatization where children mimic bending and planting rice in neat rows.",
+      "durationHint": "2-3 mins",
+      "youtubeId": null,
+      "searchQuery": "Magtanim Ay Di Biro traditional song for kids"
+    },
+    {
+      "id": "matulog-na-bunso",
+      "title": "Matulog Na Bunso",
+      "type": "lullaby",
+      "language": "Filipino",
+      "categoryId": "lullabies-and-bedtime",
+      "ageRange": "2-3",
+      "learningFocus": ["Calm and Rest", "Family Bonds", "Auditory Soothing"],
+      "suggestedActivity": "Play softly during rest time while modeling deep, calming breathing exercises for toddlers.",
+      "durationHint": "3 mins",
+      "youtubeId": null,
+      "searchQuery": "Matulog Na Bunso traditional lullaby for kids"
+    },
+    {
+      "id": "pen-pen-de-sarapen",
+      "title": "Pen Pen de Sarapen",
+      "type": "rhyme",
+      "language": "Filipino",
+      "categoryId": "filipino-folk-songs",
+      "ageRange": "3-4",
+      "learningFocus": ["Word Rhymes", "Turn Taking", "Auditory Memory"],
+      "suggestedActivity": "Form a circle on the floor with open hands to play the classic counting-out game to pick a game leader.",
+      "durationHint": "1 min",
+      "youtubeId": null,
+      "searchQuery": "Pen Pen de Sarapen traditional rhyme for kids"
+    },
+    {
+      "id": "twinkle-twinkle-little-star",
+      "title": "Twinkle Twinkle Little Star",
+      "type": "song",
+      "language": "English",
+      "categoryId": "lullabies-and-bedtime",
+      "ageRange": "2-3",
+      "learningFocus": ["Night Sky", "Finger Twinkling", "Gentle Pitch"],
+      "suggestedActivity": "Lower the lights and hand out paper star wands for learners to open and close their fingers in twinkling motions.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "Twinkle Twinkle Little Star traditional nursery rhyme"
+    },
+    {
+      "id": "row-row-row-your-boat",
+      "title": "Row Row Row Your Boat",
+      "type": "song",
+      "language": "English",
+      "categoryId": "body-parts-and-movement",
+      "ageRange": "3-4",
+      "learningFocus": ["Cooperative Play", "Balance", "Musical Canon"],
+      "suggestedActivity": "Pair children up facing one another with hands clasped, gently rocking forward and backward in rhythm.",
+      "durationHint": "1-2 mins",
+      "youtubeId": null,
+      "searchQuery": "Row Row Row Your Boat traditional nursery rhyme"
+    },
+    {
+      "id": "itsy-bitsy-spider",
+      "title": "Itsy Bitsy Spider",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "animals-and-nature",
+      "ageRange": "2-3",
+      "learningFocus": ["Fine Motor Control", "Weather Concepts", "Perseverance"],
+      "suggestedActivity": "Guide children to touch their index finger to opposite thumb in climbing gestures, strengthening the pincer grasp.",
+      "durationHint": "1-2 mins",
+      "youtubeId": null,
+      "searchQuery": "Itsy Bitsy Spider traditional nursery rhyme"
+    },
+    {
+      "id": "old-macdonald-had-a-farm",
+      "title": "Old MacDonald Had a Farm",
+      "type": "song",
+      "language": "English",
+      "categoryId": "animals-and-nature",
+      "ageRange": "3-4",
+      "learningFocus": ["Animal Sounds", "Auditory Association", "Vocabulary"],
+      "suggestedActivity": "Reveal animal hand puppets from a barn basket and let children produce each animal's call in unison.",
+      "durationHint": "3 mins",
+      "youtubeId": null,
+      "searchQuery": "Old MacDonald Had a Farm traditional nursery rhyme"
+    },
+    {
+      "id": "baa-baa-black-sheep",
+      "title": "Baa Baa Black Sheep",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "counting-and-numbers",
+      "ageRange": "3-4",
+      "learningFocus": ["One-to-One Correspondence", "Sharing", "Counting to Three"],
+      "suggestedActivity": "Place three yarn bags onto a felt board one by one to demonstrate counting and generosity.",
+      "durationHint": "1 min",
+      "youtubeId": null,
+      "searchQuery": "Baa Baa Black Sheep traditional nursery rhyme"
+    },
+    {
+      "id": "humpty-dumpty",
+      "title": "Humpty Dumpty",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "daily-routines-and-good-habits",
+      "ageRange": "3-4",
+      "learningFocus": ["Cause and Effect", "Problem Solving", "Helpfulness"],
+      "suggestedActivity": "Construct a small foam-brick wall and gently tip a plastic egg over, discussing how friends help fix things safely.",
+      "durationHint": "1 min",
+      "youtubeId": null,
+      "searchQuery": "Humpty Dumpty traditional nursery rhyme"
+    },
+    {
+      "id": "jack-and-jill",
+      "title": "Jack and Jill",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "body-parts-and-movement",
+      "ageRange": "3-4",
+      "learningFocus": ["Spatial Concepts (Up and Down)", "Story Sequence", "Safety"],
+      "suggestedActivity": "Walk up an imaginary foam incline carrying a small sand pail, practicing controlled steps and balance.",
+      "durationHint": "1 min",
+      "youtubeId": null,
+      "searchQuery": "Jack and Jill traditional nursery rhyme"
+    },
+    {
+      "id": "head-shoulders-knees-and-toes",
+      "title": "Head Shoulders Knees and Toes",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "body-parts-and-movement",
+      "ageRange": "2-3",
+      "learningFocus": ["Body Identification", "Motor Speed", "Spatial Awareness"],
+      "suggestedActivity": "Touch each body part as named, starting at a slow pace and gradually speeding up to enhance focus and agility.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "Head Shoulders Knees and Toes traditional song for kids"
+    },
+    {
+      "id": "if-youre-happy-and-you-know-it",
+      "title": "If You're Happy and You Know It",
+      "type": "song",
+      "language": "English",
+      "categoryId": "daily-routines-and-good-habits",
+      "ageRange": "3-4",
+      "learningFocus": ["Emotional Literacy", "Motor Coordination", "Social Interaction"],
+      "suggestedActivity": "Ask learners to invent new verse actions like 'shout hurray' or 'give a wave' to reflect different emotions.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "If You're Happy and You Know It traditional song for kids"
+    },
+    {
+      "id": "five-little-monkeys",
+      "title": "Five Little Monkeys",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "counting-and-numbers",
+      "ageRange": "3-4",
+      "learningFocus": ["Subtraction", "Countdown from Five", "Following Rules"],
+      "suggestedActivity": "Count down on five fingers, folding one finger down with each verse to visualize subtraction concretely.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "Five Little Monkeys Jumping on the Bed rhyme for kids"
+    },
+    {
+      "id": "ten-little-fingers",
+      "title": "Ten Little Fingers",
+      "type": "rhyme",
+      "language": "English",
+      "categoryId": "counting-and-numbers",
+      "ageRange": "2-3",
+      "learningFocus": ["Counting to Ten", "Body Parts", "Self-Concept"],
+      "suggestedActivity": "Wiggle fingers and toes in response to the lyrics, finishing with a warm round of clapping.",
+      "durationHint": "1-2 mins",
+      "youtubeId": null,
+      "searchQuery": "Ten Little Fingers and Ten Little Toes song for kids"
+    },
+    {
+      "id": "the-alphabet-song",
+      "title": "The Alphabet Song",
+      "type": "song",
+      "language": "English",
+      "categoryId": "alphabet-and-letters",
+      "ageRange": "4-5",
+      "learningFocus": ["Letter Names", "Sequencing", "Phonological Sensitivity"],
+      "suggestedActivity": "Point to a colorful classroom alphabet frieze while singing each letter slowly and clearly.",
+      "durationHint": "2 mins",
+      "youtubeId": null,
+      "searchQuery": "The Alphabet Song traditional ABC song for kids"
+    },
+    {
+      "id": "colors-for-kids",
+      "title": "Colors for Kids",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "2-3",
+      "learningFocus": ["Primary Colors", "Visual Matching", "Object Categorization"],
+      "suggestedActivity": "Organize a color scavenger hunt where learners find toy blocks that match the featured color.",
+      "durationHint": "3-5 mins",
+      "youtubeId": null,
+      "searchQuery": "Colors for kids educational video for preschool"
+    },
+    {
+      "id": "shapes-for-kids",
+      "title": "Shapes for Kids",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "3-4",
+      "learningFocus": ["Geometric Shapes", "Spatial Reasoning", "Drawing Curves and Lines"],
+      "suggestedActivity": "Trace circles, triangles, and squares with fingers in sensory sand or shaving-cream trays.",
+      "durationHint": "3-5 mins",
+      "youtubeId": null,
+      "searchQuery": "Shapes for kids educational video for preschool"
+    },
+    {
+      "id": "community-helpers",
+      "title": "Community Helpers",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "4-5",
+      "learningFocus": ["Community Roles", "Empathy", "Social Studies"],
+      "suggestedActivity": "Set up a dress-up center with simple props to roleplay doctors, firefighters, and mail carriers.",
+      "durationHint": "4-5 mins",
+      "youtubeId": null,
+      "searchQuery": "Community helpers for kids educational video preschool"
+    },
+    {
+      "id": "feelings-and-emotions",
+      "title": "Feelings and Emotions",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "3-4",
+      "learningFocus": ["Emotional Regulation", "Facial Expressions", "Empathy"],
+      "suggestedActivity": "Provide small hand mirrors so children can observe their own happy, surprised, or thoughtful expressions.",
+      "durationHint": "3-4 mins",
+      "youtubeId": null,
+      "searchQuery": "Feelings and emotions for kids educational video preschool"
+    },
+    {
+      "id": "days-of-the-week",
+      "title": "Days of the Week",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "4-5",
+      "learningFocus": ["Calendar Routine", "Time Concepts", "Sequencing"],
+      "suggestedActivity": "Move the day marker on the morning circle board and recite what fun event happens on each day.",
+      "durationHint": "2-3 mins",
+      "youtubeId": null,
+      "searchQuery": "Days of the week educational video for kids"
+    },
+    {
+      "id": "weather-and-seasons",
+      "title": "Weather and Seasons",
+      "type": "educational-video",
+      "language": "English",
+      "categoryId": "educational-videos",
+      "ageRange": "4-5",
+      "learningFocus": ["Weather Observation", "Seasons", "Clothing Choices"],
+      "suggestedActivity": "Look out the classroom window together and select the appropriate sunny, rainy, or windy symbol for the weather chart.",
+      "durationHint": "3-4 mins",
+      "youtubeId": null,
+      "searchQuery": "Weather and seasons for kids educational video preschool"
+    }
+  ]
+}
+

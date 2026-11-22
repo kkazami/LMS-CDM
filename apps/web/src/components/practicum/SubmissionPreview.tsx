@@ -1,5 +1,10 @@
-import { ExternalLink, FileText, Download } from "lucide-react";
-import { formatBytes, getExtension, toYouTubeEmbedUrl } from "@/lib/practicum/rules";
+import { ExternalLink, FileText, Download, Link2 } from "lucide-react";
+import {
+  formatBytes,
+  getExtension,
+  parseSubmissionLink,
+  toYouTubeEmbedUrl,
+} from "@/lib/practicum/rules";
 import type { SubmissionDTO } from "@/lib/practicum/dto";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg"];
@@ -11,14 +16,18 @@ function toDownloadHref(fileUrl: string): string {
   return fileUrl;
 }
 
-/** Shows the submitted evidence: a video player, an embedded video link, an image, or a document link. */
+/** Shows the submitted evidence: a video player, an embedded video link, an image, or a document/external link. */
 export default function SubmissionPreview({ submission }: { submission: SubmissionDTO }) {
   const { fileUrl, fileName, fileSize, videoLink, type, title } = submission;
 
   if (videoLink) {
-    const embed = toYouTubeEmbedUrl(videoLink);
+    const parsed = parseSubmissionLink(videoLink);
+    if (!parsed.ok) {
+      return <p className="text-sm text-slate-600 dark:text-[#94A3B8]">Invalid link.</p>;
+    }
+    const embed = toYouTubeEmbedUrl(parsed.url);
     return (
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {embed ? (
           <div className="aspect-video w-full overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-black">
             <iframe
@@ -32,15 +41,24 @@ export default function SubmissionPreview({ submission }: { submission: Submissi
             />
           </div>
         ) : null}
-        <a
-          href={videoLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          Open video link
-        </a>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#181B26]">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Link2 className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">{parsed.siteName}</p>
+              <p className="text-xs text-slate-600 dark:text-[#94A3B8]">External submission link</p>
+            </div>
+          </div>
+          <a
+            href={parsed.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:underline dark:text-blue-300"
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            Open link · {parsed.siteName}
+          </a>
+        </div>
       </div>
     );
   }

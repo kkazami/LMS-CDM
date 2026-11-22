@@ -670,6 +670,26 @@ export function createApiClient(config: ApiClientConfig) {
         request<CourseParticipationDetailResponse>(`/api/ite/courses/${courseId}/participation`),
     },
 
+    lectureVideos: {
+      list: (params?: { courseId?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.courseId && params.courseId !== 'all' && params.courseId !== 'ALL') {
+          query.set('courseId', params.courseId);
+        }
+        const qs = query.toString();
+        return request<IteLectureVideosListResponse>(`/api/lecture-videos${qs ? `?${qs}` : ''}`);
+      },
+      create: (data: CreateIteLectureVideoInput) =>
+        request<{ lecture: IteLectureVideoItem }>('/api/lecture-videos', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+      delete: (id: string) =>
+        request<{ deleted: boolean; id: string }>(`/api/lecture-videos/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        }),
+    },
+
     broadcasts: {
       list: (courseId: string) =>
         request<CourseBroadcastResponse>(`/api/courses/${courseId}/broadcast`),
@@ -1010,6 +1030,69 @@ export interface FormAttemptItem {
 
 export interface FormResponsesResponse {
   attempts: FormAttemptItem[];
+}
+
+export type IteLectureSourceType = 'UPLOAD' | 'YOUTUBE' | 'DRIVE';
+
+export interface IteLectureCourseSummary {
+  id: string;
+  code: string;
+  title: string;
+  section: string;
+  displayLabel: string;
+}
+
+export interface IteLectureProgressSummary {
+  lastPositionSeconds: number;
+  watchedSeconds: number;
+  durationSeconds: number;
+  percentWatched: number;
+  completedAt: string | null;
+  lastWatchedAt: string | null;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+}
+
+export interface IteLectureVideoItem {
+  id: string;
+  title: string;
+  description: string | null;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  courseSection: string;
+  courseLabel: string;
+  sourceType: IteLectureSourceType;
+  sourceLabel: 'Uploaded' | 'YouTube' | 'Google Drive';
+  externalVideoId: string | null;
+  externalUrl: string | null;
+  embedUrl: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  fileSize: number | null;
+  durationSeconds: number;
+  uploadedById: string;
+  uploadedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  streamUrl: string | null;
+  isProgressTracked: boolean;
+  canManage: boolean;
+  canViewProgress: boolean;
+  myProgress: IteLectureProgressSummary | null;
+}
+
+export interface IteLectureVideosListResponse {
+  lectures: IteLectureVideoItem[];
+  courses: IteLectureCourseSummary[];
+}
+
+export interface CreateIteLectureVideoInput {
+  title: string;
+  description?: string;
+  courseId: string;
+  sourceType: 'YOUTUBE' | 'DRIVE';
+  externalUrl: string;
+  durationSeconds?: number;
 }
 
 

@@ -1,5 +1,19 @@
 import { z } from "zod";
-import type { HardwarePart, LanCableType, LanFault, LanTool } from "./types";
+import type { HardwarePart, LanCableType, LanFault, LanTool, IctLabModuleId } from "./types";
+import { ICT_LAB_MODULE_IDS } from "./types";
+
+/**
+ * Validates and normalizes raw query param into a valid IctLabModuleId or null.
+ * Fallbacks to null (Hub view) if invalid, empty, or missing.
+ */
+export function parseIctModule(raw: string | null | undefined): IctLabModuleId | null {
+  if (!raw) return null;
+  const trimmed = raw.trim().toLowerCase();
+  if ((ICT_LAB_MODULE_IDS as readonly string[]).includes(trimmed)) {
+    return trimmed as IctLabModuleId;
+  }
+  return null;
+}
 
 // ─── ITE Program Matchers (Reusable across BTLEd ICT, BECEd, BEEd, BSEd Science) ───
 

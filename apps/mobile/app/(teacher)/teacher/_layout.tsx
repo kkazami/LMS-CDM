@@ -16,6 +16,7 @@ export default function TeacherLayout() {
       <Stack.Screen name="codelab/index" />
       <Stack.Screen name="practical-labs/index" />
       <Stack.Screen name="meetings/index" options={{ headerShown: false }} />
+      <Stack.Screen name="lecture-videos/index" options={{ headerShown: false }} />
       <Stack.Screen name="knowledge-exchange/index" options={{ headerShown: false }} />
     </Stack></MobilePresentationProvider>
   );

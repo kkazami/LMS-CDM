@@ -394,9 +394,57 @@ export default function StudentDashboardClient({
                 </h1>
 
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-[#94A3B8] font-medium leading-relaxed">
-                  You have <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{courses.length}</span> active {courses.length === 1 ? "course" : "courses"},{" "}
-                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{overdueItems.length}</span> overdue and{" "}
-                  <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">{upcomingItems.length}</span> due in the next 7 days.
+                  {instituteCode.toLowerCase() === "ite" ? (
+                    <>
+                      You have{" "}
+                      <span
+                        className={`font-bold font-mono tabular-nums ${
+                          courses.length > 0
+                            ? "text-blue-700 dark:text-blue-400"
+                            : "text-blue-700/75 dark:text-blue-400/75"
+                        }`}
+                      >
+                        {courses.length}
+                      </span>{" "}
+                      active {courses.length === 1 ? "course" : "courses"},{" "}
+                      <span
+                        className={`font-bold font-mono tabular-nums ${
+                          overdueItems.length > 0
+                            ? "text-red-700 dark:text-red-400"
+                            : "text-red-700/75 dark:text-red-400/75"
+                        }`}
+                      >
+                        {overdueItems.length}
+                      </span>{" "}
+                      overdue and{" "}
+                      <span
+                        className={`font-bold font-mono tabular-nums ${
+                          upcomingItems.length > 0
+                            ? "text-green-700 dark:text-green-400"
+                            : "text-green-700/75 dark:text-green-400/75"
+                        }`}
+                      >
+                        {upcomingItems.length}
+                      </span>{" "}
+                      due in the next 7 days.
+                    </>
+                  ) : (
+                    <>
+                      You have{" "}
+                      <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">
+                        {courses.length}
+                      </span>{" "}
+                      active {courses.length === 1 ? "course" : "courses"},{" "}
+                      <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">
+                        {overdueItems.length}
+                      </span>{" "}
+                      overdue and{" "}
+                      <span className="font-bold text-slate-800 dark:text-[#F0F2F8] font-mono tabular-nums">
+                        {upcomingItems.length}
+                      </span>{" "}
+                      due in the next 7 days.
+                    </>
+                  )}
                 </p>
               </div>
 

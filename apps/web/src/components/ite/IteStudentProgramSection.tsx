@@ -12,9 +12,7 @@ import {
   FlaskConical,
   GraduationCap,
   Loader2,
-  Lock,
   Music,
-  Sparkles,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -48,10 +46,12 @@ function getFeatureIcon(featureId: string) {
     case "ict-lab":
       return Cpu;
     case "nursery-songs-youtube-categories":
+    case "nursery-song-library":
       return Music;
     case "matatag-curriculum-guide":
       return BookOpen;
     case "interactive-educational-charts":
+    case "visual-kit":
       return FlaskConical;
     case "lesson-plan-builder":
     case "lesson-plan-models":
@@ -238,25 +238,16 @@ export default function IteStudentProgramSection({
       className="rounded-2xl border border-theme bg-surface p-5 sm:p-6 shadow-xs space-y-5"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-4">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              <span id="ite-your-program-heading">Your program</span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-theme bg-elevated px-2 py-0.5 text-[11px] font-medium text-secondary-theme">
-              <Lock className="h-3 w-3" aria-hidden="true" />
-              Locked
-            </span>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
-            <span className="inline-flex items-center rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-extrabold tracking-wide text-white shadow-2xs">
-              {currentProgram.code}
-            </span>
-            <h3 className="text-base sm:text-lg font-bold text-primary-theme">
-              {currentProgram.name}
-            </h3>
-          </div>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="inline-flex items-center rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-extrabold tracking-wide text-white shadow-2xs">
+            {currentProgram.code}
+          </span>
+          <h3
+            id="ite-your-program-heading"
+            className="text-base sm:text-lg font-bold text-primary-theme"
+          >
+            {currentProgram.name}
+          </h3>
         </div>
       </div>
 

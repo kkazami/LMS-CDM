@@ -4,7 +4,7 @@ import { AttendancePanel } from '../../../../../src/components/attendance/Attend
 import { CourseMeetingLinks } from '../../../../../src/components/institute/CourseMeetingLinks';
 import { HeaderIconButton } from '../../../../../src/components/ui/AppHeader';
 import { ScreenHeaderContainer } from '../../../../../src/components/common/ScreenWrapper';
-import { isIcsUser } from '../../../../../src/lib/ite-eligibility';
+import { isIcsUser, isIteUser } from '../../../../../src/lib/ite-eligibility';
 import { getOnPrimaryColor } from '../../../../../src/lib/design-system';
 import { markUsefulContent, beginUsefulContent } from '../../../../../src/lib/performance';
 import { PagedContent } from '../../../../../src/components/ui/PagedContent';
@@ -66,6 +66,7 @@ export default function StudentCourseHubScreen() {
   const router = useRouter();
   const api = useAuthStore((s) => s.api);
   const user = useAuthStore((s) => s.user);
+  const isIte = isIteUser(user);
   const theme = useTheme();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
@@ -196,13 +197,31 @@ export default function StudentCourseHubScreen() {
       />}
 
       {/* Course navigation */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={[
+          { flexGrow: 0, flexShrink: 0 },
+          isIte && {
+            backgroundColor: theme.colors.card,
+            borderBottomColor: theme.colors.border,
+            borderBottomWidth: 1,
+          },
+        ]}
+        contentContainerStyle={isIte ? { minWidth: '100%' } : undefined}
+      >
       <View
         style={[
           styles.tabBar,
           {
             backgroundColor: theme.colors.card,
             borderBottomColor: theme.colors.border,
+          },
+          isIte && {
+            borderBottomWidth: 0,
+            paddingHorizontal: s(spacing.sm),
+            gap: s(spacing.xs),
+            minWidth: '100%',
           },
         ]}
       >
@@ -213,6 +232,7 @@ export default function StudentCourseHubScreen() {
           style={[
             styles.tabBtn,
             { paddingVertical: s(spacing.md) },
+            isIte && { flex: 0, flexShrink: 0, paddingHorizontal: s(spacing.lg), minHeight: 48 },
             activeTab === 'STREAM' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
           ]}
           onPress={() => setActiveTab('STREAM')}
@@ -240,6 +260,7 @@ export default function StudentCourseHubScreen() {
           style={[
             styles.tabBtn,
             { paddingVertical: s(spacing.md) },
+            isIte && { flex: 0, flexShrink: 0, paddingHorizontal: s(spacing.lg), minHeight: 48 },
             activeTab === 'CLASSWORK' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
           ]}
           onPress={() => setActiveTab('CLASSWORK')}
@@ -267,6 +288,7 @@ export default function StudentCourseHubScreen() {
           style={[
             styles.tabBtn,
             { paddingVertical: s(spacing.md) },
+            isIte && { flex: 0, flexShrink: 0, paddingHorizontal: s(spacing.lg), minHeight: 48 },
             activeTab === 'PEOPLE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
           ]}
           onPress={() => setActiveTab('PEOPLE')}
@@ -287,7 +309,46 @@ export default function StudentCourseHubScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity accessibilityRole="tab" accessibilityState={{ selected: activeTab === 'ATTENDANCE' }} accessibilityLabel="Attendance tab" style={[styles.tabBtn, { paddingVertical: s(spacing.md), minWidth: 110 }, activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 }]} onPress={() => setActiveTab('ATTENDANCE')}><CheckCircle2 size={s(16)} color={theme.colors.text} /><Text style={{ color: theme.colors.text, fontSize: font(13) }}>Attendance</Text></TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'ATTENDANCE' }}
+          accessibilityLabel="Attendance tab"
+          style={[
+            styles.tabBtn,
+            { paddingVertical: s(spacing.md), minWidth: 110 },
+            isIte && { flex: 0, flexShrink: 0, minWidth: 0, paddingHorizontal: s(spacing.lg), minHeight: 48 },
+            activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+          ]}
+          onPress={() => setActiveTab('ATTENDANCE')}
+        >
+          <CheckCircle2
+            size={s(16)}
+            color={
+              isIte
+                ? activeTab === 'ATTENDANCE'
+                  ? theme.colors.primary
+                  : theme.colors.textSecondary
+                : theme.colors.text
+            }
+          />
+          <Text
+            style={
+              isIte
+                ? [
+                    styles.tabLabel,
+                    {
+                      fontSize: font(13),
+                      color: activeTab === 'ATTENDANCE' ? theme.colors.primary : theme.colors.textSecondary,
+                      fontWeight: activeTab === 'ATTENDANCE' ? '700' : '500',
+                    },
+                  ]
+                : { color: theme.colors.text, fontSize: font(13) }
+            }
+            maxFontSizeMultiplier={isIte ? maxFontSizeMultiplier : undefined}
+          >
+            Attendance
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           accessibilityRole="tab"
@@ -296,6 +357,7 @@ export default function StudentCourseHubScreen() {
           style={[
             styles.tabBtn,
             { paddingVertical: s(spacing.md) },
+            isIte && { flex: 0, flexShrink: 0, paddingHorizontal: s(spacing.lg), minHeight: 48 },
             activeTab === 'GRADES' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
           ]}
           onPress={() => setActiveTab('GRADES')}

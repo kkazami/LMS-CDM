@@ -6,6 +6,7 @@ import { requirePracticumActor } from "@/lib/practicum/guard";
 import { HttpError, errorResponse, isUniqueViolation } from "@/lib/practicum/http";
 import {
   SUBMISSION_TYPES,
+  isSubmissionAttachmentRequired,
   statusAfterResubmit,
   type SubmissionStatus,
   type SubmissionType,
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
     let rawIdempotencyKey = "";
     let rawFileUrl = "";
     let rawFileName = "";
+    let rawVideoLink = "";
     let hasRawFileUpload = false;
 
     const contentType = request.headers.get("content-type") ?? "";
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
         .slice(0, 128);
       rawFileUrl = String(body.fileUrl ?? "").trim();
       rawFileName = String(body.fileName ?? "").trim();
+      rawVideoLink = String(body.videoLink ?? body.link ?? "").trim();
     } else {
       let formData: FormData;
       try {
@@ -115,6 +118,7 @@ export async function POST(request: Request) {
         .slice(0, 128);
       rawFileUrl = String(formData.get("fileUrl") ?? "").trim();
       rawFileName = String(formData.get("fileName") ?? "").trim();
+      rawVideoLink = String(formData.get("videoLink") ?? formData.get("link") ?? "").trim();
       const fileEntry = formData.get("file");
       hasRawFileUpload =
         fileEntry instanceof File && (fileEntry.size > 0 || fileEntry.name.trim().length > 0);
@@ -197,15 +201,26 @@ export async function POST(request: Request) {
       videoLink: null,
     };
 
-    if (rawFileUrl || rawFileName || hasRawFileUpload) {
+    const hasFileInput = Boolean(rawFileUrl || rawFileName || hasRawFileUpload);
+    if (hasFileInput && rawVideoLink) {
+      throw new HttpError(400, "Provide either an uploaded file or a link, not both.");
+    }
+
+    if (rawVideoLink) {
+      source = await resolveSubmissionSource({
+        type: submissionType,
+        placementId: placement.id,
+        videoLink: rawVideoLink,
+      });
+    } else if (hasFileInput) {
       source = await resolveSubmissionSource({
         type: submissionType,
         placementId: placement.id,
         fileUrl: rawFileUrl || undefined,
         fileName: rawFileName || undefined,
       });
-    } else if (existingSubmission || submissionType !== "LESSON_PLAN") {
-      throw new HttpError(400, "Choose a file to upload.");
+    } else if (isSubmissionAttachmentRequired(submissionType, Boolean(existingSubmission))) {
+      throw new HttpError(400, "Provide either an uploaded file or a link.");
     }
 
     try {
@@ -216,6 +231,7 @@ export async function POST(request: Request) {
             practicumLessonPlanFile?: {
               upsert: typeof db.practicumLessonPlanFile.upsert;
               create: typeof db.practicumLessonPlanFile.create;
+              deleteMany: typeof db.practicumLessonPlanFile.deleteMany;
             };
           }
         ).practicumLessonPlanFile;
@@ -238,7 +254,15 @@ export async function POST(request: Request) {
                     fileSize: source.fileSize === null ? null : Number(source.fileSize),
                     videoLink: null,
                   }
-                : {}),
+                : source.videoLink
+                  ? {
+                      fileUrl: null,
+                      fileName: null,
+                      fileType: null,
+                      fileSize: null,
+                      videoLink: source.videoLink,
+                    }
+                  : {}),
               status: "SUBMITTED",
               version: { increment: 1 },
             },
@@ -280,6 +304,12 @@ export async function POST(request: Request) {
                   "uploadedById" = EXCLUDED."uploadedById"
               `;
             }
+          } else if (source.videoLink && caps.hasFileTable) {
+            if (fileModel) {
+              await fileModel.deleteMany({ where: { lessonPlanId: existingSubmission.id } });
+            } else {
+              await tx.$executeRaw`DELETE FROM "PracticumLessonPlanFile" WHERE "lessonPlanId" = ${existingSubmission.id}`;
+            }
           }
           return;
         }
@@ -307,7 +337,7 @@ export async function POST(request: Request) {
             fileName: source.fileName,
             fileType: source.fileType,
             fileSize: source.fileSize === null ? null : Number(source.fileSize),
-            videoLink: null,
+            videoLink: source.videoLink,
           },
           select: { id: true },
         });

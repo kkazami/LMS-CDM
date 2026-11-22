@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/lib/theme-context";
 import {
   Cpu,
@@ -12,6 +12,11 @@ import {
   Layers,
   MousePointerClick,
   ListChecks,
+  Wrench,
+  AlertTriangle,
+  ShieldAlert,
+  ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 import type { HardwarePart, HardwarePartsData } from "@/lib/ict-lab/types";
 import {
@@ -20,6 +25,10 @@ import {
   assertAllHardwarePartsHaveSvgDrawing,
   generateHardwareQuizQuestions,
 } from "@/lib/ict-lab/rules";
+import {
+  HARDWARE_GENERAL_SAFETY,
+  getHardwareProcedure,
+} from "@/lib/ict-lab/hardware-procedures";
 
 export const HARDWARE_SVG_PART_IDS = [
   "motherboard",
@@ -315,6 +324,60 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
 
   const selectedPart = partsById.get(selectedPartId) ?? data.parts[0]!;
   const currentQuestion = questions[currentQuestionIdx] ?? null;
+  const activeCategoryParts = useMemo(
+    () =>
+      selectedCategory === "all"
+        ? []
+        : data.parts.filter((part) => part.category === selectedCategory),
+    [data.parts, selectedCategory]
+  );
+
+  // Assembly & Disassembly Guide state (ephemeral, resets on part or tab change)
+  const guideRef = useRef<HTMLDivElement>(null);
+  const [guideOpen, setGuideOpen] = useState<boolean>(false);
+  const [procedureMode, setProcedureMode] = useState<"remove" | "install" | "both">("remove");
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(() => new Set());
+  const [safetyOpen, setSafetyOpen] = useState<boolean>(false);
+
+  const selectedProcedure = getHardwareProcedure(selectedPart.id);
+
+  const handleSelectCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === "all") return;
+    const matchingParts = data.parts.filter((part) => part.category === categoryId);
+    if (matchingParts.length > 0) {
+      if (!matchingParts.some((part) => part.id === selectedPartId)) {
+        setSelectedPartId(matchingParts[0]!.id);
+      }
+      setProcedureMode("both");
+      setGuideOpen(true);
+      requestAnimationFrame(() => {
+        const reduceMotion =
+          typeof window !== "undefined" &&
+          window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        guideRef.current?.scrollIntoView({
+          behavior: reduceMotion ? "auto" : "smooth",
+          block: "nearest",
+        });
+      });
+    }
+  };
+
+  useEffect(() => {
+    setCompletedSteps(new Set());
+  }, [selectedPart.id, procedureMode]);
+
+  const toggleStepDone = (stepKey: string) => {
+    setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(stepKey)) {
+        next.delete(stepKey);
+      } else {
+        next.add(stepKey);
+      }
+      return next;
+    });
+  };
 
   const startQuiz = (mode: HardwareQuizMode) => {
     const generated = generateHardwareQuizQuestions(data.parts, mode, 10);
@@ -444,21 +507,22 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
   return (
     <div className="space-y-4">
       {/* Top Bar: Category Filter Chips & Quiz Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-theme bg-surface p-3.5 shadow-sm">
+      <div className="flex flex-col gap-3 rounded-xl border border-theme bg-surface p-3.5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter hardware parts by category">
-          <span className="mr-1 inline-flex items-center gap-1 text-xs font-semibold text-secondary-theme">
+          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary-theme">
             <Layers className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-            Category:
+            Categories
           </span>
           <button
             type="button"
             disabled={isQuizActive}
-            onClick={() => setSelectedCategory("all")}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            aria-pressed={selectedCategory === "all"}
+            onClick={() => handleSelectCategory("all")}
+            className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               selectedCategory === "all"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
-            } disabled:opacity-50`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             All ({data.parts.length})
           </button>
@@ -469,12 +533,13 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
                 key={cat.id}
                 type="button"
                 disabled={isQuizActive}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                aria-pressed={active}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   active
                     ? "bg-blue-600 text-white shadow-sm"
                     : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
-                } disabled:opacity-50`}
+                } disabled:cursor-not-allowed disabled:opacity-50`}
               >
                 {cat.label}
               </button>
@@ -516,7 +581,7 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
       </div>
 
       {/* Main Content Grid: Left 2D Open Desktop Case SVG | Right Details or Quiz Panel */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-start">
         {/* 2D Interactive SVG Open Desktop Computer Case (Side View) */}
         <div className="flex flex-col rounded-xl border border-theme bg-surface p-4 shadow-sm lg:col-span-7">
           <div className="mb-2 flex items-center justify-between">
@@ -1023,6 +1088,362 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
               <span>• Use &ldquo;Connects To&rdquo; chips to trace connections</span>
             </div>
           </div>
+
+          {selectedProcedure && (
+            <div ref={guideRef} className="mt-3 rounded-xl border border-theme bg-elevated/60">
+              <button
+                id="hardware-guide-heading"
+                type="button"
+                aria-expanded={guideOpen}
+                aria-controls="hardware-guide-body"
+                onClick={() => setGuideOpen((prev) => !prev)}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl px-3.5 py-3 text-left transition hover:bg-slate-100/70 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary-theme">
+                    <Wrench className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <span>Assembly &amp; Disassembly Guide: {selectedPart.name}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                    Power off and unplug first
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-secondary-theme motion-safe:transition-transform motion-safe:duration-200 ${
+                    guideOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <div
+                id="hardware-guide-body"
+                role="region"
+                aria-labelledby="hardware-guide-heading"
+                aria-hidden={!guideOpen}
+                className={`grid motion-safe:transition-[grid-template-rows] motion-safe:duration-200 motion-safe:ease-out ${
+                  guideOpen
+                    ? "grid-rows-[1fr] visible"
+                    : "grid-rows-[0fr] invisible"
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-3 border-t border-theme p-3.5">
+                    {activeCategoryParts.length > 1 && (
+                      <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-theme bg-surface p-2">
+                        <span className="mr-1 text-[11px] font-semibold text-secondary-theme">
+                          Parts in {categoriesById.get(selectedCategory) ?? selectedCategory}:
+                        </span>
+                        {activeCategoryParts.map((part) => {
+                          const isCurrent = part.id === selectedPart.id;
+                          return (
+                            <button
+                              key={part.id}
+                              type="button"
+                              onClick={() => setSelectedPartId(part.id)}
+                              className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                isCurrent
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "border border-theme bg-elevated text-primary-theme hover:bg-slate-200/70 dark:hover:bg-white/10"
+                              }`}
+                            >
+                              {part.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* General Safety Disclosure (collapsed by default) */}
+                    <div className="rounded-lg border border-theme bg-surface">
+                      <button
+                        type="button"
+                        aria-expanded={safetyOpen}
+                        aria-controls="hardware-safety-checklist"
+                        onClick={() => setSafetyOpen((prev) => !prev)}
+                        className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-primary-theme transition hover:bg-slate-100/70 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <ShieldAlert className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                          Safety checklist before you start
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 shrink-0 text-secondary-theme motion-safe:transition-transform ${
+                            safetyOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {safetyOpen && (
+                        <ul
+                          id="hardware-safety-checklist"
+                          className="space-y-1.5 border-t border-theme px-3 py-2.5 text-xs leading-relaxed text-secondary-theme list-disc pl-7"
+                        >
+                          {HARDWARE_GENERAL_SAFETY.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Segmented Toggle: Disassemble (Remove) / Assemble (Install) / Both */}
+                    <div
+                      role="tablist"
+                      aria-label="Procedure mode"
+                      onKeyDown={(e) => {
+                        const modes: Array<"remove" | "install" | "both"> = [
+                          "remove",
+                          "install",
+                          "both",
+                        ];
+                        const idx = modes.indexOf(procedureMode);
+                        if (e.key === "ArrowRight") {
+                          e.preventDefault();
+                          setProcedureMode(modes[(idx + 1) % modes.length]!);
+                        } else if (e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setProcedureMode(modes[(idx + modes.length - 1) % modes.length]!);
+                        }
+                      }}
+                      className="grid grid-cols-3 gap-1 rounded-lg border border-theme bg-surface p-1"
+                    >
+                      <button
+                        id="tab-disassemble"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "remove"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("remove")}
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "remove"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Disassemble (Remove)
+                      </button>
+                      <button
+                        id="tab-assemble"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "install"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("install")}
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "install"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Assemble (Install)
+                      </button>
+                      <button
+                        id="tab-both"
+                        role="tab"
+                        type="button"
+                        aria-selected={procedureMode === "both"}
+                        aria-controls="panel-hardware-procedure"
+                        onClick={() => setProcedureMode("both")}
+                        className={`cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          procedureMode === "both"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-secondary-theme hover:text-primary-theme"
+                        }`}
+                      >
+                        Both
+                      </button>
+                    </div>
+
+                    {/* Active Tab Panel */}
+                    {(() => {
+                      const sections: Array<{
+                        modeKey: "remove" | "install";
+                        heading: string;
+                        steps: string[];
+                      }> =
+                        procedureMode === "both"
+                          ? [
+                              {
+                                modeKey: "remove",
+                                heading: "Disassemble (Remove)",
+                                steps: selectedProcedure.removeSteps,
+                              },
+                              {
+                                modeKey: "install",
+                                heading: "Assemble (Install)",
+                                steps: selectedProcedure.installSteps,
+                              },
+                            ]
+                          : [
+                              {
+                                modeKey: procedureMode,
+                                heading:
+                                  procedureMode === "remove"
+                                    ? "Disassemble (Remove)"
+                                    : "Assemble (Install)",
+                                steps:
+                                  procedureMode === "remove"
+                                    ? selectedProcedure.removeSteps
+                                    : selectedProcedure.installSteps,
+                              },
+                            ];
+
+                      const totalSteps = sections.reduce(
+                        (sum, section) => sum + section.steps.length,
+                        0
+                      );
+                      const doneCount = sections.reduce(
+                        (sum, section) =>
+                          sum +
+                          section.steps.filter((_, idx) =>
+                            completedSteps.has(`${section.modeKey}-${idx}`)
+                          ).length,
+                        0
+                      );
+
+                      return (
+                        <div
+                          id="panel-hardware-procedure"
+                          role="tabpanel"
+                          aria-labelledby={
+                            procedureMode === "remove"
+                              ? "tab-disassemble"
+                              : procedureMode === "install"
+                                ? "tab-assemble"
+                                : "tab-both"
+                          }
+                          className="space-y-3"
+                        >
+                          {/* Tools needed */}
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-theme">
+                              Tools needed
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {selectedProcedure.tools.map((tool) => (
+                                <span
+                                  key={tool}
+                                  className="inline-flex items-center rounded-md border border-theme bg-surface px-2 py-0.5 text-xs font-medium text-primary-theme"
+                                >
+                                  {tool}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Progress + Reset */}
+                          <div className="flex items-center justify-between gap-2 border-t border-theme pt-2.5">
+                            <span className="text-xs font-semibold text-primary-theme">
+                              {doneCount} of {totalSteps} steps
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setCompletedSteps(new Set())}
+                              disabled={doneCount === 0}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-theme bg-surface px-2 py-1 text-[11px] font-semibold text-secondary-theme transition hover:text-primary-theme disabled:cursor-default disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              Reset
+                            </button>
+                          </div>
+
+                          {/* Numbered Step List(s) with Practice Checkboxes */}
+                          <div className="space-y-4">
+                            {sections.map((section) => (
+                              <div key={section.modeKey} className="space-y-2">
+                                {procedureMode === "both" && (
+                                  <h5 className="text-xs font-bold uppercase tracking-wider text-primary-theme">
+                                    {section.heading}
+                                  </h5>
+                                )}
+                                <ol className="space-y-2">
+                                  {section.steps.map((stepText, idx) => {
+                                    const stepKey = `${section.modeKey}-${idx}`;
+                                    const isDone = completedSteps.has(stepKey);
+                                    const checkboxId = `step-${selectedPart.id}-${section.modeKey}-${idx}`;
+                                    return (
+                                      <li
+                                        key={checkboxId}
+                                        className={`flex items-start gap-2.5 rounded-lg border p-2.5 transition ${
+                                          isDone
+                                            ? "border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-500/10"
+                                            : "border-theme bg-surface"
+                                        }`}
+                                      >
+                                        <span
+                                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                            isDone
+                                              ? "bg-emerald-600 text-white"
+                                              : "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                                          }`}
+                                        >
+                                          {idx + 1}
+                                        </span>
+                                        <label
+                                          htmlFor={checkboxId}
+                                          className={`flex-1 cursor-pointer text-sm leading-relaxed ${
+                                            isDone
+                                              ? "text-secondary-theme line-through"
+                                              : "text-primary-theme"
+                                          }`}
+                                        >
+                                          {stepText}
+                                        </label>
+                                        <input
+                                          id={checkboxId}
+                                          type="checkbox"
+                                          checked={isDone}
+                                          onChange={() => toggleStepDone(stepKey)}
+                                          aria-label={`Mark ${section.heading} step ${idx + 1} done`}
+                                          className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-theme accent-blue-600 focus:ring-2 focus:ring-blue-500"
+                                        />
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Cautions & Common Mistakes Callouts (side by side from md breakpoint) */}
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {/* Cautions Callout (amber) */}
+                            <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-3">
+                              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                Cautions
+                              </p>
+                              <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-amber-900 dark:text-amber-200 list-disc pl-4">
+                                {selectedProcedure.cautions.map((caution) => (
+                                  <li key={caution}>{caution}</li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Common Mistakes Callout */}
+                            <div className="rounded-lg border border-theme bg-surface p-3">
+                              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-secondary-theme">
+                                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                                Common mistakes
+                              </p>
+                              <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-secondary-theme list-disc pl-4">
+                                {selectedProcedure.commonMistakes.map((mistake) => (
+                                  <li key={mistake}>{mistake}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <p className="text-[11px] italic text-secondary-theme">
+                      General guidance only. Real parts and cases differ; always follow the manufacturer&apos;s manual.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Component Inspector OR Interactive 10-Question Quiz */}
@@ -1033,9 +1454,14 @@ export default function HardwareExplorerTab({ data }: HardwareExplorerTabProps) 
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-2 border-b border-theme pb-3">
                   <div>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory(selectedPart.category)}
+                      aria-label={`View ${categoriesById.get(selectedPart.category) ?? selectedPart.category} category procedures`}
+                      className="inline-flex cursor-pointer items-center rounded-full bg-blue-50 dark:bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
                       {categoriesById.get(selectedPart.category) ?? selectedPart.category}
-                    </span>
+                    </button>
                     <h3 className="mt-1.5 text-lg font-bold text-primary-theme">
                       {selectedPart.name}
                     </h3>

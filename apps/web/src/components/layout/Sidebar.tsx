@@ -37,6 +37,7 @@ import {
   FileSpreadsheet,
   Briefcase,
   Cpu,
+  Music,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 import type { InstituteTheme } from "@/lib/theme";
@@ -95,6 +96,14 @@ function getProgramToolIcon(toolId: string): ComponentType<{ className?: string 
   switch (toolId) {
     case "ict-lab":
       return Cpu;
+    case "nursery-songs-youtube-categories":
+    case "nursery-song-library":
+      return Music;
+    case "matatag-curriculum-guide":
+      return BookOpen;
+    case "interactive-educational-charts":
+    case "visual-kit":
+      return FlaskConical;
     case "lesson-plan-builder":
       return BookOpen;
     case "financial-statements":
@@ -625,11 +634,6 @@ export default function Sidebar({
             aria-label="Program tools"
             className="mt-2 pt-2 border-t border-slate-200/80 dark:border-white/5 flex flex-col gap-1"
           >
-            {!isCollapsed && (
-              <span className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#8B92A5]">
-                Program tools
-              </span>
-            )}
             {visibleProgramTools.map((tool) => {
               const Icon = tool.icon;
               const active = activeLink?.href === tool.href;
@@ -640,7 +644,7 @@ export default function Sidebar({
                   href={tool.href}
                   onClick={handleLinkClick}
                   aria-current={active ? "page" : undefined}
-                  title={isCollapsed ? tool.label : undefined}
+                  title={tool.label}
                   className={`group flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-all ${
                     active
                       ? "border-l-[3px] font-semibold rounded-r-xl rounded-l-none"
@@ -658,7 +662,7 @@ export default function Sidebar({
                 >
                   <Icon className="h-5 w-5 shrink-0 group-hover:scale-105 transition-transform duration-150" />
                   <span
-                    className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                    className={`overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-300 ${
                       isCollapsed ? "w-0 opacity-0" : "opacity-100"
                     }`}
                   >

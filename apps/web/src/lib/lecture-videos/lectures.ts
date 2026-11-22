@@ -19,7 +19,7 @@ export const DRIVE_SHARING_NOTE =
   "Set the file's sharing to 'Anyone with the link' so students can watch it.";
 
 export const DRIVE_NOT_TRACKED_NOTE =
-  "Google Drive embeds do not expose playback events across origins, so viewing progress is not tracked for Google Drive lectures and is excluded from completion counts.";
+  "Progress tracking isn't available for Google Drive videos. Use a YouTube or uploaded video for tracked lectures.";
 
 export const LECTURE_ALLOWED_EXTENSIONS = ["mp4", "webm"] as const;
 export type LectureFileExtension = (typeof LECTURE_ALLOWED_EXTENSIONS)[number];
@@ -35,6 +35,8 @@ export const LECTURE_ACCEPT_ATTRIBUTE = ".mp4,.webm,video/mp4,video/webm";
 export const LECTURE_MAX_MB = 300;
 export const LECTURE_MAX_BYTES = LECTURE_MAX_MB * 1024 * 1024;
 export const LECTURE_HINT_TEXT = `MP4 or WebM, up to ${LECTURE_MAX_MB} MB`;
+export const LECTURE_UPLOADS_UNAVAILABLE_MESSAGE =
+  "Video uploads aren\u2019t available right now. Please contact your administrator.";
 
 export const LECTURE_MAX_TITLE_LENGTH = 140;
 export const LECTURE_MAX_DESCRIPTION_LENGTH = 1000;

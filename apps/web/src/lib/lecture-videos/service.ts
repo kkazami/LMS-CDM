@@ -1,10 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
 import { del, head } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { resolveIteStudentProgramFromRecord } from "@/lib/ite-programs/features";
 import type { LectureVideosActor } from "./guard";
 import {
   APPROVED_ENROLLMENT_STATUS,
+  LECTURE_MIME_BY_EXTENSION,
   LECTURE_SOURCE_LABELS,
+  LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
   buildFacultyLectureProgressReport,
   buildGoogleDriveLectureEmbedUrl,
   buildYouTubeLectureEmbedUrl,
@@ -16,7 +20,9 @@ import {
   canWriteStudentLectureProgress,
   formatCourseSubjectLabel,
   getLectureBlobStoreId,
+  getLectureFileExtension,
   isOwnLectureBlobUrl,
+  isValidLectureUploadPathname,
   lectureBlobPathnameFromUrl,
   parseExternalLectureUrl,
   resolveStreamableUploadLecture,
@@ -35,6 +41,8 @@ import {
   type StudentLectureProgressSummary,
 } from "./lectures";
 
+export const LOCAL_LECTURE_URL_PREFIX = "local-lecture://";
+
 export class LectureVideosHttpError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -43,8 +51,50 @@ export class LectureVideosHttpError extends Error {
   }
 }
 
-export function lectureUploadsConfigured(): boolean {
+export function blobLectureUploadsConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+export function localLectureUploadsConfigured(): boolean {
+  return !process.env.BLOB_READ_WRITE_TOKEN && process.env.VERCEL !== "1";
+}
+
+export function lectureUploadsConfigured(): boolean {
+  return blobLectureUploadsConfigured() || localLectureUploadsConfigured();
+}
+
+export function assertLectureUploadsConfigured(): void {
+  if (!lectureUploadsConfigured()) {
+    console.error(
+      "[lecture-videos] File upload rejected: BLOB_READ_WRITE_TOKEN is not configured on the server."
+    );
+    throw new LectureVideosHttpError(503, LECTURE_UPLOADS_UNAVAILABLE_MESSAGE);
+  }
+}
+
+export function getLocalLectureStorageRoot(): string {
+  return path.resolve(process.cwd(), ".local-uploads", "lecture-videos");
+}
+
+export function resolveLocalLectureFilePath(pathname: string): string | null {
+  const clean = pathname.replace(/^\/+/, "");
+  if (!clean || clean.includes("..") || clean.includes("\\")) {
+    return null;
+  }
+  const root = getLocalLectureStorageRoot();
+  const fullPath = path.resolve(root, clean);
+  if (!fullPath.startsWith(root + path.sep)) {
+    return null;
+  }
+  return fullPath;
+}
+
+export async function deleteLocalLectureFile(fileUrl: string): Promise<void> {
+  if (!fileUrl.startsWith(LOCAL_LECTURE_URL_PREFIX)) return;
+  const pathname = fileUrl.slice(LOCAL_LECTURE_URL_PREFIX.length);
+  const fullPath = resolveLocalLectureFilePath(pathname);
+  if (!fullPath) return;
+  await fs.promises.unlink(fullPath).catch(() => {});
 }
 
 function normalizeSourceType(raw: unknown): LectureSourceType {
@@ -87,8 +137,81 @@ export async function verifyAndResolveLectureBlob(args: {
   if (!fileUrl || !fileName) {
     throw new LectureVideosHttpError(400, "Please upload a lecture video file.");
   }
-  if (!lectureUploadsConfigured()) {
-    throw new LectureVideosHttpError(503, "File uploads are not configured.");
+  assertLectureUploadsConfigured();
+
+  if (fileUrl.startsWith(LOCAL_LECTURE_URL_PREFIX)) {
+    if (!localLectureUploadsConfigured()) {
+      throw new LectureVideosHttpError(503, LECTURE_UPLOADS_UNAVAILABLE_MESSAGE);
+    }
+    const pathname = fileUrl.slice(LOCAL_LECTURE_URL_PREFIX.length);
+    if (!isValidLectureUploadPathname(pathname, uploaderId)) {
+      throw new LectureVideosHttpError(
+        400,
+        "The video file was not uploaded to the authorized lecture storage."
+      );
+    }
+    const fullPath = resolveLocalLectureFilePath(pathname);
+    if (!fullPath) {
+      throw new LectureVideosHttpError(400, "Invalid upload destination.");
+    }
+
+    let size: number;
+    try {
+      const stat = await fs.promises.stat(fullPath);
+      size = stat.size;
+    } catch {
+      throw new LectureVideosHttpError(
+        400,
+        "The uploaded video file could not be verified. Please upload it again."
+      );
+    }
+
+    const ext = getLectureFileExtension(pathname);
+    const contentType =
+      ext === "mp4" || ext === "webm"
+        ? LECTURE_MIME_BY_EXTENSION[ext]
+        : "video/mp4";
+    const check = validateLectureUpload(pathname, contentType, size);
+    if (!check.ok) {
+      await deleteLocalLectureFile(fileUrl);
+      throw new LectureVideosHttpError(400, check.reason ?? "Invalid video file.");
+    }
+
+    try {
+      const fd = await fs.promises.open(fullPath, "r");
+      try {
+        const headerBuffer = Buffer.alloc(Math.min(32, size));
+        await fd.read(headerBuffer, 0, headerBuffer.length, 0);
+        const sigCheck = validateLectureSignature(
+          pathname,
+          new Uint8Array(headerBuffer)
+        );
+        if (!sigCheck.ok) {
+          await fd.close().catch(() => {});
+          await deleteLocalLectureFile(fileUrl);
+          throw new LectureVideosHttpError(
+            400,
+            sigCheck.reason ?? "Video file signature verification failed."
+          );
+        }
+      } finally {
+        await fd.close().catch(() => {});
+      }
+    } catch (err) {
+      if (err instanceof LectureVideosHttpError) throw err;
+      throw new LectureVideosHttpError(
+        400,
+        "Could not verify the uploaded video signature. Please try again."
+      );
+    }
+
+    return {
+      storageUrl: fileUrl,
+      storagePathname: pathname,
+      fileName: fileName.slice(0, 255),
+      mimeType: contentType,
+      fileSize: size,
+    };
   }
 
   const storeId = getLectureBlobStoreId(process.env.BLOB_READ_WRITE_TOKEN);
@@ -518,6 +641,27 @@ export async function cleanupUncommittedLectureBlob(
     return { cleaned: false };
   }
 
+  if (fileUrl.startsWith(LOCAL_LECTURE_URL_PREFIX)) {
+    const pathname = fileUrl.slice(LOCAL_LECTURE_URL_PREFIX.length);
+    if (!isValidLectureUploadPathname(pathname, actor.userId)) {
+      throw new LectureVideosHttpError(
+        400,
+        "Cannot delete a blob outside your lecture upload namespace."
+      );
+    }
+    const existingLocal = await db.iteLectureVideo
+      .findFirst({
+        where: { storageUrl: fileUrl },
+        select: { id: true },
+      })
+      .catch(() => null);
+    if (existingLocal) {
+      return { cleaned: false };
+    }
+    await deleteLocalLectureFile(fileUrl);
+    return { cleaned: true };
+  }
+
   const storeId = getLectureBlobStoreId(process.env.BLOB_READ_WRITE_TOKEN);
   if (!isOwnLectureBlobUrl(fileUrl, storeId, actor.userId)) {
     throw new LectureVideosHttpError(
@@ -730,7 +874,11 @@ export async function createIteLectureVideo(
 
     return mapLectureToDTO(created, actor);
   } catch (err) {
-    await del(resolvedBlob.storageUrl).catch(() => {});
+    if (resolvedBlob.storageUrl.startsWith(LOCAL_LECTURE_URL_PREFIX)) {
+      await deleteLocalLectureFile(resolvedBlob.storageUrl);
+    } else {
+      await del(resolvedBlob.storageUrl).catch(() => {});
+    }
     throw err;
   }
 }
@@ -886,7 +1034,11 @@ export async function deleteIteLectureVideo(
     existing.storageUrl &&
     lectureUploadsConfigured()
   ) {
-    await del(existing.storageUrl).catch(() => {});
+    if (existing.storageUrl.startsWith(LOCAL_LECTURE_URL_PREFIX)) {
+      await deleteLocalLectureFile(existing.storageUrl);
+    } else if (blobLectureUploadsConfigured()) {
+      await del(existing.storageUrl).catch(() => {});
+    }
   }
 
   return { deletedId: lectureId };

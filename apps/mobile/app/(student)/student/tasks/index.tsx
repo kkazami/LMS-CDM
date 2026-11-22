@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -16,6 +17,7 @@ import {
   Plus,
   Trash2,
   Clock,
+  Calendar,
 } from 'lucide-react-native';
 import * as Burnt from 'burnt';
 import { useAuthStore } from '../../../../src/stores/auth-store';
@@ -33,19 +35,28 @@ import {
   ErrorBanner,
   SkeletonBlock,
 } from '../../../../src/components/ui';
+import { IcsCalendar } from '../../../../src/components/institute/IcsCalendar';
+import { isIteUser } from '../../../../src/lib/ite-eligibility';
+import { getOnPrimaryColor } from '../../../../src/lib/design-system';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { radius, spacing } from '../../../../src/lib/theme';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
-import type { TaskItem } from '@lms/types';
+import type { TaskItem, MobileDashboard } from '@lms/types';
 
 export default function StudentTasksScreen() {
   const styles = useIcsStyles(incumbentStyles, icsStyles);
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const isIte = isIteUser(user);
   const api = useAuthStore((s) => s.api);
   const theme = useTheme();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
+  const [iteSection, setIteSection] = useState<'TASKS' | 'CALENDAR'>('TASKS');
+  const [calendarData, setCalendarData] = useState<MobileDashboard['calendar']>({
+    events: [],
+    schedules: [],
+  });
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,10 +93,19 @@ export default function StudentTasksScreen() {
       }
 
       const instituteCode = user?.institute?.code || 'ics';
-      const response = await api.workspace.getTasks(instituteCode);
+      const [response, agendaRes] = await Promise.all([
+        api.workspace.getTasks(instituteCode),
+        isIte ? api.workspace.getAgenda().catch(() => null) : Promise.resolve(null),
+      ]);
       if (response?.tasks) {
         setTasks(response.tasks);
         await setCachedData('student_workspace_tasks', response.tasks);
+      }
+      if (agendaRes) {
+        setCalendarData({
+          events: agendaRes.events || [],
+          schedules: agendaRes.schedules || [],
+        });
       }
     } catch (err: any) {
       if (!tasks.length) {
@@ -205,85 +225,198 @@ export default function StudentTasksScreen() {
     <Screen contentContainerStyle={styles.screenInner}>
       <AppHeader
         showBack
-        title="Study Planner"
-        subtitle="Personal Academic Tasks & Deadlines"
+        title={isIte ? 'Tasks & Calendar' : 'Study Planner'}
+        subtitle={
+          isIte
+            ? 'Study tasks, class schedule & deadlines'
+            : 'Personal Academic Tasks & Deadlines'
+        }
         rightAction={
-          <HeaderIconButton
-            onPress={() => openTask()}
-            accessibilityLabel="Add new task"
-            style={[styles.addBtn, { backgroundColor: theme.colors.primary, borderRadius: radius.full }]}
-          >
-            <Plus size={s(18)} color="#FFFFFF" />
-          </HeaderIconButton>
+          !isIte || iteSection === 'TASKS' ? (
+            <HeaderIconButton
+              onPress={() => openTask()}
+              accessibilityLabel="Add new task"
+              style={[styles.addBtn, { backgroundColor: theme.colors.primary, borderRadius: radius.full }]}
+            >
+              <Plus size={s(18)} color="#FFFFFF" />
+            </HeaderIconButton>
+          ) : undefined
         }
       />
 
-      {/* Filter Segmented Bar */}
-      <View
-        style={[
-          styles.filterBar,
-          {
+      {isIte && (
+        <View
+          style={{
+            flexDirection: 'row',
             backgroundColor: theme.colors.card,
+            borderBottomWidth: 1,
             borderBottomColor: theme.colors.border,
             paddingHorizontal: s(spacing.lg),
-          },
-        ]}
-      >
-        <TouchableOpacity
-          accessibilityRole="tab"
-          accessibilityState={{ selected: filter === 'PENDING' }}
-          accessibilityLabel={`Pending tasks, ${tasks.filter((t) => !t.completed).length} items`}
-          style={[
-            styles.filterTab,
-            { paddingVertical: s(spacing.md) },
-            filter === 'PENDING' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 2 },
-          ]}
-          onPress={() => setFilter('PENDING')}
+            paddingVertical: s(spacing.sm),
+            gap: s(spacing.sm),
+          }}
         >
-          <Text
-            style={[
-              styles.filterTabText,
-              {
+          <TouchableOpacity
+            accessibilityRole="tab"
+            accessibilityState={{ selected: iteSection === 'TASKS' }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: s(spacing.xs),
+              minHeight: 40,
+              borderRadius: radius.md,
+              backgroundColor:
+                iteSection === 'TASKS' ? theme.colors.primary : theme.colors.surfaceAlt,
+              borderWidth: 1,
+              borderColor:
+                iteSection === 'TASKS' ? theme.colors.primary : theme.colors.border,
+            }}
+            onPress={() => setIteSection('TASKS')}
+          >
+            <CheckSquare
+              size={s(15)}
+              color={iteSection === 'TASKS' ? getOnPrimaryColor(theme) : theme.colors.textSecondary}
+            />
+            <Text
+              style={{
                 fontSize: font(13),
-                color: filter === 'PENDING' ? theme.colors.primary : theme.colors.textSecondary,
-                fontWeight: filter === 'PENDING' ? '700' : '500',
+                fontWeight: '700',
+                color:
+                  iteSection === 'TASKS' ? getOnPrimaryColor(theme) : theme.colors.textSecondary,
+              }}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Tasks ({tasks.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            accessibilityRole="tab"
+            accessibilityState={{ selected: iteSection === 'CALENDAR' }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: s(spacing.xs),
+              minHeight: 40,
+              borderRadius: radius.md,
+              backgroundColor:
+                iteSection === 'CALENDAR' ? theme.colors.primary : theme.colors.surfaceAlt,
+              borderWidth: 1,
+              borderColor:
+                iteSection === 'CALENDAR' ? theme.colors.primary : theme.colors.border,
+            }}
+            onPress={() => setIteSection('CALENDAR')}
+          >
+            <Calendar
+              size={s(15)}
+              color={
+                iteSection === 'CALENDAR' ? getOnPrimaryColor(theme) : theme.colors.textSecondary
+              }
+            />
+            <Text
+              style={{
+                fontSize: font(13),
+                fontWeight: '700',
+                color:
+                  iteSection === 'CALENDAR'
+                    ? getOnPrimaryColor(theme)
+                    : theme.colors.textSecondary,
+              }}
+              maxFontSizeMultiplier={maxFontSizeMultiplier}
+            >
+              Calendar
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isIte && iteSection === 'CALENDAR' ? (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: s(spacing.lg) }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
+        >
+          <IcsCalendar calendar={calendarData} teacher={false} />
+        </ScrollView>
+      ) : (
+        <>
+          {/* Filter Segmented Bar */}
+          <View
+            style={[
+              styles.filterBar,
+              {
+                backgroundColor: theme.colors.card,
+                borderBottomColor: theme.colors.border,
+                paddingHorizontal: s(spacing.lg),
               },
             ]}
-            maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
-            Pending ({tasks.filter((t) => !t.completed).length})
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="tab"
+              accessibilityState={{ selected: filter === 'PENDING' }}
+              accessibilityLabel={`Pending tasks, ${tasks.filter((t) => !t.completed).length} items`}
+              style={[
+                styles.filterTab,
+                { paddingVertical: s(spacing.md) },
+                filter === 'PENDING' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 2 },
+              ]}
+              onPress={() => setFilter('PENDING')}
+            >
+              <Text
+                style={[
+                  styles.filterTabText,
+                  {
+                    fontSize: font(13),
+                    color: filter === 'PENDING' ? theme.colors.primary : theme.colors.textSecondary,
+                    fontWeight: filter === 'PENDING' ? '700' : '500',
+                  },
+                ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                Pending ({tasks.filter((t) => !t.completed).length})
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          accessibilityRole="tab"
-          accessibilityState={{ selected: filter === 'COMPLETED' }}
-          accessibilityLabel={`Completed tasks, ${tasks.filter((t) => t.completed).length} items`}
-          style={[
-            styles.filterTab,
-            { paddingVertical: s(spacing.md) },
-            filter === 'COMPLETED' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 2 },
-          ]}
-          onPress={() => setFilter('COMPLETED')}
-        >
-          <Text
-            style={[
-              styles.filterTabText,
-              {
-                fontSize: font(13),
-                color: filter === 'COMPLETED' ? theme.colors.primary : theme.colors.textSecondary,
-                fontWeight: filter === 'COMPLETED' ? '700' : '500',
-              },
-            ]}
-            maxFontSizeMultiplier={maxFontSizeMultiplier}
-          >
-            Completed ({tasks.filter((t) => t.completed).length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              accessibilityRole="tab"
+              accessibilityState={{ selected: filter === 'COMPLETED' }}
+              accessibilityLabel={`Completed tasks, ${tasks.filter((t) => t.completed).length} items`}
+              style={[
+                styles.filterTab,
+                { paddingVertical: s(spacing.md) },
+                filter === 'COMPLETED' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 2 },
+              ]}
+              onPress={() => setFilter('COMPLETED')}
+            >
+              <Text
+                style={[
+                  styles.filterTabText,
+                  {
+                    fontSize: font(13),
+                    color: filter === 'COMPLETED' ? theme.colors.primary : theme.colors.textSecondary,
+                    fontWeight: filter === 'COMPLETED' ? '700' : '500',
+                  },
+                ]}
+                maxFontSizeMultiplier={maxFontSizeMultiplier}
+              >
+                Completed ({tasks.filter((t) => t.completed).length})
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Main List */}
-      <View style={styles.mainContainer}>
+          {/* Main List */}
+          <View style={styles.mainContainer}>
         {errorMessage && (
           <View style={{ paddingHorizontal: s(spacing.lg), paddingTop: s(spacing.md) }}>
             <ErrorBanner
@@ -467,7 +600,9 @@ export default function StudentTasksScreen() {
             )}
           />
         )}
-      </View>
+          </View>
+        </>
+      )}
 
       {/* Add Task Modal using shared FormModal */}
       <FormModal
