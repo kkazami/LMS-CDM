@@ -246,7 +246,7 @@ function VisualKitHubCard({ diagram, bestScore, pathname }: VisualKitHubCardProp
       href={`${pathname}?topic=${diagram.id}`}
       aria-label={`${diagram.title} - ${diagram.parts.length} components`}
       draggable={false}
-      onDragStart={(e) => e.preventDefault()}
+      onDragStart={(e: React.DragEvent) => e.preventDefault()}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}

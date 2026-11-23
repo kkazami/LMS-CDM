@@ -186,7 +186,7 @@ function HubModuleCard({
       href={`${pathname}?module=${card.id}`}
       aria-label={`${card.title} - ${card.subtitle}`}
       draggable={false}
-      onDragStart={(e) => e.preventDefault()}
+      onDragStart={(e: React.DragEvent) => e.preventDefault()}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}

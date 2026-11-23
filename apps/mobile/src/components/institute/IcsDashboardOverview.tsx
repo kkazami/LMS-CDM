@@ -48,8 +48,8 @@ export function IcsDashboardOverview({ teacher, data, onQueue }: {
           key={item.queue} testID={`ics-queue-${item.queue}`} accessibilityRole="button" accessibilityLabel={item.label}
           accessibilityHint={`Open ${data ? item.value : 'pending'} ${item.copy}`} disabled={!data} onPress={() => onQueue(item.queue)}
           style={[styles.row, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }]}>
-          <View style={[styles.icon, { backgroundColor: tint }]}><item.icon size={21} color={accent} accessible={false} /></View>
-          <Text style={[styles.rowTitle, ink]}>{data ? item.value : '—'} {item.copy}</Text><ChevronRight color={theme.colors.textSecondary} size={18} accessible={false} />
+          <View style={[styles.icon, { backgroundColor: tint }]}><item.icon size={21} color={accent} aria-hidden /></View>
+          <Text style={[styles.rowTitle, ink]}>{data ? item.value : '—'} {item.copy}</Text><ChevronRight color={theme.colors.textSecondary} size={18} aria-hidden />
         </SurfacePressable>)}
       </View>
     </> : data && data.pendingAssignments.length > 0 ? <>
@@ -59,10 +59,10 @@ export function IcsDashboardOverview({ teacher, data, onQueue }: {
         {data.pendingAssignments.slice(0, 2).map((item, index) => <SurfacePressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open assignment ${item.title}`}
           onPress={() => { const path = studentNotificationRoute(item.deepLink, 'ics'); if (path) router.push(path as never); }}
           style={[styles.row, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }]}>
-          <View style={[styles.icon, { backgroundColor: tint }]}><BookOpen color={accent} size={21} accessible={false} /></View>
+          <View style={[styles.icon, { backgroundColor: tint }]}><BookOpen color={accent} size={21} aria-hidden /></View>
           <View style={styles.rowCopy}><Text style={[styles.rowTitle, ink]}>{item.title}</Text><Text style={[styles.detail, muted]}>{item.courseCode || item.courseTitle}</Text>
-            <View style={styles.date}><Clock size={12} color={accent} accessible={false} /><Text style={[styles.detail, { color: accent }]}>{schoolDateKey(item.eventDate)} · {schoolTime(item.eventDate)}</Text></View>
-          </View><ChevronRight color={theme.colors.textSecondary} size={18} accessible={false} />
+            <View style={styles.date}><Clock size={12} color={accent} aria-hidden /><Text style={[styles.detail, { color: accent }]}>{schoolDateKey(item.eventDate)} · {schoolTime(item.eventDate)}</Text></View>
+          </View><ChevronRight color={theme.colors.textSecondary} size={18} aria-hidden />
         </SurfacePressable>)}
       </View>
     </> : null}

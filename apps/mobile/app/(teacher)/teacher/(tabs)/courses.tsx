@@ -2,7 +2,8 @@ import { TextInput } from '../../../../src/components/ui/TextInput';
 import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
-import { isIcsUser } from '../../../../src/lib/ite-eligibility';
+import { IbeDashboardScreen } from '../../../../src/screens/IbeDashboardScreen';
+import { isIcsUser, isIbeUser } from '../../../../src/lib/ite-eligibility';
 import {
   View,
   StyleSheet,
@@ -25,7 +26,7 @@ import type { Course } from '@lms/types';
 
 export default function TeacherCoursesScreen() {
   const user = useAuthStore(s => s.user);
-  return isIcsUser(user) ? <IcsDashboardScreen teacher coursesOnly /> : <TeacherCourses />;
+  return isIcsUser(user) ? <IcsDashboardScreen teacher coursesOnly /> : isIbeUser(user) ? <IbeDashboardScreen teacher coursesOnly /> : <TeacherCourses />;
 }
 
 function TeacherCourses() {

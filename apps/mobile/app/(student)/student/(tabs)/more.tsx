@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -28,6 +29,11 @@ import {
   Code2,
   Table,
   FileText,
+  Briefcase,
+  FileSpreadsheet,
+  UserCheck,
+  BookOpen,
+  Trophy,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../src/stores/auth-store';
 import { useThemeStore } from '../../../../src/stores/theme-store';
@@ -38,7 +44,7 @@ import { ProfileEditModal } from '../../../../src/components/profile/ProfileEdit
 import { Screen } from '../../../../src/components/ui';
 import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import { TOUCH_TARGET } from '../../../../src/lib/typography';
-import { isIteUser, isIcsUser } from '../../../../src/lib/ite-eligibility';
+import { isIteUser, isIcsUser, isIbeUser, isBsbaHrmUser, isBsEntrepUser } from '../../../../src/lib/ite-eligibility';
 import { getWebBaseUrl } from '../../../../src/lib/constants';
 
 import { useMoreMenu } from '../../../../src/components/navigation/MoreMenuDrawer';
@@ -75,7 +81,15 @@ export default function StudentMoreScreen() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to sign out of CdM LMS?') : true;
+      if (confirmed) {
+        await logout();
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -325,7 +339,7 @@ export default function StudentMoreScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Open Quizzes and Interactive Forms on web"
-              style={styles.menuItem}
+              style={[styles.menuItem, isIbeUser(user) && { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
               onPress={() => handleOpenWeb('/assignments')}
               activeOpacity={0.7}
             >
@@ -340,6 +354,137 @@ export default function StudentMoreScreen() {
               </View>
               <ExternalLink size={16} color={theme.colors.textSecondary} />
             </TouchableOpacity>
+
+            {isIbeUser(user) && (
+              <>
+                {/* Entrepreneurship Program Tools */}
+                {(isBsEntrepUser(user) || (!isBsbaHrmUser(user) && !isBsEntrepUser(user))) && (
+                  <>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Open Business Plan on web"
+                      style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                      onPress={() => handleOpenWeb('/business-plan')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}15` }]}>
+                        <Briefcase size={20} color={theme.colors.primary} />
+                      </View>
+                      <View style={styles.menuItemText}>
+                        <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Business Plan Guide</Text>
+                        <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                          Executive summaries, financials & rubrics
+                        </Text>
+                      </View>
+                      <ExternalLink size={16} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Open Financial Statements on web"
+                      style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                      onPress={() => handleOpenWeb('/financial-statements')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}15` }]}>
+                        <FileSpreadsheet size={20} color={theme.colors.primary} />
+                      </View>
+                      <View style={styles.menuItemText}>
+                        <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Financial Statements</Text>
+                        <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                          Income statements, balance sheets & cash flows
+                        </Text>
+                      </View>
+                      <ExternalLink size={16} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {/* Human Resource Management Program Tools */}
+                {(isBsbaHrmUser(user) || (!isBsbaHrmUser(user) && !isBsEntrepUser(user))) && (
+                  <>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Open Mock Interview on web"
+                      style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                      onPress={() => handleOpenWeb('/mock-interview')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.info}15` }]}>
+                        <UserCheck size={20} color={theme.colors.info} />
+                      </View>
+                      <View style={styles.menuItemText}>
+                        <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Mock Interview AI</Text>
+                        <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                          AI-assisted applicant practice & scoring
+                        </Text>
+                      </View>
+                      <ExternalLink size={16} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Open IBE WordWise on web"
+                      style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                      onPress={() => handleOpenWeb('/wordwise')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}15` }]}>
+                        <BookOpen size={20} color={theme.colors.primary} />
+                      </View>
+                      <View style={styles.menuItemText}>
+                        <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>IBE WordWise</Text>
+                        <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                          Vocabulary & academic language hub
+                        </Text>
+                      </View>
+                      <ExternalLink size={16} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {/* Common IBE Tools */}
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Learning Hub on web"
+                  style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                  onPress={() => handleOpenWeb('/learning-hub')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.success}15` }]}>
+                    <BookOpen size={20} color={theme.colors.success} />
+                  </View>
+                  <View style={styles.menuItemText}>
+                    <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>IBE Learning Hub</Text>
+                    <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                      Curated business resources & references
+                    </Text>
+                  </View>
+                  <ExternalLink size={16} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Hall of Fame on web"
+                  style={styles.menuItem}
+                  onPress={() => handleOpenWeb('/hall-of-fame')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.warning}15` }]}>
+                    <Trophy size={20} color={theme.colors.warning} />
+                  </View>
+                  <View style={styles.menuItemText}>
+                    <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>
+                      {isBsbaHrmUser(user) ? 'HR Leaders Hall of Fame' : isBsEntrepUser(user) ? 'Entrepreneur Hall of Fame' : 'Hall of Fame'}
+                    </Text>
+                    <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                      {isBsbaHrmUser(user) ? '10 Famous Human Resource Leaders' : '10 Famous Entrepreneurs & Achievers'}
+                    </Text>
+                  </View>
+                  <ExternalLink size={16} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -409,6 +554,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 100,
+    maxWidth: 760,
+    width: '100%',
+    alignSelf: 'center',
   },
   profileCard: {
     flexDirection: 'row',

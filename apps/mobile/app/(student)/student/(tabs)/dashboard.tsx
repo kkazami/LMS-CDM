@@ -1,6 +1,7 @@
 import { Text } from '../../../../src/components/ui/Text';
 import { ContinueLearning } from '../../../../src/components/institute/ContinueLearning';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { IbeDashboardScreen } from '../../../../src/screens/IbeDashboardScreen';
 import { useAlertsStore } from '../../../../src/stores/alerts-store';
 import { studentNotificationRoute } from '../../../../src/lib/student-navigation';
 import { markUsefulContent } from '../../../../src/lib/performance';
@@ -46,7 +47,7 @@ import { TOUCH_TARGET } from '../../../../src/lib/typography';
 import { getCachedData, setCachedData } from '../../../../src/lib/offline-storage';
 import { getCanonicalInstituteName } from '../../../../src/lib/theme';
 import { formatGradePoint, computeGwaFromCourses } from '../../../../src/lib/ph-scale';
-import { isIteUser, isIcsUser } from '../../../../src/lib/ite-eligibility';
+import { isIteUser, isIcsUser, isIbeUser } from '../../../../src/lib/ite-eligibility';
 import {
   getOnPrimaryColor,
   getInstituteGradients,
@@ -56,12 +57,13 @@ import { IteParticipationCard } from '../../../../src/components/institute/ItePa
 import { IteFocusCard } from '../../../../src/components/institute/IteFocusCard';
 import { IteSuggestionsCard } from '../../../../src/components/institute/IteSuggestionsCard';
 import { IcsKnowledgeExchangeCard } from '../../../../src/components/institute/IcsKnowledgeExchangeCard';
+import { IbeStudentProgramSection } from '../../../../src/components/institute/IbeStudentProgramSection';
 import type { Course, Announcement, TaskItem, Grade, LmsCalendarEvent } from '@lms/types';
 import type { ClassMeetingItem } from '@lms/api-client';
 
 export default function StudentDashboardScreen() {
   const user = useAuthStore(s => s.user);
-  return isIcsUser(user) ? <IcsDashboardScreen /> : <StudentDashboard />;
+  return isIcsUser(user) ? <IcsDashboardScreen /> : isIbeUser(user) ? <IbeDashboardScreen /> : <StudentDashboard />;
 }
 
 function StudentDashboard() {
@@ -763,6 +765,11 @@ function StudentDashboard() {
       {/* ── ICS Features: Knowledge Exchange Discussion Feed ── */}
       {isIcsUser(user) && (
         showCommunity ? <IcsKnowledgeExchangeCard onRefreshTrigger={refreshTrigger} /> : <TouchableOpacity accessibilityRole="button" style={[styles.courseRowCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]} onPress={() => setShowCommunity(true)}><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24 }}>See campus discussions</Text><MessageSquare size={20} color={theme.colors.textSecondary} /></TouchableOpacity>
+      )}
+
+      {/* ── IBE Features: Program Section (Entrepreneurship / HRM) ── */}
+      {isIbeUser(user) && (
+        <IbeStudentProgramSection />
       )}
 
       {focusedHome ? <View style={styles.section}><SectionTitle title="Announcements" actionText="View updates" onActionPress={() => router.push('/student/announcements' as any)} /><Text style={{ color: theme.colors.textSecondary, fontSize: 16, lineHeight: 24 }}>Read your instructors’ latest notices and course updates.</Text></View> : <>

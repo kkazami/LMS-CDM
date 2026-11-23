@@ -123,7 +123,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
       ListFooterComponent={!coursesOnly ? <View>
         <Text accessibilityRole="header" style={[styles.sectionTitle, ink, { marginTop: 16, marginBottom: 16 }]}>{teacher ? 'Teaching shortcuts' : 'Your learning tools'}</Text>
         <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, { backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 0, minHeight: 100 }]}>
-          <item.icon size={21} strokeWidth={1.7} color={accent} accessible={false} />
+          <item.icon size={21} strokeWidth={1.7} color={accent} aria-hidden />
           <Text style={[styles.actionLabel, ink, { marginTop: 10 }]}>{item.label}</Text>
           <Text style={[styles.copy, muted]}>{item.description}{item.badge > 0 ? ` · ${item.badge}` : ''}</Text>
         </Pressable>)}</View>

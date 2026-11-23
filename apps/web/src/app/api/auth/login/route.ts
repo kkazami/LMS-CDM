@@ -242,6 +242,7 @@ export async function POST(request: Request) {
           role: user.role,
           requiresEnrollment,
           studentNumber: (user as Record<string, unknown>).studentNumber as string | undefined || null,
+          department: (user.department as string) || null,
           institute: {
             code: instituteCode,
             name: instituteName,

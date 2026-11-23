@@ -13,7 +13,7 @@ export function CourseCover({ value }: { value?: string | null }) {
 }
 function CoverImage({ source }: { source: ReturnType<typeof courseCoverSource> }) {
   const [failed, setFailed] = useState(false);
-  return <View style={styles.cover} accessible={false}>
+  return <View style={styles.cover} aria-hidden>
     {source && !failed ? <Image source={source} contentFit="cover" style={StyleSheet.absoluteFill} onError={() => setFailed(true)} /> : <BookOpen size={28} color="#FFFFFF" />}
   </View>;
 }

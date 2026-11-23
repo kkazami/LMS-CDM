@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -76,7 +77,15 @@ export default function TeacherMoreScreen() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to sign out of CdM LMS?') : true;
+      if (confirmed) {
+        await logout();
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -711,6 +720,9 @@ export default function TeacherMoreScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 6,
+    maxWidth: 760,
+    width: '100%',
+    alignSelf: 'center',
   },
   profileCard: {
     flexDirection: 'row',
