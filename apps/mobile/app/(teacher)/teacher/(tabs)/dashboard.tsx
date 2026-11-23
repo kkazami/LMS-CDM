@@ -1,6 +1,7 @@
 import { Text } from '../../../../src/components/ui/Text';
 import React, { useEffect, useState } from 'react';
 import { IcsDashboardScreen } from '../../../../src/screens/IcsDashboardScreen';
+import { IbeDashboardScreen } from '../../../../src/screens/IbeDashboardScreen';
 import {
   View,
   StyleSheet,
@@ -37,7 +38,7 @@ import { Card } from '../../../../src/components/common/Card';
 import { Badge } from '../../../../src/components/common/Badge';
 import { Screen, SectionTitle } from '../../../../src/components/ui';
 import { getCanonicalInstituteName } from '../../../../src/lib/theme';
-import { isIteUser, isIcsUser } from '../../../../src/lib/ite-eligibility';
+import { isIteUser, isIcsUser, isIbeUser } from '../../../../src/lib/ite-eligibility';
 import {
   getOnPrimaryColor,
   getInstituteGradients,
@@ -50,7 +51,7 @@ import type { ClassMeetingItem } from '@lms/api-client';
 
 export default function TeacherDashboardScreen() {
   const user = useAuthStore(s => s.user);
-  return isIcsUser(user) ? <IcsDashboardScreen teacher /> : <TeacherDashboard />;
+  return isIcsUser(user) ? <IcsDashboardScreen teacher /> : isIbeUser(user) ? <IbeDashboardScreen teacher /> : <TeacherDashboard />;
 }
 
 function TeacherDashboard() {

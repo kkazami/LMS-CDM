@@ -74,6 +74,15 @@ export default function StudentCourseHubScreen() {
   useEffect(() => {
     if (tab && ['STREAM', 'CLASSWORK', 'PEOPLE', 'ATTENDANCE', 'GRADES'].includes(tab)) setActiveTab(tab as TabType);
   }, [tab]);
+
+  // If a faculty instructor navigates to student course hub, redirect to teacher course detail
+  useEffect(() => {
+    const role = (user?.role || '').toUpperCase();
+    if (courseId && (role === 'PROFESSOR' || role === 'TEACHER' || role === 'INSTRUCTOR')) {
+      router.replace(`/teacher/courses/${courseId}${tab ? `?initialTab=${tab}` : ''}` as any);
+    }
+  }, [user, courseId, tab, router]);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -124,8 +133,14 @@ export default function StudentCourseHubScreen() {
         loadedSomething = true;
       }
 
-      if (!loadedSomething) {
-        setErrorMessage('Could not load course details. Please check your connection.');
+      if (!loadedSomething && activeTab !== 'ATTENDANCE') {
+        const rejected = [courseRes, streamRes, classworkRes, peopleRes, gradesRes]
+          .find((r): r is PromiseRejectedResult => r.status === 'rejected');
+        const err = rejected?.reason;
+        const msg = (err && typeof err === 'object' && ('message' in err || 'error' in err))
+          ? (err.message || (typeof err.error === 'string' ? err.error : err.error?.message))
+          : null;
+        setErrorMessage(msg || 'Could not load course details. Please check your connection.');
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to load course information.');
@@ -382,7 +397,7 @@ export default function StudentCourseHubScreen() {
       </ScrollView>
       {/* Main Tab Content */}
       <View style={[styles.mainTabContent, { padding: s(spacing.lg) }]}>
-        {errorMessage && (
+        {errorMessage && activeTab !== 'ATTENDANCE' && (
           <ErrorBanner
             message={errorMessage}
             onRetry={loadAllCourseData}

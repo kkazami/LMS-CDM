@@ -1,12 +1,17 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 const path = require('path');
 
 // Find the project and workspace directories
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
-const config = getSentryExpoConfig(projectRoot, { getDefaultConfig, includeWebReplay: false });
+let config;
+try {
+  const { getSentryExpoConfig } = require('@sentry/react-native/metro');
+  config = getSentryExpoConfig(projectRoot, { getDefaultConfig, includeWebReplay: false });
+} catch {
+  config = getDefaultConfig(projectRoot);
+}
 
 // Expo configures pnpm workspace resolution and watch folders automatically.
 

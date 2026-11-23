@@ -168,7 +168,7 @@ export default function LoginScreen() {
         <Button title="Sign In" icon={LogIn} loading={loading} disabled={googleBusy} onPress={handleLogin} textColor="#FFFFFF" style={{ backgroundColor: isDark ? '#334A69' : '#101824', borderColor: 'transparent', borderRadius: 9, marginTop: 12, minHeight: 48 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 14 }}><View style={{ flex: 1, height: 1, backgroundColor: border }} /><Text style={[styles.helper, { color: secondary }]}>or</Text><View style={{ flex: 1, height: 1, backgroundColor: border }} /></View>
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Continue with Google" accessibilityState={{ disabled: busy, busy: googleBusy }} disabled={busy} onPress={() => { void handleGoogle(); }} style={{ minHeight: 48, borderWidth: 1, borderColor: border, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12, opacity: busy ? 0.6 : 1 }}>
-          {googleBusy ? <ActivityIndicator size="small" color={ink} /> : <Svg width={19} height={19} viewBox="0 0 48 48" accessible={false}>
+          {googleBusy ? <ActivityIndicator size="small" color={ink} /> : <Svg width={19} height={19} viewBox="0 0 48 48">
             <Path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.2h6.6c3.9-3.6 6.1-8.8 6.1-15.1Z" />
             <Path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.2c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20.4 20.4 0 0 0 24 44Z" />
             <Path fill="#FBBC05" d="M12.6 27.4a12.3 12.3 0 0 1 0-7.8v-5.3H5.8a20.2 20.2 0 0 0 0 18.4l6.8-5.3Z" />

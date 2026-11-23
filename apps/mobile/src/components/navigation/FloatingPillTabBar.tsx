@@ -24,6 +24,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useAlertsStore } from '../../stores/alerts-store';
 import { useMoreMenu } from './MoreMenuDrawer';
 import { IcsTabBar } from './IcsTabBar';
+import { IbeTabBar } from './IbeTabBar';
 import {
   getOnPrimaryColor,
   getInstituteGradients,
@@ -159,7 +160,9 @@ function TabItem({
 
 export function FloatingPillTabBar(props: FloatingPillTabBarProps) {
   const theme = useTheme();
-  return theme.code === 'ics' ? <IcsTabBar {...props} /> : <LegacyTabBar {...props} />;
+  if (theme.code === 'ics') return <IcsTabBar {...props} />;
+  if (theme.code === 'ibe') return <IbeTabBar {...props} />;
+  return <LegacyTabBar {...props} />;
 }
 
 function LegacyTabBar({

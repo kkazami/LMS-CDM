@@ -169,7 +169,7 @@ export function createApiClient(config: ApiClientConfig) {
       exchangeGoogle: (ticket: string, verifier: string) => request<{ token: string }>('/api/auth/google/mobile/exchange', { method: 'POST', body: JSON.stringify({ ticket, verifier }) }),
       forgotPassword: (email: string) => request<{ message: string }>('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
       resetPassword: (email: string, otp: string, newPassword: string) => request<{ message: string }>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, otp, newPassword }) }),
-      register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean }) =>
+      register: (data: { name: string; email: string; studentNumber: string; password: string; confirmPassword: string; instituteCode: string; acceptedPolicies: boolean; program?: string }) =>
         request<LoginResponse>('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
       login: (data: LoginRequest) =>
         request<LoginResponse>('/api/auth/login', {
@@ -209,14 +209,14 @@ export function createApiClient(config: ApiClientConfig) {
         request<{ courses: Course[] }>(`/api/courses?institute=${instituteCode}`),
 
       get: (courseId: string) =>
-        request<{ course: Course }>(`/api/courses/${courseId}`),
+        request<{ course: Course }>(`/api/courses/${encodeURIComponent(courseId)}`),
 
       getStream: (courseId: string) =>
-        request<CourseStreamResponse>(`/api/courses/${courseId}/stream`),
+        request<CourseStreamResponse>(`/api/courses/${encodeURIComponent(courseId)}/stream`),
 
       postStream: (courseId: string, content: string) =>
         request<{ success: boolean; announcement: CourseAnnouncementItem }>(
-          `/api/courses/${courseId}/stream`,
+          `/api/courses/${encodeURIComponent(courseId)}/stream`,
           {
             method: 'POST',
             body: JSON.stringify({ content }),
@@ -225,7 +225,7 @@ export function createApiClient(config: ApiClientConfig) {
 
       updateStream: (courseId: string, announcementId: string, content: string) =>
         request<{ success: boolean; announcement: CourseAnnouncementItem }>(
-          `/api/courses/${courseId}/stream`,
+          `/api/courses/${encodeURIComponent(courseId)}/stream`,
           {
             method: 'PATCH',
             body: JSON.stringify({ announcementId, content }),
@@ -234,18 +234,18 @@ export function createApiClient(config: ApiClientConfig) {
 
       deleteStream: (courseId: string, announcementId: string) =>
         request<{ success: boolean }>(
-          `/api/courses/${courseId}/stream?announcementId=${encodeURIComponent(announcementId)}`,
+          `/api/courses/${encodeURIComponent(courseId)}/stream?announcementId=${encodeURIComponent(announcementId)}`,
           {
             method: 'DELETE',
           }
         ),
 
       getClasswork: (courseId: string) =>
-        request<CourseClassworkResponse>(`/api/courses/${courseId}/classwork`),
+        request<CourseClassworkResponse>(`/api/courses/${encodeURIComponent(courseId)}/classwork`),
 
       createClasswork: (courseId: string, data: CreateClassworkInput) =>
         request<{ success: boolean; item: any }>(
-          `/api/courses/${courseId}/classwork`,
+          `/api/courses/${encodeURIComponent(courseId)}/classwork`,
           {
             method: 'POST',
             body: JSON.stringify(data),
@@ -253,19 +253,19 @@ export function createApiClient(config: ApiClientConfig) {
         ),
 
       getPeople: (courseId: string) =>
-        request<CoursePeopleResponse>(`/api/courses/${courseId}/people`),
+        request<CoursePeopleResponse>(`/api/courses/${encodeURIComponent(courseId)}/people`),
 
       getGrades: (courseId: string) =>
-        request<CourseGradesResponse>(`/api/courses/${courseId}/grades`),
+        request<CourseGradesResponse>(`/api/courses/${encodeURIComponent(courseId)}/grades`),
 
       // Preserve complete-roster consumers while each server query/response stays bounded.
       getGradebook: async (courseId: string) => {
-        const first = await request<GradebookPayload>(`/api/courses/${courseId}/gradebook?page=1`);
+        const first = await request<GradebookPayload>(`/api/courses/${encodeURIComponent(courseId)}/gradebook?page=1`);
         const totalPages = first.pagination?.totalPages ?? 1;
         if (!Number.isInteger(totalPages) || totalPages < 1 || totalPages > 200) throw new ApiClientError(422, 'This roster is too large for the complete gradebook view.');
         const students = [...first.students], grades = { ...first.grades };
         for (let page = 2; page <= totalPages; page++) {
-          const next = await request<GradebookPayload>(`/api/courses/${courseId}/gradebook?page=${page}`);
+          const next = await request<GradebookPayload>(`/api/courses/${encodeURIComponent(courseId)}/gradebook?page=${page}`);
           students.push(...next.students); Object.assign(grades, next.grades);
         }
         const { pagination, ...result } = first;
