@@ -55,6 +55,13 @@ interface StudyModeProps {
   onExit: () => void;
 }
 
+const reviewStatuses = {
+  finished: { label: "Finished", color: "bg-emerald-600 dark:bg-emerald-400" },
+  retry: { label: "Retry", color: "bg-rose-600 dark:bg-rose-400" },
+  confirm: { label: "Confirm", color: "bg-blue-600 dark:bg-blue-400" },
+  unseen: { label: "Unseen", color: "bg-slate-300 dark:bg-slate-600" },
+} as const;
+
 // ─── Distractor Helpers ───────────────────────────────────────────────────────
 
 function generateChoices(
@@ -689,58 +696,85 @@ export default function StudyMode({
 
   if (studyMode === "flashcard" && currentCard) {
     const isRevealed = flashState === "revealed";
+    const latestRatings = new Map(sessionResults.map(({ cardId, correct }) => [cardId, correct] as const));
+    const queuedIds = new Set(sessionCards.slice(currentIndex).map(({ id }) => id));
+    const progress = sessionCards.slice(0, sessionSize.current).map(({ id }) => {
+      const rating = latestRatings.get(id);
+      let status: keyof typeof reviewStatuses = "unseen";
+      if (!queuedIds.has(id)) status = "finished";
+      else if (rating === false) status = "retry";
+      else if (rating === true) status = "confirm";
+      return { id, status };
+    });
+    const confidentOutcome = latestRatings.get(currentCard.id) === true ? "Finish card" : "Confirm later";
 
     const ratingLevels: {
       level: 1 | 2 | 3 | 4;
       icon: React.ReactNode;
       label: string;
       key: string;
-      iconColor: string;
-      hoverBorder: string;
-      hoverBg: string;
+      tone: string;
     }[] = [
       {
         level: 1,
         icon: <Frown className="h-5 w-5" />,
         label: "Forgot",
         key: "1",
-        iconColor: "text-red-500",
-        hoverBorder: "hover:border-red-400 dark:hover:border-red-500/60",
-        hoverBg: "hover:bg-red-50 dark:hover:bg-red-950/20",
+        tone: "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-950/40 dark:text-rose-200 dark:hover:bg-rose-950/70",
       },
       {
         level: 2,
         icon: <Meh className="h-5 w-5" />,
         label: "Hard",
         key: "2",
-        iconColor: "text-orange-500",
-        hoverBorder: "hover:border-orange-400 dark:hover:border-orange-500/60",
-        hoverBg: "hover:bg-orange-50 dark:hover:bg-orange-950/20",
+        tone: "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/70",
       },
       {
         level: 3,
         icon: <Smile className="h-5 w-5" />,
         label: "Good",
         key: "3",
-        iconColor: "text-blue-500",
-        hoverBorder: "hover:border-blue-400 dark:hover:border-blue-500/60",
-        hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-950/20",
+        tone: "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:bg-blue-950/70",
       },
       {
         level: 4,
         icon: <ThumbsUp className="h-5 w-5" />,
         label: "Easy",
         key: "4",
-        iconColor: "text-emerald-500",
-        hoverBorder: "hover:border-emerald-400 dark:hover:border-emerald-500/60",
-        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
+        tone: "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70",
       },
     ];
 
     return (
       <div className="mx-auto max-w-3xl pb-10">
         {topBarEl}
-        {progressBarEl}
+        <section aria-label="Session progress" className="mb-5 rounded-2xl border border-theme bg-surface px-4 py-3 sm:px-6">
+          <h2 className="mb-3 text-base font-semibold text-primary-theme [overflow-wrap:anywhere]">{deckTitle}</h2>
+          <ol aria-label="Flashcard progress" role="list" className="flex flex-wrap gap-x-1.5 gap-y-2 py-1 sm:gap-x-2">
+            {progress.map(({ id, status }, index) => {
+              const active = id === currentCard.id;
+              const { label, color } = reviewStatuses[status];
+              return (
+                <li
+                  key={id}
+                  aria-current={active ? "step" : undefined}
+                  title={`Card ${index + 1}: ${label}${active ? " (current)" : ""}`}
+                  className={`h-2 min-w-3 max-w-10 flex-1 basis-3 rounded-full sm:min-w-4 sm:basis-4 ${color} ${active ? "outline-2 outline-offset-1 outline-(--text-primary)" : ""}`}
+                >
+                  <span className="sr-only">Card {index + 1}: {label}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <ul role="list" aria-label="Progress totals" aria-live="polite" aria-atomic="true" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-secondary-theme">
+            {Object.entries(reviewStatuses).map(([status, { label, color }]) => (
+              <li key={status} className="inline-flex items-center gap-1.5">
+                <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${color}`} />
+                {progress.filter(card => card.status === status).length} {label}
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <div className="mb-5 [perspective:1200px]">
           <div
@@ -795,21 +829,25 @@ export default function StudyMode({
           <div className="flex w-full flex-col items-center gap-3">
             <div className="space-y-1 text-center">
               <p className="text-sm font-bold text-slate-700 dark:text-slate-200">How well did you know this?</p>
-              <p className="text-xs text-slate-600 dark:text-slate-300">Forgot or Hard sends the card to the back of the queue. Two Good or Easy ratings in a row finish it.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">Two Good or Easy ratings in a row finish a card.</p>
             </div>
-            <div className="grid w-full max-w-xl grid-cols-2 gap-3 min-[420px]:grid-cols-4">
+            <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {ratingLevels.map((r) => (
                 <button
                   key={r.level}
                   onClick={() => handleFlashRating(r.level)}
-                  className={`flex min-h-11 flex-wrap items-center justify-center gap-2 rounded-xl border border-theme bg-surface px-2 py-2.5 ${r.hoverBorder} ${r.hoverBg}`}
+                  type="button"
+                  className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl border px-2 py-3 ${r.tone}`}
                 >
-                  <span className={r.iconColor}>{r.icon}</span>
-                  <span className="text-xs font-extrabold text-slate-700 dark:text-[#F0F2F8]">
+                  <span aria-hidden="true">{r.icon}</span>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
                     {r.label}
+                    <kbd aria-hidden="true" className="rounded border border-current px-1 font-sans text-[11px]">
+                      {r.key}
+                    </kbd>
                   </span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-[#1E2132] px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10">
-                    {r.key}
+                  <span className="text-xs">
+                    {r.level < 3 ? "Retry later" : confidentOutcome}
                   </span>
                 </button>
               ))}
