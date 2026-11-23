@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCodeLabReducedMotion } from "../codelab-motion";
 
 interface AnimatedBarProps {
   /** 0–100 */
@@ -22,17 +23,20 @@ export default function AnimatedBar({
   showLabel = false,
   duration = 900,
 }: AnimatedBarProps) {
+  const reduced = useCodeLabReducedMotion();
+  const targetWidth = Math.min(Math.max(percent, 0), 100);
   const [width, setWidth] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || reduced) return;
+    let frame = 0;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => setWidth(Math.min(Math.max(percent, 0), 100)));
+          frame = requestAnimationFrame(() => {
+            frame = requestAnimationFrame(() => setWidth(targetWidth));
           });
           observer.disconnect();
         }
@@ -40,8 +44,11 @@ export default function AnimatedBar({
       { threshold: 0.2 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [percent]);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [reduced, targetWidth]);
 
   return (
     <div className="flex items-center gap-2 w-full">
@@ -49,8 +56,8 @@ export default function AnimatedBar({
         <div
           className={`${heightClass} ${colorClass} rounded-full`}
           style={{
-            width: `${width}%`,
-            transition: `width ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+            width: `${reduced ? targetWidth : width}%`,
+            transition: reduced ? "none" : `width ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
           }}
         />
       </div>

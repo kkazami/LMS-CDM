@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ArrowRight, Sparkles, X } from "lucide-react";
 import BadgeIcon from "@/components/common/BadgeIcon";
-import type { BadgeDefinition } from "@/lib/gamification/badge-catalog";
+import { formatBadgeName, type BadgeDefinition } from "@/lib/gamification/badge-catalog";
+import { BADGES_EARNED_EVENT, earnedBadgeHref } from "@/lib/gamification/badge-links";
+import { EXP_VALUES } from "@/lib/gamification/exp-engine";
 
 export interface UnnotifiedBadge {
   id: string;
@@ -12,7 +16,8 @@ export interface UnnotifiedBadge {
   definition?: BadgeDefinition;
 }
 
-export default function BadgeToastProvider() {
+export default function BadgeToastProvider({ instituteCode }: { instituteCode: string }) {
+  const pathname = usePathname();
   const [toasts, setToasts] = useState<UnnotifiedBadge[]>([]);
 
   useEffect(() => {
@@ -24,11 +29,11 @@ export default function BadgeToastProvider() {
         if (!res.ok) return;
         const data = (await res.json()) as UnnotifiedBadge[];
         if (!cancelled && Array.isArray(data) && data.length > 0) {
-          setToasts(data);
+          setToasts(current => [...current, ...data.filter(badge => !current.some(toast => toast.id === badge.id))]);
 
-          // Mark them as viewed after a brief delay
+          // Clear the indicators after the toasts are displayed.
           const badgeIds = data.map((b) => b.id);
-          fetch("/api/gamification/new-badges", {
+          await fetch("/api/gamification/new-badges", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ badgeIds }),
@@ -39,25 +44,28 @@ export default function BadgeToastProvider() {
       }
     }
 
-    checkNewBadges();
+    void checkNewBadges();
+    window.addEventListener(BADGES_EARNED_EVENT, checkNewBadges);
     return () => {
       cancelled = true;
+      window.removeEventListener(BADGES_EARNED_EVENT, checkNewBadges);
     };
-  }, []);
+  }, [pathname]);
 
-  function removeToast(id: string) {
+  const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  }
+  }, []);
 
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+    <div className="pointer-events-none fixed bottom-[calc(8rem+env(safe-area-inset-bottom,0px))] right-3 z-80 flex w-[calc(100%_-_1.5rem)] max-w-sm flex-col gap-2.5 sm:right-6 lg:bottom-24">
       {toasts.map((toast) => (
         <BadgeToastItem
           key={toast.id}
           toast={toast}
-          onDismiss={() => removeToast(toast.id)}
+          href={earnedBadgeHref(instituteCode, toast.badgeRuleId)}
+          onDismiss={removeToast}
         />
       ))}
     </div>
@@ -66,20 +74,23 @@ export default function BadgeToastProvider() {
 
 function BadgeToastItem({
   toast,
+  href,
   onDismiss,
 }: {
   toast: UnnotifiedBadge;
-  onDismiss: () => void;
+  href: string;
+  onDismiss: (id: string) => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onDismiss();
-    }, 6000);
+    if (hovered || focused) return;
+    const timer = setTimeout(() => onDismiss(toast.id), 8000);
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+  }, [focused, hovered, onDismiss, toast.id]);
 
   const def = toast.definition;
-  const name = def?.name || "New Achievement";
+  const name = def?.name || formatBadgeName(toast.badgeRuleId) || "New Achievement";
   const desc = def?.description || "You earned a new badge!";
   const iconName = def?.iconName || "Award";
   const color = def?.color || "text-[#F97316]";
@@ -87,8 +98,14 @@ function BadgeToastItem({
   const bgColor = def?.bgColor || "bg-[#F97316]/10";
 
   return (
-    <div className="pointer-events-auto animate-slide-in-right rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] p-4 shadow-2xl transition-all duration-200">
-      <div className="flex items-start gap-3">
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
+      className="pointer-events-auto relative rounded-2xl border border-slate-200 bg-white shadow-xl motion-safe:animate-slide-in-right dark:border-white/10 dark:bg-[#1A1D27]"
+    >
+      <Link href={href} onClick={() => onDismiss(toast.id)} className="flex items-start gap-3 rounded-2xl p-4 pr-12 hover:bg-slate-50 dark:hover:bg-white/5" aria-label={`View earned badge: ${name}`}>
         <div className={`p-2.5 rounded-xl ${bgColor} shrink-0`}>
           <BadgeIcon name={iconName} className={`w-6 h-6 ${color} ${darkColor}`} />
         </div>
@@ -101,14 +118,6 @@ function BadgeToastItem({
                 Badge Unlocked!
               </span>
             </div>
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-md cursor-pointer"
-              aria-label="Dismiss notification"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           <h3 className="text-sm font-bold text-slate-900 dark:text-[#F0F2F8] truncate mt-0.5">
@@ -118,11 +127,15 @@ function BadgeToastItem({
             {desc}
           </p>
 
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-            <span>+25 EXP</span>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <span className="inline-flex items-center gap-1">View badge <ArrowRight aria-hidden="true" className="size-3.5" /></span>
+            <span className="text-emerald-700 dark:text-emerald-400">+{EXP_VALUES.badge_earned} EXP</span>
           </div>
         </div>
-      </div>
+      </Link>
+      <button type="button" onClick={() => onDismiss(toast.id)} className="absolute right-1 top-1 grid size-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10" aria-label="Dismiss notification">
+        <X aria-hidden="true" className="size-4" />
+      </button>
     </div>
   );
 }

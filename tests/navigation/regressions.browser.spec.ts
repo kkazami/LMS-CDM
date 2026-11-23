@@ -17,6 +17,8 @@ test.beforeAll(async () => {
     import Profile from '${root}/apps/web/src/app/(dashboard)/[institute]/users/[userId]/client';
     import Announcements from '${root}/apps/web/src/app/(dashboard)/[institute]/announcements/client';
     import Nav from '${root}/apps/web/src/components/layout/MobileBottomNav';
+    import Sidebar from '${root}/apps/web/src/components/layout/Sidebar';
+    import Topbar from '${root}/apps/web/src/components/layout/Topbar';
     import {ThemeProvider} from '${root}/apps/web/src/lib/theme-context';
     import {getInstituteTheme} from '${root}/apps/web/src/lib/get-institute-theme';
     const theme=getInstituteTheme('ics'), query=new URLSearchParams(location.search);
@@ -24,7 +26,8 @@ test.beforeAll(async () => {
     const courses=[{id:'class',code:'CS101',title:'Programming'}];
     const posts=[{id:'notice',content:'Class reminder. Please review the lesson before our next class.',authorName:'Professor Smith',authorAvatarUrl:null,courseId:'class',courseCode:'CS101',courseTitle:'Programming',createdAt:'2026-10-21T09:00:00Z'}];
     const role=query.get('role')||'PROFESSOR';
-    const content=location.pathname==='/'?<Landing/>:location.pathname==='/profile-test'?<main className="p-4 sm:p-8"><Profile user={user} isOwnProfile={false} instituteCode="ics" theme={theme}/></main>:<><main className="p-4 pb-24">{location.pathname.endsWith('/announcements')?<Announcements announcements={query.has('empty')?[]:posts} enrolledCourses={query.has('empty')?[]:courses} theme={theme} instituteCode="ics" isInstructor={role!=='STUDENT'}/>:<h1>Teacher Dashboard</h1>}</main><Nav instituteCode="ics" primaryColor={theme.colors.primary} userRole={role}/></>;
+    const shell = <><Sidebar instituteCode="ics" theme={theme} userRole={role} isEligibleForOhmward/><div className="lg:ml-72"><Topbar instituteCode="ics" instituteName="Institute of Computing Studies" theme={theme} userName="Sample User" userRole={role}/></div><Nav instituteCode="ics" primaryColor={theme.colors.primary} userRole={role} isEligibleForOhmward/></>;
+    const content=location.pathname==='/'?<Landing/>:location.pathname==='/profile-test'?<main className="p-4 sm:p-8"><Profile user={user} isOwnProfile={false} instituteCode="ics" theme={theme}/></main>:query.has('shell')?shell:<><main className="p-4 pb-24">{location.pathname.endsWith('/announcements')?<Announcements announcements={query.has('empty')?[]:posts} enrolledCourses={query.has('empty')?[]:courses} theme={theme} instituteCode="ics" isInstructor={role!=='STUDENT'}/>:<h1>Teacher Dashboard</h1>}</main><Nav instituteCode="ics" primaryColor={theme.colors.primary} userRole={role}/></>;
     createRoot(document.getElementById('root')).render(<ThemeProvider>{content}</ThemeProvider>);
   `,loader:'tsx',resolveDir:path.resolve('apps/web')},bundle:true,write:false,jsx:'automatic',outdir:'out',tsconfig:'apps/web/tsconfig.json',nodePaths:[path.resolve('apps/web/node_modules')],
     define:{'process.env.NODE_ENV':'"production"','process.env':'{}'},
@@ -33,7 +36,7 @@ test.beforeAll(async () => {
       b.onLoad({filter:/.*/,namespace:'mock'},({path:name}:any)=>({loader:'tsx',resolveDir:path.resolve('apps/web'),contents:
         name==='next/link'?`export default function Link({children,prefetch,...props}){return <a {...props}>{children}</a>}`:
         name==='next/image'?`export default function Image({fill,priority,unoptimized,quality,sizes,...props}){return <img {...props} style={fill?{position:'absolute',inset:0,width:'100%',height:'100%',...props.style}:props.style}/>} `:
-        name==='next/navigation'?`export const usePathname=()=>location.pathname;export const useSearchParams=()=>new URLSearchParams(location.search);export const useRouter=()=>({push:url=>{location.href=url},prefetch:()=>{}});`:
+        name==='next/navigation'?`export const usePathname=()=>location.pathname;export const useParams=()=>({institute:'ics'});export const useSearchParams=()=>new URLSearchParams(location.search);export const useRouter=()=>({push:url=>{location.href=url},prefetch:()=>{}});`:
         `export const publicDisplay={className:'',variable:''};`
       }));
     }}],
@@ -126,4 +129,41 @@ test('reduced motion keeps the last mobile institute portal visible',async({page
   const ibe=page.locator('#departments').getByText('Tap To Enter IBE Portal',{exact:true});
   await ibe.scrollIntoViewIfNeeded();await expect(ibe).toBeInViewport();
   expect(await ibe.evaluate(el=>{let opacity=1;for(let p:Element|null=el;p&&p!==document.body;p=p.parentElement)opacity*=Number(getComputedStyle(p).opacity);return opacity;})).toBe(1);
+});
+
+test('admin tools show their own titles and the sidebar only links to admin navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const errors = await open(page, '/ics/admin?role=ADMIN&shell');
+  const header = page.getByRole('banner');
+  await expect(header.getByRole('heading', { name: 'Administrator Dashboard' })).toBeVisible();
+  const sidebar = page.locator('.dashboard-sidebar');
+  for (const name of ['Ohmward', 'Settings', 'Help']) {
+    await expect(sidebar.getByRole('link', { name, exact: true })).toHaveCount(0);
+  }
+  for (const [route, title] of [
+    ['courses', 'Course Management'],
+    ['faculty', 'Faculty & Program Heads'],
+    ['database', 'Database Management'],
+    ['support-tickets', 'Support Tickets'],
+    ['onboarding', 'Students and Classes'],
+  ]) {
+    await page.goto(`http://ui-regressions.test/ics/admin/${route}?role=ADMIN&shell`);
+    await expect(header.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Back to previous section' })).toHaveAttribute('href', '/ics/admin');
+  }
+  await page.goto('http://ui-regressions.test/ics/courses?role=STUDENT&shell');
+  await expect(header.getByRole('heading', { name: 'My Courses' })).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'Ohmward', exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('admin mobile More links to database and tickets without Settings, Help or Ohmward', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, '/ics/admin/database?role=ADMIN&shell');
+  await expect(page.getByRole('banner').getByRole('heading', { name: 'Database Management' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open more navigation options' }).click();
+  const sheet = page.getByRole('dialog', { name: 'More navigation options' });
+  await expect(sheet.getByRole('link', { name: /^Database Management/ })).toHaveAttribute('aria-current', 'page');
+  await expect(sheet.getByRole('link', { name: /^Support Tickets/ })).toHaveAttribute('href', '/ics/admin/support-tickets');
+  await expect(sheet.getByRole('link', { name: /^(Settings|Help|Ohmward)\b/ })).toHaveCount(0);
 });

@@ -23,6 +23,7 @@ async function load(db = {}, session = null, network = null) {
     export { POST as moderate } from './apps/web/src/app/api/codelab/instructor/reject/route';
     export { POST as generate } from './apps/web/src/app/api/flashcards/auto-generate/route';
     export { GET as fileInfo } from './apps/web/src/app/api/flashcards/file-info/route';
+    export { GET as materialPreview } from './apps/web/src/app/api/materials/preview/route';
     export { POST as webhook } from './apps/web/src/app/api/github/webhooks/route';
     export * as gradebook from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
     export * as classwork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/[itemId]/actions';

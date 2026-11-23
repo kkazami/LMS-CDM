@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/api-auth";
 import { calculateRiskLevel, type StudentActivityData } from "@/lib/risk-scoring";
+import { recordedScoreInPoints } from "@/lib/grading/score-units";
 import { AccessError } from '@/lib/super-user-v1/actor';
 import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/analytics/at-risk?courseId=...
  * Computes real at-risk metrics per (student, course) pair.
- * Each student enrollment in a course produces a separate risk assessment card.
+ * Pages contain complete assessments for each student in the selected class scope.
  */
 export async function GET(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "GET analytics/at-risk/route.ts");
@@ -42,14 +43,31 @@ export async function GET(request: Request) {
 
     const page = Number(searchParams.get('page') || 1);
     if (!Number.isSafeInteger(page) || page < 1 || page > 100000) throw new AccessError(400, 'Invalid page.');
-    const where = { status: 'APPROVED', course: courseScope };
-    const [enrollments, total] = await Promise.all([
-      db.enrollment.findMany({ where, select: { student: { select: { id: true, name: true, email: true, avatarUrl: true } }, course: { select: { id: true, title: true, code: true } } }, orderBy: [{ student: { name: 'asc' } }, { id: 'asc' }], skip: (page - 1) * 50, take: 50 }),
-      db.enrollment.count({ where }),
+    const pageSize = 50;
+    const enrollmentScope = { status: 'APPROVED', course: courseScope } as const;
+    const where = { enrollments: { some: enrollmentScope } };
+    const [students, total] = await Promise.all([
+      db.user.findMany({
+        where,
+        select: {
+          id: true, name: true, email: true, avatarUrl: true,
+          enrollments: {
+            where: enrollmentScope,
+            select: { course: { select: { id: true, title: true, code: true } } },
+          },
+        },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      db.user.count({ where }),
     ]);
-    const syllabusItems = await db.syllabusItem.findMany({ where: { courseId: { in: [...new Set(enrollments.map(e => e.course.id))] }, course: courseScope }, select: { id: true, title: true, type: true, dueDate: true, maxPoints: true, courseId: true }, take: 2001 });
+    const enrollments = students.flatMap(({ enrollments, ...student }) =>
+      enrollments.map(({ course }) => ({ course, student })),
+    );
+    const syllabusItems = await db.syllabusItem.findMany({ where: { courseId: { in: [...new Set(enrollments.map(e => e.course.id))] }, course: courseScope }, select: { id: true, title: true, type: true, dueDate: true, maxPoints: true, courseId: true, form: { select: { id: true } } }, take: 2001 });
     if (syllabusItems.length > 2000) throw new AccessError(422, 'This view exceeds 2,000 activities. Select a course to narrow the analysis.');
-    const submissions = await db.studentSubmission.findMany({ where: { studentId: { in: enrollments.map(e => e.student.id) }, syllabusItemId: { in: syllabusItems.map(i => i.id) } }, select: { id: true, syllabusItemId: true, studentId: true, status: true, grade: true, submittedAt: true, updatedAt: true } });
+    const submissions = await db.studentSubmission.findMany({ where: { studentId: { in: students.map(student => student.id) }, syllabusItemId: { in: syllabusItems.map(i => i.id) } }, select: { id: true, syllabusItemId: true, studentId: true, status: true, grade: true, submittedAt: true, updatedAt: true } });
     // Submission lookup map: [studentId][syllabusItemId] -> submission
     const submissionMap = new Map<string, Map<string, typeof submissions[0]>>();
     for (const sub of submissions) {
@@ -94,13 +112,14 @@ export async function GET(request: Request) {
 
         // Graded items
         if (sub?.grade !== null && sub?.grade !== undefined && item.maxPoints && item.maxPoints > 0) {
-          const percent = (sub.grade / item.maxPoints) * 100;
+          const score = recordedScoreInPoints(sub.grade, sub.status, !!item.form, item.maxPoints);
+          const percent = (score / item.maxPoints) * 100;
           totalGradePercentSum += percent;
           gradedCount++;
           gradedSubmissions.push({
             id: item.id,
             title: item.title,
-            score: sub.grade,
+            score,
             maxPoints: item.maxPoints,
           });
         }
@@ -161,12 +180,15 @@ export async function GET(request: Request) {
       };
     });
 
-    // Sort by riskScore descending (High risk first)
-    studentRiskResults.sort((a, b) => b.riskScore - a.riskScore);
+    const severity = { HIGH: 2, MEDIUM: 1, LOW: 0 };
+    studentRiskResults.sort((a, b) =>
+      severity[b.riskLevel] - severity[a.riskLevel] || b.riskScore - a.riskScore ||
+      a.courseCode.localeCompare(b.courseCode),
+    );
 
     return NextResponse.json({
       atRiskStudents: studentRiskResults,
-      pagination: { page, total, totalPages: Math.max(1, Math.ceil(total / 50)), pageSize: 50 },
+      pagination: { page, total, totalPages: Math.max(1, Math.ceil(total / pageSize)), pageSize },
     });
   } catch (error) {
     console.error("AT_RISK_STUDENTS_API_ERROR", error);

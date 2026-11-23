@@ -24,7 +24,7 @@ export function assertMutationOrigin(request: Request) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
   const origin = request.headers.get('origin');
   const site = request.headers.get('sec-fetch-site');
-  const destination = new URL(Reflect.get(Request.prototype, 'url', request));
+  const destination = new URL(request.url);
   // Next.js can build the URL from its bind address; Host retains the browser's
   // destination. Never use forwarded-host headers to authorize a mutation.
   const host = request.headers.get('host');

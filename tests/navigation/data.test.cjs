@@ -74,23 +74,29 @@ test('leaderboards load profiles, authorized classes and published activities in
   gate.resolve([]); await rendering; assert.equal(f.authReads, 1);
 });
 
-test('risk metrics page scoped enrollments before reading only their activities and submissions', async () => {
-  const enrollments = deferred(), items = deferred(), submissions = deferred(), reads = [];
+test('risk metrics page students and load all of their scoped enrollments before reading activities', async () => {
+  const students = deferred(), items = deferred(), submissions = deferred(), reads = [];
   const scope = { instituteId: 'ics', isArchived: false, instructorId: 'teacher', id: 'selected-class' };
   const f = { user: user(), authReads: 0, db: {
-    enrollment: {
-      findMany: async query => { reads.push(['enrollments', query]); return enrollments.promise; },
-      count: async query => { reads.push(['count', query]); await enrollments.promise; return 1; },
+    user: {
+      findMany: async query => { reads.push(['students', query]); return students.promise; },
+      count: async query => { reads.push(['count', query]); await students.promise; return 1; },
     },
     syllabusItem: { findMany: async query => { reads.push(['items', query]); return items.promise; } },
     studentSubmission: { findMany: async query => { reads.push(['submissions', query]); return submissions.promise; } },
   } };
   const api = await load(f), request = new Request('http://localhost/api/analytics/at-risk?courseId=selected-class');
   const response = api.risk(request); await tick();
-  assert.deepEqual(reads.map(([name]) => name), ['enrollments', 'count']);
-  for (const [, query] of reads) assert.deepEqual(query.where, { status: 'APPROVED', course: scope });
+  const enrollmentScope = { status: 'APPROVED', course: scope };
+  assert.deepEqual(reads.map(([name]) => name), ['students', 'count']);
+  for (const [, query] of reads) assert.deepEqual(query.where, { enrollments: { some: enrollmentScope } });
+  assert.deepEqual(reads[0][1].select.enrollments.where, enrollmentScope);
+  assert.deepEqual(reads[0][1].orderBy, [{ name: 'asc' }, { id: 'asc' }]);
   assert.equal(reads[0][1].take, 50); assert.equal(reads[0][1].skip, 0);
-  enrollments.resolve([{ student: { id: 'student-a', name: 'Dummy student', email: 'dummy@example.invalid', avatarUrl: null }, course: { id: 'selected-class', title: 'Dummy course', code: 'DUMMY' } }]);
+  students.resolve([{
+    id: 'student-a', name: 'Dummy student', email: 'dummy@example.invalid', avatarUrl: null,
+    enrollments: [{ course: { id: 'selected-class', title: 'Dummy course', code: 'DUMMY' } }],
+  }]);
   await tick(); assert.equal(reads.length, 3);
   assert.deepEqual(reads[2][1].where, { courseId: { in: ['selected-class'] }, course: scope });
   assert.equal(reads[2][1].take, 2001);
@@ -103,4 +109,39 @@ test('risk metrics page scoped enrollments before reading only their activities 
   assert.deepEqual(body.pagination, { page: 1, total: 1, totalPages: 1, pageSize: 50 });
   assert.deepEqual(body.atRiskStudents.map(row => [row.studentId, row.courseId]), [['student-a', 'selected-class']]);
   f.user.role = 'STUDENT'; assert.equal((await api.risk(request)).status, 403); assert.equal(reads.length, 4);
+});
+
+test('one student page contains both subjects and reports the total number of students', async () => {
+  const courses = [
+    { id: 'computing', title: 'Computing', code: 'CS101' },
+    { id: 'systems', title: 'Systems', code: 'SYSADMIN' },
+  ];
+  const f = { user: user(), authReads: 0, db: {
+    user: {
+      findMany: async ({ skip, take }) => {
+        assert.equal(skip, 50);
+        assert.equal(take, 50);
+        return [{ id: 'student-a', name: 'Sample Student', email: 'student@example.invalid', enrollments: courses.map(course => ({ course })) }];
+      },
+      count: async () => 51,
+    },
+    syllabusItem: { findMany: async () => [{
+      id: 'quiz', title: 'Quiz 2', type: 'QUIZ', dueDate: null,
+      maxPoints: 2, courseId: 'systems', form: { id: 'form' },
+    }] },
+    studentSubmission: { findMany: async () => [{
+      id: 'submission', studentId: 'student-a', syllabusItemId: 'quiz',
+      grade: 50, status: 'SUBMITTED',
+    }] },
+  } };
+  const api = await load(f);
+  const response = await api.risk(new Request('http://localhost/api/analytics/at-risk?page=2'));
+  assert.equal(response.status, 200);
+  const { pagination, atRiskStudents } = await response.json();
+  assert.deepEqual(pagination, { page: 2, total: 51, totalPages: 2, pageSize: 50 });
+  assert.deepEqual(atRiskStudents.map(row => [row.studentId, row.courseId, row.riskLevel]), [
+    ['student-a', 'systems', 'HIGH'],
+    ['student-a', 'computing', 'LOW'],
+  ]);
+  assert.equal(atRiskStudents[0].details.gradeAverage, 50);
 });

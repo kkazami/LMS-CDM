@@ -183,7 +183,7 @@ export default function DashboardLayout({
       {/* Student Gamification Widgets */}
       {isStudent && (
         <>
-          <BadgeToastProvider />
+          <BadgeToastProvider instituteCode={instituteCode} />
           {loginRewardExp > 0 && (
             <LoginRewardModal
               userId={userId}

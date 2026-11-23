@@ -25,7 +25,7 @@ import {
   Video,
   Film,
   HardDrive,
-  HelpCircle,
+  LifeBuoy,
   ChevronRight,
   Code2,
   MessageSquareQuote,
@@ -147,9 +147,9 @@ export default function MobileMoreSheet({
     { label: "Accounts", href: `/${instituteCode}/accounts`, icon: Users, description: "Users & students" },
     ...(instituteCode === "ics" ? [{ label: "Faculty & Program Heads", href: `/${instituteCode}/admin/faculty`, icon: Users, description: "BSIT and BSCpE faculty" }] : []),
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
-    { label: "Backup & Recovery", href: `/${instituteCode}/backup`, icon: HardDrive, description: "Protect and restore data" },
+    { label: "Database Management", href: `/${instituteCode}/admin/database`, icon: HardDrive, description: "Inspect records and manage snapshots" },
     { label: "Security Tools", href: `/${instituteCode}/security`, icon: ShieldCheck, description: "Review account security" },
-    { label: "Help", href: `/${instituteCode}/help`, icon: HelpCircle, description: "Support and guidance" },
+    { label: "Support Tickets", href: `/${instituteCode}/admin/support-tickets`, icon: LifeBuoy, description: "Review and respond to support requests" },
   ];
 
   const handleLogout = async () => {
@@ -378,18 +378,20 @@ export default function MobileMoreSheet({
               >
                 <User className="w-4 h-4" />
               </Link>
-              <Link
-                href={`/${instituteCode}/settings`}
-                onClick={() => {
-                  triggerNativeHaptic("light");
-                  onClose();
-                }}
-                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
-                title="Settings"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
+              {role !== "ADMIN" && (
+                <Link
+                  href={`/${instituteCode}/settings`}
+                  onClick={() => {
+                    triggerNativeHaptic("light");
+                    onClose();
+                  }}
+                  className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
+                  title="Settings"
+                  aria-label="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

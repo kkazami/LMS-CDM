@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef, useId } from "react";
 import { createPortal } from "react-dom";
+import { CodeLabMotionToggle } from "./CodeLabMotionControls";
 import Link from "next/link";
 import { marked } from "marked";
 import { CodeEditor } from "./CodeEditor";
@@ -626,7 +627,7 @@ export default function CodeLabScene({
   const langLabel = LANGUAGE_LABELS[fixedLanguage] || fixedLanguage;
 
   return (
-    <div ref={editor.root} data-editor-fullscreen={editor.fullscreen} className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
+    <div ref={editor.root} data-editor-fullscreen={editor.fullscreen} data-codelab-motion-surface className="flex h-full min-h-0 w-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex-col select-none relative transition-colors duration-200">
       <div data-editor-fullscreen-toolbar className="flex shrink-0 items-center justify-end border-b border-slate-200 bg-white px-3 dark:border-white/10 dark:bg-[#141721]">
         <button ref={editor.trigger} type="button" aria-pressed={editor.fullscreen} className="min-h-12 rounded-lg px-3 text-sm font-semibold text-slate-700 dark:text-slate-200 focus-visible:outline-2 focus-visible:outline-orange-600" onClick={() => { setMobilePanel('editor'); editor.setFullscreen(value => !value); }}>
           {editor.fullscreen ? 'Exit full screen' : 'Enter full screen'}
@@ -635,7 +636,7 @@ export default function CodeLabScene({
       {useCodeLabStore.getState().draftKey && <p role="status" className="px-4 py-2 text-sm text-slate-700 dark:text-slate-200">{useCodeLabStore.getState().draftSaveError ? 'Draft could not save on this device. Keep this screen open until you can submit.' : 'Code saved on this device · use Submit to send your work.'}</p>}
       {/* ──── Academic Integrity / Rejection Warning Modal ──── */}
       {mounted && showRejectionWarning && rejectionWarning?.isRejected && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div data-codelab-motion-surface className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-rose-500/30 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl text-slate-800 dark:text-[#F0F2F8] animate-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3.5 border-b border-slate-100 dark:border-white/10 pb-4">
               <div className="p-3 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 rounded-2xl">
@@ -738,8 +739,8 @@ export default function CodeLabScene({
       </header>
 
       <div className={`flex-none border-b px-3 py-2 sm:px-4 ${completed ? "codelab-completion border-emerald-200/70 bg-emerald-50/60 dark:border-emerald-500/20 dark:bg-emerald-500/[0.06]" : "border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#141721]"}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div role="status" aria-live="polite" className="min-w-0 text-xs leading-relaxed">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div role="status" aria-live="polite" className="min-w-0 flex-1 text-xs leading-relaxed">
             {completionError ? <span className="text-rose-700 dark:text-rose-300">{completionError}</span> : completed ? (
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />
@@ -755,6 +756,7 @@ export default function CodeLabScene({
               <span>Level {nextLevel}</span><ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
           ) : <span className="shrink-0 text-xs font-semibold text-emerald-800 dark:text-emerald-200">Track completed</span>)}
+          <CodeLabMotionToggle />
         </div>
       </div>
 
@@ -818,11 +820,13 @@ export default function CodeLabScene({
         <aside
           id={tutorialId}
           data-codelab-tutorial
+          aria-label="Tutorial & Challenge"
+          tabIndex={0}
           className={`w-full min-w-0 max-w-full bg-white dark:bg-[#141721] ${
             mobilePanel === "tutorial" ? "flex" : "hidden"
-          } ${tutorialCollapsed ? "md:hidden" : "md:flex"} min-h-0 flex-col overflow-hidden text-slate-800 dark:text-[#F0F2F8]`}
+          } ${tutorialCollapsed ? "md:hidden" : "md:flex"} min-h-0 flex-col overflow-x-hidden overflow-y-auto scroll-pt-11 text-slate-800 dark:text-[#F0F2F8]`}
         >
-          <div className="flex min-h-11 shrink-0 items-center justify-between gap-1 pl-3 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-[#181B26] min-w-0">
+          <div className="sticky top-0 z-10 flex min-h-11 shrink-0 items-center justify-between gap-1 pl-3 border-b border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -836,7 +840,7 @@ export default function CodeLabScene({
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6 min-w-0 max-w-full">
+          <div className="min-w-0 max-w-full shrink-0 space-y-6 px-4 py-4">
             {/* Parsed description markdown */}
             <div
               className="codelab-prose w-full max-w-full min-w-0 text-sm leading-relaxed text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_pre]:[overflow-wrap:anywhere] [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_code]:whitespace-pre-wrap [&_code]:break-words [&_code]:[overflow-wrap:anywhere]"

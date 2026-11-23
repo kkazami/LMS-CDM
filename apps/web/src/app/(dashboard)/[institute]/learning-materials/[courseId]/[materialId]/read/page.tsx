@@ -100,17 +100,18 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   }
 
   return (
-    <div className="page-enter flex flex-col h-[calc(100vh-8rem)]">
+    <div className="page-enter flex h-[calc(100dvh-8rem)] flex-col">
       {/* Header bar */}
-      <div className="mb-4 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-4">
-        <div className="flex items-center gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-white/10">
+        <div className="flex min-w-0 items-center gap-4">
           <Link
             href={`/${institute}/learning-materials/${courseId}`}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#1E2132] text-slate-500 dark:text-[#8B92A5] transition-colors hover:bg-slate-200 dark:hover:bg-[#25293C] hover:text-slate-900 dark:hover:text-white"
+            aria-label="Back to course materials"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#1E2132] text-slate-500 dark:text-[#8B92A5] transition-colors hover:bg-slate-200 dark:hover:bg-[#25293C] hover:text-slate-900 dark:hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
+          <div className="min-w-0 break-words">
             <h1 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8] leading-tight">
               {material.title}
             </h1>
@@ -120,7 +121,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {institute.toLowerCase() === "ite" && (session.user.role as string)?.toUpperCase() === "STUDENT" && (
             <StudyHelpPanel
               materialId={materialId}
@@ -135,9 +136,9 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
           />
           {/* Convert to Flashcards button */}
           <ConvertFlashcardsButton
+            key={activeAttachment.id}
             attachmentId={activeAttachment.id}
             attachmentName={activeAttachment.fileName || "Document"}
-            attachmentUrl={activeAttachment.url}
             courseId={courseId}
             instituteCode={institute}
           />
@@ -147,7 +148,8 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
       <div className="flex-1 flex flex-col xl:flex-row gap-6 min-h-0">
         {/* Left Column: PDF Viewer + Notes */}
         <div className="flex-1 min-h-0 min-w-0">
-          <DocumentViewerDynamic 
+          <DocumentViewerDynamic
+            key={activeAttachment.id}
             url={activeAttachment.url} 
             attachmentId={activeAttachment.id} 
             userId={userId}

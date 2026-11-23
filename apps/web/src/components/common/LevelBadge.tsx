@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { computeLevelInfo, TIER_CONFIG } from "@/lib/gamification/exp-engine";
 
 interface LevelBadgeProps {
@@ -17,8 +18,46 @@ export default function LevelBadge({
   className = "",
 }: LevelBadgeProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
+  const showDetails = showTooltip && tooltipVisible;
   const info = computeLevelInfo(exp);
   const tierConfig = TIER_CONFIG[info.tier] || TIER_CONFIG.newcomer;
+
+  useLayoutEffect(() => {
+    if (!showDetails) return;
+    const update = () => {
+      const anchor = anchorRef.current?.getBoundingClientRect();
+      const tooltip = tooltipRef.current;
+      if (!anchor || !tooltip) return;
+      const margin = 8;
+      const { clientWidth, clientHeight } = document.documentElement;
+      const { offsetWidth, offsetHeight } = tooltip;
+      if (anchor.bottom < 0 || anchor.top > clientHeight) {
+        setPosition(null);
+        return;
+      }
+      const above = anchor.top - offsetHeight - margin;
+      const below = anchor.bottom + margin;
+      const maxTop = Math.max(margin, clientHeight - offsetHeight - margin);
+      setPosition({
+        left: Math.max(margin, Math.min(anchor.left + (anchor.width - offsetWidth) / 2, clientWidth - offsetWidth - margin)),
+        top: above >= margin ? above : Math.max(margin, Math.min(below, maxTop)),
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, { capture: true, passive: true });
+    const dismiss = (event: KeyboardEvent) => { if (event.key === 'Escape') setTooltipVisible(false); };
+    window.addEventListener('keydown', dismiss);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('keydown', dismiss);
+    };
+  }, [showDetails]);
 
   const sizeClasses =
     size === "lg"
@@ -37,14 +76,16 @@ export default function LevelBadge({
   return (
     <div className={`relative inline-flex items-center ${className}`}>
       <div
-        tabIndex={0}
+        ref={anchorRef}
+        tabIndex={showTooltip ? 0 : undefined}
         role="img"
         className={`inline-flex items-center rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 transition-all duration-150 hover:border-slate-300 dark:hover:border-white/20 cursor-default select-none shadow-xs ${sizeClasses}`}
         onMouseEnter={() => setTooltipVisible(true)}
-        onMouseLeave={() => setTooltipVisible(false)}
+        onMouseLeave={() => { if (document.activeElement !== anchorRef.current) setTooltipVisible(false); }}
         onFocus={() => setTooltipVisible(true)}
         onBlur={() => setTooltipVisible(false)}
         aria-label={`${tierConfig.label} Tier, Level ${info.level}`}
+        aria-describedby={showDetails ? tooltipId : undefined}
       >
         <span className="leading-none">{tierConfig.icon}</span>
         <span className={`font-mono leading-none ${tierConfig.color} ${tierConfig.darkColor} ${numSize}`}>
@@ -53,9 +94,9 @@ export default function LevelBadge({
       </div>
 
       {/* Tooltip */}
-      {showTooltip && tooltipVisible && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in slide-in-from-bottom-1 duration-150 pointer-events-none">
-          <div className="bg-white dark:bg-[#1A1D27] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl px-3.5 py-3 min-w-[170px] space-y-2">
+      {showDetails && createPortal(
+        <div id={tooltipId} role="tooltip" ref={tooltipRef} style={position ?? { visibility: 'hidden' }} className="pointer-events-none fixed z-[10000] w-44 max-w-[calc(100vw_-_1rem)]">
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-xl dark:border-white/10 dark:bg-[#1A1D27]">
             <div className="flex items-center gap-2">
               <span className="text-xl leading-none">{tierConfig.icon}</span>
               <div>
@@ -86,9 +127,8 @@ export default function LevelBadge({
               {info.expToNextLevel - info.currentLevelProgress} EXP to Level {info.level + 1}
             </div>
           </div>
-          {/* Tooltip arrow */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-200 dark:border-t-white/10" />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -98,7 +98,7 @@ export default function CodeLabAlertModal({ alerts, institute: _institute }: Cod
   if (!mounted || !activeAlert) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div data-codelab-motion-surface className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-6 text-slate-800 dark:text-[#F0F2F8] animate-in zoom-in-95 duration-150 overflow-hidden">
         {/* Soft Ambient Amber Glow */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-amber-500/15 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

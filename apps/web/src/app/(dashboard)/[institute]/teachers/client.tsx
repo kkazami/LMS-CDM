@@ -303,14 +303,14 @@ export default function TeacherDashboardClient({
       <div className="space-y-8 max-w-7xl mx-auto page-enter">
         {/* ─── 1. Neutral Academic Faculty Hero Banner ─── */}
         <div
-          className="hero-noise relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 sm:p-6 lg:p-8 shadow-xs transition-colors"
+          className="hero-noise @container relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-4 sm:p-6 lg:p-8 shadow-xs transition-colors"
         >
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 @min-[64rem]:flex-row @min-[64rem]:items-center">
             <div className="space-y-2 max-w-2xl min-w-0">
               <div
                 className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10"
               >
-                <Sparkles className="h-3.5 w-3.5 text-slate-400" />
+                <Sparkles className="size-3.5 shrink-0 text-slate-400" />
                 <span>
                   {getWelcomeBannerPortalLabel(instituteCode, instituteName, true)}
                 </span>
@@ -330,7 +330,7 @@ export default function TeacherDashboardClient({
             </div>
 
             {/* Faculty StatPills row (no ExpRing) */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 self-start md:self-auto overflow-x-auto scrollbar-none max-w-full">
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-2 @min-[64rem]:w-auto @min-[64rem]:max-w-[45%] @min-[64rem]:shrink-0 @min-[64rem]:justify-end" aria-label="Instructor dashboard statistics" role="group">
               <StatPill
                 icon={BookOpen}
                 label={`${courses.length} Classes`}

@@ -153,10 +153,18 @@ test('gradebook reads only the requested students, preserves every assignment an
   let enrollmentQuery, submissionQuery, assignmentCount = 100;
   const db = { $queryRaw: async () => [{ tables: 10, columns: 2 }], course: { findUnique: async () => ({ id: 'c', title: 'Synthetic', code: 'TEST', instituteId: 'ics', instructorId: 't' }) }, enrollment: { count: async () => 400, findMany: async query => { enrollmentQuery = query; return Array.from({ length: 50 }, (_, i) => ({ student: { id: `s${query.skip + i}`, name: `Student ${i}`, email: 'synthetic@example.invalid' } })); } }, syllabusItem: { findMany: async query => Array.from({ length: Math.min(assignmentCount, query.take) }, (_, i) => ({ id: 'a' + i, title: 'Assignment ' + i, type: 'ASSIGNMENT', maxPoints: 100, dueDate: null })) }, gradingPolicy: { findUnique: async () => ({ weights: [{ category: 'ASSIGNMENT', weightPercentage: 100 }] }) }, studentSubmission: { findMany: async query => { submissionQuery = query; return [{ id: 'sub', studentId: query.where.studentId.in[0], syllabusItemId: 'a0', grade: 90, status: 'RETURNED', isReturned: true, submittedAt: new Date(), attachments: [{ id: 'f', type: 'FILE', fileName: 'answer.txt' }] }]; } } };
   db.courseGradebookPolicy = { findUnique: async () => null }; db.classworkGradingPeriod = { findMany: async () => [] };
+  const findAssignments = db.syllabusItem.findMany;
+  db.syllabusItem.findMany = async query => (await findAssignments(query)).map(item => item.id === 'a1' ? { ...item, maxPoints: 2, type: 'QUIZ', form: { id: 'legacy-form' } } : item);
+  const findSubmissions = db.studentSubmission.findMany;
+  db.studentSubmission.findMany = async query => {
+    const [submission] = await findSubmissions(query);
+    return [submission, { ...submission, id: 'legacy-quiz', syllabusItemId: 'a1', grade: 50, status: 'SUBMITTED', attachments: [] }];
+  };
   const api = await compile(sources, { db }); const data = await api.readGradebook({ id: 't', role: 'PROFESSOR', instituteId: 'ics' }, 'c', 2);
   assert.equal(data.students.length, 50); assert.equal(data.assignments.length, 100); assert.equal(data.pagination.total, 400); assert.equal(data.pagination.totalPages, 8);
   assert.equal(enrollmentQuery.skip, 50); assert.equal(enrollmentQuery.take, 50); assert.equal(submissionQuery.where.studentId.in.length, 50); assert.equal(submissionQuery.where.syllabusItemId.in.length, 100);
   assert.equal(data.grades.s50.a0.grade, 90); assert.equal(data.grades.s50.a0.attachments[0].url, '/api/submission-attachments/f');
+  assert.equal(data.grades.s50.a1.grade, 1);
   assignmentCount = 201; await assert.rejects(api.readGradebook({ id: 't', role: 'PROFESSOR', instituteId: 'ics' }, 'c'), error => error.status === 422);
   await assert.rejects(api.readGradebook(student, 'c', -1), error => error.status === 400);
 });

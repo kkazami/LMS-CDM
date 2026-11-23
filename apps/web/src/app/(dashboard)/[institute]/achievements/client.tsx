@@ -16,6 +16,7 @@ import type { InstituteTheme } from "@/lib/theme";
 import BadgeIcon from "@/components/common/BadgeIcon";
 import {
   BADGE_CATALOG,
+  formatBadgeName,
   getBadgeById,
   type BadgeCategory,
   type BadgeDefinition,
@@ -70,24 +71,27 @@ export default function AchievementsClient({
 }: AchievementsClientProps) {
   const searchParams = useSearchParams();
   const badgeQueryParam = searchParams.get("badge");
+  const requestedEarnedOnly = searchParams.get('view') === 'earned';
 
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [earnedOnly, setEarnedOnly] = useState(requestedEarnedOnly);
   const [highlightedBadgeId, setHighlightedBadgeId] = useState<string | null>(null);
 
   const levelInfo = computeLevelInfo(exp);
   const currentTierConfig = TIER_CONFIG[levelInfo.tier] || TIER_CONFIG.newcomer;
 
-  // Auto-switch category & scroll to badge if query param present
+  useEffect(() => setEarnedOnly(requestedEarnedOnly), [requestedEarnedOnly, badgeQueryParam]);
+
+  // Open badge links even if a previous search or category would hide the card.
   useEffect(() => {
     if (!badgeQueryParam) return;
 
     const matchedDef = getBadgeById(badgeQueryParam);
     const targetId = matchedDef?.id || badgeQueryParam;
 
-    if (matchedDef) {
-      setSelectedCategory(matchedDef.category);
-    }
+    setSearchQuery('');
+    setSelectedCategory(matchedDef?.category ?? 'all');
     setHighlightedBadgeId(targetId);
 
     // Scroll into view after a short tick
@@ -96,7 +100,9 @@ export default function AchievementsClient({
         document.getElementById(`badge-${targetId}`) ||
         document.getElementById(`badge-${badgeQueryParam}`);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
       }
     }, 250);
 
@@ -124,16 +130,34 @@ export default function AchievementsClient({
     return map;
   }, [earnedBadges]);
 
+  const availableBadges = useMemo(() => [
+    ...BADGE_CATALOG,
+    ...earnedBadges.filter(badge => !getBadgeById(badge.badgeRuleId)).map((badge): BadgeDefinition => ({
+      id: badge.badgeRuleId,
+      name: formatBadgeName(badge.badgeRuleId),
+      description: 'An achievement you earned.',
+      howToEarn: '',
+      category: 'special',
+      iconName: 'Award',
+      color: 'text-amber-700',
+      darkColor: 'dark:text-amber-400',
+      bgColor: 'bg-amber-500/10',
+      isSecret: false,
+      levelRequirement: 0,
+    })),
+  ], [earnedBadges]);
+
   // Filtered badges
   const filteredBadges = useMemo(() => {
-    return BADGE_CATALOG.filter((badge) => {
+    return availableBadges.filter((badge) => {
+      if (earnedOnly && !earnedMap.has(badge.id)) return false;
       // Category filter
       if (selectedCategory !== "all" && badge.category !== selectedCategory) {
         return false;
       }
       // Search query filter
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
+        const query = searchQuery.trim().toLowerCase();
         const matchesName = badge.name.toLowerCase().includes(query);
         const matchesDesc = badge.description.toLowerCase().includes(query);
         const matchesHow = badge.howToEarn.toLowerCase().includes(query);
@@ -141,10 +165,10 @@ export default function AchievementsClient({
       }
       return true;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [availableBadges, earnedMap, earnedOnly, selectedCategory, searchQuery]);
 
-  const earnedCount = earnedBadges.length;
-  const totalCount = BADGE_CATALOG.length;
+  const earnedCount = availableBadges.filter(badge => earnedMap.has(badge.id)).length;
+  const totalCount = availableBadges.length;
   const totalCompletionPercent = Math.round((earnedCount / (totalCount || 1)) * 100);
 
   return (
@@ -262,15 +286,16 @@ export default function AchievementsClient({
       </div>
 
       {/* ── Category Filter Tabs & Search Bar ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
+        <div className="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto p-1 scrollbar-none lg:w-auto">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
               <button
                 key={cat.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isSelected
@@ -285,15 +310,21 @@ export default function AchievementsClient({
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search badges..."
-            className="w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] text-xs text-slate-900 dark:text-[#F0F2F8] placeholder:text-slate-400 outline-none focus:border-[#F97316] transition-colors"
-          />
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <button type="button" aria-pressed={earnedOnly} onClick={() => setEarnedOnly(value => !value)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 aria-pressed:border-emerald-600 aria-pressed:bg-emerald-50 aria-pressed:text-emerald-800 dark:border-white/10 dark:bg-[#141721] dark:text-slate-200 dark:hover:bg-white/5 dark:aria-pressed:border-emerald-500/50 dark:aria-pressed:bg-emerald-500/10 dark:aria-pressed:text-emerald-300">
+            <CheckCircle2 aria-hidden="true" className="size-4" /> Earned only
+          </button>
+          <div className="relative min-w-36 flex-1 sm:w-52">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search badges"
+              placeholder="Search badges..."
+              className="min-h-11 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-500 dark:border-white/10 dark:bg-[#141721] dark:text-[#F0F2F8]"
+            />
+          </div>
         </div>
       </div>
 
@@ -301,9 +332,9 @@ export default function AchievementsClient({
       {filteredBadges.length === 0 ? (
         <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-12 text-center">
           <Trophy className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm font-bold text-slate-700 dark:text-[#F0F2F8]">No badges found</p>
+          <p className="text-sm font-bold text-slate-700 dark:text-[#F0F2F8]">{earnedOnly && earnedCount === 0 ? 'No earned badges yet' : 'No badges match these filters'}</p>
           <p className="text-xs text-slate-400 dark:text-[#8B92A5] mt-1">
-            Try adjusting your search query or filter category.
+            {earnedOnly && earnedCount === 0 ? 'Turn off Earned only to see badges you can unlock.' : 'Try a different search or category.'}
           </p>
         </div>
       ) : (
@@ -366,6 +397,7 @@ function BadgeCard({
   return (
     <div
       id={`badge-${badge.id}`}
+      tabIndex={-1}
       className={`relative flex flex-col justify-between p-5 rounded-3xl border transition-all duration-300 ${
         isHighlighted
           ? "ring-4 ring-orange-500 border-orange-500 shadow-2xl scale-[1.02] bg-orange-500/5 dark:bg-orange-500/10"

@@ -17,7 +17,7 @@ function repairBrokenTurbopackJunctions() {
 repairBrokenTurbopackJunctions();
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["officeparser", "pg", "@prisma/adapter-pg", "@node-rs/argon2"],
+  serverExternalPackages: ["officeparser", "pdfjs-dist", "pg", "@prisma/adapter-pg", "@node-rs/argon2"],
   async headers() {
     return [
       {

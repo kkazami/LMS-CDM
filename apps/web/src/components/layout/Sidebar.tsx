@@ -26,8 +26,6 @@ import {
   FlaskConical,
   Code2,
   ChevronDown,
-  Settings,
-  HelpCircle,
   MessageSquareQuote,
   NotebookPen,
   Video,
@@ -197,8 +195,6 @@ const getAdminLinks = (code: string): NavLink[] => [
   { label: "Security Tools", href: `/${code}/security`, icon: ShieldCheck },
   { label: "Database Management", href: `/${code}/admin/database`, icon: HardDrive },
   { label: "Support Tickets", href: `/${code}/admin/support-tickets`, icon: LifeBuoy },
-  { label: "Settings", href: `/${code}/settings`, icon: Settings },
-  { label: "Help", href: `/${code}/help`, icon: HelpCircle },
 ];
 
 function getLinks(instituteCode: string, role: string): (NavLink & { key?: string })[] {
@@ -402,16 +398,16 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`dashboard-sidebar ${
+      className={`dashboard-sidebar scroll-pt-16 ${
         isMobileDrawer
-          ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
-          : `hidden h-screen border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
+          ? "flex h-full w-full shrink-0 border-r flex-col overflow-y-auto overflow-x-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-2xl"
+          : `hidden h-dvh border-r flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:z-30 lg:flex transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden bg-white dark:bg-[#12151E] border-slate-200/80 dark:border-white/5 shadow-xs ${
               isCollapsed ? "w-18" : "w-72"
             }`
       }`}
     >
       {/* Header with logo + collapse toggle */}
-      <div className="flex items-center h-16 shrink-0 border-b border-slate-200/80 dark:border-white/5 bg-transparent px-4 gap-2">
+      <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200/80 bg-white px-4 dark:border-white/5 dark:bg-[#12151E]">
         <div
           className={`flex items-center gap-2 overflow-hidden transition-all duration-300 flex-1 min-w-0 ${
             !isMobileDrawer && isCollapsed ? "opacity-0 w-0 pointer-events-none" : "opacity-100"
@@ -459,8 +455,7 @@ export default function Sidebar({
         ) : null}
       </div>
 
-      {/* Scrollable Nav */}
-      <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
+      <nav className="flex shrink-0 flex-col gap-1 p-3">
         {links.map((item) => {
           const Icon = item.icon;
           const active = activeLink?.href === item.href;

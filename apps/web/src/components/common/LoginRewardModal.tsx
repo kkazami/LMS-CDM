@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { earnedBadgeHref } from "@/lib/gamification/badge-links";
 import { X, Sparkles, Flame, CheckCircle2, ArrowRight } from "lucide-react";
 import { useLoginRewardStore } from "@/stores/login-reward-store";
 import CountUpNumber from "@/features/interactive-activities/codelab/components/analytics/CountUpNumber";
@@ -243,8 +245,8 @@ export default function LoginRewardModal({
         </div>
 
         {/* New Badge Unlocked Preview (if any) */}
-        {newBadges.length > 0 && (
-          <div className="mb-5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left flex items-center gap-3">
+        {newBadges.length > 0 && currentInstitute && (
+          <Link href={earnedBadgeHref(currentInstitute, newBadges[0].badgeRuleId)} onClick={handleClose} className="mb-5 flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-left hover:bg-amber-500/15">
             <div className="p-2 rounded-xl bg-amber-500/20 shrink-0">
               <BadgeIcon name={newBadges[0].definition?.iconName || "Trophy"} className="w-5 h-5 text-amber-500" />
             </div>
@@ -256,7 +258,8 @@ export default function LoginRewardModal({
                 {newBadges[0].definition?.name || "Achievement"}
               </p>
             </div>
-          </div>
+            <ArrowRight aria-hidden="true" className="size-4 text-amber-600 dark:text-amber-400" />
+          </Link>
         )}
 
         {/* Action Button */}

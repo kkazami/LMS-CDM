@@ -335,25 +335,14 @@ html[data-native-reduced-motion="true"] *::after { animation: none !important; t
   html[data-native-feature="true"] textarea,
   html[data-native-feature="true"] select { font-size: 16px; }
 }
-.dashboard-workspace-shell:has([data-codelab-track-browser]) {
-  overflow-x: clip;
-}
-@media (min-width: 1024px) {
-  .dashboard-workspace-shell:has([data-codelab-track-browser]) {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    overflow: clip;
-  }
-  .dashboard-workspace-shell:has([data-codelab-track-browser]) > header {
-    flex-shrink: 0;
-  }
-  .dashboard-workspace-shell > main:has([data-codelab-track-browser]) {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding-bottom: 16px;
-  }
+/* CodeLab dialogs can render directly under body. The preview iframe keeps its own styles. */
+html:has([data-codelab-motion="off"]),
+body:has([data-codelab-motion="off"]) :is([data-codelab-motion-surface], [data-codelab-motion-surface] *),
+body:has([data-codelab-motion="off"]) :is([data-codelab-motion-surface], [data-codelab-motion-surface] *)::before,
+body:has([data-codelab-motion="off"]) :is([data-codelab-motion-surface], [data-codelab-motion-surface] *)::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
 .dashboard-workspace-shell:has([data-codelab-workspace]) {
   display: flex;
