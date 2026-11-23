@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -47,16 +48,19 @@ export default function UserAvatar({
   onClick,
 }: UserAvatarProps) {
   const { container, text, px } = SIZE_CLASSES[size];
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const imageUrl = avatarUrl && avatarUrl !== failedUrl ? avatarUrl : null;
 
-  const inner = avatarUrl ? (
+  const inner = imageUrl ? (
     <Image
-      src={avatarUrl}
+      src={imageUrl}
       alt={`${name}'s avatar`}
       width={px}
       height={px}
       className="h-full w-full rounded-full object-cover"
       // The optimizer does not forward the viewer's session cookie to private assets.
-      unoptimized={avatarUrl.startsWith("data:") || avatarUrl.startsWith('/api/assets/')}
+      unoptimized={imageUrl.startsWith("data:") || imageUrl.startsWith('/api/assets/')}
+      onError={() => setFailedUrl(imageUrl)}
     />
   ) : (
     <span className={cn("font-semibold text-white select-none", text)}>
@@ -71,7 +75,7 @@ export default function UserAvatar({
     className
   );
 
-  const style = !avatarUrl ? { backgroundColor: color } : undefined;
+  const style = !imageUrl ? { backgroundColor: color } : undefined;
 
   if (onClick) {
     return (

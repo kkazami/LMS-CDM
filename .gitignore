@@ -72,6 +72,7 @@ test-results/
 # Copied from pinned packages by the web dev/build scripts.
 /apps/web/public/codelab-runtime/pyodide-*/
 /apps/web/public/codelab-runtime/sql.js-*/
+/apps/web/public/pdf-runtime/
 *.log
 
 # Next.js regenerates this file for development/build/typegen.

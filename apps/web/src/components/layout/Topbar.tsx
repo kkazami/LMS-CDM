@@ -142,6 +142,9 @@ export default function Topbar({
     "manage-leaderboard": "Manage Leaderboard",
     // Admin
     admin: "Administrator Dashboard",
+    "admin/courses": "Course Management",
+    "admin/database": "Database Management",
+    "admin/support-tickets": "Support Tickets",
     faculty: "Faculty & Program Heads",
     accounts: "Account Management",
     onboarding: "Students and Classes",
@@ -177,7 +180,9 @@ export default function Topbar({
   };
 
   const routeSegments = pathname.split('/').filter(Boolean);
-  const knownSegment = [...routeSegments.slice(1)].reverse().find(part => titleMap[part]);
+  const [, section, subsection] = routeSegments;
+  const knownSegment = [`${section}/${subsection}`, ...routeSegments.slice(1).reverse()]
+    .find((part) => Object.hasOwn(titleMap, part));
   if (knownSegment) dynamicTitle = titleMap[knownSegment];
   const role = userRole.toUpperCase();
   const home = `/${instituteCode}/${role === 'STUDENT' ? 'students' : role === 'SUPER_USER' ? 'academic-operations' : role === 'ADMIN' ? 'admin' : 'teachers'}`;

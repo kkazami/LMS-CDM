@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import type { FlashcardCard, FlashcardStudyStats } from "@/lib/lms-types";
 import FocusButton from "@/components/focus/FocusButton";
+import { panel, primaryButton, secondaryButton } from "./styles";
+import { BADGES_EARNED_EVENT } from "@/lib/gamification/badge-links";
 import {
   ArrowLeft,
   Lightbulb,
@@ -138,7 +140,11 @@ export default function StudyMode({
   const [sessionCards, setSessionCards] = useState<FlashcardCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionResults, setSessionResults] = useState<SessionResult[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const sessionSize = useRef(0);
+  const awaitingConfirmation = useRef(new Set<string>());
+  const ratedThisReveal = useRef(false);
+  const pendingProgress = useRef(Promise.resolve());
+  const flipTimer = useRef<number | undefined>(undefined);
 
   // ── Flashcard mode ──
   const [flashState, setFlashState] = useState<FlashState>("viewing");
@@ -174,27 +180,33 @@ export default function StudyMode({
 
   // Trigger session completion EXP grant when study finishes
   useEffect(() => {
-    if (phase === "summary" && sessionResults.length >= 3) {
+    if (phase === "summary") {
+      const cardsReviewed = new Set(sessionResults.map(result => result.cardId)).size;
+      if (cardsReviewed < 3) return;
       const elapsedSeconds = Math.max(5, Math.round((Date.now() - sessionStartTimeRef.current) / 1000));
-
-      fetch("/api/flashcards/complete-session", {
+      let active = true;
+      pendingProgress.current.then(() => fetch("/api/flashcards/complete-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deckId,
-          cardsReviewed: sessionResults.length,
+          cardsReviewed,
           durationSeconds: elapsedSeconds,
         }),
-      })
+      }))
         .then((r) => r.json())
         .then((data) => {
-          if (data.grantedExp > 0) {
+          if (data.success) window.dispatchEvent(new Event(BADGES_EARNED_EVENT));
+          if (active && data.grantedExp > 0) {
             setExpEarned(data.grantedExp);
           }
         })
         .catch(() => {});
+      return () => { active = false; };
     }
-  }, [phase, deckId, sessionResults.length]);
+  }, [phase, deckId, sessionResults]);
+
+  useEffect(() => () => window.clearTimeout(flipTimer.current), [phase]);
 
   const currentCard = sessionCards[currentIndex] ?? null;
 
@@ -224,6 +236,10 @@ export default function StudyMode({
   const startSession = useCallback(
     (mode: StudyModeType, cardList?: FlashcardCard[]) => {
       const list = cardList ?? allCards;
+      sessionSize.current = list.length;
+      sessionStartTimeRef.current = Date.now();
+      awaitingConfirmation.current.clear();
+      setExpEarned(null);
       setStudyMode(mode);
       setSessionCards(list);
       setCurrentIndex(0);
@@ -242,6 +258,7 @@ export default function StudyMode({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cardId, selfRating: rating }),
+          signal: AbortSignal.timeout(10_000),
         });
       } catch {
         // Progress is not critical — swallow the error silently
@@ -252,18 +269,20 @@ export default function StudyMode({
 
   // ── Advance to the next card ──
   const advance = useCallback(
-    (isCorrect: boolean, cardId: string) => {
+    (isCorrect: boolean, cardId: string, requeue?: FlashcardCard) => {
       const updatedResults = [...sessionResults, { cardId, correct: isCorrect }];
       setSessionResults(updatedResults);
 
       const next = currentIndex + 1;
-      if (next >= sessionCards.length) {
+      const queue = requeue ? [...sessionCards, requeue] : sessionCards;
+      if (requeue) setSessionCards(queue);
+      if (next >= queue.length) {
         setPhase("summary");
         return;
       }
 
       setCurrentIndex(next);
-      prepareCard(next, studyMode, sessionCards);
+      prepareCard(next, studyMode, queue);
     },
     [currentIndex, sessionCards, sessionResults, studyMode, prepareCard]
   );
@@ -272,7 +291,8 @@ export default function StudyMode({
   const handleReveal = useCallback(() => {
     if (flashState !== "viewing" || isFlipping) return;
     setIsFlipping(true);
-    setTimeout(() => {
+    flipTimer.current = window.setTimeout(() => {
+      ratedThisReveal.current = false;
       setFlashState("revealed");
       setIsFlipping(false);
     }, 300);
@@ -280,24 +300,25 @@ export default function StudyMode({
 
   // ── Flashcard: 4-level self-rating ──
   const handleFlashRating = useCallback(
-    async (level: 1 | 2 | 3 | 4) => {
-      if (!currentCard || submitting) return;
-      setSubmitting(true);
+    (level: 1 | 2 | 3 | 4) => {
+      if (!currentCard || flashState !== "revealed" || ratedThisReveal.current) return;
+      ratedThisReveal.current = true;
       const isCorrect = level >= 3;
-      await recordProgress(
-        currentCard.id,
-        isCorrect ? "knew_it" : "still_learning"
+      const confirmed = awaitingConfirmation.current.delete(currentCard.id);
+      if (isCorrect && !confirmed) awaitingConfirmation.current.add(currentCard.id);
+
+      pendingProgress.current = pendingProgress.current.then(() =>
+        recordProgress(currentCard.id, isCorrect ? "knew_it" : "still_learning")
       );
-      setSubmitting(false);
-      advance(isCorrect, currentCard.id);
+      advance(isCorrect, currentCard.id, isCorrect && confirmed ? undefined : currentCard);
     },
-    [currentCard, submitting, recordProgress, advance]
+    [currentCard, flashState, recordProgress, advance]
   );
 
   // ── Multiple choice: select answer ──
   const handleChoiceSelect = useCallback(
     async (choice: MultipleChoiceOption) => {
-      if (choiceAnswered || !currentCard || submitting) return;
+      if (choiceAnswered || !currentCard) return;
       setSelectedLabel(choice.label);
       setChoiceAnswered(true);
       await recordProgress(
@@ -305,13 +326,13 @@ export default function StudyMode({
         choice.isCorrect ? "knew_it" : "still_learning"
       );
     },
-    [choiceAnswered, currentCard, submitting, recordProgress]
+    [choiceAnswered, currentCard, recordProgress]
   );
 
   // ── True/False: answer ──
   const handleTfAnswer = useCallback(
     async (answer: boolean) => {
-      if (tfAnswered || !currentCard || !tfQuestion || submitting) return;
+      if (tfAnswered || !currentCard || !tfQuestion) return;
       setTfAnswer(answer);
       setTfAnswered(true);
       const isCorrect = answer === tfQuestion.correctAnswer;
@@ -320,17 +341,18 @@ export default function StudyMode({
         isCorrect ? "knew_it" : "still_learning"
       );
     },
-    [tfAnswered, currentCard, tfQuestion, submitting, recordProgress]
+    [tfAnswered, currentCard, tfQuestion, recordProgress]
   );
 
   // ── Keyboard shortcuts (flashcard mode only) ──
   useEffect(() => {
     if (phase !== "studying" || studyMode !== "flashcard") return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === " " && flashState === "viewing") {
+      if (e.defaultPrevented || e.repeat || e.altKey || e.ctrlKey || e.metaKey || (e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable]'))) return;
+      if (e.key === " " && flashState === "viewing" && !(e.target instanceof HTMLElement && e.target.closest('button, a'))) {
         e.preventDefault();
         handleReveal();
-      } else if (flashState === "revealed" && !submitting) {
+      } else if (flashState === "revealed") {
         const keyMap: Record<string, 1 | 2 | 3 | 4> = {
           "1": 1,
           "2": 2,
@@ -342,14 +364,14 @@ export default function StudyMode({
           e.preventDefault();
           handleFlashRating(level);
         }
-      } else if (e.key === "Tab" && flashState === "viewing") {
+      } else if (e.key.toLowerCase() === "h" && flashState === "viewing") {
         e.preventDefault();
         setShowHint(true);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [phase, studyMode, flashState, submitting, handleReveal, handleFlashRating]);
+  }, [phase, studyMode, flashState, handleReveal, handleFlashRating]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Loading / empty states
@@ -417,14 +439,12 @@ export default function StudyMode({
         icon: <ListChecks className="h-7 w-7" />,
         title: "Multiple Choice",
         desc: "Pick the right answer from four options. Instant feedback.",
-        badge: "A B C D",
       },
       {
         id: "true-false",
         icon: <ToggleLeft className="h-7 w-7" />,
         title: "True or False",
         desc: "Is the statement correct? Quick-fire decision making.",
-        badge: "T / F",
       },
     ];
 
@@ -441,18 +461,11 @@ export default function StudyMode({
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div
-            className="mx-auto mb-5 h-16 w-16 rounded-2xl flex items-center justify-center shadow-sm"
-            style={{ backgroundColor: `${deckColor}25` }}
-          >
-            <Layers className="h-8 w-8" style={{ color: deckColor }} />
-          </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-[#F0F2F8]">
-            {deckTitle}
+          <h2 className="flex items-center justify-center gap-2 text-2xl font-bold tracking-tight text-primary-theme sm:text-3xl">
+            <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: deckColor }} />
+            <span className="[overflow-wrap:anywhere]">{deckTitle}</span>
           </h2>
-          <p className="mt-2 text-slate-500 dark:text-[#8B92A5] font-medium">
-            Choose how you want to study
-          </p>
+          <p className="mt-2 text-sm text-secondary-theme">Choose how you want to study.</p>
 
           {/* Stats chips */}
           {stats && (
@@ -480,29 +493,9 @@ export default function StudyMode({
             <button
               key={m.id}
               onClick={() => startSession(m.id)}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor =
-                  `${deckColor}80`;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "";
-              }}
-              className="group relative flex flex-col items-center text-center rounded-3xl border-2 border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-7 shadow-xs transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl active:scale-95 cursor-pointer"
+              className={`flex min-w-0 flex-col items-start p-4 text-left hover:border-(--focus-ring) sm:p-5 ${panel}`}
             >
-              {m.badge && (
-                <span
-                  className="absolute top-3.5 right-3.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white"
-                  style={{ backgroundColor: deckColor }}
-                >
-                  {m.badge}
-                </span>
-              )}
-              <div
-                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl transition-colors"
-                style={{ backgroundColor: `${deckColor}15`, color: deckColor }}
-              >
-                {m.icon}
-              </div>
+              <span className="mb-3 grid size-10 place-items-center rounded-lg bg-canvas text-primary-theme">{m.icon}</span>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-[#F0F2F8] mb-2">
                 {m.title}
               </h3>
@@ -510,8 +503,7 @@ export default function StudyMode({
                 {m.desc}
               </p>
               <div
-                className="mt-5 flex items-center gap-1 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={{ color: deckColor }}
+                className="mt-auto flex items-center gap-1 pt-3 text-xs font-semibold text-primary-theme"
               >
                 Start <ChevronRight className="h-3.5 w-3.5" />
               </div>
@@ -548,26 +540,15 @@ export default function StudyMode({
     const incorrectCardIds = new Set(
       sessionResults.filter((r) => !r.correct).map((r) => r.cardId)
     );
-    const incorrectCardsForRetry = sessionCards.filter((c) =>
+    const incorrectCardsForRetry = allCards.filter((c) =>
       incorrectCardIds.has(c.id)
     );
 
     return (
       <div className="mx-auto max-w-lg page-enter">
-        <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] shadow-xl overflow-hidden">
-          {/* Gradient header */}
-          <div
-            className="px-8 py-10 text-center"
-            style={{
-              background: `linear-gradient(135deg, ${deckColor}20, ${deckColor}08)`,
-            }}
-          >
-            <div
-              className="mx-auto mb-4 h-16 w-16 rounded-full flex items-center justify-center shadow-xs"
-              style={{ backgroundColor: `${deckColor}20` }}
-            >
-              <Trophy className="h-8 w-8" style={{ color: deckColor }} />
-            </div>
+        <div className={`overflow-hidden ${panel}`}>
+          <div className="border-b border-theme bg-canvas px-5 py-6 text-center">
+            <Trophy aria-hidden="true" className="mx-auto mb-3 size-7 text-primary-theme" />
             <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F0F2F8]">
               Session Complete!
             </h2>
@@ -592,8 +573,7 @@ export default function StudyMode({
           <div className="px-8 py-6 space-y-6">
             <div className="text-center">
               <div
-                className="text-6xl font-extrabold tabular-nums"
-                style={{ color: deckColor }}
+                className="text-4xl font-bold tabular-nums text-primary-theme"
               >
                 {accuracy}%
               </div>
@@ -604,7 +584,7 @@ export default function StudyMode({
 
             <div className="grid grid-cols-3 gap-4 pt-5 border-t border-slate-100 dark:border-white/5">
               {[
-                { label: "Total", value: total, color: "text-slate-900 dark:text-[#F0F2F8]" },
+                { label: "Attempts", value: total, color: "text-slate-900 dark:text-[#F0F2F8]" },
                 { label: "Correct", value: correctCount, color: "text-emerald-500" },
                 { label: "Incorrect", value: incorrectCount, color: "text-rose-500" },
               ].map((s) => (
@@ -619,18 +599,17 @@ export default function StudyMode({
           </div>
 
           {/* Actions */}
-          <div className="px-8 py-5 bg-slate-50 dark:bg-[#181B26] border-t border-slate-100 dark:border-white/5 space-y-3">
+          <div className="space-y-3 border-t border-theme bg-canvas px-4 py-5 sm:px-6">
             <div className="flex items-center gap-3">
               <button
                 onClick={onExit}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-50 dark:hover:bg-[#25293C] transition-colors cursor-pointer"
+                className={`flex-1 ${secondaryButton}`}
               >
                 Back to Deck
               </button>
               <button
                 onClick={() => startSession(studyMode)}
-                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:opacity-90 cursor-pointer"
-                style={{ backgroundColor: deckColor }}
+                className={`flex-1 ${primaryButton}`}
               >
                 Study Again
               </button>
@@ -670,11 +649,12 @@ export default function StudyMode({
     "true-false": "True or False",
   };
 
+  const remainingCards = sessionCards.length - currentIndex;
   const topBarEl = (
-    <div className="flex items-center justify-between mb-6">
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <button
         onClick={() => setPhase("mode-select")}
-        className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-secondary-theme hover:text-primary-theme"
       >
         <ArrowLeft className="h-4 w-4" />
         {modeLabelMap[studyMode]}
@@ -686,19 +666,18 @@ export default function StudyMode({
           title={deckTitle}
         />
         <span className="text-sm font-bold text-slate-500 dark:text-[#8B92A5] bg-slate-100 dark:bg-[#1E2132] px-3.5 py-1 rounded-full border border-slate-200/60 dark:border-white/5">
-          {currentIndex + 1} / {sessionCards.length}
+          {studyMode === 'flashcard' ? `${remainingCards} left` : `${currentIndex + 1} / ${sessionCards.length}`}
         </span>
       </div>
     </div>
   );
 
   const progressBarEl = (
-    <div className="mb-8 h-2 w-full rounded-full bg-slate-100 dark:bg-[#1E2132] overflow-hidden">
+    <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-(--border-color)">
       <div
-        className="h-full rounded-full transition-all duration-500 ease-out"
+        className="h-full rounded-full bg-(--action-bg) motion-safe:transition-[width]"
         style={{
-          width: `${((currentIndex) / sessionCards.length) * 100}%`,
-          backgroundColor: deckColor,
+          width: `${(1 - remainingCards / Math.max(1, sessionSize.current)) * 100}%`,
         }}
       />
     </div>
@@ -759,104 +738,31 @@ export default function StudyMode({
     ];
 
     return (
-      <div className="mx-auto max-w-5xl page-enter flex flex-col justify-center min-h-[calc(100vh-12rem)] pb-10 px-4">
+      <div className="mx-auto max-w-3xl pb-10">
         {topBarEl}
         {progressBarEl}
 
-        {/* 3-D Flip card */}
-        <div
-          className="mb-8 flex-1 flex flex-col justify-center"
-          style={{ perspective: "1200px" }}
-        >
+        <div className="mb-5 [perspective:1200px]">
           <div
-            className="relative w-full transition-transform duration-500 ease-in-out cursor-pointer"
-            style={{
-              minHeight: "420px",
-              transformStyle: "preserve-3d",
-              transform:
-                isRevealed || isFlipping
-                  ? "rotateY(180deg)"
-                  : "rotateY(0deg)",
-            }}
+            className="grid min-h-64 grid-cols-1 [transform-style:preserve-3d] motion-safe:transition-transform motion-safe:duration-300 sm:min-h-72"
+            style={{ transform: isRevealed || isFlipping ? "rotateY(180deg)" : undefined }}
             onClick={!isRevealed ? handleReveal : undefined}
           >
-            {/* Front face */}
-            <div
-              className="absolute inset-0 rounded-3xl border-2 bg-slate-900 dark:bg-[#141721] shadow-2xl p-10 flex flex-col items-center justify-center"
-              style={{
-                backfaceVisibility: "hidden",
-                borderColor: `${deckColor}60`,
-              }}
-            >
-              <span
-                className="inline-block rounded-full px-5 py-2 text-sm font-bold mb-8 uppercase tracking-widest"
-                style={{
-                  backgroundColor: `${deckColor}25`,
-                  color: deckColor,
-                }}
-              >
-                Question
-              </span>
-              <p className="text-4xl sm:text-5xl font-semibold text-white leading-tight max-w-3xl mx-auto text-center wrap-break-word">
-                {currentCard.front}
-              </p>
-
-              {/* Image attachments */}
-              {currentCard.attachments?.length > 0 && (
-                <div className="mt-8 flex justify-center w-full">
-                  {currentCard.attachments.map((att, i) =>
-                    att.type === "image" && att.url ? (
-                      <div
-                        key={i}
-                        className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-xl"
-                        style={{ maxHeight: "280px" }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={att.url}
-                          alt="Question visual"
-                          className="h-full max-h-72 w-auto object-contain bg-slate-800/50 rounded-xl"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      </div>
-                    ) : null
-                  )}
-                </div>
-              )}
-
-              <div className="mt-10 flex items-center gap-2 text-slate-500 dark:text-slate-400 animate-pulse">
-                <Eye className="h-5 w-5" />
-                <span className="text-sm font-medium">Tap to reveal answer</span>
-                <span className="text-xs bg-slate-800 dark:bg-[#1E2132] px-1.5 py-0.5 rounded border border-slate-700 dark:border-white/10 ml-1">
-                  Space
-                </span>
+            <div aria-hidden={isRevealed} className={`col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden [backface-visibility:hidden] ${panel}`}>
+              <div className="border-b border-theme px-4 py-2.5 text-sm font-semibold text-secondary-theme sm:px-6">Question</div>
+              <div className="grid flex-1 place-content-center gap-4 p-5 text-center sm:p-8">
+                <p className="mx-auto max-w-prose whitespace-pre-wrap text-xl/8 font-semibold text-primary-theme [overflow-wrap:anywhere] sm:text-3xl/10">{currentCard.front}</p>
+                {currentCard.attachments?.map((attachment, index) => attachment.type === "image" && attachment.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={index} src={attachment.url} alt={attachment.label || "Question visual"} className="mx-auto max-h-56 max-w-full rounded-xl border border-theme object-contain" onError={event => { event.currentTarget.hidden = true; }} />
+                ) : null)}
               </div>
             </div>
-
-            {/* Back face */}
-            <div
-              className="absolute inset-0 rounded-3xl border-2 bg-slate-900 dark:bg-[#141721] shadow-2xl p-10 flex flex-col items-center justify-center"
-              style={{
-                backfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-                borderColor: `${deckColor}60`,
-              }}
-            >
-              <span
-                className="inline-block rounded-full px-5 py-2 text-sm font-bold mb-8 uppercase tracking-widest"
-                style={{
-                  backgroundColor: `${deckColor}25`,
-                  color: deckColor,
-                }}
-              >
-                Answer
-              </span>
-              <p className="text-3xl sm:text-4xl font-semibold text-white leading-relaxed max-w-3xl mx-auto text-center wrap-break-word">
-                {currentCard.back}
-              </p>
+            <div aria-hidden={!isRevealed} className={`col-start-1 row-start-1 flex min-w-0 flex-col overflow-hidden [backface-visibility:hidden] [transform:rotateY(180deg)] ${panel}`}>
+              <div className="border-b border-theme bg-canvas px-4 py-2.5 text-sm font-semibold text-secondary-theme sm:px-6">Answer</div>
+              <div className="grid flex-1 place-content-center p-5 text-center sm:p-8">
+                <p className="mx-auto max-w-prose whitespace-pre-wrap text-xl/8 font-semibold text-primary-theme [overflow-wrap:anywhere] sm:text-3xl/10">{currentCard.back}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -877,7 +783,7 @@ export default function StudyMode({
                 <Lightbulb className="h-5 w-5" />
                 Show Hint
                 <span className="text-xs bg-white dark:bg-[#1E2132] px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/10 ml-1">
-                  Tab
+                  H
                 </span>
               </button>
             )}
@@ -886,17 +792,17 @@ export default function StudyMode({
 
         {/* Rating buttons (revealed) / Reveal button (viewing) */}
         {isRevealed ? (
-          <div className="flex flex-col items-center gap-5 w-full animate-[fadeInUp_0.4s_ease-out]">
-            <p className="text-sm font-bold text-slate-400 dark:text-[#8B92A5] uppercase tracking-wider">
-              How well did you know this?
-            </p>
-            <div className="flex items-stretch gap-3 w-full max-w-xl">
+          <div className="flex w-full flex-col items-center gap-3">
+            <div className="space-y-1 text-center">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">How well did you know this?</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">Forgot or Hard sends the card to the back of the queue. Two Good or Easy ratings in a row finish it.</p>
+            </div>
+            <div className="grid w-full max-w-xl grid-cols-2 gap-3 min-[420px]:grid-cols-4">
               {ratingLevels.map((r) => (
                 <button
                   key={r.level}
                   onClick={() => handleFlashRating(r.level)}
-                  disabled={submitting}
-                  className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 border-slate-200/60 dark:border-white/10 bg-white dark:bg-[#141721] px-3 py-4 shadow-xs transition-all ${r.hoverBorder} ${r.hoverBg} hover:-translate-y-1 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer`}
+                  className={`flex min-h-11 flex-wrap items-center justify-center gap-2 rounded-xl border border-theme bg-surface px-2 py-2.5 ${r.hoverBorder} ${r.hoverBg}`}
                 >
                   <span className={r.iconColor}>{r.icon}</span>
                   <span className="text-xs font-extrabold text-slate-700 dark:text-[#F0F2F8]">
@@ -908,26 +814,19 @@ export default function StudyMode({
                 </button>
               ))}
             </div>
-            {submitting && (
-              <div className="flex items-center gap-2 text-slate-400">
-                <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-slate-500 animate-spin" />
-                <span className="text-xs">Saving progress...</span>
-              </div>
-            )}
           </div>
         ) : (
           <div className="text-center">
             <button
               onClick={handleReveal}
               disabled={isFlipping}
-              className="inline-flex items-center gap-3 rounded-2xl px-10 py-4 text-lg font-bold text-white shadow-lg transition-all hover:opacity-90 hover:-translate-y-0.5 hover:shadow-xl active:scale-95 disabled:opacity-50 cursor-pointer"
-              style={{ backgroundColor: deckColor }}
+              className={primaryButton}
             >
-              <Eye className="h-6 w-6" />
+              <Eye aria-hidden="true" className="size-4" />
               Reveal Answer
-              <span className="text-xs opacity-70 ml-1 bg-white/20 px-2 py-0.5 rounded">
+              <kbd className="ml-1 rounded border border-current px-1.5 py-0.5 font-sans text-xs">
                 Space
-              </span>
+              </kbd>
             </button>
           </div>
         )}
@@ -940,26 +839,17 @@ export default function StudyMode({
   // ─────────────────────────────────────────────────────────────────────────
 
   if (studyMode === "multiple-choice" && currentCard) {
-    const labelColors: Record<"A" | "B" | "C" | "D", string> = {
-      A: "#6366f1",
-      B: "#f59e0b",
-      C: "#10b981",
-      D: "#ef4444",
-    };
-
     return (
-      <div className="mx-auto max-w-2xl page-enter flex flex-col min-h-[calc(100vh-12rem)] pb-10 px-4">
+      <div className="mx-auto max-w-3xl pb-10">
         {topBarEl}
         {progressBarEl}
 
         {/* Question card */}
         <div
-          className="rounded-3xl border-2 bg-white dark:bg-[#141721] shadow-lg p-8 mb-6 text-center"
-          style={{ borderColor: `${deckColor}40` }}
+          className={`mb-4 p-4 sm:p-6 ${panel}`}
         >
           <span
-            className="inline-block rounded-full px-4 py-1.5 text-xs font-bold mb-5 uppercase tracking-widest"
-            style={{ backgroundColor: `${deckColor}15`, color: deckColor }}
+            className="mb-2 inline-block text-sm font-semibold text-secondary-theme"
           >
             Question
           </span>
@@ -976,69 +866,20 @@ export default function StudyMode({
         {/* Answer options */}
         <div className="space-y-3">
           {choices.map((choice) => {
-            // Determine visual state after answer is submitted
-            let borderClass =
-              "border-slate-200/80 dark:border-white/5";
-            let bgClass = "bg-white dark:bg-[#141721]";
-            let textClass = "text-slate-800 dark:text-[#F0F2F8]";
-            let opacityClass = "";
-            let feedbackIcon: React.ReactNode = null;
-
-            if (choiceAnswered) {
-              if (choice.isCorrect) {
-                borderClass = "border-emerald-500 dark:border-emerald-500/70";
-                bgClass = "bg-emerald-50 dark:bg-emerald-950/40";
-                textClass = "text-emerald-800 dark:text-emerald-300";
-                feedbackIcon = (
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-                );
-              } else if (selectedLabel === choice.label) {
-                borderClass = "border-red-500 dark:border-red-500/70";
-                bgClass = "bg-red-50 dark:bg-red-950/40";
-                textClass = "text-red-800 dark:text-red-300";
-                feedbackIcon = (
-                  <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                );
-              } else {
-                opacityClass = "opacity-40";
-              }
-            }
+            const correct = choiceAnswered && choice.isCorrect;
+            const incorrect = choiceAnswered && selectedLabel === choice.label && !choice.isCorrect;
+            const resultStyle = correct
+              ? "border-emerald-600 bg-emerald-50 text-emerald-900 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
+              : incorrect
+                ? "border-rose-600 bg-rose-50 text-rose-900 dark:border-rose-500/50 dark:bg-rose-500/10 dark:text-rose-200"
+                : "border-theme bg-surface text-primary-theme enabled:hover:bg-canvas";
 
             return (
-              <button
-                key={choice.label}
-                onClick={() => handleChoiceSelect(choice)}
-                disabled={choiceAnswered}
-                onMouseEnter={(e) => {
-                  if (!choiceAnswered)
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      `${deckColor}80`;
-                }}
-                onMouseLeave={(e) => {
-                  if (!choiceAnswered)
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "";
-                }}
-                className={`w-full flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-all cursor-pointer ${borderClass} ${bgClass} ${opacityClass} ${
-                  !choiceAnswered
-                    ? "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
-                    : ""
-                }`}
-              >
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white"
-                  style={{
-                    backgroundColor: labelColors[choice.label],
-                  }}
-                >
-                  {choice.label}
-                </span>
-                <span
-                  className={`flex-1 text-sm font-semibold leading-snug wrap-break-word ${textClass}`}
-                >
-                  {choice.text}
-                </span>
-                {feedbackIcon}
+              <button type="button" key={choice.label} onClick={() => handleChoiceSelect(choice)} disabled={choiceAnswered} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${resultStyle}`}>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-canvas text-sm font-semibold text-secondary-theme">{choice.label}</span>
+                <span className="min-w-0 flex-1 text-sm font-medium [overflow-wrap:anywhere]">{choice.text}</span>
+                {correct && <CheckCircle2 aria-label="Correct answer" role="img" className="size-5 shrink-0" />}
+                {incorrect && <XCircle aria-label="Incorrect answer" role="img" className="size-5 shrink-0" />}
               </button>
             );
           })}
@@ -1051,8 +892,7 @@ export default function StudyMode({
                 const choice = choices.find((c) => c.label === selectedLabel);
                 advance(choice?.isCorrect ?? false, currentCard.id);
               }}
-              className="inline-flex items-center gap-2 rounded-2xl px-8 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-              style={{ backgroundColor: deckColor }}
+              className={primaryButton}
             >
               Next Question
               <ChevronRight className="h-5 w-5" />
@@ -1068,41 +908,26 @@ export default function StudyMode({
   // ─────────────────────────────────────────────────────────────────────────
 
   if (studyMode === "true-false" && currentCard && tfQuestion) {
-    const getTrueBtnClass = () => {
-      if (!tfAnswered)
-        return "border-emerald-300 dark:border-emerald-500/40 bg-white dark:bg-[#141721] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-500 hover:-translate-y-1 hover:shadow-lg active:scale-95";
-      if (tfQuestion.correctAnswer === true)
-        return "bg-emerald-500 border-emerald-500 text-white shadow-lg scale-105";
-      if (tfAnswer === true)
-        return "bg-red-500 border-red-500 text-white opacity-80";
-      return "opacity-40 border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-400";
-    };
-
-    const getFalseBtnClass = () => {
-      if (!tfAnswered)
-        return "border-red-300 dark:border-red-500/40 bg-white dark:bg-[#141721] text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-500 hover:-translate-y-1 hover:shadow-lg active:scale-95";
-      if (tfQuestion.correctAnswer === false)
-        return "bg-emerald-500 border-emerald-500 text-white shadow-lg scale-105";
-      if (tfAnswer === false)
-        return "bg-red-500 border-red-500 text-white opacity-80";
-      return "opacity-40 border-slate-200 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-400";
+    const optionStyle = (answer: boolean) => {
+      if (!tfAnswered) return "border-theme bg-surface text-primary-theme hover:bg-canvas";
+      if (answer === tfQuestion.correctAnswer) return "border-emerald-600 bg-emerald-50 text-emerald-900 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200";
+      if (answer === tfAnswer) return "border-rose-600 bg-rose-50 text-rose-900 dark:border-rose-500/50 dark:bg-rose-500/10 dark:text-rose-200";
+      return "border-theme bg-surface text-secondary-theme";
     };
 
     const isCorrect = tfAnswered && tfAnswer === tfQuestion.correctAnswer;
 
     return (
-      <div className="mx-auto max-w-xl page-enter flex flex-col min-h-[calc(100vh-12rem)] pb-10 px-4">
+      <div className="mx-auto max-w-3xl pb-10">
         {topBarEl}
         {progressBarEl}
 
         {/* Card with question + statement */}
         <div
-          className="rounded-3xl border-2 bg-white dark:bg-[#141721] shadow-lg p-8 mb-8 text-center"
-          style={{ borderColor: `${deckColor}40` }}
+          className={`mb-4 p-4 sm:p-6 ${panel}`}
         >
           <span
-            className="inline-block rounded-full px-4 py-1.5 text-xs font-bold mb-5 uppercase tracking-widest"
-            style={{ backgroundColor: `${deckColor}15`, color: deckColor }}
+            className="mb-2 inline-block text-sm font-semibold text-secondary-theme"
           >
             For this question:
           </span>
@@ -1125,14 +950,14 @@ export default function StudyMode({
           <button
             onClick={() => handleTfAnswer(true)}
             disabled={tfAnswered}
-            className={`flex-1 rounded-3xl border-2 py-7 text-2xl font-extrabold tracking-wide transition-all cursor-pointer ${getTrueBtnClass()}`}
+            className={`min-h-11 flex-1 rounded-xl border px-4 py-3 text-sm font-semibold ${optionStyle(true)}`}
           >
             ✓ TRUE
           </button>
           <button
             onClick={() => handleTfAnswer(false)}
             disabled={tfAnswered}
-            className={`flex-1 rounded-3xl border-2 py-7 text-2xl font-extrabold tracking-wide transition-all cursor-pointer ${getFalseBtnClass()}`}
+            className={`min-h-11 flex-1 rounded-xl border px-4 py-3 text-sm font-semibold ${optionStyle(false)}`}
           >
             ✗ FALSE
           </button>
@@ -1161,9 +986,8 @@ export default function StudyMode({
                 onClick={() =>
                   advance(tfAnswer === tfQuestion.correctAnswer, currentCard.id)
                 }
-                className="inline-flex items-center gap-2 rounded-2xl px-8 py-3 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-                style={{ backgroundColor: deckColor }}
-              >
+                className={primaryButton}
+                >
                 Next Question
                 <ChevronRight className="h-5 w-5" />
               </button>

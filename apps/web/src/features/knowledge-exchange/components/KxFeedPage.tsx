@@ -130,8 +130,8 @@ export default function KxFeedPage({
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Collaborative academic Q&A for computer science and engineering
-            students, instructors, and researchers.
+            Academic Q&A for students and instructors in CdM’s Information Technology
+            and Computer Engineering programs.
           </p>
         </div>
 

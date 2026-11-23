@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import DotConstellation from "./DotConstellation";
 import { LANGUAGE_LOGO_MAP } from "./LanguageLogos";
 import { MORPH_CONSTELLATIONS } from "./constellations";
+import { useCodeLabReducedMotion } from "./codelab-motion";
 
 export interface TrackConfig {
   language: string;
@@ -33,6 +34,7 @@ export default function TrackCardGrid({
   institute,
 }: TrackCardGridProps) {
   const [hoveredLanguage, setHoveredLanguage] = useState<string | null>(null);
+  const reduced = useCodeLabReducedMotion();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -50,15 +52,15 @@ export default function TrackCardGrid({
             href={`/${institute}/activities/codelab/${track.language}`}
             className={`group relative flex flex-col justify-between rounded-2xl bg-white/90 dark:bg-[#141721]/90 border border-slate-200/80 dark:border-white/5 border-l-4 ${track.borderClass} p-5 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 cursor-pointer overflow-hidden`}
             style={{ animationDelay: `${idx * 40}ms` }}
-            onMouseEnter={() => setHoveredLanguage(track.language)}
+            onMouseEnter={reduced ? undefined : () => setHoveredLanguage(track.language)}
             onMouseLeave={() => setHoveredLanguage(null)}
           >
             {/* Dot Constellation Background — appears on hover */}
-            <DotConstellation
+            {!reduced && <DotConstellation
               dots={dots}
               color={track.dotColor}
               isHovered={isHovered}
-            />
+            />}
 
             {/* Card Content (above the constellation) */}
             <div className="relative z-10 space-y-3.5">

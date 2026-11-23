@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { CodeLabMotionToggle } from "./CodeLabMotionControls";
 import { CodeLabProblemSummary } from "../problems/types";
 import {
   Users,
@@ -531,12 +532,12 @@ export function CodeLabInstructorClient({
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20 px-2 sm:px-4 page-enter">
+    <div data-codelab-motion-surface className="space-y-8 max-w-7xl mx-auto pb-20 px-2 sm:px-4 page-enter">
       {/* ──── Invalidation Modal (Portaled to document.body) ──── */}
       {mounted &&
         selectedSub &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div data-codelab-motion-surface className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/10 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-6 shadow-2xl text-slate-800 dark:text-[#F0F2F8] animate-in zoom-in-95 duration-150">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -719,7 +720,8 @@ export function CodeLabInstructorClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <CodeLabMotionToggle />
           <Link
             href={`/${institute}/activities/codelab/instructor?view=codelab`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs transition-all cursor-pointer"

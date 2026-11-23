@@ -6,9 +6,12 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { Loader2, ChevronLeft, ChevronRight, MessageSquare, ZoomIn, ZoomOut, Download, FileText, ExternalLink } from "lucide-react";
+import { getFileExtension } from "@/lib/ite/media-preview";
+import { materialPreviewUrl, supportsOfficePreview } from "@/lib/material-preview";
+import OfficeAttachmentPreview from "./OfficeAttachmentPreview";
 
 // Initialize pdfjs worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf-runtime/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface Annotation {
   id: string;
@@ -152,13 +155,12 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
   // Determine file types
   const isLink = type === "LINK";
-  const fileExt = (fileName || url).split('.').pop()?.toLowerCase();
-  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '');
-  const isOffice = ['docx', 'xlsx', 'doc', 'xls', 'pptx', 'ppt'].includes(fileExt || '');
-  const isText = ['txt', 'csv'].includes(fileExt || '');
-  
-  // If it's a link, we assume it's NOT a PDF. If it's a file, default to PDF if not something else.
-  const isPdf = !isLink && !isImage && !isOffice && !isText;
+  const fileExt = getFileExtension(fileName || url);
+  const isImage = !isLink && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+  const isOffice = !isLink && supportsOfficePreview(fileExt);
+  const isText = !isLink && ['txt', 'csv'].includes(fileExt);
+  const isPdf = !isLink && fileExt === 'pdf';
+  const downloadOnly = !isLink && !isImage && !isOffice && !isText && !isPdf;
 
   const showPdfControls = isPdf;
 
@@ -173,11 +175,6 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
         .catch(err => console.error("Failed to fetch text", err));
     }
   }, [isText, url]);
-
-  // Is local relative url?
-  const isLocalUrl = url.startsWith('/');
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  const requiresPublicUrlForOffice = isOffice && (isLocalUrl || isLocalhost);
 
   // Parse YouTube
   let youtubeUrl = null;
@@ -197,9 +194,9 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   return (
     <div className="flex h-full flex-col md:flex-row gap-6">
       {/* Main Document Viewer */}
-      <div className="flex-1 flex flex-col rounded-3xl bg-slate-100 dark:bg-[#0B0D13] border border-slate-200/80 dark:border-white/5 overflow-hidden shadow-inner">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 dark:border-white/5 dark:bg-[#0B0D13]">
         {/* Toolbar - Show pagination and zoom for PDFs and converted PPTXs */}
-        <div className="flex items-center justify-between bg-white dark:bg-[#141721] px-4 py-3 border-b border-slate-200/80 dark:border-white/5">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-white px-3 py-2 sm:px-4 dark:border-white/5 dark:bg-[#141721]">
           <div className="flex items-center gap-2">
             {showPdfControls && (
               <>
@@ -223,7 +220,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
               </>
             )}
             {!showPdfControls && (
-              <span className="text-sm font-bold text-slate-700 dark:text-[#F0F2F8] flex items-center gap-2">
+              <span className="flex min-w-0 items-center gap-2 break-all text-sm font-bold text-slate-700 dark:text-[#F0F2F8]">
                 <FileText className={`h-4 w-4 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />
                 {isLink ? "External Link Preview" : (fileName || "File Preview")}
               </span>
@@ -357,49 +354,23 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             </div>
           )}
 
-          {/* 5. Office Files (DOCX, XLSX, PPTX) — Localhost fallback */}
-          {isOffice && requiresPublicUrlForOffice && (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-[#0B0D13]">
-              <div className="bg-white dark:bg-[#141721] p-8 rounded-3xl shadow-xs border border-slate-200/80 dark:border-white/5 max-w-md">
-                <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Download className="h-8 w-8" />
-                </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-[#F0F2F8] mb-2">Download to View</h2>
-                <p className="text-sm text-slate-500 dark:text-[#8B92A5] mb-6">
-                  Microsoft Office Viewer requires a public URL to render PowerPoints and Word documents. Since you are running locally, please download the file to view it.
-                </p>
-                <a 
-                  href={url}
-                  download
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-colors shadow-xs ${
-                    isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
-                  }`}
-                >
-                  <Download className="h-4 w-4" />
-                  Download File
-                </a>
-              </div>
+          {isOffice && <OfficeAttachmentPreview attachmentId={attachmentId} />}
+
+          {downloadOnly && (
+            <div className="m-auto max-w-sm p-6 text-center">
+              <FileText aria-hidden="true" className="mx-auto mb-3 size-7 text-slate-500" />
+              <h2 className="font-semibold">Preview unavailable</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Use Download to save the original, then open it from your Downloads folder.</p>
             </div>
           )}
 
-          {/* 6. Office Files (Production Public URL) */}
-          {isOffice && !requiresPublicUrlForOffice && (
-            <div className="w-full h-full">
-              <iframe
-                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
-                className="w-full h-full border-0 bg-white dark:bg-[#141721]"
-                title={fileName}
-              />
-            </div>
-          )}
 
           {/* 8. PDF Document */}
           {isPdf && (
             <div className="w-full flex justify-center p-4">
               <Document
-                file={url}
+                file={materialPreviewUrl(attachmentId)}
+                error={<p role="alert" className="max-w-sm p-6 text-center text-sm text-slate-600 dark:text-slate-300">The PDF preview could not load. Use Download to open the original.</p>}
                 onLoadSuccess={onDocumentLoadSuccess}
                 loading={
                   <div className="flex h-64 items-center justify-center">

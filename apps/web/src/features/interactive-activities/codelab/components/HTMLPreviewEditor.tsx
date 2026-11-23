@@ -10,6 +10,7 @@ import MonacoInit from "@/components/common/MonacoInit";
 import { CodeSymbolBar } from './CodeSymbolBar';
 import { ResizeDivider } from './ResizeDivider';
 import { buildStaticPreviewDocument } from '../utils/html-css-runner';
+import { useCodeLabReducedMotion } from './codelab-motion';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -27,6 +28,7 @@ export default function HTMLPreviewEditor({
   htmlTemplate,
   onChange,
 }: HTMLPreviewEditorProps) {
+  const reduced = useCodeLabReducedMotion();
   const workspace = useRef<HTMLDivElement>(null);
   const [sourceShare, setSourceShare] = useState(50);
   const [stacked, setStacked] = useState(false);
@@ -150,6 +152,7 @@ export default function HTMLPreviewEditor({
               fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
+              cursorBlinking: reduced ? "solid" : "blink",
               wordWrap: "on",
               lineNumbers: "on",
               automaticLayout: true,

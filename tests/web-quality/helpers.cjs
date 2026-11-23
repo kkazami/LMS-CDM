@@ -1,5 +1,6 @@
 const path = require('node:path');
 const Module = require('node:module');
+const { pathToFileURL } = require('node:url');
 const { createRequire } = Module;
 const { build } = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('tsx'))] }));
 const webRequire = createRequire(path.resolve('apps/web/package.json'));
@@ -23,12 +24,17 @@ async function load(db = {}, session = null, network = null) {
     export { POST as moderate } from './apps/web/src/app/api/codelab/instructor/reject/route';
     export { POST as generate } from './apps/web/src/app/api/flashcards/auto-generate/route';
     export { GET as fileInfo } from './apps/web/src/app/api/flashcards/file-info/route';
+    export { GET as materialPreview } from './apps/web/src/app/api/materials/preview/route';
     export { POST as webhook } from './apps/web/src/app/api/github/webhooks/route';
     export * as gradebook from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/gradebook/actions';
     export * as classwork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/[itemId]/actions';
     export * as instructorClasswork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/actions';
   `, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', tsconfig: 'apps/web/tsconfig.json',
     plugins: [{ name: 'isolated-boundaries', setup(b) {
+      b.onResolve({ filter: /^pdfjs-dist\/legacy\/build\/pdf\.mjs$/ }, ({ path: name }) => ({
+        path: pathToFileURL(webRequire.resolve(name)).href,
+        external: true,
+      }));
       b.onResolve({ filter: /(^|\/)db$|(^|\/)auth-session$|^next\/(server|navigation|cache)$|^@\/lib\/skills$|^node:(https|dns\/promises)$/ }, ({ path: name }) => name.startsWith('node:') && !network ? { path: name, external: true } : { path: name, namespace: 'boundary' });
       b.onLoad({ filter: /.*/, namespace: 'boundary' }, ({ path: name }) => ({ contents:
         name === 'node:https' ? 'export default globalThis.__webQuality.network.https;' :

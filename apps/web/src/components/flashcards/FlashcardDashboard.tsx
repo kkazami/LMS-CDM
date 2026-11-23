@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { FlashcardDeck } from "@/lib/lms-types";
 import DeckCard from "./DeckCard";
 import DeckDetailView from "./DeckDetailView";
+import { field, iconButton, panel, primaryButton, secondaryButton } from "./styles";
 import Modal from "@/components/common/Modal";
 import {
   Plus,
@@ -43,7 +44,6 @@ const DECK_COLORS = [
 ];
 
 export default function FlashcardDashboard({
-  instituteCode,
   initialDecks,
   courseOptions,
   theme,
@@ -91,7 +91,7 @@ export default function FlashcardDashboard({
 
   const handleCreateDeck = async () => {
     if (!newTitle.trim()) {
-      setCreateError("Flashcard title is required.");
+      setCreateError("Deck title is required.");
       return;
     }
 
@@ -184,315 +184,133 @@ export default function FlashcardDashboard({
   // Deck detail view
   if (activeDeck) {
     return (
-      <div className="page-enter">
-        <DeckDetailView
-          deck={activeDeck}
-          instituteCode={instituteCode}
-          onBack={() => {
-            setActiveDeck(null);
-            // Refresh decks to get updated stats
-            refreshDecks();
-          }}
-          onDeckUpdated={handleDeckUpdated}
-        />
-      </div>
+      <DeckDetailView
+        deck={activeDeck}
+        onBack={() => {
+          setActiveDeck(null);
+          refreshDecks();
+        }}
+        onDeckUpdated={handleDeckUpdated}
+      />
     );
   }
 
-
   // Main deck grid
   return (
-    <div className="page-enter pb-12">
-      {/* Anti-Slop Study Center Hero */}
-      <div
-        className="hero-noise relative mb-8 overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 sm:p-8 shadow-xs transition-colors"
-        style={{
-          borderLeft: `4px solid ${theme.colors.primary}`,
-          background: `radial-gradient(ellipse at 25% 45%, ${theme.colors.primary}15 0%, transparent 70%), var(--bg-surface, #FFFFFF)`,
-        }}
-      >
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div
-              className="mb-3 inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-bold tracking-wide uppercase"
-              style={{
-                backgroundColor: `${theme.colors.primary}1A`,
-                color: theme.colors.primary,
-              }}
-            >
-              <FlashcardIcon className="h-3.5 w-3.5" />
-              <span>Study Center</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] mb-2">
-              Flashcards
-            </h1>
-            <p className="max-w-2xl text-sm font-medium text-slate-500 dark:text-[#8B92A5] leading-relaxed">
-              Master your subjects faster. Create custom decks, practice with spaced repetition, and track your progress in real-time.
-            </p>
-          </div>
-
-          <div className="shrink-0 flex items-center gap-3">
-            <FocusButton
-              contextType="FLASHCARDS"
-              title="Flashcard Practice"
-            />
-            <button
-              onClick={() => setCreateOpen(true)}
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-11"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>Create New Flashcard</span>
-            </button>
-          </div>
+    <div className="mx-auto max-w-6xl pb-12">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-theme pb-5">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-primary-theme sm:text-3xl">Flashcards</h1>
+          <p className="mt-1 text-sm/6 text-secondary-theme">Create decks, review course material, and track your progress.</p>
         </div>
-      </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <FocusButton contextType="FLASHCARDS" title="Flashcard Practice" />
+          <button type="button" onClick={() => setCreateOpen(true)} className={primaryButton}>
+            <Plus aria-hidden="true" className="size-4" /> New deck
+          </button>
+        </div>
+      </header>
 
-      {/* Search & Filters */}
-      <div className="mb-8 flex flex-col sm:flex-row items-center gap-4">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-[#8B92A5]" />
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-40 flex-1">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-secondary-theme" />
           <input
-            type="text"
+            type="search"
+            aria-label="Search decks"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search your flashcards by title, topic, or tags..."
-            className="w-full min-h-12 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] py-3.5 pl-14 pr-12 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-[#8B92A5] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
+            placeholder="Search decks"
+            className={`${field} pl-9 pr-10 [&::-webkit-search-cancel-button]:hidden`}
           />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 dark:bg-[#1E2132] p-1.5 text-slate-500 dark:text-[#8B92A5] transition-colors hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-            >
-              <X className="h-4 w-4" />
+            <button type="button" aria-label="Clear search" onClick={() => setSearchQuery("")} className={`absolute right-0 top-0 ${iconButton}`}>
+              <X aria-hidden="true" className="size-4" />
             </button>
           )}
         </div>
-
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-2xl border px-6 text-sm font-bold transition-all shadow-xs cursor-pointer ${
-            showFilters || filterCourse
-              ? ""
-              : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-[#181B26] hover:border-slate-300 dark:hover:border-white/10"
-          }`}
-          style={
-            showFilters || filterCourse
-              ? {
-                  borderColor: `${theme.colors.primary}40`,
-                  backgroundColor: `${theme.colors.primary}1A`,
-                  color: theme.colors.primary,
-                }
-              : undefined
-          }
-        >
-          <SlidersHorizontal className="h-5 w-5" />
-          Filters
-          {filterCourse && (
-            <span
-              className="ml-1.5 flex h-2 w-2 rounded-full shadow-xs"
-              style={{ backgroundColor: theme.colors.primary }}
-            />
-          )}
+        <button type="button" onClick={() => setShowFilters(value => !value)} aria-expanded={showFilters} aria-controls="flashcard-filters" className={secondaryButton}>
+          <SlidersHorizontal aria-hidden="true" className="size-4" /> Filters{filterCourse ? " (1)" : ""}
         </button>
       </div>
 
-      {/* Filter panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-6 shadow-xs">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex-1 min-w-62.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-2">
-                Filter by Course
-              </label>
-              <select
-                value={filterCourse}
-                onChange={(e) => setFilterCourse(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-[#181B26] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:bg-white dark:focus:bg-[#1E2132] focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20 cursor-pointer"
-              >
-                <option value="">All Courses</option>
-                {courseOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} — {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {filterCourse && (
-              <button
-                onClick={() => setFilterCourse("")}
-                className="mt-6 inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors cursor-pointer min-h-11"
-                style={{ color: theme.colors.primary }}
-              >
-                Clear filter
-              </button>
-            )}
+      <div id="flashcard-filters" hidden={!showFilters} className={`mb-5 p-4 ${panel}`}>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-0 flex-1 basis-44">
+            <label htmlFor="flashcard-course" className="mb-1 block text-sm font-semibold text-primary-theme">Course</label>
+            <select id="flashcard-course" value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)} className={field}>
+              <option value="">All courses</option>
+              {courseOptions.map((c) => <option key={c.id} value={c.id}>{c.code} â€” {c.title}</option>)}
+            </select>
           </div>
+          {filterCourse && <button type="button" onClick={() => setFilterCourse("")} className={secondaryButton}>Clear filter</button>}
         </div>
-      )}
+      </div>
 
-      {/* Deck grid */}
       {filteredDecks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center mt-4 shadow-xs">
-          <div
-            className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl shadow-inner"
-            style={{
-              backgroundColor: `${theme.colors.primary}1A`,
-              color: theme.colors.primary,
-            }}
-          >
-            <FlashcardIcon className="h-10 w-10" />
-          </div>
-          <h3 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-            {searchQuery || filterCourse ? "No flashcards found" : "No flashcards yet"}
-          </h3>
-          <p className="mb-8 max-w-md text-base text-slate-500 dark:text-[#8B92A5]">
-            {searchQuery || filterCourse
-              ? "We couldn't find any flashcards matching your search. Try adjusting your filters or search query."
-              : "You haven't created any flashcards yet. Get started by creating your first flashcard and mastering your courses!"}
-          </p>
+        <div className={`flex flex-col items-center px-4 py-12 text-center ${panel}`}>
+          <span className="mb-4 grid size-12 place-items-center rounded-xl bg-canvas text-primary-theme"><FlashcardIcon aria-hidden="true" className="size-6" /></span>
+          <h2 className="text-lg font-semibold text-primary-theme">{searchQuery || filterCourse ? "No matching decks" : "No decks yet"}</h2>
+          <p className="mt-1 max-w-sm text-sm/6 text-secondary-theme">{searchQuery || filterCourse ? "Try a different search or course filter." : "Create a deck to start adding and reviewing cards."}</p>
           {!searchQuery && !filterCourse && (
-            <button
-              onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer min-h-11"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              <Plus className="h-5 w-5" />
-              Create Your First Flashcard
+            <button type="button" onClick={() => setCreateOpen(true)} className={`mt-4 ${primaryButton}`}>
+              <Plus aria-hidden="true" className="size-4" /> Create a deck
             </button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-          {filteredDecks.map((deck, index) => (
-            <div
-              key={deck.id}
-              style={{
-                animation: `staggerFadeIn 0.3s ease-out ${index * 60}ms both`,
-              }}
-            >
-              <DeckCard
-                deck={deck}
-                onClick={() => setActiveDeck(deck)}
-                onDelete={handleDeleteDeck}
-              />
-            </div>
-          ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredDecks.map((deck) => <DeckCard key={deck.id} deck={deck} onClick={() => setActiveDeck(deck)} onDelete={handleDeleteDeck} />)}
         </div>
       )}
 
       {/* Create Deck Modal */}
       <Modal
         open={createOpen}
-        title="Create New Flashcard"
+        title="New deck"
         onClose={() => {
           setCreateOpen(false);
           resetCreateForm();
         }}
       >
-        <div className="space-y-6">
-          {createError && (
-            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-500 shadow-xs">
-              {createError}
-            </div>
-          )}
-
-          <div className="space-y-4 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                Flashcard Title <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g., Midterms Prep, Vocabulary..."
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                Description
-              </label>
-              <textarea
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Brief description of this flashcard..."
-                rows={2}
-                className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
-              />
-            </div>
-            
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                Tags <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(comma-separated)</span>
-              </label>
-              <input
-                type="text"
-                value={newTags}
-                onChange={(e) => setNewTags(e.target.value)}
-                placeholder="e.g., Midterms, Chapter 5, Vocabulary"
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20"
-              />
-            </div>
-            
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                Course <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(Optional)</span>
-              </label>
-              <select
-                value={newCourseId}
-                onChange={(e) => setNewCourseId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-medium text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-white/20 cursor-pointer"
-              >
-                <option value="">No course linked</option>
-                {courseOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} — {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <form className="space-y-4" onSubmit={event => { event.preventDefault(); if (!creating) void handleCreateDeck(); }}>
+          {createError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-800 dark:text-rose-300">{createError}</p>}
+          <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+            <span>Deck title</span>
+            <input type="text" required value={newTitle} onChange={event => setNewTitle(event.target.value)} className={field} />
+          </label>
+          <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+            <span>Description <span className="font-normal text-secondary-theme">(optional)</span></span>
+            <textarea value={newDescription} onChange={event => setNewDescription(event.target.value)} rows={2} className={`${field} resize-y font-normal`} />
+          </label>
+          <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+            <span>Tags <span className="font-normal text-secondary-theme">(comma-separated)</span></span>
+            <input type="text" value={newTags} onChange={event => setNewTags(event.target.value)} className={field} />
+          </label>
+          <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+            <span>Course <span className="font-normal text-secondary-theme">(optional)</span></span>
+            <select value={newCourseId} onChange={event => setNewCourseId(event.target.value)} className={field}>
+              <option value="">No course linked</option>
+              {courseOptions.map(course => <option key={course.id} value={course.id}>{course.code} - {course.title}</option>)}
+            </select>
+          </label>
+          <div className="flex flex-wrap justify-end gap-2 border-t border-theme pt-4">
+            <button type="button" onClick={() => { setCreateOpen(false); resetCreateForm(); }} className={secondaryButton}>Cancel</button>
+            <button type="submit" disabled={creating} className={primaryButton}>{creating ? "Creating..." : "Create deck"}</button>
           </div>
-
-
-
-          <div className="flex items-center justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setCreateOpen(false);
-                resetCreateForm();
-              }}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer min-h-11"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleCreateDeck}
-              disabled={creating}
-              className="rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer min-h-11"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {creating ? "Creating..." : "Create Flashcard"}
-            </button>
-          </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
         open={!!deckToDelete}
-        title="Delete Flashcard"
+        title="Delete deck"
         onClose={() => {
           if (!isDeleting) setDeckToDelete(null);
         }}
       >
         <div className="space-y-6">
           <p className="text-sm text-slate-600 dark:text-[#8B92A5]">
-            Are you sure you want to delete this entire flashcard? All cards inside it will be permanently removed. This action cannot be undone.
+            Deleting this deck permanently removes all of its cards.
           </p>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
@@ -509,7 +327,7 @@ export default function FlashcardDashboard({
               disabled={isDeleting}
               className="rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-rose-700 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             >
-              {isDeleting ? "Deleting..." : "Delete Flashcard"}
+              {isDeleting ? "Deleting..." : "Delete deck"}
             </button>
           </div>
         </div>

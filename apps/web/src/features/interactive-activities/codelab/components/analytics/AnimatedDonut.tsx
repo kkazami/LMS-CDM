@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCodeLabReducedMotion } from "../codelab-motion";
 
 export interface DonutSegment {
   label: string;
@@ -27,6 +28,7 @@ export default function AnimatedDonut({
   centerLabel = "",
   centerValue = "",
 }: AnimatedDonutProps) {
+  const reduced = useCodeLabReducedMotion();
   const total = segments.reduce((s, seg) => s + seg.value, 0);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -38,19 +40,23 @@ export default function AnimatedDonut({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || animated || reduced) return;
+    let frame = 0;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          requestAnimationFrame(() => setAnimated(true));
+          frame = requestAnimationFrame(() => setAnimated(true));
           observer.disconnect();
         }
       },
       { threshold: 0.3 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [animated, reduced]);
 
   let cumulativeAngle = -90; // start from top
 
@@ -85,12 +91,12 @@ export default function AnimatedDonut({
                   fill="none"
                   stroke={seg.color}
                   strokeWidth={strokeWidth}
-                  strokeDasharray={`${animated ? dashLen : 0} ${circumference}`}
+                  strokeDasharray={`${animated || reduced ? dashLen : 0} ${circumference}`}
                   strokeDashoffset={0}
                   strokeLinecap="butt"
                   transform={`rotate(${angle} ${cx} ${cy})`}
                   style={{
-                    transition: `stroke-dasharray 900ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 100}ms`,
+                    transition: reduced ? "none" : `stroke-dasharray 900ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 100}ms`,
                   }}
                 />
               );

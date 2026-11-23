@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { isEligibleKxInstituteCode } from "@/lib/kx-eligibility";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 import { isIteInstituteCode } from "@/lib/ite/ite-eligibility";
 import { getAvailableSidebarToolsForIteProgram } from "@/lib/ite-programs/features";
 import { resolveIteStudentProgram } from "@/lib/ite-programs/registration";
@@ -169,7 +170,7 @@ export default async function InstituteLayout({
       avatarUrl={(session.user as Record<string, unknown>).avatarUrl as string | null ?? null}
       theme={theme}
       isEligibleForActivities={activityEligible}
-      isEligibleForOhmward={process.env.OHMWARD_ENABLED === 'true' && institute.toLowerCase() === 'ics' && userInstituteCode === 'ics' && ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(userRole))}
+      isEligibleForOhmward={process.env.OHMWARD_ENABLED === 'true' && userInstituteCode === 'ics' && Boolean(ohmwardDestination(institute, userRole))}
       isEligibleForKnowledgeExchange={kxEligible}
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}

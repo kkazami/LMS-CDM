@@ -4,10 +4,20 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import vm from 'node:vm';
 import { defaultPeriodPolicy } from '../../apps/web/src/lib/grading/periods';
+import { recordedScoreInPoints } from '../../apps/web/src/lib/grading/score-units';
 
 const require = createRequire(import.meta.url);
 const webRequire = createRequire(path.resolve('apps/web/package.json'));
 const { build } = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('tsx'))] }));
+
+test('legacy quiz percentages convert to points while valid point scores and manual grades keep their units', () => {
+  assert.equal(recordedScoreInPoints(50, 'SUBMITTED', true, 2), 1);
+  assert.equal(recordedScoreInPoints(1, 'SUBMITTED', true, 2), 1);
+  assert.equal(recordedScoreInPoints(0, 'SUBMITTED', true, 2), 0);
+  assert.equal(recordedScoreInPoints(null, 'SUBMITTED', true, 2), null);
+  assert.equal(recordedScoreInPoints(50, 'RETURNED', true, 2), 50);
+  assert.equal(recordedScoreInPoints(50, 'SUBMITTED', false, 2), 50);
+});
 
 test('subject CSV exports period and combined grade equivalents, preserving pending and zero scores', async () => {
   const students = [
@@ -16,14 +26,14 @@ test('subject CSV exports period and combined grade equivalents, preserving pend
     { id: 'zero', name: 'Zero Student', email: 'zero@example.invalid' },
   ];
   const items = [
-    { id: 'm', title: 'Midterm', type: 'MIDTERM_EXAM', maxPoints: 100 },
+    { id: 'm', title: 'Midterm', type: 'MIDTERM_EXAM', maxPoints: 2, form: { id: 'midterm-form' } },
     { id: 'f', title: 'Finals', type: 'FINAL_EXAM', maxPoints: 100 },
   ];
   const scores = [
-    { studentId: 'complete', syllabusItemId: 'm', grade: 80 },
+    { studentId: 'complete', syllabusItemId: 'm', grade: 80, status: 'SUBMITTED' },
     { studentId: 'complete', syllabusItemId: 'f', grade: 90 },
-    { studentId: 'pending', syllabusItemId: 'm', grade: 96 },
-    { studentId: 'zero', syllabusItemId: 'm', grade: 0 },
+    { studentId: 'pending', syllabusItemId: 'm', grade: 96, status: 'SUBMITTED' },
+    { studentId: 'zero', syllabusItemId: 'm', grade: 0, status: 'SUBMITTED' },
     { studentId: 'zero', syllabusItemId: 'f', grade: 0 },
   ];
   const scopes: unknown[] = [];
@@ -59,6 +69,7 @@ test('subject CSV exports period and combined grade equivalents, preserving pend
   assert.ok(result.csvContent.startsWith('\uFEFF'));
   assert.ok(result.csvContent.split('\n')[0].endsWith('"Midterm Grade","Finals Grade","Final Grade"'));
   assert.ok(!result.csvContent.includes('%'));
+  assert.deepEqual(result.csvContent.split('\n').slice(1).map((line: string) => line.split(',')[2]), ['1.6', '1.92', '0']);
   const rows = result.csvContent.split('\n').slice(1).map((line: string) => {
     const cells = line.split(',');
     assert.equal(cells.length, 9);

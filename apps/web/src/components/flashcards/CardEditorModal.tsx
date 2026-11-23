@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { FlashcardCard } from "@/lib/lms-types";
 import Modal from "@/components/common/Modal";
 import { ImagePlus } from "lucide-react";
+import { field, primaryButton, secondaryButton } from "./styles";
 
 interface CardEditorModalProps {
   open: boolean;
@@ -12,7 +13,6 @@ interface CardEditorModalProps {
   /** If provided, we are editing; otherwise creating */
   editingCard?: FlashcardCard | null;
   onSaved: (card: FlashcardCard) => void;
-  instituteCode?: string;
 }
 
 export default function CardEditorModal({
@@ -21,9 +21,7 @@ export default function CardEditorModal({
   deckId,
   editingCard,
   onSaved,
-  instituteCode,
 }: CardEditorModalProps) {
-  const isIte = (instituteCode || "").toLowerCase() === "ite";
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [hint, setHint] = useState("");
@@ -117,136 +115,45 @@ export default function CardEditorModal({
   };
 
   return (
-    <Modal
-      open={open}
-      title={editingCard ? "Edit Flashcard" : "New Flashcard"}
-      onClose={onClose}
-    >
-      <div className="space-y-6">
-        {error && (
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-500 shadow-xs">
-            {error}
+    <Modal open={open} title={editingCard ? "Edit flashcard" : "New flashcard"} onClose={onClose}>
+      <form className="space-y-4" onSubmit={event => { event.preventDefault(); void handleSave(); }}>
+        {error && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-800 dark:text-rose-300">{error}</p>}
+        <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+          <span>Question</span>
+          <textarea ref={frontRef} value={front} onChange={event => setFront(event.target.value)} rows={3} className={`${field} resize-y font-normal`} />
+        </label>
+
+        <div className="space-y-2">
+          <input type="file" accept="image/*" ref={fileInputRef} hidden onChange={handleImageUpload} />
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => fileInputRef.current?.click()} className={secondaryButton}>
+              <ImagePlus aria-hidden="true" className="size-4" /> {imageUrl ? "Change image" : "Add question image"}
+            </button>
+            {imageUrl && <button type="button" onClick={() => setImageUrl("")} className={secondaryButton}>Remove image</button>}
           </div>
-        )}
-
-        {/* Front (Question) + Image */}
-        <div className="space-y-4 rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
-          <label className="block text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-            Question (Front)
-          </label>
-          <textarea
-            ref={frontRef}
-            value={front}
-            onChange={(e) => setFront(e.target.value)}
-            placeholder="Type your question here..."
-            rows={3}
-            className={`w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 ${
-              isIte
-                ? "focus:border-blue-600 focus:ring-blue-500/10"
-                : "focus:border-[#F97316] focus:ring-orange-500/10"
-            }`}
-          />
-          <div className="flex flex-col gap-2 pt-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-              Optional Image
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-sm font-bold text-slate-600 dark:text-[#8B92A5] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#25293C] hover:border-slate-400 dark:hover:border-white/20 focus:outline-none focus:ring-4 cursor-pointer ${
-                  isIte ? "focus:ring-blue-500/10" : "focus:ring-orange-500/10"
-                }`}
-              >
-                <ImagePlus className="h-5 w-5" />
-                {imageUrl ? "Change Image" : "Upload Image"}
-              </button>
-              {imageUrl && (
-                <button
-                   type="button"
-                   onClick={() => setImageUrl("")}
-                   className="flex h-13 px-5 shrink-0 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-50 dark:bg-rose-950/30 text-sm font-bold text-rose-600 dark:text-rose-400 shadow-xs transition-colors hover:bg-rose-100 dark:hover:bg-rose-950/50 cursor-pointer"
-                >
-                   Remove
-                </button>
-              )}
-            </div>
-            {imageUrl.trim() && (
-              <div className="mt-2 relative flex items-center justify-center rounded-xl overflow-hidden border border-slate-200/80 dark:border-white/5 bg-slate-100 dark:bg-[#141721]" style={{ height: "160px" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={imageUrl.trim()} 
-                  alt="Preview" 
-                  className="w-full h-full object-contain" 
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
-                />
-              </div>
-            )}
-          </div>
+          {imageUrl.trim() && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl.trim()} alt="Question image preview" className="max-h-40 max-w-full rounded-xl border border-theme object-contain" onError={event => { event.currentTarget.hidden = true; }} />
+          )}
         </div>
 
-        {/* Back (Answer Key) */}
-        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
-          <label className="mb-4 block text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-            Answer Key (Back)
-          </label>
-          <textarea
-            value={back}
-            onChange={(e) => setBack(e.target.value)}
-            placeholder="Type the exact answer here..."
-            rows={3}
-            className={`w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 ${
-              isIte
-                ? "focus:border-blue-600 focus:ring-blue-500/10"
-                : "focus:border-[#F97316] focus:ring-orange-500/10"
-            }`}
-          />
-        </div>
+        <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+          <span>Answer</span>
+          <textarea value={back} onChange={event => setBack(event.target.value)} rows={3} className={`${field} resize-y font-normal`} />
+        </label>
+        <label className="block space-y-1.5 text-sm font-semibold text-primary-theme">
+          <span>Hint <span className="font-normal text-secondary-theme">(optional)</span></span>
+          <textarea value={hint} onChange={event => setHint(event.target.value)} rows={2} className={`${field} resize-y font-normal`} />
+        </label>
 
-        {/* Hint (Optional) */}
-        <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#181B26] p-5 sm:p-6">
-          <label className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#F0F2F8]">
-            <span className="text-amber-500">💡</span> Hint (Optional)
-          </label>
-          <textarea
-            value={hint}
-            onChange={(e) => setHint(e.target.value)}
-            placeholder="Add a helpful hint for when you are stuck..."
-            rows={2}
-            className="w-full resize-none rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1E2132] px-4 py-3 text-base text-slate-900 dark:text-[#F0F2F8] shadow-xs transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/10"
-          />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={`rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
-              isIte
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-[#F97316] hover:bg-orange-600"
-            }`}
-          >
-            {saving ? "Saving..." : editingCard ? "Update Card" : "Add Flashcard"}
+        <div className="flex flex-wrap justify-end gap-2 border-t border-theme pt-4">
+          <button type="button" onClick={onClose} className={secondaryButton}>Cancel</button>
+          <button type="submit" disabled={saving} className={primaryButton}>
+            {saving ? "Savingâ€¦" : editingCard ? "Update card" : "Add card"}
           </button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
+
 }

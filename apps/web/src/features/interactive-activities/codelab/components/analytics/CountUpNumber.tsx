@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCodeLabReducedMotion } from "../codelab-motion";
 
 interface CountUpNumberProps {
   /** Target value */
@@ -25,6 +26,7 @@ export default function CountUpNumber({
   className = "",
   decimals = 0,
 }: CountUpNumberProps) {
+  const reduced = useCodeLabReducedMotion();
   const [displayed, setDisplayed] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
@@ -32,11 +34,11 @@ export default function CountUpNumber({
   // Trigger when element enters viewport
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || hasStarted || reduced) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted) {
+        if (entry.isIntersecting) {
           setHasStarted(true);
         }
       },
@@ -44,12 +46,13 @@ export default function CountUpNumber({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasStarted]);
+  }, [hasStarted, reduced]);
 
   // Count-up animation using requestAnimationFrame
   useEffect(() => {
-    if (!hasStarted) return;
+    if (!hasStarted || reduced) return;
     const start = performance.now();
+    let frame = requestAnimationFrame(tick);
 
     function tick(now: number) {
       const elapsed = now - start;
@@ -57,15 +60,15 @@ export default function CountUpNumber({
       // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplayed(parseFloat((eased * value).toFixed(decimals)));
-      if (progress < 1) requestAnimationFrame(tick);
+      if (progress < 1) frame = requestAnimationFrame(tick);
     }
 
-    requestAnimationFrame(tick);
-  }, [hasStarted, value, duration, decimals]);
+    return () => cancelAnimationFrame(frame);
+  }, [hasStarted, reduced, value, duration, decimals]);
 
   return (
     <span ref={ref} className={className}>
-      {prefix}{displayed.toFixed(decimals)}{suffix}
+      {prefix}{(reduced ? value : displayed).toFixed(decimals)}{suffix}
     </span>
   );
 }

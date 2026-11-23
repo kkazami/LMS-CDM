@@ -16,6 +16,8 @@ test.beforeAll(async () => {
     import {getProblemById} from './apps/web/src/features/interactive-activities/codelab/problems';
     import DashboardLayout from './apps/web/src/components/layout/DashboardLayout';
     import PageTransition from './apps/web/src/components/common/PageTransition';
+    import CodeLabHeroHeader from './apps/web/src/features/interactive-activities/codelab/components/CodeLabHeroHeader';
+    import CodeLabBackdrop from './apps/web/src/features/interactive-activities/codelab/components/CodeLabBackdrop';
     const language=new URL(location.href).searchParams.get('language')||'html';
     const problem=getProblemById(language+'-level-1');
     const tests=problem.testCases.map(tc=>({input:tc.inputTemplate,expectedOutput:tc.expectedOutputTemplate,isHidden:tc.isHidden}));
@@ -24,16 +26,19 @@ test.beforeAll(async () => {
       fixedLanguage={language} fixedLanguageId={problem.languageId} executionMethod={problem.executionMethod}
       htmlTemplate={problem.htmlTemplate} hints={problem.hints} tags={problem.tags} templateTitle={problem.title} />;
     const mode=new URL(location.href).searchParams.get('mode');
-    const content=mode==='page' ? <article data-long-page style={{height:1800,display:'flex',flexDirection:'column',justifyContent:'space-between'}}><h1>Dashboard / Courses</h1><button>Last page action</button></article>
+    const content=mode==='page' || mode==='tracks' ? <article data-codelab-motion-surface={mode==='tracks' ? '' : undefined} style={{height:1800,position:'relative',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+      {mode==='tracks' ? <><CodeLabBackdrop/><CodeLabHeroHeader institute='ics'/></> : <h1>Dashboard / Courses</h1>}
+      <button>Last page action</button></article>
       : <div data-codelab-workspace className='flex h-full min-h-0 w-full flex-col overflow-hidden'>{scene}</div>;
     createRoot(document.getElementById('root')).render(<PageTransition><DashboardLayout instituteCode='ics' instituteName='Institute of Computing Studies'
       userName='Student' userRole='INSTRUCTOR' theme={{colors:{primary:'#F97316'}}} isEligibleForActivities>{content}</DashboardLayout></PageTransition>);`,
-    resolveDir:process.cwd(),loader:'tsx'}, bundle:true,write:false,jsx:'automatic', tsconfig:'apps/web/tsconfig.json',nodePaths:[path.resolve('apps/web/node_modules')],
+    resolveDir:process.cwd(),loader:'tsx'}, bundle:true,write:false,outfile:'fixture.js',jsx:'automatic', tsconfig:'apps/web/tsconfig.json',nodePaths:[path.resolve('apps/web/node_modules')],
     plugins:[{name:'browser-adapters',setup(b:any){
-      b.onResolve({filter:/^next\/link$|^next\/dynamic$|^@monaco-editor\/react$|^next\/navigation$|MonacoInit$|common\/(Toast|ChatbotWidget|BadgeToast|LoginRewardModal|FloatingStudyTimer)$|^@\/components\/layout\/(Sidebar|Topbar|NavigationProgress|MobileBottomNav)$|^@\/lib\/(theme-context|chatbot-context)$|FocusModeProvider$|DraftRecovery$/},({path:name}:{path:string})=>({path:name,namespace:'fixture'}));
+      b.onResolve({filter:/^next\/(link|image|dynamic|navigation)$|^@monaco-editor\/react$|^\.\/particle-field$|MonacoInit$|common\/(Toast|ChatbotWidget|BadgeToast|LoginRewardModal|FloatingStudyTimer)$|^@\/components\/layout\/(Topbar|NavigationProgress|MobileBottomNav)$|^@\/lib\/(theme-context|chatbot-context)$|FocusModeProvider$|DraftRecovery$/},({path:name}:{path:string})=>({path:name,namespace:'fixture'}));
       b.onLoad({filter:/.*/,namespace:'fixture'},({path:name}:{path:string})=>({loader:'tsx',resolveDir:path.resolve('apps/web'),contents:
         name==='next/navigation' ? 'export const usePathname=()=>location.pathname;' :
-        name.endsWith('/Sidebar') ? `export default function Sidebar(){return <aside id='sidebar' className='fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white p-6 dark:bg-slate-950 lg:block'>CdM LMS</aside>}` :
+        name==='next/image' ? 'export default function Image(){return null}' :
+        name==='./particle-field' ? `export function createParticleField(host) { const canvas = document.createElement('canvas'); host.appendChild(canvas); return { setTheme(){}, dispose(){ canvas.remove(); } }; }` :
         name.endsWith('/Topbar') ? `export default function Topbar(){return <header className='sticky top-0 z-50 h-16 shrink-0 border-b border-slate-200 bg-white p-5 dark:bg-slate-950'>ICS / CodeLab</header>}` :
         name.endsWith('/MobileBottomNav') ? `export default function Nav(){return <nav aria-label='Mobile navigation' className='fixed inset-x-0 bottom-0 h-14 border-t border-slate-200 bg-white p-4 lg:hidden'>Dashboard · Courses · Grades</nav>}` :
         name.endsWith('theme-context') ? `export function ThemeProvider({children}){return children}; export function useTheme(){return {themeMode:document.documentElement.dataset.theme||'light'}}` :
@@ -44,9 +49,10 @@ test.beforeAll(async () => {
         name==='next/dynamic' ? `export default function dynamic(){return function Editor({value,onChange}){if(!onChange)return null;return <textarea aria-label='Source code editor' style={{height:'100%',width:'100%',resize:'none',fontFamily:'monospace',padding:16,background:'var(--bg-surface)',color:'var(--text-primary)'}} value={value} onChange={e=>onChange(e.target.value)}/>}}` :
         name.endsWith('Toast') ? 'export default function Toast(){return null}; export const toast={success(){},error(){}};' : 'export default function Empty(){return null}'}));
     }}] });
-  script = result.outputFiles[0].text;
+  script = result.outputFiles.find((file: { path: string }) => file.path.endsWith('.js')).text;
   css = (await web('postcss')([web('@tailwindcss/postcss')({base:path.resolve('apps/web')})])
-    .process(await fs.readFile('apps/web/src/app/globals.css','utf8'),{from:path.resolve('apps/web/src/app/globals.css')})).css;
+    .process(await fs.readFile('apps/web/src/app/globals.css','utf8'),{from:path.resolve('apps/web/src/app/globals.css')})).css
+    + result.outputFiles.find((file: { path: string }) => file.path.endsWith('.css')).text;
   await fs.mkdir(shots,{recursive:true});
   const nativeFixture = path.resolve('tmp/native-embedded-fixtures');
   await fs.mkdir(nativeFixture, { recursive: true });
@@ -209,4 +215,61 @@ test('CodeLab fills the actual shell without a blank footer or document scrollin
   await page.mouse.wheel(0,1000);
   expect(await page.evaluate(()=>window.scrollY)).toBe(0);
   await fits(page);
+});
+
+test('wheel scrolling reaches the track list from the LMS sidebar', async ({page}) => {
+  await mount(page, 'html', 1366, 600, false, 'tracks');
+  await page.locator('.dashboard-sidebar').getByRole('link', {name:'CdM LMS'}).hover();
+  await page.mouse.wheel(0, 700);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+test('wheel scrolling over the tutorial header reaches the tutorial content', async ({page}) => {
+  await mount(page, 'html', 1366, 600);
+  const tutorial = page.locator('[data-codelab-tutorial]');
+  await tutorial.getByText('Tutorial & Challenge', {exact:true}).hover();
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => tutorial.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('the LMS sidebar scrolls independently when its links overflow in the editor', async ({page}) => {
+  await mount(page, 'html', 1366, 420);
+  const sidebar = page.locator('.dashboard-sidebar');
+  await sidebar.getByRole('link', {name:'CdM LMS'}).hover();
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => sidebar.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('reduce motion stops CodeLab effects and persists between tracks and editor', async ({page}) => {
+  await mount(page, 'html', 1366, 600, false, 'tracks');
+  const toggle = page.getByRole('button', {name:'Reduce motion', exact:true});
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('canvas')).toBeAttached();
+  await expect(page.locator('[data-running]')).toHaveAttribute('data-running', 'true');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('[data-running]')).toHaveCount(0);
+  await expect(page.getByRole('heading', {name:'Choose Your Learning Track'})).toHaveText('Choose Your Learning Track');
+
+  await mount(page, 'html', 1366, 600);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-codelab-tutorial]')).toHaveCSS('scroll-behavior', 'auto');
+  await expect(page.locator('[data-editor-fullscreen]')).toHaveCSS('transition-duration', '0s');
+  await expect(page.getByRole('button', {name:'Run Tests', exact:true})).toBeEnabled();
+  await toggle.click();
+  await mount(page, 'html', 1366, 600, false, 'tracks');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('canvas')).toBeAttached();
+});
+
+test('CodeLab follows system reduced motion by default', async ({page}) => {
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await mount(page, 'html', 390, 844, false, 'tracks');
+  const toggle = page.getByRole('button', {name:'Reduce motion (system)', exact:true});
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toBeDisabled();
+  await expect(page.locator('canvas')).toHaveCount(0);
 });

@@ -10,6 +10,7 @@ import { useTheme } from "@/lib/theme-context";
 import { LANGUAGE_LABELS } from "../problems/types";
 import MonacoInit from "@/components/common/MonacoInit";
 import { CodeSymbolBar } from './CodeSymbolBar';
+import { useCodeLabReducedMotion } from './codelab-motion';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -27,6 +28,7 @@ const MONACO_LANGUAGE_MAP: Record<CodeLabLanguage, string> = {
 };
 
 export function CodeEditor() {
+  const reduced = useCodeLabReducedMotion();
   const language = useCodeLabStore((s) => s.language);
   const code = useCodeLabStore((s) => s.codeByLanguage[language] || "");
   const updateCode = useCodeLabStore((s) => s.updateCode);
@@ -127,7 +129,8 @@ export function CodeEditor() {
             fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
-            cursorSmoothCaretAnimation: "on",
+            cursorBlinking: reduced ? "solid" : "blink",
+            cursorSmoothCaretAnimation: reduced ? "off" : "on",
             renderLineHighlight: "all",
             lineNumbers: "on",
             glyphMargin: false,

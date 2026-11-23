@@ -46,7 +46,7 @@ test('instructors organize periods, edit scores, customize 40/60, export and swi
   const unchanged = await (await page.request.get('/api/courses/grade-course/gradebook')).json();
   expect(unchanged.grades.other['grade-mid'].grade).toBe(70);
   await page.unroute('**/ics/gradebooks**');
-  await page.getByRole('button', { name: 'Retry / save score', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry / Save Score', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Score saved.' })).toBeVisible();
   await expect(page.getByRole('main').getByRole('alert')).toHaveCount(0);
   await page.getByRole('button', { name: 'Final Grades', exact: true }).click();
