@@ -53,7 +53,7 @@ export default function AssignmentsScreen() {
             maxPoints: null,
             professorName: '',
             creatorId: user?.id || '',
-            instituteId: user?.institute?.id || '',
+            instituteId: user?.instituteId || '',
             createdAt: t.createdAt,
             updatedAt: t.updatedAt,
           };

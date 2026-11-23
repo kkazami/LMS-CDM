@@ -42,12 +42,11 @@ export function IbeCourseCard({
   }
 
   // Warm gold and bronze gradient backgrounds tailored for IBE
-  const gradients = [
-    ['#4A3505', '#1F1602'],
-    ['#3B2A08', '#171003'],
-    ['#543B05', '#241902'],
-  ];
-  const gradient = gradients[index % gradients.length];
+  const gradient: [string, string] = index % 3 === 0
+    ? ['#4A3505', '#1F1602']
+    : index % 3 === 1
+      ? ['#3B2A08', '#171003']
+      : ['#543B05', '#241902'];
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
