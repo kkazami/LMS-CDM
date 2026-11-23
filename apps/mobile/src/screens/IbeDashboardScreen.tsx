@@ -573,7 +573,7 @@ export function IbeDashboardScreen({
                 </TouchableOpacity>
               ))}
             </View>
-          ) : null
+          ) : undefined
         }
       />
 

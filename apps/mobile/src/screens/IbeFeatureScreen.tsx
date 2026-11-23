@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+
+const WebViewComponent = WebView as any;
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExternalLink, RefreshCw } from 'lucide-react-native';
@@ -64,7 +66,7 @@ export function IbeFeatureScreen({ feature }: { feature: IbeFeature }) {
   const token = useAuthStore(s => s.token);
   const user = useAuthStore(s => s.user);
 
-  const web = useRef<WebView>(null);
+  const web = useRef<WebView<object>>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [canGoBack, setCanGoBack] = useState(false);
@@ -184,8 +186,18 @@ export function IbeFeatureScreen({ feature }: { feature: IbeFeature }) {
                 onPress={() => router.back()}
               />
             </View>
+          ) : (Platform.OS as string) === 'web' ? (
+            <View style={styles.state}>
+              <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
+                Use the iOS or Android app for the in-app workspace. In this browser preview, continue in the web portal.
+              </Text>
+              <Button
+                title={`Open ${info.title}`}
+                onPress={() => { void openSafeUrl(fullUrl); }}
+              />
+            </View>
           ) : (
-            <WebView
+            <WebViewComponent
               key={attempt}
               ref={web}
               source={{
@@ -195,7 +207,7 @@ export function IbeFeatureScreen({ feature }: { feature: IbeFeature }) {
               style={{ flex: 1, backgroundColor: theme.colors.background }}
               injectedJavaScriptBeforeContentLoaded={setup}
               injectedJavaScript={setup}
-              onNavigationStateChange={nav => {
+              onNavigationStateChange={(nav: any) => {
                 setCanGoBack(nav.canGoBack);
               }}
               onLoadStart={() => setLoading(true)}

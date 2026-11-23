@@ -20,8 +20,7 @@ const icons = {
   more: MoreHorizontal,
 };
 
-export function IbeTabBar({ state, descriptors, navigation }: FloatingPillTabBarProps) {
-  const tabRefs = useRef<Record<string, View | null>>({});
+export function IbeTabBar({ state, descriptors, emitter, navigateToTab }: FloatingPillTabBarProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -54,9 +53,9 @@ export function IbeTabBar({ state, descriptors, navigation }: FloatingPillTabBar
         },
       ]}
     >
-      {state.routes.map((route, index) => {
+      {state.routes.map((route: any, index: number) => {
         const options = descriptors[route.key].options;
-        if (options.href === null || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') {
+        if (options.hidden || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') {
           return null;
         }
 
@@ -68,7 +67,6 @@ export function IbeTabBar({ state, descriptors, navigation }: FloatingPillTabBar
         return (
           <Pressable
             key={route.key}
-            ref={node => { tabRefs.current[route.key] = node; }}
             accessibilityRole="tab"
             accessibilityLabel={`${label} tab`}
             accessibilityHint={route.name === 'alerts' ? `${unread} unread notifications` : undefined}
@@ -79,10 +77,10 @@ export function IbeTabBar({ state, descriptors, navigation }: FloatingPillTabBar
                 openMenu();
                 return;
               }
-              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-              if (!event.defaultPrevented) navigation.navigate(route.name);
+              const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!event.defaultPrevented) navigateToTab(route.key);
             }}
-            onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+            onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
           >
             <View>
               <Icon size={21} color={color} strokeWidth={1.7} />

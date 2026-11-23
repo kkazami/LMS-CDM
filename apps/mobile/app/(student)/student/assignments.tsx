@@ -71,7 +71,6 @@ export default function AssignmentsScreen() {
         dueSoon: pendingAssignments.filter(event => Date.parse(event.eventDate) >= now && Date.parse(event.eventDate) <= nextWeek).length,
       };
     },
-    staleTime: 20000,
   });
 
   const items = (query.data?.pendingAssignments || [])
@@ -143,7 +142,7 @@ export default function AssignmentsScreen() {
                 <Text style={{ color: theme.colors.textSecondary, fontSize: 15, lineHeight: 24, textAlign: 'center', marginTop: 32 }}>
                   No {filter === 'All' ? 'pending' : filter.toLowerCase()} assignments. You’re all caught up.
                 </Text>
-              ) : null
+              ) : undefined
             }
             renderItem={({ item }) => (
               <Pressable

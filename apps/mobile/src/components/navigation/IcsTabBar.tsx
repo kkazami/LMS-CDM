@@ -24,7 +24,7 @@ export function IcsTabBar({ state, descriptors, emitter, navigateToTab }: Floati
   const api = useAuthStore(s => s.api);
   useEffect(() => { void fetchUnread(api); }, [api, fetchUnread]);
   return <View testID={isIcsV2 ? 'ics-tab-bar-v2' : undefined} style={[styles.bar, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, paddingBottom: insets.bottom }, isIcsV2 && { borderTopWidth: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 8, paddingTop: 6 }]}>
-    {state.routes.map((route, index) => {
+    {state.routes.map((route: any, index: number) => {
       const options = descriptors[route.key].options;
       if (options.hidden || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
       const active = route.name === 'more' ? isOpen : !isOpen && state.index === index;
