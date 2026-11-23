@@ -1,0 +1,2043 @@
+{
+  "date": "2026-11-19",
+  "scope": "Local revision-specific evidence from public manifests, permitted offline fixtures and disposable synthetic PostgreSQL.",
+  "git_and_preservation": {
+    "sprint_2": {
+      "base": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+      "commit": "0452a5dae2ef5d3026f9e11fb6b2c214c2d36e04",
+      "tree": "de0d269b47588082210e470b9b28ce7da0c5e500",
+      "patch_sha256": "eb27390b6fed08dafd17f70c6aaa2ad15abc0377086bb916e0f8378af94000c3",
+      "scope_files": 55
+    },
+    "sprint_3": {
+      "tree": "83b9d5e8e2e4ba5bb79b9106a888be4eac288c21",
+      "patch_sha256": "2192af57bef398dae5b84c3c85c2e08293e7d49938493c20abcb3d617817fb2b",
+      "scope_files": 15,
+      "state": "frozen for review; original checkout preserves work in progress"
+    },
+    "sprint_4": {
+      "branch": "codex/security-sprint-4",
+      "head": "4ddff68f8dd9ae5a7703d3d6a70b978ff1d9f53a",
+      "committed": "Expo-only app and Expo-only lockfile",
+      "working_tree": "Frozen Sprint 3 plus additional Sprint 4 changes",
+      "review_path": "tmp/security-sprint-4/sprint-4-review"
+    },
+    "historical_files_matched": 186,
+    "run2": {
+      "commit": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+      "ledger_sha256": "ba328d448925135cb5c6a4d36677441f80684feb6c536f41307c9c33dfd447bb",
+      "counts": {
+        "covered": 14,
+        "candidate": 4,
+        "blocked": 8,
+        "deferred": 51
+      },
+      "blocked_retried": false
+    }
+  },
+  "dependencies": {
+    "pnpm": "10.32.1",
+    "before": {
+      "before-prod": {
+        "artifact": "tmp/security-sprint-3/before-prod.stdout.log",
+        "sha256": "25a8c334fdb826994e44657ab7546bbd39c953649a239cfa78151a343bbf7f4a",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--prod",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 2,
+          "high": 1,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-vcc3-ghjq-m6fr",
+            "package": "decode-uri-component",
+            "severity": "moderate",
+            "patched": ">=0.5.0",
+            "findings": [
+              {
+                "version": "0.2.2",
+                "paths": [
+                  "apps__mobile>expo-router>query-string>decode-uri-component"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-qr28-fpjm-wq7f",
+            "package": "decode-uri-component",
+            "severity": "high",
+            "patched": ">=0.5.1",
+            "findings": [
+              {
+                "version": "0.2.2",
+                "paths": [
+                  "apps__mobile>expo-router>query-string>decode-uri-component"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__mobile>expo>@expo/fingerprint>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "before-all": {
+        "artifact": "tmp/security-sprint-3/before-all.stdout.log",
+        "sha256": "7e58207378daa4d1113eca107cd447db113be39002335c56ff2465e786975531",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 4,
+          "high": 1,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-w5hq-g745-h8pq",
+            "package": "uuid",
+            "severity": "moderate",
+            "patched": ">=11.1.1",
+            "findings": [
+              {
+                "version": "3.4.0",
+                "paths": [
+                  "apps__mobile>@expo/ngrok>uuid"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-vcc3-ghjq-m6fr",
+            "package": "decode-uri-component",
+            "severity": "moderate",
+            "patched": ">=0.5.0",
+            "findings": [
+              {
+                "version": "0.2.2",
+                "paths": [
+                  "apps__mobile>expo-router>query-string>decode-uri-component"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-qr28-fpjm-wq7f",
+            "package": "decode-uri-component",
+            "severity": "high",
+            "patched": ">=0.5.1",
+            "findings": [
+              {
+                "version": "0.2.2",
+                "paths": [
+                  "apps__mobile>expo-router>query-string>decode-uri-component"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "9.0.9",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+                ]
+              },
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "after": {
+      "after-expo-prod": {
+        "artifact": "tmp/security-sprint-4/after-expo-prod.stdout.log",
+        "sha256": "0fdaaebea62bf8504a21710f42ef84b0ea404d348bf5cda4eaaec61b132284c8",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--prod",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "dbe76a6477f3ec8c1744e86d55a58dcd5e9bca7839791407115112bbbb9f940e",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 2,
+          "high": 0,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-3g3m-2fjr-6pw4",
+            "package": "glob",
+            "severity": "moderate",
+            "patched": ">=14.0.2",
+            "findings": [
+              {
+                "version": "13.0.7",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "after-expo-all": {
+        "artifact": "tmp/security-sprint-4/after-expo-all.stdout.log",
+        "sha256": "f28bd18ca7240ba56ca53a83c93630714209cb6c2cfab9f4c60b1cecf450a72d",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "dbe76a6477f3ec8c1744e86d55a58dcd5e9bca7839791407115112bbbb9f940e",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 4,
+          "high": 0,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-w5hq-g745-h8pq",
+            "package": "uuid",
+            "severity": "moderate",
+            "patched": ">=11.1.1",
+            "findings": [
+              {
+                "version": "3.4.0",
+                "paths": [
+                  "apps__mobile>@expo/ngrok>uuid"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-3g3m-2fjr-6pw4",
+            "package": "glob",
+            "severity": "moderate",
+            "patched": ">=14.0.2",
+            "findings": [
+              {
+                "version": "13.0.7",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "9.0.9",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+                ]
+              },
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "after-identity-prod": {
+        "artifact": "tmp/security-sprint-4/after-identity-prod.stdout.log",
+        "sha256": "90557727ac3a6bbfead5ea6740e57968aab92504e1c53877f0de4346f3955184",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--prod",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 2,
+          "high": 0,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-3g3m-2fjr-6pw4",
+            "package": "glob",
+            "severity": "moderate",
+            "patched": ">=14.0.2",
+            "findings": [
+              {
+                "version": "13.0.7",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "after-identity-all": {
+        "artifact": "tmp/security-sprint-4/after-identity-all.stdout.log",
+        "sha256": "cba1b272658ad9f72f3df01967b0ba0c8c9afa1a9c0c98648ef790a9657d42a9",
+        "command": [
+          "node",
+          "pnpm",
+          "audit",
+          "--json"
+        ],
+        "exit": 1,
+        "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "matches": {
+          "info": 0,
+          "low": 0,
+          "moderate": 4,
+          "high": 0,
+          "critical": 0
+        },
+        "advisories": [
+          {
+            "id": "GHSA-w5hq-g745-h8pq",
+            "package": "uuid",
+            "severity": "moderate",
+            "patched": ">=11.1.1",
+            "findings": [
+              {
+                "version": "3.4.0",
+                "paths": [
+                  "apps__mobile>@expo/ngrok>uuid"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-3g3m-2fjr-6pw4",
+            "package": "glob",
+            "severity": "moderate",
+            "patched": ">=14.0.2",
+            "findings": [
+              {
+                "version": "13.0.7",
+                "paths": [
+                  "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GHSA-g3hv-75wg-m249",
+            "package": "minimatch",
+            "severity": "moderate",
+            "patched": ">=11.0.1",
+            "findings": [
+              {
+                "version": "9.0.9",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+                ]
+              },
+              {
+                "version": "10.2.6",
+                "paths": [
+                  "apps__desktop>electron-builder>app-builder-lib>minimatch"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "expo_compatibility_record": {
+      "artifact": "tmp/security-sprint-4/official-compatibility.json",
+      "sha256": "dddf61b08d09400e9fc42527466a7a9a935951667d3b64ede4ae8d8afdb302a3"
+    },
+    "expo_doctor_tool": {
+      "shasum": "b8a9f0e61b8c87874c1fd7ca4fa41127ce41ab7d",
+      "tarball": "https://registry.npmjs.org/expo-doctor/-/expo-doctor-1.21.8.tgz",
+      "fileCount": 102,
+      "integrity": "sha512-O05U/k4AX/khIFQ9DJkDYAe5wYMGrGWiAZmyQ/gn6n99buTozKbPFnz/fzF4MjuYki19FkPQSB/UI+3pkS2q7w==",
+      "signatures": [
+        {
+          "sig": "MEYCIQDv6C6tGQFYNWlaIDLc8D6tu5YgqXHMVJiFfGC3sKE4eAIhANe/N/VkR3UJdROd+309B7fapnuyB9sPoJG69Pd+CAAW",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "sig": "MEUCICIhWeLcn+6vLwcTRtaaWhRzluf+AzAfjz3/3y3UYNdGAiEAv9ogwjbmmhiDx6kj5+0U/09lp+m42FjYvoV9QRY0hJA=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/expo-doctor@1.21.8",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 816541
+    }
+  },
+  "local_receipts": {
+    "identity-regressions": {
+      "receipt": "tmp/security-sprint-4/identity-regressions/receipt.json",
+      "receipt_sha256": "81faf07d36a4e953e65d62b4ccac6c197f05be348cd08351f33cdb75a1257c7e",
+      "mode": "tests",
+      "exit": 1,
+      "counts": {
+        "tests": 116,
+        "pass": 115,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs"
+      ],
+      "seconds": 66.67,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs"
+      ],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "28f588db717a4c6f871fcf0690858831ddef4a7fadb258051982863b26cf2c6c"
+    },
+    "regressions-release": {
+      "receipt": "tmp/security-sprint-4/regressions-release/receipt.json",
+      "receipt_sha256": "0efbea14b4c5eef8163cfe15902b04c0fa7e4391886430023cfd79a8b65f60a9",
+      "mode": "tests",
+      "exit": 0,
+      "counts": {
+        "tests": 116,
+        "pass": 116,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs"
+      ],
+      "seconds": 88.78,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs"
+      ],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/roster/rate-limit.ts": "d9b9f9475bf98f7497f53d6803baf1c4128589566def6da9eda115836e3c86c0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "c3bc51b461e82a4c0959a88ca43343b8e04d630b67adfd7bd30c91e2578fe350"
+    },
+    "web-types-final": {
+      "receipt": "tmp/security-sprint-4/web-types-final/receipt.json",
+      "receipt_sha256": "da7006aa8c02827c2a624d25ea1a7e275c75f699d15a7f367901a3bc36a863c7",
+      "mode": "web-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next typegen && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "seconds": 131.44,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "314d1d8a61c1afe40b8d98f631b4826b7c406d9a7c703586c7d8ef69002339dc"
+    },
+    "mobile-types-final": {
+      "receipt": "tmp/security-sprint-4/mobile-types-final/receipt.json",
+      "receipt_sha256": "e6d1ffdf62531e77ff19d2c256f409c5c0b64463b5ea0155725847dc161a49a3",
+      "mode": "mobile-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "seconds": 58.16,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "0626b81a2e56a2a8cac29114e50caa4bf37814f91eb5d1b77890640803cb88be"
+    },
+    "desktop-types-final": {
+      "receipt": "tmp/security-sprint-4/desktop-types-final/receipt.json",
+      "receipt_sha256": "38b7679a5555135fc6acaab4758b1cc8348c8fa32a361f4dccad62ee5a70ef96",
+      "mode": "desktop-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "seconds": 94.55,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "harness-types-final": {
+      "receipt": "tmp/security-sprint-4/harness-types-final/receipt.json",
+      "receipt_sha256": "3c053cb8bae9e77014b6b95883557310ac3b544dc8ef36ebc65963aa75fbbc3f",
+      "mode": "harness-types",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node node_modules/typescript/bin/tsc --noEmit --incremental false --project scripts/harness/tsconfig.json"
+      ],
+      "seconds": 63.51,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "9ac0f86997ded592dd85b8ad70a2ae8c5efc90377341296f187b9874a09afff9"
+    },
+    "desktop-compile-final": {
+      "receipt": "tmp/security-sprint-4/desktop-compile-final/receipt.json",
+      "receipt_sha256": "2ecf5d5f03ada77e65e66479c72019bd8c883c7cfd00dd53df127f2b75fe5917",
+      "mode": "desktop-compile",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json && test -s dist/electron/main.js && test -s dist/electron/preload.js"
+      ],
+      "seconds": 52.68,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mobile-bundle-final": {
+      "receipt": "tmp/security-sprint-4/mobile-bundle-final/receipt.json",
+      "receipt_sha256": "64b847f1a792a948b8d0ffc428050500607f98c68726acac51ece320de51f3e3",
+      "mode": "mobile-export",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/mobile && node node_modules/expo/bin/cli export --platform android --platform ios --output-dir /scratch/mobile-export --max-workers 2"
+      ],
+      "seconds": 310.52,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "5a60904a8c161c9108232ab65b1ca6eb4b81e4f8f91fdf6467c9f26032b5c2d8"
+    },
+    "expo-check-final": {
+      "receipt": "tmp/security-sprint-4/expo-check-final/receipt.json",
+      "receipt_sha256": "47da3103dcd12c5326b7160f79ae7d1e0730c67bad82a7150f00c996a175f16e",
+      "mode": "expo-check",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/mobile && CI=1 node node_modules/expo/bin/cli install --check"
+      ],
+      "seconds": 67.75,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "e1dd64d5cdc32bb8d9de45b145444a634096309b0b760945109ce3b1bd3b62c8"
+    },
+    "expo-doctor-final": {
+      "receipt": "tmp/security-sprint-4/expo-doctor-final/receipt.json",
+      "receipt_sha256": "ce8bcd1174115e71f65100ee52cf27ee5a599f3e5da22f417cdcb81d3e3476e2",
+      "mode": "expo-doctor",
+      "exit": 1,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "mkdir /scratch/doctor && tar -xzf expo-doctor.tgz -C /scratch/doctor && cd apps/mobile && CI=1 node /scratch/doctor/package/bin/expo-doctor.js"
+      ],
+      "seconds": 91.85,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "15ffb64334080bd297abc630b6ffe96086169b6ead654a4ca54fe9f47494e43e"
+    },
+    "web-build-linux": {
+      "receipt": "tmp/security-sprint-4/web-build-linux/receipt.json",
+      "receipt_sha256": "4dc544afe2ca0ada487397d18d1a8f89c72cbe3b5ef7ab5c9a82ffd40d42173d",
+      "mode": "web-build",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf \"Build ID: \" && cat .next/BUILD_ID"
+      ],
+      "seconds": 257.05,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1"
+      },
+      "output_sha256": "f2deeee2a20e56de776446359af1694092f55870e23f3d59dfe57b707e41aabe",
+      "build_id": "a4tMr4--wCrpYw3AW6ktZ"
+    },
+    "web-build-final": {
+      "receipt": "tmp/security-sprint-4/web-build-final/receipt.json",
+      "receipt_sha256": "6cc344ee0351220851610ee8202f2504db3ef8f267aada65f2c3e2cf3ff65673",
+      "mode": "web-build",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf \"Build ID: \" && cat .next/BUILD_ID"
+      ],
+      "seconds": 448.48,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "33d0951c2e0ef88325e2aa42129ddd265bf738cea3325327bd30603c45687066",
+      "build_id": "_dtLw8YwkqR_MyXU63e59"
+    },
+    "web-build-release": {
+      "receipt": "tmp/security-sprint-4/web-build-release/receipt.json",
+      "receipt_sha256": "e7332c191757b3d7944fc3decf3bf599138621dde7b1d4cfec870021e31a516a",
+      "mode": "web-build",
+      "exit": 0,
+      "counts": {},
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf \"Build ID: \" && cat .next/BUILD_ID"
+      ],
+      "seconds": 338.3,
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/roster/rate-limit.ts": "d9b9f9475bf98f7497f53d6803baf1c4128589566def6da9eda115836e3c86c0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "a4817c35b02b861f23ba4a0f49f6cf0e46703d19975b2abf8e859dd1de9256a5",
+      "build_id": "NuxBqACYWj163nQR8aJZ0"
+    },
+    "staging-isolated": {
+      "receipt": "tmp/security-sprint-4/staging-isolated/receipt.json",
+      "receipt_sha256": "a0c19be29a5eb0d098848b29dc7a0ad9d7439482bc9fb3282af53ecad33ec128",
+      "mode": "staging",
+      "exit": 0,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-2/staging.test.cjs"
+      ],
+      "seconds": 85.51,
+      "limits": {
+        "network": "container:lms-sprint2-pg-d0ec7d822f6940f682a6ad48651482a5",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/sprint-2/staging.test.cjs"
+      ],
+      "matching_sprint_4_source_hashes": {
+        "apps/desktop/electron/main.ts": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db",
+        "apps/mobile/app.json": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749",
+        "apps/mobile/app/(student)/student/(tabs)/alerts.tsx": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80",
+        "apps/mobile/app/(student)/student/assignments.tsx": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02",
+        "apps/mobile/app/(student)/student/leaderboard/index.tsx": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017",
+        "apps/mobile/app/(student)/student/meetings/index.tsx": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e",
+        "apps/mobile/app/(teacher)/teacher/meetings/index.tsx": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e",
+        "apps/mobile/package.json": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef",
+        "apps/mobile/src/components/MobileWebContainer.tsx": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4",
+        "apps/mobile/src/components/chatbot/ChatbotFAB.tsx": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50",
+        "apps/mobile/src/components/institute/IcsHeader.tsx": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1",
+        "apps/mobile/src/components/motion/SurfacePressable.tsx": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616",
+        "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2",
+        "apps/mobile/src/components/navigation/IcsTabBar.tsx": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602",
+        "apps/mobile/src/components/navigation/IcsToolsMenu.tsx": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75",
+        "apps/mobile/src/components/presentation/MobilePresentation.tsx": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139",
+        "apps/mobile/src/components/ui/Text.tsx": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0",
+        "apps/mobile/src/components/ui/TextInput.tsx": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd",
+        "apps/mobile/src/screens/IcsDashboardScreen.tsx": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7",
+        "apps/mobile/src/screens/IcsFeatureScreen.tsx": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844",
+        "apps/web/next.config.ts": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7",
+        "apps/web/package.json": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5",
+        "apps/web/src/app/api/auth/change-password/route.ts": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f",
+        "apps/web/src/app/api/auth/login/route.ts": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123",
+        "apps/web/src/app/api/auth/mobile-session/route.ts": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583",
+        "apps/web/src/app/api/auth/register/route.ts": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06",
+        "apps/web/src/app/api/auth/sessions/route.ts": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2",
+        "apps/web/src/lib/auth-session.ts": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01",
+        "apps/web/src/lib/codelab-rate-limit.ts": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137",
+        "apps/web/src/lib/password-hashing.ts": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222",
+        "apps/web/src/lib/rbac.ts": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e",
+        "apps/web/src/lib/request-security.ts": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0",
+        "apps/web/src/lib/session-cookie.ts": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a",
+        "apps/web/src/lib/session-policy.ts": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b",
+        "apps/web/src/lib/super-user-v1/institute-admin.ts": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628",
+        "apps/web/src/middleware.ts": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1",
+        "pnpm-lock.yaml": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+        "tests/sprint-4/identity.test.cjs": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+      },
+      "output_sha256": "9bf0c8b0f98f07ef3141f557e77fd8b834c8e08f9deedecd220b6a154e548101"
+    },
+    "fixture-staging-isolated": {
+      "receipt": "tmp/security-sprint-4/fixture-staging-isolated/receipt.json",
+      "receipt_sha256": "d1550cc2ec78eeb815eec96eb0bc42037fd2eb3d0c3b57a6ccc1820724707bc0",
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_counts": {
+          "users": 3,
+          "courses": 1,
+          "enrollments": 1,
+          "export_events": 1
+        },
+        "production_restore": false,
+        "role_grants_objects_keys_and_cross_cluster_recovery": "not established"
+      }
+    },
+    "static": {
+      "receipt": "tmp/security-sprint-4/scan-static-d842a07f/receipt.json",
+      "receipt_sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b",
+      "mode": "static",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "output_sha256": "2ccec512a3d9d2ce1e89d9e685ff3729c39777da557714652be8f77819a0cfc3"
+    },
+    "secrets": {
+      "receipt": "tmp/security-sprint-4/scan-secrets-7b0fb52d/receipt.json",
+      "receipt_sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18",
+      "mode": "secrets",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "output_sha256": "a8df20c275ade2c2a3203ed64d13be6a869b695ed6d02514cafe0bc0b3f47301"
+    }
+  },
+  "database_pilot": {
+    "receipt": "tmp/security-sprint-4/pilot-release.stdout.log",
+    "receipt_sha256": "e117a136d4db01cf941be9a940d473d982f0f2f389757cdeb461b68c98d767bf",
+    "exit": 0,
+    "postgresql": "17.11",
+    "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+    "scope": "Disposable PostgreSQL; restricted role, synthetic read isolation, restored fingerprint and role policies, counter saturation and reset.",
+    "clients": 4,
+    "keys": 2,
+    "transactions": 100,
+    "failed": 0,
+    "average_latency_ms": 0.475,
+    "restore_scope": "Create disposable destination and restore tiny pre-existing custom-format dump; policy and schema/data checks run separately.",
+    "restore_time_ms": 78,
+    "restore_fingerprint": "e9853630892e620785f0f4729cd6a4e7|3"
+  },
+  "asvs": {
+    "version": "5.0.0",
+    "target": 2,
+    "register_count": 253,
+    "new_requirement_passes": 0,
+    "scoped_evidence_entries": [
+      "v5.0.0-2.4.1",
+      "v5.0.0-3.3.1",
+      "v5.0.0-3.3.2",
+      "v5.0.0-3.3.3",
+      "v5.0.0-3.3.4",
+      "v5.0.0-6.2.1",
+      "v5.0.0-6.2.4",
+      "v5.0.0-6.2.5",
+      "v5.0.0-6.2.8",
+      "v5.0.0-6.2.9",
+      "v5.0.0-6.2.12",
+      "v5.0.0-6.3.3",
+      "v5.0.0-7.3.1",
+      "v5.0.0-7.3.2",
+      "v5.0.0-7.4.1",
+      "v5.0.0-7.5.2",
+      "v5.0.0-8.4.1",
+      "v5.0.0-11.4.2",
+      "v5.0.0-16.2.1",
+      "v5.0.0-16.2.5"
+    ]
+  },
+  "open": {
+    "hosted_ci": "Not run. Deployment and preview credentials could not be checked from the repository.",
+    "mfa": "Existing privileged path retained. Local ordinary-role enrollment and enforcement held on client/federation completion.",
+    "password": "Read support for changed consumers only. New writes, automatic rehash, policy activation and real-host resource limits pending.",
+    "cookie": "Host-prefix cutover waits for owner and client compatibility. Single-device stronger reauthentication remains an ASVS gap.",
+    "desktop_and_mobile": "Native device, signed artifact, distribution and OTA checks not performed. Expo Doctor 18/20; remote schema and directory unavailable offline.",
+    "database": "No actual Prisma/Neon pooled RLS or production policies/grants. Local PostgreSQL fixture does not represent actual load.",
+    "recovery": "Backup schedule, encrypted independent custody and full infrastructure recovery unverified.",
+    "blocked_scope": "Original blocked audit units were not retried or rephrased."
+  },
+  "changes_relative_to_frozen_sprint_3": [
+    {
+      "path": "SECURITY-ROADMAP.md",
+      "change": "modified",
+      "sha256": "d16b4d8d9005731c34f51dd05cf39074a08687c023109844511378e1edb08ec5"
+    },
+    {
+      "path": "apps/desktop/electron/main.ts",
+      "change": "modified",
+      "sha256": "f24974f348af12fd3092f265544103914600b41c31e94b72c6ad5a279e8d86db"
+    },
+    {
+      "path": "apps/mobile/app.json",
+      "change": "modified",
+      "sha256": "3c0e36dbffacb3da9e7027649771103eed2ed63795c2692ee94336120a809749"
+    },
+    {
+      "path": "apps/mobile/app/(student)/student/(tabs)/alerts.tsx",
+      "change": "modified",
+      "sha256": "47e1d66128e2657afc3e376bff3bf73d98344c0f39848f34a938b6d929a93c80"
+    },
+    {
+      "path": "apps/mobile/app/(student)/student/assignments.tsx",
+      "change": "modified",
+      "sha256": "a55c1404b7ac942ff85551c85cb784b7b19602ec47bcefe155fb09ffede2bd02"
+    },
+    {
+      "path": "apps/mobile/app/(student)/student/leaderboard/index.tsx",
+      "change": "modified",
+      "sha256": "3634b8211792e80f5bb80b60b84e4e35f3c49aeb2ea425e06668393c2da84017"
+    },
+    {
+      "path": "apps/mobile/app/(student)/student/meetings/index.tsx",
+      "change": "modified",
+      "sha256": "b98edb9755d1673e172f281db705b86bb4407ae43f347c315f64ec0d78d3e54e"
+    },
+    {
+      "path": "apps/mobile/app/(teacher)/teacher/meetings/index.tsx",
+      "change": "modified",
+      "sha256": "ef578787f51bafc33b18d6dad7c0abeaa91e21922431156032b56defa88c237e"
+    },
+    {
+      "path": "apps/mobile/package.json",
+      "change": "modified",
+      "sha256": "f3849087668a2b318d558f660217dd0e53132f8e1da2e285e74f80d3a1c133ef"
+    },
+    {
+      "path": "apps/mobile/src/components/MobileWebContainer.tsx",
+      "change": "modified",
+      "sha256": "3b23446cc96805f5d80d416964a453f36f2fecdd9509c5b2a353979b163b99e4"
+    },
+    {
+      "path": "apps/mobile/src/components/chatbot/ChatbotFAB.tsx",
+      "change": "modified",
+      "sha256": "244ccef684564517cb71c00a5c876292437a0a2d2588805565470056fd26ed50"
+    },
+    {
+      "path": "apps/mobile/src/components/institute/IcsHeader.tsx",
+      "change": "modified",
+      "sha256": "dbea8ed4f37ebe081cff9239aec5589914fa1e94258325bdb9d75310f7f906b1"
+    },
+    {
+      "path": "apps/mobile/src/components/motion/SurfacePressable.tsx",
+      "change": "modified",
+      "sha256": "7197b42efee7bb132f0f4146ffdf74c3cc5c63ab77931b773068325ab592a616"
+    },
+    {
+      "path": "apps/mobile/src/components/navigation/FloatingPillTabBar.tsx",
+      "change": "modified",
+      "sha256": "b0648f7d65bc08548628066b91c03e29330af9b0366c1c72174a3154889977c2"
+    },
+    {
+      "path": "apps/mobile/src/components/navigation/IcsTabBar.tsx",
+      "change": "modified",
+      "sha256": "f7bdddc70034cb0e712988298b996d778d7636e661cfcd4e92bc721ad50c2602"
+    },
+    {
+      "path": "apps/mobile/src/components/navigation/IcsToolsMenu.tsx",
+      "change": "modified",
+      "sha256": "9f669cad33214fcc61d82f788da29d5ee5c681bae3902a2ee04e4dc0bd6feb75"
+    },
+    {
+      "path": "apps/mobile/src/components/presentation/MobilePresentation.tsx",
+      "change": "modified",
+      "sha256": "1d9eddf35fbb752a8ff00c8961cc24930a830266c78697295ef40e36e3af1139"
+    },
+    {
+      "path": "apps/mobile/src/components/ui/Text.tsx",
+      "change": "modified",
+      "sha256": "cbdee04af06302b7ba5f72919926113c60b18d1dd611375908d1261eb4d885b0"
+    },
+    {
+      "path": "apps/mobile/src/components/ui/TextInput.tsx",
+      "change": "modified",
+      "sha256": "1f9380a2c540938558fe94c8878f273fb8fbdf8bcfb9ada82696359d3b172bfd"
+    },
+    {
+      "path": "apps/mobile/src/screens/IcsDashboardScreen.tsx",
+      "change": "modified",
+      "sha256": "2ad9be802157c9ff695171281cd06d3af395c88875a8e5848c1fa38de054f2d7"
+    },
+    {
+      "path": "apps/mobile/src/screens/IcsFeatureScreen.tsx",
+      "change": "modified",
+      "sha256": "799d83f181bc38b9fa4682578eb2148fa40985a16405b54c1281a701a62e7844"
+    },
+    {
+      "path": "apps/web/next.config.ts",
+      "change": "modified",
+      "sha256": "7e37d860a1a1869ce63165d51fd9299ba076bfe707abff9cfaf30e213863bba7"
+    },
+    {
+      "path": "apps/web/package.json",
+      "change": "modified",
+      "sha256": "41296a8c2d1da4b8b6443bd8ca211a673d803b02f2ecaa132fd140544ce8390d"
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx",
+      "change": "modified",
+      "sha256": "e8347f428755c66f5a6faec33cdd9662e1b5e8f4de724f5ced3691edfd57eb56"
+    },
+    {
+      "path": "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx",
+      "change": "modified",
+      "sha256": "1b4f396658444e1a5ffa8659341f32f566d3a9b2a9650bcb4c89cfce5e239db5"
+    },
+    {
+      "path": "apps/web/src/app/api/auth/change-password/route.ts",
+      "change": "modified",
+      "sha256": "8cc1c9ac07fb813fc1d172c33543c328ab6dc9bccb28f04ff7830f48b8056f6f"
+    },
+    {
+      "path": "apps/web/src/app/api/auth/login/route.ts",
+      "change": "modified",
+      "sha256": "7e351504c33a4d334b0eed0832b7a211e41417bae4b5f407ed5db68617beb123"
+    },
+    {
+      "path": "apps/web/src/app/api/auth/mobile-session/route.ts",
+      "change": "modified",
+      "sha256": "034c90e47dc3df9e60de2304c006b49f4f58479e962011198d8891070fb4a583"
+    },
+    {
+      "path": "apps/web/src/app/api/auth/register/route.ts",
+      "change": "modified",
+      "sha256": "d514e3a8d8826cf207c3635799ab9b87f5776cb4115ce381418215ba48770d06"
+    },
+    {
+      "path": "apps/web/src/app/api/auth/sessions/route.ts",
+      "change": "modified",
+      "sha256": "5ea456d19eb28cb23597943762924ecfe1db967778c55e62f580be0533e5e8a2"
+    },
+    {
+      "path": "apps/web/src/lib/auth-session.ts",
+      "change": "modified",
+      "sha256": "d71f7be389d4141a7ecb70a50811f85651bdcb1c267e84d1cfccd57392e6351e"
+    },
+    {
+      "path": "apps/web/src/lib/authenticated-rate-limits.ts",
+      "change": "added",
+      "sha256": "9dbe36b430e357bef67909a552a450f183d2b410f2942f220252deb0282a3e01"
+    },
+    {
+      "path": "apps/web/src/lib/codelab-rate-limit.ts",
+      "change": "modified",
+      "sha256": "dcfcf1c095683b463e3722b8e6ae2f81472839992190ce6c3d8a1a50d4bd6137"
+    },
+    {
+      "path": "apps/web/src/lib/password-hashing.ts",
+      "change": "added",
+      "sha256": "824b80505782866a9c73512f3aae7d46bce76893d1a60cb2ea547655f9cc0222"
+    },
+    {
+      "path": "apps/web/src/lib/rbac.ts",
+      "change": "modified",
+      "sha256": "5be97fdde58c08e1b7f9aafa16f0a35651597f193e1b990f367f245b43ca645e"
+    },
+    {
+      "path": "apps/web/src/lib/request-security.ts",
+      "change": "modified",
+      "sha256": "5e641fc6196373af335532b7ca69e16d5b42c98514857a40ae53a8e858a72ea0"
+    },
+    {
+      "path": "apps/web/src/lib/roster/rate-limit.ts",
+      "change": "modified",
+      "sha256": "d9b9f9475bf98f7497f53d6803baf1c4128589566def6da9eda115836e3c86c0"
+    },
+    {
+      "path": "apps/web/src/lib/session-cookie.ts",
+      "change": "added",
+      "sha256": "809b3d56b9b9bc543f0b9b6cf3e9bb700a98e00f01d5705cad94364fcfaff61a"
+    },
+    {
+      "path": "apps/web/src/lib/session-policy.ts",
+      "change": "modified",
+      "sha256": "d27df362e2370942b95d5d716265f9f4141e0426e9d0e3cab2683167f8026f9b"
+    },
+    {
+      "path": "apps/web/src/lib/super-user-v1/institute-admin.ts",
+      "change": "modified",
+      "sha256": "67151900b44c2186440deedacbe0605657e8e950a15d31044d8feb6e5f8e2628"
+    },
+    {
+      "path": "apps/web/src/middleware.ts",
+      "change": "modified",
+      "sha256": "ae1c59aaedccc76f57f58010a48c0a50bcfe44d1a165e6b6c2148f753f33a7e1"
+    },
+    {
+      "path": "docs/security/asvs-5.0-level2-register.csv",
+      "change": "modified",
+      "sha256": "ce8c6af0c61feb7b13df26198257ae0b80b94fa3c32ebca73f826fc0f64c6909"
+    },
+    {
+      "path": "docs/security/authorization-matrix.md",
+      "change": "modified",
+      "sha256": "8400287b55e058c6d2ad59c5e4f2635a344405a554372e9beece9db737af3c80"
+    },
+    {
+      "path": "docs/security/automated-security-checks.md",
+      "change": "modified",
+      "sha256": "a886b782b11f0c7891e76e64d406df3197705d9b06b84a636392d647ebc2593a"
+    },
+    {
+      "path": "docs/security/backup-disaster-recovery.md",
+      "change": "modified",
+      "sha256": "b3e8afa6583241a12ff0511e64508e47d35872baf0b4aee2e9538ad3f87dd133"
+    },
+    {
+      "path": "docs/security/client-release-security.md",
+      "change": "modified",
+      "sha256": "49c1958d736ceaef57a47c416eec448fd9a6954c3d6ce2b1af14143bea70f4dd"
+    },
+    {
+      "path": "docs/security/database-security-architecture.md",
+      "change": "modified",
+      "sha256": "b0184eecd3673aeccb3d21dba25ec9c7cb0854a145590c40f11afb29ed785c95"
+    },
+    {
+      "path": "docs/security/distributed-rate-limiting.md",
+      "change": "added",
+      "sha256": "9689ed18fddece6ebe9cec97ec7c6741358653f1c72b839903dee19cd7de1765"
+    },
+    {
+      "path": "docs/security/expo-sdk-58-migration.md",
+      "change": "added",
+      "sha256": "0845ba1de3dd144320c380e47222e2b4e9398cd64b72adda4d3569b72630ab10"
+    },
+    {
+      "path": "docs/security/identity-access-management.md",
+      "change": "modified",
+      "sha256": "24de2555a5322837e95bde77a990ae04506eddc60fa7cb359e4095fd47e9701a"
+    },
+    {
+      "path": "docs/security/password-hashing-migration.md",
+      "change": "added",
+      "sha256": "3c25096710eb2f1d86ff7230c4dca39de47a4a54113bec0ccfaf036e324876b1"
+    },
+    {
+      "path": "docs/security/postgresql-rls-implementation.md",
+      "change": "added",
+      "sha256": "a1e67fc13c63cb39b2ab0c6244470bde5e0db34f763dd9043f9b2a1afa1a8395"
+    },
+    {
+      "path": "docs/security/production-release-gates.md",
+      "change": "added",
+      "sha256": "b5a94f0a406d27a906cb04c22b0c6c1d0e3544b919cae2cd8b403bb68a96db67"
+    },
+    {
+      "path": "docs/security/session-security.md",
+      "change": "added",
+      "sha256": "f0dce55c62aa4ce617a20431ab6a385ee2de217efff0d6e7c0fbe0be50290332"
+    },
+    {
+      "path": "docs/security/sprint-4-dependency-remediation.md",
+      "change": "added",
+      "sha256": "3b5594c855a0639faac4cc36fea91bfa9b60aaad39d1096ba2186afb7c54b3b0"
+    },
+    {
+      "path": "docs/security/sprint-4-results.md",
+      "change": "added",
+      "sha256": "36d1287a2ec70928b7827e1b3cf6efccebcccb212735cbacc9e09c17edba4618"
+    },
+    {
+      "path": "docs/security/sprint-4-staging-verification.md",
+      "change": "added",
+      "sha256": "4961340d4fa3d1f745efa2e3c19d650c64ede0b0bfa6bf1ad1e24e2468b9f368"
+    },
+    {
+      "path": "docs/security/sprint-4-verification.json",
+      "change": "added",
+      "sha256": null
+    },
+    {
+      "path": "docs/security/system-wide-mfa.md",
+      "change": "added",
+      "sha256": "155d13c58bfea97feea84e190d3903edfa9a83548839c8185cb00d86a626d3e5"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "change": "modified",
+      "sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1"
+    },
+    {
+      "path": "scripts/security/run-scoped.py",
+      "change": "modified",
+      "sha256": "a6fb234217ef91ded0260d98a32a198785d8cc1c67b4f3db153a8cfdcc3de8c4"
+    },
+    {
+      "path": "tests/sprint-4/.gitattributes",
+      "change": "added",
+      "sha256": "2fd04988d0b8feb8e20e823cfa081e6050f28c984a3712f9cf323fd5545899d9"
+    },
+    {
+      "path": "tests/sprint-4/allowed-tests.json",
+      "change": "added",
+      "sha256": "a7ec360f567fef003ca1bb365ba6a63cdaeb17b2e2b8a407d4b27d399c52f5f9"
+    },
+    {
+      "path": "tests/sprint-4/identity.test.cjs",
+      "change": "added",
+      "sha256": "7cf740ee29b48eda66c812530747141991b9005821d001947441662b94c17fa7"
+    },
+    {
+      "path": "tests/sprint-4/limiter-benchmark.sql",
+      "change": "added",
+      "sha256": "e785336f91c0e6053a5a1292654f7adf7948d6e759e0ca5d746ed46445e63604"
+    },
+    {
+      "path": "tests/sprint-4/rls-checks.sql",
+      "change": "added",
+      "sha256": "3eaa148ceeb687cf2a93dadd22a1846192e6b9e5a30f429001c20c6177e6132e"
+    },
+    {
+      "path": "tests/sprint-4/rls-pilot.sql",
+      "change": "added",
+      "sha256": "a10fce8bc9472d9bd13b2c817d83c1baa3b5f65c6ae320ca37987eda2b1896b9"
+    },
+    {
+      "path": "tests/sprint-4/run-rls-pilot.sh",
+      "change": "added",
+      "sha256": "22eb53ac8bbf9e8a6585c917e77aa165f53596115a51b5ad8b69040d9ff2240b"
+    }
+  ],
+  "scope_execution": {
+    "push": false,
+    "deployment": false,
+    "production_data": false,
+    "production_migration": false,
+    "paid_services_added": false,
+    "broad_suite_discovery": false,
+    "historical_evidence_edited": false
+  }
+}

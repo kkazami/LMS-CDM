@@ -45,7 +45,6 @@ export default async function AssignmentDetailPage({ params }: Props) {
           id: true,
           status: true,
           opensAt: true,
-          showScoreAfter: true,
           formType: true,
           timeLimitMins: true,
           maxAttempts: true,
@@ -116,7 +115,7 @@ export default async function AssignmentDetailPage({ params }: Props) {
     const maxAttempts = item.form.maxAttempts ?? 1;
     canRetakeForm = submittedAttempts.length > 0 && attempts.length < maxAttempts;
 
-    if (submittedAttempts.length > 0 && item.form.showScoreAfter) {
+    if (submittedAttempts.length > 0) {
       const validScores = submittedAttempts.filter(
         (a) => a.rawScore !== null && a.totalPoints !== null
       );

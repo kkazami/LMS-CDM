@@ -1,0 +1,23 @@
+{
+  "purpose": "Sprint 2 approved compatibility and desktop boundaries; excludes all previously blocked validations",
+  "testFiles": [
+    "tests/security/admin-database-export-audit.test.cjs",
+    "tests/calendar/dashboard-calendar-data.test.cjs",
+    "tests/leaderboard/activity.test.cjs",
+    "tests/navigation/data.test.cjs",
+    "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+    "tests/labs/authoring.test.ts",
+    "tests/roster/activation-email.test.ts",
+    "tests/security/activity-grading.test.ts",
+    "tests/security/arduino-preview.test.ts",
+    "tests/security/admin-mfa.test.cjs",
+    "tests/codelab/runner.test.cjs",
+    "tests/codelab/completion.test.cjs",
+    "tests/sprint-2/dependency-compatibility.test.cjs",
+    "tests/sprint-2/desktop-security.test.cjs",
+    "tests/sprint-2/mobile-compatibility.test.cjs"
+  ],
+  "blockedValidationSuitesExcluded": true,
+  "fullSuiteRunAuthorized": false,
+  "expectedTestCount": 102
+}

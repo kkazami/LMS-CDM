@@ -187,6 +187,10 @@ export default function TerminalUI({
       <div className="mr-[400px]">
         <SubmitBar 
           activityType="server-rack"
+          getAnswers={() => {
+            const { equipment, cables, deviceConfigs } = useServerRackStore.getState();
+            return { equipment, cables, deviceConfigs, sourceId: pingSource, destinationIp: pingTarget };
+          }}
           assignmentId={assignmentId}
           studentId={studentId}
           variantSeed={variantSeed}

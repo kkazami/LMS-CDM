@@ -17,10 +17,7 @@
  *       startedAt: startTime.toISOString(),
  *       completionTimeSeconds: elapsed,
  *       attempts: attemptCount,
- *       stateCheck: { cpu_installed: true, ram_seated: false },
- *       score: 75,
- *       maxScore: 100,
- *       passed: true,
+ *       answers: assemblyAnswers,
  *     });
  *   };
  */
@@ -28,7 +25,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { ActivitySubmission } from "../types";
+import type { ActivitySubmissionInput } from "../types";
 
 /** Shape of the success response from /api/activities/submit */
 interface SubmissionResult {
@@ -47,7 +44,7 @@ interface SubmissionError {
 
 interface UseActivitySubmissionReturn {
   /** Call this to POST a completed activity submission. */
-  submit: (payload: ActivitySubmission) => Promise<SubmissionResult | null>;
+  submit: (payload: ActivitySubmissionInput) => Promise<SubmissionResult | null>;
   /** True while the POST is in flight. */
   isSubmitting: boolean;
   /** Error message from the last failed submission, or null. */
@@ -73,7 +70,7 @@ export function useActivitySubmission(): UseActivitySubmissionReturn {
   }, []);
 
   const submit = useCallback(
-    async (payload: ActivitySubmission): Promise<SubmissionResult | null> => {
+    async (payload: ActivitySubmissionInput): Promise<SubmissionResult | null> => {
       setIsSubmitting(true);
       setError(null);
       setFieldErrors(null);

@@ -29,6 +29,8 @@ export default function ArduinoUI({
   const { setScore, updateStateCheck, markComplete } = useActivityStore();
   const serialRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => () => arduinoSim.stop(), [assignmentId, studentId, variantSeed]);
+
   // Auto-scroll serial monitor
   useEffect(() => {
     if (serialRef.current) {
@@ -121,6 +123,7 @@ export default function ArduinoUI({
       <div className="mr-0 lg:mr-[450px]">
         <SubmitBar 
           activityType="arduino"
+          getAnswers={() => ({ code, wires: useArduinoStore.getState().wires })}
           assignmentId={assignmentId}
           studentId={studentId}
           variantSeed={variantSeed}

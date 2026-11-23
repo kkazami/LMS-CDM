@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "codex/security-*": false
+    }
+  },
   "crons": [
     { "path": "/api/cron/attendance-retention", "schedule": "0 3 * * *" },
     {

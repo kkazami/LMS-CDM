@@ -1,5 +1,44 @@
 # Managed CodeLab execution and PR #51 CI repair
 
+## Production provider policy — 14 November 2026
+
+Production CodeLab permits `onlinecompiler` and authenticated `judge0` configurations.
+`jdoodle` is development-only and fails before sending student code when `NODE_ENV=production`.
+Unknown selectors fail closed in every environment. Provider failures never switch providers or
+run student code on the LMS web host. Existing explicit provider selection is retained; this
+change does not configure hosting secrets or change the default provider.
+
+OnlineCompiler remains allowed because its [published isolation contract](https://onlinecompiler.io/security)
+describes a fresh gVisor sandbox for each run, networking disabled, an unprivileged user,
+read-only language images, bounded scratch space and resource limits. Its
+[Judge0-compatible API](https://onlinecompiler.io/docs/judge0) rejects `enable_network` with 422,
+so the adapter deliberately omits that field rather than retrying with weaker settings.
+The provider's [limits documentation](https://onlinecompiler.io/docs/limits) describes the
+fixed runtime and output bounds. These are provider claims, not a local demonstration of
+the deployed sandbox; no hosted isolation test or provider call was performed for this change.
+
+Judge0 requests always send `enable_network:false`, as defined by the
+[Judge0 submission/configuration contract](https://ce.judge0.com/docs). The operator must use a
+reviewed, maintained provider that enforces that setting; an arbitrary compatible endpoint
+or a successful HTTP response does not establish isolation. Existing authenticated HTTPS
+origin checks, redirect rejection, quotas, deadlines and no-host-fallback behavior remain.
+
+JDoodle's [REST documentation](https://www.jdoodle.com/docs/api/rest) says networking is disabled
+by default but can be enabled for paid accounts. It lists no per-run network-off field that
+this adapter can enforce, so JDoodle is not a production fallback. Its development adapter
+remains available for explicitly selected local practice.
+
+The server constructs provider payloads from source, stdin and the fixed language allowlist.
+Student JSON cannot add execution environment variables, credentials, files, callbacks,
+headers, destinations or network settings. Provider credentials are server-owned HTTP metadata
+(JDoodle development authentication is in its API envelope), never inserted into the student's
+source or stdin. Browser practice remains non-authoritative in the opaque-origin sandbox;
+successful remote submission is required for programming completion and rewards.
+
+Permanent mocked contract tests in `tests/codelab/runner.test.cjs` cover production selector
+rejection, permitted production adapters, exact payload fields, credential segregation and
+failure without fallback. They verify application behavior, not a hosted provider's security.
+
 ## OnlineCompiler.io and local practice — 2 November 2026
 
 CodeLab supports `CODELAB_RUNNER=onlinecompiler` with the server-only

@@ -10,7 +10,7 @@ export const formSettingsSchema = z.object({
   maxAttempts: z.number().int().min(1).max(100),
   scoreToKeep: z.enum(['HIGHEST', 'LATEST', 'AVERAGE']),
   shuffleQuestions: z.boolean(), shuffleOptions: z.boolean(),
-  showScoreAfter: z.boolean(), showAnswersAfter: z.boolean(), showFeedbackAfter: z.boolean(),
+  showScoreAfter: z.boolean().transform(() => true), showAnswersAfter: z.boolean(), showFeedbackAfter: z.boolean(),
   isProctored: z.boolean(), disableCopyPaste: z.boolean(), detectTabSwitch: z.boolean(), lockBrowser: z.boolean(),
   passingScore: z.number().finite().min(0).nullable(),
   themeColor: z.string().max(100).nullable(), headerImageUrl: z.string().max(4000).nullable(),

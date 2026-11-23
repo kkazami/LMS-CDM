@@ -4,7 +4,7 @@
  * Implements a topological directed graph evaluator for combinational logic circuits.
  */
 
-import { LogicGate, LogicWire, TargetTruthTable } from "../stores/logic-store";
+import type { LogicGate, LogicWire, TargetTruthTable } from "../stores/logic-store";
 
 // Helper to evaluate a specific gate type given an array of boolean inputs
 function evaluateGateLogic(type: string, inputs: boolean[], currentState: boolean): boolean {
@@ -46,8 +46,8 @@ export function evaluateLogicGraph(
   });
 
   wires.forEach(w => {
-    const srcGate = w.fromPin.split('-')[0];
-    const destGate = w.toPin.split('-')[0];
+    const srcGate = w.fromPin.replace(/-out$/, '');
+    const destGate = w.toPin.replace(/-in\d+$/, '');
     if (outgoingWires[srcGate]) outgoingWires[srcGate].push(w);
     if (incomingWires[destGate]) incomingWires[destGate].push(w);
   });
@@ -69,7 +69,7 @@ export function evaluateLogicGraph(
     sorted.push(curr);
     
     outgoingWires[curr].forEach(w => {
-      const neighbor = w.toPin.split('-')[0];
+      const neighbor = w.toPin.replace(/-in\d+$/, '');
       inDegree[neighbor]--;
       if (inDegree[neighbor] === 0) {
         queue.push(neighbor);
@@ -94,7 +94,7 @@ export function evaluateLogicGraph(
     // Collect inputs for this gate based on incoming wires
     // Sort incoming wires by their pin index (e.g. "in0", "in1")
     const sortedIncoming = incomingWires[gateId].sort((a, b) => a.toPin.localeCompare(b.toPin));
-    const inputValues = sortedIncoming.map(w => w.state);
+    const inputValues = sortedIncoming.map(w => nodeStates[w.fromPin.replace(/-out$/, '')] ?? false);
     
     // Evaluate the gate
     const result = evaluateGateLogic(gate.type, inputValues, nodeStates[gateId]);

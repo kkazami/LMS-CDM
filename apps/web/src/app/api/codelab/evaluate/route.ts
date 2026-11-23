@@ -1,3 +1,6 @@
+import { boundedJson } from '@/lib/roster/policy';
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
@@ -95,7 +98,7 @@ export async function POST(request: Request) {
     if (limited) return limited;
 
     // 3. Parse and validate body
-    const body = (await request.json()) as EvaluateRequest;
+    const body = (await boundedJson(request, 512 * 1024)) as EvaluateRequest;
     const { templateId, seed, sourceCode, languageId } = body;
 
     if (!templateId || !seed || !sourceCode || !languageId) {
@@ -153,6 +156,10 @@ export async function POST(request: Request) {
     }> = [];
 
     if (problem) {
+      const course = await db.course.findFirst({ where: { instituteId: session.user.instituteId, isArchived: false,
+        OR: [{ instructorId: session.user.id }, { enrollments: { some: { studentId: session.user.id, status: 'APPROVED' } } }] }, orderBy: { id: 'asc' } });
+      if (!course) return NextResponse.json({ error: 'An authorized active course is required.' }, { status: 403 });
+      await requireCourseAccess(session.user, course.id);
       const evaluatedVars = evaluateVariables(seed, problem.variables);
 
       testCasesToRun = problem.testCases.map((tc) => ({
@@ -164,12 +171,14 @@ export async function POST(request: Request) {
       // Fallback to database activity template
       const template = await db.activityTemplate.findUnique({
         where: { id: templateId },
-        select: { variables: true, hiddenTestCases: true, activityType: true },
+        select: { courseId: true, variables: true, hiddenTestCases: true, activityType: true },
       });
 
       if (!template || template.activityType !== "codelab") {
         return NextResponse.json({ error: "CodeLab problem template not found" }, { status: 404 });
       }
+
+      await requireCourseAccess(session.user, template.courseId);
 
       const variablesObj = JSON.parse((template.variables as string) || "{}");
       const hiddenCases = JSON.parse((template.hiddenTestCases as string) || "[]");
@@ -298,6 +307,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responsePayload);
   } catch (error: unknown) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     if (error instanceof CodeRunnerUnavailableError) return NextResponse.json({ error: error.message, code: "RUNNER_UNAVAILABLE" }, { status: 503 });
     if (error instanceof CodeLabCompletionError) return NextResponse.json({ error: error.message, completed: error.status === 409 }, { status: error.status });
     console.error("CODELAB_EVALUATE_ERROR", error);

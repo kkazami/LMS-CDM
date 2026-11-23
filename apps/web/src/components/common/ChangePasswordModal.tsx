@@ -9,9 +9,10 @@ interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   hasSecurityPin?: boolean;
+  passwordPilot?: boolean;
 }
 
-export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = false }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = false, passwordPilot = false }: ChangePasswordModalProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,10 +37,12 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
       setError("New passwords do not match.");
       return;
     }
-    const parsed = passwordSchema.safeParse(newPassword);
-    if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
-      return;
+    if (!passwordPilot) {
+      const parsed = passwordSchema.safeParse(newPassword);
+      if (!parsed.success) {
+        setError(parsed.error.issues[0].message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -123,6 +126,7 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type={showCurrentPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
@@ -145,6 +149,7 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type={showNewPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     required
                     minLength={8}
                     value={newPassword}
@@ -168,6 +173,7 @@ export default function ChangePasswordModal({ isOpen, onClose, hasSecurityPin = 
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     required
                     minLength={8}
                     value={confirmPassword}

@@ -3,6 +3,7 @@ import { getSecurityHeaders } from '@/lib/security-headers';
 import { getCorsHeaders } from '@/lib/cors';
 import { mutationOriginAllowed } from '@/lib/request-security';
 import { sessionActivity } from '@/lib/session-policy';
+import { currentSessionCookiePolicy } from '@/lib/session-cookie';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -26,8 +27,8 @@ export async function middleware(request: NextRequest) {
   if (!mutationOriginAllowed(request)) {
     response = NextResponse.json({ error: 'Forbidden request origin.' }, { status: 403 });
   } else {
-    const publicPage = ['/', '/login', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support', '/offline.html'].includes(pathname);
-    response = !api && !publicPage && !request.cookies.get('lumina_session')?.value
+    const publicPage = ['/', '/login', '/mfa', '/register', '/activate', '/forgot-password', '/reset-password', '/terms', '/privacy', '/support', '/offline.html'].includes(pathname);
+    response = !api && !publicPage && !currentSessionCookiePolicy().read.some(name => request.cookies.get(name)?.value)
       ? NextResponse.redirect(new URL(`/login?institute=${encodeURIComponent(pathname.split('/').filter(Boolean)[0] || 'ics')}`, request.url))
       : NextResponse.next({ request: { headers: incoming } });
   }

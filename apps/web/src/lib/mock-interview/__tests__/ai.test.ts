@@ -317,8 +317,17 @@ describe("prompt safety", () => {
   test("voice mode prompt includes spoken transcript guidance and accepts up to AI_VOICE_MAX_CHARS", () => {
     const voicePrompt = buildEvaluationPrompt(question, GOOD_ANSWER, "voice");
     assert.ok(voicePrompt.includes("SPOKEN INTERVIEW ANSWER"));
-    const longerSpoken = `${GOOD_ANSWER} `.repeat(12); // > 1500 chars, <= 4500 chars
-    assert.equal(validateAnswer(longerSpoken, AI_MAX_CHARS).ok, false);
+    const longerSpoken = [
+      GOOD_ANSWER,
+      "Our original handoff took place in one crowded message thread. When someone joined late, they had to read through unrelated links and meeting notes before discovering which files still needed review. I asked each teammate to describe the part of the process that held them up. Three people named the handoff between research and editing, so we decided to improve that step first.",
+      "I sketched a board with a small number of columns and brought it to our next meeting. The group decided that cards should show the next action, the person responsible, and the date when someone else could reasonably expect a draft. We used checklists for tasks with multiple pieces and a separate label for work waiting on information from another team. That made the board readable without requiring a new account or a paid tool.",
+      "During the pilot, I noticed that people marked their drafts complete before the editor could open them. Instead of adding another meeting, we agreed that every completed research card should include its final document link. Another teammate suggested a short note about unanswered questions. Those changes gave the editor useful context and helped us separate genuine blockers from routine revisions.",
+      "After the report was submitted, we compared the timeline with our initial schedule. The editor said they spent less time asking which copy to review. Looking back, I would define a trial period and a simple measurement before changing the process. That would help us judge whether the improvement came from the shared board or from having a smaller workload near the end of the project.",
+    ].join(" ");
+    assert.ok(longerSpoken.length > AI_MAX_CHARS && longerSpoken.length <= AI_VOICE_MAX_CHARS);
+    const textResult = validateAnswer(longerSpoken, AI_MAX_CHARS);
+    assert.ok(!textResult.ok);
+    assert.equal(textResult.code, "TOO_LONG");
     assert.equal(validateAnswer(longerSpoken, AI_VOICE_MAX_CHARS).ok, true);
   });
 });

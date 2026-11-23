@@ -177,10 +177,10 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      score: attempt.form.showScoreAfter ? totalEarned : null,
-      totalPoints: attempt.form.showScoreAfter ? totalPossible : null,
-      percentage: attempt.form.showScoreAfter ? percentage : null,
-      passed: attempt.form.showScoreAfter ? passed : null,
+      score: totalEarned,
+      totalPoints: totalPossible,
+      percentage,
+      passed,
       confirmationMessage: attempt.form.confirmationMessage || "Your response has been submitted successfully.",
     });
   } catch (error) {

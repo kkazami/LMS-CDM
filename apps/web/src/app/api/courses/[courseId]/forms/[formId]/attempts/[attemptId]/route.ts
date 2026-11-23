@@ -77,7 +77,7 @@ export async function GET(request: Request, context: RouteContext) {
         fileName: ans.fileName,
         fileSizeBytes: ans.fileSizeBytes,
         isCorrect: isInstructor || attempt.form.showAnswersAfter ? ans.isCorrect : null,
-        pointsAwarded: isInstructor || attempt.form.showScoreAfter ? ans.pointsAwarded : null,
+        pointsAwarded: ans.pointsAwarded,
         autoGraded: ans.autoGraded,
         instructorGraded: ans.instructorGraded,
         feedback: isInstructor || attempt.form.showFeedbackAfter ? ans.feedback : null,
@@ -89,7 +89,6 @@ export async function GET(request: Request, context: RouteContext) {
       attempt: {
         ...attempt,
         form: publicForm(attempt.form),
-        ...(!isInstructor && !attempt.form.showScoreAfter ? { rawScore: null, percentage: null, passed: null } : {}),
         answers: parsedAnswers,
       },
     });
