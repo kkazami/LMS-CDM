@@ -96,6 +96,10 @@ def main(label,mode='tests',network='none',fixture=None):
  memory='6144m' if mode=='web-build' else '4096m' if mode in ['web-types','web-build','mobile-export'] else '2304m';seconds=600 if mode in ['mobile-export','web-build'] else 300 if mode in ['web-types','web-build','mobile-export','tests','desktop-package'] else 180
  env=['NODE_OPTIONS=--max-old-space-size='+('4096' if mode=='web-build' else '3072' if mode in ['web-types','web-build','mobile-export'] else '1536'),'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/scratch','TMPDIR=/scratch','NODE_ENV=test','NEXT_TELEMETRY_DISABLED=1','DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline','ESBUILD_BINARY_PATH=/scratch/esbuild','TSX_TSCONFIG_PATH=apps/web/tsconfig.json','EXPO_OFFLINE=1','EXPO_NO_TELEMETRY=1','EXPO_PUBLIC_API_URL=https://staging.example.invalid','SENTRY_DISABLE_AUTO_UPLOAD=true']
  cmd=['docker','run','--pull=never','--name',name,'--label','lms.sprint2='+labelvalue,'--network',network,'--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--memory',memory,'--cpus','2','--pids-limit','128','--ulimit','core=0:0','--ulimit','nofile=4096:4096','--ulimit','fsize=536870912:536870912','--tmpfs',f'/scratch:rw,exec,nosuid,nodev,size={scratch_mb}m,mode=1777','--mount',f'type=bind,source={source},target=/source,readonly','--mount',f'type=bind,source={DEPS},target=/deps,readonly','--mount',f'type=bind,source={DEPS},target={linux},readonly','--mount',f'type=bind,source={TOOLS},target=/tools,readonly','--entrypoint','/usr/bin/env',json.loads((ROOT/'scripts/security/tools.json').read_text())['nodeImage'],'-i',*env,'timeout','--kill-after=5s',str(seconds)+'s','sh','-c',shell,'sprint2',*argv]
+ if os.name == 'posix':
+  # Match the install owner so Prisma detects the read-only mount instead of an ownership error.
+  index=cmd.index('--entrypoint')
+  cmd[index:index]=['--user',f'{os.geteuid()}:{os.getegid()}']
  if mode in STAGING_TESTS:
   index=cmd.index('--entrypoint')
   cmd[index:index]=['--mount',f'type=bind,source={fixture},target=/fixture,readonly']
