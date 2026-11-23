@@ -162,6 +162,10 @@ export default function TruthTableUI({
         {/* We use manualGrading because the auto-grading is too rigid for the student. */}
         <SubmitBar 
           activityType="logic-gate"
+          getAnswers={() => {
+            const { gates, wires } = useLogicStore.getState();
+            return { gates, wires };
+          }}
           assignmentId={assignmentId}
           studentId={studentId}
           variantSeed={variantSeed}

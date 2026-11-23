@@ -1,3 +1,6 @@
+import { boundedJson } from '@/lib/roster/policy';
+import { requireCourseAccess } from '@/lib/course-access';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { limitCodeLabRuns } from '@/lib/codelab-rate-limit';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
@@ -76,7 +79,7 @@ export async function POST(request: Request) {
     if (limited) return limited;
 
     // 2. Parse request
-    const body = (await request.json()) as {
+    const body = (await boundedJson(request, 512 * 1024)) as {
       templateId: string;
       variantSeed: string;
       sourceCode: string;
@@ -104,12 +107,14 @@ export async function POST(request: Request) {
     // 4. Fetch template
     const template = await db.activityTemplate.findUnique({
       where: { id: templateId },
-      select: { title: true, variables: true, hiddenTestCases: true, activityType: true },
+      select: { courseId: true, title: true, variables: true, hiddenTestCases: true, activityType: true },
     });
 
     if (!template || template.activityType !== "codelab") {
       return NextResponse.json({ error: "Template not found or not a CodeLab" }, { status: 404 });
     }
+
+    await requireCourseAccess(eligibility.session.user, template.courseId);
 
     // 5. Parse template data
     const variablesObj = JSON.parse((template.variables as string) || "{}");
@@ -200,6 +205,7 @@ export async function POST(request: Request) {
       leveledUp: false,
     });
   } catch (error: unknown) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
     if (error instanceof CodeRunnerUnavailableError) return NextResponse.json({ error: error.message, code: "RUNNER_UNAVAILABLE" }, { status: 503 });
     console.error("CODELAB_RUN_TESTS_ERROR", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

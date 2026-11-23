@@ -1,0 +1,22 @@
+{
+  "purpose": "Sprint 2 client-shell and automation changes; partial static/secret scope, not an audit retry",
+  "files": [
+    "apps/desktop/electron/main.ts",
+    "apps/desktop/electron/security.ts",
+    "apps/desktop/electron/preload.ts",
+    "apps/desktop/electron/ipc/handlers.ts",
+    "apps/desktop/electron/web-url.ts",
+    "apps/desktop/electron/menu.ts",
+    "apps/desktop/renderer/offline.js",
+    "apps/mobile/src/lib/api-url.ts",
+    "apps/mobile/src/lib/google-login-validation.ts",
+    "apps/mobile/src/lib/student-navigation.ts"
+  ],
+  "automationDirectories": [
+    "scripts/security",
+    ".github/workflows"
+  ],
+  "automationFiles": [
+    ".github/dependabot.yml"
+  ]
+}

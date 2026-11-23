@@ -1,0 +1,586 @@
+{
+  "date": "2026-11-19",
+  "scope": "Sprint 3 authorization hardening, dependency investigation and IAM/DB proposal",
+  "frozen_sprint_2": {
+    "base": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+    "tree": "de0d269b47588082210e470b9b28ce7da0c5e500",
+    "patch_sha256": "eb27390b6fed08dafd17f70c6aaa2ad15abc0377086bb916e0f8378af94000c3",
+    "commit_message": "security: checkpoint Sprint 2 hardening and verification",
+    "approval": "pending",
+    "historical_files_unchanged": 186,
+    "source_hashes_matched": 47,
+    "file_count": 55,
+    "inventory_sha256": "21e49767f1670c269e01bcec312608ad68e08266fca2f4f1ba558f255aff58ad"
+  },
+  "historical_evidence": {
+    "matched_files": 186,
+    "run2": {
+      "revision": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+      "covered": 14,
+      "candidates": 4,
+      "blocked": 8,
+      "deferred": 51,
+      "ledger_sha256": "ba328d448925135cb5c6a4d36677441f80684feb6c536f41307c9c33dfd447bb"
+    }
+  },
+  "status": {
+    "tested_worktree_base": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+    "current_HEAD": "b8f5d4b7da704f76d2abeae8748d012d0115a7ba",
+    "dependencies_changed": false,
+    "production_access": false,
+    "production_migration": false,
+    "push_or_deploy": false,
+    "hosted_CI": false,
+    "native_builds_or_devices": "Sprint 2 evidence retained. Sprint 3 did not change a native app or its lockfile.",
+    "blocked_validations_executed": false,
+    "broad_discovery_executed": false,
+    "ASVS_passes_added": 0
+  },
+  "pnpm": "10.32.1",
+  "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+  "sprint_3_source_hashes": {
+    "apps/web/src/app/api/admin/users/[userId]/route.ts": "59367b8e4607a201cbc5e921b9b72e21470c027b0a28ea15eaa6d9ef4cb6f3a4",
+    "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts": "e912ed31d142e578e9ffb210978920acfa3e2689c3da26adfcbd0f9e32fdac5a",
+    "apps/web/src/lib/skills/gradebook-exporter.ts": "72b4e78b9929509e779742c7a1c80ed46e05941b3c04701d823c32402f30bb7b",
+    "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts": "e96f963b8314832ae8ea52bf8af9e84096bf1d61eaea9328e85da6e17d885f75",
+    "scripts/security/run-scoped.py": "a1c81e91ab930078868466dac682f7eb92c90ac908d353842735d3e786c88236",
+    "tests/sprint-3/allowed-tests.json": "2ac0554da982202e0fd847a4248b7abf183a9220d9307b16339e1dfb98c7bd11",
+    "tests/sprint-3/authorization.test.cjs": "3b3884a8764da622a61dcdc3e44b4700bd3791ec1d0ae434f613572634b62290"
+  },
+  "checks": [
+    {
+      "label": "sprint3-regressions",
+      "status": "passed",
+      "invocation": [
+        "python",
+        "scripts/security/run-scoped.py",
+        "sprint3-regressions",
+        "tests"
+      ],
+      "exit": 0,
+      "counts": {
+        "tests": 109,
+        "pass": 109,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 193.53,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts"
+      ],
+      "sandbox": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=1536",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "tested_source_hashes": {
+        "tests/sprint-3/authorization.test.cjs": "3b3884a8764da622a61dcdc3e44b4700bd3791ec1d0ae434f613572634b62290",
+        "apps/web/src/lib/skills/gradebook-exporter.ts": "72b4e78b9929509e779742c7a1c80ed46e05941b3c04701d823c32402f30bb7b",
+        "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts": "e96f963b8314832ae8ea52bf8af9e84096bf1d61eaea9328e85da6e17d885f75",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts": "e912ed31d142e578e9ffb210978920acfa3e2689c3da26adfcbd0f9e32fdac5a",
+        "apps/web/src/app/api/admin/users/[userId]/route.ts": "59367b8e4607a201cbc5e921b9b72e21470c027b0a28ea15eaa6d9ef4cb6f3a4"
+      },
+      "tested_full_snapshot_hash": "1a2957fe5c6300572d9db4da362143c8cf59ccc559c5e56c75c19505b92d5453",
+      "receipt": "tmp/security-sprint-2/sprint3-regressions/receipt.json",
+      "receipt_sha256": "11878ff45945db1b298702fbfe895d8d1321b5192332a150da959e1965e1c3ea",
+      "log_sha256": "94a8e3d43d72b9fd645d3ec4eeb85c39c3e0978c95c8ec80b1c736a98e413da5"
+    },
+    {
+      "label": "sprint3-web-types",
+      "status": "passed",
+      "invocation": [
+        "python",
+        "scripts/security/run-scoped.py",
+        "sprint3-web-types",
+        "web-types"
+      ],
+      "exit": 0,
+      "counts": {},
+      "seconds": 249.82,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/web && node node_modules/next/dist/bin/next typegen && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "sandbox": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 4294967296,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=3072",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "tested_source_hashes": {
+        "tests/sprint-3/authorization.test.cjs": "3b3884a8764da622a61dcdc3e44b4700bd3791ec1d0ae434f613572634b62290",
+        "apps/web/src/lib/skills/gradebook-exporter.ts": "72b4e78b9929509e779742c7a1c80ed46e05941b3c04701d823c32402f30bb7b",
+        "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts": "e96f963b8314832ae8ea52bf8af9e84096bf1d61eaea9328e85da6e17d885f75",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts": "e912ed31d142e578e9ffb210978920acfa3e2689c3da26adfcbd0f9e32fdac5a",
+        "apps/web/src/app/api/admin/users/[userId]/route.ts": "59367b8e4607a201cbc5e921b9b72e21470c027b0a28ea15eaa6d9ef4cb6f3a4"
+      },
+      "tested_full_snapshot_hash": "1a2957fe5c6300572d9db4da362143c8cf59ccc559c5e56c75c19505b92d5453",
+      "receipt": "tmp/security-sprint-2/sprint3-web-types/receipt.json",
+      "receipt_sha256": "a5bca661d80bdb2d7a56d8f269c168bf4dd7dda944353a9cfcfbc4a6cde356ec",
+      "log_sha256": "a84db48a9bb8268f36eebba893a756510a2e82d29db0a8455daf914c6c17d0b9"
+    },
+    {
+      "label": "sprint3-web-build",
+      "status": "failed",
+      "invocation": [
+        "python",
+        "scripts/security/run-scoped.py",
+        "sprint3-web-build",
+        "web-build"
+      ],
+      "exit": 124,
+      "counts": {},
+      "seconds": 601.8,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack"
+      ],
+      "sandbox": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=4096",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "tested_source_hashes": {
+        "tests/sprint-3/authorization.test.cjs": "3b3884a8764da622a61dcdc3e44b4700bd3791ec1d0ae434f613572634b62290",
+        "apps/web/src/lib/skills/gradebook-exporter.ts": "72b4e78b9929509e779742c7a1c80ed46e05941b3c04701d823c32402f30bb7b",
+        "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts": "e96f963b8314832ae8ea52bf8af9e84096bf1d61eaea9328e85da6e17d885f75",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts": "e912ed31d142e578e9ffb210978920acfa3e2689c3da26adfcbd0f9e32fdac5a",
+        "apps/web/src/app/api/admin/users/[userId]/route.ts": "59367b8e4607a201cbc5e921b9b72e21470c027b0a28ea15eaa6d9ef4cb6f3a4"
+      },
+      "tested_full_snapshot_hash": "1a2957fe5c6300572d9db4da362143c8cf59ccc559c5e56c75c19505b92d5453",
+      "receipt": "tmp/security-sprint-2/sprint3-web-build/receipt.json",
+      "receipt_sha256": "bc165588bf21b16b15a5ac0317b2fb106e5baf0dbae8bac97b799aae5639b4ac",
+      "log_sha256": "30b538fad31298a4072e65dcf2294b3370b06482746b1e8df0b9cc5837df1923"
+    },
+    {
+      "label": "sprint3-web-build-retry",
+      "status": "failed",
+      "invocation": [
+        "python",
+        "tmp/security-sprint-3/retry-web-build.py"
+      ],
+      "exit": 124,
+      "counts": {},
+      "seconds": 901.88,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack"
+      ],
+      "sandbox": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 900
+      },
+      "safe_environment": [
+        "NODE_OPTIONS=--max-old-space-size=4096",
+        "PATH=/usr/local/bin:/usr/bin:/bin",
+        "HOME=/scratch",
+        "TMPDIR=/scratch",
+        "NODE_ENV=test",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline",
+        "ESBUILD_BINARY_PATH=/scratch/esbuild",
+        "TSX_TSCONFIG_PATH=apps/web/tsconfig.json",
+        "EXPO_OFFLINE=1",
+        "EXPO_NO_TELEMETRY=1",
+        "EXPO_PUBLIC_API_URL=https://staging.example.invalid",
+        "SENTRY_DISABLE_AUTO_UPLOAD=true"
+      ],
+      "tested_source_hashes": {
+        "tests/sprint-3/authorization.test.cjs": "3b3884a8764da622a61dcdc3e44b4700bd3791ec1d0ae434f613572634b62290",
+        "apps/web/src/lib/skills/gradebook-exporter.ts": "72b4e78b9929509e779742c7a1c80ed46e05941b3c04701d823c32402f30bb7b",
+        "apps/web/src/lib/super-user-v1/legacy-entry-guard.ts": "e96f963b8314832ae8ea52bf8af9e84096bf1d61eaea9328e85da6e17d885f75",
+        "apps/web/src/app/api/courses/[courseId]/gradebook/export/route.ts": "e912ed31d142e578e9ffb210978920acfa3e2689c3da26adfcbd0f9e32fdac5a",
+        "apps/web/src/app/api/admin/users/[userId]/route.ts": "59367b8e4607a201cbc5e921b9b72e21470c027b0a28ea15eaa6d9ef4cb6f3a4"
+      },
+      "tested_full_snapshot_hash": "1a2957fe5c6300572d9db4da362143c8cf59ccc559c5e56c75c19505b92d5453",
+      "receipt": "tmp/security-sprint-2/sprint3-web-build-retry/receipt.json",
+      "receipt_sha256": "8bd40d8f93d7b9245ab410aa57c842065236ec54e369b29915a9021c1f764fae",
+      "log_sha256": "61873e4e00d6ac772f06bec3ac20cd99bb1d583660e440a250b60e290522a903"
+    },
+    {
+      "label": "sprint3-static",
+      "status": "passed",
+      "invocation": [
+        "python",
+        "scripts/security/run-scanners.py",
+        "static"
+      ],
+      "exit": 0,
+      "receipt": "tmp/security-sprint-2/scan-static-77173f2c/receipt.json",
+      "receipt_sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b",
+      "summary": {
+        "scanner": "semgrep",
+        "assessment_self_tests": 6,
+        "static_rule_fixtures": "passed",
+        "scanned": [
+          "apps/desktop/electron/ipc/handlers.ts",
+          "apps/desktop/electron/main.ts",
+          "apps/desktop/electron/menu.ts",
+          "apps/desktop/electron/preload.ts",
+          "apps/desktop/electron/security.ts",
+          "apps/desktop/electron/web-url.ts",
+          "apps/desktop/renderer/offline.js",
+          "apps/mobile/src/lib/api-url.ts",
+          "apps/mobile/src/lib/google-login-validation.ts",
+          "apps/mobile/src/lib/student-navigation.ts"
+        ],
+        "findings": [],
+        "exit": 0
+      },
+      "scope_files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ]
+    },
+    {
+      "label": "sprint3-secrets",
+      "status": "passed",
+      "invocation": [
+        "python",
+        "scripts/security/run-scanners.py",
+        "secrets"
+      ],
+      "exit": 0,
+      "receipt": "tmp/security-sprint-2/scan-secrets-683df8b0/receipt.json",
+      "receipt_sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18",
+      "summary": {
+        "scanner": "gitleaks",
+        "scope": "explicit scan-scope.json files only, no Git history",
+        "findings": [],
+        "exit": 0
+      },
+      "scope_files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ]
+    }
+  ],
+  "advisory_matches": {
+    "prod": {
+      "command": [
+        "node",
+        "pnpm",
+        "audit",
+        "--prod",
+        "--json"
+      ],
+      "exit": 1,
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 1,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "patched": ">=0.5.0",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "package": "decode-uri-component",
+          "severity": "high",
+          "patched": ">=0.5.1",
+          "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "package": "minimatch",
+          "severity": "moderate",
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "findings": [
+            {
+              "version": "10.2.6",
+              "paths": [
+                "apps__mobile>expo>@expo/fingerprint>minimatch"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "all": {
+      "command": [
+        "node",
+        "pnpm",
+        "audit",
+        "--json"
+      ],
+      "exit": 1,
+      "lock_sha256": "df21d4eeac438ada020416c7a60f534578ceb5c69f6f3926f3c4c1dfe96f4894",
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 1,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "package": "uuid",
+          "severity": "moderate",
+          "patched": ">=11.1.1",
+          "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+          "findings": [
+            {
+              "version": "3.4.0",
+              "paths": [
+                "apps__mobile>@expo/ngrok>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "patched": ">=0.5.0",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "package": "decode-uri-component",
+          "severity": "high",
+          "patched": ">=0.5.1",
+          "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "package": "minimatch",
+          "severity": "moderate",
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "findings": [
+            {
+              "version": "9.0.9",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+              ]
+            },
+            {
+              "version": "10.2.6",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "advisory_policy_gate_exit": {
+    "prod": 1,
+    "all": 1
+  },
+  "sdk58_proposal": {
+    "implemented": false,
+    "expo": "58.0.26",
+    "router": "58.0.32",
+    "react_native": "0.88.1",
+    "manifest_only_evidence": [
+      "tmp/security-sprint-3/registry.json",
+      "tmp/security-sprint-3/expo-sdk-compatibility.json"
+    ],
+    "migration_plan": "docs/security/remaining-dependency-remediation.md"
+  },
+  "local_retry_wrapper_sha256": "e960a1e2bfd5f0bd3ca1f040b899b6381d9fc45cd3778ca50524d8c93ce68548",
+  "asvs_scoped_support": [
+    "8.1.1",
+    "8.1.2",
+    "8.2.1",
+    "8.2.2",
+    "8.2.3",
+    "8.3.1",
+    "8.4.1"
+  ],
+  "remaining_decisions": [
+    "Frozen Sprint 2 commit approval",
+    "SDK 58 transition validation and signed rollback",
+    "IAM policy and rollout",
+    "Production permissions/role and RLS changes",
+    "Staging, hosted CI, native signing and production release approvals"
+  ]
+}

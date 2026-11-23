@@ -80,6 +80,13 @@ export interface ActivitySubmission {
   errorLog?: string[];
 }
 
+/** Non-CodeLab clients submit answers; grading outcomes are created by the server. */
+export type ActivityAnswerSubmission = Omit<ActivitySubmission, 'activityType' | 'stateCheck' | 'score' | 'maxScore' | 'passed' | 'errorLog'> & {
+  activityType: Exclude<ActivityType, 'codelab'>;
+  answers: unknown;
+};
+export type ActivitySubmissionInput = ActivityAnswerSubmission | (ActivitySubmission & { activityType: 'codelab' });
+
 /** Difficulty levels for activity templates. */
 export type ActivityDifficulty = 1 | 2 | 3;
 

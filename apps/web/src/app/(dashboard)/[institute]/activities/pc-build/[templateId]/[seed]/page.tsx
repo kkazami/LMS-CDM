@@ -1,3 +1,4 @@
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student PC Build Execution Route
@@ -35,6 +36,8 @@ export default async function PCBuildActivityPage({
   if (!template || template.activityType !== "pc-build") {
     notFound();
   }
+  await requireCourseAccess(session.user, template.courseId);
+
 
   // Parse faults and determine mode
   const faultPool = JSON.parse(template.faultPool || "[]") as string[];

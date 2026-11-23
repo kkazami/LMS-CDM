@@ -123,6 +123,7 @@ export default function SandboxPage() {
       {/* 2D Overlay UI */}
       <SubmitBar 
         activityType="pc-build" // Dummy type from allowed schema enum
+        getAnswers={() => ({})} // The dev scene is not an assessed PC assembly.
         assignmentId={dummyAssignmentId}
         studentId={dummyStudentId}
         variantSeed="dev-seed"

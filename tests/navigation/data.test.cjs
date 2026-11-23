@@ -74,17 +74,33 @@ test('leaderboards load profiles, authorized classes and published activities in
   gate.resolve([]); await rendering; assert.equal(f.authReads, 1);
 });
 
-test('risk metrics load concurrently and every read enforces the instructor and institute scope', async () => {
-  const gate = deferred(), scopes = [];
+test('risk metrics page scoped enrollments before reading only their activities and submissions', async () => {
+  const enrollments = deferred(), items = deferred(), submissions = deferred(), reads = [];
+  const scope = { instituteId: 'ics', isArchived: false, instructorId: 'teacher', id: 'selected-class' };
   const f = { user: user(), authReads: 0, db: {
-    enrollment: { findMany: async ({ where }) => { scopes.push(where.course); return gate.promise; } },
-    syllabusItem: { findMany: async ({ where }) => { scopes.push(where.course); return gate.promise; } },
-    studentSubmission: { findMany: async ({ where }) => { scopes.push(where.syllabusItem.course); return gate.promise; } },
+    enrollment: {
+      findMany: async query => { reads.push(['enrollments', query]); return enrollments.promise; },
+      count: async query => { reads.push(['count', query]); await enrollments.promise; return 1; },
+    },
+    syllabusItem: { findMany: async query => { reads.push(['items', query]); return items.promise; } },
+    studentSubmission: { findMany: async query => { reads.push(['submissions', query]); return submissions.promise; } },
   } };
   const api = await load(f), request = new Request('http://localhost/api/analytics/at-risk?courseId=selected-class');
   const response = api.risk(request); await tick();
-  assert.equal(scopes.length, 3);
-  for (const scope of scopes) assert.deepEqual(scope, { instituteId: 'ics', isArchived: false, instructorId: 'teacher', id: 'selected-class' });
-  gate.resolve([]); assert.equal((await response).status, 200);
-  f.user.role = 'STUDENT'; assert.equal((await api.risk(request)).status, 403); assert.equal(scopes.length, 3);
+  assert.deepEqual(reads.map(([name]) => name), ['enrollments', 'count']);
+  for (const [, query] of reads) assert.deepEqual(query.where, { status: 'APPROVED', course: scope });
+  assert.equal(reads[0][1].take, 50); assert.equal(reads[0][1].skip, 0);
+  enrollments.resolve([{ student: { id: 'student-a', name: 'Dummy student', email: 'dummy@example.invalid', avatarUrl: null }, course: { id: 'selected-class', title: 'Dummy course', code: 'DUMMY' } }]);
+  await tick(); assert.equal(reads.length, 3);
+  assert.deepEqual(reads[2][1].where, { courseId: { in: ['selected-class'] }, course: scope });
+  assert.equal(reads[2][1].take, 2001);
+  items.resolve([{ id: 'activity-a', title: 'Dummy work', type: 'ASSIGNMENT', dueDate: null, maxPoints: 10, courseId: 'selected-class' }]);
+  await tick(); assert.equal(reads.length, 4);
+  assert.deepEqual(reads[3][1].where, { studentId: { in: ['student-a'] }, syllabusItemId: { in: ['activity-a'] } });
+  submissions.resolve([]);
+  const result = await response; assert.equal(result.status, 200);
+  const body = await result.json();
+  assert.deepEqual(body.pagination, { page: 1, total: 1, totalPages: 1, pageSize: 50 });
+  assert.deepEqual(body.atRiskStudents.map(row => [row.studentId, row.courseId]), [['student-a', 'selected-class']]);
+  f.user.role = 'STUDENT'; assert.equal((await api.risk(request)).status, 403); assert.equal(reads.length, 4);
 });

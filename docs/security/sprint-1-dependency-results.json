@@ -1,0 +1,3249 @@
+{
+  "date": "2026-11-19",
+  "scope": "manifest/lockfile registry advisories, not demonstrated exploitability",
+  "changes": {
+    "next": {
+      "before": [
+        "16.4.2"
+      ],
+      "after": [
+        "16.4.6"
+      ]
+    },
+    "electron": {
+      "before": [
+        "41.0.3"
+      ],
+      "after": [
+        "41.10.7"
+      ]
+    },
+    "shell-quote": {
+      "before": [
+        "1.8.3"
+      ],
+      "after": [
+        "1.12.0"
+      ]
+    },
+    "node-forge": {
+      "before": [
+        "1.3.3"
+      ],
+      "after": [
+        "1.4.3"
+      ]
+    },
+    "brace-expansion": {
+      "before": [
+        "1.1.12",
+        "2.1.4",
+        "5.0.4"
+      ],
+      "after": [
+        "1.1.22",
+        "2.1.8",
+        "5.0.13"
+      ]
+    },
+    "picomatch": {
+      "before": [
+        "2.3.1",
+        "4.0.7"
+      ],
+      "after": [
+        "2.3.2",
+        "4.0.7"
+      ]
+    },
+    "js-yaml": {
+      "before": [
+        "4.1.1"
+      ],
+      "after": [
+        "4.3.2"
+      ]
+    },
+    "compression": {
+      "before": [
+        "1.8.1"
+      ],
+      "after": [
+        "1.8.2"
+      ]
+    },
+    "ip-address": {
+      "before": [
+        "10.7.0"
+      ],
+      "after": [
+        "10.7.6"
+      ]
+    },
+    "browserslist": {
+      "before": [
+        "4.28.1",
+        "4.29.4"
+      ],
+      "after": [
+        "4.29.6"
+      ]
+    },
+    "baseline-browser-mapping": {
+      "before": [
+        "2.10.8",
+        "2.11.30"
+      ],
+      "after": [
+        "2.11.38"
+      ]
+    }
+  },
+  "reports": {
+    "before_prod": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 6,
+        "moderate": 18,
+        "high": 25,
+        "critical": 1
+      },
+      "reported_match_count": 50,
+      "advisory_records": 50,
+      "raw_sha256": "2321bd00d46358ede7c8277c8b326c73c00835e0ca063a790016343f5d8d3ea4",
+      "advisories": [
+        {
+          "id": "GHSA-f886-m6hf-6m8v",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <5.0.5",
+          "patched_versions": ">=5.0.5",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2328-f5f3-gj25",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.3.3",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q67f-28xg-22rw",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5m6q-g25r-mvwx",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3v7f-55p6-f55p",
+          "package": "picomatch",
+          "severity": "moderate",
+          "vulnerable_versions": "<2.3.2",
+          "patched_versions": ">=2.3.2",
+          "findings": [
+            {
+              "version": "2.3.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/metro-file-map>jest-worker>jest-util>picomatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-c2c7-rcm5-vvqj",
+          "package": "picomatch",
+          "severity": "high",
+          "vulnerable_versions": "<2.3.2",
+          "patched_versions": ">=2.3.2",
+          "findings": [
+            {
+              "version": "2.3.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/metro-file-map>jest-worker>jest-util>picomatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-ppp5-5v6c-4jwp",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w5hq-g745-h8pq",
+          "package": "uuid",
+          "severity": "moderate",
+          "vulnerable_versions": "<11.1.1",
+          "patched_versions": ">=11.1.1",
+          "findings": [
+            {
+              "version": "7.0.3",
+              "paths": [
+                "apps__mobile>expo-splash-screen>@expo/config-plugins>xcode>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jxxr-4gwj-5jf2",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=5.0.0 <5.0.6",
+          "patched_versions": ">=5.0.6",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w7jw-789q-3m8p",
+          "package": "shell-quote",
+          "severity": "critical",
+          "vulnerable_versions": ">=1.1.0 <=1.8.3",
+          "patched_versions": ">=1.8.4",
+          "findings": [
+            {
+              "version": "1.8.3",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>react-native>react-devtools-core>shell-quote"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h67p-54hq-rp68",
+          "package": "js-yaml",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <=4.1.1",
+          "patched_versions": ">=4.2.0",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3jxr-9vmj-r5cp",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=3.0.0 <5.0.7",
+          "patched_versions": ">=5.0.7",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-52cp-r559-cp3m",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.0",
+          "patched_versions": ">=4.3.0",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-395f-4hp3-45gv",
+          "package": "shell-quote",
+          "severity": "high",
+          "vulnerable_versions": "<=1.8.4",
+          "patched_versions": ">=1.9.0",
+          "findings": [
+            {
+              "version": "1.8.3",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>react-native>react-devtools-core>shell-quote"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mh99-v99m-4gvg",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.8",
+          "patched_versions": ">=5.0.8",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rgw5-rvv9-x895",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.9",
+          "patched_versions": ">=5.0.9",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5p4m-2wfm-xmqj",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.1",
+          "patched_versions": ">=4.3.1",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vcc3-ghjq-m6fr",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "vulnerable_versions": "<=0.4.2",
+          "patched_versions": ">=0.5.0",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>@expo/cli>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2883-xcg3-v3hh",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.2",
+          "patched_versions": ">=4.3.2",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/xcpretty>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q2hr-2g5m-vwhr",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <5.0.12",
+          "patched_versions": ">=5.0.12",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qhr7-859c-m2p7",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.11",
+          "patched_versions": ">=5.0.11",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6j4f-fj2g-mc7p",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.10",
+          "patched_versions": ">=5.0.10",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-86w9-cpqp-85rv",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": "<0.0.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vc2v-76pw-4v95",
+          "package": "compression",
+          "severity": "high",
+          "vulnerable_versions": "<1.8.2",
+          "patched_versions": ">=1.8.2",
+          "findings": [
+            {
+              "version": "1.8.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>compression"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "package": "zod",
+          "severity": "high",
+          "vulnerable_versions": "<4.6.6",
+          "patched_versions": ">=4.6.6",
+          "findings": [
+            {
+              "version": "3.25.76",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>zod"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qr28-fpjm-wq7f",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "vulnerable_versions": "<=0.5.0",
+          "patched_versions": ">=0.5.1",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>@expo/cli>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "vulnerable_versions": ">=9.0.0 <=14.0.1",
+          "patched_versions": ">=14.0.2",
+          "findings": [
+            {
+              "version": "13.0.6",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-4642-5mcj-2rqw",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6wvx-3r32-xmcg",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-525v-9gp9-w22h",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7wch-p9px-956x",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h6cr-wjv9-3cpp",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-4487-j8r4-4g2f",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5cwg-6vw7-rj6p",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jc66-7q78-782g",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8hrf-8g6f-7xwp",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-hqq3-7jhf-c5jx",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5x38-2vff-x55p",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "vulnerable_versions": ">=7.0.0 <11.0.1",
+          "patched_versions": ">=11.0.1",
+          "findings": [
+            {
+              "version": "10.2.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9wg5-mj3p-v49q",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2vgq-wchc-25w7",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h46v-rmh6-fq4f",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rhr8-3pm8-cq29",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6qrw-m8cv-hcxf",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6889-vf6x-f3g5",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w4xr-hqv8-ch44",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6cv4-p8m7-4r25",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": ">=0.1.2 <=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-j8rw-jp99-435v",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mfr8-8qww-v76h",
+          "package": "next",
+          "severity": "moderate",
+          "vulnerable_versions": ">=16.3.0 <=16.4.4",
+          "patched_versions": ">=16.4.5",
+          "findings": [
+            {
+              "version": "16.4.2",
+              "paths": [
+                "apps__web>next"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vc7v-qv4w-wrv8",
+          "package": "next",
+          "severity": "moderate",
+          "vulnerable_versions": ">=16.2.0 <=16.4.4",
+          "patched_versions": ">=16.4.5",
+          "findings": [
+            {
+              "version": "16.4.2",
+              "paths": [
+                "apps__web>next"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "before_all": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 13,
+        "moderate": 48,
+        "high": 54,
+        "critical": 2
+      },
+      "reported_match_count": 117,
+      "advisory_records": 114,
+      "raw_sha256": "573fb57d2f403f61aa9511b3841d53c6478bdc9f3c753cda5f069a442422845f",
+      "advisories": [
+        {
+          "id": "GHSA-34x7-hfp2-rc4v",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<7.5.7",
+          "patched_versions": ">=7.5.7",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8qq5-rm4j-mr97",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.2",
+          "patched_versions": ">=7.5.3",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-83g3-92jg-28cx",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<7.5.8",
+          "patched_versions": ">=7.5.8",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qffp-2rhf-9h96",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.9",
+          "patched_versions": ">=7.5.10",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9ppj-qmqm-q256",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.10",
+          "patched_versions": ">=7.5.11",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-r6q2-hw4h-h46w",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.3",
+          "patched_versions": ">=7.5.4",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-f886-m6hf-6m8v",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": "<1.1.13",
+          "patched_versions": ">=1.1.13",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-f886-m6hf-6m8v",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <5.0.5",
+          "patched_versions": ">=5.0.5",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2328-f5f3-gj25",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.3.3",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q67f-28xg-22rw",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5m6q-g25r-mvwx",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3v7f-55p6-f55p",
+          "package": "picomatch",
+          "severity": "moderate",
+          "vulnerable_versions": "<2.3.2",
+          "patched_versions": ">=2.3.2",
+          "findings": [
+            {
+              "version": "2.3.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/metro-file-map>jest-worker>jest-util>picomatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-c2c7-rcm5-vvqj",
+          "package": "picomatch",
+          "severity": "high",
+          "vulnerable_versions": "<2.3.2",
+          "patched_versions": ">=2.3.2",
+          "findings": [
+            {
+              "version": "2.3.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>@expo/metro-file-map>jest-worker>jest-util>picomatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-ppp5-5v6c-4jwp",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<1.4.0",
+          "patched_versions": ">=1.4.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8x5q-pvf5-64mp",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.1.0",
+          "patched_versions": ">=41.1.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-f37v-82c4-4x64",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.1.0",
+          "patched_versions": ">=41.1.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-f3pv-wv63-48x8",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.1.0",
+          "patched_versions": ">=41.1.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w5hq-g745-h8pq",
+          "package": "uuid",
+          "severity": "moderate",
+          "vulnerable_versions": "<11.1.1",
+          "patched_versions": ">=11.1.1",
+          "findings": [
+            {
+              "version": "3.4.0",
+              "paths": [
+                "apps__mobile>@expo/ngrok>uuid"
+              ]
+            },
+            {
+              "version": "7.0.3",
+              "paths": [
+                "apps__mobile>expo-splash-screen>@expo/config-plugins>xcode>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jxxr-4gwj-5jf2",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=5.0.0 <5.0.6",
+          "patched_versions": ">=5.0.6",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w7jw-789q-3m8p",
+          "package": "shell-quote",
+          "severity": "critical",
+          "vulnerable_versions": ">=1.1.0 <=1.8.3",
+          "patched_versions": ">=1.8.4",
+          "findings": [
+            {
+              "version": "1.8.3",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>react-native>react-devtools-core>shell-quote"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vmf3-w455-68vh",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.15",
+          "patched_versions": ">=7.5.16",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h67p-54hq-rp68",
+          "package": "js-yaml",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <=4.1.1",
+          "patched_versions": ">=4.2.0",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3jxr-9vmj-r5cp",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": "<1.1.16",
+          "patched_versions": ">=1.1.16",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3jxr-9vmj-r5cp",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=3.0.0 <5.0.7",
+          "patched_versions": ">=5.0.7",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-52cp-r559-cp3m",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.0",
+          "patched_versions": ">=4.3.0",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w8wr-v893-vjvp",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.17",
+          "patched_versions": ">=7.5.18",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-23hp-3jrh-7fpw",
+          "package": "tar",
+          "severity": "critical",
+          "vulnerable_versions": "<=7.5.18",
+          "patched_versions": ">=7.5.19",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8x88-c5mf-7j5w",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.17",
+          "patched_versions": ">=7.5.18",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-gvwx-54wh-qm9j",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.16",
+          "patched_versions": ">=7.5.17",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-395f-4hp3-45gv",
+          "package": "shell-quote",
+          "severity": "high",
+          "vulnerable_versions": "<=1.8.4",
+          "patched_versions": ">=1.9.0",
+          "findings": [
+            {
+              "version": "1.8.3",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>react-native>react-devtools-core>shell-quote"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-p2f4-r6v6-j797",
+          "package": "builder-util-runtime",
+          "severity": "high",
+          "vulnerable_versions": "<9.7.0",
+          "patched_versions": ">=9.7.0",
+          "findings": [
+            {
+              "version": "9.2.10",
+              "paths": [
+                "apps__desktop>electron-builder>builder-util-runtime"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7g7r-gx96-252g",
+          "package": "app-builder-lib",
+          "severity": "high",
+          "vulnerable_versions": "<26.15.0",
+          "patched_versions": ">=26.15.0",
+          "findings": [
+            {
+              "version": "25.1.8",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mh99-v99m-4gvg",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": "<1.1.17",
+          "patched_versions": ">=1.1.17",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mh99-v99m-4gvg",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.8",
+          "patched_versions": ">=5.0.8",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rgw5-rvv9-x895",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.9",
+          "patched_versions": ">=5.0.9",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rgw5-rvv9-x895",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": "<1.1.18",
+          "patched_versions": ">=1.1.18",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jm7p-cc5g-qwxx",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-v3j7-r9gq-3gjw",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.4.0",
+          "patched_versions": ">=41.4.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-m55f-7gqj-fr98",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5c9j-mhmv-5xgx",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.1.1",
+          "patched_versions": ">=41.1.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h7rp-cf8h-j98x",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.2",
+          "patched_versions": ">=41.2.2",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-x8rc-wpg4-grpf",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9pf5-hg6p-4pwp",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.0",
+          "patched_versions": ">=41.2.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-pfmc-3mgc-p6fp",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-r4w5-6pfg-jxp5",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.9.1",
+          "patched_versions": ">=41.9.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-v64r-4m7r-3mvq",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-v93f-fgjr-hjrj",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9f4c-93c8-jc8g",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": ">=40.0.0-alpha.1 <41.10.3",
+          "patched_versions": ">=41.10.3",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-p2rr-rvmm-c5fp",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-f2r8-jv7c-xqmp",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.1",
+          "patched_versions": ">=41.2.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-ff2p-hmqr-hxm4",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.2",
+          "patched_versions": ">=41.2.2",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-4f78-qhmw-8j8m",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=41.0.0-alpha.1 <41.2.0",
+          "patched_versions": ">=41.2.0",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5p4m-2wfm-xmqj",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.1",
+          "patched_versions": ">=4.3.1",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jmr9-qjv8-65gv",
+          "package": "extract-zip",
+          "severity": "high",
+          "vulnerable_versions": "<=2.0.1",
+          "patched_versions": "<0.0.0",
+          "findings": [
+            {
+              "version": "2.0.1",
+              "paths": [
+                "apps__desktop>electron>extract-zip"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-r292-9mhp-454m",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.20",
+          "patched_versions": ">=7.5.21",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vcc3-ghjq-m6fr",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "vulnerable_versions": "<=0.4.2",
+          "patched_versions": ">=0.5.0",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>@expo/cli>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-c83g-rgw3-j3cx",
+          "package": "browserslist",
+          "severity": "high",
+          "vulnerable_versions": "<=4.28.6",
+          "patched_versions": ">=4.28.7",
+          "findings": [
+            {
+              "version": "4.28.1",
+              "paths": [
+                "apps__web>autoprefixer>browserslist"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-73wf-gq98-2v4g",
+          "package": "browserslist",
+          "severity": "high",
+          "vulnerable_versions": "<=4.28.6",
+          "patched_versions": ">=4.28.7",
+          "findings": [
+            {
+              "version": "4.28.1",
+              "paths": [
+                "apps__web>autoprefixer>browserslist"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7pqw-9j4j-h8q3",
+          "package": "extract-zip",
+          "severity": "high",
+          "vulnerable_versions": "<=2.0.1",
+          "patched_versions": "<0.0.0",
+          "findings": [
+            {
+              "version": "2.0.1",
+              "paths": [
+                "apps__desktop>electron>extract-zip"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w5vr-8v7q-w6rv",
+          "package": "baseline-browser-mapping",
+          "severity": "moderate",
+          "vulnerable_versions": ">=2.0.0 <2.11.0",
+          "patched_versions": ">=2.11.0",
+          "findings": [
+            {
+              "version": "2.10.8",
+              "paths": [
+                "apps__web>autoprefixer>browserslist>baseline-browser-mapping"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2883-xcg3-v3hh",
+          "package": "js-yaml",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <4.3.2",
+          "patched_versions": ">=4.3.2",
+          "findings": [
+            {
+              "version": "4.1.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>js-yaml"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-hq2x-r82h-9wj4",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<41.10.4",
+          "patched_versions": ">=41.10.4",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-gr2m-v5gq-v685",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<41.10.6",
+          "patched_versions": ">=41.10.6",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-j84w-jfhq-vhvj",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<41.10.6",
+          "patched_versions": ">=41.10.6",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vv43-5jgx-7qv8",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": ">=40.0.0-alpha.1 <41.10.5",
+          "patched_versions": ">=41.10.5",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-j6r3-76f7-8jcv",
+          "package": "ip-address",
+          "severity": "moderate",
+          "vulnerable_versions": "<=10.7.0",
+          "patched_versions": ">=10.7.1",
+          "findings": [
+            {
+              "version": "10.7.0",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>socks-proxy-agent>socks>ip-address"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h3mg-xc3c-68pw",
+          "package": "ip-address",
+          "severity": "moderate",
+          "vulnerable_versions": "<=10.7.0",
+          "patched_versions": ">=10.7.1",
+          "findings": [
+            {
+              "version": "10.7.0",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>socks-proxy-agent>socks>ip-address"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q2hr-2g5m-vwhr",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": "<1.1.21",
+          "patched_versions": ">=1.1.21",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q2hr-2g5m-vwhr",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=2.0.0 <2.1.7",
+          "patched_versions": ">=2.1.7",
+          "findings": [
+            {
+              "version": "2.1.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>cacache>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-q2hr-2g5m-vwhr",
+          "package": "brace-expansion",
+          "severity": "moderate",
+          "vulnerable_versions": ">=4.0.0 <5.0.12",
+          "patched_versions": ">=5.0.12",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qhr7-859c-m2p7",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": "<1.1.20",
+          "patched_versions": ">=1.1.20",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qhr7-859c-m2p7",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=2.0.0 <2.1.6",
+          "patched_versions": ">=2.1.6",
+          "findings": [
+            {
+              "version": "2.1.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>cacache>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qhr7-859c-m2p7",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.11",
+          "patched_versions": ">=5.0.11",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6j4f-fj2g-mc7p",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": "<1.1.19",
+          "patched_versions": ">=1.1.19",
+          "findings": [
+            {
+              "version": "1.1.12",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6j4f-fj2g-mc7p",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=2.0.0 <2.1.5",
+          "patched_versions": ">=2.1.5",
+          "findings": [
+            {
+              "version": "2.1.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>cacache>glob>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6j4f-fj2g-mc7p",
+          "package": "brace-expansion",
+          "severity": "high",
+          "vulnerable_versions": ">=4.0.0 <5.0.10",
+          "patched_versions": ">=5.0.10",
+          "findings": [
+            {
+              "version": "5.0.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch>brace-expansion"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-86w9-cpqp-85rv",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": "<0.0.0",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vc2v-76pw-4v95",
+          "package": "compression",
+          "severity": "high",
+          "vulnerable_versions": "<1.8.2",
+          "patched_versions": ">=1.8.2",
+          "findings": [
+            {
+              "version": "1.8.1",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>compression"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9qh4-3jw8-366w",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<41.10.6",
+          "patched_versions": ">=41.10.6",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-fw47-9c62-h3vw",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2p8c-gr87-2676",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-x562-297c-g43g",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.9",
+          "patched_versions": ">=42.11.9",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-98mx-cjp9-gchm",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.1",
+          "patched_versions": ">=42.11.1",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3qxv-5xgr-q7w9",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.6",
+          "patched_versions": ">=42.11.6",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h3v5-h239-pg29",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.6",
+          "patched_versions": ">=42.11.6",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-997q-gvvc-jwmx",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rxp7-6hxx-x8q5",
+          "package": "ip-address",
+          "severity": "moderate",
+          "vulnerable_versions": "<=10.7.3",
+          "patched_versions": ">=10.7.4",
+          "findings": [
+            {
+              "version": "10.7.0",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/rebuild>node-gyp>make-fetch-happen>socks-proxy-agent>socks>ip-address"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "package": "zod",
+          "severity": "high",
+          "vulnerable_versions": "<4.6.6",
+          "patched_versions": ">=4.6.6",
+          "findings": [
+            {
+              "version": "3.25.76",
+              "paths": [
+                ".>puppeteer-core>chromium-bidi>zod"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jr5w-w6x2-84p9",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<42.11.16",
+          "patched_versions": ">=42.11.16",
+          "findings": [
+            {
+              "version": "41.0.3",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qr28-fpjm-wq7f",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "vulnerable_versions": "<=0.5.0",
+          "patched_versions": ">=0.5.1",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo>babel-preset-expo>expo>@expo/cli>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "vulnerable_versions": ">=9.0.0 <=14.0.1",
+          "patched_versions": ">=14.0.2",
+          "findings": [
+            {
+              "version": "10.5.0",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>config-file-ts>glob"
+              ]
+            },
+            {
+              "version": "13.0.6",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-4642-5mcj-2rqw",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6wvx-3r32-xmcg",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-525v-9gp9-w22h",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7wch-p9px-956x",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h6cr-wjv9-3cpp",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-4487-j8r4-4g2f",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5cwg-6vw7-rj6p",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jc66-7q78-782g",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8hrf-8g6f-7xwp",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-hqq3-7jhf-c5jx",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-5x38-2vff-x55p",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "vulnerable_versions": ">=7.0.0 <11.0.1",
+          "patched_versions": ">=11.0.1",
+          "findings": [
+            {
+              "version": "9.0.9",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+              ]
+            },
+            {
+              "version": "10.2.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9wg5-mj3p-v49q",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2vgq-wchc-25w7",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h46v-rmh6-fq4f",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-rhr8-3pm8-cq29",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6qrw-m8cv-hcxf",
+          "package": "node-forge",
+          "severity": "high",
+          "vulnerable_versions": "<=1.4.0",
+          "patched_versions": ">=1.4.1",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6889-vf6x-f3g5",
+          "package": "node-forge",
+          "severity": "low",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w4xr-hqv8-ch44",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-6cv4-p8m7-4r25",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": ">=0.1.2 <=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-j8rw-jp99-435v",
+          "package": "node-forge",
+          "severity": "moderate",
+          "vulnerable_versions": "<=1.4.2",
+          "patched_versions": ">=1.4.3",
+          "findings": [
+            {
+              "version": "1.3.3",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>node-forge"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mfr8-8qww-v76h",
+          "package": "next",
+          "severity": "moderate",
+          "vulnerable_versions": ">=16.3.0 <=16.4.4",
+          "patched_versions": ">=16.4.5",
+          "findings": [
+            {
+              "version": "16.4.2",
+              "paths": [
+                "apps__web>next"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vc7v-qv4w-wrv8",
+          "package": "next",
+          "severity": "moderate",
+          "vulnerable_versions": ">=16.2.0 <=16.4.4",
+          "patched_versions": ">=16.4.5",
+          "findings": [
+            {
+              "version": "16.4.2",
+              "paths": [
+                "apps__web>next"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "after_prod": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 2,
+        "critical": 0
+      },
+      "reported_match_count": 6,
+      "advisory_records": 6,
+      "raw_sha256": "269fe6e3d830a7a0f32144de74085f5a1ae7c428f5bfbedfd6ded81447b1f56d",
+      "advisories": [
+        {
+          "id": "GHSA-w5hq-g745-h8pq",
+          "package": "uuid",
+          "severity": "moderate",
+          "vulnerable_versions": "<11.1.1",
+          "patched_versions": ">=11.1.1",
+          "findings": [
+            {
+              "version": "7.0.3",
+              "paths": [
+                "apps__mobile>expo-splash-screen>@expo/config-plugins>xcode>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vcc3-ghjq-m6fr",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "vulnerable_versions": "<=0.4.2",
+          "patched_versions": ">=0.5.0",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "package": "zod",
+          "severity": "high",
+          "vulnerable_versions": "<4.6.6",
+          "patched_versions": ">=4.6.6",
+          "findings": [
+            {
+              "version": "3.25.76",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>zod"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qr28-fpjm-wq7f",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "vulnerable_versions": "<=0.5.0",
+          "patched_versions": ">=0.5.1",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "vulnerable_versions": ">=9.0.0 <=14.0.1",
+          "patched_versions": ">=14.0.2",
+          "findings": [
+            {
+              "version": "13.0.6",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "vulnerable_versions": ">=7.0.0 <11.0.1",
+          "patched_versions": ">=11.0.1",
+          "findings": [
+            {
+              "version": "10.2.4",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob>minimatch"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "after_all": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 3,
+        "moderate": 14,
+        "high": 13,
+        "critical": 1
+      },
+      "reported_match_count": 31,
+      "advisory_records": 28,
+      "raw_sha256": "7275c5b7d1e22f41a9b80f31e22e7af278c2ebef2d7da95845001a88cec62dea",
+      "advisories": [
+        {
+          "id": "GHSA-34x7-hfp2-rc4v",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<7.5.7",
+          "patched_versions": ">=7.5.7",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8qq5-rm4j-mr97",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.2",
+          "patched_versions": ">=7.5.3",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-83g3-92jg-28cx",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<7.5.8",
+          "patched_versions": ">=7.5.8",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qffp-2rhf-9h96",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.9",
+          "patched_versions": ">=7.5.10",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-9ppj-qmqm-q256",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.10",
+          "patched_versions": ">=7.5.11",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-r6q2-hw4h-h46w",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.3",
+          "patched_versions": ">=7.5.4",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w5hq-g745-h8pq",
+          "package": "uuid",
+          "severity": "moderate",
+          "vulnerable_versions": "<11.1.1",
+          "patched_versions": ">=11.1.1",
+          "findings": [
+            {
+              "version": "3.4.0",
+              "paths": [
+                "apps__mobile>@expo/ngrok>uuid"
+              ]
+            },
+            {
+              "version": "7.0.3",
+              "paths": [
+                "apps__mobile>expo-splash-screen>@expo/config-plugins>xcode>uuid"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vmf3-w455-68vh",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.15",
+          "patched_versions": ">=7.5.16",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-w8wr-v893-vjvp",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.17",
+          "patched_versions": ">=7.5.18",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-23hp-3jrh-7fpw",
+          "package": "tar",
+          "severity": "critical",
+          "vulnerable_versions": "<=7.5.18",
+          "patched_versions": ">=7.5.19",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-8x88-c5mf-7j5w",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.17",
+          "patched_versions": ">=7.5.18",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-gvwx-54wh-qm9j",
+          "package": "tar",
+          "severity": "moderate",
+          "vulnerable_versions": "<=7.5.16",
+          "patched_versions": ">=7.5.17",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-p2f4-r6v6-j797",
+          "package": "builder-util-runtime",
+          "severity": "high",
+          "vulnerable_versions": "<9.7.0",
+          "patched_versions": ">=9.7.0",
+          "findings": [
+            {
+              "version": "9.2.10",
+              "paths": [
+                "apps__desktop>electron-builder>builder-util-runtime"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-7g7r-gx96-252g",
+          "package": "app-builder-lib",
+          "severity": "high",
+          "vulnerable_versions": "<26.15.0",
+          "patched_versions": ">=26.15.0",
+          "findings": [
+            {
+              "version": "25.1.8",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-r292-9mhp-454m",
+          "package": "tar",
+          "severity": "high",
+          "vulnerable_versions": "<=7.5.20",
+          "patched_versions": ">=7.5.21",
+          "findings": [
+            {
+              "version": "6.2.1",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>tar"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-vcc3-ghjq-m6fr",
+          "package": "decode-uri-component",
+          "severity": "moderate",
+          "vulnerable_versions": "<=0.4.2",
+          "patched_versions": ">=0.5.0",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-fw47-9c62-h3vw",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-2p8c-gr87-2676",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-x562-297c-g43g",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.9",
+          "patched_versions": ">=42.11.9",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-98mx-cjp9-gchm",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.1",
+          "patched_versions": ">=42.11.1",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3qxv-5xgr-q7w9",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.6",
+          "patched_versions": ">=42.11.6",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-h3v5-h239-pg29",
+          "package": "electron",
+          "severity": "low",
+          "vulnerable_versions": "<42.11.6",
+          "patched_versions": ">=42.11.6",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-997q-gvvc-jwmx",
+          "package": "electron",
+          "severity": "moderate",
+          "vulnerable_versions": "<42.11.3",
+          "patched_versions": ">=42.11.3",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "package": "zod",
+          "severity": "high",
+          "vulnerable_versions": "<4.6.6",
+          "patched_versions": ">=4.6.6",
+          "findings": [
+            {
+              "version": "3.25.76",
+              "paths": [
+                ".>puppeteer-core>chromium-bidi>zod"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-jr5w-w6x2-84p9",
+          "package": "electron",
+          "severity": "high",
+          "vulnerable_versions": "<42.11.16",
+          "patched_versions": ">=42.11.16",
+          "findings": [
+            {
+              "version": "41.10.7",
+              "paths": [
+                "apps__desktop>electron"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-qr28-fpjm-wq7f",
+          "package": "decode-uri-component",
+          "severity": "high",
+          "vulnerable_versions": "<=0.5.0",
+          "patched_versions": ">=0.5.1",
+          "findings": [
+            {
+              "version": "0.2.2",
+              "paths": [
+                "apps__mobile>expo-router>query-string>decode-uri-component"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "package": "glob",
+          "severity": "moderate",
+          "vulnerable_versions": ">=9.0.0 <=14.0.1",
+          "patched_versions": ">=14.0.2",
+          "findings": [
+            {
+              "version": "13.0.6",
+              "paths": [
+                "apps__mobile>expo>@expo/cli>glob"
+              ]
+            },
+            {
+              "version": "10.5.0",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>config-file-ts>glob"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "package": "minimatch",
+          "severity": "moderate",
+          "vulnerable_versions": ">=7.0.0 <11.0.1",
+          "patched_versions": ">=11.0.1",
+          "findings": [
+            {
+              "version": "9.0.9",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch"
+              ]
+            },
+            {
+              "version": "10.2.4",
+              "paths": [
+                "apps__desktop>electron-builder>app-builder-lib>minimatch"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "parent_contracts": {
+    "@babel/helper-compilation-targets@7.29.7": {
+      "browserslist": "^4.24.0"
+    },
+    "@expo/cli@57.0.32": {
+      "compression": "^1.7.4",
+      "node-forge": "^1.3.3",
+      "picomatch": "^4.0.4"
+    },
+    "@expo/code-signing-certificates@0.0.6": {
+      "node-forge": "^1.3.3"
+    },
+    "@expo/metro-config@57.0.13": {
+      "picomatch": "^4.0.4",
+      "browserslist": "^4.25.0"
+    },
+    "@expo/xcpretty@4.4.7": {
+      "js-yaml": "^4.1.0"
+    },
+    "app-builder-lib@25.1.8": {
+      "js-yaml": "^4.1.0"
+    },
+    "autoprefixer@10.4.27": {
+      "browserslist": "^4.28.1"
+    },
+    "browserslist@4.28.1": {
+      "baseline-browser-mapping": "^2.9.0"
+    },
+    "browserslist@4.29.4": {
+      "baseline-browser-mapping": "^2.11.29"
+    },
+    "builder-util@25.1.7": {
+      "js-yaml": "^4.1.0"
+    },
+    "core-js-compat@3.49.0": {
+      "browserslist": "^4.28.1"
+    },
+    "dmg-builder@25.1.8": {
+      "js-yaml": "^4.1.0"
+    },
+    "fdir@6.5.0": {
+      "picomatch": null
+    },
+    "jest-util@29.7.0": {
+      "picomatch": "^2.2.3"
+    },
+    "micromatch@4.0.8": {
+      "picomatch": "^2.3.1"
+    },
+    "minimatch@10.2.4": {
+      "brace-expansion": "^5.0.2"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "^1.1.7"
+    },
+    "minimatch@5.1.9": {
+      "brace-expansion": "^2.0.1"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "^2.0.2"
+    },
+    "next@16.4.2": {
+      "baseline-browser-mapping": "^2.9.19"
+    },
+    "react-devtools-core@6.1.5": {
+      "shell-quote": "^1.6.1"
+    },
+    "socks@2.8.10": {
+      "ip-address": "^10.1.1"
+    },
+    "tinyglobby@0.2.17": {
+      "picomatch": "^4.0.4"
+    },
+    "update-browserslist-db@1.2.3": {
+      "browserslist": null
+    },
+    "update-browserslist-db@1.3.4": {
+      "browserslist": null
+    }
+  },
+  "lock_sha256": "c2752589fc67da45d60f7d97da2a90e0b2fd6fb20ec950556e940783bb9f27fb",
+  "package_scripts_during_install": "disabled",
+  "production_access": false
+}

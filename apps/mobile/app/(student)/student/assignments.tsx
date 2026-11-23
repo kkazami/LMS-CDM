@@ -22,6 +22,7 @@ export default function AssignmentsScreen() {
 
   const query = useQuery({
     queryKey: ['assignments-screen', user?.id, institute],
+    staleTime: 20000,
     queryFn: async () => {
       if (isIcs) {
         return api.mobileDashboard.get();

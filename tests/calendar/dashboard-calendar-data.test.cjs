@@ -30,6 +30,8 @@ test("dashboard calendars use taught or approved enrolled courses and keep perso
   const eventBase = { creatorId: "teacher", instituteId: "ics", courseId: null, creator: { role: "PROFESSOR" }, eventDate: date, createdAt: date, updatedAt: date };
   const savedEvents = ["personal", "event", "assignment", "exam", "quiz", "submission"].map((eventType) => ({ ...eventBase, id: eventType, title: eventType, eventType }));
   globalThis.__calendarDb = {
+    // This calendar fixture represents an installation without the optional lab schema.
+    $queryRaw: async () => [{ tables: 0, columns: 0 }],
     calendarEvent: { findMany: async ({ where }) => savedEvents.filter((event) => matches(event, where)) },
     syllabusItem: { findMany: async (query) => { queries.push(query.where); return [{ id: "quiz", title: "QUIZ1", type: "QUIZ", courseId: "enrolled", dueDate: date, createdAt: date, updatedAt: date, course: courses[1] }]; } },
     course: { findMany: async ({ where }) => courses.filter((course) => matches(course, where)).map(({ instituteId, isArchived, instructorId, enrollments, ...course }) => course) },

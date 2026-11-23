@@ -1,3 +1,4 @@
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Unified CodeLab Problem / Level Execution Page
@@ -259,6 +260,8 @@ export default async function CodeLabDynamicExecutionPage({ params }: CodeLabDyn
   if (!template || template.activityType !== "codelab") {
     notFound();
   }
+
+  await requireCourseAccess(session.user, template.courseId);
 
   const variablesObj = JSON.parse((template.variables as string) || "{}");
   const descriptionTemplate = variablesObj.descriptionTemplate || "";

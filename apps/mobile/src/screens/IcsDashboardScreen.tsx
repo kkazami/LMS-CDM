@@ -119,7 +119,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
         {!!orderError && <ErrorBanner message={orderError} onDismiss={() => setOrderError('')} />}
       </>}
       renderItem={({ item, index }) => <IcsCourseCard course={item} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />}
-      ListEmptyComponent={query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={160} width="100%" /><SkeletonBlock height={160} width="100%" /></View> : !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={accent} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : null}
+      ListEmptyComponent={query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={160} width="100%" /><SkeletonBlock height={160} width="100%" /></View> : !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={accent} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : undefined}
       ListFooterComponent={!coursesOnly ? <View>
         <Text accessibilityRole="header" style={[styles.sectionTitle, ink, { marginTop: 16, marginBottom: 16 }]}>{teacher ? 'Teaching shortcuts' : 'Your learning tools'}</Text>
         <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, { backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 0, minHeight: 100 }]}>
@@ -128,7 +128,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
           <Text style={[styles.copy, muted]}>{item.description}{item.badge > 0 ? ` · ${item.badge}` : ''}</Text>
         </Pressable>)}</View>
         {data && <IcsCalendar calendar={data.calendar} teacher={teacher} />}
-      </View> : null}
+      </View> : undefined}
     /> : <>
     <Screen scroll contentContainerStyle={[styles.content, isIcsV2 && { paddingHorizontal: 20, paddingTop: 12 }, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
       {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}

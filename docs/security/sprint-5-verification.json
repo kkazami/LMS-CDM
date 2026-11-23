@@ -1,0 +1,1100 @@
+{
+  "date": "2026-11-19",
+  "candidate_branch": "codex/security-review-sprint-5",
+  "base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+  "checkpoints": {
+    "sprint_2": "0452a5dae2ef5d3026f9e11fb6b2c214c2d36e04",
+    "sprint_3": {
+      "commit": "9e4b6b14ac670b499c3fa1772176c1d6fb54fa1b",
+      "tree": "83b9d5e8e2e4ba5bb79b9106a888be4eac288c21",
+      "files": 15
+    },
+    "sprint_4": {
+      "commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+      "tree": "f64860fd6ba9f1ea510b2032f0a55eccb995f016",
+      "files": 68,
+      "parents": [
+        "4ddff68f8dd9ae5a7703d3d6a70b978ff1d9f53a",
+        "9e4b6b14ac670b499c3fa1772176c1d6fb54fa1b"
+      ]
+    },
+    "expo": "4ddff68f8dd9ae5a7703d3d6a70b978ff1d9f53a",
+    "audit_target": "5dc0a42963b241ca0bbaa1711ad6318fe0b9f202",
+    "historical_files_matched": 186,
+    "preserved_outside_scope": [
+      ".github/workflows/security.yml",
+      "apps/web/vercel.json"
+    ]
+  },
+  "checkpoint_receipt_sha256": "534a1ab488ae109696ecee7ada6a48c3737415e064eb334f1f17fb46180fa0af",
+  "scope": {
+    "production_access": false,
+    "push": false,
+    "hosted_ci": "Owner requested a local branch; no hosted receipt",
+    "real_device_or_signing": false,
+    "blocked_validation_retried": false,
+    "historical_evidence_matched": 186
+  },
+  "dependency_assessment": {
+    "prod": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 0,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "id": "1244013",
+          "package": "glob",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+          ],
+          "patched": ">=14.0.2",
+          "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4"
+        },
+        {
+          "id": "1244623",
+          "package": "minimatch",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob>minimatch"
+          ],
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+        }
+      ],
+      "passed": true,
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "public_report": "tmp/security-sprint-5/after-sprint5-prod.stdout.log",
+      "report_sha256": "90557727ac3a6bbfead5ea6740e57968aab92504e1c53877f0de4346f3955184"
+    },
+    "all": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 0,
+        "critical": 0
+      },
+      "advisories": [
+        {
+          "id": "1119441",
+          "package": "uuid",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>@expo/ngrok>uuid"
+          ],
+          "patched": ">=11.1.1",
+          "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+        },
+        {
+          "id": "1244013",
+          "package": "glob",
+          "severity": "moderate",
+          "paths": [
+            "apps__mobile>@sentry/react-native>@sentry/bundler-plugins>glob"
+          ],
+          "patched": ">=14.0.2",
+          "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4"
+        },
+        {
+          "id": "1244623",
+          "package": "minimatch",
+          "severity": "moderate",
+          "paths": [
+            "apps__desktop>electron-builder>app-builder-lib>@electron/universal>minimatch",
+            "apps__desktop>electron-builder>app-builder-lib>minimatch"
+          ],
+          "patched": ">=11.0.1",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+        }
+      ],
+      "passed": true,
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "public_report": "tmp/security-sprint-5/after-sprint5-all.stdout.log",
+      "report_sha256": "cba1b272658ad9f72f3df01967b0ba0c8c9afa1a9c0c98648ef790a9657d42a9"
+    }
+  },
+  "parent_contracts": {
+    "artifact": "tmp/security-sprint-5/parent-contracts.json",
+    "sha256": "a625e7502d1b577da24833c753e4af49474a1c4ac7435d2b5994a107bc512f1b"
+  },
+  "tests": {
+    "scoped-final": {
+      "mode": "tests",
+      "exit": 0,
+      "counts": {
+        "tests": 121,
+        "pass": 121,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 48.6,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/scoped-final/receipt.json",
+      "sha256": "41fe6fdf5bfb8e5afba34a8169048398ce49eccfc2fd82b066a007edb544daee",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "f375516b034eff7ca8e4c989591f6369a33e41afcbef388e1c98cce5bac84962"
+    },
+    "scoped-release": {
+      "mode": "tests",
+      "exit": 0,
+      "counts": {
+        "tests": 121,
+        "pass": 121,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 60.24,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 300
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/security/admin-database-export-audit.test.cjs",
+        "tests/calendar/dashboard-calendar-data.test.cjs",
+        "tests/leaderboard/activity.test.cjs",
+        "tests/navigation/data.test.cjs",
+        "apps/web/src/lib/ite/focus/__tests__/route-context.test.ts",
+        "tests/labs/authoring.test.ts",
+        "tests/roster/activation-email.test.ts",
+        "tests/security/activity-grading.test.ts",
+        "tests/security/arduino-preview.test.ts",
+        "tests/security/admin-mfa.test.cjs",
+        "tests/codelab/runner.test.cjs",
+        "tests/codelab/completion.test.cjs",
+        "tests/sprint-2/dependency-compatibility.test.cjs",
+        "tests/sprint-2/desktop-security.test.cjs",
+        "tests/sprint-2/mobile-compatibility.test.cjs",
+        "tests/sprint-3/authorization.test.cjs",
+        "tests/gradebook/export.test.ts",
+        "tests/sprint-4/identity.test.cjs",
+        "tests/sprint-5/local-qualification.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/scoped-release/receipt.json",
+      "sha256": "bf1dfb9ccf334f34bcc7c9753b3d2418dbce74e09f9e676a36306336f2163859",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "4db357ab6bf9f685a4445b9e66b74d4bf0e788d6a6fc00128001b01e4453738c",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "0b2f1960645191a6a78d884d09fc7fc3cc099b865cb3a02f79bf820a0c895aaa"
+    },
+    "web-build-final": {
+      "mode": "web-build",
+      "exit": 0,
+      "counts": {},
+      "seconds": 292.16,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node scripts/prepare-codelab-runtimes.mjs && cd apps/web && node node_modules/next/dist/bin/next build --webpack && test -s .next/BUILD_ID && test -s .next/required-server-files.json && test -s .next/server/app/api/health/route.js.nft.json && printf \"Build ID: \" && cat .next/BUILD_ID"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 4294967296,
+        "memory_bytes": 6442450944,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 600
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "artifact": "tmp/security-sprint-5/web-build-final/receipt.json",
+      "sha256": "c75bd8008d70769a84c3332935d0df98e1a7c556ebe523746a928b7887a5d4c3",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "6f478f2a049e6077e4dbf9980ac8483ad4de473db6c078855f7df05dd73ac5a7",
+      "build_id": "D2S910KNszCqPT8T1N5vL"
+    },
+    "mobile-types-final": {
+      "mode": "mobile-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 42.21,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && cd apps/mobile && node node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "artifact": "tmp/security-sprint-5/mobile-types-final/receipt.json",
+      "sha256": "1d9fe49bc1847421fa14b4c72e4e804cbfdcdcb75425a3e6b3d5cd55b3b804cc",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "eb311cb4f7b806d3f1a897535d3b9d30c9e959ab00fda06f62457303fe046907"
+    },
+    "desktop-types-final": {
+      "mode": "desktop-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 32.13,
+      "argv": [
+        "sh",
+        "-c",
+        "cd apps/desktop && node ../../node_modules/typescript/bin/tsc --noEmit --incremental false"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "artifact": "tmp/security-sprint-5/desktop-types-final/receipt.json",
+      "sha256": "c57f982aca2c4f2dfb1610614ff62dde99c681c5cbcd9b821c11e9182a938bc5",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "harness-types-final": {
+      "mode": "harness-types",
+      "exit": 0,
+      "counts": {},
+      "seconds": 40.89,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && node node_modules/typescript/bin/tsc --noEmit --incremental false --project scripts/harness/tsconfig.json"
+      ],
+      "limits": {
+        "network": "none",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [],
+      "artifact": "tmp/security-sprint-5/harness-types-final/receipt.json",
+      "sha256": "0f21930dc163e8628d8e58b4088b0bb9e6764803dc6e9d0cb0ab6037bb88be0a",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "4db357ab6bf9f685a4445b9e66b74d4bf0e788d6a6fc00128001b01e4453738c",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "cd6e7eda6500211e3035d0769958a3d147ce783b23b76ef7eabe20ee3338029f"
+    },
+    "prisma-rls": {
+      "mode": "rls-staging",
+      "exit": 0,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 28.39,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-5/prisma-rls.test.cjs"
+      ],
+      "limits": {
+        "network": "container:lms-sprint2-pg-fbc3fca635b8445ea0d9d06dcc43edb4",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/sprint-5/prisma-rls.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/prisma-rls/receipt.json",
+      "sha256": "038fc406f6de7ee1574d222a2d4099564d0779f0b8db53bf0d53d2044e31c821",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "93242c759a39c60e3edce9100a7a286923517f0002b039aeafbe52d413b5ac81"
+    },
+    "fixture-prisma-rls": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "rls-staging",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "3|2|3|t|f|f",
+        "seconds": 1.058,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": true
+      },
+      "artifact": "tmp/security-sprint-5/fixture-prisma-rls/receipt.json",
+      "sha256": "7c0e0848415edfccc2feed6bfab0916b8cf82c05d41fe239db41179219abbc73"
+    },
+    "password-writer": {
+      "mode": "writer-staging",
+      "exit": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 51.93,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "limits": {
+        "network": "container:lms-sprint2-pg-b0e2f1ea4364484e819473b9933bc922",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/password-writer/receipt.json",
+      "sha256": "9755fdc9912d2adb47721bfaeb041f009df00f5ed71085b8f71767ebc79f408e",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/password-writer-staging.test.cjs": "94c6c3fedc1232406a3406e72bf27984e7f0f3b280fb8b0f49f5b3a1b54c876f",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "10b2de09ba06fc201b5e8f2d3c6ff999d995286544bed5942a6e62b32cfd358b"
+    },
+    "fixture-password-writer": {
+      "exit": 1,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "writer-staging",
+      "recovery": "not run because staging failed",
+      "artifact": "tmp/security-sprint-5/fixture-password-writer/receipt.json",
+      "sha256": "8bf38d144eada6b292ee8835a647c5192d72ad2217937418224bc29a06da0b4b"
+    },
+    "password-writer-enrolled": {
+      "mode": "writer-staging",
+      "exit": 0,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 36.23,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "limits": {
+        "network": "container:lms-sprint2-pg-1cd172dd5d284cddb65b8ef5fdb3e09a",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/sprint-5/password-writer-staging.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/password-writer-enrolled/receipt.json",
+      "sha256": "f4e66c49884e15fe8141bc051d847a72596113d5c488a7f2a731de5a09c0a23d",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "fa1004c05d902469eb9922bb021c86b57c874d008bb2a5d1068111e8ebe771c6",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "aeb2c91777e5ef280da3dddcca921663c1ae48bf079dd392be9a6b2934d275d1"
+    },
+    "fixture-password-writer-enrolled": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "writer-staging",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "1|0|1",
+        "seconds": 1.281,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": false
+      },
+      "artifact": "tmp/security-sprint-5/fixture-password-writer-enrolled/receipt.json",
+      "sha256": "8d7ea40fe28db05836d4c2e6aecc9c4769536b1087a90beb01e85437f3463bd2"
+    },
+    "ordinary-staging": {
+      "mode": "staging",
+      "exit": 0,
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 42.28,
+      "argv": [
+        "sh",
+        "-c",
+        "node /deps/node_modules/prisma/build/index.js generate --config ./prisma.sprint.config.ts && for x in /deps/node_modules/.pnpm/@prisma+client@7.9.1*/node_modules; do ln -s \"$x\" generated/client/node_modules; break; done && exec \"$@\"",
+        "scoped-tests",
+        "node",
+        "--require",
+        "./tests/sprint-1/network-guard.cjs",
+        "--require",
+        "./tests/security/typescript-register.cjs",
+        "--test",
+        "--test-concurrency=1",
+        "tests/sprint-2/staging.test.cjs"
+      ],
+      "limits": {
+        "network": "container:lms-sprint2-pg-3e497ef1b32849589eee5cb61f46ced0",
+        "read_only_source_and_tools": true,
+        "scratch_bytes": 1073741824,
+        "memory_bytes": 2415919104,
+        "cpus": 2,
+        "pids": 128,
+        "file_bytes": 536870912,
+        "seconds": 180
+      },
+      "lock_sha256": "808520ec12f38289c9b869408c160ebede046b3a103e6ebe845c43bc48483ad1",
+      "tests": [
+        "tests/sprint-2/staging.test.cjs"
+      ],
+      "artifact": "tmp/security-sprint-5/ordinary-staging/receipt.json",
+      "sha256": "c3771bcae2de21a0d00ea69f04db21cf78f335ab823af424c9c1fbdade81114f",
+      "sprint_5_snapshot_hashes": {
+        "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+        "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+        "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+        "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+        "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+        "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+        "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+        "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+        "tests/sprint-5/local-qualification.test.cjs": "4db357ab6bf9f685a4445b9e66b74d4bf0e788d6a6fc00128001b01e4453738c",
+        "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+        "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+        "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713"
+      },
+      "output_sha256": "d4949d04c82e9971b9f29be4cf54358a2fa6b628d2790719076fa653672ba8c9"
+    },
+    "fixture-ordinary-staging": {
+      "exit": 0,
+      "image": "postgres@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f",
+      "schema_sha256": "2bbbe9cbeb75bc91ad6edb781d22cfe760e4f9e3a49c670096b1389e3d4d9ff3",
+      "ddl_sha256": "852673bb3cae95482183c9470f734efa9982bd0c95d77d4854ec5f06dcf5cc89",
+      "profile": "staging",
+      "recovery": {
+        "format": "pg_dump custom / pg_restore",
+        "verified_summary": "3|1|1|1",
+        "seconds": 1.53,
+        "production_restore": false,
+        "cluster_roles_reprovisioned": false,
+        "same_cluster_role_grants_preserved": false
+      },
+      "artifact": "tmp/security-sprint-5/fixture-ordinary-staging/receipt.json",
+      "sha256": "57fc07e7ea26b18f5af896c1a078edbcebccf6d556a031d870a64e7fc465a969"
+    },
+    "static": {
+      "mode": "static",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "artifact": "tmp/security-sprint-5/scan-static-fe6d3df2/receipt.json",
+      "sha256": "156356079e1906578e7b95ab3cda36f40ed959f7e1669db7291fd3563c7b379b",
+      "output_sha256": "2ccec512a3d9d2ce1e89d9e685ff3729c39777da557714652be8f77819a0cfc3"
+    },
+    "secrets": {
+      "mode": "secrets",
+      "exit": 0,
+      "seconds": 180,
+      "image": "semgrep/semgrep@sha256:6e1b04340e60e910fbb4ddbf3c857ab0918f064417ad5ac530014ccb3cf8c8f1",
+      "files": [
+        ".github/dependabot.yml",
+        ".github/workflows/harness.yml",
+        ".github/workflows/security.yml",
+        ".github/workflows/web-quality.yml",
+        "apps/desktop/electron/ipc/handlers.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/menu.ts",
+        "apps/desktop/electron/preload.ts",
+        "apps/desktop/electron/security.ts",
+        "apps/desktop/electron/web-url.ts",
+        "apps/desktop/renderer/offline.js",
+        "apps/mobile/src/lib/api-url.ts",
+        "apps/mobile/src/lib/google-login-validation.ts",
+        "apps/mobile/src/lib/student-navigation.ts",
+        "scripts/security/.gitignore",
+        "scripts/security/assess.py",
+        "scripts/security/dependency-review.py",
+        "scripts/security/inspect-package.cjs",
+        "scripts/security/prepare.py",
+        "scripts/security/run-scanners.py",
+        "scripts/security/run-scoped.py",
+        "scripts/security/run-staging.py",
+        "scripts/security/sbom.cjs",
+        "scripts/security/scan-scope.json",
+        "scripts/security/scanner-entry.py",
+        "scripts/security/semgrep.yml",
+        "scripts/security/tools.json",
+        "tests/sprint-2/semgrep/client.ts",
+        "tests/sprint-2/tooling_test.py"
+      ],
+      "artifact": "tmp/security-sprint-5/scan-secrets-1dab21ca/receipt.json",
+      "sha256": "2860c518eeb61bb6be64ab6d31c59fb7dd1ecf2fe66c029dc85394fc851c3b18",
+      "output_sha256": "a8df20c275ade2c2a3203ed64d13be6a869b695ed6d02514cafe0bc0b3f47301"
+    }
+  },
+  "bounded_local_measurements": [
+    "# 4 sequential Argon2id jobs in the local fixture: 60 ms",
+    "# After native writer sequence: 381 ms; RSS delta 33 MiB; process peak RSS 164 MiB",
+    "# Synthetic configuration, object and test-key recovery: 6 ms"
+  ],
+  "asvs": {
+    "standard": "5.0.0",
+    "target_level": 2,
+    "prior_requirement_rows": 253,
+    "new_full_pass_claims": 0,
+    "scoped_requirements": [
+      {
+        "id": "v5.0.0-2.4.1",
+        "applicability": "Applicable to authenticated password changes",
+        "implementation": "authenticated-rate-limits.ts; change-password/route.ts",
+        "expected": "Quota keys derive from the admitted actor; exhaustion and store failure stop writes.",
+        "observed": "429/503 returned by scoped handler test with zero mutations. Current-schema writer used the persistent store.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Production contention and other endpoint policies remain open."
+      },
+      {
+        "id": "v5.0.0-3.3.3",
+        "applicability": "Applicable to browser session cookies",
+        "implementation": "session-cookie.ts",
+        "expected": "Eligible browser sessions adopt the host prefix only after the configured UTC transition.",
+        "observed": "Host name selected at the canonical timestamp. Four invalid or ambiguous timestamps rejected.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Production cookie cutoff and real client coverage remain open."
+      },
+      {
+        "id": "v5.0.0-6.2.3",
+        "applicability": "Applicable to self-service credential changes",
+        "implementation": "change-password/route.ts",
+        "expected": "Require both current and new password.",
+        "observed": "Incorrect current password rejected; current-schema fixture accepted the supplied current password and stored the matching new password.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data; scoped-release corroborates the incorrect-current case",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Other credential writers, reviewed breach/common corpus, client and production rollout remain open."
+      },
+      {
+        "id": "v5.0.0-6.2.4",
+        "applicability": "Applicable to password setters",
+        "implementation": "password-write-pilot.ts; password-hashing.ts",
+        "expected": "Enforce required common-password list coverage on supported setters.",
+        "observed": "Checksum mismatch rejected, 3,000 dummy entries parsed, selected dummy choice rejected.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Fixture is a synthetic regular-format list. Real corpus membership and integration are open."
+      },
+      {
+        "id": "v5.0.0-6.2.5",
+        "applicability": "Applicable to password setters",
+        "implementation": "password-hashing.ts; ChangePasswordModal.tsx",
+        "expected": "Allow modern composition without mandatory character categories.",
+        "observed": "Unicode/space phrase without composition requirements persisted through the pilot.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Other credential writers, reviewed breach/common corpus, client and production rollout remain open."
+      },
+      {
+        "id": "v5.0.0-6.2.7",
+        "applicability": "Applicable to supported clients",
+        "implementation": "ChangePasswordModal.tsx",
+        "expected": "Allow paste and expose password-manager autofill semantics.",
+        "observed": "Current-password and new-password autocomplete declarations checked in source.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Source inspection plus offline build",
+        "receipt": "web-build-final",
+        "limitations": "Real password-manager and paste interaction is unverified."
+      },
+      {
+        "id": "v5.0.0-6.2.9",
+        "applicability": "Applicable to password setters",
+        "implementation": "password-hashing.ts; change-password/route.ts",
+        "expected": "Accept passwords of at least 64 characters in scope.",
+        "observed": "The handler fixture round-tripped a 128-code-point synthetic value and distinguished its trailing whitespace. The real PostgreSQL fixture accepted both candidate lengths before settling one write.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Other credential writers, reviewed breach/common corpus, client and production rollout remain open."
+      },
+      {
+        "id": "v5.0.0-6.2.12",
+        "applicability": "Applicable to password setters",
+        "implementation": "password-write-pilot.ts; change-password/route.ts",
+        "expected": "Use an actual reviewed breached-password list.",
+        "observed": "The same complete-value comparison rejected a configured dummy digest.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "password-writer-enrolled",
+        "limitations": "A genuine reviewed breach corpus and all applicable writers remain open."
+      },
+      {
+        "id": "v5.0.0-6.3.3",
+        "applicability": "Applicable to authentication assurance",
+        "implementation": "system-wide-mfa.md; established privileged MFA",
+        "expected": "Consistent MFA for applicable roles.",
+        "observed": "Existing privileged assurance tests passed within the allowlist. Ordinary-role enrollment is absent from this sprint.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Ordinary role completion and real factor pathways remain open."
+      },
+      {
+        "id": "v5.0.0-7.4.1",
+        "applicability": "Applicable to opaque sessions",
+        "implementation": "change-password/route.ts; sessions/route.ts",
+        "expected": "Revoke affected opaque session records at the backend.",
+        "observed": "Current-schema successful credential change left zero sessions. The local single-session fixture verified account scope and cookie clearing.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Other revocation sources and real-client verification remain open."
+      },
+      {
+        "id": "v5.0.0-7.4.3",
+        "applicability": "Applicable to authentication-factor changes",
+        "implementation": "change-password/route.ts",
+        "expected": "Terminate sessions after supported factor changes.",
+        "observed": "One committed synthetic Argon2id update revoked all of the actor's sessions.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Evidence covers the self-service password factor only. Recovery and MFA factor changes require separate qualification."
+      },
+      {
+        "id": "v5.0.0-7.5.2",
+        "applicability": "Applicable to session management",
+        "implementation": "sessions/route.ts; privacy/client.tsx",
+        "expected": "Require renewed factor proof for terminating other/all active sessions.",
+        "observed": "Stale admission rejected for another/all sessions. Fresh session permitted; current-device logout remained available.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Separate factor challenge, federated timing and privileged self-service remain unverified."
+      },
+      {
+        "id": "v5.0.0-8.2.3",
+        "applicability": "Applicable to resource fields",
+        "implementation": "prisma-course-rls.sql; prisma-rls.test.cjs",
+        "expected": "Restrict course writes to authorized fields and principals.",
+        "observed": "Runtime granted title update only with its maintained timestamp, without tenant update. Job read permitted only for bounded identifiers.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "prisma-rls",
+        "limitations": "Scope is the selected course policy fixture. No production policy activated."
+      },
+      {
+        "id": "v5.0.0-8.4.1",
+        "applicability": "Applicable to institutional isolation",
+        "implementation": "prisma-course-rls.sql; prisma-rls.test.cjs",
+        "expected": "Enforce isolation across institutional principals and reused connections.",
+        "observed": "Student, instructor and admin results matched scope, foreign course update count zero, and the reused connection had no retained context.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "prisma-rls",
+        "limitations": "Actual Neon pooling, all tenant operations and migration readiness remain open."
+      },
+      {
+        "id": "v5.0.0-11.4.2",
+        "applicability": "Applicable to password storage",
+        "implementation": "password-hashing.ts; change-password/route.ts",
+        "expected": "Store pilot hashes using the bounded Argon2id profile and preserve bcrypt-reader compatibility.",
+        "observed": "Actual PostgreSQL writer stored a verifiable Argon2id hash. Local test preserved the bcrypt reader and prevented downgrade.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Other credential writers, reviewed breach/common corpus, client and production rollout remain open."
+      },
+      {
+        "id": "v5.0.0-16.2.5",
+        "applicability": "Applicable to audit logging",
+        "implementation": "change-password/route.ts; existing export event",
+        "expected": "Audit change without password, PIN, token or record values.",
+        "observed": "Exactly one SELF_PASSWORD_CHANGED event with fixed outcome metadata after the serialized password write. Existing export metadata test passed.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Bounded PostgreSQL 17 current-schema fixture and Prisma 7 adapter, dummy data; ordinary-staging for export",
+        "receipt": "password-writer-enrolled",
+        "limitations": "Other sink and operational alert coverage remain open."
+      },
+      {
+        "id": "v5.0.0-16.5.1",
+        "applicability": "Applicable to unexpected route failures",
+        "implementation": "change-password/route.ts",
+        "expected": "Return a generic outage message for a backing store failure.",
+        "observed": "Mocked limiter outage returned 503 and approved generic error. No write was attempted.",
+        "outcome": "partial evidence",
+        "tested_base_commit": "4986f1dbbcae0f08a781fe4a8c56a9206bfe81d5",
+        "environment": "Offline Linux Node suite; includes handler-level doubles and native Argon2id",
+        "receipt": "scoped-release",
+        "limitations": "Broader routes, actual connection outage and operator monitors remain open."
+      }
+    ]
+  },
+  "changed_file_hashes": {
+    ".github/workflows/security.yml": "306841c0ac15c8a894c749f8d0aa0b31efee325b06f25db6cf1687972eccbdd8",
+    "SECURITY-ROADMAP.md": "aac91fffef27678a50adf4b56fc826b38bec859687caf1fe972406792fa32ea5",
+    "apps/web/src/app/(dashboard)/[institute]/privacy/client.tsx": "849f195770a56b93005ecb9dedb575cc403928302887fa67f74650fc1223124f",
+    "apps/web/src/app/(dashboard)/[institute]/privacy/page.tsx": "b57254deceae3d458fd619e8c52b4c095dd550b1ccf544c848b6f80af4c559b1",
+    "apps/web/src/app/api/auth/change-password/route.ts": "65adf2b2d43cc207f6b68f00ea25f795cf765f721b70795e36b620b1ac787c31",
+    "apps/web/src/app/api/auth/sessions/route.ts": "f0338046c8f103b5782a61f0e733687ce27a6dfd7cadcd22e4b844612211564d",
+    "apps/web/src/components/common/ChangePasswordModal.tsx": "f69a3cd132964d2a7ede521e49ce35dfd159cc0cd34ab2d51dbe1a34d1869fcb",
+    "apps/web/src/lib/authenticated-rate-limits.ts": "0e1be80799c06fb22e842e97246e32f1a4ba9f885f27f7d55ad1f7db79c6630f",
+    "apps/web/src/lib/password-write-pilot.ts": "70ffe6c5e5735afb49e9d910a3b0b9ba7d40b6fcf83e978ceda009b755612e99",
+    "apps/web/src/lib/session-cookie.ts": "001bb09f88fd4a457049743f98acd776aea3065ec7534c1a21df2ba14f438500",
+    "apps/web/vercel.json": "20bed75ddc1bf825bcf266ed7127c3de98de8dcfb22954ec3b6bcc9f8584fe91",
+    "docs/security/asvs-5.0-level2-register.csv": "b87ebfad8710452e19d46dcd9137056c11933bb0f6bf83d302bc3c0e30b53286",
+    "docs/security/automated-security-checks.md": "32f835d785e5f7afe15c92f6b9790412855f1ce0f14acfd13b5b495dadd3d950",
+    "docs/security/backup-disaster-recovery.md": "8671a4e320361145b23f7332b7b201b436095898e50800856a4d85954d206a5a",
+    "docs/security/distributed-rate-limiting.md": "648a09d152c467cae6211a653514da9ba66d5206294828430e6d52bd66def1dc",
+    "docs/security/hosted-ci-verification.md": "e68fa9c132f4863f1b5eea252dd73e6bc47ccd8060d696cb89af7e6fac58e0e7",
+    "docs/security/identity-rollout-qualification.md": "c8f0a6a555c8c7b94bbf71409e44c0366aa0d1415921c77e081e0865d15c3647",
+    "docs/security/incident-response.md": "e9fe74999d313ca44e30db5874127790eff1dc55e5a4faa2fb8ac6135d245b99",
+    "docs/security/password-hashing-migration.md": "209f48a074d24e3a45d5c8a3d831c58d2408de57d4ca1c321a966de191d3b7fe",
+    "docs/security/postgresql-rls-implementation.md": "f71e39c3b257808694a11d525eb650fe2e233df9e48133cf954fe0b9628a354c",
+    "docs/security/prisma-rls-qualification.md": "0b0f920c9adff13a9e68454378c71cfc4f827206aedf007a99750edd6ca23cd9",
+    "docs/security/production-release-gates.md": "2e1d69c5ab51dcd62fd03c22492cd02e7c1d4817ee06babcffd357029488eb79",
+    "docs/security/release-readiness-assessment.md": "1c958d94182b24d0c3e1ff7ee4c61f608b8b4285bd472420ac313572544b18aa",
+    "docs/security/session-security.md": "a2b557b46925fab35dcc5bcdae02df169469b5281eb11b0c889c2113df7deb56",
+    "docs/security/sprint-5-results.md": "2fc62d8b35b6f82169aa176d003600b6f8431ac91ecf4395ebbb94cab5a9da0a",
+    "docs/security/sprint-5-staging-results.md": "eea2f0e9d8b5338aa6178eef273a5011720b353646a948b895a069b356710dd4",
+    "docs/security/system-wide-mfa.md": "28d5e26bd29ea64c769a9086c30a1303f6fba1c0a1944c6b76a28159772eeabb",
+    "scripts/security/run-scoped.py": "862377e265d8f4e1f30782166b0a4d94e20ba85d3c58c12845ac89388610b0f9",
+    "scripts/security/run-staging.py": "bef97378d2c9ccd97d025b81003db58c15d5cd2802ff013ad71a9f011cbba467",
+    "tests/sprint-5/allowed-tests.json": "084bf95a3e2e7b1bd280e29695525ea0ce669aaf492a7e53b448e2ae6fe5ab21",
+    "tests/sprint-5/local-qualification.test.cjs": "4db357ab6bf9f685a4445b9e66b74d4bf0e788d6a6fc00128001b01e4453738c",
+    "tests/sprint-5/password-writer-staging.test.cjs": "bab893b850d7bad3f79ba5f87fc197438564059ddfe29b02bdc735e4edb5ce84",
+    "tests/sprint-5/prisma-course-rls.sql": "e3095955c0a20594b0a3cfa057f0e6f9ade84d5e4e34d21e83591b2d8301538b",
+    "tests/sprint-5/prisma-rls.test.cjs": "975f71a80bab86c0edbf2b527e70b7e56131df263d0feb527ba9851a6674a713",
+    "vercel.json": "20bed75ddc1bf825bcf266ed7127c3de98de8dcfb22954ec3b6bcc9f8584fe91"
+  }
+}

@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { compare, hash } from 'bcryptjs';
+import { hash } from 'bcryptjs';
+import { verifyAccountPassword } from '@/lib/password-hashing';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { AccessError, revalidateActor, type Actor } from './actor';
@@ -48,7 +49,7 @@ export async function updateInstituteAdmin(actor: Actor, institute: Institute, t
     return await db.$transaction(async tx => {
       await lockAccounts(tx, [actor.id, targetId]);
       const operator = await revalidateActor(tx, actor, ['SUPER_USER']);
-      if (!operator.password || !await compare(parsed.data.currentPassword, operator.password)) throw new AccessError(403, 'REAUTH_FAILED');
+      if (!operator.password || !await verifyAccountPassword(parsed.data.currentPassword, operator.password)) throw new AccessError(403, 'REAUTH_FAILED');
       const target = await tx.user.findUnique({ where: { id: targetId } });
       if (!target) throw new AccessError(404, 'Account not found.');
       if (target.id === actor.id || target.role !== 'ADMIN' || target.instituteId !== institute.id) throw new AccessError(403, 'Forbidden target.');

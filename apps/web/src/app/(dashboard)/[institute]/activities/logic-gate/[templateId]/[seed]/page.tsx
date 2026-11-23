@@ -1,3 +1,4 @@
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student Logic Gate Execution Route
@@ -30,6 +31,8 @@ export default async function LogicGateActivityPage({
   if (!template || template.activityType !== "logic-gate") {
     notFound();
   }
+  await requireCourseAccess(session.user, template.courseId);
+
 
   const faultPool = JSON.parse(template.faultPool || "[]") as string[];
   const variables = JSON.parse(template.variables as string || "{}");

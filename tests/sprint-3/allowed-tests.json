@@ -1,0 +1,8 @@
+{
+  "purpose": "Account detail and course gradebook export scope plus the existing CSV grading compatibility test",
+  "testFiles": [
+    "tests/sprint-3/authorization.test.cjs",
+    "tests/gradebook/export.test.ts"
+  ],
+  "expectedTestCount": 7
+}

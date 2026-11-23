@@ -68,12 +68,12 @@ export async function GET(request: Request) {
       });
     }
 
-    // 2. Fetch GRADED submissions for this student across enrolled courses
+    // Completed form submissions also carry a visible server-computed grade.
     const gradedSubmissions = await db.studentSubmission.findMany({
       where: {
         studentId,
         grade: { not: null },
-        status: { in: ["GRADED", "RETURNED"] },
+        status: { in: ["SUBMITTED", "GRADED", "RETURNED"] },
         syllabusItem: {
           courseId: { in: courseIds },
           type: { not: "MATERIAL" }, // Only ASSIGNMENT and QUIZ

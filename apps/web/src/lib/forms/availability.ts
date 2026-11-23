@@ -30,7 +30,8 @@ export function studentQuestionConfig(raw: string | QuestionConfig): QuestionCon
 
 export function publicForm<T extends { passwordHash: string | null }>(form: T) {
   const { passwordHash, ...safe } = form;
-  return { ...safe, hasPassword: Boolean(passwordHash) };
+  // Scores are always visible to the authorized owner/instructor, including legacy forms.
+  return { ...safe, showScoreAfter: true, hasPassword: Boolean(passwordHash) };
 }
 
 export function formDeadline(form: Pick<Availability, 'closesAt'> & { timeLimitMins: number | null }, now = new Date()) {

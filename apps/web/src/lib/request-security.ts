@@ -1,3 +1,5 @@
+import { hasSessionCookie } from './session-cookie';
+
 function isDevOrigin(origin: string): boolean {
   if (process.env.NODE_ENV === 'production') return false;
   try {
@@ -19,7 +21,7 @@ export function mutationOriginAllowed(request: Request): boolean {
   const site = request.headers.get('sec-fetch-site');
   const url = new URL(request.url);
   const expected = `${url.protocol}//${request.headers.get('host') || url.host}`.toLowerCase();
-  const noCookie = !/(?:^|;\s*)lumina_session=/.test(request.headers.get('cookie') || '');
+  const noCookie = !hasSessionCookie(request.headers.get('cookie'));
   const bearerOnly = /^Bearer\s+\S+$/i.test(request.headers.get('authorization') || '') && noCookie;
   const configured = (process.env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
   const clientAllowed = (bearerOnly || (noCookie && url.pathname.startsWith('/api/auth/'))) &&

@@ -1,3 +1,4 @@
+import { requireCourseAccess } from '@/lib/course-access';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 /**
  * Student Arduino Execution Route
@@ -30,6 +31,8 @@ export default async function ArduinoActivityPage({
   if (!template || template.activityType !== "arduino") {
     notFound();
   }
+  await requireCourseAccess(session.user, template.courseId);
+
 
   const faultPool = JSON.parse(template.faultPool || "[]") as string[];
   const variables = JSON.parse(template.variables as string || "{}");

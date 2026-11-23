@@ -645,7 +645,7 @@ export default function TeacherMeetingsScreen() {
                   onDismiss={() => setError(null)}
                 />
               </View>
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>

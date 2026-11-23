@@ -1,0 +1,193 @@
+name: Security engineering
+on:
+  pull_request:
+  push:
+    branches: [main, master, 'codex/security-*']
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: python3 scripts/security/prepare.py workspace
+      - name: Frozen manifest-only installation (no lifecycle scripts)
+        run: |
+          cd tmp/security-sprint-2/dependency-workspace
+          NPM_CONFIG_GLOBALCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" NPM_CONFIG_USERCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" pnpm install --frozen-lockfile --ignore-scripts
+      - run: python3 scripts/security/prepare.py tools
+      - name: Fetch immutable sandbox image before offline execution
+        run: |
+          docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['nodeImage'])")"
+      - name: All-workspace advisory inventories
+        shell: bash
+        run: |
+          set +e
+          cd tmp/security-sprint-2/dependency-workspace
+          export NPM_CONFIG_GLOBALCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc"
+          export NPM_CONFIG_USERCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc"
+          pnpm audit --json > ../audit-all.json
+          all_status=$?
+          pnpm audit --prod --json > ../audit-prod.json
+          prod_status=$?
+          test "$all_status" -le 1 && test "$prod_status" -le 1
+      - name: Lockfile SBOM (all workspaces, build and optional dependencies)
+        run: python3 scripts/security/run-scoped.py ci-sbom sbom
+      - name: Prepare PR base without executing its code
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python3 scripts/security/prepare.py workspace "$BASE_SHA"
+          cd tmp/security-sprint-2/base-workspace
+          set +e
+          NPM_CONFIG_GLOBALCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" NPM_CONFIG_USERCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" pnpm audit --json > ../audit-base.json
+          status=$?
+          test "$status" -le 1
+      - name: Dependency review
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          base=-
+          if [ "$EVENT_NAME" = pull_request ]; then base=tmp/security-sprint-2/audit-base.json; fi
+          python3 scripts/security/dependency-review.py tmp/security-sprint-2/audit-all.json "$base" tmp/security-sprint-2/dependency-review.json
+      - name: No critical or high advisories in production graph
+        if: always()
+        run: python3 scripts/security/assess.py audit tmp/security-sprint-2/audit-prod.json tmp/security-sprint-2/assessment-prod.json
+      - name: No critical or high advisories across all workspaces
+        if: always()
+        run: python3 scripts/security/assess.py audit tmp/security-sprint-2/audit-all.json tmp/security-sprint-2/assessment-all.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: security-dependencies
+          path: |
+            tmp/security-sprint-2/*/receipt.json
+            tmp/security-sprint-2/*/output.txt
+            tmp/security-sprint-2/*/sbom.json
+            tmp/security-sprint-2/*.json
+          if-no-files-found: error
+          retention-days: 14
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - run: python3 scripts/security/prepare.py tools
+      - name: Fetch immutable scanner image
+        run: |
+          docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['semgrepImage'])")"
+      - run: python3 scripts/security/run-scanners.py static
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: security-static
+          path: |
+            tmp/security-sprint-2/*/receipt.json
+            tmp/security-sprint-2/*/output.txt
+            tmp/security-sprint-2/*/sbom.json
+            tmp/security-sprint-2/*.json
+          if-no-files-found: error
+          retention-days: 14
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - run: python3 scripts/security/prepare.py tools
+      - name: Fetch immutable scanner image
+        run: |
+          docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['semgrepImage'])")"
+      - run: python3 scripts/security/run-scanners.py secrets
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: security-secrets
+          path: |
+            tmp/security-sprint-2/*/receipt.json
+            tmp/security-sprint-2/*/output.txt
+            tmp/security-sprint-2/*/sbom.json
+            tmp/security-sprint-2/*.json
+          if-no-files-found: error
+          retention-days: 14
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: python3 scripts/security/prepare.py workspace
+      - name: Frozen manifest-only installation (no lifecycle scripts)
+        run: |
+          cd tmp/security-sprint-2/dependency-workspace
+          NPM_CONFIG_GLOBALCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" NPM_CONFIG_USERCONFIG="$GITHUB_WORKSPACE/tmp/security-sprint-2/config/empty.npmrc" pnpm install --frozen-lockfile --ignore-scripts
+      - run: python3 scripts/security/prepare.py tools
+      - name: Fetch immutable sandbox image before offline execution
+        run: |
+          docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['nodeImage'])")"
+      - run: python3 scripts/security/run-scoped.py ci-regressions tests
+      - run: python3 scripts/security/run-scoped.py ci-web-types web-types
+      - run: python3 scripts/security/run-scoped.py ci-mobile-types mobile-types
+      - run: python3 scripts/security/run-scoped.py ci-desktop-types desktop-types
+      - run: python3 scripts/security/run-scoped.py ci-harness-types harness-types
+      - run: python3 scripts/security/run-scoped.py ci-desktop-build desktop-compile
+      - run: python3 scripts/security/run-scoped.py ci-mobile-build mobile-export
+      - run: python3 scripts/security/run-scoped.py ci-web-build web-build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: security-compatibility
+          path: |
+            tmp/security-sprint-2/*/receipt.json
+            tmp/security-sprint-2/*/output.txt
+            tmp/security-sprint-2/*/sbom.json
+            tmp/security-sprint-2/*.json
+          if-no-files-found: error
+          retention-days: 14
+  aggregate-security:
+    if: always()
+    needs: [dependencies, static, secrets, compatibility]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Fail on absent, failed, cancelled or skipped required jobs
+        env:
+          SECURITY_NEEDS: ${{ toJSON(needs) }}
+        run: |
+          mkdir -p tmp/security-sprint-2
+          python3 -c "import os,pathlib;pathlib.Path('tmp/security-sprint-2/needs.json').write_text(os.environ['SECURITY_NEEDS'])"
+          python3 scripts/security/assess.py aggregate tmp/security-sprint-2/needs.json tmp/security-sprint-2/aggregate.json

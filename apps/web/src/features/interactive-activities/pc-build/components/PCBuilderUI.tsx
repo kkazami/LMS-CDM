@@ -121,6 +121,10 @@ export default function PCBuilderUI({
       {/* Shared Submit Bar */}
       <SubmitBar 
         activityType="pc-build"
+        getAnswers={() => {
+          const { mobo, cpu, cooler, gpu, psu, ramSticks, thermalPasteApplied } = usePCBuildStore.getState();
+          return { mobo, cpu, cooler, gpu, psu, ramSticks, thermalPasteApplied };
+        }}
         assignmentId={assignmentId}
         studentId={studentId}
         variantSeed={variantSeed}

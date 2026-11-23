@@ -6,7 +6,9 @@ import { Timer, Trophy, RotateCcw, Send, Loader2, AlertCircle, CheckCircle2 } fr
 
 interface SubmitBarProps {
   /** The specific type of activity being submitted */
-  activityType: "pc-build" | "arduino" | "server-rack" | "logic-gate" | "codelab";
+  activityType: "pc-build" | "arduino" | "server-rack" | "logic-gate";
+  /** Raw assembly/circuit/configuration answers; never a claimed grading result. */
+  getAnswers: () => unknown;
   /** The assignment ID being attempted */
   assignmentId: string;
   /** The authenticated student's ID */
@@ -17,7 +19,7 @@ interface SubmitBarProps {
   startedAt: string;
   /** Max possible score for this activity */
   maxScore?: number;
-  /** Whether this activity is graded manually by the instructor */
+  /** Hide provisional browser scores for activities evaluated on submission. */
   manualGrading?: boolean;
   /** Called after a successful submission */
   onSuccess?: () => void;
@@ -42,8 +44,9 @@ export default function SubmitBar({
   maxScore = 100,
   manualGrading = false,
   onSuccess,
+  getAnswers,
 }: SubmitBarProps) {
-  const { elapsedSeconds, attempts, score, stateCheck, stopTimer } = useActivityStore();
+  const { elapsedSeconds, attempts, score, stopTimer } = useActivityStore();
   const { submit, isSubmitting, error, result } = useActivitySubmission();
 
   const handleSubmit = async () => {
@@ -61,10 +64,7 @@ export default function SubmitBar({
       startedAt,
       completionTimeSeconds: elapsedSeconds,
       attempts: currentAttempts,
-      stateCheck,
-      score,
-      maxScore,
-      passed: score >= (maxScore * 0.7), // Arbitrary passing threshold (70%)
+      answers: getAnswers(),
     });
 
     if (res && onSuccess) {
@@ -108,9 +108,7 @@ export default function SubmitBar({
         <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs px-3 py-2 rounded-xl flex items-start gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
           <p>
-            {manualGrading 
-              ? "Submitted successfully! Awaiting instructor grading." 
-              : `Submitted successfully! Score: ${result.score}%`}
+            {`Submitted successfully! Score: ${result.score} / ${result.maxScore}.`}
           </p>
         </div>
       )}
@@ -134,7 +132,7 @@ export default function SubmitBar({
         ) : (
           <>
             <Send className="w-4 h-4" />
-            <span>{manualGrading ? "Submit for Grading" : "Submit Activity"}</span>
+            <span>Submit Activity</span>
           </>
         )}
       </button>

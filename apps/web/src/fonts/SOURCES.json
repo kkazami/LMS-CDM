@@ -1,0 +1,30 @@
+{
+  "source": "Official Google Fonts repository; SIL Open Font License 1.1, bundled unchanged",
+  "files": {
+    "Manrope.ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf",
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "bytes": 164700
+    },
+    "Manrope-OFL.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt",
+      "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+      "bytes": 4387
+    },
+    "DMSerifDisplay-Regular.ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/dmserifdisplay/DMSerifDisplay-Regular.ttf",
+      "sha256": "8cc3643535edf039aa5d95440a8542735e9197e4f4b8d9303e980fefbf5ab616",
+      "bytes": 76580
+    },
+    "DMSerifDisplay-Italic.ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/dmserifdisplay/DMSerifDisplay-Italic.ttf",
+      "sha256": "df74c0ac387baeaeb0fe4f2324e1668e6a3ed8c09cd9796fe162c71753e19e45",
+      "bytes": 71208
+    },
+    "DMSerifDisplay-OFL.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/dmserifdisplay/OFL.txt",
+      "sha256": "a3e5cdd67d4571dd0a24fcc968de0efde7ae97ef752daf0906e4767619dd7231",
+      "bytes": 4605
+    }
+  }
+}
