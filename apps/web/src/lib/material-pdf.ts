@@ -1,7 +1,7 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export async function withMaterialPdf<T>(bytes: Buffer, read: (pdf: PDFDocumentProxy) => T | Promise<T>): Promise<T> {
-  const { getDocument } = require('pdfjs-dist/legacy/build/pdf.mjs') as typeof import('pdfjs-dist');
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const task = getDocument({ data: new Uint8Array(bytes), disableFontFace: true, useSystemFonts: false });
   try {
     return await read(await task.promise);
