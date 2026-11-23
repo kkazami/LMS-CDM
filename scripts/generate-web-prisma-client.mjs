@@ -8,8 +8,10 @@ const rootPackage = new URL('../package.json', import.meta.url);
 const root = dirname(fileURLToPath(rootPackage));
 const rootRequire = createRequire(rootPackage);
 const webRequire = createRequire(new URL('../apps/web/package.json', import.meta.url));
+const prismaPackage = rootRequire.resolve('prisma/package.json');
+const prismaCli = resolve(dirname(prismaPackage), rootRequire(prismaPackage).bin.prisma);
 
-execFileSync(process.execPath, [rootRequire.resolve('prisma'), 'generate'], {
+execFileSync(process.execPath, [prismaCli, 'generate'], {
   cwd: root,
   stdio: 'inherit',
 });
