@@ -73,7 +73,7 @@ jobs:
       - name: No critical or high advisories across all workspaces
         if: always()
         run: python3 scripts/security/assess.py audit tmp/security-sprint-2/audit-all.json tmp/security-sprint-2/assessment-all.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: security-dependencies
@@ -97,7 +97,7 @@ jobs:
         run: |
           docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['semgrepImage'])")"
       - run: python3 scripts/security/run-scanners.py static
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: security-static
@@ -121,7 +121,7 @@ jobs:
         run: |
           docker pull "$(python3 -c "import json;print(json.load(open('scripts/security/tools.json'))['semgrepImage'])")"
       - run: python3 scripts/security/run-scanners.py secrets
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: security-secrets
@@ -163,7 +163,7 @@ jobs:
       - run: python3 scripts/security/run-scoped.py ci-desktop-build desktop-compile
       - run: python3 scripts/security/run-scoped.py ci-mobile-build mobile-export
       - run: python3 scripts/security/run-scoped.py ci-web-build web-build
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: security-compatibility
