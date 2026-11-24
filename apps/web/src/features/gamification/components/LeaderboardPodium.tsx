@@ -121,7 +121,7 @@ function PodiumCard({
   return (
     <div
       onClick={() => onSelectStudent?.(student)}
-      className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass} ${onSelectStudent ? "cursor-pointer" : ""}`}
+      className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass} ${onSelectStudent && (!student.isAnonymized || student.isSelf) ? "cursor-pointer" : ""}`}
     >
       {/* Avatar + Rank Badge */}
       <div className="relative mb-2.5 flex flex-col items-center">

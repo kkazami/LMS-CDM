@@ -10,7 +10,6 @@ import {
   EyeOff,
   Sparkles,
   BookOpen,
-  Zap,
 } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
 import UserAvatar from "@/components/common/UserAvatar";
@@ -168,14 +167,12 @@ export default function LeaderboardsClient({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-16">
-      {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-theme pb-5">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] flex items-center gap-2.5">
-            <span className="text-2xl">⚡</span>
-            <span>Leaderboard</span>
+          <h1 className="text-2xl font-bold tracking-tight text-primary-theme sm:text-3xl">
+            Leaderboard
           </h1>
-          <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-1">
+          <p className="mt-1 text-sm/6 text-secondary-theme">
             See who's leading across the institute and your courses.
           </p>
         </div>
@@ -186,7 +183,7 @@ export default function LeaderboardsClient({
             type="button"
             onClick={handleTogglePrivacy}
             disabled={togglingPrivacy}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-2xl border text-xs font-bold transition-all cursor-pointer shadow-xs ${
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
               isAnonymized
                 ? "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#F0F2F8]"
                 : "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400"
@@ -206,7 +203,7 @@ export default function LeaderboardsClient({
             )}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -248,7 +245,7 @@ export default function LeaderboardsClient({
             value={selectedCourseId}
             onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedActivityId(null); setSearchQuery(""); }}
             aria-label="Class"
-            className="w-full sm:w-56 px-3 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] text-xs font-bold text-slate-900 dark:text-[#F0F2F8] outline-none"
+            className="w-full cursor-pointer rounded-2xl border border-theme bg-surface px-3 py-2 text-xs font-bold text-primary-theme sm:w-56"
           >
             {enrolledCourses.map((c) => (
               <option key={c.id} value={c.id}>
@@ -344,13 +341,13 @@ export default function LeaderboardsClient({
                     <div
                       key={student.studentId}
                       onClick={() => openProfile(student)}
-                      className={`flex items-center justify-between px-6 py-3.5 transition-colors cursor-pointer ${
+                      className={`flex items-center justify-between px-6 py-3.5 transition-colors ${
                         student.isSelf
                           ? isIte
                             ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
                             : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
-                          : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"
-                      }`}
+                          : !student.isAnonymized ? "hover:bg-canvas" : ""
+                      } ${!student.isAnonymized || student.isSelf ? "cursor-pointer" : ""}`}
                     >
                       {/* Left: Rank + Avatar + Name + Level Badge */}
                       <div className="flex items-center gap-3 min-w-0">
@@ -430,7 +427,7 @@ export default function LeaderboardsClient({
                   <button
                     key={activity.id}
                     onClick={() => { setLoadingActivity(true); setSelectedActivityId(activity.id); }}
-                    className={`text-left p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] transition-colors shadow-xs ${
+                    className={`cursor-pointer text-left p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] transition-colors shadow-xs ${
                       isIte ? "hover:border-blue-600/50" : "hover:border-[#F97316]/50"
                     }`}
                   >
@@ -519,13 +516,13 @@ export default function LeaderboardsClient({
                         <div
                           key={student.studentId}
                           onClick={() => openProfile(student)}
-                          className={`flex items-center justify-between px-6 py-3.5 transition-colors cursor-pointer ${
+                          className={`flex items-center justify-between px-6 py-3.5 transition-colors ${
                             student.isSelf
                               ? isIte
                                 ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
                                 : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
-                              : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"
-                          }`}
+                              : !student.isAnonymized ? "hover:bg-canvas" : ""
+                          } ${!student.isAnonymized || student.isSelf ? "cursor-pointer" : ""}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <span className="w-6 text-center text-xs font-black font-mono text-slate-400 dark:text-[#555C72]">

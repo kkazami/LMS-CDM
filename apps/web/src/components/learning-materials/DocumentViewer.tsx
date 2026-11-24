@@ -203,7 +203,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                 <button
                   onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
                   disabled={pageNumber <= 1}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer"
+                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -213,7 +213,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                 <button
                   onClick={() => setPageNumber(Math.min(numPages || 1, pageNumber + 1))}
                   disabled={pageNumber >= (numPages || 1)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer"
+                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -317,7 +317,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-sm font-bold text-white shadow-xs transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                  className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-6 py-4 text-sm font-bold text-white shadow-xs transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
                     isIte ? "bg-blue-600 hover:bg-blue-700" : "bg-[#F97316] hover:bg-orange-600"
                   }`}
                 >
