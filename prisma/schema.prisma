@@ -437,7 +437,6 @@ model Institute {
 }
 
 model User {
-<<<<<<< HEAD
   attendanceRecords AttendanceRecord[]
   ohmwardLearner OhmwardLearner?
   labTemplates LabTemplate[] @relation("LabAuthor")
@@ -466,33 +465,6 @@ model User {
   adminMfaSessions  AdminMfaSession[]
   instituteId       String
   createdAt         DateTime                @default(now())
-=======
-  attendanceRecords     AttendanceRecord[]
-  ohmwardLearner        OhmwardLearner?
-  labTemplates          LabTemplate[]           @relation("LabAuthor")
-  createdLabAssignments LabAssignment[]         @relation("LabAssignmentCreator")
-  labAttempts           LabAttempt[]            @relation("LabStudent")
-  labReviews            LabReview[]             @relation("LabReviewer")
-  id                    String                  @id @default(cuid())
-  name                  String
-  email                 String                  @unique
-  password              String?
-  googleSubject         String?                 @unique
-  firstName             String?
-  lastName              String?
-  section               String                  @default("")
-  activationStatus      AccountActivationStatus @default(ACTIVE)
-  activatedAt           DateTime?
-  invitationVersion     Int                     @default(0)
-  uniqueId              String                  @default("") // Employee ID or general identifier
-  studentNumber         String?                 @unique
-  role                  String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
-  isActive              Boolean                 @default(true)
-  permissions           String                  @default("[]") // JSON array of permission strings
-  securityPin           String? // 6-digit hashed security PIN for step-up MFA
-  instituteId           String
-  createdAt             DateTime                @default(now())
->>>>>>> 9877249aabefc8279d9b5ab1d8a859bfde227e2f
 
   // â”€â”€ Profile fields â”€â”€
   avatarUrl   String? // URL to uploaded avatar image (null = initials fallback)
