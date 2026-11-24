@@ -35,7 +35,7 @@ function isSameOrigin(targetUrl?: string, referenceUrl?: string): boolean {
 }
 
 export default function MobileWebContainer({ onReady }: MobileWebContainerProps) {
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebView<object>>(null);
   const loadFailed = useRef(false);
   const insets = useSafeAreaInsets();
   const [canGoBack, setCanGoBack] = useState(false);
@@ -390,7 +390,7 @@ export default function MobileWebContainer({ onReady }: MobileWebContainerProps)
 
   return (
     <View style={styles.container}>
-      <WebView
+      <WebView<object>
         key={reloadKey}
         ref={webViewRef}
         source={{ uri: initialUri }}

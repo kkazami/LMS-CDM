@@ -24,6 +24,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { useAlertsStore } from '../../stores/alerts-store';
 import { useMoreMenu } from './MoreMenuDrawer';
 import { IcsTabBar } from './IcsTabBar';
+import { IbeTabBar } from './IbeTabBar';
 import {
   getOnPrimaryColor,
   getInstituteGradients,
@@ -39,15 +40,8 @@ export interface TabRoute {
   params?: any;
 }
 
-export interface FloatingPillTabBarProps {
-  state: {
-    index: number;
-    routes: TabRoute[];
-  };
-  descriptors: Record<string, { options: any }>;
-  navigation: any;
-  role: 'STUDENT' | 'TEACHER';
-}
+type RouterTabBar = NonNullable<React.ComponentProps<typeof import('expo-router').Tabs>['tabBar']>;
+export type FloatingPillTabBarProps = Parameters<RouterTabBar>[0] & { role: 'STUDENT' | 'TEACHER' };
 
 interface TabItemProps {
   route: TabRoute;
@@ -159,13 +153,16 @@ function TabItem({
 
 export function FloatingPillTabBar(props: FloatingPillTabBarProps) {
   const theme = useTheme();
-  return theme.code === 'ics' ? <IcsTabBar {...props} /> : <LegacyTabBar {...props} />;
+  if (theme.code === 'ics') return <IcsTabBar {...props} />;
+  if (theme.code === 'ibe') return <IbeTabBar {...props} />;
+  return <LegacyTabBar {...props} />;
 }
 
 function LegacyTabBar({
   state,
   descriptors,
-  navigation,
+  emitter,
+  navigateToTab,
   role,
 }: FloatingPillTabBarProps) {
   const theme = useTheme();
@@ -213,7 +210,7 @@ function LegacyTabBar({
       >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-        if (options.href === null || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
+        if (options.hidden || StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
         const isFocused = state.index === index;
         const isMore = route.name === 'more';
 
@@ -230,19 +227,19 @@ function LegacyTabBar({
             return;
           }
 
-          const event = navigation.emit({
+          const event = emitter.emit({
             type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            navigateToTab(route.key);
           }
         };
 
         const onLongPress = () => {
-          navigation.emit({
+          emitter.emit({
             type: 'tabLongPress',
             target: route.key,
           });

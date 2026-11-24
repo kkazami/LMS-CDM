@@ -1,5 +1,6 @@
 const path = require('node:path');
 const Module = require('node:module');
+const { pathToFileURL } = require('node:url');
 const { createRequire } = Module;
 const { build } = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('tsx'))] }));
 const webRequire = createRequire(path.resolve('apps/web/package.json'));
@@ -30,6 +31,10 @@ async function load(db = {}, session = null, network = null) {
     export * as instructorClasswork from './apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/(learning)/classwork/actions';
   `, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', tsconfig: 'apps/web/tsconfig.json',
     plugins: [{ name: 'isolated-boundaries', setup(b) {
+      b.onResolve({ filter: /^pdfjs-dist\/legacy\/build\/pdf\.mjs$/ }, ({ path: name }) => ({
+        path: pathToFileURL(webRequire.resolve(name)).href,
+        external: true,
+      }));
       b.onResolve({ filter: /(^|\/)db$|(^|\/)auth-session$|^next\/(server|navigation|cache)$|^@\/lib\/skills$|^node:(https|dns\/promises)$/ }, ({ path: name }) => name.startsWith('node:') && !network ? { path: name, external: true } : { path: name, namespace: 'boundary' });
       b.onLoad({ filter: /.*/, namespace: 'boundary' }, ({ path: name }) => ({ contents:
         name === 'node:https' ? 'export default globalThis.__webQuality.network.https;' :

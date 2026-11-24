@@ -33,8 +33,20 @@
       }
     },
     "plugins": [
-      ["expo-camera", { "cameraPermission": "Allow CdM LMS to scan attendance QR codes.", "recordAudioAndroid": false, "microphonePermission": false }],
-      ["expo-location", { "locationWhenInUsePermission": "Allow a foreground location check for class attendance, or request instructor approval instead." }],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CdM LMS to scan attendance QR codes.",
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow a foreground location check for class attendance, or request instructor approval instead."
+        }
+      ],
       "@sentry/react-native/expo",
       "expo-router",
       "expo-secure-store",
@@ -56,6 +68,10 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "web": {
+      "output": "single"
+    },
+    "runtimeVersion": "sdk58-1.0.0"
   }
 }

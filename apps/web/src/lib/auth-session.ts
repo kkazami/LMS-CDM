@@ -8,6 +8,7 @@ import { canonicalRole, mayAdmitAccount, privilegedRole } from './super-user-v1/
 import { applicationWriterQualified } from './super-user-v1/provisioning';
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, SESSION_TOUCH_MS, sessionExpired, sessionActivity } from './session-policy';
 import { needsClassEnrollment } from './student-access';
+import { currentSessionCookiePolicy, HOST_SESSION_COOKIE, LEGACY_SESSION_COOKIE, SESSION_COOKIE_NAMES, sessionCookieAttributes } from './session-cookie';
 import { beginAdminMfa, consumeAdminMfa, saveAdminMfaSession, validAdminMfaSession, ADMIN_MFA_COOKIE, ADMIN_MFA_COOKIE_PATH, ADMIN_MFA_TTL_SECONDS } from './admin-mfa';
 
 /**
@@ -94,7 +95,8 @@ export async function createSession(
 
   const cookieStore = await cookies();
   if (session.kind === 'mfa') {
-    cookieStore.delete('lumina_session');
+    cookieStore.delete(LEGACY_SESSION_COOKIE);
+    cookieStore.set(HOST_SESSION_COOKIE, '', { ...sessionCookieAttributes(HOST_SESSION_COOKIE), maxAge: 0 });
     cookieStore.set(ADMIN_MFA_COOKIE, session.mfa.rawToken, {
       httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict',
       path: ADMIN_MFA_COOKIE_PATH, maxAge: ADMIN_MFA_TTL_SECONDS,
@@ -102,13 +104,11 @@ export async function createSession(
     throw new AdminMfaRequiredError(session.mfa.enrollment);
   }
   cookieStore.set(ADMIN_MFA_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: ADMIN_MFA_COOKIE_PATH, maxAge: 0 });
-  cookieStore.set("lumina_session", rawToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    expires: expiresAt,
-    path: "/",
-  });
+  const { write } = currentSessionCookiePolicy();
+  for (const name of SESSION_COOKIE_NAMES) {
+    if (name !== write) cookieStore.set(name, '', { ...sessionCookieAttributes(name), maxAge: 0 });
+  }
+  cookieStore.set(write, rawToken, { ...sessionCookieAttributes(write), expires: expiresAt });
 
   return {
     sessionId: session.created.id,
@@ -137,7 +137,11 @@ export async function getSession(request?: Request, options: { allowUnenrolled?:
   if (!selection) {
     selection = (async () => {
       let cookieToken: string | undefined;
-      try { cookieToken = (await cookies()).get('lumina_session')?.value; } catch { /* No Cookie context. */ }
+      const { read } = currentSessionCookiePolicy();
+      try {
+        const store = await cookies();
+        cookieToken = read.map(name => store.get(name)?.value).find(Boolean);
+      } catch { /* No Cookie context. */ }
       const select = async (token: string | null | undefined): Promise<CredentialSelection> => {
         if (!token) return null;
         const touch = request ? sessionActivity(new URL(request.url).pathname, request.method, request.headers.get('x-lms-user-active') === '1') : headerStore?.get('x-lms-session-touch') !== '0';
@@ -230,7 +234,7 @@ export async function deleteSession() {
   });
   try {
     const cookieStore = await cookies();
-    cookieStore.delete("lumina_session");
+    for (const name of SESSION_COOKIE_NAMES) cookieStore.set(name, '', { ...sessionCookieAttributes(name), maxAge: 0 });
     cookieStore.set(ADMIN_MFA_COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: ADMIN_MFA_COOKIE_PATH, maxAge: 0 });
   } catch {
     // Non-cookie environment

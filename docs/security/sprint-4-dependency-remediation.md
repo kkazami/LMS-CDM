@@ -1,0 +1,14 @@
+# Sprint 4 dependency remediation
+
+The frozen Sprint 2 graph reported three production matches (one high, two moderate) and five overall (one high, four moderate). The Expo-only graph and the final graph that also adds `@node-rs/argon2@2.2.2` each report two production and four overall matches, all moderate. Counts are pnpm's advisory match totals. The two minimatch versions are two matches of one advisory. The machine-readable [verification record](sprint-4-verification.json) identifies the public registry reports and lockfiles.
+
+Expo Router 58.0.32 drops `query-string@7.1.3` from its dependency contract. The mobile path to `decode-uri-component@0.2.2` is absent from both refreshed reports. This removes the high and moderate matches on that path. No advisory is suppressed. [High advisory](https://github.com/advisories/GHSA-qr28-fpjm-wq7f) · [Moderate advisory](https://github.com/advisories/GHSA-vcc3-ghjq-m6fr)
+
+| Open match | Relevance and compatible remediation |
+|---|---|
+| `mobile > @sentry/react-native@8.28.1 > @sentry/bundler-plugins@10.75.2 > glob@13.0.7` | New moderate production-graph match on the SDK 58 Sentry line. This path enters through tooling used during bundling. Its inclusion in a published binary was not verified. Patched glob starts at 14.0.2. Follow an Expo-compatible Sentry parent update that admits glob 14. [Advisory](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) |
+| `mobile > @expo/ngrok@4.1.3 > uuid@3.4.0` | Moderate development tunnel dependency. The parent requires uuid 3 and the patch starts at 11.1.1. Keep developer tunnels separate from release jobs and assess migration to the SDK 58 tunnel path as a distinct tooling change. [Advisory](https://github.com/advisories/GHSA-w5hq-g745-h8pq) |
+| `desktop > electron-builder > app-builder-lib > minimatch@10.2.6` | Moderate production-graph match in packaging tooling. The reviewed builder contracts still resolve minimatch 10. The patch starts at 11.0.1. Adopt a compatible reviewed parent update when available. [Advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249) |
+| `desktop > electron-builder > app-builder-lib > @electron/universal@2.0.3 > minimatch@9.0.9` | Moderate overall-graph match in macOS universal packaging. The reviewed parent pins Universal 2.0.3. Universal 3 removes this edge but requires a compatible builder release and native package verification. [Advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249) |
+
+Re-run both audits after each graph change. Keep the existing high/critical dependency gate, lockfile and full advisory reports. Package using reviewed inputs and disposable jobs. Release owners should record treatment of the four moderate matches as part of sign-off and track compatible parent releases. The public inventory says which dependency graph contains a match. It does not prove runtime reachability or signed-binary contents.

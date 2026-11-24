@@ -1,5 +1,7 @@
 # Client release security and synthetic staging
 
+Sprint 4 upgraded the mobile runtime to SDK 58 and added desktop recognition of the host-prefixed session cookie. The verified candidate evidence and requirements for separate signed delivery and rollback are recorded in [SDK 58 migration](expo-sdk-58-migration.md), [synthetic staging](sprint-4-staging-verification.md) and [release gates](production-release-gates.md). The Sprint 2 results below retain their original scope.
+
 See [Sprint 2 results](sprint-2-results.md), [automation](automated-security-checks.md), [MFA rollout](admin-mfa-production-rollout.md), [operator checklist](production-operator-checklist.md) and [backup/DR strategy](backup-disaster-recovery.md). No production endpoint, real record, signing credential or deployment was used.
 
 ## Desktop changes and evidence

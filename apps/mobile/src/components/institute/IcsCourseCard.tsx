@@ -27,15 +27,15 @@ export function IcsCourseCard({ course, teacher, index, count, saving, onMove }:
     <Pressable accessibilityRole="button" accessibilityLabel={`Open course ${course.title}`} onPress={() => open()}>
       <View style={styles.heading}>
         <LinearGradient colors={index % 3 === 0 ? ['#3D1976', '#160B29'] : index % 3 === 1 ? ['#154638', '#071C16'] : ['#243B4B', '#0E1821']} style={styles.thumbnail}>
-          <BookOpen size={25} color="#FFFFFF" accessible={false} />
-          {cover && <Image source={cover} contentFit={image?.startsWith('/course-banners/') ? 'contain' : 'cover'} style={StyleSheet.absoluteFill} accessible={false} />}
+          <BookOpen size={25} color="#FFFFFF" aria-hidden />
+          {cover && <Image source={cover} contentFit={image?.startsWith('/course-banners/') ? 'contain' : 'cover'} style={StyleSheet.absoluteFill} aria-hidden />}
         </LinearGradient>
         <View style={styles.headingText}>
           <Text style={[styles.courseCode, { color: accent }]}>{course.courseCode || course.code}{course.section ? ` · ${course.section}` : ''}</Text>
           <Text style={[styles.title, { color: theme.colors.text }]}>{course.title}</Text>
           {teacher && course.pendingWorkCount > 0 && <Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{course.pendingWorkCount} to grade</Text>}
         </View>
-        <ChevronRight size={18} color={accent} accessible={false} />
+        <ChevronRight size={18} color={accent} aria-hidden />
       </View>
     </Pressable>
     <View style={styles.body}>

@@ -7,7 +7,7 @@
 
 import { db } from './db';
 import { getSession } from './auth-session';
-import { compare } from 'bcryptjs';
+import { verifyAccountPassword } from '@/lib/password-hashing';
 import {
   normalizeRole,
   DEFAULT_ROLE_PERMISSIONS,
@@ -154,7 +154,7 @@ export async function requireReAuth(
     throw { status: 404, message: 'Admin user not found.' };
   }
 
-  const valid = await compare(password, admin.password);
+  const valid = await verifyAccountPassword(password, admin.password);
   if (!valid) {
     throw { status: 401, message: 'Re-authentication failed. Incorrect password.' };
   }

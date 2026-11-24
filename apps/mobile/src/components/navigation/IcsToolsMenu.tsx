@@ -16,7 +16,7 @@ import { ProfileEditModal } from '../profile/ProfileEditModal';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 
 type Item = { icon: LucideIcon; title: string; description: string; route: string };
-function focus(target: View | null) {
+function focus(target: React.ComponentRef<typeof View> | null) {
   if (!target) return;
   if (Platform.OS === 'web') target.focus();
   else { const handle = findNodeHandle(target); if (handle) AccessibilityInfo.setAccessibilityFocus(handle); }
@@ -59,7 +59,7 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
     <Modal visible={isOpen} transparent animationType={reduced ? 'none' : 'slide'}
       onRequestClose={close} onShow={() => focus(title.current)} onDismiss={() => { if (!profile && restoreFocus.current) focus(toolsReturnFocus.current); }}>
       <View style={styles.overlay}>
-        <SurfacePressable accessible={false} onPress={close} style={StyleSheet.absoluteFill} />
+        <SurfacePressable aria-hidden onPress={close} style={StyleSheet.absoluteFill} />
         <View testID="ics-tools-sheet-v2" accessibilityViewIsModal onAccessibilityEscape={close}
           style={[styles.sheet, { backgroundColor: theme.colors.card, maxHeight: height - insets.top - 20, paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={[styles.handle, { backgroundColor: theme.colors.border }]} />
@@ -76,7 +76,7 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
             {groups.map(group => <View key={group.title} style={{ marginTop: 24 }}><Text accessibilityRole="header" style={[styles.groupTitle, { color: theme.colors.text }]}>{group.title}</Text>
               <View style={{ borderRadius: 18, overflow: 'hidden', backgroundColor: theme.colors.cardSecondary }}>{group.items.map((item, index) => <SurfacePressable key={item.title} accessibilityRole="button" accessibilityLabel={item.title} accessibilityHint={item.description} onPress={() => navigate(item.route)}
                 style={[styles.item, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }]}>
-                <item.icon color={accent} size={21} accessible={false} /><View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.colors.text }]}>{item.title}</Text><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{item.description}</Text></View><ChevronRight size={17} color={theme.colors.textSecondary} accessible={false} />
+                <item.icon color={accent} size={21} aria-hidden /><View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.colors.text }]}>{item.title}</Text><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{item.description}</Text></View><ChevronRight size={17} color={theme.colors.textSecondary} aria-hidden />
               </SurfacePressable>)}</View>
             </View>)}
             <View style={[styles.account, { borderTopColor: theme.colors.border }]}>

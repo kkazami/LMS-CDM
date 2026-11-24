@@ -84,8 +84,8 @@ function createWindow() {
   splashWindow.loadFile(path.join(DESKTOP_ROOT, 'renderer', 'splash.html'));
 
   // ─── Check existing session ───
-  adminSession.cookies.get({ name: 'lumina_session' }).then((cookies) => {
-    const hasSession = cookies.length > 0;
+  adminSession.cookies.get({ url: WEB_URL }).then((cookies) => {
+    const hasSession = cookies.some(cookie => ['__Host-lumina_session', 'lumina_session'].includes(cookie.name));
     const targetURL = hasSession ? (WEB_URL + '/ics') : ADMIN_LOGIN_URL;
 
     win.loadURL(targetURL).catch(() => {

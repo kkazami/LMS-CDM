@@ -11,14 +11,15 @@ import { administratorInstitute } from '@/lib/administrator-scope';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
+import { hashArgonPassword, ordinaryPasswordPolicyError } from '@/lib/password-hashing';
+import { passwordPilotBlocklist, passwordWritePilotEnabled } from '@/lib/password-write-pilot';
+import { limitAuthenticatedOperation } from '@/lib/authenticated-rate-limits';
 import { previewImport, commitImport } from '@/lib/roster/imports';
 import { rosterActor, rosterError } from '@/lib/roster/policy';
 import { HEADERS } from '@/lib/roster/csv';
 import { db } from '@/lib/db';
 import {
   requireAdmin,
-  createAuditLog,
-  getClientIp,
   parsePermissions,
 } from '@/lib/rbac';
 import {
@@ -151,11 +152,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const ceilingDenial = await denyLegacyApi(request, "POST admin/users/route.ts");
-  if (ceilingDenial) return ceilingDenial;
+  const headers = { 'Cache-Control': 'private, no-store' };
+  if (ceilingDenial) {
+    ceilingDenial.headers.set('Cache-Control', headers['Cache-Control']);
+    return ceilingDenial;
+  }
 
   try {
     const session = await requireAdmin();
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ message: 'Invalid account details.' }, { status: 400, headers });
+    }
     if (!body.role || canonicalRole(body.role) === 'STUDENT') {
       const actor = await rosterActor(request);
       const values = [body.studentNumber ?? body.student_Id ?? '', body.last_name ?? '', body.first_name ?? '', body.email ?? '', body.program ?? '', body.section ?? ''];
@@ -177,7 +185,9 @@ export async function POST(request: Request) {
     };
 
     // Validate required fields
-    if (!name || !email || !instituteCode) {
+    if (typeof name !== 'string' || !name || typeof email !== 'string' || !email ||
+        typeof instituteCode !== 'string' || !instituteCode ||
+        (uniqueId != null && typeof uniqueId !== 'string')) {
       return NextResponse.json(
         { message: 'Name, email, and instituteCode are required.' },
         { status: 400 }
@@ -222,40 +232,39 @@ export async function POST(request: Request) {
     const dbRole = normalizedRole === 'INSTRUCTOR' ? 'PROFESSOR' : normalizedRole;
     const defaultPerms = DEFAULT_ROLE_PERMISSIONS[normalizedRole];
 
-    // Generate or use provided password
+    if (password != null && (typeof password !== 'string' || !password.length || password.length > 1024)) {
+      return NextResponse.json({ message: 'Invalid temporary password.' }, { status: 400, headers });
+    }
+    const pilot = passwordWritePilotEnabled(dbRole);
     const rawPassword = password ?? randomBytes(18).toString('base64url');
-    const hashedPassword = await hash(rawPassword, 10);
+    if (pilot) {
+      const issue = ordinaryPasswordPolicyError(rawPassword, await passwordPilotBlocklist());
+      if (issue) return NextResponse.json({ message: issue }, { status: 400, headers });
+    } else if (Buffer.byteLength(rawPassword, 'utf8') > 72) {
+      return NextResponse.json({ message: 'Temporary passwords must be at most 72 UTF-8 bytes.' }, { status: 400, headers });
+    }
+    await limitAuthenticatedOperation('instructorProvisioning', session.user.id);
+    const hashedPassword = pilot ? await hashArgonPassword(rawPassword) : await hash(rawPassword, 10);
 
-    const user = await db.user.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        uniqueId: uniqueId ?? '',
-        role: dbRole,
-        isActive: true,
-        permissions: JSON.stringify(defaultPerms),
-        instituteId: institute.id,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        uniqueId: true,
-        role: true,
-        isActive: true,
-        permissions: true,
-        createdAt: true,
-      },
-    });
-
-    // Audit log
-    await createAuditLog({
-      adminId: session.user.id,
-      targetId: user.id,
-      action: AUDIT_ACTIONS.ACCOUNT_CREATED,
-      ipAddress: getClientIp(request),
-      metadata: { role: normalizedRole, email: user.email },
+    const user = await db.$transaction(async tx => {
+      const created = await tx.user.create({
+        data: {
+          name,
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          uniqueId: uniqueId ?? '',
+          role: dbRole,
+          isActive: true,
+          permissions: JSON.stringify(defaultPerms),
+          instituteId: institute.id,
+        },
+        select: { id: true, name: true, email: true, uniqueId: true, role: true, isActive: true, permissions: true, createdAt: true },
+      });
+      await tx.auditLog.create({
+        data: { adminId: session.user.id, targetId: created.id, action: AUDIT_ACTIONS.ACCOUNT_CREATED,
+          metadata: JSON.stringify({ instituteId: institute.id, role: normalizedRole, outcome: 'CREATED' }) },
+      });
+      return created;
     });
 
     return NextResponse.json(
@@ -269,14 +278,24 @@ export async function POST(request: Request) {
         },
         temporaryPassword: password ? undefined : rawPassword,
       },
-      { status: 201 }
+      { status: 201, headers }
     );
   } catch (err) {
-    const error = err as { status?: number; message?: string };
-    if (err instanceof Error && err.name === 'AccessError') return rosterError(err);
+    const error = err as { status?: number; message?: string; code?: string } | null;
+    if (err instanceof Error && err.name === 'AccessError') {
+      const response = rosterError(err);
+      response.headers.set('Cache-Control', headers['Cache-Control']);
+      return response;
+    }
+    if (error?.status === 401 || error?.status === 403) {
+      return NextResponse.json({ message: error.message }, { status: error.status, headers });
+    }
+    if (error?.code === 'P2002') {
+      return NextResponse.json({ message: 'An account with those details already exists.' }, { status: 409, headers });
+    }
     return NextResponse.json(
-      { message: error.message ?? 'Internal server error.' },
-      { status: error.status ?? 500 }
+      { message: 'Unable to create the account right now.' },
+      { status: 503, headers }
     );
   }
 }

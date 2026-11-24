@@ -128,11 +128,12 @@ export const FLOATING_TAB_BAR_MARGIN_HORIZONTAL = 18;
  */
 export function useFloatingTabBarHeight() {
   const insets = useSafeAreaInsets();
-  const ics = useTheme().code === 'ics';
+  const code = useTheme().code;
+  const isAnchored = code === 'ics' || code === 'ibe';
   const { fontScale } = useWindowDimensions();
-  const barHeight = ics ? Math.max(56, Math.ceil(32 + 24 * Math.min(fontScale, 2))) : Math.max(76, Math.ceil(40 + 36 * Math.min(fontScale, 2)));
-  const bottomLift = ics ? 0 : Math.max(insets.bottom, 12) + 6;
-  const totalClearance = barHeight + bottomLift + (ics ? insets.bottom : 0);
+  const barHeight = isAnchored ? Math.max(56, Math.ceil(32 + 24 * Math.min(fontScale, 2))) : Math.max(76, Math.ceil(40 + 36 * Math.min(fontScale, 2)));
+  const bottomLift = isAnchored ? 0 : Math.max(insets.bottom, 12) + 6;
+  const totalClearance = barHeight + bottomLift + (isAnchored ? insets.bottom : 0);
   const contentPaddingBottom = totalClearance + 20;
   const fabBottom = totalClearance + 12;
 

@@ -39,7 +39,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
   const hybridReady = (useAuthStore(s => s.mobileCapabilities)?.hybridDrafts ?? 0) >= 1;
   const { isOffline } = useNetworkStatus();
   const logout = useAuthStore(s => s.logout);
-  const web = useRef<WebView>(null);
+  const web = useRef<WebView<object>>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [editorFullscreen, setEditorFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -134,7 +134,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
       <Text style={[styles.message, { color: theme.colors.textSecondary }]}>Use the iOS or Android app for the in-app workspace. In this browser preview, continue in the web portal.</Text>
       <Button title={`Open ${title}`} onPress={() => { void openSafeUrl(`${API_BASE_URL}${path}`); }} />
     </View> : <View style={{ flex: 1, paddingBottom: insets.bottom, paddingTop: editorFullscreen ? insets.top : 0 }}>
-      <WebView key={attempt} ref={web} source={source}
+      <WebView<object> key={attempt} ref={web} source={source}
         style={{ flex: 1, backgroundColor: theme.colors.background }}
         injectedJavaScriptBeforeContentLoaded={setup} injectedJavaScript={setup}
         onMessage={event => {
@@ -192,7 +192,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
       />
       {loading && <View style={[StyleSheet.absoluteFill, styles.state, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: theme.colors.textSecondary }]}>Opening {title}…</Text>
+        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: theme.colors.textSecondary }]}>Opening {title}â€¦</Text>
       </View>}
       {feature === 'assessment' && isOffline && ready.current && <View style={[StyleSheet.absoluteFill, styles.state, { backgroundColor: theme.colors.background }]}>
         <Text accessibilityRole="alert" style={[styles.message, { color: theme.colors.text }]}>Connection lost. Reconnect to continue. Keep this screen open while your answers recover; the assessment deadline still applies.</Text>

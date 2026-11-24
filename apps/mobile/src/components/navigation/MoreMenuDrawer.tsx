@@ -13,6 +13,7 @@ import {
   Alert,
   Linking,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -40,6 +41,10 @@ import {
   Network,
   BarChart2,
   Trophy,
+  Briefcase,
+  FileSpreadsheet,
+  UserCheck,
+  BookOpen,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/auth-store';
 import { useThemeStore } from '../../stores/theme-store';
@@ -50,10 +55,11 @@ import {
   useReducedMotion,
 } from '../../lib/design-system';
 import { getCanonicalInstituteName } from '../../lib/theme';
-import { isIteUser, isIcsUser } from '../../lib/ite-eligibility';
+import { isIteUser, isIcsUser, isIbeUser, isBsbaHrmUser, isBsEntrepUser } from '../../lib/ite-eligibility';
 import { getWebBaseUrl } from '../../lib/constants';
 import { ProfileEditModal } from '../profile/ProfileEditModal';
 import { IcsMoreMenu } from './IcsMoreMenu';
+import { IbeMoreMenu } from './IbeMoreMenu';
 
 export interface MoreMenuContextType {
   isOpen: boolean;
@@ -78,7 +84,13 @@ interface MoreMenuDrawerProps {
 
 export function MoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
   const theme = useTheme();
-  return theme.code === 'ics' ? <IcsMoreMenu role={role} context={MoreMenuContext}>{children}</IcsMoreMenu> : <LegacyMoreMenuDrawer role={role}>{children}</LegacyMoreMenuDrawer>;
+  if (theme.code === 'ics') {
+    return <IcsMoreMenu role={role} context={MoreMenuContext}>{children}</IcsMoreMenu>;
+  }
+  if (theme.code === 'ibe') {
+    return <IbeMoreMenu role={role} context={MoreMenuContext}>{children}</IbeMoreMenu>;
+  }
+  return <LegacyMoreMenuDrawer role={role}>{children}</LegacyMoreMenuDrawer>;
 }
 
 function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
@@ -237,7 +249,16 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to sign out of CdM LMS?') : true;
+      if (confirmed) {
+        closeMenu();
+        await logout();
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
     closeMenu();
     setTimeout(() => {
       Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
@@ -648,6 +669,107 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
                     <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Quizzes & Forms</Text>
                     <ExternalLink size={12} color={menuSecondaryTextColor} />
                   </TouchableOpacity>
+
+                  {isIbeUser(user) && (
+                    <>
+                      {/* Entrepreneurship Program Tools */}
+                      {(isBsEntrepUser(user) || (!isBsbaHrmUser(user) && !isBsEntrepUser(user))) && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.menuRow}
+                            onPress={() => handleOpenWeb('/business-plan')}
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open Business Plan on web"
+                          >
+                            <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                              <Briefcase size={16} color={menuIconColor} />
+                            </View>
+                            <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Business Plan Guide</Text>
+                            <ExternalLink size={12} color={menuSecondaryTextColor} />
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.menuRow}
+                            onPress={() => handleOpenWeb('/financial-statements')}
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open Financial Statements on web"
+                          >
+                            <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                              <FileSpreadsheet size={16} color={menuIconColor} />
+                            </View>
+                            <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Financial Statements</Text>
+                            <ExternalLink size={12} color={menuSecondaryTextColor} />
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {/* Human Resource Management Program Tools */}
+                      {(isBsbaHrmUser(user) || (!isBsbaHrmUser(user) && !isBsEntrepUser(user))) && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.menuRow}
+                            onPress={() => handleOpenWeb('/mock-interview')}
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open Mock Interview on web"
+                          >
+                            <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                              <UserCheck size={16} color={menuIconColor} />
+                            </View>
+                            <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>Mock Interview AI</Text>
+                            <ExternalLink size={12} color={menuSecondaryTextColor} />
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.menuRow}
+                            onPress={() => handleOpenWeb('/wordwise')}
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open IBE WordWise on web"
+                          >
+                            <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                              <BookOpen size={16} color={menuIconColor} />
+                            </View>
+                            <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>IBE WordWise</Text>
+                            <ExternalLink size={12} color={menuSecondaryTextColor} />
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {/* Common IBE Tools */}
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleOpenWeb('/learning-hub')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open Learning Hub on web"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <BookOpen size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>IBE Learning Hub</Text>
+                        <ExternalLink size={12} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.menuRow}
+                        onPress={() => handleOpenWeb('/hall-of-fame')}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open Hall of Fame on web"
+                      >
+                        <View style={[styles.iconBox, { backgroundColor: menuIconBg }]}>
+                          <Trophy size={16} color={menuIconColor} />
+                        </View>
+                        <Text style={[styles.rowLabel, { color: menuTextColor }]} numberOfLines={2}>
+                          {isBsbaHrmUser(user) ? 'HR Leaders Hall of Fame' : isBsEntrepUser(user) ? 'Entrepreneur Hall of Fame' : 'Hall of Fame'}
+                        </Text>
+                        <ExternalLink size={12} color={menuSecondaryTextColor} />
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </>
               ) : (
                 <>

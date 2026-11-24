@@ -42,3 +42,7 @@ WHERE n.nspname = 'public'
 ```
 
 Read these results with the existing protected writer qualification workflow, membership/ownership inventory and migration receipt. An absent expected relation or writer guard is a release blocker. Verify grants and statement/lock timeout decisions on staging first. [PostgreSQL privilege inspection functions](https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-ACCESS-TABLE)
+
+## Sprint 4 application follow-up
+
+The [isolated PostgreSQL pilot](postgresql-rls-implementation.md) exercises role-aware read isolation under disposable restricted grants and transaction-scoped context. Apply the combined approach in synthetic Prisma/Neon staging only after the driver, pool, jobs and maintenance prerequisites pass. The pilot ships no production schema migration and grants no additional application role capabilities. [Release gates](production-release-gates.md)

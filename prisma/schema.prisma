@@ -437,34 +437,34 @@ model Institute {
 }
 
 model User {
-  attendanceRecords AttendanceRecord[]
-  ohmwardLearner OhmwardLearner?
-  labTemplates LabTemplate[] @relation("LabAuthor")
-  createdLabAssignments LabAssignment[] @relation("LabAssignmentCreator")
-  labAttempts LabAttempt[] @relation("LabStudent")
-  labReviews LabReview[] @relation("LabReviewer")
-  id                String                  @id @default(cuid())
-  name              String
-  email             String                  @unique
-  password          String?
-  googleSubject     String?                 @unique
-  firstName         String?
-  lastName          String?
-  section           String                  @default("")
-  activationStatus  AccountActivationStatus @default(ACTIVE)
-  activatedAt       DateTime?
-  invitationVersion Int                     @default(0)
-  uniqueId          String                  @default("") // Employee ID or general identifier
-  studentNumber     String?                 @unique
-  role              String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
-  isActive          Boolean                 @default(true)
-  permissions       String                  @default("[]") // JSON array of permission strings
-  securityPin       String? // Legacy password-change PIN; not a second factor.
-  adminMfaFactor    AdminMfaFactor?
-  adminMfaChallenges AdminMfaChallenge[]
-  adminMfaSessions  AdminMfaSession[]
-  instituteId       String
-  createdAt         DateTime                @default(now())
+  attendanceRecords     AttendanceRecord[]
+  ohmwardLearner        OhmwardLearner?
+  labTemplates          LabTemplate[]           @relation("LabAuthor")
+  createdLabAssignments LabAssignment[]         @relation("LabAssignmentCreator")
+  labAttempts           LabAttempt[]            @relation("LabStudent")
+  labReviews            LabReview[]             @relation("LabReviewer")
+  id                    String                  @id @default(cuid())
+  name                  String
+  email                 String                  @unique
+  password              String?
+  googleSubject         String?                 @unique
+  firstName             String?
+  lastName              String?
+  section               String                  @default("")
+  activationStatus      AccountActivationStatus @default(ACTIVE)
+  activatedAt           DateTime?
+  invitationVersion     Int                     @default(0)
+  uniqueId              String                  @default("") // Employee ID or general identifier
+  studentNumber         String?                 @unique
+  role                  String                  @default("STUDENT") // Roles: "STUDENT", "PROFESSOR" (alias: INSTRUCTOR), "ADMIN"
+  isActive              Boolean                 @default(true)
+  permissions           String                  @default("[]") // JSON array of permission strings
+  securityPin           String? // Legacy password-change PIN; use the authenticator for MFA.
+  adminMfaFactor        AdminMfaFactor?
+  adminMfaChallenges    AdminMfaChallenge[]
+  adminMfaSessions      AdminMfaSession[]
+  instituteId           String
+  createdAt             DateTime                @default(now())
 
   // â”€â”€ Profile fields â”€â”€
   avatarUrl   String? // URL to uploaded avatar image (null = initials fallback)

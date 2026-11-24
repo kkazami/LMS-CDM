@@ -11,6 +11,8 @@ The LMS backend is the Next.js application. Browser, mobile and desktop capabili
 
 Use five separate decisions for each operation:
 
+Sprint 4 applies those decisions to session management. Existing legacy-eligible users can revoke their own sessions. Sign-out from all devices additionally requires a fresh session. A transaction rechecks session identity and expiration and scopes deletion to the resolved actor. Only the approved session ID can be removed by a single-session request. The Super User ceiling continues to apply. The disposable RLS pilot adds proposed database read isolation and keeps the existing application course and role rules authoritative. [Sessions](session-security.md) · [RLS pilot](postgresql-rls-implementation.md)
+
 1. **Authentication.** Resolve the same request's server session and enforce active account, provisioning and factor rules. A route guard and its service must use the same request context. Session IDs and client-submitted role or institute fields convey no authority.
 2. **Role/capability.** List the roles admitted to the operation and apply the role's ceiling before exposing resource data. Keep Super User entry points separate from legacy features. Resolve a capability independently of display role labels.
 3. **Resource.** Resolve the persisted target, approved enrollment or assigned instructor and verify every independently supplied resource. Apply ownership checks at the service that can actually read or write it. Mutating services should revalidate actor and target inside the appropriate existing transaction and locks.

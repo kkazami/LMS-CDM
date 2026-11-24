@@ -1,5 +1,13 @@
 # Recoverable backups and disaster recovery
 
+For operator acceptance, freeze the approved recovery point and record a non-sensitive manifest with database snapshot or WAL position, encrypted database and grants archive checksums, object-version checkpoint, configuration revision, and key identifiers. The backup custodian places encrypted copies in independently controlled storage and the key custodian retains versioned unwrap access separately. Validate integrity and custody access before restoration. Use a fresh isolated destination with outbound jobs disabled, establish roles first, restore schema and records, restore matching object/configuration versions, then confirm authorization, sampled object integrity and test key decryptability. Record elapsed time, data-age window, alert delivery and sign-off before considering any production cutover.
+
+Use RPO ≤24 hours, RTO ≤4 hours, daily independently held encrypted copies, 30-day retention, monthly restore rehearsal and PITR where supported. The stabilization rehearsal recreates only the known synthetic roles in a second local cluster and verifies Course ownership, policy, ACL and authorized read counts. Actual service restoration and production backup settings remain separately approved operator evidence.
+
+Sprint 6 verifies least-privilege Course backup, a same-cluster restore of role ownership and ACLs, and restoration of a dummy MFA wrapping key against the actual crypto helper. Before operation, approve a recovery-point manifest covering DB snapshot/log position, schema and privilege export, matching independent object versions, configuration revision and protected key identifiers. Rebuild a separate isolated destination with reviewed identities, verify checksums/counts and key decryptability, and record start/end and achieved RPO/RTO. Confirm named backup and key custodians and rehearse alert escalation. [Release and operator checklist](final-release-readiness-assessment.md)
+
+Sprint 5 extends local evidence to current-schema data, RLS definitions, restricted grants and separate synthetic encrypted object/configuration and test-key recovery. The approved operational objectives remain unchanged. [Sprint 5 staging and evidence](sprint-5-staging-results.md)
+
 Sprint 1, 19 November 2026. Tracks DR-01/02 and DATA-01 in [the roadmap](../../SECURITY-ROADMAP.md). **Strategy prepared; no production backup, restore, database operation, subscription or disaster-recovery drill was performed.** Owner approval is required for the actual target, costs, retention, recovery objectives and every destructive/cutover operation.
 
 ## What is and is not a backup
@@ -8,17 +16,17 @@ The LMS administrator database “backup” functionality stores **metadata summ
 
 A recoverable service requires a consistent database recovery point **plus** matching private objects/files, schema/migrations and guard functions/grants, server-secret/key custody, application/build/runtime dependencies and deployment configuration. A database restored without object data or MFA/GitHub wrapping keys can still be unusable. Git is an application-source record, not a student-record backup.
 
-## Proposed objectives — awaiting institutional approval
+## Approved Sprint 4 planning objectives
 
-| Item | Proposed starting objective | Unverified prerequisite |
+| Item | Planning objective | Unverified prerequisite |
 |---|---|---|
-| Academic/identity database | RPO <= 24 hours; RTO <= 8 hours; improve RPO using provider PITR if approved and available | Size, backup duration, provider restore window and plan costs |
+| Academic/identity database | RPO ≤24 hours and RTO ≤4 hours. Use PITR where supported by the approved infrastructure. | Size, backup duration, provider restore window and plan costs |
 | Student file/object data | RPO <= 24 hours, consistent enough with DB references to identify every missing object | Existing versioning/snapshot/export facilities and institutional retention policy; no blocked asset validation |
 | Keys/configuration | Recover the exact protected versions needed for every retained database recovery point | Separate custody, restore access and expiration policy |
-| Independent backups | Daily encrypted copy, 7 daily and 4 weekly points as a proposal only | Institution-approved retention/deletion/legal holds, destination/capacity and access model |
-| Recovery rehearsal | Before first production readiness sign-off, then quarterly and after major schema/key changes | Isolated environment, synthetic/sanitized inputs and staffed operator review |
+| Independent backups | Daily encrypted copies under independent custody, retained for 30 days | Institution-approved retention/deletion/legal holds, destination/capacity and access model |
+| Recovery rehearsal | Before first production readiness sign-off, monthly and after major schema/key changes | Isolated environment, synthetic/sanitized inputs and staffed operator review |
 
-These targets are proposals, not achieved SLOs or an automatic retention rule. Prefer approved existing infrastructure; present alternatives and costs before introducing a paid service. Shorter RPO may be required during enrollment/exam periods.
+The owner approved these planning targets in Sprint 4. Scheduling, retention settings and measured production readiness require separate approval and evidence. Use approved existing infrastructure and identify costs before adding any service. Assess a shorter RPO during enrollment and exam periods with the academic owner. [Sprint 4 synthetic recovery](sprint-4-staging-verification.md)
 
 ## Layers and ownership
 

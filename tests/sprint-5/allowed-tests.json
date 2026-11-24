@@ -1,0 +1,4 @@
+{
+  "testFiles": ["tests/sprint-5/local-qualification.test.cjs"],
+  "expectedTestCount": 5
+}

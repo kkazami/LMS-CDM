@@ -113,9 +113,9 @@ export function CourseCoverEditor({ course, onClose }: { course: MobileCourse; o
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{mobileCourseBanners.map(banner => {
           const selected = draft.selected === banner.value;
           return <SurfacePressable key={banner.id} accessibilityRole="button" accessibilityLabel={`${banner.label} mobile banner`} accessibilityState={{ selected }} disabled={busy || picking} onPress={() => change(banner.value)} style={{ width: '48%', padding: 10, gap: 8, alignItems: 'center', borderWidth: 1, borderRadius: 12, borderColor: selected ? theme.colors.primary : theme.colors.border, backgroundColor: theme.colors.cardSecondary }}>
-            <Image source={banner.source} contentFit="cover" style={{ width: 64, height: 64, borderRadius: 12 }} accessible={false} />
+            <Image source={banner.source} contentFit="cover" style={{ width: 64, height: 64, borderRadius: 12 }} aria-hidden />
             <Text style={{ color: theme.colors.text, fontSize: 12, lineHeight: 18, textAlign: 'center' }}>{banner.label}</Text>
-            <View style={{ height: 18 }}>{selected && <CheckCircle2 size={18} color={theme.colors.text} accessible={false} />}</View>
+            <View style={{ height: 18 }}>{selected && <CheckCircle2 size={18} color={theme.colors.text} aria-hidden />}</View>
           </SurfacePressable>;
         })}</View>
       </>}
