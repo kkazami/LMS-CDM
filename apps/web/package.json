@@ -22,7 +22,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@node-rs/argon2": "2.2.2",
     "@octokit/rest": "^22.0.1",
-    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.9.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
