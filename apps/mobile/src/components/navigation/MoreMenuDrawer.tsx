@@ -249,30 +249,10 @@ function LegacyMoreMenuDrawer({ role, children }: MoreMenuDrawerProps) {
     }
   };
 
-  const handleLogout = async () => {
-    if (Platform.OS === 'web') {
-      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to sign out of CdM LMS?') : true;
-      if (confirmed) {
-        closeMenu();
-        await logout();
-        router.replace('/(auth)/login');
-      }
-      return;
-    }
+  const handleLogout = () => {
     closeMenu();
-    setTimeout(() => {
-      Alert.alert('Sign Out', 'Are you sure you want to sign out of CdM LMS?', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          },
-        },
-      ]);
-    }, 300);
+    void logout();
+    router.replace('/(auth)/login');
   };
 
   const getInitials = (name?: string) => {

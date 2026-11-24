@@ -53,7 +53,7 @@ export async function GET(request: Request, context: RouteContext) {
         where: { courseId, ...(session.user.role.toUpperCase() === 'STUDENT' ? await visibleSyllabusForms(undefined, session.user.id) : {}) },
         include: {
           form: { select: { id: true, opensAt: true } },
-          labAssignment: await labsAvailable() ? ({ select: { id: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
+          labAssignment: await labsAvailable() ? ({ select: { id: true, opensAt: true, attempts: { where: { studentId: session.user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
           attachments: {
             select: {
               id: true,
@@ -102,6 +102,7 @@ export async function GET(request: Request, context: RouteContext) {
         id: item.id,
         taskFormat: item.labAssignment ? 'GUIDED_LAB' : null,
         labAssignmentId: item.labAssignment?.id ?? null,
+        labStartsAt: item.labAssignment?.opensAt?.toISOString() ?? null,
         labStatus: currentLabAttempt(item.labAssignment)?.status ?? null,
         revisionDueAt: currentLabAttempt(item.labAssignment)?.revisionDueAt?.toISOString() ?? null,
         labUrl: item.labAssignment ? `/ics/courses/${courseId}/labs/${item.labAssignment.id}` : null,

@@ -2,8 +2,7 @@ import { useIcsStyles } from '../../../../../src/hooks/useIcsStyles';
 import { Text } from '../../../../../src/components/ui/Text';
 import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
 import { CourseMeetingLinks } from '../../../../../src/components/institute/CourseMeetingLinks';
-import { HeaderIconButton } from '../../../../../src/components/ui/AppHeader';
-import { ScreenHeaderContainer } from '../../../../../src/components/common/ScreenWrapper';
+import { IcsCourseBanner, IcsCourseNavigation, IcsCourseShell, type IcsCourseTab } from '../../../../../src/components/institute/IcsCourseShell';
 import { isIcsUser, isIteUser } from '../../../../../src/lib/ite-eligibility';
 import { getOnPrimaryColor } from '../../../../../src/lib/design-system';
 import { markUsefulContent, beginUsefulContent } from '../../../../../src/lib/performance';
@@ -30,7 +29,9 @@ import {
   FileUp,
   Image as ImageIcon,
   Trash2,
-  ArrowLeft,
+  MessageSquare,
+  BookOpen,
+  ClipboardCheck,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../../src/stores/auth-store';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -60,6 +61,14 @@ import type {
 
 type TabType = 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'ATTENDANCE' | 'GRADES';
 
+const icsTabs: IcsCourseTab<TabType>[] = [
+  { id: 'STREAM', label: 'Stream', Icon: MessageSquare },
+  { id: 'CLASSWORK', label: 'Classwork', Icon: BookOpen },
+  { id: 'PEOPLE', label: 'People', Icon: Users },
+  { id: 'ATTENDANCE', label: 'Attendance', Icon: ClipboardCheck },
+  { id: 'GRADES', label: 'Grades', Icon: Award, accessibilityLabel: 'Course grades tab' },
+];
+
 export default function StudentCourseHubScreen() {
   const styles = useIcsStyles(incumbentStyles, icsStyles);
   const { courseId, tab } = useLocalSearchParams<{ courseId: string; tab?: string }>();
@@ -67,10 +76,11 @@ export default function StudentCourseHubScreen() {
   const api = useAuthStore((s) => s.api);
   const user = useAuthStore((s) => s.user);
   const isIte = isIteUser(user);
+  const isIcs = isIcsUser(user);
   const theme = useTheme();
   const { s, font, maxFontSizeMultiplier } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<TabType>(tab === 'ATTENDANCE' ? 'ATTENDANCE' : tab === 'GRADES' ? 'GRADES' : tab === 'STREAM' ? 'STREAM' : 'CLASSWORK');
+  const [activeTab, setActiveTab] = useState<TabType>(() => icsTabs.find(entry => entry.id === tab)?.id ?? (isIcs ? 'STREAM' : 'CLASSWORK'));
   useEffect(() => {
     if (tab && ['STREAM', 'CLASSWORK', 'PEOPLE', 'ATTENDANCE', 'GRADES'].includes(tab)) setActiveTab(tab as TabType);
   }, [tab]);
@@ -176,9 +186,10 @@ export default function StudentCourseHubScreen() {
     return item.type === classworkFilter;
   });
 
-  return (
+  const content = (
     <Screen
       scrollable
+      withBottomInset={isIcs}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -187,19 +198,9 @@ export default function StudentCourseHubScreen() {
           colors={[theme.colors.primary]}
         />
       }
-      contentContainerStyle={styles.screenInner}
+      contentContainerStyle={isIcs ? styles.icsScreenInner : styles.screenInner}
     >
-      {/* Course Banner Topbar */}
-      {isIcsUser(user) ? <ScreenHeaderContainer backgroundColor={theme.colors.background} style={styles.courseHeader}>
-        <View style={styles.courseHeaderRow} testID="course-page-header">
-          <HeaderIconButton accessibilityLabel="Go back" onPress={() => router.back()}><ArrowLeft size={20} color={theme.colors.text} /></HeaderIconButton>
-          <View style={styles.courseHeaderText}>
-            <Text style={[styles.courseHeaderCode, { color: theme.isDark ? '#FFAE79' : '#B84400' }]}>{course?.code || course?.courseCode || 'COURSE'}{course?.section ? ` · ${course.section}` : ''}</Text>
-            <Text accessibilityRole="header" style={[styles.courseHeaderTitle, { color: theme.colors.text }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>{course?.title || 'Course Hub'}</Text>
-            <Text style={[styles.courseHeaderInstructor, { color: theme.colors.textSecondary }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>Instructor: {course?.instructorName || 'Faculty Instructor'}</Text>
-          </View>
-        </View>
-      </ScreenHeaderContainer> : <AppHeader
+      {isIcs ? (course && <IcsCourseBanner course={course} />) : <AppHeader
         showBack
         title={course?.title || 'Course Hub'}
         subtitle={`Instructor: ${course?.instructorName || 'Faculty Instructor'}`}
@@ -211,8 +212,7 @@ export default function StudentCourseHubScreen() {
         }
       />}
 
-      {/* Course navigation */}
-      <ScrollView
+      {isIcs ? <IcsCourseNavigation tabs={icsTabs} active={activeTab} onSelect={setActiveTab} /> : <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={[
@@ -394,9 +394,9 @@ export default function StudentCourseHubScreen() {
         </TouchableOpacity>
       </View>
 
-      </ScrollView>
+      </ScrollView>}
       {/* Main Tab Content */}
-      <View style={[styles.mainTabContent, { padding: s(spacing.lg) }]}>
+      <View style={[styles.mainTabContent, { padding: s(isIcs ? 14 : spacing.lg) }]}>
         {errorMessage && activeTab !== 'ATTENDANCE' && (
           <ErrorBanner
             message={errorMessage}
@@ -472,8 +472,7 @@ export default function StudentCourseHubScreen() {
                   </View>
                 )}
 
-                {/* Stream Announcements Feed */}
-                <Text
+                {!isIcs && <Text
                   style={[
                     styles.sectionHeading,
                     { color: theme.colors.text, fontSize: font(16), marginBottom: s(spacing.md) },
@@ -481,7 +480,7 @@ export default function StudentCourseHubScreen() {
                   maxFontSizeMultiplier={maxFontSizeMultiplier}
                 >
                   Course Announcements
-                </Text>
+                </Text>}
 
                 {(!stream?.announcements || stream.announcements.length === 0) ? (
                   <Card
@@ -523,13 +522,14 @@ export default function StudentCourseHubScreen() {
                         {
                           backgroundColor: theme.colors.card,
                           borderColor: theme.colors.border,
-                          borderRadius: radius.lg,
-                          padding: s(spacing.lg),
+                          borderRadius: isIcs ? 16 : radius.lg,
+                          padding: s(isIcs ? 16 : spacing.lg),
                           marginBottom: s(spacing.md),
                         },
+                        isIcs && styles.icsStreamCard,
                       ]}
                     >
-                      <View style={[styles.streamCardHeader, { marginBottom: s(spacing.md) }]}>
+                      <View style={isIcs ? styles.icsAuthorIcon : [styles.streamCardHeader, { marginBottom: s(spacing.md) }]}>
                         <View
                           style={[
                             styles.authorAvatar,
@@ -546,7 +546,7 @@ export default function StudentCourseHubScreen() {
                             {getInitials(ann.author?.name)}
                           </Text>
                         </View>
-                        <View style={styles.authorMeta}>
+                        {!isIcs && <View style={styles.authorMeta}>
                           <Text
                             style={[styles.authorName, { color: theme.colors.text, fontSize: font(14) }]}
                             maxFontSizeMultiplier={maxFontSizeMultiplier}
@@ -560,17 +560,24 @@ export default function StudentCourseHubScreen() {
                             {new Date(ann.createdAt).toLocaleDateString()} at{' '}
                             {new Date(ann.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
-                        </View>
+                        </View>}
                       </View>
-
-                      <Text
-                        style={[styles.annContent, { color: theme.colors.text, fontSize: font(14), lineHeight: font(20) }]}
-                        selectable
-                        maxFontSizeMultiplier={maxFontSizeMultiplier}
-                      >
-                        {ann.content}
-                      </Text>
-                      <CourseMeetingLinks content={ann.content} />
+                      <View style={isIcs && { flex: 1, minWidth: 0, gap: 7 }}>
+                        {isIcs && <View style={styles.icsAuthorMeta}>
+                          <Text style={[styles.authorName, { color: theme.colors.text, fontSize: 13 }]}>{ann.author?.name || 'Course Instructor'}</Text>
+                          <View style={styles.icsTimestamp}><Clock size={12} color={theme.colors.textSecondary} />
+                            <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>{new Date(ann.createdAt).toLocaleDateString()}</Text>
+                          </View>
+                        </View>}
+                        <Text
+                          style={[styles.annContent, { color: isIcs ? theme.colors.textSecondary : theme.colors.text, fontSize: font(14), lineHeight: font(20) }]}
+                          selectable
+                          maxFontSizeMultiplier={maxFontSizeMultiplier}
+                        >
+                          {ann.content}
+                        </Text>
+                        <CourseMeetingLinks content={ann.content} />
+                      </View>
                     </View>
                   )}</PagedContent>
                 )}
@@ -1213,15 +1220,19 @@ export default function StudentCourseHubScreen() {
       {activeTab === 'GRADES' && !!grades && <View style={{ padding: 20 }}><Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Instructor feedback</Text>{grades.feedback.length ? <PagedContent items={grades.feedback}>{feedback => <View key={feedback.id} style={{ marginBottom: 20 }}><Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600' }}>{feedback.senderName}</Text><Text style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21 }}>{new Date(feedback.createdAt).toLocaleString()}</Text><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24, marginTop: 8 }}>{feedback.content}</Text></View>}</PagedContent> : <Text style={{ color: theme.colors.textSecondary, fontSize: 16, lineHeight: 24 }}>No private feedback has been posted yet. Check back after your instructor reviews your work.</Text>}</View>}
     </Screen>
   );
+  if (!isIcs) return content;
+  return <IcsCourseShell title={icsTabs.find(entry => entry.id === activeTab)?.label || 'Course'} onBack={() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/student/(tabs)/courses');
+  }}>{content}</IcsCourseShell>;
 }
 
 const incumbentStyles = StyleSheet.create({
-  courseHeader: { paddingHorizontal: 16, paddingBottom: 14, borderBottomWidth: 0 },
-  courseHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  courseHeaderText: { flex: 1, minWidth: 0, gap: 4 },
-  courseHeaderCode: { fontSize: 11, lineHeight: 16, fontWeight: '600' },
-  courseHeaderTitle: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
-  courseHeaderInstructor: { fontSize: 12, lineHeight: 18 },
+  icsStreamCard: { flexDirection: 'row', alignItems: 'flex-start' },
+  icsAuthorIcon: { paddingTop: 2 },
+  icsAuthorMeta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 4 },
+  icsTimestamp: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  icsScreenInner: { width: '100%', maxWidth: 900, alignSelf: 'center' },
   screenInner: {
     paddingBottom: 40,
   },

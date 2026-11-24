@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const { existsSync } = require('node:fs');
 const path = require('path');
 
 // Find the project and workspace directories
@@ -14,6 +15,20 @@ try {
 }
 
 // Expo configures pnpm workspace resolution and watch folders automatically.
+
+// Sentry's optional route lookup still probes the store removed in Expo Router 58.
+const legacyRouterStore = 'expo-router/build/global-state/router-store';
+const routerRoot = path.dirname(require.resolve('expo-router/package.json'));
+if (!existsSync(path.join(routerRoot, 'build/global-state/router-store.js'))) {
+  const resolveRequest = config.resolver.resolveRequest;
+  config.resolver.resolveRequest = (context, moduleName, platform) => {
+    if (moduleName === legacyRouterStore && /[\\/]@sentry[\\/]react-native[\\/].*[\\/]expoRouterStore\.js$/.test(context.originModulePath)) {
+      return { type: 'empty' };
+    }
+
+    return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);
+  };
+}
 
 // 2. Prevent Metro from watching and re-indexing Next.js build cache (.next), desktop app, and temp files
 const defaultBlockList = Array.isArray(config.resolver.blockList)

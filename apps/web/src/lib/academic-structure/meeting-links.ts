@@ -5,7 +5,7 @@ export function googleMeetLinks(content: string): string[] {
         try {
             const url = new URL(match[0].replace(/[),.!?;:]+$/, ''));
             if (url.protocol === 'https:' && url.hostname === 'meet.google.com' && !url.port && !url.username && !url.password
-                && /^\/(?:[a-z]{3}-[a-z]{4}-[a-z]{3}|lookup\/[a-z\d_-]+)\/?$/i.test(url.pathname)) links.add(url.href);
+                && /^\/(?:[a-z\d]{3}-[a-z\d]{4}-[a-z\d]{3}|lookup\/[a-z\d_-]+)\/?$/i.test(url.pathname)) links.add(url.href);
         } catch { /* A malformed pasted URL remains plain announcement text. */ }
     }
     return [...links];

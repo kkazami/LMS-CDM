@@ -9,11 +9,14 @@ import { openSafeUrl } from '../../lib/open-link';
 
 export function CourseMeetingLinks({ content }: { content: string }) {
   const theme = useTheme();
+  const isIcs = theme.code === 'ics';
   const [error, setError] = useState('');
   const links = googleMeetLinks(content);
   if (!links.length) return null;
   return <View style={{ marginTop: 12, gap: 8 }}>
-    {links.map((url, index) => <Button key={url} title={links.length === 1 ? 'Join Google Meet' : `Join Google Meet ${index + 1}`} icon={Video} variant="outline" onPress={() => {
+    {links.map((url, index) => <Button key={url} title={links.length === 1 ? 'Join Google Meet' : `Join Google Meet ${index + 1}`} icon={Video} variant={isIcs ? "primary" : "outline"} textColor={isIcs ? '#FFFFFF' : undefined}
+      style={isIcs && { alignSelf: 'flex-start', backgroundColor: '#B93406', borderColor: '#B93406', borderRadius: 10, paddingHorizontal: 13 }}
+      textStyle={isIcs && { fontSize: 13 }} onPress={() => {
       setError('');
       void openSafeUrl(url, setError);
     }} />)}

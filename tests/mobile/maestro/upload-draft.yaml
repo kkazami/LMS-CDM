@@ -6,7 +6,7 @@ appId: com.lumina.lms
     env:
       EMAIL: student@example.invalid
 - tapOn: "Courses tab"
-- tapOn: "Open course Programming Fundamentals and Problem Solving"
+- tapOn: "Classwork for Programming Fundamentals and Problem Solving"
 - tapOn: "Classwork item Practice 2, ASSIGNMENT"
 - scrollUntilVisible:
     element: "Attach Document"
@@ -17,7 +17,7 @@ appId: com.lumina.lms
 - stopApp
 - launchApp
 - tapOn: "Courses tab"
-- tapOn: "Open course Programming Fundamentals and Problem Solving"
+- tapOn: "Classwork for Programming Fundamentals and Problem Solving"
 - tapOn: "Classwork item Practice 2, ASSIGNMENT"
 - scrollUntilVisible:
     element: "synthetic-answer.txt"

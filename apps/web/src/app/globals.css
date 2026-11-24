@@ -335,6 +335,30 @@ html[data-native-reduced-motion="true"] *::after { animation: none !important; t
   html[data-native-feature="true"] textarea,
   html[data-native-feature="true"] select { font-size: 16px; }
 }
+.dashboard-workspace-shell:has(> main > [data-material-reader]) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.dashboard-workspace-shell:has(> main > [data-material-reader]) > header {
+  flex-shrink: 0;
+}
+
+.dashboard-workspace-shell > main:has(> [data-material-reader]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 1023px) {
+  html:not([data-native-feature="true"]) .dashboard-workspace-shell > main:has(> [data-material-reader]) {
+    padding-bottom: calc(4.625rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* CodeLab dialogs can render directly under body. The preview iframe keeps its own styles. */
 html:has([data-codelab-motion="off"]),
 body:has([data-codelab-motion="off"]) :is([data-codelab-motion-surface], [data-codelab-motion-surface] *),

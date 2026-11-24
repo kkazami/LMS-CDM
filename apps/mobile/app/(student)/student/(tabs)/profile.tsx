@@ -19,7 +19,7 @@ export default function StudentProfile() {
     <Button title="Grades and feedback" variant="ghost" onPress={() => router.push('/student/grades' as any)} />
     <Button title="Inbox" variant="ghost" onPress={() => router.push('/student/alerts' as any)} />
     <Button title="Achievements" variant="ghost" onPress={() => router.push('/student/achievements' as any)} />
-    <Button title={theme.isDark ? 'Use light appearance' : 'Use dark appearance'} variant="ghost" onPress={() => { void useThemeStore.getState().toggleTheme(); }} />
+    <Button title={theme.isDark ? 'Use light appearance' : 'Use dark appearance'} variant="ghost" onPress={event => { void useThemeStore.getState().toggleTheme({ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }); }} />
     <Button title="Use device appearance" variant="ghost" onPress={() => { void useThemeStore.getState().setThemePreference('system'); }} />
     <Button title="More tools and settings" variant="ghost" onPress={openMenu} />
     <ProfileEditModal visible={editing} onClose={() => setEditing(false)} />

@@ -5,7 +5,9 @@ import { googleMeetLinks as webMeetingLinks } from '../../apps/web/src/lib/acade
 
 test('native course announcements recognize the same valid Meet destinations as web and reject lookalikes', () => {
   const valid = 'https://meet.google.com/abc-defg-hij';
+  const withDigits = 'https://meet.google.com/abc-defg-h4j?authuser=1';
   assert.deepEqual(googleMeetLinks(`Join class\n${valid}.\n${valid}`), [valid]);
+  assert.deepEqual(googleMeetLinks(`Join class\n${withDigits}`), [withDigits]);
   for (const content of [
     `Join class\n${valid}`,
     `Join (${valid}?authuser=1).`,

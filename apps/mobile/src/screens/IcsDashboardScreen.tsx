@@ -87,7 +87,6 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
     { label: 'Broadcast', description: 'Send notice', icon: Share2, press: () => navigate('/teacher/(tabs)/alerts'), badge: 0 },
     { label: 'CodeLab Hub', description: 'Lab workspace', icon: Compass, press: () => navigate('/teacher/codelab'), badge: 0 },
   ] : [
-    ohmwardAction,
     { label: 'Join Class', description: 'Enter code', icon: Plus, press: () => { setJoinError(''); setJoining(true); }, badge: 0 },
     { label: 'Assignments', description: data?.overdue ? 'Overdue work' : 'Upcoming work', icon: ClipboardList, press: () => navigate('/student/assignments'), badge: data?.overdue || 0 },
     { label: 'Flashcards', description: 'Study decks', icon: Flame, press: () => navigate('/student/flashcards'), badge: 0 },
@@ -95,42 +94,64 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
     { label: 'CodeLab', description: 'Interactive labs', icon: Code2, press: () => navigate('/student/codelab'), badge: 0 },
     { label: 'Leaderboards', description: 'Top rankings', icon: Trophy, press: () => navigate('/student/leaderboard'), badge: 0 },
   ];
+  const joinClass = () => { setJoinError(''); setJoining(true); };
+  const hour = new Date().getHours();
+  const studentOverview = <>
+    <View style={[styles.welcome, surface]}>
+      <View style={[styles.portal, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}>
+        <Sparkles size={13} color={theme.colors.textSecondary} />
+        <Text style={[styles.portalText, muted]}>INSTITUTE OF COMPUTING STUDIES · PORTAL</Text>
+      </View>
+      <Text accessibilityRole="header" style={[styles.greeting, ink]}>Good {hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'}, {user?.name?.split(' ')[0] || 'Student'}.</Text>
+      <Text style={[styles.copy, muted]}>{data ? `You have ${courses.length} active courses, ${data.overdue} overdue and ${data.dueSoon} due in the next 7 days.` : 'Loading your courses and upcoming work…'}</Text>
+    </View>
+    <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, surface]}>
+      <View style={[styles.actionIcon, { backgroundColor: theme.isDark ? '#382419' : '#FFF4ED' }]}><item.icon size={17} strokeWidth={1.7} color={accent} /></View>
+      {item.badge > 0 && <View style={[styles.actionBadge, { backgroundColor: theme.colors.dangerBg }]}><Text style={{ fontSize: 12, color: theme.colors.danger }}>{item.badge}</Text></View>}
+      <Text style={[styles.actionLabel, ink]}>{item.label}</Text><Text style={[styles.actionDescription, muted]}>{item.description}</Text>
+    </Pressable>)}</View>
+  </>;
   const notices = <>
       {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}
       {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="Dismiss class request confirmation" onPress={() => setNotice('')} style={[styles.notice, { backgroundColor: theme.colors.successBg }]}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.success }}>{notice}</Text></Pressable>}
   </>;
   return <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-    <IcsHeader teacher={teacher} title={coursesOnly ? teacher ? 'My Classes' : 'My Courses' : undefined} />
+    <IcsHeader teacher={teacher} title={coursesOnly ? teacher ? 'Classes' : 'Courses' : undefined} />
     {teacher && coursesOnly && <Button title="Attendance helper assignments" variant="outline" onPress={() => router.push('/teacher/attendance')} style={{ marginHorizontal: 16, marginVertical: 8 }} />}
-    {isIcsV2 ? <FlatList
-      testID="ics-dashboard-v2" data={courses} keyExtractor={course => course.id}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: contentPaddingBottom, width: '100%', maxWidth: 760, alignSelf: 'center' }}
+    {(isIcsV2 || !teacher) ? <FlatList
+      testID={isIcsV2 ? "ics-dashboard-v2" : undefined} data={courses} keyExtractor={course => course.id}
+      contentContainerStyle={{ paddingHorizontal: coursesOnly || teacher ? 20 : 14, paddingTop: 14, paddingBottom: contentPaddingBottom, width: '100%', maxWidth: 760, alignSelf: 'center' }}
       initialNumToRender={4} maxToRenderPerBatch={6} windowSize={5}
       keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}
       ListHeaderComponent={<>
         {notices}
-        {!coursesOnly && <IcsDashboardOverview teacher={teacher} data={data} onQueue={setQueue} />}
+        {!coursesOnly && (teacher ? <IcsDashboardOverview teacher data={data} onQueue={setQueue} /> : studentOverview)}
         <View style={styles.courseHeading}>
-          <View style={{ flex: 1 }}><Text accessibilityRole="header" style={[styles.sectionTitle, ink]}>{teacher ? 'My Classes' : 'My Courses'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Your assigned classes, in one place.' : 'Pick up where you left off.'}</Text></View>
-          <Text style={[styles.count, { color: accent, backgroundColor: theme.isDark ? '#382419' : '#FFF0E5' }]}>{data ? courses.length : '—'}</Text>
+          {!teacher && !coursesOnly && <View style={[styles.headingIcon, { backgroundColor: theme.isDark ? '#382419' : '#FFF4ED' }]}><GraduationCap size={20} color={accent} /></View>}
+          <View style={{ flex: 1 }}><Text accessibilityRole="header" style={[styles.sectionTitle, ink]}>{teacher ? 'My Classes' : coursesOnly ? 'My Courses' : 'My Enrolled Classes'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Your assigned classes, in one place.' : coursesOnly ? 'Pick up where you left off.' : 'Courses you are currently participating in'}</Text></View>
+          {(teacher || coursesOnly) && <Text style={[styles.count, { color: accent, backgroundColor: theme.isDark ? '#382419' : '#FFF0E5' }]}>{data ? courses.length : '—'}</Text>}
         </View>
-        {courses.length > 1 && <Text accessibilityLiveRegion="polite" style={[styles.reorderHint, muted]}>{saving ? 'Saving course order…' : 'Arrange your courses with the arrow buttons.'}</Text>}
+        {!teacher && !coursesOnly && <View style={styles.courseActions}>
+          <Text style={[styles.count, { color: accent, backgroundColor: theme.isDark ? '#382419' : '#FFF0E5' }]}>{data ? `${courses.length} ${courses.length === 1 ? 'Class' : 'Classes'}` : '—'}</Text>
+          <Button title="Join Class" icon={Plus} onPress={joinClass} textColor={theme.isDark ? '#0F172A' : '#FFFFFF'} style={{ borderRadius: 12, backgroundColor: theme.isDark ? '#F5C400' : '#0F1724', borderWidth: 0, minHeight: 44 }} textStyle={{ fontSize: 13 }} />
+        </View>}
+        {courses.length > 1 && <Text accessibilityLiveRegion="polite" style={[styles.reorderHint, muted]}>{saving ? 'Saving course order…' : coursesOnly || teacher ? 'Arrange your courses with the arrow buttons.' : 'Use the arrow buttons to reorder · changes are saved automatically'}</Text>}
         {!!orderError && <ErrorBanner message={orderError} onDismiss={() => setOrderError('')} />}
       </>}
       renderItem={({ item, index }) => <IcsCourseCard course={item} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />}
-      ListEmptyComponent={query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={160} width="100%" /><SkeletonBlock height={160} width="100%" /></View> : !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={accent} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : undefined}
+      ListEmptyComponent={query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={160} width="100%" /><SkeletonBlock height={160} width="100%" /></View> : !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={accent} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={teacher ? () => navigate('/teacher/tools?tool=create-class') : joinClass} /></View> : undefined}
       ListFooterComponent={!coursesOnly ? <View>
-        <Text accessibilityRole="header" style={[styles.sectionTitle, ink, { marginTop: 16, marginBottom: 16 }]}>{teacher ? 'Teaching shortcuts' : 'Your learning tools'}</Text>
-        <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, { backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 0, minHeight: 100 }]}>
+        {teacher && <Text accessibilityRole="header" style={[styles.sectionTitle, ink, { marginTop: 16, marginBottom: 16 }]}>Teaching shortcuts</Text>}
+        {teacher && <View style={styles.actionGrid}>{actions.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} accessibilityHint={item.description} onPress={item.press} style={[styles.action, { backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 0, minHeight: 100 }]}>
           <item.icon size={21} strokeWidth={1.7} color={accent} aria-hidden />
           <Text style={[styles.actionLabel, ink, { marginTop: 10 }]}>{item.label}</Text>
           <Text style={[styles.copy, muted]}>{item.description}{item.badge > 0 ? ` · ${item.badge}` : ''}</Text>
-        </Pressable>)}</View>
+        </Pressable>)}</View>}
         {data && <IcsCalendar calendar={data.calendar} teacher={teacher} />}
       </View> : undefined}
     /> : <>
-    <Screen scroll contentContainerStyle={[styles.content, isIcsV2 && { paddingHorizontal: 20, paddingTop: 12 }, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
+    <Screen scroll contentContainerStyle={[styles.content, { paddingBottom: contentPaddingBottom }]} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={theme.colors.primary} />}>
       {query.isError && <ErrorBanner message={dashboardErrorMessage(query.error, !!data)} onRetry={() => { void query.refetch(); }} />}
       {!!notice && <Pressable accessibilityRole="button" accessibilityLabel="Dismiss class request confirmation" onPress={() => setNotice('')} style={[styles.notice, { backgroundColor: theme.colors.successBg }]}><Text accessibilityLiveRegion="polite" style={{ color: theme.colors.success }}>{notice}</Text></Pressable>}
       {!coursesOnly && <>
@@ -160,7 +181,7 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
       </View>
       {courses.length > 1 && <Text style={[styles.reorderHint, muted]}>{saving ? 'Saving course order…' : 'Use the arrow buttons to reorder · changes are saved automatically'}</Text>}
       {!!orderError && <ErrorBanner message={orderError} onDismiss={() => setOrderError('')} />}
-      {query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={240} width="100%" /><SkeletonBlock height={240} width="100%" /></View> : !courses.length && !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={theme.colors.textSecondary} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={actions[0].press} /></View> : courses.map((course, index) => <IcsCourseCard key={course.id} course={course} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />)}
+      {query.isPending ? <View style={{ gap: 16 }}><SkeletonBlock height={240} width="100%" /><SkeletonBlock height={240} width="100%" /></View> : !courses.length && !query.isError ? <View style={[styles.empty, surface]}><BookOpen size={30} color={theme.colors.textSecondary} /><Text style={[styles.sectionTitle, ink]}>{teacher ? 'No classes assigned yet' : 'Your courses will appear here'}</Text><Text style={[styles.copy, muted]}>{teacher ? 'Create a class to start managing coursework.' : 'Join a class using the code from your instructor.'}</Text><Button title={teacher ? 'Add Class' : 'Join Class'} onPress={teacher ? () => navigate('/teacher/tools?tool=create-class') : joinClass} /></View> : courses.map((course, index) => <IcsCourseCard key={course.id} course={course} teacher={teacher} index={index} count={courses.length} saving={saving} onMove={(from, direction) => { void move(from, direction); }} />)}
     </Screen>
     </>}
     <FormModal visible={!!queue} onClose={() => setQueue(null)} title={queue === 'grading' ? 'To Grade' : 'Enrollment requests'}>
@@ -177,25 +198,26 @@ export function IcsDashboardScreen({ teacher = false, coursesOnly = false }: { t
 
 const styles = StyleSheet.create({
   content: { padding: 14 },
-  welcome: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 24 },
-  portal: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderRadius: 20, alignSelf: 'flex-start' },
+  welcome: { borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 20 },
+  portal: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderRadius: 20, alignSelf: 'flex-start' },
   portalText: { fontSize: 11, lineHeight: 17, fontWeight: '700', letterSpacing: 0.4, flexShrink: 1 },
-  greeting: { fontSize: 20, lineHeight: 28, fontWeight: '700', marginTop: 10, marginBottom: 8, letterSpacing: -0.4 },
-  copy: { fontSize: 13, lineHeight: 21 },
+  greeting: { fontSize: 19, lineHeight: 25, fontWeight: '700', marginTop: 8, marginBottom: 6, letterSpacing: -0.4 },
+  copy: { fontSize: 13, lineHeight: 19 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, paddingHorizontal: 12, minHeight: 36, borderRadius: 20 },
   sectionLabel: { fontSize: 13, fontWeight: '600', letterSpacing: 0.7, marginTop: 8, marginBottom: 14 },
-  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-  action: { width: '48%', flexGrow: 1, flexBasis: '46%', minHeight: 106, padding: 12, borderRadius: 16, borderWidth: 1, alignItems: 'flex-start' },
-  actionIcon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 },
+  action: { width: '48%', flexGrow: 1, flexBasis: '46%', minHeight: 94, padding: 10, borderRadius: 14, borderWidth: 1, alignItems: 'flex-start' },
+  actionIcon: { width: 28, height: 28, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   actionLabel: { fontSize: 13, lineHeight: 20, fontWeight: '600' },
   actionDescription: { fontSize: 13, lineHeight: 19, marginTop: 2 },
   actionBadge: { position: 'absolute', top: 12, right: 12, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 10 },
-  courseHeading: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 18 },
+  courseActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  courseHeading: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   headingIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: { fontSize: 20, lineHeight: 28, fontWeight: '700' },
   count: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, fontSize: 12 },
-  reorderHint: { fontSize: 13, lineHeight: 20, marginBottom: 18 },
+  reorderHint: { fontSize: 13, lineHeight: 19, marginBottom: 14 },
   empty: { borderRadius: 16, borderWidth: 1, padding: 24, alignItems: 'center', gap: 12 },
   queueItem: { paddingVertical: 16, borderBottomWidth: 1, gap: 6 },
   notice: { borderRadius: 12, padding: 16, marginBottom: 16 },

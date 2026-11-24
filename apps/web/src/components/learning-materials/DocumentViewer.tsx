@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ComponentProps } from "react";
 import { useParams } from "next/navigation";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -12,6 +12,10 @@ import OfficeAttachmentPreview from "./OfficeAttachmentPreview";
 
 // Initialize pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `/pdf-runtime/${pdfjs.version}/pdf.worker.min.mjs`;
+
+type LoadedPdf = Parameters<NonNullable<ComponentProps<typeof Document>["onLoadSuccess"]>>[0];
+const PDF_PAGE_PADDING = 16;
+const PDF_LOAD_ERROR = <p role="alert" className="max-w-sm p-6 text-center text-sm text-slate-600 dark:text-slate-300">The PDF preview could not load. Use Download to open the original.</p>;
 
 interface Annotation {
   id: string;
@@ -35,9 +39,16 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   const institute = (params?.institute as string) || "";
   const isIte = institute.toLowerCase() === "ite";
 
-  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pdf, setPdf] = useState<LoadedPdf | null>(null);
+  const numPages = pdf?.numPages;
   const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
+  const [zoom, setZoom] = useState(100);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [pageLayout, setPageLayout] = useState<{
+    pdf: LoadedPdf;
+    pageNumber: number;
+    size: { width: number; height: number } | null;
+  } | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -85,8 +96,8 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
     }
   };
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
+  const onDocumentLoadSuccess = (document: LoadedPdf) => {
+    setPdf(document);
     setPageNumber(1);
   };
 
@@ -164,6 +175,46 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
   const showPdfControls = isPdf;
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!isPdf || !container) return;
+
+    function measure() {
+      if (!container) return;
+      // The border box stays constant when zooming adds scrollbars.
+      const { offsetWidth, offsetHeight } = container;
+      setViewport({ width: offsetWidth - PDF_PAGE_PADDING * 2, height: offsetHeight - PDF_PAGE_PADDING * 2 });
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container, { box: "border-box" });
+    return () => observer.disconnect();
+  }, [isPdf]);
+
+  useEffect(() => {
+    if (!pdf || !isPdf) return;
+
+    let active = true;
+    pdf.getPage(pageNumber).then((page) => {
+      const { width, height } = page.getViewport({ scale: 1 });
+      if (active) setPageLayout({ pdf, pageNumber, size: { width, height } });
+    }).catch(() => {
+      if (active) setPageLayout({ pdf, pageNumber, size: null });
+    });
+    return () => { active = false; };
+  }, [pdf, pageNumber, isPdf]);
+
+  useEffect(() => {
+    if (isPdf) containerRef.current?.scrollTo(0, 0);
+  }, [isPdf, pageNumber]);
+
+  const currentPage = pageLayout?.pdf === pdf && pageLayout.pageNumber === pageNumber ? pageLayout : null;
+  const pageScale = currentPage?.size && viewport.width > 0 && viewport.height > 0
+    ? Math.min(viewport.width / currentPage.size.width, viewport.height / currentPage.size.height) * zoom / 100
+    : null;
+  const pdfLoading = <Loader2 aria-label="Loading PDF preview" className={`h-8 w-8 animate-spin ${isIte ? "text-blue-600" : "text-[#F97316]"}`} />;
+
   // Load text content if it's a text file
   useEffect(() => {
     if (isText && url) {
@@ -201,6 +252,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             {showPdfControls && (
               <>
                 <button
+                  aria-label="Previous page"
                   onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
                   disabled={pageNumber <= 1}
                   className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
@@ -211,6 +263,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
                   Page {pageNumber} of {numPages || "--"}
                 </span>
                 <button
+                  aria-label="Next page"
                   onClick={() => setPageNumber(Math.min(numPages || 1, pageNumber + 1))}
                   disabled={pageNumber >= (numPages || 1)}
                   className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
@@ -269,11 +322,18 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
             {showPdfControls && (
               <>
                 <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-                <button onClick={() => setScale((s) => Math.max(0.5, s - 0.1))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8] cursor-pointer">
+                <button aria-label="Zoom out" onClick={() => setZoom((value) => Math.max(50, value - 10))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8] cursor-pointer">
                   <ZoomOut className="h-5 w-5" />
                 </button>
-                <span className="text-sm font-medium w-12 text-center text-slate-700 dark:text-[#F0F2F8]">{Math.round(scale * 100)}%</span>
-                <button onClick={() => setScale((s) => Math.min(3, s + 0.1))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8] cursor-pointer">
+                <button
+                  aria-label={`${zoom}% zoom. Fit whole page`}
+                  title="Fit whole page"
+                  onClick={() => setZoom(100)}
+                  className="w-12 rounded-md py-1 text-center text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-[#F0F2F8] dark:hover:bg-white/5 cursor-pointer"
+                >
+                  {zoom}%
+                </button>
+                <button aria-label="Zoom in" onClick={() => setZoom((value) => Math.min(300, value + 10))} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-[#F0F2F8] cursor-pointer">
                   <ZoomIn className="h-5 w-5" />
                 </button>
               </>
@@ -283,7 +343,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
         {/* Dynamic Content Container */}
         <div 
-          className="flex-1 overflow-auto flex relative bg-slate-100 dark:bg-[#0B0D13]"
+          className="relative flex min-h-0 flex-1 overflow-auto bg-slate-100 dark:bg-[#0B0D13]"
           ref={containerRef}
           onMouseUp={handleSelection}
         >
@@ -367,25 +427,17 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
           {/* 8. PDF Document */}
           {isPdf && (
-            <div className="w-full flex justify-center p-4">
+            <div className="flex min-h-full w-max min-w-full shrink-0 self-start" style={{ padding: PDF_PAGE_PADDING }}>
               <Document
                 file={materialPreviewUrl(attachmentId)}
-                error={<p role="alert" className="max-w-sm p-6 text-center text-sm text-slate-600 dark:text-slate-300">The PDF preview could not load. Use Download to open the original.</p>}
+                error={PDF_LOAD_ERROR}
                 onLoadSuccess={onDocumentLoadSuccess}
-                loading={
-                  <div className="flex h-64 items-center justify-center">
-                    <Loader2 className={`h-8 w-8 animate-spin ${isIte ? "text-blue-600" : "text-[#F97316]"}`} />
-                  </div>
-                }
-                className="shadow-md"
+                loading={pdfLoading}
+                className="m-auto shrink-0"
               >
-                <Page
-                  pageNumber={pageNumber}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="bg-white"
-                />
+                {pageScale !== null ? (
+                  <Page pageNumber={pageNumber} scale={pageScale} error={PDF_LOAD_ERROR} className="bg-white shadow-md" />
+                ) : currentPage && !currentPage.size ? PDF_LOAD_ERROR : pdfLoading}
               </Document>
             </div>
           )}
@@ -448,7 +500,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
 
       {/* Annotations Sidebar */}
       {showNotes && (
-        <div className="w-full md:w-80 shrink-0 flex flex-col h-150 md:h-auto rounded-3xl bg-white dark:bg-[#141721] border border-slate-200/80 dark:border-white/5 shadow-xs overflow-hidden animate-in slide-in-from-right-8">
+        <div className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs animate-in slide-in-from-right-8 max-md:max-h-1/3 md:w-80 dark:border-white/5 dark:bg-[#141721]">
           <div className="bg-slate-50 dark:bg-[#181B26] border-b border-slate-200/80 dark:border-white/5 px-5 py-4">
           <h3 className="font-bold text-slate-900 dark:text-[#F0F2F8] flex items-center gap-2">
             <MessageSquare className={`h-5 w-5 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />

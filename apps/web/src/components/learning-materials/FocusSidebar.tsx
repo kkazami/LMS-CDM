@@ -30,7 +30,7 @@ export default function FocusSidebar({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="w-full xl:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto transition-all animate-in slide-in-from-right-8">
+    <div className="flex w-full shrink-0 flex-col gap-6 overflow-y-auto transition-all animate-in slide-in-from-right-8 max-xl:max-h-1/3 xl:w-80">
       <div className="flex items-center justify-between bg-white dark:bg-[#141721] rounded-2xl p-4 border border-slate-200/80 dark:border-white/5 shadow-xs">
         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-[#F0F2F8] flex items-center gap-2">
           <Timer className={`h-5 w-5 ${isIte ? "text-blue-600 dark:text-blue-400" : "text-[#F97316]"}`} />

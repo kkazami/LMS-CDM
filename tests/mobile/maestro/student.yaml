@@ -4,7 +4,7 @@ appId: com.lumina.lms
     file: login.yaml
     env:
       EMAIL: student@example.invalid
-- assertVisible: "A fresh day, Jamie."
+- assertVisible: "Good (morning|afternoon|evening), Jamie."
 - takeScreenshot: student-dashboard-light
 - tapOn: "More tab"
 - assertVisible:
@@ -30,12 +30,6 @@ appId: com.lumina.lms
 - takeScreenshot: student-tools-dark
 - assertNotVisible: "Switch account"
 - tapOn: "Sign out"
-- assertVisible: "Sign out of CdM LMS?"
-- tapOn: "Cancel"
-- assertVisible:
-    id: ics-tools-sheet-v2
-- tapOn: "Sign out"
-- tapOn: "Confirm sign out"
 - assertVisible: "Welcome back."
 - assertNotVisible:
     id: ics-dashboard-v2

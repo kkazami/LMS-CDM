@@ -1,10 +1,12 @@
 import { useIcsStyles } from '../../../../../src/hooks/useIcsStyles';
+import { IcsCourseBanner, IcsCourseNavigation, IcsCourseShell, type IcsCourseTab } from '../../../../../src/components/institute/IcsCourseShell';
+import { IcsInstructorClasswork } from '../../../../../src/components/institute/IcsInstructorClasswork';
 import { CourseMeetingLinks } from '../../../../../src/components/institute/CourseMeetingLinks';
 import { useMobilePresentation } from '../../../../../src/components/presentation/MobilePresentation';
 import { TextInput } from '../../../../../src/components/ui/TextInput';
 import { Text } from '../../../../../src/components/ui/Text';
 import { AttendancePanel } from '../../../../../src/components/attendance/AttendancePanel';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,9 +18,12 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
+  BarChart2,
+  ClipboardCheck,
+  MessageSquare,
   Radio,
   FileText,
   Users,
@@ -57,7 +62,7 @@ import { Card } from '../../../../../src/components/common/Card';
 import { Button } from '../../../../../src/components/common/Button';
 import { Input } from '../../../../../src/components/common/Input';
 import { TOUCH_TARGET } from '../../../../../src/lib/typography';
-import { isIteUser } from '../../../../../src/lib/ite-eligibility';
+import { isIcsUser, isIteUser } from '../../../../../src/lib/ite-eligibility';
 import { ClassworkAttachments, ClassworkDescription } from '../../../../../src/components/classwork/ClassworkAttachments';
 import type {
   CourseDetail,
@@ -77,6 +82,16 @@ import type {
 
 type TeacherTab = 'STREAM' | 'CLASSWORK' | 'BROADCAST' | 'FORMS' | 'GRADEBOOK' | 'PEOPLE' | 'ATTENDANCE' | 'PARTICIPATION';
 
+const icsTabs: IcsCourseTab<TeacherTab>[] = [
+  { id: 'STREAM', label: 'Stream', Icon: MessageSquare },
+  { id: 'CLASSWORK', label: 'Classwork', Icon: BookOpen },
+  { id: 'PEOPLE', label: 'People', Icon: Users },
+  { id: 'ATTENDANCE', label: 'Attendance', Icon: ClipboardCheck },
+  { id: 'BROADCAST', label: 'Broadcast', Icon: Radio },
+  { id: 'GRADEBOOK', label: 'Gradebook', Icon: BarChart2 },
+  { id: 'FORMS', label: 'Forms & Quizzes', Icon: ClipboardList },
+];
+
 interface GradebookData {
   course: { id: string; title: string; code: string };
   students: Array<{ id: string; name: string; email: string; studentNumber?: string | null }>;
@@ -92,6 +107,7 @@ export default function TeacherCourseDetailScreen() {
   const api = useAuthStore((s) => s.api);
   const user = useAuthStore((s) => s.user);
   const theme = useTheme();
+  const isIcs = isIcsUser(user);
   const { s, font, maxFontSizeMultiplier, bottomClearance } = useResponsive();
 
   const [activeTab, setActiveTab] = useState<TeacherTab>(
@@ -278,7 +294,7 @@ export default function TeacherCourseDetailScreen() {
     }
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!courseId) return;
 
     try {
@@ -315,11 +331,11 @@ export default function TeacherCourseDetailScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [api, courseId]);
 
-  useEffect(() => {
-    loadData();
-  }, [courseId]);
+  useFocusEffect(useCallback(() => {
+    void loadData();
+  }, [loadData]));
 
   useEffect(() => {
     if (activeTab === 'BROADCAST' && broadcasts.length === 0 && !loadingBroadcasts) {
@@ -599,10 +615,13 @@ export default function TeacherCourseDetailScreen() {
       .toUpperCase();
   };
 
-  return (
+  const pendingWork = course?.pendingWorkCount ?? (gradebook ? Object.values(gradebook.grades).reduce(
+    (total, grades) => total + Object.values(grades).filter(grade => grade.status === 'SUBMITTED' && grade.grade === null).length, 0,
+  ) : undefined);
+  const content = (
     <ScreenWrapper>
       {/* Top Banner & Header Container with Safe Area Inset */}
-      <ScreenHeaderContainer
+      {!isIcs && <ScreenHeaderContainer
         style={[
           styles.headerBanner,
           {
@@ -886,14 +905,14 @@ export default function TeacherCourseDetailScreen() {
             </TouchableOpacity>
           )}
         </ScrollView>
-      </ScreenHeaderContainer>
+      </ScreenHeaderContainer>}
 
       {/* Main Tab Content */}
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           {
-            padding: s(13),
+            padding: isIcs ? 0 : s(13),
             paddingBottom: bottomClearance,
           },
         ]}
@@ -907,6 +926,11 @@ export default function TeacherCourseDetailScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {isIcs && <>
+          {course && <IcsCourseBanner course={course} pendingWork={pendingWork} onPendingWork={() => setActiveTab('GRADEBOOK')} />}
+          <IcsCourseNavigation tabs={icsTabs} active={activeTab} onSelect={setActiveTab} counts={{ PEOPLE: pendingEnrollments.length, GRADEBOOK: pendingWork }} />
+        </>}
+        <View style={isIcs && { padding: s(13) }}>
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -1026,8 +1050,14 @@ export default function TeacherCourseDetailScreen() {
             )}
 
             {/* ==================== TAB 2: CLASSWORK ==================== */}
-            {activeTab === 'CLASSWORK' && (
-              <View>
+            {activeTab === 'CLASSWORK' && (isIcs
+              ? classwork
+                ? <IcsInstructorClasswork key={courseId} courseId={courseId} items={classwork.items || []} />
+                : <Card style={styles.errorCard}>
+                    <Text accessibilityRole="alert" style={{ color: theme.colors.text }}>Classwork could not load.</Text>
+                    <Button title="Try again" variant="outline" onPress={onRefresh} />
+                  </Card>
+              : <View>
                 {/* Create Classwork Trigger Button */}
                 <TouchableOpacity
                   accessibilityRole="button"
@@ -1120,6 +1150,8 @@ export default function TeacherCourseDetailScreen() {
             {/* ==================== TAB 3: GRADEBOOK ==================== */}
             {activeTab === 'GRADEBOOK' && (
               <View>
+                {isIcs && <Button title="Grading Policy and Export" variant="outline" style={{ alignSelf: 'flex-start', borderRadius: 12, marginBottom: 14 }}
+                  onPress={() => router.push({ pathname: '/teacher/tools', params: { tool: 'course-tools', action: 'gradebook', courseId } })} />}
                 <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
                   Class Evaluation Matrix
                 </Text>
@@ -1205,6 +1237,8 @@ export default function TeacherCourseDetailScreen() {
             {/* ==================== TAB 4: PEOPLE & ENROLLMENTS ==================== */}
             {activeTab === 'PEOPLE' && (
               <View>
+                {isIcs && <Button title="Manage Student Groups" variant="outline" style={{ alignSelf: 'flex-start', borderRadius: 12, marginBottom: 14 }}
+                  onPress={() => router.push({ pathname: '/teacher/tools', params: { tool: 'course-tools', action: 'people', courseId } })} />}
                 {/* Pending Requests Section */}
                 {pendingEnrollments.length > 0 && (
                   <View style={styles.pendingSection}>
@@ -1676,6 +1710,7 @@ export default function TeacherCourseDetailScreen() {
             )}
           </>
         )}
+        </View>
       </ScrollView>
 
       {/* ==================== CREATE CLASSWORK MODAL ==================== */}
@@ -2176,6 +2211,11 @@ export default function TeacherCourseDetailScreen() {
       </Modal>
     </ScreenWrapper>
   );
+  if (!isIcs) return content;
+  return <IcsCourseShell teacher title={icsTabs.find(entry => entry.id === activeTab)?.label || 'Class'} onBack={() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/teacher/(tabs)/courses');
+  }}>{content}</IcsCourseShell>;
 }
 
 const incumbentStyles = StyleSheet.create({

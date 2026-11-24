@@ -130,11 +130,16 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Course not found.' }, { status: 404 });
     }
 
+    const pendingWorkCount = course.instructor?.id === session.user.id
+      ? await db.studentSubmission.count({ where: { syllabusItem: { courseId }, status: 'SUBMITTED', grade: null } })
+      : undefined;
+
     return NextResponse.json(
       {
         course: {
           ...course,
           courseCode: course.courseCode || course.code,
+          pendingWorkCount,
           instructorName: course.instructor?.name || 'Instructor',
         },
       },

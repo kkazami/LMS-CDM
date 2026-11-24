@@ -26,7 +26,6 @@ export function IbeHeader({ teacher = false, title }: { teacher?: boolean; title
 
   const goldAccent = theme.isDark ? '#FFAE19' : '#B8860B';
   const goldBg = theme.isDark ? '#3D2A08' : '#FFF9E6';
-  const goldBorder = theme.isDark ? '#6B4C0A' : '#F3D580';
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top + 8 }]}>
@@ -42,7 +41,7 @@ export function IbeHeader({ teacher = false, title }: { teacher?: boolean; title
           accessibilityRole="button"
           accessibilityLabel={`Use ${theme.isDark ? 'light' : 'dark'} appearance`}
           style={styles.iconBtn}
-          onPress={() => { void toggleTheme(); }}
+          onPress={event => { void toggleTheme({ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }); }}
         >
           {theme.isDark ? <Sun size={20} color={theme.colors.textSecondary} /> : <Moon size={20} color={theme.colors.textSecondary} />}
         </SurfacePressable>
@@ -66,7 +65,7 @@ export function IbeHeader({ teacher = false, title }: { teacher?: boolean; title
           {avatar ? (
             <Image source={{ uri: avatar }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatar, { backgroundColor: goldBg, borderColor: goldBorder, borderWidth: 1 }]}>
+            <View style={[styles.avatar, { backgroundColor: goldBg }]}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: goldAccent }}>{initials}</Text>
             </View>
           )}
