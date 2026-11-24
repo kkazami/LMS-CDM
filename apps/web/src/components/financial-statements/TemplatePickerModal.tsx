@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   X,
   Search,
-  Sparkles,
+  FileSpreadsheet,
   ArrowRight,
   Calendar,
   Layers,
-  CheckCircle2,
 } from "lucide-react";
 import { TEMPLATES } from "@/lib/financial-statements/templates";
 import type { StatementType, TemplateCategory } from "@/lib/financial-statements/types";
@@ -86,7 +85,7 @@ export default function TemplatePickerModal({
     <div className="fixed inset-0 z-110 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -96,16 +95,16 @@ export default function TemplatePickerModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="template-picker-title"
-        className={`relative w-full max-w-4xl max-h-[90vh] flex flex-col ${cardClass} shadow-2xl overflow-hidden`}
+        className={`relative w-full max-w-4xl max-h-[90vh] flex flex-col ${cardClass} shadow-lg overflow-hidden`}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b-2 border-slate-200 dark:border-white/15 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <Sparkles className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-slate-100 dark:bg-[#10131B] border border-slate-200 dark:border-white/10 text-amber-600 dark:text-amber-400">
+              <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="template-picker-title" className={`text-lg font-bold ${headingText}`}>
+              <h2 id="template-picker-title" className={`text-base sm:text-lg font-bold ${headingText}`}>
                 Choose a Financial Report Template
               </h2>
               <p className={`text-xs ${mutedText}`}>
@@ -116,7 +115,7 @@ export default function TemplatePickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
             aria-label="Close template picker"
           >
             <X className="w-5 h-5" />
@@ -124,15 +123,16 @@ export default function TemplatePickerModal({
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="p-5 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 shrink-0 space-y-3">
+        <div className="p-4 sm:p-5 border-b-2 border-slate-200 dark:border-white/15 bg-slate-50/70 dark:bg-[#10131B] shrink-0 space-y-3">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
+              aria-label="Search financial report templates"
               placeholder="Search templates by name, purpose, or accounting report type..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className={`${inputClass} pl-10`}
+              className={`${inputClass} pl-10 bg-white dark:bg-[#141721]`}
             />
           </div>
 
@@ -145,10 +145,10 @@ export default function TemplatePickerModal({
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
                     active
-                      ? "bg-amber-500 text-white shadow-xs"
-                      : "bg-white dark:bg-[#1A1D27] text-slate-600 dark:text-[#8B92A5] border border-slate-200/80 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-amber-500 dark:text-slate-950 dark:border-amber-500"
+                      : "bg-white dark:bg-[#141721] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
                   }`}
                 >
                   {cat}
@@ -177,25 +177,25 @@ export default function TemplatePickerModal({
                 return (
                   <div
                     key={tpl.type}
-                    className={`group relative rounded-2xl border p-4.5 transition-all duration-200 flex flex-col justify-between ${
+                    className={`rounded-xl border-2 p-4 flex flex-col justify-between transition-colors ${
                       isSelected
-                        ? "border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/20"
-                        : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#151824] hover:border-amber-500/50 hover:shadow-md"
+                        ? "border-amber-500 bg-amber-500/5"
+                        : "border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] hover:border-slate-300 dark:hover:border-white/25"
                     }`}
                   >
                     <div>
                       {/* Top Row: Icon + Category Badge */}
                       <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform shrink-0">
-                          <Icon className="w-5 h-5" />
+                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-[#10131B] border border-slate-200 dark:border-white/10 text-amber-600 dark:text-amber-400 shrink-0">
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#8B92A5]">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/10">
                           {tpl.category}
                         </span>
                       </div>
 
                       {/* Title & Description */}
-                      <h3 className={`text-sm font-bold ${headingText} mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors`}>
+                      <h3 className={`text-sm font-bold ${headingText} mb-1`}>
                         {tpl.name}
                       </h3>
                       <p className={`text-xs ${mutedText} line-clamp-2 leading-relaxed mb-3`}>
@@ -203,9 +203,9 @@ export default function TemplatePickerModal({
                       </p>
 
                       {/* Meta badges */}
-                      <div className="flex flex-wrap items-center gap-2 mb-4 text-[11px] text-slate-500 dark:text-[#8B92A5]">
+                      <div className="flex flex-wrap items-center gap-2 mb-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
+                          <Calendar className="w-3.5 h-3.5 text-amber-500" />
                           {tpl.periodMode === "period" ? "Period Range" : "Point in Time (As-of)"}
                         </span>
                         <span>•</span>
@@ -213,8 +213,8 @@ export default function TemplatePickerModal({
                       </div>
 
                       {/* Formulas Preview */}
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0E1017] border border-slate-100 dark:border-white/5 mb-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#555C72] mb-1">
+                      <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-[#10131B] border border-slate-200/80 dark:border-white/10 mb-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
                           Primary Formula
                         </p>
                         <p className="text-[11px] font-mono text-slate-700 dark:text-slate-300 truncate">
@@ -228,10 +228,10 @@ export default function TemplatePickerModal({
                       type="button"
                       disabled={Boolean(creatingType)}
                       onClick={() => handleCreate(tpl.type)}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                         isSelected
                           ? "bg-amber-600 text-white"
-                          : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-xs active:scale-[0.98]"
+                          : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
                       }`}
                     >
                       {isSelected ? (
@@ -242,7 +242,7 @@ export default function TemplatePickerModal({
                       ) : (
                         <>
                           <span>Use This Template</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </>
                       )}
                     </button>

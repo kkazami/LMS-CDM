@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useId, type ComponentProps } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -22,9 +22,10 @@ import {
   Check,
 } from "lucide-react";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
+import { materialPreviewUrl } from "@/lib/material-preview";
 
 // Initialize pdfjs worker (same as DocumentViewer)
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf-runtime/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface RawCard {
   front: string;
@@ -42,7 +43,6 @@ interface FileInfo {
 interface ConvertFlashcardsModalProps {
   attachmentId: string;
   attachmentName: string;
-  attachmentUrl?: string; // Direct URL to the PDF for thumbnail rendering
   courseId: string;
   instituteCode: string;
   onClose: () => void;
@@ -65,16 +65,18 @@ interface PageThumbnailProps {
   pageNumber: number;
   isSelected: boolean;
   onToggle: (pageNum: number) => void;
+  pdf: ComponentProps<typeof Page>['pdf'];
 }
 
-function PageThumbnail({ pageNumber, isSelected, onToggle }: PageThumbnailProps) {
+function PageThumbnail({ pageNumber, isSelected, onToggle, pdf }: PageThumbnailProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [previewFailed, setPreviewFailed] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !pdf) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -88,12 +90,13 @@ function PageThumbnail({ pageNumber, isSelected, onToggle }: PageThumbnailProps)
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [pdf]);
 
   return (
     <button
       ref={ref}
       type="button"
+      aria-pressed={isSelected}
       onClick={() => onToggle(pageNumber)}
       className={`group relative flex flex-col items-center rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
         isSelected
@@ -102,23 +105,26 @@ function PageThumbnail({ pageNumber, isSelected, onToggle }: PageThumbnailProps)
       }`}
     >
       {/* Thumbnail Container */}
-      <div className="relative w-full aspect-3/4 overflow-hidden rounded-t-xl bg-slate-100 dark:bg-[#0E1018]">
-        {isVisible ? (
+      <div className={`relative w-full overflow-hidden rounded-t-xl bg-slate-100 dark:bg-[#0E1018] ${pdf ? 'aspect-3/4' : 'h-14'}`}>
+        {pdf && isVisible && !previewFailed ? (
           <>
             <div className={`w-full h-full flex items-center justify-center [&_.react-pdf__Page]:bg-transparent! [&_canvas]:max-w-full [&_canvas]:max-h-full [&_canvas]:w-auto! [&_canvas]:h-auto! [&_canvas]:object-contain ${!isLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}`}>
               <Page
+                pdf={pdf}
                 pageNumber={pageNumber}
                 width={160}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
                 onRenderSuccess={() => setIsLoaded(true)}
+                onLoadError={() => setPreviewFailed(true)}
+                onRenderError={() => setPreviewFailed(true)}
                 loading={null}
               />
             </div>
             {/* Loading skeleton */}
             {!isLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-emerald-500 animate-spin" />
+                <FileText aria-hidden="true" className="h-7 w-7 text-slate-400" />
               </div>
             )}
           </>
@@ -166,12 +172,43 @@ function PageThumbnail({ pageNumber, isSelected, onToggle }: PageThumbnailProps)
   );
 }
 
+function PdfPagePicker({ attachmentId, totalPages, selectedPages, onToggle }: {
+  attachmentId: string;
+  totalPages: number;
+  selectedPages: Set<number>;
+  onToggle: (pageNumber: number) => void;
+}) {
+  const [pdf, setPdf] = useState<ComponentProps<typeof Page>['pdf']>();
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (pdf || failed) return;
+    const timeout = setTimeout(() => setFailed(true), 20_000);
+    return () => clearTimeout(timeout);
+  }, [failed, pdf]);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#1A1D27]">
+      {!failed && <div hidden>
+        <Document file={materialPreviewUrl(attachmentId)} onLoadSuccess={setPdf} onLoadError={() => setFailed(true)} />
+      </div>}
+      {!pdf && <p role="status" className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+        {failed ? 'Thumbnails are unavailable. You can still select pages by number.' : 'Loading thumbnails. You can already select pages by number.'}
+      </p>}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]">
+        {Array.from({ length: totalPages }, (_, i) => (
+          <PageThumbnail key={i + 1} pageNumber={i + 1} isSelected={selectedPages.has(i + 1)} onToggle={onToggle} pdf={pdf} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Modal Component ───────────────────────────────────────────────────
 
 export default function ConvertFlashcardsModal({
   attachmentId,
   attachmentName,
-  attachmentUrl,
   courseId,
   instituteCode,
   onClose,
@@ -184,12 +221,30 @@ export default function ConvertFlashcardsModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const theme = getInstituteTheme(instituteCode);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const trigger = document.activeElement;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, []);
 
   // ── Page/slide selection state ──
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [selectedSlides, setSelectedSlides] = useState<Set<number>>(new Set());
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const selectedCount = fileInfo?.fileType === 'pdf' ? selectedPages.size : selectedSlides.size;
+  const totalCount = fileInfo?.totalPages ?? fileInfo?.totalSlides ?? 0;
+  const selectionTooLarge = selectedCount > 500 && selectedCount !== totalCount;
 
   // ── Step 1: Inspect the file (get page/slide count) ──
   async function handleStartGenerate() {
@@ -197,10 +252,13 @@ export default function ConvertFlashcardsModal({
     setErrorMessage("");
 
     try {
-      const res = await fetch(
-        `/api/flashcards/file-info?attachmentId=${attachmentId}`
-      );
-      const info: FileInfo = await res.json();
+      const res = await fetch(`/api/flashcards/file-info?attachmentId=${encodeURIComponent(attachmentId)}`, { signal: AbortSignal.timeout(20_000) });
+      const info: FileInfo & { message?: string } = await res.json();
+      if (!res.ok) {
+        setErrorMessage(info.message || 'Could not read this file. Try again.');
+        setStep('error');
+        return;
+      }
       setFileInfo(info);
 
       if (info.fileType === "unsupported" || (!info.totalPages && !info.totalSlides)) {
@@ -209,22 +267,11 @@ export default function ConvertFlashcardsModal({
         return;
       }
 
-      // PDF — default = all pages selected, resolve the PDF URL for thumbnails
+      // Default to the entire document.
       if (info.fileType === "pdf" && info.totalPages) {
         setSelectedPages(
           new Set(Array.from({ length: info.totalPages }, (_, i) => i + 1))
         );
-        // Resolve PDF URL for thumbnail rendering
-        if (attachmentUrl) {
-          setPdfUrl(attachmentUrl);
-        } else {
-          // Fetch the attachment URL from the API
-          const attachRes = await fetch(`/api/materials/attachment-url?id=${attachmentId}`);
-          if (attachRes.ok) {
-            const attachData = await attachRes.json();
-            setPdfUrl(attachData.url);
-          }
-        }
       }
 
       // PPTX — default = all slides selected
@@ -236,8 +283,8 @@ export default function ConvertFlashcardsModal({
 
       setStep("page-select");
     } catch {
-      setErrorMessage("Could not read file metadata. Try generating anyway.");
-      await runGenerate(null);
+      setErrorMessage('Could not read this file. Check your connection and try again.');
+      setStep('error');
     }
   }
 
@@ -262,7 +309,7 @@ export default function ConvertFlashcardsModal({
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMessage(data.message || "Failed to generate flashcards.");
+        setErrorMessage(data.message || data.error?.message || "Failed to generate flashcards.");
         setStep("error");
         return;
       }
@@ -277,7 +324,12 @@ export default function ConvertFlashcardsModal({
 
   // Called when user confirms their page/slide selection
   async function handleConfirmSelection() {
-    if (!fileInfo) return;
+    if (!fileInfo || selectedCount === 0 || selectionTooLarge) return;
+
+    if (selectedCount === totalCount) {
+      await runGenerate(null);
+      return;
+    }
 
     if (fileInfo.fileType === "pdf") {
       await runGenerate({ selectedPages: Array.from(selectedPages) });
@@ -392,42 +444,41 @@ export default function ConvertFlashcardsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal — wider for the page grid */}
-      <div className={`relative z-10 w-full mx-4 bg-white dark:bg-[#141721] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
-        step === "page-select" ? "max-w-5xl" : "max-w-3xl"
-      } transition-all duration-300`}>
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        onCancel={event => { event.preventDefault(); if (step !== "saving") onClose(); }}
+        onClick={event => { if (event.target === event.currentTarget && step !== "saving") onClose(); }}
+        className="m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl backdrop:bg-slate-950/55 open:flex dark:border-white/10 dark:bg-[#141721] dark:text-slate-100"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6 dark:border-white/10">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 shrink-0">
               <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">
+            <div className="min-w-0">
+              <h2 id={titleId} className="text-base font-bold sm:text-lg">
                 Convert to Flashcards
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5 truncate max-w-75">
+              <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-300">
                 {attachmentName}
               </p>
             </div>
           </div>
           <button
+            type="button"
+            aria-label="Close flashcard converter"
+            disabled={step === "saving"}
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-[#F0F2F8] transition-colors cursor-pointer"
+            className="grid size-11 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {/* ── Idle State ── */}
           {step === "idle" && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -470,7 +521,7 @@ export default function ConvertFlashcardsModal({
               {fileInfo.fileType === "pdf" && fileInfo.totalPages && (
                 <div>
                   {/* Section header */}
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 shrink-0">
                         <FileSliders className="h-5 w-5 text-indigo-500" />
@@ -479,9 +530,7 @@ export default function ConvertFlashcardsModal({
                         <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8]">
                           Select Pages
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-[#8B92A5] mt-0.5">
-                          Click pages to select which ones to convert ({fileInfo.totalPages} pages total)
-                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">Choose which pages to convert.</p>
                       </div>
                     </div>
                     {/* Select / Deselect controls */}
@@ -491,6 +540,8 @@ export default function ConvertFlashcardsModal({
                       </span>
                       <div className="flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-[#1E2132] p-1">
                         <button
+                          type="button"
+                          aria-pressed={selectedPages.size === fileInfo.totalPages}
                           onClick={selectAllPages}
                           className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                             selectedPages.size === fileInfo.totalPages
@@ -501,6 +552,8 @@ export default function ConvertFlashcardsModal({
                           All
                         </button>
                         <button
+                          type="button"
+                          aria-pressed={selectedPages.size === 0}
                           onClick={deselectAllPages}
                           className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                             selectedPages.size === 0
@@ -514,90 +567,7 @@ export default function ConvertFlashcardsModal({
                     </div>
                   </div>
 
-                  {/* Page Thumbnail Grid */}
-                  <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#1A1D27] p-4">
-                    {pdfUrl ? (
-                      <Document
-                        file={pdfUrl}
-                        loading={
-                          <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
-                          </div>
-                        }
-                        error={
-                          <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <AlertCircle className="h-8 w-8 text-amber-500 mb-2" />
-                            <p className="text-sm text-slate-500 dark:text-[#8B92A5]">
-                              Could not load page previews. You can still generate flashcards from all pages.
-                            </p>
-                          </div>
-                        }
-                      >
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[55vh] overflow-y-auto pr-1 scrollbar-thin">
-                          {Array.from({ length: fileInfo.totalPages! }, (_, i) => (
-                            <PageThumbnail
-                              key={i + 1}
-                              pageNumber={i + 1}
-                              isSelected={selectedPages.has(i + 1)}
-                              onToggle={togglePage}
-                            />
-                          ))}
-                        </div>
-                      </Document>
-                    ) : (
-                      /* Fallback: show grid without thumbnails if URL isn't available */
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 max-h-[55vh] overflow-y-auto pr-1">
-                        {Array.from({ length: fileInfo.totalPages! }, (_, i) => {
-                          const pageNum = i + 1;
-                          const isSelected = selectedPages.has(pageNum);
-                          return (
-                            <button
-                              key={pageNum}
-                              type="button"
-                              onClick={() => togglePage(pageNum)}
-                              className={`relative flex flex-col items-center justify-center rounded-xl border-2 aspect-3/4 transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm"
-                                  : "border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#1E2132] hover:border-slate-300 dark:hover:border-white/10"
-                              }`}
-                            >
-                              <FileText className={`h-6 w-6 mb-1 transition-colors ${
-                                isSelected ? "text-emerald-500" : "text-slate-300 dark:text-white/15"
-                              }`} />
-                              <span className={`text-xs font-bold ${
-                                isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400 dark:text-[#8B92A5]"
-                              }`}>
-                                {pageNum}
-                              </span>
-                              {isSelected && (
-                                <div className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-md bg-emerald-500">
-                                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Selection summary */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
-                      Generating from{" "}
-                      <span className="font-bold text-slate-600 dark:text-[#F0F2F8]">
-                        {selectedPages.size} page{selectedPages.size !== 1 ? "s" : ""}
-                      </span>{" "}
-                      of {fileInfo.totalPages}.
-                    </p>
-                    {/* Skip link */}
-                    <button
-                      onClick={() => runGenerate(null)}
-                      className="text-xs text-slate-400 dark:text-[#8B92A5] hover:text-slate-600 dark:hover:text-[#F0F2F8] underline underline-offset-2 cursor-pointer transition-colors"
-                    >
-                      Use all pages instead
-                    </button>
-                  </div>
+                  <PdfPagePicker attachmentId={attachmentId} totalPages={fileInfo.totalPages} selectedPages={selectedPages} onToggle={togglePage} />
                 </div>
               )}
 
@@ -650,6 +620,8 @@ export default function ConvertFlashcardsModal({
                       return (
                         <button
                           key={slideNum}
+                          type="button"
+                          aria-pressed={isSelected}
                           onClick={() => toggleSlide(slideNum)}
                           className={`flex items-center gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all cursor-pointer ${
                             isSelected
@@ -708,15 +680,6 @@ export default function ConvertFlashcardsModal({
                     })}
                   </div>
 
-                  {/* Skip link */}
-                  <div className="mt-5 text-center">
-                    <button
-                      onClick={() => runGenerate(null)}
-                      className="text-xs text-slate-400 dark:text-[#8B92A5] hover:text-slate-600 dark:hover:text-[#F0F2F8] underline underline-offset-2 cursor-pointer transition-colors"
-                    >
-                      Use all slides instead
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
@@ -744,21 +707,21 @@ export default function ConvertFlashcardsModal({
               <h3 className="text-base font-bold text-slate-900 dark:text-[#F0F2F8] mb-1">
                 Could Not Generate
               </h3>
-              <p className="text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm mb-5">
+              <p role="alert" className="text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm mb-5">
                 {errorMessage}
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
                 <button
-                  onClick={handleStartGenerate}
+                  onClick={() => totalCount ? void handleConfirmSelection() : fileInfo ? void runGenerate(null) : void handleStartGenerate()}
                   className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition-all cursor-pointer"
                 >
                   Try Again
                 </button>
                 <button
-                  onClick={onClose}
+                  onClick={() => totalCount ? setStep('page-select') : onClose()}
                   className="rounded-xl border border-slate-200 dark:border-white/10 px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
                 >
-                  Close
+                  {totalCount ? 'Change selection' : 'Close'}
                 </button>
               </div>
             </div>
@@ -962,7 +925,8 @@ export default function ConvertFlashcardsModal({
         {/* Footer */}
         {/* Page-select step footer */}
         {step === "page-select" && fileInfo && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] shrink-0">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:px-6 dark:border-white/10">
+            {selectionTooLarge && <p role="status" className="w-full text-xs text-slate-600 dark:text-slate-300">Select up to 500 {fileInfo.fileType === 'pdf' ? 'pages' : 'slides'}, or choose all.</p>}
             <button
               onClick={onClose}
               className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
@@ -971,37 +935,25 @@ export default function ConvertFlashcardsModal({
             </button>
             <button
               onClick={handleConfirmSelection}
-              disabled={
-                (fileInfo.fileType === "pdf" && selectedPages.size === 0) ||
-                (fileInfo.fileType === "pptx" && selectedSlides.size === 0)
-              }
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-5 py-2 text-sm font-semibold text-white transition-all shadow-sm cursor-pointer"
+              disabled={selectedCount === 0 || selectionTooLarge}
+              className="ml-auto flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
             >
-              <ChevronRight className="h-4 w-4" />
-              Generate from Selection
-              {fileInfo.fileType === "pdf" && selectedPages.size > 0 && (
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">
-                  {selectedPages.size}
-                </span>
-              )}
-              {fileInfo.fileType === "pptx" && selectedSlides.size > 0 && (
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">
-                  {selectedSlides.size}
-                </span>
-              )}
+              <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
+              Generate flashcards
             </button>
           </div>
         )}
 
         {/* Preview / saving footer */}
         {(step === "preview" || step === "saving") && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] shrink-0">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:px-6 dark:border-white/10">
             <p className="text-xs text-slate-400 dark:text-[#8B92A5]">
               Review and edit your cards before saving
             </p>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
+                disabled={step === "saving"}
                 className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-600 dark:text-[#8B92A5] hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer"
               >
                 Cancel
@@ -1030,7 +982,6 @@ export default function ConvertFlashcardsModal({
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </dialog>
   );
 }

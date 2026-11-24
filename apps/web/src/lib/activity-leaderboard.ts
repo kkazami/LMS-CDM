@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { canonicalRole } from "@/lib/super-user-v1/capabilities";
+import { recordedScoreInPoints } from "@/lib/grading/score-units";
 
 export function leaderboardCourseWhere(user: { id: string; instituteId: string; role: string }): Prisma.CourseWhereInput {
   const role = canonicalRole(user.role);
@@ -34,8 +35,5 @@ export function leaderboardActivityWhere(user: { id: string; instituteId: string
 }
 
 export function leaderboardScore(grade: number, status: string, isForm: boolean, maxPoints: number | null) {
-  // Form auto-grades are stored as percentages; manual grades are stored as points.
-  return isForm && status === "SUBMITTED"
-    ? Math.round(grade * (maxPoints ?? 100)) / 100
-    : grade;
+  return recordedScoreInPoints(grade, status, isForm, maxPoints);
 }

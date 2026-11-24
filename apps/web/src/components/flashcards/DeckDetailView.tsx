@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import type { FlashcardCard, FlashcardDeck } from "@/lib/lms-types";
 import CardEditorModal from "./CardEditorModal";
 import StudyMode from "./StudyMode";
-import ProgressRing from "./ProgressRing";
+import DeckProgress from "./DeckProgress";
+import { iconButton, panel, primaryButton, secondaryButton } from "./styles";
 import Modal from "@/components/common/Modal";
 import {
   ArrowLeft,
@@ -14,25 +15,27 @@ import {
   Edit3,
   CheckSquare,
   Square,
-  MoreVertical,
   AlertCircle,
 } from "lucide-react";
 import FlashcardIcon from "@/components/icons/FlashcardIcon";
 
+const CARD_STATUS = {
+  correct: { label: "Mastered", className: "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300" },
+  incorrect: { label: "Needs Review", className: "bg-rose-50 text-rose-800 dark:bg-rose-500/10 dark:text-rose-300" },
+  unseen: { label: "Unseen", className: "bg-canvas text-secondary-theme" },
+};
+
 interface DeckDetailViewProps {
   deck: FlashcardDeck;
-  instituteCode?: string;
   onBack: () => void;
   onDeckUpdated: (deck: FlashcardDeck) => void;
 }
 
 export default function DeckDetailView({
   deck,
-  instituteCode,
   onBack,
   onDeckUpdated,
 }: DeckDetailViewProps) {
-  const isIte = (instituteCode || "").toLowerCase() === "ite";
   const [cards, setCards] = useState<FlashcardCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -158,8 +161,6 @@ export default function DeckDetailView({
     }
   };
 
-  const percentage = deck.cardCount > 0 ? Math.round((deck.correctCount / deck.cardCount) * 100) : 0;
-
   // Study Mode view
   if (studyMode) {
     return (
@@ -176,93 +177,47 @@ export default function DeckDetailView({
   }
 
   return (
-    <div className="page-enter pb-12">
-      {/* Premium Hero Header */}
-      <div
-        className="relative mb-8 overflow-hidden rounded-4xl p-8 text-white shadow-lg sm:p-10"
-        style={{ backgroundColor: deck.color }}
-      >
-        {/* Decorative Background Elements */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white opacity-10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-black opacity-10 blur-2xl" />
-
-        <div className="relative z-10">
-          <button
-            onClick={onBack}
-            className="mb-8 inline-flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/30"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            All Flashcards
-          </button>
-
-          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-inner sm:h-20 sm:w-20">
-                <FlashcardIcon className="h-8 w-8 sm:h-10 sm:w-10" style={{ color: deck.color }} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-sm sm:text-4xl">
-                  {deck.title}
-                </h1>
-                {deck.description && (
-                  <p className="mt-2 max-w-xl text-sm font-medium text-white/90 sm:text-base">
-                    {deck.description}
-                  </p>
-                )}
-                {deck.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {deck.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="shrink-0 rounded-2xl border border-white/20 bg-white/10 p-4 shadow-sm backdrop-blur-md sm:p-5">
-              <ProgressRing
-                percentage={percentage}
-                size={80}
-                strokeWidth={6}
-                color="white"
-              />
+    <div className="mx-auto max-w-6xl pb-12">
+      <button type="button" onClick={onBack} className="mb-3 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-secondary-theme hover:text-primary-theme">
+        <ArrowLeft aria-hidden="true" className="size-4" />
+        All Flashcards
+      </button>
+      <header className={`mb-6 ${panel}`}>
+        <div className="flex flex-col gap-5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <span className="relative grid size-11 shrink-0 place-items-center rounded-xl bg-canvas text-primary-theme">
+              <FlashcardIcon aria-hidden="true" className="size-6" />
+              <span aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full ring-2 ring-(--bg-surface)" style={{ backgroundColor: deck.color }} />
+            </span>
+            <div className="min-w-0 [overflow-wrap:anywhere]">
+              <h1 className="text-2xl font-bold tracking-tight text-primary-theme sm:text-3xl">{deck.title}</h1>
+              {deck.courseTitle && <p className="mt-1 text-sm font-medium text-secondary-theme">{deck.courseTitle}</p>}
+              {deck.description && <p className="mt-2 max-w-prose whitespace-pre-wrap text-sm/6 text-secondary-theme">{deck.description}</p>}
+              {deck.tags.length > 0 && (
+                <ul aria-label="Tags" className="mt-3 flex flex-wrap gap-1.5 text-xs text-secondary-theme">
+                  {deck.tags.map((tag, index) => <li key={index} className="max-w-full rounded-md bg-canvas px-2 py-1">{tag}</li>)}
+                </ul>
+              )}
             </div>
           </div>
+          <div className="w-full border-t border-theme pt-4 sm:w-52 sm:shrink-0 sm:border-t-0 sm:pt-0">
+            <DeckProgress total={loading ? deck.cardCount : cards.length} mastered={loading ? deck.correctCount : cards.filter(card => card.progress?.status === "correct").length} />
+          </div>
         </div>
-      </div>
+        <div className="flex flex-wrap gap-2 border-t border-theme px-4 py-3 sm:px-6">
+          <button type="button" onClick={() => setStudyMode(true)} disabled={cards.length === 0} className={primaryButton}>
+            <Play aria-hidden="true" className="size-4" /> Study Now
+          </button>
+          <button type="button" onClick={() => { setEditingCard(null); setEditorOpen(true); }} className={secondaryButton}>
+            <Plus aria-hidden="true" className="size-4" /> Add Card
+          </button>
+        </div>
+      </header>
 
-      {/* Action bar */}
-      <div className="mb-8 flex flex-wrap items-center gap-3 px-1">
-        <button
-          onClick={() => setStudyMode(true)}
-          disabled={cards.length === 0}
-          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-bold text-white shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-40 cursor-pointer"
-          style={{ backgroundColor: deck.color }}
-        >
-          <Play className="h-5 w-5 fill-current" />
-          Study Now
-        </button>
-
-        <button
-          onClick={() => {
-            setEditingCard(null);
-            setEditorOpen(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141721] px-5 py-3 text-sm font-bold text-slate-700 dark:text-[#F0F2F8] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#181B26] cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Add Card
-        </button>
-
-        <div className="flex-1" />
-
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold tracking-tight text-primary-theme">Cards</h2>
         {batchMode ? (
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] p-1.5 shadow-xs">
+          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-theme bg-surface p-1">
             <button
               onClick={toggleSelectAll}
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
@@ -278,7 +233,7 @@ export default function DeckDetailView({
             <button
               onClick={handleDeleteSelected}
               disabled={selectedIds.size === 0 || deleting}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors disabled:opacity-40 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Delete ({selectedIds.size})
@@ -298,7 +253,7 @@ export default function DeckDetailView({
           <button
             onClick={() => setBatchMode(true)}
             disabled={cards.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] shadow-xs transition-all hover:bg-slate-50 dark:hover:bg-[#181B26] hover:text-slate-900 dark:hover:text-white disabled:opacity-40 cursor-pointer"
+            className={secondaryButton}
           >
             <CheckSquare className="h-4 w-4 text-slate-400" />
             Batch Edit
@@ -314,11 +269,11 @@ export default function DeckDetailView({
           ))}
         </div>
       ) : cards.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center shadow-xs">
+        <div className={`flex flex-col items-center px-4 py-12 text-center ${panel}`}>
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 dark:bg-[#181B26] shadow-xs ring-1 ring-slate-100 dark:ring-white/5">
             <AlertCircle className="h-8 w-8 text-slate-400 dark:text-[#8B92A5]" />
           </div>
-          <h3 className="mb-2 text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">No cards in this flashcard</h3>
+          <h3 className="mb-2 text-lg font-bold text-slate-900 dark:text-[#F0F2F8]">No cards in this deck</h3>
           <p className="mb-6 max-w-sm text-sm text-slate-500 dark:text-[#8B92A5]">
             Get started by adding your first flashcard. The more cards you add, the better your study sessions will be.
           </p>
@@ -327,104 +282,46 @@ export default function DeckDetailView({
               setEditingCard(null);
               setEditorOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-xs transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-            style={{ backgroundColor: deck.color }}
+            className={primaryButton}
           >
             <Plus className="h-4 w-4" />
             Add First Card
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <ol className={panel}>
           {cards.map((card, index) => {
             const status = card.progress?.status ?? "unseen";
-            const statusColors: Record<string, { bg: string; text: string; label: string; border: string }> = {
-              correct: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", label: "Mastered", border: "bg-emerald-500" },
-              incorrect: { bg: "bg-rose-50 dark:bg-rose-950/30", text: "text-rose-700 dark:text-rose-400", label: "Needs Review", border: "bg-rose-500" },
-              unseen: { bg: "bg-slate-100 dark:bg-[#1E2132]", text: "text-slate-600 dark:text-[#8B92A5]", label: "Unseen", border: "bg-slate-300 dark:bg-slate-600" },
-            };
-            const statusInfo = statusColors[status] ?? statusColors.unseen;
+            const statusInfo = CARD_STATUS[status] ?? CARD_STATUS.unseen;
 
             return (
-              <div
-                key={card.id}
-                className="group relative flex items-center gap-4 rounded-2xl bg-white dark:bg-[#141721] p-5 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 dark:hover:border-white/10"
-                style={{
-                  animation: `staggerFadeIn 0.3s ease-out ${index * 50}ms both`,
-                }}
-              >
-                {/* Status Indicator Bar */}
-                <div
-                  className={`absolute left-0 top-1/2 h-1/2 w-1.5 -translate-y-1/2 rounded-r-full ${statusInfo.border}`}
-                />
-
-                {/* Batch checkbox */}
-                {batchMode && (
-                  <button
-                    onClick={() => toggleSelect(card.id)}
-                    className="shrink-0 pl-2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  >
-                    {selectedIds.has(card.id) ? (
-                      <CheckSquare className="h-5 w-5 text-[#F97316]" />
-                    ) : (
-                      <Square className="h-5 w-5" />
-                    )}
-                  </button>
+              <li key={card.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 border-theme px-4 py-3 not-first:border-t sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5">
+                {batchMode ? (
+                  <input type="checkbox" checked={selectedIds.has(card.id)} onChange={() => toggleSelect(card.id)} aria-label={`Select card ${index + 1}`} className="mt-2 size-4 cursor-pointer accent-(--action-bg) sm:mt-0" />
+                ) : (
+                  <span className="grid size-8 place-items-center rounded-lg bg-canvas text-xs font-semibold tabular-nums text-secondary-theme">{index + 1}</span>
                 )}
-
-                {/* Index & Content */}
-                <div className={`flex flex-1 min-w-0 items-center gap-4 ${!batchMode ? "pl-2" : ""}`}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 dark:bg-[#181B26] text-sm font-bold text-slate-400 dark:text-[#8B92A5] border border-slate-100 dark:border-white/5">
-                    {index + 1}
-                  </span>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-base font-bold text-slate-900 dark:text-[#F0F2F8]">
-                      {card.front}
-                    </p>
-                    <p className="mt-1 truncate text-sm text-slate-500 dark:text-[#8B92A5]">
-                      {card.back}
-                    </p>
-                  </div>
+                <div className="min-w-0 [overflow-wrap:anywhere]">
+                  <p className="whitespace-pre-wrap text-sm/6 font-semibold text-primary-theme">{card.front}</p>
+                  <p className="line-clamp-3 whitespace-pre-wrap text-sm/6 text-secondary-theme">{card.back}</p>
                 </div>
-
-                {/* Status badge */}
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${statusInfo.bg} ${statusInfo.text}`}
-                >
-                  {statusInfo.label}
-                </span>
-
-                {/* Action buttons */}
-                {!batchMode && (
-                  <div className="shrink-0 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      onClick={() => {
-                        setEditingCard(card);
-                        setEditorOpen(true);
-                      }}
-                      className={`rounded-xl p-2.5 text-slate-400 transition-all ${
-                        isIte
-                          ? "hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
-                          : "hover:bg-orange-500/10 hover:text-[#F97316]"
-                      } cursor-pointer`}
-                      title="Edit Card"
-                    >
-                      <Edit3 className="h-4.5 w-4.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCard(card.id)}
-                      className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-500 cursor-pointer"
-                      title="Delete Card"
-                    >
-                      <Trash2 className="h-4.5 w-4.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
+                <div className="col-start-2 flex min-w-0 flex-wrap items-center gap-1 sm:col-start-3 sm:justify-end">
+                  <span className={`mr-1 rounded-md px-2 py-1 text-xs font-medium ${statusInfo.className}`}>{statusInfo.label}</span>
+                  {!batchMode && (
+                    <>
+                      <button type="button" onClick={() => { setEditingCard(card); setEditorOpen(true); }} className={iconButton} aria-label={`Edit card ${index + 1}`}>
+                        <Edit3 aria-hidden="true" className="size-4" />
+                      </button>
+                      <button type="button" onClick={() => handleDeleteCard(card.id)} className={`${iconButton} hover:text-rose-600`} aria-label={`Delete card ${index + 1}`}>
+                        <Trash2 aria-hidden="true" className="size-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       )}
 
       {/* Card Editor Modal */}
@@ -437,7 +334,6 @@ export default function DeckDetailView({
         deckId={deck.id}
         editingCard={editingCard}
         onSaved={handleCardSaved}
-        instituteCode={instituteCode}
       />
 
       {/* Delete Single Card Modal */}
@@ -457,7 +353,7 @@ export default function DeckDetailView({
               type="button"
               onClick={() => setCardToDelete(null)}
               disabled={deleting}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
@@ -490,7 +386,7 @@ export default function DeckDetailView({
               type="button"
               onClick={() => setConfirmBatchDelete(false)}
               disabled={deleting}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:opacity-50"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-[#8B92A5] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>

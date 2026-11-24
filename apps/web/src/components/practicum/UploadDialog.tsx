@@ -7,11 +7,13 @@ import { toast } from "@/components/common/Toast";
 import { useDialogA11y } from "@/hooks/useDialogA11y";
 import type { SubmissionDTO } from "@/lib/practicum/dto";
 import {
+  ACCEPTED_SUBMISSION_LINK_SITES_TEXT,
   MIME_BY_EXTENSION,
   UPLOAD_RULES,
   formatBytes,
   getExtension,
-  parseVideoLink,
+  isSubmissionAttachmentRequired,
+  parseSubmissionLink,
   practicumPathPrefix,
   validateUpload,
   type SubmissionType,
@@ -63,11 +65,11 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
   const [title, setTitle] = useState(isResubmit ? target.submission.title : "");
   const [description, setDescription] = useState(isResubmit ? target.submission.description ?? "" : "");
   const [source, setSource] = useState<"file" | "link">(
-    type === "DEMO_VIDEO" && !uploadsConfigured ? "link" : "file"
+    !uploadsConfigured || (isResubmit && Boolean(target.submission.videoLink)) ? "link" : "file"
   );
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [videoLink, setVideoLink] = useState("");
+  const [videoLink, setVideoLink] = useState(isResubmit ? target.submission.videoLink ?? "" : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +85,8 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
 
   const acceptAttr = rule.extensions.map((e) => `.${e}`).join(",");
   const fileUnavailable = source === "file" && !uploadsConfigured;
-  const fileOptional = !isResubmit && type === "LESSON_PLAN";
+  const attachmentRequired = isSubmissionAttachmentRequired(type, isResubmit);
+  const fileOptional = !attachmentRequired;
 
   function handleSelectedFile(picked: File | null) {
     setError(null);
@@ -138,8 +141,8 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
       return;
     }
 
-    if (source === "link") {
-      const parsed = parseVideoLink(videoLink);
+    if (source === "link" && (videoLink.trim().length > 0 || !fileOptional)) {
+      const parsed = parseSubmissionLink(videoLink, type);
       if (!parsed.ok) {
         setError(parsed.reason);
         return;
@@ -179,7 +182,7 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
       return;
     }
 
-    if (file) {
+    if (source === "file" && file) {
       if (!uploadsConfigured) {
         setError("File uploads are not configured.");
         return;
@@ -349,40 +352,68 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
             />
           </div>
 
-          {type === "DEMO_VIDEO" && (
-            <div>
-              <span className="mb-1.5 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Video source <span className="text-rose-500" aria-hidden="true">*</span>
-              </span>
-              <div role="radiogroup" aria-label="Video source" aria-required="true" className="flex gap-2">
-                {(["file", "link"] as const).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    role="radio"
-                    aria-checked={source === option}
-                    disabled={busy}
-                    onClick={() => {
-                      setSource(option);
-                      setError(null);
-                    }}
-                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium ${
-                      source === option
-                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-                        : "border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:text-[#D1D5DB] dark:hover:bg-white/5"
-                    }`}
-                  >
-                    {option === "file" ? "Upload a video" : "Paste a video link"}
-                  </button>
-                ))}
-              </div>
+          <div>
+            <span className="mb-1.5 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
+              {type === "DEMO_VIDEO" ? "Video source" : "Attachment source"}{" "}
+              {attachmentRequired ? (
+                <span className="text-rose-500" aria-hidden="true">*</span>
+              ) : (
+                <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>
+              )}
+            </span>
+            <div
+              role="radiogroup"
+              aria-label={type === "DEMO_VIDEO" ? "Video source" : "Attachment source"}
+              aria-required={attachmentRequired ? "true" : undefined}
+              className="flex flex-wrap gap-2"
+            >
+              {(["file", "link"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={source === option}
+                  disabled={busy}
+                  onClick={() => {
+                    setSource(option);
+                    setError(null);
+                  }}
+                  className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium ${
+                    source === option
+                      ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/15 dark:text-[#D1D5DB] dark:hover:bg-white/5"
+                  }`}
+                >
+                  {type === "DEMO_VIDEO"
+                    ? option === "file"
+                      ? "Upload a video"
+                      : "Paste a video link"
+                    : option === "file"
+                      ? "Upload a file"
+                      : "Paste a link"}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {!uploadsConfigured && (
+            <p
+              role="status"
+              className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+            >
+              File uploads are unavailable right now. You can paste a link instead.
+            </p>
           )}
 
           {source === "link" ? (
             <div>
               <label htmlFor="practicum-link" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
-                Video link <span className="text-rose-500" aria-hidden="true">*</span>
+                {type === "DEMO_VIDEO" ? "Video link" : "Link"}{" "}
+                {fileOptional ? (
+                  <span className="font-normal text-slate-600 dark:text-[#94A3B8]">(optional)</span>
+                ) : (
+                  <span className="text-rose-500" aria-hidden="true">*</span>
+                )}
               </label>
               <input
                 id="practicum-link"
@@ -391,24 +422,20 @@ export default function UploadDialog({ target, uploadsConfigured, onClose, onDon
                 onChange={(e) => setVideoLink(e.target.value)}
                 disabled={busy}
                 className={inputClass}
-                placeholder="https://www.youtube.com/watch?v=…"
+                placeholder={
+                  type === "DEMO_VIDEO"
+                    ? "https://www.youtube.com/watch?v=…"
+                    : "https://drive.google.com/file/d/…"
+                }
                 inputMode="url"
-                required
-                aria-required="true"
+                required={!fileOptional}
+                aria-required={!fileOptional}
               />
               <p className="mt-1 text-xs text-slate-600 dark:text-[#94A3B8]">
-                Use an unlisted link your supervisor can open. It must start with https://.
+                Make sure the link&apos;s sharing is set so your supervisor can open it. Accepted sites: {ACCEPTED_SUBMISSION_LINK_SITES_TEXT}.
               </p>
             </div>
-          ) : fileUnavailable ? (
-            <p
-              role="status"
-              className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
-            >
-              File uploads are not configured.
-              {type === "DEMO_VIDEO" ? " You can still paste a video link instead." : ""}
-            </p>
-          ) : (
+          ) : fileUnavailable ? null : (
             <div>
               <label htmlFor="practicum-file" className="mb-1 block text-sm font-medium text-slate-800 dark:text-[#F0F2F8]">
                 File{" "}

@@ -47,15 +47,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     // Guarded by status and version so two concurrent resubmits cannot both succeed.
-    const updated = await db.practicumSubmission.updateMany({
-      where: { id, status: "NEEDS_REVISION", version: submission.version },
-      data: {
-        ...source,
-        title: input.title,
-        description: input.description === undefined ? undefined : input.description || null,
-        status: transition.status,
-        version: { increment: 1 },
-      },
+    const updated = await db.$transaction(async (tx) => {
+      const res = await tx.practicumSubmission.updateMany({
+        where: { id, status: "NEEDS_REVISION", version: submission.version },
+        data: {
+          ...source,
+          title: input.title,
+          description: input.description === undefined ? undefined : input.description || null,
+          status: transition.status,
+          version: { increment: 1 },
+        },
+      });
+      if (res.count === 1 && source.videoLink && submission.type === "LESSON_PLAN") {
+        try {
+          const tableCheck = await tx.$queryRawUnsafe<Array<{ reg: string | null }>>(
+            `SELECT to_regclass('public."PracticumLessonPlanFile"')::text AS reg`
+          );
+          if (tableCheck?.[0]?.reg) {
+            await tx.$executeRaw`DELETE FROM "PracticumLessonPlanFile" WHERE "lessonPlanId" = ${id}`;
+          }
+        } catch {
+          // Optional auxiliary table
+        }
+      }
+      return res;
     });
     if (updated.count !== 1) {
       throw new HttpError(409, "This submission was changed by someone else. Refresh and try again.");

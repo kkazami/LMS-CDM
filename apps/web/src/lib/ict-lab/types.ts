@@ -1,3 +1,11 @@
+export type IctLabModuleId = "code-playground" | "hardware-explorer" | "lan-cable-guide";
+
+export const ICT_LAB_MODULE_IDS: readonly IctLabModuleId[] = [
+  "code-playground",
+  "hardware-explorer",
+  "lan-cable-guide",
+] as const;
+
 export interface HardwareCategory {
   id: string;
   label: string;

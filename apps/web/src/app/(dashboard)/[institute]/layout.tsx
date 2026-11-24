@@ -3,9 +3,11 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { isEligibleInstituteCode } from "@/lib/activity-eligibility";
 import { isEligibleKxInstituteCode } from "@/lib/kx-eligibility";
+import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
 import { isIteInstituteCode } from "@/lib/ite/ite-eligibility";
 import { getAvailableSidebarToolsForIteProgram } from "@/lib/ite-programs/features";
 import { resolveIteStudentProgram } from "@/lib/ite-programs/registration";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import { db } from "@/lib/db";
 import { getPHTDateString, getPHTMidnight, processLoginReward } from "@/lib/gamification/login-rewards";
 import { getInstituteByCode, getStudentEnrollments } from "@/lib/dashboard-data";
@@ -72,13 +74,18 @@ export default async function InstituteLayout({
   const focusModeEligible = isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
 
   // ITE per-program student sidebar tools ("Program tools" group): only for ITE students, only "available" features for their program.
-  const resolvedIteProgram =
+  const [resolvedIteProgram, resolvedIbeProgram] = await Promise.all([
     isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute)
-      ? await resolveIteStudentProgram(session.user.id)
-      : null;
+      ? resolveIteStudentProgram(session.user.id)
+      : Promise.resolve(null),
+    isStudent && userInstituteCode === "ibe" && institute.toLowerCase() === "ibe"
+      ? resolveIbeStudentProgram(session.user.id)
+      : Promise.resolve(null),
+  ]);
   const iteProgramTools = getAvailableSidebarToolsForIteProgram(
     resolvedIteProgram?.programCode
   );
+  const ibeProgramCode = resolvedIbeProgram?.programCode ?? null;
 
   // Use the institute id already loaded with the session when this is the user's own institute
   // (no extra query); only look it up when it is a different one.
@@ -163,12 +170,13 @@ export default async function InstituteLayout({
       avatarUrl={(session.user as Record<string, unknown>).avatarUrl as string | null ?? null}
       theme={theme}
       isEligibleForActivities={activityEligible}
-      isEligibleForOhmward={process.env.OHMWARD_ENABLED === 'true' && institute.toLowerCase() === 'ics' && userInstituteCode === 'ics' && ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(canonicalRole(userRole))}
+      isEligibleForOhmward={process.env.OHMWARD_ENABLED === 'true' && userInstituteCode === 'ics' && Boolean(ohmwardDestination(institute, userRole))}
       isEligibleForKnowledgeExchange={kxEligible}
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}
       iteProgramTools={iteProgramTools}
+      ibeProgramCode={ibeProgramCode}
       enrolledCourses={enrolledCourses}
       exp={gamification?.exp ?? 0}
       streakCurrent={gamification?.loginStreakCurrent ?? 0}

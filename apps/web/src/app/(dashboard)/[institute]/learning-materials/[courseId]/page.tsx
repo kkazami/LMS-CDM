@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import Link from "next/link";
-import { BookOpen, FileText, ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
+import { BookOpen, FileText, ArrowLeft, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -62,48 +62,23 @@ export default async function CourseMaterialsPage({ params }: Props) {
   });
 
   return (
-    <div className="page-enter pb-12">
-      {/* Hero Header */}
-      <div 
-        className="relative mb-8 overflow-hidden rounded-[2.5rem] p-8 text-white shadow-xl sm:p-12 bg-cover bg-center" 
-        style={
-          course.coverImage 
-            ? { backgroundImage: `url("${course.coverImage}")` }
-            : { background: `linear-gradient(135deg, ${theme.colors.sidebar} 0%, ${theme.colors.primary} 100%)` }
-        }
-      >
-        {/* Subtle Premium Background */}
-        <div className={`pointer-events-none absolute inset-0 ${course.coverImage ? 'bg-gradient-to-r from-black/80 via-black/50 to-black/20' : 'bg-gradient-to-r from-black/20 via-transparent to-black/10'}`} />
-        {!course.coverImage && (
-          <>
-            <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
-            <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-          </>
-        )}
-        
-        <div className="relative z-10 max-w-4xl">
-          <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Link
-              href={`/${institute}/learning-materials`}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to All Subjects
-            </Link>
-
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold tracking-widest text-white backdrop-blur-md uppercase shadow-sm border border-white/10">
-              {course.code}
-            </div>
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-sm sm:text-5xl lg:text-6xl mb-4 leading-tight">
-            {course.title}
-          </h1>
-          <p className="text-lg font-medium text-white/80 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
-            Prof. {course.instructor?.name || "Unassigned"}
-          </p>
-        </div>
-      </div>
+    <div className="page-enter mx-auto max-w-6xl pb-12">
+      <header className="mb-6 border-b border-theme pb-5">
+        <Link
+          href={`/${institute}/learning-materials`}
+          className="mb-3 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg pr-3 text-sm font-semibold text-secondary-theme hover:text-primary-theme"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Back to All Subjects
+        </Link>
+        <h1 className="text-2xl font-bold tracking-tight text-primary-theme [overflow-wrap:anywhere] sm:text-3xl">
+          {course.title}
+        </h1>
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm/6 text-secondary-theme">
+          <span className="rounded-md bg-surface px-2 text-xs font-semibold [overflow-wrap:anywhere]">{course.code}</span>
+          <span>Prof. {course.instructor?.name || "Unassigned"}</span>
+        </p>
+      </header>
 
       {materials.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#141721] py-24 text-center shadow-xs">
@@ -160,7 +135,7 @@ export default async function CourseMaterialsPage({ params }: Props) {
                           <Link
                             href={`/${institute}/learning-materials/${courseId}/${material.id}/read?attachmentId=${file.id}`}
                             key={file.id}
-                            className={`flex items-center justify-between gap-4 rounded-2xl bg-white dark:bg-[#181B26] p-4 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md group/link ${
+                            className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-white dark:bg-[#181B26] p-4 shadow-xs border border-slate-200/80 dark:border-white/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md group/link ${
                               isIte
                                 ? "hover:border-blue-600 dark:hover:border-blue-500"
                                 : "hover:border-[#F97316] dark:hover:border-[#F97316]"

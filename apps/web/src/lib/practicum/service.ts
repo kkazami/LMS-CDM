@@ -1,7 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
-import { HttpError } from "./http";
+import {
+  executeDeletePlacement,
+  type DeletePlacementDeps,
+  type DeletePlacementResult,
+  type DeletePlacementTx,
+} from "./delete-placement";
+import { HttpError, PRACTICUM_TRANSACTION_OPTIONS } from "./http";
 import type { FeedbackDTO, PlacementDTO, SubmissionDTO } from "./dto";
 import {
   RUBRIC_MIME_BY_EXTENSION,
@@ -206,14 +212,14 @@ export async function prepareRubricUpload(file: File): Promise<PreparedRubricUpl
 
   const preCheck = validateRubricUpload(file.name, effectiveMime, file.size);
   if (!preCheck.ok) {
-    throw new HttpError(400, preCheck.reason);
+    throw new HttpError(preCheck.reason.startsWith("File too large") ? 413 : 400, preCheck.reason);
   }
 
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
   const postCheck = validateRubricUpload(file.name, effectiveMime, bytes.byteLength);
   if (!postCheck.ok) {
-    throw new HttpError(400, postCheck.reason);
+    throw new HttpError(postCheck.reason.startsWith("File too large") ? 413 : 400, postCheck.reason);
   }
 
   const signatureCheck = validateRubricSignature(file.name, bytes);
@@ -368,5 +374,31 @@ export async function notifyStudentOfPlacement(args: {
     title: "Practicum placement assigned",
     message: `${args.supervisorName} added you to a practicum placement at ${args.schoolName}.`,
     link: ITE_BASE,
+  });
+}
+
+// ─── Placement Deletion ────────────────────────────────────────────────────
+
+export async function deletePlacement(args: {
+  placementId: string;
+  actor: PracticumActor;
+  ipAddress?: string;
+  deps?: Partial<DeletePlacementDeps>;
+}): Promise<DeletePlacementResult> {
+  return executeDeletePlacement({
+    placementId: args.placementId,
+    actor: args.actor,
+    ipAddress: args.ipAddress,
+    deps: {
+      runTransaction:
+        args.deps?.runTransaction ??
+        (<T>(fn: (tx: DeletePlacementTx) => Promise<T>) =>
+          db.$transaction(
+            (tx) => fn(tx as unknown as DeletePlacementTx),
+            PRACTICUM_TRANSACTION_OPTIONS
+          )),
+      deleteBlobs: args.deps?.deleteBlobs,
+      uploadsConfigured: args.deps?.uploadsConfigured,
+    },
   });
 }

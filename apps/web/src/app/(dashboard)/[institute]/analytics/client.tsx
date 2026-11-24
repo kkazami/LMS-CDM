@@ -72,36 +72,38 @@ export default function AnalyticsClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
-  const { students, isLoading, error, refetch, pagination, setPage } = useAtRiskStudents(selectedCourseId);
+  const { students: assessments, isLoading, error, refetch, pagination, setPage } = useAtRiskStudents(selectedCourseId);
+
+  // Assessments arrive in severity order, so the first subject sets each student's risk level.
+  const byStudent = new Map<string, { primary: AtRiskStudentItem; subjects: AtRiskStudentItem[] }>();
+  for (const assessment of assessments) {
+    const group = byStudent.get(assessment.studentId);
+    if (group) group.subjects.push(assessment);
+    else byStudent.set(assessment.studentId, { primary: assessment, subjects: [assessment] });
+  }
+  const students = [...byStudent.values()];
 
   // Statistics counters
   const totalAnalyzed = students.length;
-  const highRiskCount = students.filter((s) => s.riskLevel === "HIGH").length;
-  const mediumRiskCount = students.filter((s) => s.riskLevel === "MEDIUM").length;
-  const lowRiskCount = students.filter((s) => s.riskLevel === "LOW").length;
+  const highRiskCount = students.filter(({ primary }) => primary.riskLevel === "HIGH").length;
+  const mediumRiskCount = students.filter(({ primary }) => primary.riskLevel === "MEDIUM").length;
+  const lowRiskCount = totalAnalyzed - highRiskCount - mediumRiskCount;
 
   // Filter students based on active tab & search query & risk filter
-  const displayedStudents = students.filter((s) => {
+  const q = searchQuery.trim().toLowerCase();
+  const displayedStudents = students.filter(({ primary, subjects }) => {
     // Tab filter: "attention" tab only shows HIGH and MEDIUM risk
-    if (activeTab === "attention" && s.riskLevel === "LOW") {
-      return false;
-    }
-
-    // Risk level pill filter
-    if (filterLevel !== "all" && s.riskLevel !== filterLevel) {
-      return false;
+    if (activeTab === "attention") {
+      if (primary.riskLevel === "LOW") return false;
+      if (filterLevel !== "all" && primary.riskLevel !== filterLevel) return false;
     }
 
     // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = s.studentName.toLowerCase().includes(q);
-      const matchEmail = s.email.toLowerCase().includes(q);
-      const matchCode = s.courseCode.toLowerCase().includes(q);
-      if (!matchName && !matchEmail && !matchCode) return false;
-    }
-
-    return true;
+    return !q || primary.studentName.toLowerCase().includes(q) ||
+      primary.email.toLowerCase().includes(q) ||
+      subjects.some(({ courseCode, courseTitle }) =>
+        courseCode.toLowerCase().includes(q) || courseTitle.toLowerCase().includes(q),
+      );
   });
 
   const toggleExpand = (studentId: string) => {
@@ -111,7 +113,10 @@ export default function AnalyticsClient({
   return (
     <div className="max-w-6xl mx-auto page-enter space-y-8">
       <nav aria-label="Student analytics pages" className="flex flex-wrap items-center justify-between gap-3 text-sm">
-        <span>Page {pagination.page} of {pagination.totalPages} · {pagination.total} enrollments. Counts, search and risk order apply to this page.</span>
+        <span>
+          Page {pagination.page} of {pagination.totalPages} · {pagination.total} {pagination.total === 1 ? "student" : "students"}
+          {pagination.totalPages > 1 && " · Counts and filters apply to this page"}
+        </span>
         <div className="flex gap-4">
           <button disabled={isLoading || pagination.page <= 1} onClick={() => setPage(pagination.page - 1)} className="underline disabled:opacity-40">Previous students</button>
           <button disabled={isLoading || pagination.page >= pagination.totalPages} onClick={() => setPage(pagination.page + 1)} className="underline disabled:opacity-40">Next students</button>
@@ -141,11 +146,14 @@ export default function AnalyticsClient({
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <Filter className="h-4 w-4 text-slate-500 dark:text-[#8B92A5]" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Class Scope:</span>
+          <label htmlFor="analytics-course-filter" className="text-sm font-medium text-slate-700 dark:text-slate-200">Class Scope</label>
           <select
             id="analytics-course-filter"
             value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
+            onChange={(e) => {
+              setExpandedStudentId(null);
+              setSelectedCourseId(e.target.value);
+            }}
             className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1D27] px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 transition-shadow"
             style={{
               // @ts-expect-error CSS variable for focus ring
@@ -171,7 +179,7 @@ export default function AnalyticsClient({
               </div>
             </div>
             <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-[#F0F2F8]">{totalAnalyzed}</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-[#8B92A5]">Across selected class scope</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#8B92A5]">{pagination.totalPages > 1 ? "On this page" : "Across selected class scope"}</p>
           </div>
 
           <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-5 shadow-sm">
@@ -248,6 +256,7 @@ export default function AnalyticsClient({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search students"
               placeholder="Search student name..."
               className="w-full bg-transparent text-sm text-slate-900 dark:text-[#F0F2F8] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
@@ -315,24 +324,34 @@ export default function AnalyticsClient({
             <CheckCircle className="h-8 w-8 text-emerald-500" />
           </div>
           <h3 className="text-lg font-semibold text-slate-800 dark:text-[#F0F2F8]">
-            {activeTab === "attention" ? "No students need immediate attention!" : "No students found"}
+            {activeTab === "attention" && !q && filterLevel === "all"
+              ? "No students flagged on this page"
+              : "No matching students"}
           </h3>
           <p className="text-sm text-slate-500 dark:text-[#8B92A5] max-w-sm mt-1">
-            {activeTab === "attention"
-              ? "All enrolled students are performing well and meeting activity/grade expectations."
-              : "Try adjusting your search query or class filter."}
+            {q || (activeTab === "attention" && filterLevel !== "all")
+              ? "Try adjusting the search or risk filter."
+              : "Try selecting a different class."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {displayedStudents.map((student) => {
-            const isExpanded = expandedStudentId === student.id;
-            const summaryReason = student.reasons.join(" • ");
+          {displayedStudents.map(({ primary: student, subjects }) => {
+            const isExpanded = expandedStudentId === student.studentId;
+            const atRisk = student.riskLevel !== "LOW";
+            const visibleSubjects = atRisk ? subjects.filter((subject) => subject.riskLevel !== "LOW") : subjects;
+            const subjectSummary = visibleSubjects.length === 1
+              ? visibleSubjects[0].courseCode
+              : `${visibleSubjects.length} ${atRisk ? "at-risk subjects" : "subjects"}`;
+            const summaryReason = visibleSubjects.length === 1
+              ? student.reasons.join(" • ")
+              : visibleSubjects.map((subject) => subject.courseCode).join(" · ");
+            const detailsId = `student-risk-details-${student.studentId}`;
 
             return (
               <div
-                key={student.id}
-                id={`student-risk-card-${student.id}`}
+                key={student.studentId}
+                id={`student-risk-card-${student.studentId}`}
                 className="rounded-xl border bg-white dark:bg-[#141721] border-slate-200 dark:border-white/10 transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md"
                 style={{
                   borderLeftWidth: "5px",
@@ -345,210 +364,66 @@ export default function AnalyticsClient({
                 }}
               >
                 {/* ── Summary Row ── */}
-                <div
-                  onClick={() => toggleExpand(student.id)}
-                  className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                <button
+                  type="button"
+                  aria-expanded={isExpanded}
+                  aria-controls={isExpanded ? detailsId : undefined}
+                  onClick={() => toggleExpand(student.studentId)}
+                  className="w-full p-5 flex items-center justify-between gap-3 text-left cursor-pointer hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
                 >
-                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                  <span className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                     {/* Avatar */}
                     {student.avatarUrl ? (
                       <img
                         src={student.avatarUrl}
-                        alt={student.studentName}
+                        alt=""
                         className="h-11 w-11 rounded-full object-cover shrink-0 border border-slate-200 dark:border-white/10"
                       />
                     ) : (
-                      <div
+                      <span aria-hidden="true"
                         className="h-11 w-11 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold text-white"
                         style={{ backgroundColor: theme.colors.primary }}
                       >
                         {getInitials(student.studentName)}
-                      </div>
+                      </span>
                     )}
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2 flex-wrap">
+                        <span className="max-w-full text-base font-semibold text-slate-900 dark:text-[#F0F2F8] truncate">
                           {student.studentName}
-                        </h3>
+                        </span>
                         <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10">
-                          {student.courseCode}
+                          {subjectSummary}
                         </span>
                         {getRiskBadge(student.riskLevel)}
-                      </div>
+                      </span>
 
                       {/* One-line summary */}
-                      <p className="text-xs text-slate-600 dark:text-[#8B92A5] mt-1 truncate">
+                      <span className="block text-xs text-slate-600 dark:text-[#8B92A5] mt-1 truncate">
                         {summaryReason}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                    <span className="text-xs font-medium text-slate-500 dark:text-[#8B92A5] hidden md:inline">
-                      {isExpanded ? "Hide Details" : "Click for Details"}
+                      </span>
                     </span>
-                    <button
-                      type="button"
-                      className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  </span>
+
+                  <span className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs font-medium text-slate-500 dark:text-[#8B92A5] hidden md:inline">
+                      {isExpanded ? "Hide Details" : "View Details"}
+                    </span>
+                    <span aria-hidden="true"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-[#8B92A5]"
                     >
                       {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+                    </span>
+                  </span>
+                </button>
 
                 {/* ── Student Detail View (Expanded Panel) ── */}
                 {isExpanded && (
-                  <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] p-6 space-y-6 animate-in">
-                    {/* 1. Flagged Reasons Breakdown */}
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3 flex items-center gap-1.5">
-                        <FileWarning className="h-4 w-4 text-amber-500" />
-                        Identified Risk Indicators & Reasons
-                      </h4>
-                      <ul className="space-y-2">
-                        {student.reasons.map((reason, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-center gap-2 text-sm text-slate-700 dark:text-[#D1D5DB] bg-white dark:bg-[#141721] p-3 rounded-lg border border-slate-200 dark:border-white/10 shadow-2xs"
-                          >
-                            <span
-                              className="h-2 w-2 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  student.riskLevel === "HIGH"
-                                    ? "#EF4444"
-                                    : student.riskLevel === "MEDIUM"
-                                    ? "#F59E0B"
-                                    : "#10B981",
-                              }}
-                            />
-                            <span>{reason}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* 2. Detailed Breakdown Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Missed Assignments Detail */}
-                      <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-red-500" />
-                            Missed / Past Due Work ({student.details.missedAssignments.length})
-                          </h5>
-                        </div>
-                        {student.details.missedAssignments.length === 0 ? (
-                          <p className="text-xs text-slate-400 dark:text-[#8B92A5] italic">No past-due missed assignments.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {student.details.missedAssignments.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center justify-between text-xs p-2 rounded bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30"
-                              >
-                                <span className="font-medium text-slate-800 dark:text-[#F0F2F8] truncate">{item.title}</span>
-                                <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold shrink-0 ml-2">
-                                  Due: {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Past Due"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Grade Performance Detail */}
-                      <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                            <GraduationCap className="h-3.5 w-3.5 text-indigo-500" />
-                            Academic Average & Submissions
-                          </h5>
-                          <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8]">
-                            {student.details.gradeAverage !== null
-                              ? `${Math.round(student.details.gradeAverage)}% Avg`
-                              : "No graded work"}
-                          </span>
-                        </div>
-                        {student.details.gradedSubmissions.length === 0 ? (
-                          <p className="text-xs text-slate-400 dark:text-[#8B92A5] italic">No graded submissions yet.</p>
-                        ) : (
-                          <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                            {student.details.gradedSubmissions.map((sub) => {
-                              const pct = (sub.score / sub.maxPoints) * 100;
-                              return (
-                                <div
-                                  key={sub.id}
-                                  className="flex items-center justify-between text-xs p-2 rounded bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5"
-                                >
-                                  <span className="text-slate-800 dark:text-[#F0F2F8] truncate">{sub.title}</span>
-                                  <span
-                                    className={`font-semibold shrink-0 ml-2 ${
-                                      pct < 65
-                                        ? "text-red-600 dark:text-red-400"
-                                        : pct < 75
-                                        ? "text-amber-600 dark:text-amber-400"
-                                        : "text-emerald-600 dark:text-emerald-400"
-                                    }`}
-                                  >
-                                    {sub.score} / {sub.maxPoints} pts ({Math.round(pct)}%)
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 3. Inactivity & Module Completion Status */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Inactivity status */}
-                      <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
-                        <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-amber-500" />
-                          Activity Recency
-                        </h5>
-                        <p className="text-xs text-slate-600 dark:text-[#8B92A5]">
-                          {student.details.daysInactive !== null ? (
-                            <>
-                              Last active: <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">{student.details.daysInactive} days ago</span> (
-                              {student.details.lastActiveDate
-                                ? new Date(student.details.lastActiveDate).toLocaleDateString()
-                                : "N/A"}
-                              )
-                            </>
-                          ) : (
-                            <span className="text-slate-400 dark:text-[#8B92A5] italic">No activity recorded yet in this course</span>
-                          )}
-                        </p>
-                      </div>
-
-                      {/* Incomplete modules */}
-                      <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
-                        <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5 text-blue-500" />
-                          Incomplete Learning Materials ({student.details.incompleteModules.length})
-                        </h5>
-                        {student.details.incompleteModules.length === 0 ? (
-                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">All course materials completed!</p>
-                        ) : (
-                          <div className="space-y-1">
-                            {student.details.incompleteModules.slice(0, 3).map((mod) => (
-                              <p key={mod.id} className="text-xs text-slate-600 dark:text-[#8B92A5] truncate">
-                                • {mod.title}
-                              </p>
-                            ))}
-                            {student.details.incompleteModules.length > 3 && (
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                                + {student.details.incompleteModules.length - 3} more incomplete items
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  <div id={detailsId} className="border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#181B26] divide-y divide-slate-200 dark:divide-white/10">
+                    {visibleSubjects.map((subject) => (
+                      <SubjectRiskDetails key={subject.courseId} student={subject} />
+                    ))}
                   </div>
                 )}
               </div>
@@ -557,5 +432,167 @@ export default function AnalyticsClient({
         </div>
       )}
     </div>
+  );
+}
+
+function SubjectRiskDetails({ student }: { student: AtRiskStudentItem }) {
+  return (
+    <section className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-[#F0F2F8]">
+          {student.courseCode} · {student.courseTitle}
+        </h4>
+        {getRiskBadge(student.riskLevel)}
+      </div>
+      {/* 1. Flagged Reasons Breakdown */}
+      <div>
+        <h5 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3 flex items-center gap-1.5">
+          <FileWarning className="h-4 w-4 text-amber-500" />
+          Identified Risk Indicators & Reasons
+        </h5>
+        <ul className="space-y-2">
+          {student.reasons.map((reason, idx) => (
+            <li
+              key={idx}
+              className="flex items-center gap-2 text-sm text-slate-700 dark:text-[#D1D5DB] bg-white dark:bg-[#141721] p-3 rounded-lg border border-slate-200 dark:border-white/10 shadow-2xs"
+            >
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{
+                  backgroundColor:
+                    student.riskLevel === "HIGH"
+                      ? "#EF4444"
+                      : student.riskLevel === "MEDIUM"
+                      ? "#F59E0B"
+                      : "#10B981",
+                }}
+              />
+              <span>{reason}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 2. Detailed Breakdown Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Missed Assignments Detail */}
+        <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-red-500" />
+              Missed / Past Due Work ({student.details.missedAssignments.length})
+            </h5>
+          </div>
+          {student.details.missedAssignments.length === 0 ? (
+            <p className="text-xs text-slate-400 dark:text-[#8B92A5] italic">No past-due missed assignments.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {student.details.missedAssignments.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-xs p-2 rounded bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30"
+                >
+                  <span className="font-medium text-slate-800 dark:text-[#F0F2F8] truncate">{item.title}</span>
+                  <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold shrink-0 ml-2">
+                    Due: {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Past Due"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Grade Performance Detail */}
+        <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <GraduationCap className="h-3.5 w-3.5 text-indigo-500" />
+              Academic Average & Submissions
+            </h5>
+            <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8]">
+              {student.details.gradeAverage !== null
+                ? `${Math.round(student.details.gradeAverage)}% Avg`
+                : "No graded work"}
+            </span>
+          </div>
+          {student.details.gradedSubmissions.length === 0 ? (
+            <p className="text-xs text-slate-400 dark:text-[#8B92A5] italic">No graded submissions yet.</p>
+          ) : (
+            <div className="space-y-1.5 max-h-36 overflow-y-auto">
+              {student.details.gradedSubmissions.map((sub) => {
+                const pct = (sub.score / sub.maxPoints) * 100;
+                return (
+                  <div
+                    key={sub.id}
+                    className="flex items-center justify-between text-xs p-2 rounded bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5"
+                  >
+                    <span className="text-slate-800 dark:text-[#F0F2F8] truncate">{sub.title}</span>
+                    <span
+                      className={`font-semibold shrink-0 ml-2 ${
+                        pct < 65
+                          ? "text-red-600 dark:text-red-400"
+                          : pct < 75
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-emerald-600 dark:text-emerald-400"
+                      }`}
+                    >
+                      {sub.score} / {sub.maxPoints} pts ({Math.round(pct)}%)
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Inactivity & Module Completion Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Inactivity status */}
+        <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
+          <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+            Activity Recency
+          </h5>
+          <p className="text-xs text-slate-600 dark:text-[#8B92A5]">
+            {student.details.daysInactive !== null ? (
+              <>
+                Last active: <span className="font-semibold text-slate-800 dark:text-[#F0F2F8]">{student.details.daysInactive} days ago</span> (
+                {student.details.lastActiveDate
+                  ? new Date(student.details.lastActiveDate).toLocaleDateString()
+                  : "N/A"}
+                )
+              </>
+            ) : (
+              <span className="text-slate-400 dark:text-[#8B92A5] italic">No activity recorded yet in this course</span>
+            )}
+          </p>
+        </div>
+
+        {/* Incomplete modules */}
+        <div className="bg-white dark:bg-[#141721] p-4 rounded-xl border border-slate-200 dark:border-white/10 space-y-1.5">
+          <h5 className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5 text-blue-500" />
+            Incomplete Learning Materials ({student.details.incompleteModules.length})
+          </h5>
+          {student.details.incompleteModules.length === 0 ? (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">All course materials completed!</p>
+          ) : (
+            <div className="space-y-1">
+              {student.details.incompleteModules.slice(0, 3).map((mod) => (
+                <p key={mod.id} className="text-xs text-slate-600 dark:text-[#8B92A5] truncate">
+                  • {mod.title}
+                </p>
+              ))}
+              {student.details.incompleteModules.length > 3 && (
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  + {student.details.incompleteModules.length - 3} more incomplete items
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

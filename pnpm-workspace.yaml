@@ -15,6 +15,7 @@ overrides:
   '@vercel/blob>undici': 6.29.1
   '@vercel/cli-config>zod': 4.6.6
   '@prisma/config>deepmerge-ts': 8.0.2
+  '@prisma/config>effect': 3.22.1
   'prisma>mysql2': 3.24.6
   'ajv@8.20.0>fast-uri': 3.1.9
   # Sprint 1: stay within the consuming parents' existing compatible ranges.

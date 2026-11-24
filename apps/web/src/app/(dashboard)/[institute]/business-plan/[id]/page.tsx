@@ -5,6 +5,8 @@ import {
   loadOwnedBusinessPlan,
   toBusinessPlanRecord,
 } from "@/lib/business-plan/access";
+import { canIbeProgramAccessFeature } from "@/lib/ibe-programs/features";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import BusinessPlanEditorClient from "@/components/business-plan/BusinessPlanEditorClient";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,11 @@ export default async function BusinessPlanEditorPage({
     notFound();
   }
 
+  const resolvedProgram = await resolveIbeStudentProgram(session.user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "business-plan")) {
+    redirect("/ibe/students");
+  }
+
   let owned = null;
   try {
     owned = await loadOwnedBusinessPlan(id, session.user.id);
@@ -40,7 +47,7 @@ export default async function BusinessPlanEditorPage({
   const initialRecord = toBusinessPlanRecord(owned);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto py-1 sm:py-4">
       <BusinessPlanEditorClient
         instituteCode={institute}
         initialRecord={initialRecord}

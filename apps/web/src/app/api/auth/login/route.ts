@@ -22,6 +22,19 @@ import { needsClassEnrollment } from '@/lib/student-access';
 
 export const dynamic = "force-dynamic";
 
+const LOGIN_RATE_LIMIT_DISABLED = (() => {
+  const flagEnabled = process.env.DISABLE_LOGIN_RATE_LIMIT === "true";
+  if (!flagEnabled) return false;
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "SECURITY ERROR: DISABLE_LOGIN_RATE_LIMIT is set in production and will be ignored."
+    );
+    return false;
+  }
+  console.warn("Login rate limit DISABLED (dev only)");
+  return true;
+})();
+
 export async function OPTIONS(request: Request) {
   return handleCorsPreflight(request) ?? new NextResponse(null, { status: 204 });
 }
@@ -44,23 +57,26 @@ export async function POST(request: Request) {
   });
 
   try {
-    await timed('rate-limit', () => persistentLimit('login-ip:' + clientIp, RATE_LIMIT_CONFIG.loginIp.maxRequests, RATE_LIMIT_CONFIG.loginIp.windowMs));
     const body = await request.json();
 
-    // 1. Dual Rate Limiting (IP-based and Account-based)
-    const rateLimitResult = await checkDualRateLimit({
-      ip: clientIp,
-      account: typeof body?.email === "string" ? body.email : undefined,
-      ipPolicy: RATE_LIMIT_CONFIG.loginIp,
-      accountPolicy: RATE_LIMIT_CONFIG.loginAccount,
-    });
+    if (!LOGIN_RATE_LIMIT_DISABLED) {
+      await timed('rate-limit', () => persistentLimit('login-ip:' + clientIp, RATE_LIMIT_CONFIG.loginIp.maxRequests, RATE_LIMIT_CONFIG.loginIp.windowMs));
 
-    if (!rateLimitResult.allowed) {
-      const resp = createRateLimitResponse(rateLimitResult);
-      for (const [k, v] of Object.entries(corsHeaders)) {
-        resp.headers.set(k, v);
+      // 1. Dual Rate Limiting (IP-based and Account-based)
+      const rateLimitResult = await checkDualRateLimit({
+        ip: clientIp,
+        account: typeof body?.email === "string" ? body.email : undefined,
+        ipPolicy: RATE_LIMIT_CONFIG.loginIp,
+        accountPolicy: RATE_LIMIT_CONFIG.loginAccount,
+      });
+
+      if (!rateLimitResult.allowed) {
+        const resp = createRateLimitResponse(rateLimitResult);
+        for (const [k, v] of Object.entries(corsHeaders)) {
+          resp.headers.set(k, v);
+        }
+        return resp;
       }
-      return resp;
     }
 
     // 2. Validate input schema
@@ -78,19 +94,38 @@ export async function POST(request: Request) {
     const { password, instituteCode: requestedInstituteCode } = parsed.data;
     const identifier = (parsed.data.identifier ?? parsed.data.email!).trim();
 
-    // 3. User lookup
+    // 3. User lookup (retry once on transient pool/socket error)
     stage = "account-lookup";
-    const matches = await timed('account-lookup', () => db.user.findMany({
-      where: identifier.includes('@') ? { email: { equals: identifier.toLowerCase(), mode: 'insensitive' } } : { studentNumber: identifier.toUpperCase(), role: { equals: 'STUDENT', mode: 'insensitive' } },
-      include: {
-        institute: true,
-      },
-      take: 2,
-    }));
+    const lookupUser = () =>
+      db.user.findMany({
+        where: identifier.includes('@') ? { email: { equals: identifier.toLowerCase(), mode: 'insensitive' } } : { studentNumber: identifier.toUpperCase(), role: { equals: 'STUDENT', mode: 'insensitive' } },
+        include: {
+          institute: true,
+        },
+        take: 2,
+      });
+    const matches = await timed('account-lookup', async () => {
+      try {
+        return await lookupUser();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message.toLowerCase() : '';
+        if (
+          msg.includes('connection timeout') ||
+          msg.includes('connection terminated') ||
+          msg.includes('socket hang up')
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          return await lookupUser();
+        }
+        throw err;
+      }
+    });
     // Legacy rosters may contain duplicate IDs until reconciliation is complete.
     const user = matches.length === 1 ? matches[0] : null;
 
-    await timed('account-limit', () => persistentLimit('login-account:' + (user?.id ?? identifier.toLowerCase()), RATE_LIMIT_CONFIG.loginAccount.maxRequests, RATE_LIMIT_CONFIG.loginAccount.windowMs));
+    if (!LOGIN_RATE_LIMIT_DISABLED) {
+      await timed('account-limit', () => persistentLimit('login-account:' + (user?.id ?? identifier.toLowerCase()), RATE_LIMIT_CONFIG.loginAccount.maxRequests, RATE_LIMIT_CONFIG.loginAccount.windowMs));
+    }
     if (user && user.activationStatus === undefined) {
       console.warn('LOGIN_DATABASE_CLIENT_SCHEMA_STALE');
       return NextResponse.json(

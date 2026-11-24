@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 
+const primaryActionStyle = 'min-h-12 w-full rounded-lg bg-(--action-bg) px-4 py-3 text-sm font-semibold text-(--action-ink) enabled:hover:bg-(--action-hover) disabled:opacity-50';
+
 export default function AdministratorMfaPage() {
   const [enrollment, setEnrollment] = useState<boolean | null>(null);
   const [setup, setSetup] = useState<{ secret: string; qr: string } | null>(null);
@@ -37,37 +39,42 @@ export default function AdministratorMfaPage() {
     try { await fetch('/api/auth/mfa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel' }) }); }
     finally { window.location.replace('/login?force=true'); }
   }
-  return <main className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-5 py-12 dark:bg-slate-950">
-    <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-7 shadow-sm dark:border-slate-800 dark:bg-slate-900" aria-busy={busy}>
-      <p className="mb-2 text-sm font-medium text-orange-600">Administrator security</p>
-      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{enrollment ? 'Set up your authenticator' : 'Verify your authenticator'}</h1>
-      <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">Your password has been checked. Administrator access starts only after this second step.</p>
+  return <main className="flex min-h-[85vh] items-center justify-center bg-(--bg-canvas) px-4 py-8 sm:px-6 sm:py-12">
+    <section className="w-full min-w-0 max-w-lg rounded-2xl border border-(--border-color) bg-(--bg-surface) p-5 text-(--text-primary) sm:p-8" aria-busy={busy}>
+      <h1 className="text-2xl font-semibold tracking-tight">{enrollment === null ? 'Administrator verification' : enrollment ? 'Set up your authenticator' : 'Verify your authenticator'}</h1>
+      {enrollment !== null && <p className="mt-2 text-sm/6 text-(--text-secondary)">Your password has been checked. Administrator access starts only after this second step.</p>}
       {error && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">{error}</p>}
-      {enrollment === null && !error && <p className="mt-5 text-sm">Loading verification…</p>}
-      {enrollment && !setup && !codes && <button disabled={busy} onClick={() => void submit('enroll')} className="mt-6 rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50">Set up authenticator app</button>}
-      {setup && <div className="mt-5 space-y-3">
-        <p className="text-sm">Scan this QR code in your authenticator app, or enter the setup key manually. Keep it private.</p>
+      {enrollment === null && !error && <p role="status" className="mt-2 text-sm/6 text-(--text-secondary)">Loading verification…</p>}
+      {enrollment && !setup && !codes && <div className="mt-6">
+        <button type="button" disabled={busy} onClick={() => void submit('enroll')} className={primaryActionStyle}>{busy ? 'Preparing setup…' : 'Set up authenticator app'}</button>
+      </div>}
+      {setup && <div className="mt-6 space-y-3">
+        <p className="text-sm/6 text-(--text-secondary)">Scan this QR code in your authenticator app, or enter the setup key manually. Keep it private.</p>
         {/* The QR contains only this account's enrollment URI and is generated locally. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={setup.qr} alt="Authenticator enrollment QR code" width={240} height={240} className="rounded-lg" />
-        <p className="break-all rounded-lg bg-slate-100 p-3 font-mono text-sm text-slate-900">{setup.secret}</p>
+        <img src={setup.qr} alt="Authenticator enrollment QR code" width={240} height={240} className="mx-auto h-auto max-w-full rounded-lg bg-white" />
+        <p className="break-all rounded-lg border border-(--border-color) bg-(--bg-canvas) p-3 font-mono text-sm">{setup.secret}</p>
       </div>}
-      {readyToComplete && <button disabled={busy} onClick={() => void submit('complete')} className="mt-6 rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50">Continue secure sign-in</button>}
+      {readyToComplete && <div className="mt-6">
+        <button type="button" disabled={busy} onClick={() => void submit('complete')} className={primaryActionStyle}>Continue secure sign-in</button>
+      </div>}
       {enrollment !== null && (!enrollment || setup) && !codes && !readyToComplete && <form onSubmit={verify} className="mt-6 space-y-4">
         <label className="block text-sm font-medium">{recovery ? 'Recovery code' : 'Six-digit authenticator code'}
-          <input value={code} onChange={event => setCode(event.target.value)} autoComplete="one-time-code" inputMode={recovery ? 'text' : 'numeric'} maxLength={64} required disabled={busy} className="mt-2 block w-full rounded-lg border border-slate-300 bg-transparent px-3 py-3 dark:border-slate-600" />
+          <input value={code} onChange={event => setCode(event.target.value)} autoComplete="one-time-code" inputMode={recovery ? 'text' : 'numeric'} maxLength={64} required disabled={busy} className="mt-2 block w-full rounded-lg border border-slate-400 bg-transparent px-3 py-3 text-base dark:border-slate-500" />
         </label>
-        {!enrollment && <label className="flex gap-2 text-sm"><input type="checkbox" checked={recovery} onChange={event => { setRecovery(event.target.checked); setCode(''); }} disabled={busy} />Use a single-use recovery code</label>}
-        <button disabled={busy} className="rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50">{busy ? 'Verifying…' : 'Verify code'}</button>
+        {!enrollment && <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-4 shrink-0 accent-(--action-bg)" checked={recovery} onChange={event => { setRecovery(event.target.checked); setCode(''); }} disabled={busy} />Use a single-use recovery code</label>}
+        <button type="submit" disabled={busy} className={primaryActionStyle}>{busy ? 'Verifying…' : 'Verify code'}</button>
       </form>}
-      {codes && <div className="mt-5 space-y-4">
+      {codes && <div className="mt-6 space-y-4">
         <h2 className="font-semibold">Save your recovery codes</h2>
-        <p className="text-sm">Each code works once if you lose access to your authenticator. Store these in a password manager or another private place. They will not be displayed again.</p>
-        <pre className="overflow-x-auto rounded-lg bg-slate-100 p-4 text-sm text-slate-900">{codes.join('\n')}</pre>
-        <label className="flex gap-2 text-sm"><input type="checkbox" checked={saved} onChange={event => setSaved(event.target.checked)} disabled={busy} />I saved my recovery codes.</label>
-        <button disabled={!saved || busy} onClick={() => void submit('acknowledge')} className="rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50">Finish secure sign-in</button>
+        <p className="text-sm/6 text-(--text-secondary)">Each code works once if you lose access to your authenticator. Store these in a password manager or another private place. They will not be displayed again.</p>
+        <pre className="overflow-x-auto rounded-lg border border-(--border-color) bg-(--bg-canvas) p-4 text-sm">{codes.join('\n')}</pre>
+        <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-4 shrink-0 accent-(--action-bg)" checked={saved} onChange={event => setSaved(event.target.checked)} disabled={busy} />I saved my recovery codes.</label>
+        <button type="button" disabled={!saved || busy} onClick={() => void submit('acknowledge')} className={primaryActionStyle}>Finish secure sign-in</button>
       </div>}
-      <button type="button" onClick={() => void cancel()} disabled={busy} className="mt-6 inline-block text-sm underline">Return to sign-in</button>
+      <div className="mt-6 flex justify-center border-t border-(--border-color) pt-3">
+        <button type="button" onClick={() => void cancel()} disabled={busy} className="min-h-11 rounded-md px-3 text-sm font-medium text-(--text-secondary) underline underline-offset-4 enabled:hover:text-(--text-primary) disabled:opacity-50">Return to sign-in</button>
+      </div>
     </section>
   </main>;
 }

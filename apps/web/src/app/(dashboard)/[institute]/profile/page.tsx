@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import { resolveIteStudentProgram } from "@/lib/ite-programs/registration";
+import { resolveIbeStudentProgram } from "@/lib/ibe-programs/registration";
 import ProfileEditClient from "./client";
 
 export const dynamic = "force-dynamic";
@@ -74,14 +75,22 @@ export default async function ProfilePage({ params }: PageProps) {
   const isIteStudent =
     institute.toLowerCase() === "ite" &&
     user.role.toUpperCase() === "STUDENT";
-  const resolvedIteProgram = isIteStudent
-    ? await resolveIteStudentProgram(user.id)
-    : null;
+  const isIbeStudent =
+    institute.toLowerCase() === "ibe" &&
+    user.role.toUpperCase() === "STUDENT";
+
+  const [resolvedIteProgram, resolvedIbeProgram] = await Promise.all([
+    isIteStudent ? resolveIteStudentProgram(user.id) : Promise.resolve(null),
+    isIbeStudent ? resolveIbeStudentProgram(user.id) : Promise.resolve(null),
+  ]);
 
   const { preferences: _preferences, ...publicUser } = user;
   const serializedUser = {
     ...publicUser,
-    department: resolvedIteProgram?.programCode ?? user.department,
+    department:
+      resolvedIteProgram?.programCode ??
+      resolvedIbeProgram?.programCode ??
+      user.department,
     bannerImageUrl: profileBanner(user.preferences),
     createdAt: user.createdAt.toISOString(),
     gamificationProfile: user.gamificationProfile
@@ -105,6 +114,14 @@ export default async function ProfilePage({ params }: PageProps) {
           ? {
               code: resolvedIteProgram.programCode,
               name: resolvedIteProgram.programName,
+            }
+          : null
+      }
+      lockedIbeProgram={
+        resolvedIbeProgram
+          ? {
+              code: resolvedIbeProgram.programCode,
+              name: resolvedIbeProgram.programName,
             }
           : null
       }

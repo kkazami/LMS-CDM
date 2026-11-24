@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { requirePracticumPageActor } from "@/lib/practicum/guard";
+import { canDeletePlacement } from "@/lib/practicum/rules";
 import { getPlacementDTO, getPlacementSubmissions } from "@/lib/practicum/service";
 import PlacementDetailClient from "@/components/practicum/PlacementDetailClient";
 
@@ -20,6 +21,7 @@ export default async function PlacementDetailPage({ params }: PlacementPageProps
   if (!placement || (actor.role !== "ADMIN" && placement.supervisorId !== actor.userId)) notFound();
 
   const submissions = await getPlacementSubmissions(placement.id);
+  const canDelete = canDeletePlacement({ id: actor.userId, role: actor.role, isIte: true }, placement);
 
   return (
     <PlacementDetailClient
@@ -27,6 +29,7 @@ export default async function PlacementDetailPage({ params }: PlacementPageProps
       placement={placement}
       submissions={submissions}
       primaryColor={theme.colors.primary}
+      canDelete={canDelete}
     />
   );
 }

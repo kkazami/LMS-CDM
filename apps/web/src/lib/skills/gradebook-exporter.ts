@@ -16,6 +16,7 @@ import { db } from "@/lib/db";
 import { readPeriodConfiguration } from '@/lib/grading/period-service';
 import { calculatePeriodGrades, resolveItemPeriod } from '@/lib/grading/periods';
 import { percentToGradePoint, formatGradePoint } from '@/lib/grading/ph-scale';
+import { recordedScoreInPoints } from '@/lib/grading/score-units';
 
 export interface GradebookExportResult {
   csvContent: string;
@@ -41,7 +42,7 @@ export async function exportGradebookSkill(courseId: string, request?: Request):
     }),
     db.syllabusItem.findMany({
       where: { courseId, type: { not: 'MATERIAL' }, maxPoints: { gt: 0 } },
-      select: { id: true, title: true, maxPoints: true, type: true, orderIndex: true },
+      select: { id: true, title: true, maxPoints: true, type: true, orderIndex: true, form: { select: { id: true } } },
       orderBy: { orderIndex: "asc" },
     }),
     db.studentSubmission.findMany({
@@ -56,8 +57,10 @@ export async function exportGradebookSkill(courseId: string, request?: Request):
 
   // Build grade lookup map
   const gradeMap = new Map<string, number | null>();
+  const itemsById = new Map(syllabusItems.map(item => [item.id, item]));
   for (const sub of submissions) {
-    gradeMap.set(`${sub.studentId}::${sub.syllabusItemId}`, sub.grade);
+    const item = itemsById.get(sub.syllabusItemId);
+    gradeMap.set(`${sub.studentId}::${sub.syllabusItemId}`, recordedScoreInPoints(sub.grade, sub.status, Boolean(item?.form), item?.maxPoints ?? null));
   }
 
   function csvEscape(val: string): string {

@@ -38,6 +38,7 @@ import {
   LECTURE_MIME_BY_EXTENSION,
   LECTURE_SAVE_INTERVAL_MS,
   LECTURE_SOURCE_LABELS,
+  LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
   accumulateWatchedStep,
   buildLectureBlobPathname,
   filterAndSortFacultyProgressRows,
@@ -523,9 +524,7 @@ export function LectureUploadDialog({
 
     // Uploaded video source type
     if (!uploadsConfigured) {
-      setInlineError(
-        "File uploads are not configured (missing BLOB_READ_WRITE_TOKEN)."
-      );
+      setInlineError(LECTURE_UPLOADS_UNAVAILABLE_MESSAGE);
       return;
     }
 
@@ -550,18 +549,104 @@ export function LectureUploadDialog({
       const contentType = LECTURE_MIME_BY_EXTENSION[ext] || file.type;
       const pathname = buildLectureBlobPathname(userId, file.name);
 
-      const blob = await upload(pathname, file, {
-        access: "public",
-        handleUploadUrl: "/api/lecture-videos/upload",
-        multipart: true,
-        contentType,
-        abortSignal: controller.signal,
-        onUploadProgress: ({ percentage }) => {
-          setUploadPercent(Math.round(percentage));
-        },
-      });
+      let uploadedUrl: string;
+      try {
+        const blob = await upload(pathname, file, {
+          access: "public",
+          handleUploadUrl: "/api/lecture-videos/upload",
+          multipart: true,
+          contentType,
+          abortSignal: controller.signal,
+          onUploadProgress: ({ percentage }) => {
+            setUploadPercent(Math.round(percentage));
+          },
+        });
+        uploadedUrl = blob.url;
+      } catch (blobErr) {
+        if (
+          controller.signal.aborted ||
+          (blobErr as { name?: string })?.name === "AbortError"
+        ) {
+          throw blobErr;
+        }
+        const LOCAL_UPLOAD_CHUNK_BYTES = 4 * 1024 * 1024; // 4 MB chunks (stays well below Next.js 10 MB middleware body limit)
+        const totalSize = file.size;
+        let lastUrl = "";
 
-      uncommittedBlobUrlRef.current = blob.url;
+        for (
+          let offset = 0;
+          offset < totalSize;
+          offset += LOCAL_UPLOAD_CHUNK_BYTES
+        ) {
+          if (controller.signal.aborted) {
+            const abortError = new Error("Upload cancelled.");
+            abortError.name = "AbortError";
+            throw abortError;
+          }
+          const chunkEnd = Math.min(
+            offset + LOCAL_UPLOAD_CHUNK_BYTES,
+            totalSize
+          );
+          const chunkBlob = file.slice(offset, chunkEnd);
+
+          lastUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open(
+              "PUT",
+              `/api/lecture-videos/upload?pathname=${encodeURIComponent(pathname)}&offset=${offset}&totalSize=${totalSize}`
+            );
+            xhr.setRequestHeader("Content-Type", contentType);
+            const onAbort = () => {
+              xhr.abort();
+              const abortError = new Error("Upload cancelled.");
+              abortError.name = "AbortError";
+              reject(abortError);
+            };
+            controller.signal.addEventListener("abort", onAbort, {
+              once: true,
+            });
+            xhr.upload.onprogress = (ev) => {
+              if (ev.lengthComputable && totalSize > 0) {
+                const overallPct = Math.min(
+                  100,
+                  Math.round(((offset + ev.loaded) / totalSize) * 100)
+                );
+                setUploadPercent(overallPct);
+              }
+            };
+            xhr.onload = () => {
+              controller.signal.removeEventListener("abort", onAbort);
+              let parsed: { url?: string; message?: string } = {};
+              try {
+                parsed = JSON.parse(xhr.responseText || "{}");
+              } catch {
+                // ignore
+              }
+              if (xhr.status >= 200 && xhr.status < 300 && parsed.url) {
+                setUploadPercent(
+                  Math.min(100, Math.round((chunkEnd / totalSize) * 100))
+                );
+                resolve(parsed.url);
+              } else {
+                reject(
+                  new Error(
+                    parsed.message || "Failed to upload lecture video file."
+                  )
+                );
+              }
+            };
+            xhr.onerror = () => {
+              controller.signal.removeEventListener("abort", onAbort);
+              reject(new Error("Network error while uploading lecture video."));
+            };
+            xhr.send(chunkBlob);
+          });
+        }
+
+        uploadedUrl = lastUrl;
+      }
+
+      uncommittedBlobUrlRef.current = uploadedUrl;
 
       const res = await fetch("/api/lecture-videos", {
         method: "POST",
@@ -571,7 +656,7 @@ export function LectureUploadDialog({
           description: meta.description,
           courseId: meta.courseId,
           sourceType: "UPLOAD",
-          fileUrl: blob.url,
+          fileUrl: uploadedUrl,
           fileName: file.name,
           durationSeconds: probedDuration,
         }),
@@ -583,7 +668,7 @@ export function LectureUploadDialog({
         message?: string;
       };
       if (!res.ok || !data.lecture) {
-        cleanupUncommittedBlob(blob.url);
+        cleanupUncommittedBlob(uploadedUrl);
         throw new Error(data.message || "Failed to save lecture.");
       }
 
@@ -936,10 +1021,19 @@ export function LectureUploadDialog({
                   />
                 </div>
                 {sourceType === "DRIVE" ? (
-                  <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 flex items-start gap-1.5 pt-0.5">
-                    <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span>{DRIVE_SHARING_NOTE}</span>
-                  </p>
+                  <div className="space-y-1.5 pt-0.5">
+                    <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+                      <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span>{DRIVE_SHARING_NOTE}</span>
+                    </p>
+                    <p
+                      role="note"
+                      className="text-[11px] font-medium text-amber-800 dark:text-amber-300 flex items-start gap-1.5"
+                    >
+                      <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span>{DRIVE_NOT_TRACKED_NOTE}</span>
+                    </p>
+                  </div>
                 ) : (
                   <p className="text-[11px] text-muted-theme">
                     Paste a direct https:// YouTube video link (watch, youtu.be, embed, or shorts).
@@ -1463,6 +1557,15 @@ export function LectureVideoPlayerModal({
             <span className="font-bold text-primary-theme shrink-0">
               {liveSummary?.percentWatched ?? 0}% watched
             </span>
+          </div>
+        )}
+        {!isTracked && (
+          <div
+            role="note"
+            className="flex items-center gap-1.5 pt-2 border-t border-theme text-xs font-medium text-amber-800 dark:text-amber-300"
+          >
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>{DRIVE_NOT_TRACKED_NOTE}</span>
           </div>
         )}
       </div>
@@ -2063,7 +2166,7 @@ export default function LectureVideosClient({
               <span>Institute of Teacher Education • Lecture Videos</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Recorded Lecture Videos
+              Lecture Videos
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
               {isFacultyOrAdmin

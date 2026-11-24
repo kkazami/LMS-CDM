@@ -23,7 +23,7 @@ import {
   isLevelUnlocked,
 } from "@/features/interactive-activities/codelab/problems/types";
 import { getTrackLevels } from "@/features/interactive-activities/codelab/problems";
-import { TypingBanner } from "@/components/motion/TypingBanner";
+import { CodeLabMotionToggle, CodeLabTitle } from "@/features/interactive-activities/codelab/components/CodeLabMotionControls";
 import CodeLabBackdrop from "@/features/interactive-activities/codelab/components/CodeLabBackdrop";
 import CodeLabAlertModal, {
   type CodeLabAlertItem,
@@ -297,14 +297,14 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
   }));
 
   return (
-    <div className="relative isolate">
+    <div className="relative isolate" data-codelab-motion-surface>
       <CodeLabBackdrop />
       <div className="space-y-8 pb-12 page-enter max-w-7xl mx-auto">
         {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}
         <CodeLabAlertModal alerts={formattedAlerts} institute={institute} />
 
         {/* ─── 1. Top Breadcrumb & Stats ─── */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <Link
             href={`/${institute}/activities/codelab`}
             className="group inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] hover:bg-slate-50 dark:hover:bg-[#181B26] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs transition-all cursor-pointer active:scale-95"
@@ -313,9 +313,12 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
             <span>All Tracks</span>
           </Link>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs">
-            <Trophy className="w-4 h-4 text-[#F97316]" />
-            <span>{highestPassed} of 30 Completed</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-[#F0F2F8] bg-white dark:bg-[#141721] px-4 py-2.5 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <Trophy className="w-4 h-4 text-[#F97316]" />
+              <span>{highestPassed} of 30 Completed</span>
+            </div>
+            <CodeLabMotionToggle />
           </div>
         </div>
 
@@ -335,12 +338,7 @@ export default async function CodeLabTrackDetailPage({ params }: TrackDetailPage
               <span>{langLabel} Track</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]">
-              <TypingBanner
-                text={`${langLabel} Curriculum — 30 Levels`}
-                speed={35}
-                cursorColor={langTheme.caretColor}
-                className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8]"
-              />
+              <CodeLabTitle text={`${langLabel} Curriculum — 30 Levels`} cursorColor={langTheme.caretColor} />
             </h1>
             <p className="text-slate-600 dark:text-[#8B92A5] text-xs sm:text-sm font-normal leading-relaxed">
               Pass each level with score ≥ 60% to unlock the next level in sequence. Practice real-world programming challenges with automated validation.

@@ -52,8 +52,8 @@ export default async function RootLayout({
 }) {
   await headers(); // Nonces require a fresh server render for every document.
   return (
-    <html lang="en" className={manrope.variable} data-scroll-behavior="smooth">
-      <body className="antialiased selection:bg-orange-500 selection:text-white">
+    <html lang="en" className={manrope.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
+      <body className="antialiased selection:bg-orange-500 selection:text-white" suppressHydrationWarning>
         <OfflineBanner />
         <InAppBrowserPrompt />
         <ServiceWorkerRegister />

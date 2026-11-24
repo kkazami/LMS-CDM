@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { requireMaterialAttachment } from '@/lib/material-access';
 import { readAttachment } from '@/lib/attachment-content';
+import { materialPdfText } from '@/lib/material-pdf';
 import { AccessError, accountErrorResponse, assertMutationOrigin } from '@/lib/super-user-v1/actor';
 
 const generationInput = z.object({
@@ -1417,7 +1418,6 @@ export async function POST(req: Request) {
 
     // ── Preview mode: parse the file and return the cards for editing ──
     const bytes = await readAttachment(attachment.url);
-    const response = new Response(new Uint8Array(bytes));
 
     const fileNameLower = attachment.fileName.toLowerCase();
     let generatedCards: RawCard[] = [];
@@ -1425,95 +1425,40 @@ export async function POST(req: Request) {
     try {
       if (fileNameLower.endsWith(".pptx")) {
         // ── PPTX: Slide-level XML parsing with optional slide filter ──
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
         const allowedSlides =
           Array.isArray(selectedSlides) && selectedSlides.length > 0
             ? new Set(selectedSlides.map(Number))
             : undefined;
-        generatedCards = parsePptxSlides(buffer, allowedSlides);
+        generatedCards = parsePptxSlides(bytes, allowedSlides);
       } else if (fileNameLower.endsWith(".pdf")) {
-        // ── PDF: Rule-based NLP text extraction with optional page filter ──
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-
-        // Determine which pages to include:
-        // 1. selectedPages (Vaia-style individual page picks) takes priority
-        // 2. pageFrom/pageTo (legacy range) as fallback
-        // 3. All pages if neither is provided
-        const allowedPages: Set<number> | null =
-          Array.isArray(selectedPages) && selectedPages.length > 0
-            ? new Set(selectedPages.map(Number))
-            : null;
-
-        const fromPage = !allowedPages && typeof pageFrom === "number" && pageFrom >= 1 ? pageFrom : 1;
-        const toPage = !allowedPages && typeof pageTo === "number" && pageTo >= fromPage ? pageTo : Infinity;
-        const isFiltered = allowedPages !== null || fromPage > 1 || toPage < Infinity;
-
-        if (isFiltered) {
-          // Collect text only from allowed pages
-          const pageTexts: string[] = [];
-          await pdfParse(buffer, {
-            pagerender: (pageData: { pageIndex: number; getTextContent: () => Promise<{ items: { str: string }[] }> }) => {
-              const pageNum = pageData.pageIndex + 1; // pageIndex is 0-based
-
-              // Check if this page is in the allowed set
-              if (allowedPages) {
-                if (!allowedPages.has(pageNum)) return Promise.resolve("");
-              } else {
-                if (pageNum < fromPage || pageNum > toPage) return Promise.resolve("");
-              }
-
-              return pageData.getTextContent().then(
-                (content: any) => {
-                  let lastY: number | undefined;
-                  let text = "";
-                  for (const item of content.items) {
-                    if (lastY === item.transform[5] || lastY === undefined) {
-                      text += item.str;
-                    } else {
-                      text += "\n" + item.str;
-                    }
-                    lastY = item.transform[5];
-                  }
-                  pageTexts.push(text);
-                  return text;
-                }
-              );
-            },
-          });
-          generatedCards = extractFlashcardsFromText(pageTexts.join("\n"));
-        } else {
-          // No filter — original fast path
-          const pdfData = await pdfParse(buffer);
-          generatedCards = extractFlashcardsFromText(pdfData.text);
+        const pages = selectedPages?.length ? new Set(selectedPages) : null;
+        const firstPage = pageFrom ?? 1;
+        const lastPage = pageTo !== undefined && pageTo >= firstPage ? pageTo : Infinity;
+        const text = await materialPdfText(bytes, page => pages ? pages.has(page) : page >= firstPage && page <= lastPage);
+        if (!text.trim()) {
+          return NextResponse.json({ message: 'No selectable text was found. Try other pages or a PDF with selectable text.' }, { status: 422 });
         }
+        generatedCards = extractFlashcardsFromText(text);
       } else if (
         fileNameLower.endsWith(".txt") ||
         fileNameLower.endsWith(".csv")
       ) {
-        const rawText = await response.text();
+        const rawText = new TextDecoder().decode(bytes);
         generatedCards = extractFlashcardsFromText(rawText);
       } else if (fileNameLower.endsWith(".docx")) {
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const officeparser = require("officeparser");
-        // Typed options object — avoids `as any` per strict-typing rule
-        interface OfficeParserOptions { fileType: string; }
-        const officeOptions: OfficeParserOptions = { fileType: "docx" };
-        const ast = await officeparser.parseOffice(buffer, officeOptions);
+        const { parseOffice } = require('officeparser') as typeof import('officeparser');
+        const ast = await parseOffice(bytes, { fileType: 'docx' });
         generatedCards = extractFlashcardsFromText(ast.toText());
       } else {
         return NextResponse.json(
           {
             message:
-              "Unsupported file type. Only .pdf, .pptx, .docx, and .txt files can be converted to flashcards.",
+              "Only PDF, PowerPoint (.pptx), Word (.docx), TXT, and CSV files can be converted to flashcards.",
           },
           { status: 400 }
         );
       }
-    } catch (e: unknown) {
+    } catch {
       return NextResponse.json({ message: 'Failed to parse file content.' }, { status: 400 });
     }
 
@@ -1536,5 +1481,8 @@ export async function POST(req: Request) {
       fileName: attachment.fileName,
       cardCount: generatedCards.length,
     });
-  } catch (error) { return accountErrorResponse(error); }
+  } catch (error) {
+    if (error instanceof AccessError || error instanceof SyntaxError) return accountErrorResponse(error);
+    return NextResponse.json({ message: 'Flashcards could not be processed right now. Please try again.' }, { status: 503 });
+  }
 }

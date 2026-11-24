@@ -207,7 +207,7 @@ export default async function CodeLabTrackBrowserPage({
   }));
 
   return (
-    <div className="relative isolate" data-codelab-track-browser>
+    <div className="relative isolate" data-codelab-motion-surface>
       <CodeLabBackdrop />
       <div className="space-y-8 page-enter max-w-7xl mx-auto">
         {/* ─── 0. Academic Support & Invalidation Alert Modal ─── */}

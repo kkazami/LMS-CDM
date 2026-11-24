@@ -95,22 +95,26 @@ test("isLearningHubEligible strictly permits only active IBE students", () => {
 });
 
 test("catalog includes all official providers from external academy", () => {
-  assert.equal(LEARNING_PROVIDERS.length, 6);
+  assert.equal(LEARNING_PROVIDERS.length, 7);
+  assert.equal(LEARNING_PROVIDERS[0]?.id, "TESDA_ONLINE_PROGRAM");
+  assert.equal(EXTERNAL_COURSE_CATALOG[0]?.providerId, "TESDA_ONLINE_PROGRAM");
 
   const expectedProviders = [
-    ["HP_LIFE", "HP LIFE", "https://www.life-global.org/"],
-    ["SAYLOR_UNIVERSITY", "Saylor University", "https://learn.saylor.org/"],
-    ["HUBSPOT_ACADEMY", "HubSpot Academy", "https://academy.hubspot.com/"],
-    ["OPENLEARN", "OpenLearn", "https://www.open.edu/openlearn/"],
-    ["SANTANDER_OPEN_ACADEMY", "Santander Open Academy", "https://www.santanderopenacademy.com/"],
-    ["ALISON", "Alison", "https://alison.com/"],
+    ["HP_LIFE", "HP LIFE", "https://www.life-global.org/", "https://www.life-global.org/allcourses"],
+    ["SAYLOR_UNIVERSITY", "Saylor University", "https://learn.saylor.org/", "https://learn.saylor.org/course/index.php"],
+    ["HUBSPOT_ACADEMY", "HubSpot Academy", "https://academy.hubspot.com/", "https://academy.hubspot.com/courses"],
+    ["OPENLEARN", "OpenLearn", "https://www.open.edu/openlearn/", "https://www.open.edu/openlearn/money-business/free-courses"],
+    ["SANTANDER_OPEN_ACADEMY", "Santander Open Academy", "https://www.santanderopenacademy.com/", "https://www.santanderopenacademy.com/en/courses.html"],
+    ["ALISON", "Alison", "https://alison.com/", "https://alison.com/courses/business"],
+    ["TESDA_ONLINE_PROGRAM", "TESDA Online Program", "https://e-tesda.gov.ph/", "https://e-tesda.gov.ph/course/"],
   ] as const;
 
-  for (const [id, name, homepageUrl] of expectedProviders) {
+  for (const [id, name, homepageUrl, catalogUrl] of expectedProviders) {
     const provider = getProviderById(id);
     assert.ok(provider, `Missing provider ${id}`);
     assert.equal(provider.name, name);
     assert.equal(provider.homepageUrl, homepageUrl);
+    assert.equal(provider.catalogUrl, catalogUrl);
     const urlCheck = validateSafeExternalUrl(provider.homepageUrl, { requireHttps: true });
     assert.equal(urlCheck.ok, true);
     const catalogCheck = validateSafeExternalUrl(provider.catalogUrl, { requireHttps: true });
@@ -164,10 +168,39 @@ test("catalog includes all initial researched course entries and covers all 12 I
     assert.ok(count >= 1, `Subject category "${subject}" has no courses`);
   }
 
-  // Verify all 6 providers are represented in the catalog
+  // Verify all 7 providers are represented in the catalog
   for (const provider of LEARNING_PROVIDERS) {
     const providerCourses = EXTERNAL_COURSE_CATALOG.filter((c) => c.providerId === provider.id);
     assert.ok(providerCourses.length >= 1, `Provider "${provider.name}" has no courses`);
+  }
+
+  // Verify TESDA Online Program covers all 12 IBE subjects with verified e-tesda.gov.ph URLs and qualification details
+  const tesdaCourses = EXTERNAL_COURSE_CATALOG.filter(
+    (c) => c.providerId === "TESDA_ONLINE_PROGRAM"
+  );
+  assert.ok(tesdaCourses.length >= 12);
+
+  for (const subject of IBE_SUBJECT_CATEGORIES) {
+    const subjectTesdaCourses = filterAndSortCatalog({
+      providerId: "TESDA_ONLINE_PROGRAM",
+      subject,
+    });
+    assert.ok(
+      subjectTesdaCourses.length >= 1,
+      `TESDA Online Program has no courses mapped to IBE subject "${subject}"`
+    );
+  }
+
+  for (const course of tesdaCourses) {
+    assert.equal(course.providerName, "TESDA Online Program");
+    assert.ok(
+      course.officialUrl.startsWith("https://e-tesda.gov.ph/course/"),
+      `Unexpected TESDA officialUrl on ${course.id}: ${course.officialUrl}`
+    );
+    assert.equal(course.fallbackUrl, "https://e-tesda.gov.ph/course/");
+    assert.ok(course.availabilityStatus && course.availabilityStatus.length > 0);
+    assert.ok(course.qualificationLevel && course.qualificationLevel.length > 0);
+    assert.ok(course.certificateConditionLabel.includes("Certificate of Completion"));
   }
 });
 

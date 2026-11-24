@@ -30,7 +30,8 @@ export async function mobileNavigationBrowserChecks({ pageFor, base, check, outp
           for (const label of ['Archived Classes', 'Organizational Chart', 'Student Analytics', 'Manage Leaderboard', 'CodeLab Analytics']) assert.equal(await sheet.getByRole('link', { name: new RegExp('^' + label) }).count(), 1, label);
         }
         if (role === 'admin') {
-          for (const label of ['Faculty & Program Heads', 'Backup & Recovery', 'Security Tools', 'Help']) assert.equal(await sheet.getByRole('link', { name: new RegExp('^' + label) }).count(), 1, label);
+          for (const label of ['Faculty & Program Heads', 'Database Management', 'Security Tools', 'Support Tickets']) assert.equal(await sheet.getByRole('link', { name: new RegExp('^' + label) }).count(), 1, label);
+          assert.equal(await sheet.getByRole('link', { name: /^(Settings|Help|Ohmward)\b/ }).count(), 0);
         }
         await page.keyboard.press('Shift+Tab');
         assert.ok(await sheet.getByRole('button', { name: 'Sign Out / Switch Account' }).evaluate(element => document.activeElement === element), 'Focus stays within More');

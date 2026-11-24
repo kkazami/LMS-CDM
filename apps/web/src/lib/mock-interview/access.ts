@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "../api-auth";
 import { isMockInterviewEligible, MOCK_INTERVIEW_INSTITUTE_CODE } from "./eligibility";
-
+import { canIbeProgramAccessFeature } from "../ibe-programs/features";
+import { resolveIbeStudentProgram } from "../ibe-programs/registration";
 export { isMockInterviewEligible, MOCK_INTERVIEW_INSTITUTE_CODE };
 
 export type MockInterviewStudentAccess =
@@ -19,6 +20,14 @@ export async function requireMockInterviewStudent(request?: Request): Promise<Mo
       ok: false,
       status: 403,
       message: "The Mock Interview Feature is available to authenticated IBE students only.",
+    };
+  }
+  const resolvedProgram = await resolveIbeStudentProgram(user.id);
+  if (!canIbeProgramAccessFeature(resolvedProgram?.programCode, "mock-interview")) {
+    return {
+      ok: false,
+      status: 403,
+      message: "The Mock Interview Feature is restricted to BSBA HRM students.",
     };
   }
   return {

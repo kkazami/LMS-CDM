@@ -94,11 +94,11 @@ export interface IteSidebarProgramTool {
 
 /**
  * Authoritative ITE per-program student feature configuration.
- * - "Lesson Plan Models": all four ITE student programs (coming-soon)
- * - "Nursery Songs & YouTube Categories": BECEd only (coming-soon)
- * - "MATATAG Curriculum Guide": BEEd only (coming-soon)
- * - "Interactive Educational Charts": BSEd SCIENCE only (coming-soon)
+ * - "Nursery Song & Educational Media Library": BECEd only (available, links to /ite/nursery-library)
+ * - "MATATAG Curriculum Reference Hub": BEEd only (available, links to /ite/matatag)
+ * - "Interactive Visual Learning Kit": BSEd SCIENCE only (available, links to /ite/visual-kit)
  * - "ICT Lab": BTLEd ICT only (available, links to /ite/ict-lab)
+ * - "Lesson Plan Builder": all four ITE student programs (available, links to /ite/lesson-plans)
  */
 export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   {
@@ -111,27 +111,30 @@ export const ITE_PROGRAM_FEATURES: readonly IteProgramFeature[] = [
   },
   {
     id: "nursery-songs-youtube-categories",
-    title: "Nursery Songs & YouTube Categories",
+    title: "Nursery Song & Educational Media Library",
     description:
       "Curated early childhood songs, action rhymes, and classroom video categories for young learners.",
+    href: "/ite/nursery-library",
     programs: ["BECEd"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "matatag-curriculum-guide",
-    title: "MATATAG Curriculum Guide",
+    title: "MATATAG Curriculum Reference Hub",
     description:
       "Elementary generalist learning competencies, standards, and teaching references under the MATATAG curriculum.",
+    href: "/ite/matatag",
     programs: ["BEEd"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "interactive-educational-charts",
-    title: "Interactive Educational Charts",
+    title: "Interactive Visual Learning Kit",
     description:
-      "Visual science reference charts, periodic tables, and interactive anatomical and physical diagrams.",
+      "Interactive 2D anatomical models, biological systems, and physical processes for BSEd Science pre-service educators.",
+    href: "/ite/visual-kit",
     programs: ["BSEd SCIENCE"],
-    status: "coming-soon",
+    status: "available",
   },
   {
     id: "lesson-plan-builder",

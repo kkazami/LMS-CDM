@@ -1,6 +1,7 @@
 import { requireMaterialAttachment } from '@/lib/material-access';
 import { readAttachment } from '@/lib/attachment-content';
-import { accountErrorResponse } from '@/lib/super-user-v1/actor';
+import { withMaterialPdf } from '@/lib/material-pdf';
+import { AccessError, accountErrorResponse } from '@/lib/super-user-v1/actor';
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from "next/server";
 import { requireWorkspaceSession } from "../../workspace/_shared";
@@ -74,18 +75,7 @@ export async function GET(request: Request) {
     if (fileNameLower.endsWith(".pdf")) {
       // ── PDF: get total page count from metadata ──
       const buffer = await readAttachment(attachment.url);
-      const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-
-      // Only parse metadata (no text render) to get page count quickly
-      let totalPages = 0;
-      await pdfParse(buffer, {
-        pagerender: (_pageData: unknown) => {
-          // Count pages without rendering text
-          return Promise.resolve("");
-        },
-      }).then((data: { numpages: number }) => {
-        totalPages = data.numpages;
-      });
+      const totalPages = await withMaterialPdf(buffer, pdf => pdf.numPages);
 
       return NextResponse.json({
         fileType: "pdf",
@@ -102,5 +92,8 @@ export async function GET(request: Request) {
       totalPages: null,
       slideTitles: null,
     });
-  } catch (error) { return accountErrorResponse(error); }
+  } catch (error) {
+    if (error instanceof AccessError) return accountErrorResponse(error);
+    return NextResponse.json({ message: 'File details could not be read. Try again or open the original.' }, { status: 503 });
+  }
 }

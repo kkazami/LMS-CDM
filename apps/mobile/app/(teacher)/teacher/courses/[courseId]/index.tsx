@@ -817,7 +817,47 @@ export default function TeacherCourseDetailScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity accessibilityRole="tab" accessibilityState={{ selected: activeTab === 'ATTENDANCE' }} accessibilityLabel="Attendance tab" style={[styles.tabBtn, { padding: 12, minHeight: 48 }, activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 }]} onPress={() => setActiveTab('ATTENDANCE')}><UserCheck size={16} color={theme.colors.text} /><Text style={{ color: theme.colors.text, fontSize: 13 }}>Attendance</Text></TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === 'ATTENDANCE' }}
+            accessibilityLabel="Attendance tab"
+            style={[
+              styles.tabBtn,
+              isIte
+                ? { paddingVertical: s(8), paddingHorizontal: s(12), minHeight: isIcsV2 ? 48 : s(36) }
+                : { padding: 12, minHeight: 48 },
+              activeTab === 'ATTENDANCE' && { borderBottomColor: theme.colors.primary, borderBottomWidth: 3 },
+            ]}
+            onPress={() => setActiveTab('ATTENDANCE')}
+          >
+            <UserCheck
+              size={isIte ? s(14) : 16}
+              color={
+                isIte
+                  ? activeTab === 'ATTENDANCE'
+                    ? theme.colors.primary
+                    : theme.colors.textSecondary
+                  : theme.colors.text
+              }
+            />
+            <Text
+              style={
+                isIte
+                  ? [
+                      styles.tabLabel,
+                      {
+                        fontSize: font(11.5),
+                        color: activeTab === 'ATTENDANCE' ? theme.colors.primary : theme.colors.textSecondary,
+                        fontWeight: activeTab === 'ATTENDANCE' ? '700' : '500',
+                      },
+                    ]
+                  : { color: theme.colors.text, fontSize: 13 }
+              }
+              maxFontSizeMultiplier={isIte ? maxFontSizeMultiplier : undefined}
+            >
+              Attendance
+            </Text>
+          </TouchableOpacity>
           {isIte && (
             <TouchableOpacity
               accessibilityRole="tab"

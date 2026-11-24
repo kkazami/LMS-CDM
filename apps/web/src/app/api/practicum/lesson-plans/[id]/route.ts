@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requirePracticumActor } from "@/lib/practicum/guard";
 import { HttpError, errorResponse } from "@/lib/practicum/http";
-import { canDeleteSubmission, type SubmissionStatus } from "@/lib/practicum/rules";
+import {
+  canDeleteSubmission,
+  shouldDeleteStoredSubmissionFile,
+  type SubmissionStatus,
+} from "@/lib/practicum/rules";
 import { requirePlacementAccess } from "@/lib/practicum/service";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +30,8 @@ export async function DELETE(
         id: true,
         placementId: true,
         status: true,
+        fileUrl: true,
+        videoLink: true,
       },
     });
     if (!submission) {
@@ -41,22 +47,26 @@ export async function DELETE(
       throw new HttpError(400, "Only submitted lesson plans awaiting review can be deleted.");
     }
 
+    const deleteFileRecord = shouldDeleteStoredSubmissionFile(submission);
+
     await db.$transaction(async (tx) => {
-      const tableCheck = await tx.$queryRawUnsafe<Array<{ reg: string | null }>>(
-        `SELECT to_regclass('public."PracticumLessonPlanFile"')::text AS reg`
-      );
-      if (tableCheck?.[0]?.reg) {
-        const fileModel = (
-          tx as unknown as {
-            practicumLessonPlanFile?: {
-              deleteMany: typeof db.practicumLessonPlanFile.deleteMany;
-            };
+      if (deleteFileRecord) {
+        const tableCheck = await tx.$queryRawUnsafe<Array<{ reg: string | null }>>(
+          `SELECT to_regclass('public."PracticumLessonPlanFile"')::text AS reg`
+        );
+        if (tableCheck?.[0]?.reg) {
+          const fileModel = (
+            tx as unknown as {
+              practicumLessonPlanFile?: {
+                deleteMany: typeof db.practicumLessonPlanFile.deleteMany;
+              };
+            }
+          ).practicumLessonPlanFile;
+          if (fileModel) {
+            await fileModel.deleteMany({ where: { lessonPlanId: submission.id } });
+          } else {
+            await tx.$executeRaw`DELETE FROM "PracticumLessonPlanFile" WHERE "lessonPlanId" = ${submission.id}`;
           }
-        ).practicumLessonPlanFile;
-        if (fileModel) {
-          await fileModel.deleteMany({ where: { lessonPlanId: submission.id } });
-        } else {
-          await tx.$executeRaw`DELETE FROM "PracticumLessonPlanFile" WHERE "lessonPlanId" = ${submission.id}`;
         }
       }
       await tx.practicumSubmission.delete({

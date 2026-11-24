@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 import { evaluateIctLabAccess, isEligibleForIctLabSidebar } from "../guard";
 import { loadHardwarePartsData, loadLanCableData } from "../data-loader";
 import {
+  HARDWARE_GENERAL_SAFETY,
+  HARDWARE_PROCEDURES,
+  getHardwareProcedure,
+} from "../hardware-procedures";
+import {
   MAX_PLAYGROUND_BYTES,
   PLAYGROUND_IFRAME_CSP,
   PLAYGROUND_POSTMESSAGE_SOURCE,
@@ -24,12 +29,33 @@ import {
   isBeedProgram,
   isBsedScienceProgram,
   isBtledIctProgram,
+  parseIctModule,
   reduceLanToolPreviewState,
   simulateCableTester,
   validatePreviewMessageEvent,
 } from "../rules";
 import { PLAYGROUND_EXAMPLES, DEFAULT_EXAMPLE } from "../examples";
 import { HARDWARE_SVG_PART_IDS } from "../../../components/ict-lab/HardwareExplorerTab";
+import {
+  ICT_MODULE_THEMES,
+  sampleShapePoints,
+  CODE_PLAYGROUND_SHAPE,
+  HARDWARE_EXPLORER_SHAPE,
+  LAN_CABLE_GUIDE_SHAPE,
+} from "../particle-shapes";
+import {
+  stepParticles,
+  isSettled,
+  type ParticleState,
+  type TargetPoint,
+} from "../particle-physics";
+import {
+  createInitialHoverState,
+  nextHoverState,
+  LEAVE_GRACE_PERIOD_MS,
+  type HoverMachineState,
+} from "../hover-machine";
+import { ICT_LAB_MODULE_IDS } from "../types";
 
 describe("BTLED ICT Lab - Access Guard", () => {
   it("allows only ITE students in the BTLEd ICT program and denies ITE instructors, admins, and non-BTLED ITE students", async () => {
@@ -537,3 +563,440 @@ describe("BTLED ICT Lab - Required Tools & Materials Data, SVG Assets & Preview 
     assert.equal(getNextTrappedFocusIndex(1, 3, true), 0);
   });
 });
+
+describe("BTLED ICT Lab - Module Query Parameter Parsing", () => {
+  it("recognizes canonical module ids regardless of case and trimming", () => {
+    assert.equal(parseIctModule("code-playground"), "code-playground");
+    assert.equal(parseIctModule("  CODE-PLAYGROUND  "), "code-playground");
+    assert.equal(parseIctModule("hardware-explorer"), "hardware-explorer");
+    assert.equal(parseIctModule("Hardware-Explorer"), "hardware-explorer");
+    assert.equal(parseIctModule("lan-cable-guide"), "lan-cable-guide");
+    assert.equal(parseIctModule("LAN-CABLE-GUIDE"), "lan-cable-guide");
+  });
+
+  it("safely falls back to null for null, undefined, empty, or unknown query params", () => {
+    assert.equal(parseIctModule(null), null);
+    assert.equal(parseIctModule(undefined), null);
+    assert.equal(parseIctModule(""), null);
+    assert.equal(parseIctModule("   "), null);
+    assert.equal(parseIctModule("garbage"), null);
+    assert.equal(parseIctModule("playground"), null);
+    assert.equal(parseIctModule("hardware"), null);
+    assert.equal(parseIctModule("cable"), null);
+    assert.equal(parseIctModule("unknown-module"), null);
+  });
+});
+
+describe("BTLED ICT Lab - Particle Shapes & Theme Configurations", () => {
+  it("defines distinctive theme configurations and mathematical shapes for all modules", () => {
+    for (const moduleId of ICT_LAB_MODULE_IDS) {
+      const theme = ICT_MODULE_THEMES[moduleId];
+      assert.ok(theme, `Theme config must exist for module ${moduleId}`);
+      assert.equal(theme.id, moduleId);
+      assert.ok(theme.accentDark.startsWith("#"), "accentDark must be a hex color");
+      assert.ok(theme.accentLight.startsWith("#"), "accentLight must be a hex color");
+      assert.equal(theme.accentRgb.length, 3, "accentRgb must have 3 components");
+      assert.ok(theme.shape.primitives.length >= 3, "Shape must have at least 3 primitives");
+      assert.ok(theme.cardBorderHoverClass.length > 0);
+      assert.ok(theme.iconContainerClass.length > 0);
+      assert.ok(theme.buttonClass.length > 0);
+    }
+
+    // Verify distinctive primary colors
+    assert.equal(ICT_MODULE_THEMES["code-playground"].accentDark, "#10b981"); // Emerald
+    assert.equal(ICT_MODULE_THEMES["hardware-explorer"].accentDark, "#f59e0b"); // Amber
+    assert.equal(ICT_MODULE_THEMES["lan-cable-guide"].accentDark, "#06b6d4"); // Cyan
+  });
+
+  it("deterministically samples points within [0, 1] space matching exact requested count", () => {
+    const testCounts = [10, 50, 140, 180];
+    const shapes = [
+      { name: "code-playground", shape: CODE_PLAYGROUND_SHAPE },
+      { name: "hardware-explorer", shape: HARDWARE_EXPLORER_SHAPE },
+      { name: "lan-cable-guide", shape: LAN_CABLE_GUIDE_SHAPE },
+    ];
+
+    for (const { name, shape } of shapes) {
+      for (const count of testCounts) {
+        const points = sampleShapePoints(shape, count);
+        assert.equal(
+          points.length,
+          count,
+          `Shape ${name} must produce exactly ${count} points`
+        );
+
+        for (const pt of points) {
+          assert.ok(
+            pt.x >= 0 && pt.x <= 1,
+            `Point x=${pt.x} out of [0, 1] in ${name}`
+          );
+          assert.ok(
+            pt.y >= 0 && pt.y <= 1,
+            `Point y=${pt.y} out of [0, 1] in ${name}`
+          );
+        }
+
+        // Must be purely deterministic
+        const secondRun = sampleShapePoints(shape, count);
+        assert.deepEqual(
+          points,
+          secondRun,
+          `Sampling ${name} must be 100% deterministic`
+        );
+      }
+    }
+  });
+
+  it("handles empty shapes or zero counts gracefully", () => {
+    assert.deepEqual(sampleShapePoints({ primitives: [] }, 50), []);
+    assert.deepEqual(sampleShapePoints(CODE_PLAYGROUND_SHAPE, 0), []);
+    assert.deepEqual(sampleShapePoints(CODE_PLAYGROUND_SHAPE, -5), []);
+  });
+});
+
+describe("BTLED ICT Lab - Particle Physics & Convergence", () => {
+  it("converges from a deterministic start to fixed targets within 0.5px after N steps and isSettled becomes true", () => {
+    const N = 50;
+    let state: ParticleState[] = Array.from({ length: N }, (_, i) => ({
+      x: 20 + (i * 7) % 300,
+      y: 10 + (i * 11) % 300,
+      vx: 0,
+      vy: 0,
+    }));
+
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 100 + ((i * 13) % 200),
+      y: 80 + ((i * 17) % 200),
+    }));
+
+    // Initially not settled
+    assert.equal(isSettled(state, targets), false);
+
+    // Run 150 physics steps with canvas bounds
+    for (let step = 0; step < 150; step++) {
+      state = stepParticles(state, targets, {
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // Every particle must be within 0.5px of its target
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - targets[i].x, state[i].y - targets[i].y);
+      assert.ok(
+        dist <= 0.5,
+        `Particle ${i} did not converge: distance = ${dist.toFixed(4)}px`
+      );
+    }
+
+    assert.equal(isSettled(state, targets), true);
+  });
+
+  it("converges back to targets without permanent offset after pointer repel is applied and removed", () => {
+    const N = 40;
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 150 + i * 2,
+      y: 150 + i * 2,
+    }));
+
+    let state: ParticleState[] = targets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+
+    // Apply fixed pointer repel right on top of a cluster of particles for 60 steps
+    const pointerPos = { x: 180, y: 180 };
+    for (let step = 0; step < 60; step++) {
+      state = stepParticles(state, targets, {
+        pointerPos,
+        repelRadius: 60,
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // While pointer is active, particles near (180, 180) are repelled away
+    assert.equal(isSettled(state, targets), false);
+
+    // Remove pointer (pointerPos: null) and run 150 steps
+    for (let step = 0; step < 150; step++) {
+      state = stepParticles(state, targets, {
+        pointerPos: null,
+        bounds: { width: 400, height: 400 },
+      });
+    }
+
+    // Must completely recover with zero permanent offset
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - targets[i].x, state[i].y - targets[i].y);
+      assert.ok(
+        dist <= 0.5,
+        `Particle ${i} retained permanent offset: distance = ${dist.toFixed(4)}px`
+      );
+    }
+    assert.equal(isSettled(state, targets), true);
+  });
+
+  it("keeps particles within bounds and prevents directional y-drift during 600 continuous pointer movement steps", () => {
+    const N = 50;
+    const bounds = { width: 360, height: 420 };
+    const targets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 80 + (i % 10) * 20,
+      y: 100 + Math.floor(i / 10) * 35,
+    }));
+
+    let state: ParticleState[] = targets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+
+    let sumYOffsets = 0;
+
+    // Simulate mouse moving back and forth along y for 600 frames
+    for (let step = 0; step < 600; step++) {
+      const pointerPos = {
+        x: 180,
+        y: 180 + Math.sin(step * 0.08) * 90,
+      };
+
+      state = stepParticles(state, targets, {
+        pointerPos,
+        repelRadius: 50,
+        bounds,
+      });
+
+      // No particle must ever leave the canvas bounds
+      for (let i = 0; i < N; i++) {
+        assert.ok(state[i].x >= 0 && state[i].x <= bounds.width);
+        assert.ok(state[i].y >= 0 && state[i].y <= bounds.height);
+      }
+
+      // Track mean y offset from target
+      const meanYOffset =
+        state.reduce((acc, p, idx) => acc + (p.y - targets[idx].y), 0) / N;
+      sumYOffsets += meanYOffset;
+    }
+
+    // Mean directional drift over 600 steps must be virtually zero (no upward runaway drift)
+    const averageDrift = sumYOffsets / 600;
+    assert.ok(
+      Math.abs(averageDrift) < 1.0,
+      `Mean y-drift is too large: ${averageDrift.toFixed(4)}px`
+    );
+  });
+
+  it("reports isSettled accurately based on both distance threshold and speed threshold", () => {
+    const targets: TargetPoint[] = [{ x: 100, y: 100 }, { x: 200, y: 200 }];
+
+    // Perfectly on target and zero velocity
+    const settledState: ParticleState[] = [
+      { x: 100, y: 100, vx: 0, vy: 0 },
+      { x: 200, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(settledState, targets), true);
+
+    // One particle slightly outside distance threshold (0.6px > 0.5px)
+    const displacedState: ParticleState[] = [
+      { x: 100, y: 100, vx: 0, vy: 0 },
+      { x: 200.6, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(displacedState, targets), false);
+
+    // Near target (dist < 0.5px) but still moving fast (speed > 0.02)
+    const fastMovingState: ParticleState[] = [
+      { x: 100.1, y: 100.1, vx: 0.15, vy: 0 },
+      { x: 200, y: 200, vx: 0, vy: 0 },
+    ];
+    assert.equal(isSettled(fastMovingState, targets), false);
+
+    // Empty list is trivially settled
+    assert.equal(isSettled([], []), true);
+  });
+
+  it("converges properly when switching targets from logo to resting cluster", () => {
+    const N = 40;
+    const logoTargets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 120 + (i % 8) * 15,
+      y: 120 + Math.floor(i / 8) * 20,
+    }));
+    const restTargets: TargetPoint[] = Array.from({ length: N }, (_, i) => ({
+      x: 320 + Math.cos(i) * 25,
+      y: 340 + Math.sin(i) * 25,
+    }));
+
+    // Start settled on logo targets
+    let state: ParticleState[] = logoTargets.map((t) => ({ ...t, vx: 0, vy: 0 }));
+    assert.equal(isSettled(state, logoTargets), true);
+
+    // Switch targets to resting cluster and step
+    assert.equal(isSettled(state, restTargets), false);
+
+    for (let step = 0; step < 160; step++) {
+      state = stepParticles(state, restTargets, {
+        bounds: { width: 360, height: 400 },
+      });
+    }
+
+    // Now settled on resting cluster
+    assert.equal(isSettled(state, restTargets), true);
+    for (let i = 0; i < N; i++) {
+      const dist = Math.hypot(state[i].x - restTargets[i].x, state[i].y - restTargets[i].y);
+      assert.ok(dist <= 0.5);
+    }
+  });
+});
+
+describe("BTLED ICT Lab - Hover State Machine & Flicker Immunity", () => {
+  it("leave followed by enter within the grace period stays hovered without toggling inactive", () => {
+    let state = createInitialHoverState();
+    const t0 = 1000;
+
+    // Pointer enters
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+
+    // Pointer leave fires
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 20);
+    assert.equal(state.isHovered, true, "isHovered remains true during grace period");
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Re-enter 40ms later (well within LEAVE_GRACE_PERIOD_MS)
+    state = nextHoverState(state, { type: "pointerenter" }, t0 + 60);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false, "Grace timer is cancelled");
+    assert.equal(state.leaveTimestamp, null);
+  });
+
+  it("pointercancel while inside bounds does not clear hover (native drag gesture immunity)", () => {
+    let state = createInitialHoverState();
+    state = nextHoverState(state, { type: "pointerenter" });
+
+    // Native browser dragstart fires pointercancel while cursor is inside card bounds
+    state = nextHoverState(state, { type: "pointercancel", insideRect: true });
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("leave alone clears hover only after the grace period expires", () => {
+    let state = createInitialHoverState();
+    const t0 = 2000;
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+
+    // Pointer leaves
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 10);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Grace timer triggers after 100ms
+    state = nextHoverState(state, { type: "grace_timeout" }, t0 + 10 + LEAVE_GRACE_PERIOD_MS);
+    assert.equal(state.isHovered, false);
+    assert.equal(state.active, false);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("move inside bounds always re-asserts hovered and cancels pending leave", () => {
+    let state = createInitialHoverState();
+    const t0 = 3000;
+    state = nextHoverState(state, { type: "pointerenter" }, t0);
+    state = nextHoverState(state, { type: "pointerleave", insideRect: false }, t0 + 10);
+    assert.equal(state.leaveTimerPending, true);
+
+    // Moving mouse inside bounds
+    state = nextHoverState(state, { type: "pointermove", insideRect: true }, t0 + 30);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+    assert.equal(state.leaveTimerPending, false);
+  });
+
+  it("focus-visible forms the logo and blur clears it only if not hovered", () => {
+    let state = createInitialHoverState();
+    assert.equal(state.active, false);
+
+    // Focus triggers active logo
+    state = nextHoverState(state, { type: "focus" });
+    assert.equal(state.isFocused, true);
+    assert.equal(state.active, true);
+
+    // Blur without hover clears active
+    state = nextHoverState(state, { type: "blur" });
+    assert.equal(state.isFocused, false);
+    assert.equal(state.active, false);
+
+    // Focus with active hover: blur preserves active because hovered is true
+    state = nextHoverState(state, { type: "pointerenter" });
+    state = nextHoverState(state, { type: "focus" });
+    assert.equal(state.active, true);
+
+    state = nextHoverState(state, { type: "blur" });
+    assert.equal(state.isFocused, false);
+    assert.equal(state.isHovered, true);
+    assert.equal(state.active, true);
+  });
+});
+
+describe("BTLED ICT Lab - Hardware Assembly & Disassembly Procedures", () => {
+  it("provides a complete procedure for every real hardware part id in hardware-parts.json", () => {
+    const hardware = loadHardwarePartsData();
+    assert.equal(hardware.parts.length, 12);
+
+    for (const part of hardware.parts) {
+      const proc = getHardwareProcedure(part.id);
+      assert.ok(proc, `Missing procedure for part id "${part.id}"`);
+      assert.strictEqual(HARDWARE_PROCEDURES[part.id], proc);
+
+      assert.ok(
+        proc.removeSteps.length >= 4,
+        `Expected >= 4 removeSteps for "${part.id}", got ${proc.removeSteps.length}`
+      );
+      assert.ok(
+        proc.installSteps.length >= 4,
+        `Expected >= 4 installSteps for "${part.id}", got ${proc.installSteps.length}`
+      );
+      assert.ok(proc.tools.length >= 1, `Expected >= 1 tool for "${part.id}"`);
+      assert.ok(proc.cautions.length >= 1, `Expected >= 1 caution for "${part.id}"`);
+      assert.ok(
+        proc.commonMistakes.length >= 1,
+        `Expected >= 1 common mistake for "${part.id}"`
+      );
+
+      for (const [listName, items] of [
+        ["tools", proc.tools],
+        ["removeSteps", proc.removeSteps],
+        ["installSteps", proc.installSteps],
+        ["cautions", proc.cautions],
+        ["commonMistakes", proc.commonMistakes],
+      ] as const) {
+        const seen = new Set<string>();
+        for (const item of items) {
+          assert.ok(
+            typeof item === "string" && item.trim().length > 0,
+            `Empty or whitespace-only string in ${part.id}.${listName}`
+          );
+          assert.ok(
+            !seen.has(item),
+            `Duplicate text in ${part.id}.${listName}: "${item}"`
+          );
+          seen.add(item);
+        }
+      }
+    }
+  });
+
+  it("defines non-empty HARDWARE_GENERAL_SAFETY items with no blank or duplicate entries", () => {
+    assert.ok(HARDWARE_GENERAL_SAFETY.length > 0);
+    const seen = new Set<string>();
+    for (const item of HARDWARE_GENERAL_SAFETY) {
+      assert.ok(typeof item === "string" && item.trim().length > 0);
+      assert.ok(!seen.has(item));
+      seen.add(item);
+    }
+  });
+
+  it("returns undefined from getHardwareProcedure for unknown or invalid part ids", () => {
+    assert.equal(getHardwareProcedure("non-existent-part"), undefined);
+    assert.equal(getHardwareProcedure(""), undefined);
+    assert.equal(getHardwareProcedure(null), undefined);
+    assert.equal(getHardwareProcedure(undefined), undefined);
+    assert.equal(getHardwareProcedure("toString"), undefined);
+  });
+});
+
+
+

@@ -41,9 +41,10 @@ const createPrismaClient = () => {
       // In serverless production (e.g. Vercel), limit connections per lambda to prevent pool exhaustion.
       // In local dev, allow up to 15 connections with longer idle timeout so pooled connections stay warm.
       max: configuredMax === undefined ? (isProduction ? 2 : 15) : Number(configuredMax),
-      idleTimeoutMillis: isProduction ? 30000 : 120000,
-      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: isProduction ? 10000 : 20000,
       keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
       // pg parses sslrootcert from the URL when a private certificate authority is required.
       ssl: !isLocalhost ? { rejectUnauthorized: true } : undefined,
     };
@@ -70,9 +71,21 @@ const schemaVersion = createHash("sha256")
   .update(JSON.stringify(Prisma.dmmf.datamodel) + "lab-provenance-omit-v1")
   .digest("hex");
 const previous = globalForPrisma.prisma;
-export const db = previous && globalForPrisma.prismaSchemaVersion === schemaVersion && "financialStatement" in (previous as object)
-  ? previous
-  : createPrismaClient();
+export const db =
+  previous &&
+  globalForPrisma.prismaSchemaVersion === schemaVersion &&
+  "financialStatement" in (previous as object) &&
+  "businessPlan" in (previous as object) &&
+  "ibeLearningRecord" in (previous as object) &&
+  "mockInterviewApplicantAttempt" in (previous as object) &&
+  "vocabularyWord" in (previous as object) &&
+  "appointment" in (previous as object) &&
+  "instructorAvailability" in (previous as object) &&
+  "instructorBlockedDate" in (previous as object) &&
+  "appointmentAttachment" in (previous as object) &&
+  "appointmentMessage" in (previous as object)
+    ? previous
+    : createPrismaClient();
 
 // Always cache client on globalThis in all environments so warm serverless lambdas reuse the instance
 globalForPrisma.prisma = db;

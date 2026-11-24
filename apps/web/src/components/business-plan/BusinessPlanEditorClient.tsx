@@ -30,6 +30,7 @@ import {
   TAX_AND_REGISTRATION_CHECKLIST,
 } from "@/lib/business-plan/learning-center";
 import { STEP_METADATA, validateBusinessPlan } from "@/lib/business-plan/validation";
+import { ResponsiveSelect, SelectField } from "@/components/ui/ResponsiveSelect";
 import type {
   BusinessCategory,
   BusinessOwnershipType,
@@ -182,7 +183,7 @@ export default function BusinessPlanEditorClient({
           data,
         }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(json.message || "Failed to save business plan.");
       }
@@ -209,7 +210,7 @@ export default function BusinessPlanEditorClient({
   return (
     <div className="space-y-6">
       {/* Top Action Bar */}
-      <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 print:hidden">
+      <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-4 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 print:hidden">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <Link
@@ -253,7 +254,7 @@ export default function BusinessPlanEditorClient({
           <button
             type="button"
             onClick={() => setViewMode(viewMode === "builder" ? "preview" : "builder")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0 transition cursor-pointer"
           >
             {viewMode === "builder" ? (
               <>
@@ -270,7 +271,7 @@ export default function BusinessPlanEditorClient({
 
           <a
             href={`/api/business-plan/${record.id}/export?format=pdf`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0 transition"
           >
             <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             Export PDF
@@ -278,7 +279,7 @@ export default function BusinessPlanEditorClient({
 
           <a
             href={`/api/business-plan/${record.id}/export?format=docx`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0 transition"
           >
             <FileSpreadsheet className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             Export DOCX
@@ -288,7 +289,7 @@ export default function BusinessPlanEditorClient({
             type="button"
             disabled={isSaving}
             onClick={() => savePlan("DRAFT")}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow transition cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow whitespace-nowrap shrink-0 transition cursor-pointer disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {isSaving ? "Saving..." : "Save Draft"}
@@ -303,7 +304,7 @@ export default function BusinessPlanEditorClient({
                 ? "Mark Business Plan as Completed"
                 : "Complete all 11 sections and resolve invalid errors before marking Completed"
             }
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow transition cursor-pointer disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow whitespace-nowrap shrink-0 transition cursor-pointer disabled:opacity-40"
           >
             <CheckCircle2 className="w-4 h-4" />
             Mark Completed
@@ -349,7 +350,7 @@ export default function BusinessPlanEditorClient({
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white text-slate-900 border border-slate-200 p-8 sm:p-12 shadow-xl space-y-10 max-w-5xl mx-auto print:shadow-none print:p-0">
+          <div className="rounded-xl border-2 border-slate-200 bg-white text-slate-900 p-8 sm:p-12 shadow-xs space-y-10 max-w-5xl mx-auto print:shadow-none print:p-0">
             {/* Cover Page */}
             <div className="border-b-2 border-slate-300 pb-10 space-y-6 text-center">
               <div className="inline-block px-4 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-widest">
@@ -512,7 +513,7 @@ export default function BusinessPlanEditorClient({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Stepper & Validation Readiness Sidebar */}
           <div className="lg:col-span-3 space-y-4">
-            <div className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-4 space-y-4 shadow-sm">
+            <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-4 space-y-4 shadow-sm">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -522,7 +523,7 @@ export default function BusinessPlanEditorClient({
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-linear-to-r from-amber-500 to-emerald-400 transition-all"
+                    className="h-full rounded-full bg-amber-500 transition-all"
                     style={{ width: `${Math.max(5, validation.completionPercentage)}%` }}
                   />
                 </div>
@@ -574,10 +575,10 @@ export default function BusinessPlanEditorClient({
           {/* Right Active Step Editor */}
           <div className="lg:col-span-9 space-y-5">
             {/* Step Header & Inline Learning Guide Toggle */}
-            <div className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-sm">
+            <div className="rounded-xl border-2 border-slate-200 dark:border-white/15 bg-white dark:bg-[#141721] p-6 space-y-4 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                       Step {currentStep} of 11
                     </span>
@@ -760,7 +761,7 @@ export default function BusinessPlanEditorClient({
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                         Business Category
                       </label>
-                      <select
+                      <SelectField
                         value={data.businessInfo.businessCategory}
                         onChange={(e) =>
                           setData((prev) => ({
@@ -778,13 +779,13 @@ export default function BusinessPlanEditorClient({
                             {label}
                           </option>
                         ))}
-                      </select>
+                      </SelectField>
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                         Business Ownership Type
                       </label>
-                      <select
+                      <SelectField
                         value={data.businessInfo.ownershipType}
                         onChange={(e) =>
                           setData((prev) => ({
@@ -802,7 +803,7 @@ export default function BusinessPlanEditorClient({
                             {opt.label}
                           </option>
                         ))}
-                      </select>
+                      </SelectField>
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
@@ -1090,7 +1091,7 @@ export default function BusinessPlanEditorClient({
 
                   {/* Competitor Table */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Competitor Comparison Table
                       </label>
@@ -1114,7 +1115,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Competitor
@@ -1498,7 +1499,7 @@ export default function BusinessPlanEditorClient({
 
                   {/* Staffing Table */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Staffing Requirements & Monthly Compensation Table
                       </label>
@@ -1522,7 +1523,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Role
@@ -1788,7 +1789,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Startup Cost Row
@@ -1815,7 +1816,7 @@ export default function BusinessPlanEditorClient({
                             placeholder="Startup Item Description (e.g., Commercial Freezer, Permits)"
                             className="sm:col-span-6 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white"
                           />
-                          <select
+                          <SelectField
                             value={row.category}
                             onChange={(e) => {
                               const next = [...data.financialPlan.startupCosts];
@@ -1836,7 +1837,7 @@ export default function BusinessPlanEditorClient({
                             <option value="CAPEX">Capital Equipment (CAPEX)</option>
                             <option value="PRE_OPERATING">Pre-Operating / Permits</option>
                             <option value="WORKING_CAPITAL">Initial Working Capital Reserve</option>
-                          </select>
+                          </SelectField>
                           <input
                             type="number"
                             min={0}
@@ -1905,7 +1906,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Funding Source
@@ -1932,7 +1933,7 @@ export default function BusinessPlanEditorClient({
                             placeholder="Funding Source (e.g., Co-Founders Personal Equity Contribution)"
                             className="sm:col-span-6 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white"
                           />
-                          <select
+                          <SelectField
                             value={row.sourceType}
                             onChange={(e) => {
                               const next = [...data.financialPlan.fundingSources];
@@ -1953,7 +1954,7 @@ export default function BusinessPlanEditorClient({
                             <option value="OWNER_EQUITY">Owner Equity Contribution</option>
                             <option value="FAMILY_GRANT">Family / Seed Grant</option>
                             <option value="LOAN">Micro-Loan / Payable</option>
-                          </select>
+                          </SelectField>
                           <input
                             type="number"
                             min={0}
@@ -2024,14 +2025,14 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Product / Service Line
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400 px-1 pt-2">
+                    <div className="hidden sm:grid sm:grid-cols-12 gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400 px-1 pt-2">
                       <div className="col-span-4">Product / Service Name</div>
                       <div className="col-span-2 text-right">Monthly Qty</div>
                       <div className="col-span-2 text-right">Selling Price</div>
@@ -2172,7 +2173,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Operating Expense
@@ -2199,7 +2200,7 @@ export default function BusinessPlanEditorClient({
                             placeholder="Expense Description (e.g., Monthly Stall Rent, Staff Allowance)"
                             className="sm:col-span-6 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white"
                           />
-                          <select
+                          <SelectField
                             value={row.costBehavior}
                             onChange={(e) => {
                               const next = [...data.financialPlan.operatingExpenses];
@@ -2216,7 +2217,7 @@ export default function BusinessPlanEditorClient({
                           >
                             <option value="FIXED">Fixed Cost (Monthly)</option>
                             <option value="VARIABLE">Variable Operating Cost</option>
-                          </select>
+                          </SelectField>
                           <input
                             type="number"
                             min={0}
@@ -2637,7 +2638,7 @@ export default function BusinessPlanEditorClient({
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                         Student Feasibility Assessment Status
                       </label>
-                      <select
+                      <SelectField
                         value={data.riskFeasibility.feasibilityConclusionStatus}
                         onChange={(e) =>
                           setData((prev) => ({
@@ -2660,7 +2661,7 @@ export default function BusinessPlanEditorClient({
                         <option value="NEEDS_REVISION">
                           Needs Model Revision Before Launch
                         </option>
-                      </select>
+                      </SelectField>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
@@ -2712,7 +2713,7 @@ export default function BusinessPlanEditorClient({
 
                   {/* Implementation Timeline Table */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Implementation Timeline Milestones
                       </label>
@@ -2736,7 +2737,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Milestone
@@ -2842,7 +2843,7 @@ export default function BusinessPlanEditorClient({
 
                   {/* Supplier Quotations Table */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                         Supplier Quotations & Equipment Estimates
                       </label>
@@ -2866,7 +2867,7 @@ export default function BusinessPlanEditorClient({
                             },
                           }))
                         }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Supplier Quote
@@ -3035,23 +3036,23 @@ export default function BusinessPlanEditorClient({
               )}
 
               {/* Step Footer Navigation */}
-              <div className="pt-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div className="pt-5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
                 <button
                   type="button"
                   disabled={currentStep <= 1}
                   onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer disabled:opacity-40"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold whitespace-nowrap shrink-0 transition cursor-pointer disabled:opacity-40"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Previous Step
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     disabled={isSaving}
                     onClick={() => savePlan("DRAFT")}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                    className="inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0 transition cursor-pointer"
                   >
                     Save Progress
                   </button>
@@ -3059,7 +3060,7 @@ export default function BusinessPlanEditorClient({
                     <button
                       type="button"
                       onClick={() => setCurrentStep((s) => Math.min(11, s + 1))}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                     >
                       Next Step
                       <ArrowRight className="w-4 h-4" />
@@ -3068,7 +3069,7 @@ export default function BusinessPlanEditorClient({
                     <button
                       type="button"
                       onClick={() => setViewMode("preview")}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer"
                     >
                       <Eye className="w-4 h-4" />
                       Preview Full Business Plan

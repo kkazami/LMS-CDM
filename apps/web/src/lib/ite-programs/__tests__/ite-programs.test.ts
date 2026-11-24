@@ -557,35 +557,77 @@ describe("ITE Program Features & Sidebar Filtering", () => {
       href: "/ite/lesson-plans",
     };
 
+    const nurseryTool = {
+      id: "nursery-songs-youtube-categories",
+      title: "Nursery Song & Educational Media Library",
+      description:
+        "Curated early childhood songs, action rhymes, and classroom video categories for young learners.",
+      href: "/ite/nursery-library",
+    };
+
     const becedFeatures = getFeaturesForIteProgram("BECEd");
     assert.deepEqual(
       becedFeatures.map((f) => f.title),
-      ["Nursery Songs & YouTube Categories", "Lesson Plan Builder"]
+      ["Nursery Song & Educational Media Library", "Lesson Plan Builder"]
     );
+    const becedLib = becedFeatures.find((f) => f.id === "nursery-songs-youtube-categories");
+    assert.equal(becedLib?.status, "available");
+    assert.equal(becedLib?.href, "/ite/nursery-library");
     const becedLp = becedFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(becedLp?.status, "available");
     assert.equal(becedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BECEd"), [
+      nurseryTool,
+      lessonPlanTool,
+    ]);
+
+    const matatagTool = {
+      id: "matatag-curriculum-guide",
+      title: "MATATAG Curriculum Reference Hub",
+      description:
+        "Elementary generalist learning competencies, standards, and teaching references under the MATATAG curriculum.",
+      href: "/ite/matatag",
+    };
 
     const beedFeatures = getFeaturesForIteProgram("BEEd");
     assert.deepEqual(
       beedFeatures.map((f) => f.title),
-      ["MATATAG Curriculum Guide", "Lesson Plan Builder"]
+      ["MATATAG Curriculum Reference Hub", "Lesson Plan Builder"]
     );
+    const beedMatatag = beedFeatures.find((f) => f.id === "matatag-curriculum-guide");
+    assert.equal(beedMatatag?.status, "available");
+    assert.equal(beedMatatag?.href, "/ite/matatag");
     const beedLp = beedFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(beedLp?.status, "available");
     assert.equal(beedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BEEd"), [
+      matatagTool,
+      lessonPlanTool,
+    ]);
+
+    const visualKitTool = {
+      id: "interactive-educational-charts",
+      title: "Interactive Visual Learning Kit",
+      description:
+        "Interactive 2D anatomical models, biological systems, and physical processes for BSEd Science pre-service educators.",
+      href: "/ite/visual-kit",
+    };
 
     const bsedSciFeatures = getFeaturesForIteProgram("BSEd SCIENCE");
     assert.deepEqual(
       bsedSciFeatures.map((f) => f.title),
-      ["Interactive Educational Charts", "Lesson Plan Builder"]
+      ["Interactive Visual Learning Kit", "Lesson Plan Builder"]
     );
+    const bsedVisualKit = bsedSciFeatures.find((f) => f.id === "interactive-educational-charts");
+    assert.equal(bsedVisualKit?.status, "available");
+    assert.equal(bsedVisualKit?.href, "/ite/visual-kit");
     const bsedLp = bsedSciFeatures.find((f) => f.id === "lesson-plan-builder");
     assert.equal(bsedLp?.status, "available");
     assert.equal(bsedLp?.href, "/ite/lesson-plans");
-    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), [lessonPlanTool]);
+    assert.deepEqual(getAvailableSidebarToolsForIteProgram("BSEd SCIENCE"), [
+      visualKitTool,
+      lessonPlanTool,
+    ]);
 
     const btledFeatures = getFeaturesForIteProgram("BTLEd ICT");
     assert.deepEqual(

@@ -22,6 +22,7 @@ import {
   Shield,
   HelpCircle,
   Video,
+  Film,
   MessageSquare,
   ExternalLink,
   Code2,
@@ -137,26 +138,49 @@ export default function StudentMoreScreen() {
 
           <View style={[styles.menuGroup, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
             {isIteUser(user) && (
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Class Meetings"
-                style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
-                onPress={() => {
-                  router.push('/student/meetings' as any);
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.info}15` }]}>
-                  <Video size={20} color={theme.colors.info} />
-                </View>
-                <View style={styles.menuItemText}>
-                  <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Class Meetings</Text>
-                  <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
-                    Join virtual sessions and view schedule
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Class Meetings"
+                  style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                  onPress={() => {
+                    router.push('/student/meetings' as any);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.info}15` }]}>
+                    <Video size={20} color={theme.colors.info} />
+                  </View>
+                  <View style={styles.menuItemText}>
+                    <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Class Meetings</Text>
+                    <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                      Join virtual sessions and view schedule
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Lecture Videos"
+                  style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
+                  onPress={() => {
+                    router.push('/student/lecture-videos' as any);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuIconContainer, { backgroundColor: `${theme.colors.primary}15` }]}>
+                    <Film size={20} color={theme.colors.primary} />
+                  </View>
+                  <View style={styles.menuItemText}>
+                    <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Lecture Videos</Text>
+                    <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
+                      Watch recorded class lectures and videos
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              </>
             )}
 
             <TouchableOpacity
@@ -182,7 +206,7 @@ export default function StudentMoreScreen() {
 
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Personal Tasks & Notes"
+              accessibilityLabel={isIteUser(user) ? 'Tasks & Calendar' : 'Personal Tasks & Notes'}
               style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: theme.colors.border }]}
               onPress={() => {
                 router.push('/student/tasks' as any);
@@ -193,9 +217,13 @@ export default function StudentMoreScreen() {
                 <CheckSquare size={20} color={theme.colors.warning} />
               </View>
               <View style={styles.menuItemText}>
-                <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>Workspace Planner</Text>
+                <Text style={[styles.menuItemTitle, { color: theme.colors.text }]}>
+                  {isIteUser(user) ? 'Tasks & Calendar' : 'Workspace Planner'}
+                </Text>
                 <Text style={[styles.menuItemDesc, { color: theme.colors.textSecondary }]}>
-                  Personal study tasks and subject notes
+                  {isIteUser(user)
+                    ? 'Study tasks, class schedule and deadlines'
+                    : 'Personal study tasks and subject notes'}
                 </Text>
               </View>
               <ChevronRight size={18} color={theme.colors.textSecondary} />

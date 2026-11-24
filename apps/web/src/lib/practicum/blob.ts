@@ -4,7 +4,7 @@ import {
   blobPathnameFromUrl,
   getBlobStoreId,
   isOwnBlobUrl,
-  parseVideoLink,
+  parseSubmissionLink,
   validateUpload,
   type SubmissionType,
 } from "./rules";
@@ -36,17 +36,18 @@ export async function resolveSubmissionSource(args: {
 }): Promise<SubmissionSource> {
   const { type, placementId, fileUrl, fileName, videoLink } = args;
 
+  if (fileUrl && videoLink) {
+    throw new HttpError(400, "Provide either an uploaded file or a link, not both.");
+  }
+
   if (videoLink) {
-    if (type !== "DEMO_VIDEO") {
-      throw new HttpError(400, "Video links are only allowed for demo videos.");
-    }
-    const parsed = parseVideoLink(videoLink);
+    const parsed = parseSubmissionLink(videoLink, type);
     if (!parsed.ok) throw new HttpError(400, parsed.reason);
     return { fileUrl: null, fileName: null, fileType: null, fileSize: null, videoLink: parsed.url };
   }
 
   if (!fileUrl || !fileName) {
-    throw new HttpError(400, "Provide either an uploaded file or a video link.");
+    throw new HttpError(400, "Provide either an uploaded file or a link.");
   }
   if (!uploadsConfigured()) {
     throw new HttpError(503, "File uploads are not configured.");

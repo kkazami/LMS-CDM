@@ -38,4 +38,12 @@ for (const checkout of [process.env.ORIGIN_TEST_CHECKOUT || '.']) {
     assert.doesNotThrow(() => assertMutationOrigin(new Request('http://localhost:3000/api/faculty', { headers: { origin: 'https://foreign.invalid' } })));
     assert.doesNotThrow(() => assertMutationOrigin(mutation({ host: 'localhost:3000' })));
   });
+
+  test(`${checkout}: same-origin mutations work with the App Router request proxy`, () => {
+    const wrapped = headers => new Proxy(mutation(headers), {
+      get: (target, property) => Reflect.get(target, property, target),
+    });
+    assert.doesNotThrow(() => assertMutationOrigin(wrapped({ host: 'localhost:3000', origin: 'http://localhost:3000' })));
+    assert.throws(() => assertMutationOrigin(wrapped({ host: 'localhost:3000', origin: 'https://foreign.invalid' })), error => error.status === 403);
+  });
 }

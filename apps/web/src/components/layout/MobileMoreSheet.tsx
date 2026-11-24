@@ -25,18 +25,25 @@ import {
   Video,
   Film,
   HardDrive,
-  HelpCircle,
+  LifeBuoy,
   ChevronRight,
   Code2,
   MessageSquareQuote,
   FileSpreadsheet,
   Briefcase,
+  GraduationCap,
   Cpu,
+  FlaskConical,
+  Music,
   type LucideIcon,
 } from "lucide-react";
 import UserAvatar from "@/components/common/UserAvatar";
 import { triggerNativeHaptic, logoutFromNative } from "@/lib/mobile-bridge";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
+import {
+  canIbeProgramAccessFeature,
+  type IbeStudentProgramCode,
+} from "@/lib/ibe-programs/features";
 
 import { getNavigationPath } from "@/lib/navigation-path";
 import { ohmwardDestination } from "@/features/interactive-activities/ohmward/domain/eligibility";
@@ -53,6 +60,7 @@ interface MobileMoreSheetProps {
   isEligibleForOhmward?: boolean;
   isEligibleForKnowledgeExchange?: boolean;
   iteProgramTools?: IteSidebarProgramTool[];
+  ibeProgramCode?: IbeStudentProgramCode | null;
 }
 
 interface NavItem {
@@ -74,6 +82,7 @@ export default function MobileMoreSheet({
   isEligibleForOhmward,
   isEligibleForKnowledgeExchange,
   iteProgramTools = [],
+  ibeProgramCode = null,
 }: MobileMoreSheetProps) {
   const pathname = getNavigationPath(usePathname(), instituteCode);
   const router = useRouter();
@@ -125,6 +134,9 @@ export default function MobileMoreSheet({
     { label: "Archived Classes", href: `/${instituteCode}/courses/archived`, icon: Archive, description: "Review previous classes" },
     { label: "Calendar", href: `/${instituteCode}/tasks`, icon: CalendarDays, description: "Class schedule and personal events" },
     ...(instituteCode === "ics" ? [{ label: "Organizational Chart", href: `/${instituteCode}/organization`, icon: Network, description: "Program faculty & classes" }] : []),
+    ...(instituteCode.toLowerCase() === "ibe"
+      ? [{ label: "Consultation Management", href: `/${instituteCode}/consultation-management`, icon: CalendarDays, description: "Manage student consultation requests & availability" }]
+      : []),
     { label: "Student Analytics", href: `/${instituteCode}/analytics`, icon: BarChart2, description: "Class progress and performance" },
     { label: "Manage Leaderboard", href: `/${instituteCode}/manage-leaderboard`, icon: Trophy, description: "Manage institute rankings" },
     { label: "Create Tasks", href: `/${instituteCode}/create-tasks`, icon: PlusSquare, description: "Assign activities" },
@@ -135,9 +147,9 @@ export default function MobileMoreSheet({
     { label: "Accounts", href: `/${instituteCode}/accounts`, icon: Users, description: "Users & students" },
     ...(instituteCode === "ics" ? [{ label: "Faculty & Program Heads", href: `/${instituteCode}/admin/faculty`, icon: Users, description: "BSIT and BSCpE faculty" }] : []),
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
-    { label: "Backup & Recovery", href: `/${instituteCode}/backup`, icon: HardDrive, description: "Protect and restore data" },
+    { label: "Database Management", href: `/${instituteCode}/admin/database`, icon: HardDrive, description: "Inspect records and manage snapshots" },
     { label: "Security Tools", href: `/${instituteCode}/security`, icon: ShieldCheck, description: "Review account security" },
-    { label: "Help", href: `/${instituteCode}/help`, icon: HelpCircle, description: "Support and guidance" },
+    { label: "Support Tickets", href: `/${instituteCode}/admin/support-tickets`, icon: LifeBuoy, description: "Review and respond to support requests" },
   ];
 
   const handleLogout = async () => {
@@ -170,12 +182,29 @@ export default function MobileMoreSheet({
       ? [{ label: "Lecture Videos", href: `/${instituteCode}/lecture-videos`, icon: Film, description: "Recorded lectures" }]
       : [];
 
+  const getProgramIcon = (id: string): LucideIcon => {
+    switch (id) {
+      case "ict-lab":
+        return Cpu;
+      case "nursery-songs-youtube-categories":
+      case "nursery-song-library":
+        return Music;
+      case "matatag-curriculum-guide":
+        return BookOpen;
+      case "interactive-educational-charts":
+      case "visual-kit":
+        return FlaskConical;
+      default:
+        return FileText;
+    }
+  };
+
   const iteProgramToolItems: NavItem[] =
     isStudent && instituteCode.toLowerCase() === "ite"
       ? iteProgramTools.map((tool) => ({
           label: tool.title,
           href: tool.href,
-          icon: Cpu,
+          icon: getProgramIcon(tool.id),
           description: tool.description,
         }))
       : [];
@@ -189,8 +218,75 @@ export default function MobileMoreSheet({
       ? [{ label: "Knowledge Exchange", href: `/${instituteCode}/knowledge-exchange`, icon: MessageSquareQuote, description: "Questions & discussions" }] : []),
     ...(isStudent && instituteCode.toLowerCase() === "ibe"
       ? [
-          { label: "Financial Statement Generator", href: `/${instituteCode}/financial-statements`, icon: FileSpreadsheet, description: "Create and manage accounting reports" },
-          { label: "Mock Interview", href: `/${instituteCode}/mock-interview`, icon: Briefcase, description: "Practice job interviews and recruiter evaluations" },
+          {
+            label: "Consultation & Scheduling",
+            href: `/${instituteCode}/consultation`,
+            icon: CalendarDays,
+            description: "Request appointments with your instructors",
+          },
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "financial-statements")
+            ? [
+                {
+                  label: "Financial Statement Generator",
+                  href: `/${instituteCode}/financial-statements`,
+                  icon: FileSpreadsheet,
+                  description: "Create and manage accounting reports",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "mock-interview")
+            ? [
+                {
+                  label: "Mock Interview",
+                  href: `/${instituteCode}/mock-interview`,
+                  icon: Briefcase,
+                  description: "Practice job interviews and recruiter evaluations",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "wordwise")
+            ? [
+                {
+                  label: "IBE WordWise",
+                  href: `/${instituteCode}/wordwise`,
+                  icon: BookOpen,
+                  description: "Vocabulary & academic language hub",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "business-plan")
+            ? [
+                {
+                  label: "Business Plan Guide",
+                  href: `/${instituteCode}/business-plan`,
+                  icon: NotebookPen,
+                  description: "Guided lessons and venture builder",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "learning-hub")
+            ? [
+                {
+                  label: "IBE Learning Hub",
+                  href: `/${instituteCode}/learning-hub`,
+                  icon: Library,
+                  description: "Free external business courses",
+                },
+              ]
+            : []),
+          ...(canIbeProgramAccessFeature(ibeProgramCode, "hall-of-fame")
+            ? [
+                {
+                  label: "Hall of Fame",
+                  href: `/${instituteCode}/hall-of-fame`,
+                  icon: GraduationCap,
+                  description:
+                    ibeProgramCode === "BSBA HRM"
+                      ? "10 Famous HR Leader biographies"
+                      : "10 Famous Entrepreneur biographies",
+                },
+              ]
+            : []),
         ] : []),
     ...(isStudent
       ? [...studentItems, ...meetingsItems, ...practicumItems, ...lectureVideosItems, ...iteProgramToolItems]
@@ -282,18 +378,20 @@ export default function MobileMoreSheet({
               >
                 <User className="w-4 h-4" />
               </Link>
-              <Link
-                href={`/${instituteCode}/settings`}
-                onClick={() => {
-                  triggerNativeHaptic("light");
-                  onClose();
-                }}
-                className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
-                title="Settings"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </Link>
+              {role !== "ADMIN" && (
+                <Link
+                  href={`/${instituteCode}/settings`}
+                  onClick={() => {
+                    triggerNativeHaptic("light");
+                    onClose();
+                  }}
+                  className="rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors min-h-11 min-w-11 flex items-center justify-center active:scale-95"
+                  title="Settings"
+                  aria-label="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

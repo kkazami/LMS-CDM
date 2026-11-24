@@ -14,6 +14,7 @@ import {
   LECTURE_SOURCE_TYPES,
   LECTURE_STREAM_CHUNK_BYTES,
   LECTURE_UNEXPECTED_ERROR_MESSAGE,
+  LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
   accumulateWatchedStep,
   buildFacultyLectureProgressReport,
   buildGoogleDriveLectureEmbedUrl,
@@ -1340,5 +1341,20 @@ describe("ITE Lecture Videos - POST /api/lecture-videos Error Classification", (
       status: 500,
       message: LECTURE_UNEXPECTED_ERROR_MESSAGE,
     });
+  });
+
+  it("keeps the missing-upload-token message user-friendly without exposing env var names", () => {
+    assert.equal(
+      LECTURE_UPLOADS_UNAVAILABLE_MESSAGE,
+      "Video uploads aren\u2019t available right now. Please contact your administrator."
+    );
+    assert.equal(
+      LECTURE_UPLOADS_UNAVAILABLE_MESSAGE.includes("BLOB_READ_WRITE_TOKEN"),
+      false
+    );
+    assert.equal(
+      LECTURE_UPLOADS_UNAVAILABLE_MESSAGE.includes("NEXT_PUBLIC_"),
+      false
+    );
   });
 });
