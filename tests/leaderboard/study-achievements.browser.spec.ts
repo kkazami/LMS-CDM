@@ -182,7 +182,7 @@ test('gradebook edit actions have borders and keyboard cancel discards the draft
   expect(await page.evaluate(() => 'savedGrades' in globalThis)).toBe(false);
 });
 
-test('flashcards rejoin the end of the queue and need two consecutive confident ratings', async ({ page }) => {
+test('flashcards rejoin the end of the queue and need two consecutive confident ratings', async ({ page }, testInfo) => {
   const progress: string[] = [];
   let cardsReviewed = 0;
   await page.route('**/api/flashcards/study?*', route => route.fulfill({ json: { cards: ['A', 'B', 'C'].map(id => ({ id, front: `Question ${id}`, back: `Answer ${id}` })), stats: null } }));
@@ -203,14 +203,32 @@ test('flashcards rejoin the end of the queue and need two consecutive confident 
 
   await page.goto(`${origin}/ics/study`);
   await page.getByRole('button', { name: /^Flashcards Classic/ }).click();
+  const strip = page.getByRole('list', { name: 'Flashcard progress' });
+  await expect(strip.getByRole('listitem')).toHaveCount(3);
+  await expect(strip.locator('[aria-current="step"]')).toHaveText('Card 1: Unseen');
   await rate(page, 'A', 'Forgot');
+  await expect(strip.getByText('Card 1: Retry')).toBeAttached();
   await rate(page, 'B', 'Hard');
   await rate(page, 'C', 'Good');
+  await expect(strip.getByText('Card 3: Confirm')).toBeAttached();
+  await expect(strip.locator('[aria-current="step"]')).toHaveText('Card 1: Retry');
   await rate(page, 'A', 'Easy');
   await rate(page, 'B', 'Good');
   await rate(page, 'C', 'Hard');
+  await expect(strip.getByText('Card 3: Retry')).toBeAttached();
   await rate(page, 'A', 'Good');
-  await rate(page, 'B', 'Easy');
+  await expect(page.getByRole('list', { name: 'Progress totals' })).toContainText('1 Finished');
+  await expect(page.getByRole('list', { name: 'Progress totals' })).toContainText('1 Retry');
+  await expect(page.getByRole('list', { name: 'Progress totals' })).toContainText('1 Confirm');
+  await expect(page.getByText('Question B', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Reveal Answer' }).click();
+  const easy = page.getByRole('button', { name: /^Easy/ });
+  await expect(easy).toContainText('Finish card');
+  await page.screenshot({ path: testInfo.outputPath('flashcard-progress.png'), animations: 'disabled' });
+  await easy.click();
+  await expect(strip.getByText('Card 1: Finished')).toBeAttached();
+  await expect(strip.getByText('Card 2: Finished')).toBeAttached();
+  await expect(strip.getByRole('listitem')).toHaveCount(3);
   await expect(page.getByText('1 left', { exact: true })).toBeVisible();
   await rate(page, 'C', 'Easy');
   badgeReady = true;
