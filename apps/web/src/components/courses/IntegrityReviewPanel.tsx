@@ -51,6 +51,9 @@ function parseMetadataDetails(metadataStr: string): string | null {
   try {
     const data = JSON.parse(metadataStr || "{}");
     const parts: string[] = [];
+    if (typeof data.attemptNumber === "number" && data.attemptNumber > 0) {
+      parts.push(`Attempt #${data.attemptNumber}`);
+    }
     if (data.durationSeconds) parts.push(`Away for ${data.durationSeconds}s`);
     if (data.action) parts.push(`Action: ${data.action}`);
     if (data.charCount) parts.push(`${data.charCount} characters`);
