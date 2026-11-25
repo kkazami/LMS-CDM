@@ -29,6 +29,10 @@ import {
   AlertCircle,
   Loader2,
   Clock,
+  FileText,
+  Shield,
+  BarChart2,
+  Edit3,
 } from "lucide-react";
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { validateFormForPublish } from '@/lib/forms/form-validator';
@@ -507,6 +511,63 @@ export default function FormBuilder({
               <span>{form.status === "PUBLISHED" ? "Update Published" : "Publish"}</span>
             </button>
           </div>
+        </div>
+
+        {/* Shared Top Navigation Tabs: Questions / Builder | Submissions & Grading | Integrity & Proctoring | Analytics */}
+        <div className="max-w-5xl mx-auto flex items-center gap-2 pt-3 mt-3 border-t border-slate-100 dark:border-white/5 overflow-x-auto">
+          <button
+            type="button"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold shadow-xs shrink-0"
+            style={{
+              backgroundColor: primaryColor,
+              color: theme.code === "ibe" ? "#0F172A" : "#FFFFFF",
+            }}
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Questions / Builder</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!ready || isPublishing}
+            onClick={() =>
+              void navigateSaved(
+                `/${instituteCode}/courses/${courseId}/classwork/forms/${form.id}/responses?tab=submissions`
+              )
+            }
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Submissions & Grading</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!ready || isPublishing}
+            onClick={() =>
+              void navigateSaved(
+                `/${instituteCode}/courses/${courseId}/classwork/forms/${form.id}/responses?tab=integrity`
+              )
+            }
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Integrity & Proctoring</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!ready || isPublishing}
+            onClick={() =>
+              void navigateSaved(
+                `/${instituteCode}/courses/${courseId}/classwork/forms/${form.id}/responses?tab=analytics`
+              )
+            }
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-[#8B92A5] hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <BarChart2 className="w-3.5 h-3.5" />
+            <span>Analytics</span>
+          </button>
         </div>
       </header>
 

@@ -143,7 +143,7 @@ export default function FormRenderer({
   // Sync integrity action to backend
   const logIntegrityAction = useCallback(
     async (
-      action: "TAB_SWITCH" | "COPY_PASTE" | "RIGHT_CLICK",
+      action: "TAB_SWITCH" | "COPY_PASTE" | "RIGHT_CLICK" | "FULLSCREEN_EXIT",
       metadata: Record<string, unknown> = {}
     ) => {
       if (isPreview) return;
@@ -153,30 +153,57 @@ export default function FormRenderer({
       if (now - last < 500) return;
       lastLoggedRef.current[action] = now;
 
-      // 1. Patch FormAttempt record with live counts
-      try {
-        fetch(
-          `/api/courses/${courseId}/forms/${form.id}/attempts/${attempt.id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action,
-              tabSwitchCount: tabSwitchCountRef.current,
-              copyPasteCount: copyPasteCountRef.current,
-            }),
-            keepalive: true,
-          }
-        ).catch(() => {});
-      } catch {}
+      // 1. Patch FormAttempt record with live counts (keep existing behavior unchanged)
+      if (action === "TAB_SWITCH" || action === "COPY_PASTE" || action === "RIGHT_CLICK") {
+        try {
+          fetch(
+            `/api/courses/${courseId}/forms/${form.id}/attempts/${attempt.id}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action,
+                tabSwitchCount: tabSwitchCountRef.current,
+                copyPasteCount: copyPasteCountRef.current,
+              }),
+              keepalive: true,
+            }
+          ).catch(() => {});
+        } catch {}
+      }
 
-      // 2. Log to system integrity event table
+      // 2. Log to system integrity event table only when proctoring is enabled in Form Settings
+      const shouldLogIntegrityEvent =
+        action === "TAB_SWITCH"
+          ? Boolean(form.isProctored || form.detectTabSwitch)
+          : action === "COPY_PASTE"
+          ? Boolean(form.isProctored || form.disableCopyPaste)
+          : action === "FULLSCREEN_EXIT"
+          ? Boolean(form.isProctored || form.lockBrowser)
+          : Boolean(
+              form.isProctored ||
+                form.detectTabSwitch ||
+                form.disableCopyPaste ||
+                form.lockBrowser
+            );
+
+      if (!shouldLogIntegrityEvent || !form.syllabusItemId) return;
+
       try {
         const payload = {
-          syllabusItemId: form.syllabusItemId || undefined,
+          syllabusItemId: form.syllabusItemId,
           eventType: action,
-          severity: action === "TAB_SWITCH" ? "MEDIUM" : action === "COPY_PASTE" ? "HIGH" : "LOW",
-          metadata,
+          severity:
+            action === "TAB_SWITCH"
+              ? "MEDIUM"
+              : action === "COPY_PASTE" || action === "FULLSCREEN_EXIT"
+              ? "HIGH"
+              : "LOW",
+          metadata: {
+            attemptId: attempt.id,
+            attemptNumber: attempt.attemptNumber,
+            ...metadata,
+          },
         };
         const blob = new Blob([JSON.stringify(payload)], {
           type: "application/json",
@@ -193,7 +220,18 @@ export default function FormRenderer({
         }
       } catch {}
     },
-    [courseId, form.id, form.syllabusItemId, attempt.id, isPreview]
+    [
+      courseId,
+      form.id,
+      form.syllabusItemId,
+      form.isProctored,
+      form.detectTabSwitch,
+      form.disableCopyPaste,
+      form.lockBrowser,
+      attempt.id,
+      attempt.attemptNumber,
+      isPreview,
+    ]
   );
 
   // Autosave hook
@@ -270,6 +308,32 @@ export default function FormRenderer({
       setCopyPasteCount(copyPasteCountRef.current);
       triggerToast("Cutting text is disabled during assessments.", "COPY_PASTE");
       logIntegrityAction("COPY_PASTE", { action: "cut" });
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const pastedText = e.clipboardData?.getData("text") || "";
+      copyPasteCountRef.current += 1;
+      setCopyPasteCount(copyPasteCountRef.current);
+      if (form.disableCopyPaste || form.isProctored) {
+        triggerToast("Clipboard paste detected — this action has been logged.", "COPY_PASTE");
+      }
+      logIntegrityAction("COPY_PASTE", {
+        action: "paste",
+        charCount: pastedText.length,
+        targetTag: target?.tagName || "UNKNOWN",
+      });
+    };
+
+    const handleFullscreenChange = () => {
+      if (
+        typeof document !== "undefined" &&
+        !document.fullscreenElement &&
+        (form.lockBrowser || form.isProctored)
+      ) {
+        triggerToast("Fullscreen exited — this incident has been logged.", "INFO");
+        logIntegrityAction("FULLSCREEN_EXIT", { action: "fullscreen_exit" });
+      }
     };
 
     // 3. Selection & Drag Prevention outside input fields
@@ -392,10 +456,12 @@ export default function FormRenderer({
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("copy", handleCopy);
     window.addEventListener("cut", handleCut);
+    window.addEventListener("paste", handlePaste);
     window.addEventListener("selectstart", handleSelectStart);
     window.addEventListener("dragstart", handleDragStart);
     window.addEventListener("keydown", handleKeyDown);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     window.addEventListener("blur", handleWindowBlur);
     window.addEventListener("focus", handleWindowFocus);
 
@@ -403,14 +469,25 @@ export default function FormRenderer({
       window.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("copy", handleCopy);
       window.removeEventListener("cut", handleCut);
+      window.removeEventListener("paste", handlePaste);
       window.removeEventListener("selectstart", handleSelectStart);
       window.removeEventListener("dragstart", handleDragStart);
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [isPreview, submissionResult, triggerToast, logIntegrityAction, nativeOwner]);
+  }, [
+    isPreview,
+    submissionResult,
+    triggerToast,
+    logIntegrityAction,
+    nativeOwner,
+    form.disableCopyPaste,
+    form.isProctored,
+    form.lockBrowser,
+  ]);
 
   // Questions with dynamic branching evaluation
   const allQuestions = form.questions || [];

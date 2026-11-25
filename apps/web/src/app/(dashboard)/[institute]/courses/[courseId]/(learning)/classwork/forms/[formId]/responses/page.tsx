@@ -1,15 +1,15 @@
 import { requireFormAccess } from '@/lib/forms/access';
+import { getFormLiveMonitorSnapshot } from '@/lib/forms/live-monitor';
 import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 import { requireLegacyActor } from '@/lib/super-user-v1/legacy-entry-guard';
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
-import InstructorResponseTable from "@/components/forms/results/InstructorResponseTable";
-import FormAnalytics from "@/components/forms/results/FormAnalytics";
-import { ArrowLeft, BarChart2, ListOrdered, Edit3 } from "lucide-react";
-import type { FormAnalyticsData, QuestionAnalyticsItem, QuestionConfig, QuestionType } from "@/types/forms";
+import FormLiveMonitorClient, {
+  type FormMonitorTab,
+} from "@/components/forms/results/FormLiveMonitorClient";
+import type { FormAnalyticsData, QuestionAnalyticsItem, QuestionType } from "@/types/forms";
 
 interface PageProps {
   params: Promise<{
@@ -37,34 +37,36 @@ export default async function FormResponsesPage({ params, searchParams }: PagePr
     redirect(`/${institute}/courses/${courseId}/classwork`);
   }
 
-  const form = await db.form.findUnique({
-    where: { id: formId },
-    include: {
-      questions: { orderBy: { position: "asc" } },
-      attempts: {
-        where: { status: { in: ["SUBMITTED", "TIMED_OUT"] } },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              studentNumber: true,
+  const [form, snapshot] = await Promise.all([
+    db.form.findUnique({
+      where: { id: formId },
+      include: {
+        questions: { orderBy: { position: "asc" } },
+        attempts: {
+          where: { status: { in: ["SUBMITTED", "TIMED_OUT"] } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                studentNumber: true,
+              },
             },
+            answers: true,
           },
-          answers: true,
+          orderBy: { submittedAt: "desc" },
         },
-        orderBy: { submittedAt: "desc" },
       },
-    },
-  });
+    }),
+    getFormLiveMonitorSnapshot(courseId, formId),
+  ]);
 
-  if (!form || form.courseId !== courseId) {
+  if (!form || form.courseId !== courseId || !snapshot) {
     redirect(`/${institute}/courses/${courseId}/classwork`);
   }
 
   const theme = getInstituteTheme(institute);
-  const primaryColor = theme.colors.primary;
 
   // Compute analytics
   const submittedAttempts = form.attempts;
@@ -157,78 +159,24 @@ export default async function FormResponsesPage({ params, searchParams }: PagePr
     questions: questionsAnalytics,
   };
 
+  const initialTab: FormMonitorTab =
+    tab === "integrity"
+      ? "integrity"
+      : tab === "analytics"
+      ? "analytics"
+      : "submissions";
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href={`/${institute}/courses/${courseId}/classwork`}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Classwork</span>
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {form.title} — Responses
-          </h1>
-          <p className="text-xs text-slate-500">
-            {totalAttempts} response{totalAttempts === 1 ? "" : "s"} submitted
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/${institute}/courses/${courseId}/classwork/forms/${formId}/builder`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#12151E] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-xs"
-          >
-            <Edit3 className="w-4 h-4" />
-            <span>Edit Form</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-px text-xs font-semibold">
-        <Link
-          href={`/${institute}/courses/${courseId}/classwork/forms/${formId}/responses?tab=table`}
-          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 transition-colors ${
-            tab === "table"
-              ? "border-primary text-slate-900 dark:text-white"
-              : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-          }`}
-          style={{ borderColor: tab === "table" ? primaryColor : undefined }}
-        >
-          <ListOrdered className="w-4 h-4" />
-          <span>Responses Table ({totalAttempts})</span>
-        </Link>
-
-        <Link
-          href={`/${institute}/courses/${courseId}/classwork/forms/${formId}/responses?tab=analytics`}
-          className={`flex items-center gap-2 px-4 py-2.5 border-b-2 transition-colors ${
-            tab === "analytics"
-              ? "border-primary text-slate-900 dark:text-white"
-              : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-          }`}
-          style={{ borderColor: tab === "analytics" ? primaryColor : undefined }}
-        >
-          <BarChart2 className="w-4 h-4" />
-          <span>Analytics & Insights</span>
-        </Link>
-      </div>
-
-      {/* Tab Views */}
-      {tab === "analytics" ? (
-        <FormAnalytics analytics={analyticsData} theme={theme} />
-      ) : (
-        <InstructorResponseTable
-          attempts={form.attempts as any}
-          courseId={courseId}
-          formId={formId}
-          instituteCode={institute}
-          theme={theme}
-        />
-      )}
+    <div className="py-4">
+      <FormLiveMonitorClient
+        initialSnapshot={snapshot}
+        analytics={analyticsData}
+        courseId={courseId}
+        formId={formId}
+        instituteCode={institute}
+        theme={theme}
+        initialTab={initialTab}
+      />
     </div>
   );
 }
