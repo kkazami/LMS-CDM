@@ -1,17 +1,14 @@
 import React from 'react';
 import { Text } from '../ui/Text';
-import { courseCoverSource } from '../../lib/course-cover';
-import { mobileCourseBannerSource } from '../../lib/mobile-course-banners';
+import { CourseCover } from './CourseCover';
 import { useAuthStore } from '../../stores/auth-store';
 import { StyleSheet, View } from 'react-native';
 import { SurfacePressable as Pressable } from '../motion/SurfacePressable';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpen, ChevronDown, ChevronRight, ChevronUp, MapPin, Users } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import type { Course } from '@lms/types';
 import { useTheme } from '../../hooks/useTheme';
-import { API_BASE_URL } from '../../lib/constants';
 
 export function IbeCourseCard({
   course,
@@ -33,9 +30,6 @@ export function IbeCourseCard({
   const isTeacher = teacher || ['PROFESSOR', 'TEACHER', 'INSTRUCTOR'].includes((user?.role || '').toUpperCase());
   const path = `/${isTeacher ? 'teacher' : 'student'}/courses/${course.id}`;
   const accent = theme.isDark ? '#FFAE19' : '#B8860B';
-  const token = useAuthStore(s => s.token);
-  const image = (course as any).mobileCoverImage || course.coverImage;
-  const cover = mobileCourseBannerSource(image) || courseCoverSource(image, API_BASE_URL, token);
 
   function open(tab?: string) {
     router.push((path + (tab ? `?${isTeacher ? 'initialTab' : 'tab'}=${tab}` : '')) as never);
@@ -52,17 +46,9 @@ export function IbeCourseCard({
     <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`Open course ${course.title}`} onPress={() => open()}>
         <View style={styles.heading}>
-          <LinearGradient colors={gradient} style={styles.thumbnail}>
-            <BookOpen size={24} color="#FFD700" aria-hidden />
-            {cover && (
-              <Image
-                source={cover}
-                contentFit={image?.startsWith('/course-banners/') ? 'contain' : 'cover'}
-                style={StyleSheet.absoluteFill}
-                aria-hidden
-              />
-            )}
-          </LinearGradient>
+          <CourseCover value={course.mobileCoverImage || course.coverImage} contentPosition={!course.mobileCoverImage && course.coverImage?.startsWith('/course-banners/') ? 'right center' : undefined} style={styles.thumbnail} fallback={
+            <LinearGradient colors={gradient} style={[StyleSheet.absoluteFill, styles.placeholder]}><BookOpen size={24} color="#FFD700" aria-hidden /></LinearGradient>
+          } />
           <View style={styles.headingText}>
             <Text style={[styles.courseCode, { color: accent }]}>
               {course.code || 'IBE'}{(course as any).section ? ` · ${(course as any).section}` : ''}
@@ -172,6 +158,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  placeholder: { alignItems: 'center', justifyContent: 'center' },
   headingText: {
     flex: 1,
     minWidth: 0,

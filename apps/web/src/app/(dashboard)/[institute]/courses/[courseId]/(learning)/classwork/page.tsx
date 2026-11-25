@@ -12,9 +12,10 @@ import ClassworkClient from "./client";
 
 type PageProps = {
   params: Promise<{ institute: string; courseId: string }>;
+  searchParams: Promise<{ mobileAction?: string; itemId?: string }>;
 };
 
-export default async function ClassworkPage({ params }: PageProps) {
+export default async function ClassworkPage({ params, searchParams }: PageProps) {
   await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/classwork/page.tsx", await params);
 
   const { institute, courseId } = await params;
@@ -114,8 +115,11 @@ export default async function ClassworkPage({ params }: PageProps) {
     })),
   }));
 
+  const { mobileAction, itemId } = await searchParams;
   return (
     <ClassworkClient
+      mobileAction={canEdit && institute.toLowerCase() === "ics" ? mobileAction : undefined}
+      mobileItemId={itemId}
       labsReady={await labsAvailable()}
       items={serialized}
       courseId={courseId}

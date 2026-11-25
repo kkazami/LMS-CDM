@@ -21,10 +21,9 @@ copy `apps/mobile/.env.example` to `apps/mobile/.env.local` and set
 `EXPO_PUBLIC_API_URL`. This is public app configuration; never put secrets there.
 Use a server origin, such as `https://lms.example.edu`, rather than a login-page URL.
 
-The project uses Expo SDK 57. The phone's Expo Go build must support SDK 57, or use
-a development build matching this project. Installing the latest store app does
-not guarantee a match. See Expo's [version mismatch guide](https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/).
-Keep the project's pinned dependency versions until making a deliberate SDK upgrade.
+The project uses Expo SDK 58. Use [Expo Go for SDK 58 on Android](https://expo.dev/go?device=true&platform=android&sdkVersion=58)
+or a development build matching this project. Keep the project's pinned dependency
+versions until making a deliberate SDK upgrade.
 
 For local API work, set `EXPO_PUBLIC_API_URL=auto`, start `pnpm dev:web` in another
 terminal, and keep the phone and computer on the same network. Automatic discovery
@@ -58,18 +57,37 @@ code. An old QR code can point at a different computer or a previous Wi-Fi addre
 Keep both devices on the same non-guest network; VPNs, client isolation, or a
 firewall blocking Node's private-network traffic can block the developer connection.
 
-For different networks or a troublesome Wi-Fi connection, use:
+### “Failed to download remote update” in Expo Go
+
+This error can occur when Expo Go cannot fetch the development bundle. On the same
+Wi-Fi, stop the old Metro process and try `pnpm dev:mobile:clear --go`. Keep Metro
+running and scan its fresh QR code from Expo Go. If it still fails, open the Metro
+LAN address with `/status` appended in the phone's browser (replace `exp://` with
+`http://`). A `packager-status:running` response confirms the phone can reach Metro.
+Check the Metro terminal for an Android bundling error when scanning again.
+
+For different networks or a troublesome Wi-Fi connection, sign in to Expo CLI and
+use the default SDK 58 tunnel. Wait for the tunnel to connect before scanning:
 
 ```sh
-pnpm dev:mobile:tunnel
+pnpm --filter mobile exec expo login
+pnpm dev:mobile:tunnel --go --clear
 ```
+
+The `ngrok` argument explicitly selects the legacy tunnel provider. If the terminal
+says it is falling back to a LAN URL, that QR code requires the phone to reach the
+computer over the local network. See the [SDK 58 tunnel notes](https://expo.dev/changelog/sdk-58#a-faster-more-reliable-expo-cli-tunnel).
+
+If tunnel startup exits with `ETIMEDOUT` before it shows a QR code, you can start
+Metro on the same Wi-Fi with `pnpm dev:mobile --go --offline`. Expo CLI skips its
+own network requests in this mode. The mobile app still needs access to its API.
 
 For Android over USB, install Android SDK Platform-Tools, enable USB debugging,
 connect the phone, and approve its debugging prompt. Check that `adb devices`
 shows the intended device as `device`, then run:
 
 ```sh
-pnpm dev:mobile:usb
+pnpm dev:mobile:usb --go --android
 ```
 
 That command forwards the phone's port 8081 to this computer and starts Expo on

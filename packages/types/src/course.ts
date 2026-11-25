@@ -17,6 +17,7 @@ export interface Course {
 }
 
 export interface CourseDetail extends Course {
+  pendingWorkCount?: number;
   description: string | null;
   instructorId: string | null;
   instituteId: string;
@@ -75,7 +76,7 @@ export interface ClassworkSubmission {
 
 export interface ClassworkItem {
   id: string;
-  type: 'ASSIGNMENT' | 'QUIZ' | 'MATERIAL' | 'EXAM' | 'PROJECT' | 'ACTIVITY';
+  type: string;
   formId?: string | null;
   opensAt?: string | null;
   title: string;
@@ -83,6 +84,7 @@ export interface ClassworkItem {
   maxPoints?: number | null;
   dueDate?: string | null;
   labAssignmentId?: string | null;
+  labStartsAt?: string | null;
   labStatus?: string | null;
   labUrl?: string | null;
   orderIndex: number;

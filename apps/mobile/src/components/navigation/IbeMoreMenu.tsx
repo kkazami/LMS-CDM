@@ -283,9 +283,9 @@ export function IbeMoreMenu({
     }
   }
 
-  async function handleLeave() {
+  function handleLeave() {
     close();
-    await logout();
+    void logout();
     router.replace('/(auth)/login');
   }
 

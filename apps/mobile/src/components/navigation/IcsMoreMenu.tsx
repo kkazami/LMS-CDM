@@ -73,7 +73,7 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
             </Pressable>)}
           </ScrollView>
           <View style={[styles.footer, { borderColor: theme.colors.border }]}>
-            <Pressable accessibilityRole="button" style={[styles.signOut, { backgroundColor: theme.isDark ? '#401C29' : '#FFF1F2', borderColor: theme.isDark ? '#88334C' : '#FFB7C7' }]} onPress={() => { setOpen(false); void logout().then(() => router.replace('/(auth)/login')); }}>
+            <Pressable accessibilityRole="button" style={[styles.signOut, { backgroundColor: theme.isDark ? '#401C29' : '#FFF1F2', borderColor: theme.isDark ? '#88334C' : '#FFB7C7' }]} onPress={() => { setOpen(false); void logout(); router.replace('/(auth)/login'); }}>
               <LogOut size={17} color={theme.isDark ? '#FDA4AF' : '#BE123C'} /><Text style={{ color: theme.isDark ? '#FDA4AF' : '#BE123C', fontSize: 14, fontWeight: '600' }}>Sign Out</Text>
             </Pressable>
           </View>

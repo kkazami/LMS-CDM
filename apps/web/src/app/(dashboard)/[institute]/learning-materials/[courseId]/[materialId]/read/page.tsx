@@ -90,7 +90,7 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
 
   if (!activeAttachment) {
     return (
-      <div className="flex h-[80vh] flex-col items-center justify-center">
+      <div className="flex flex-col items-center py-12 text-center">
         <h2 className="text-xl font-bold">No file available for this module.</h2>
         <Link href={`/${institute}/learning-materials/${courseId}`} className="mt-4 cursor-pointer text-indigo-600 hover:underline">
           Go back to course materials
@@ -100,9 +100,9 @@ export default async function ReadingScreenPage({ params, searchParams }: Props)
   }
 
   return (
-    <div className="page-enter flex h-[calc(100dvh-8rem)] flex-col">
+    <div data-material-reader className="flex min-h-[24rem] flex-1 flex-col">
       {/* Header bar */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-white/10">
+      <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-white/10">
         <div className="flex min-w-0 items-center gap-4">
           <Link
             href={`/${institute}/learning-materials/${courseId}`}

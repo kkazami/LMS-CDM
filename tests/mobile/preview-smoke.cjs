@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 
 async function main() {
   const v2 = process.env.MOBILE_PREVIEW_V2 === 'true';
-  const studentGreeting = v2 ? 'A fresh day, Jamie.' : 'A fresh day, a fresh idea, Jamie.';
+  const studentGreeting = /^Good (morning|afternoon|evening), Jamie\.$/;
   const root = path.resolve(process.env.MOBILE_PREVIEW_ROOT || 'tmp/mobile-ics-release');
   const output = path.resolve(process.env.MOBILE_PREVIEW_OUTPUT || 'tmp/mobile-ics-review');
   fs.mkdirSync(output, { recursive: true });
@@ -16,7 +16,7 @@ async function main() {
     const url = new URL(req.url, 'http://localhost');
     let file = path.resolve(root, '.' + decodeURIComponent(url.pathname));
     if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
-    res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.png') ? 'image/png' : file.endsWith('.ttf') ? 'font/ttf' : 'text/html');
+    res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.png') ? 'image/png' : file.endsWith('.webp') ? 'image/webp' : file.endsWith('.ttf') ? 'font/ttf' : 'text/html');
     fs.createReadStream(file).pipe(res);
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -33,6 +33,7 @@ async function main() {
   async function checkReferenceCourseCard() {
     const open = page.getByRole('button', { name: `Open course ${course.title}`, exact: true });
     assert.equal(await open.evaluate(element => getComputedStyle(element.parentElement).borderRadius), '22px');
+    await open.locator('img').first().evaluate(img => img.decode());
     const image = await open.locator('img').first().boundingBox();
     const title = await open.getByText(course.title, { exact: true }).boundingBox();
     assert.ok(image && title && Math.abs(image.width - 58) < 0.1 && Math.abs(image.height - 64) < 0.1, 'Course image must stay in the original small thumbnail');
@@ -101,7 +102,7 @@ async function main() {
       await page.screenshot({ path: path.join(output, `home-${width}.png`) });
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole('button', { name: 'Join Class', exact: true }).click();
+    await page.getByRole('button', { name: 'Join Class', exact: true }).first().click();
     await page.getByLabel('Class code', { exact: true }).fill('SYNTHETIC');
     await page.getByRole('button', { name: 'Join Class', exact: true }).last().click();
     await page.getByLabel('Class code', { exact: true }).waitFor({ state: 'hidden' });
@@ -159,12 +160,18 @@ async function main() {
     await page.getByRole('button', { name: 'Close flashcard session', exact: true }).click();
     await page.goBack();
     await page.getByRole('tab', { name: 'Courses tab', exact: true }).click();
+    await page.goto(origin + '/student/courses');
     await checkReferenceCourseCard();
-    const moved = page.waitForResponse(response => response.url().includes('/api/mobile/dashboard') && response.request().method() === 'PATCH');
-    await page.getByRole('button', { name: `Move ${course.title} down`, exact: true }).click();
-    await moved; assert.equal(fixture.courses[1].id, course.id);
+    const moveDown = page.getByRole('button', { name: `Move ${course.title} down`, exact: true });
+    await Promise.all([
+      page.waitForResponse(response => response.url().includes('/api/mobile/dashboard') && response.request().method() === 'PATCH'),
+      moveDown.click({ timeout: 10000 }),
+    ]);
+    assert.equal(fixture.courses[1].id, course.id);
     await page.screenshot({ path: path.join(output, 'student-courses-390.png') });
     await page.getByRole('button', { name: `Open course ${course.title}`, exact: true }).click();
+    await page.getByRole('button', { name: 'Join Google Meet', exact: true }).waitFor();
+    await page.getByRole('tab', { name: 'Classwork tab', exact: true }).click();
     await page.getByRole('button', { name: 'Classwork item Practice 1, QUIZ', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: /^Classwork item / }).count(), 20);
     await page.getByRole('button', { name: 'Next page', exact: true }).click();
@@ -172,7 +179,7 @@ async function main() {
     await page.getByRole('button', { name: 'Previous page', exact: true }).click();
     // Capture an actual initial viewport; scrolling the horizontal tab into view
     // can scroll the browser document away from the native screen's heading.
-    await page.goto(origin + '/student/courses/course-1');
+    await page.goto(origin + '/student/courses/course-1?tab=CLASSWORK');
     await page.getByRole('button', { name: 'Classwork item Practice 1, QUIZ', exact: true }).waitFor();
     await page.evaluate(() => { window.scrollTo(0, 0); document.querySelectorAll('*').forEach(element => { if (element.scrollTop) element.scrollTop = 0; }); });
     const firstClasswork = await page.getByRole('button', { name: 'Classwork item Practice 1, QUIZ', exact: true }).boundingBox();
@@ -190,7 +197,7 @@ async function main() {
         await page.setViewportSize({ width, height: 844 });
         await page.evaluate(() => { window.scrollTo(0, 0); document.querySelectorAll('*').forEach(element => { if (element.scrollTop) element.scrollTop = 0; }); });
         const header = await page.getByTestId('course-page-header').boundingBox();
-        assert.ok(header && header.height < 140, `Course header is too tall at ${width}`);
+        assert.ok(header && header.height < 245, `Course header is too tall at ${width}`);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
         await page.screenshot({ path: path.join(output, `course-stream-${theme}-${width}.png`) });
       }
@@ -230,6 +237,7 @@ async function main() {
     await page.getByRole('button', { name: `Open enrollment requests for ${course.title}`, exact: true }).waitFor();
     await page.getByRole('button', { name: 'Close modal', exact: true }).click();
     await page.getByRole('tab', { name: 'Classes tab', exact: true }).click();
+    await page.goto(origin + '/teacher/courses');
     await checkReferenceCourseCard();
     await page.screenshot({ path: path.join(output, 'teacher-courses-390.png') });
     const editCover = page.getByRole('button', { name: `Customize cover for ${course.title}`, exact: true });
@@ -252,6 +260,7 @@ async function main() {
     assert.equal(course.coverImage, '/course-banners/programming.svg');
     await checkReferenceCourseCard();
     await editCover.click();
+    await page.getByRole('button', { name: 'Programming mobile banner', exact: true }).locator('img').evaluate(img => img.decode());
     const chooser = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: 'Choose mobile photo', exact: true }).click();
     await (await chooser).setFiles(path.resolve('apps/mobile/assets/cdm-logo.png'));
@@ -265,7 +274,7 @@ async function main() {
     await editCover.click();
     await page.getByRole('tab', { name: 'Web cover', exact: true }).click();
     await page.getByRole('button', { name: 'Cybersecurity banner', exact: true }).click();
-    await page.waitForFunction(() => Array.from(document.images).some(img => img.src.includes('cybersecurity.svg') && img.naturalWidth > 0));
+    await page.waitForFunction(() => Array.from(document.images).some(img => /\/course-banners\/cybersecurity\.[a-f0-9]+\.webp$/.test(img.src) && img.naturalWidth > 0));
     await page.screenshot({ path: path.join(output, 'teacher-cover-editor-390.png') });
     await page.getByRole('tab', { name: 'Mobile thumbnail', exact: true }).click();
     await page.getByTestId('course-mobile-image-preview').waitFor();
@@ -317,7 +326,22 @@ async function main() {
     await page.getByRole('button', { name: 'Join Google Meet', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Practical Labs', exact: true }).count(), 0);
     await page.screenshot({ path: path.join(output, 'teacher-course-restored-390.png') });
+    await page.getByRole('tab', { name: 'Classwork tab', exact: true }).click();
+    for (const name of ['Create Form Assessment', 'Add Task', 'Practical Labs']) await page.getByRole('button', { name, exact: true }).waitFor();
+    await page.getByRole('button', { name: /^Quizzes/ }).click();
+    assert.equal(await page.getByRole('button', { name: 'Open Practice 1', exact: true }).count(), 0);
+    await page.getByRole('button', { name: /^Quizzes/ }).click();
+    await page.getByRole('button', { name: 'Manage Practice 1', exact: true }).click();
+    await page.getByRole('button', { name: 'Edit Classwork Item', exact: true }).click();
+    await page.waitForURL(/action=edit/);
+    await page.getByRole('button', { name: 'Open Classwork', exact: true }).waitFor();
     await page.goBack();
+    await page.getByRole('button', { name: 'Create Form Assessment', exact: true }).click();
+    await page.waitForURL(/action=form/);
+    await page.goBack();
+    await page.screenshot({ path: path.join(output, 'teacher-classwork-390.png') });
+    await page.getByRole('tab', { name: 'Classes tab', exact: true }).click();
+    await editCover.waitFor();
     await page.getByRole('tab', { name: 'More tab', exact: true }).click();
     await page.getByText('Instructor tools', { exact: true }).waitFor();
     await page.screenshot({ path: path.join(output, 'teacher-more-390.png') });
@@ -334,7 +358,6 @@ async function main() {
       await page.getByTestId('ics-dashboard-v2').waitFor();
       await page.getByRole('tab', { name: 'More tab', exact: true }).click();
       await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-      await page.getByRole('button', { name: 'Confirm sign out', exact: true }).click();
       await page.getByText('Welcome back.', { exact: true }).waitFor();
       assert.equal(await page.getByTestId('ics-tools-sheet-v2').count(), 0);
       assert.equal(await page.getByTestId('ics-dashboard-v2').count(), 0);

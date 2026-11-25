@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { AccessibilityInfo, Platform, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react-native';
+import { CheckCircle2, ChevronRight } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import type { MobileCourse } from '@lms/types';
 import { FormModal } from '../ui/FormModal';
@@ -15,9 +15,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useResponsive } from '../../hooks/useResponsive';
 import { scopeIsCurrent, studentScope } from '../../lib/student-scope';
 import { useAnnouncement } from '../../hooks/useAnnouncement';
-import { courseCoverSource, courseCoverUploadFile } from '../../lib/course-cover';
-import { mobileCourseBanners, mobileCourseBannerSource } from '../../lib/mobile-course-banners';
-import { API_BASE_URL } from '../../lib/constants';
+import { courseCoverUploadFile } from '../../lib/course-cover';
+import { mobileCourseBanners } from '../../lib/mobile-course-banners';
 
 const presets = [['programming', 'Programming'], ['database', 'Database'], ['networking', 'Networking'], ['webdev', 'Web development'], ['cybersecurity', 'Cybersecurity']] as const;
 type Target = 'mobile' | 'web';
@@ -26,7 +25,7 @@ type Draft = { selected: string | null; photo: ImagePicker.ImagePickerAsset | nu
 export function CourseCoverEditor({ course, onClose }: { course: MobileCourse; onClose: () => void }) {
   const theme = useTheme(), client = useQueryClient();
   const { height, insets } = useResponsive();
-  const api = useAuthStore(s => s.api), user = useAuthStore(s => s.user), token = useAuthStore(s => s.token);
+  const api = useAuthStore(s => s.api), user = useAuthStore(s => s.user);
   const scope = useRef(studentScope()).current;
   const [target, setTarget] = useState<Target>('mobile');
   const [drafts, setDrafts] = useState<Record<Target, Draft>>({
@@ -38,7 +37,6 @@ export function CourseCoverEditor({ course, onClose }: { course: MobileCourse; o
   const draft = drafts[target], changed = drafts.web.changed || drafts.mobile.changed;
   const mobileReady = Object.hasOwn(course, 'mobileCoverImage');
   const preview = target === 'mobile' && !draft.selected && !draft.photo ? drafts.web : draft;
-  const previewSource = preview.photo ? { uri: preview.photo.uri } : mobileCourseBannerSource(preview.selected) || courseCoverSource(preview.selected, API_BASE_URL, token);
   useAnnouncement(error || (busy ? 'Saving class images' : undefined), true);
   function change(selected: string | null, photo: ImagePicker.ImagePickerAsset | null = null) {
     setDrafts(previous => ({ ...previous, [target]: { selected, photo, changed: true } })); setError('');
@@ -97,16 +95,13 @@ export function CourseCoverEditor({ course, onClose }: { course: MobileCourse; o
       <Text style={{ color: theme.colors.textSecondary, fontSize: 14, lineHeight: 22 }}>{target === 'mobile' ? 'Choose a square banner or photo for the mobile tile. Your wide web cover stays separate.' : 'Choose the wide cover shown in the web app. Your mobile thumbnail stays separate.'}</Text>
       {target === 'mobile' ? <>
         <View testID="course-mobile-image-preview" accessibilityLabel="Mobile course card preview" style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: theme.colors.cardSecondary }}>
-          <View style={{ width: 58, height: 64, borderRadius: 16, backgroundColor: '#243B4B', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-            <BookOpen size={25} color="#FFFFFF" />
-            {!!previewSource && <Image source={previewSource} contentFit={preview.selected?.startsWith('/course-banners/') ? 'contain' : 'cover'} style={{ position: 'absolute', inset: 0 }} />}
-          </View>
+          <CourseCover value={preview.selected} localUri={preview.photo?.uri} contentPosition={preview === drafts.web && preview.selected?.startsWith('/course-banners/') ? 'right center' : undefined} style={{ width: 58, height: 64, borderRadius: 16 }} />
           <View style={{ flex: 1, minWidth: 0, gap: 4 }}><Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>{course.courseCode || course.code}{course.section ? ` · ${course.section}` : ''}</Text><Text style={{ color: theme.colors.text, fontSize: 16, lineHeight: 24, fontWeight: '700' }}>{course.title}</Text></View>
           <ChevronRight size={18} color={theme.colors.textSecondary} />
         </View>
-        {!draft.selected && <Text style={{ color: theme.colors.textSecondary, fontSize: 13 }}>Currently using the web cover.</Text>}
+        {!draft.selected && !!(preview.selected || preview.photo) && <Text style={{ color: theme.colors.textSecondary, fontSize: 13 }}>Currently using the web cover.</Text>}
         {!mobileReady && <Text style={{ color: theme.colors.textSecondary, fontSize: 13 }}>Mobile image saving will be available after the LMS update.</Text>}
-      </> : <View style={{ borderRadius: 16, overflow: 'hidden' }}>{draft.photo ? <Image source={{ uri: draft.photo.uri }} contentFit="cover" style={{ width: '100%', aspectRatio: 3.2 }} /> : <CourseCover value={draft.selected} />}</View>}
+      </> : <CourseCover value={draft.selected} localUri={draft.photo?.uri} style={{ width: '100%', aspectRatio: 3.2, borderRadius: 16 }} />}
       <Button title={picking ? 'Opening photos…' : target === 'mobile' ? 'Choose mobile photo' : 'Choose web photo'} variant="outline" disabled={busy || picking} onPress={() => { void pick(); }} />
       {target === 'mobile' && <>
         <Text accessibilityRole="header" style={{ color: theme.colors.text, fontWeight: '700' }}>Mobile class banners</Text>

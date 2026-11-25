@@ -14,6 +14,11 @@ test('deduplicates meetings and supports lookup links and multiple meetings', ()
     ]);
 });
 
+test('recognizes meeting codes that contain digits', () => {
+    const link = 'https://meet.google.com/abc-defg-h4j?authuser=1';
+    assert.deepEqual(googleMeetLinks(`Join before 10:30 AM.\n\n${link}`), [link]);
+});
+
 test('rejects lookalike hosts, credentials, invalid meeting paths and non-HTTPS links', () => {
     for (const link of ['http://meet.google.com/abc-defg-hij', 'https://meet.google.com.example.org/abc-defg-hij', 'https://meet.google.com@evil.example/abc-defg-hij', 'https://user:secret@meet.google.com/abc-defg-hij', 'https://meet.google.com:8080/abc-defg-hij', 'https://meet.google.com/not-a-meeting', 'javascript:alert(1)']) {
         assert.deepEqual(googleMeetLinks(link), [], link);

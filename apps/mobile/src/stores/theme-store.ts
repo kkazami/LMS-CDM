@@ -4,6 +4,13 @@ import { Appearance } from 'react-native';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ThemeOrigin = { x: number; y: number };
+type ThemeTransition = (origin: ThemeOrigin | undefined, apply: () => Promise<void>) => Promise<void>;
+let transition: ThemeTransition | undefined;
+
+export function registerThemeTransition(handler: ThemeTransition) {
+  transition = handler;
+  return () => { if (transition === handler) transition = undefined; };
+}
 
 interface ThemeState {
   themePreference: ThemePreference;
@@ -42,7 +49,8 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     await preferenceWrite;
   },
 
-  // Paint immediately; capturing the entire screen before changing theme caused
-  // a noticeable pause on Android and blocked subsequent taps.
-  toggleTheme: () => get().setThemePreference(get().isDark ? 'light' : 'dark'),
+  toggleTheme: origin => {
+    const apply = () => get().setThemePreference(get().isDark ? 'light' : 'dark');
+    return transition ? transition(origin, apply) : apply();
+  },
 }));

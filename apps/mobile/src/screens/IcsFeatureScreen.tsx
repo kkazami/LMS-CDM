@@ -18,12 +18,12 @@ import { featureUrlIsTrusted, icsFeaturePath, type IcsFeature } from '../lib/ics
 import { PracticalLabsScreen } from './PracticalLabsScreen';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
-const TITLES: Record<IcsFeature, string> = { codelab: 'CodeLab', ohmward: 'Ohmward', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
+const TITLES: Record<IcsFeature, string> = { codelab: 'CodeLab', ohmward: 'Ohmward', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', classwork: 'Classwork', 'course-tools': 'Class Tools', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
 
 export function IcsFeatureScreen({ feature }: { feature: IcsFeature }) {
-  const { courseId, assignmentId, formId, postId, view } = useLocalSearchParams<{ courseId?: string; assignmentId?: string; formId?: string; postId?: string; view?: string }>();
+  const { courseId, assignmentId, formId, postId, view, itemId, action } = useLocalSearchParams<{ courseId?: string; assignmentId?: string; formId?: string; postId?: string; view?: string; itemId?: string; action?: string }>();
   if (feature === 'practical-labs' && !courseId) return <PracticalLabsScreen />;
-  const path = feature === 'codelab' && view === 'instructor' ? '/ics/activities/codelab/instructor' : icsFeaturePath(feature, courseId, feature === 'assessment' ? formId : assignmentId, postId);
+  const path = feature === 'codelab' && view === 'instructor' ? '/ics/activities/codelab/instructor' : icsFeaturePath(feature, courseId, feature === 'assessment' ? formId : itemId ?? assignmentId, postId, action);
   return <FeatureWorkspace key={`${feature}:${path}`} feature={feature} path={path} />;
 }
 
@@ -48,7 +48,10 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
   const [attempt, setAttempt] = useState(0);
   const failed = useRef(false);
   const ready = useRef(false);
-  const allowed = isIcsUser(user) && !!token && !!path && (verified || ready.current);
+  const instructorTools = feature === 'classwork' || feature === 'course-tools';
+  const isInstructor = ['PROFESSOR', 'TEACHER'].includes(user?.role.toUpperCase() || '');
+  const allowed = isIcsUser(user) && !!token && !!path && (verified || ready.current)
+    && (!instructorTools || isInstructor);
   const source = React.useMemo(() => ({
     uri: `${API_BASE_URL}/api/auth/mobile-session?returnTo=${encodeURIComponent(path || '')}`,
     headers: { Authorization: `Bearer ${token}` },
@@ -128,7 +131,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
       {sessionExpired ? <Button title="Sign in again" onPress={() => { void logout().then(() => router.replace('/(auth)/login')); }} />
         : allowed && <Button title="Try again" icon={RefreshCw} onPress={retry} />}
       <Button title="Go back" variant="ghost" onPress={() => router.back()} />
-      {!hybridReady && <Button title="Continue in the web portal" onPress={() => { void openSafeUrl(`${API_BASE_URL}${path}`); }} />}
+      {(!hybridReady || error && instructorTools) && !!path && <Button title="Continue in the web portal" onPress={() => { void openSafeUrl(`${API_BASE_URL}${path}`); }} />}
       {feature === 'assessment' && process.env.EXPO_PUBLIC_ICS_ASSESSMENTS_ENABLED === 'false' && <Button title="Continue in the web portal" onPress={() => { void openSafeUrl(`${API_BASE_URL}${path}`); }} />}
     </View> : Platform.OS === 'web' ? <View style={styles.state}>
       <Text style={[styles.message, { color: theme.colors.textSecondary }]}>Use the iOS or Android app for the in-app workspace. In this browser preview, continue in the web portal.</Text>
@@ -192,7 +195,7 @@ function FeatureWorkspace({ feature, path }: { feature: IcsFeature; path: string
       />
       {loading && <View style={[StyleSheet.absoluteFill, styles.state, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: theme.colors.textSecondary }]}>Opening {title}â€¦</Text>
+        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: theme.colors.textSecondary }]}>Opening {title}…</Text>
       </View>}
       {feature === 'assessment' && isOffline && ready.current && <View style={[StyleSheet.absoluteFill, styles.state, { backgroundColor: theme.colors.background }]}>
         <Text accessibilityRole="alert" style={[styles.message, { color: theme.colors.text }]}>Connection lost. Reconnect to continue. Keep this screen open while your answers recover; the assessment deadline still applies.</Text>

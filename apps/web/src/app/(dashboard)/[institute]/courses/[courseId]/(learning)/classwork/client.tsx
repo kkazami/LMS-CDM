@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { InstituteTheme } from "@/lib/theme";
@@ -71,6 +71,8 @@ function SubmitButton({
   );
 }
 
+const predefinedTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL", "ACTIVITY", "RECITATION", "MIDTERM_EXAM", "FINAL_EXAM"];
+
 const initialState = {
   message: "",
   errors: undefined as Record<string, string[]> | undefined,
@@ -84,6 +86,8 @@ export default function ClassworkClient({
   canEdit,
   labsReady = true,
   studentGroups,
+  mobileAction,
+  mobileItemId,
 }: {
   items: SyllabusItemData[];
   courseId: string;
@@ -92,6 +96,8 @@ export default function ClassworkClient({
   canEdit: boolean;
   labsReady?: boolean;
   studentGroups: StudentGroup[];
+  mobileAction?: string;
+  mobileItemId?: string;
 }) {
   const router = useRouter();
   const [deletingItem, setDeletingItem] = useState<SyllabusItemData | null>(null);
@@ -111,7 +117,6 @@ export default function ClassworkClient({
   const [leaderboardEnabled, setLeaderboardEnabled] = useState(false);
   const [rewardTiers, setRewardTiers] = useState<{placement: number; rewardLabel: string; bonusExp: number}[]>([]);
 
-  const predefinedTypes = ["ASSIGNMENT", "QUIZ", "MATERIAL", "ACTIVITY", "RECITATION", "MIDTERM_EXAM", "FINAL_EXAM"];
   const isIte = instituteCode?.toLowerCase() === "ite";
 
   const [state, formAction] = useActionState(
@@ -136,7 +141,7 @@ export default function ClassworkClient({
     }
   }, [state]);
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     setEditingItem(null);
     setSelectedGroups([]);
     setAttachments([]);
@@ -149,9 +154,9 @@ export default function ClassworkClient({
     setLeaderboardEnabled(false);
     setRewardTiers([]);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (item: SyllabusItemData) => {
+  const handleEdit = useCallback((item: SyllabusItemData) => {
     setEditingItem(item);
     setSelectedGroups(item.targetGroups.map((tg) => tg.groupId));
     setEnableIntegrity(Boolean(item.enableIntegrityMonitoring));
@@ -180,12 +185,27 @@ export default function ClassworkClient({
     }
     
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleDelete = (itemId: string) => {
     const item = items.find(row => row.id === itemId);
     if (item && canEdit) { setDeleteNotice(''); setDeletingItem(item); }
   };
+
+  const openedAction = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canEdit || !mobileAction) return;
+    const key = `${mobileAction}:${mobileItemId ?? ''}`;
+    if (openedAction.current === key) return;
+    openedAction.current = key;
+    if (mobileAction === 'add') handleCreate();
+    const item = items.find(row => row.id === mobileItemId);
+    if (item && mobileAction === 'edit') handleEdit(item);
+    if (item && mobileAction === 'delete') {
+      setDeleteNotice('');
+      setDeletingItem(item);
+    }
+  }, [canEdit, mobileAction, mobileItemId, items, handleCreate, handleEdit]);
 
   const toggleGroup = (groupId: string) => {
     setSelectedGroups((prev) =>

@@ -1,16 +1,17 @@
 import * as Sentry from '@sentry/react-native';
 import { navigationMonitoring } from '../src/lib/sentry';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Slot, useNavigationContainerRef, usePathname, useGlobalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
-import { StyleSheet, LogBox, View, AppState, Appearance } from 'react-native';
+import { StyleSheet, LogBox, View, AppState, Appearance, type LayoutRectangle } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../src/lib/query-client';
 import { useThemeStore } from '../src/stores/theme-store';
 import { useAuthStore } from '../src/stores/auth-store';
+import { ThemeReveal } from '../src/components/motion/ThemeReveal';
 import { OfflineNotice } from '../src/components/common/OfflineNotice';
 import { Toaster } from 'burnt/web';
 import { syncCardQueue } from '../src/lib/flashcard-queue';
@@ -29,6 +30,8 @@ LogBox.ignoreLogs([
 ]);
 
 function RootLayout() {
+  const contentRef = useRef<React.ComponentRef<typeof View>>(null);
+  const [contentLayout, setContentLayout] = useState<LayoutRectangle | null>(null);
   useEffect(() => observeUsefulContent((screen, value) => Sentry.setMeasurement(`mobile.${screen}.useful_content`, value, 'millisecond')), []);
   const pathname = usePathname(), params = useGlobalSearchParams();
   const userId = useAuthStore(s => s.user?.id);
@@ -79,6 +82,9 @@ function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           <View
+            ref={contentRef}
+            collapsable={false}
+            onLayout={({ nativeEvent }) => setContentLayout(nativeEvent.layout)}
             style={[
               styles.container,
               { backgroundColor: isDark ? '#0F1117' : '#FAF8F1' },
@@ -88,6 +94,7 @@ function RootLayout() {
             <Slot />
             <Toaster />
           </View>
+          <ThemeReveal route={pathname} contentRef={contentRef} contentLayout={contentLayout} />
         </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

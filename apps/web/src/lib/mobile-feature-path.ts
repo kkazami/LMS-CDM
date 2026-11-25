@@ -4,6 +4,6 @@ export function mobileFeaturePath(value: string | null): string | null {
   const url = new URL(value, 'https://mobile.invalid');
   if (url.origin !== 'https://mobile.invalid' || url.pathname !== value.split(/[?#]/)[0]) return null;
   const segment = '[A-Za-z0-9_-]+';
-  const allowed = new RegExp(`^/ics/(?:teachers|organization|manage-leaderboard|courses/archived|activities/codelab(?:/${segment}){0,2}|activities/ohmward(?:/(?:primer|sandbox|progress|modules/${segment}|levels/${segment}|instructor(?:/students/${segment})?))?|knowledge-exchange(?:/${segment}){0,3}|courses/${segment}/(?:labs(?:/${segment})?|classwork/forms/${segment}(?:/respond)?))$`);
+  const allowed = new RegExp(`^/ics/(?:teachers|organization|manage-leaderboard|courses/archived|activities/codelab(?:/${segment}){0,2}|activities/ohmward(?:/(?:primer|sandbox|progress|modules/${segment}|levels/${segment}|instructor(?:/students/${segment})?))?|knowledge-exchange(?:/${segment}){0,3}|courses/${segment}/(?:people|gradebook|labs(?:/${segment})?|classwork(?:/(?:forms/${segment}(?:/respond)?|${segment}))?))$`);
   return allowed.test(url.pathname) ? url.pathname + url.search + url.hash : null;
 }

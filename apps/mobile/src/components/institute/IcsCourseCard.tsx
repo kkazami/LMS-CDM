@@ -1,35 +1,27 @@
 import React, { useState } from 'react';
 import { Text } from '../ui/Text';
+import { CourseCover } from './CourseCover';
 import { CourseCoverEditor } from './CourseCoverEditor';
-import { courseCoverSource } from '../../lib/course-cover';
-import { mobileCourseBannerSource } from '../../lib/mobile-course-banners';
-import { useAuthStore } from '../../stores/auth-store';
 import { StyleSheet, View } from 'react-native';
 import { SurfacePressable as Pressable } from '../motion/SurfacePressable';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpen, ChevronDown, ChevronRight, ChevronUp, MapPin, Users } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import type { MobileCourse } from '@lms/types';
 import { useTheme } from '../../hooks/useTheme';
-import { API_BASE_URL } from '../../lib/constants';
 
 export function IcsCourseCard({ course, teacher, index, count, saving, onMove }: { course: MobileCourse; teacher: boolean; index: number; count: number; saving: boolean; onMove: (index: number, direction: number) => void }) {
   const theme = useTheme(), router = useRouter();
   const path = `/${teacher ? 'teacher' : 'student'}/courses/${course.id}`;
   const accent = theme.isDark ? '#FFAE79' : '#B84400';
-  const token = useAuthStore(s => s.token);
-  const image = course.mobileCoverImage || course.coverImage;
-  const cover = mobileCourseBannerSource(image) || courseCoverSource(image, API_BASE_URL, token);
   const [editingCover, setEditingCover] = useState(false);
   function open(tab?: string) { router.push((path + (tab ? `?${teacher ? 'initialTab' : 'tab'}=${tab}` : '')) as never); }
   return <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Open course ${course.title}`} onPress={() => open()}>
       <View style={styles.heading}>
-        <LinearGradient colors={index % 3 === 0 ? ['#3D1976', '#160B29'] : index % 3 === 1 ? ['#154638', '#071C16'] : ['#243B4B', '#0E1821']} style={styles.thumbnail}>
-          <BookOpen size={25} color="#FFFFFF" aria-hidden />
-          {cover && <Image source={cover} contentFit={image?.startsWith('/course-banners/') ? 'contain' : 'cover'} style={StyleSheet.absoluteFill} aria-hidden />}
-        </LinearGradient>
+        <CourseCover value={course.mobileCoverImage || course.coverImage} contentPosition={!course.mobileCoverImage && course.coverImage?.startsWith('/course-banners/') ? 'right center' : undefined} style={styles.thumbnail} fallback={
+            <LinearGradient colors={index % 3 === 0 ? ['#3D1976', '#160B29'] : index % 3 === 1 ? ['#154638', '#071C16'] : ['#243B4B', '#0E1821']} style={[StyleSheet.absoluteFill, styles.placeholder]}><BookOpen size={25} color="#FFFFFF" aria-hidden /></LinearGradient>
+          } />
         <View style={styles.headingText}>
           <Text style={[styles.courseCode, { color: accent }]}>{course.courseCode || course.code}{course.section ? ` · ${course.section}` : ''}</Text>
           <Text style={[styles.title, { color: theme.colors.text }]}>{course.title}</Text>
@@ -40,7 +32,7 @@ export function IcsCourseCard({ course, teacher, index, count, saving, onMove }:
     </Pressable>
     <View style={styles.body}>
       <View style={styles.metadata}><Users size={15} color={theme.colors.textSecondary} /><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{teacher ? `${course.enrolledCount ?? 0} enrolled students` : course.instructorName || 'Instructor to be assigned'}</Text></View>
-      {!!course.room && <View style={styles.metadata}><MapPin size={15} color={theme.colors.textSecondary} /><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>Room {course.room}</Text></View>}
+      {!!course.room && <View style={styles.metadata}><MapPin size={15} color={theme.colors.textSecondary} /><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{course.room}</Text></View>}
       <View style={[styles.footer, { borderColor: theme.colors.border }]}>
         <View style={styles.links}>
           <Pressable accessibilityRole="button" accessibilityLabel={`Classwork for ${course.title}`} style={styles.link} onPress={() => open('CLASSWORK')}><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>Classwork</Text></Pressable>
@@ -62,6 +54,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: 22, overflow: 'hidden', marginBottom: 16 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
   thumbnail: { width: 58, height: 64, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  placeholder: { alignItems: 'center', justifyContent: 'center' },
   headingText: { flex: 1, minWidth: 0, gap: 4 },
   courseCode: { fontSize: 12, lineHeight: 19, fontWeight: '600' },
   title: { fontSize: 16, lineHeight: 24, fontWeight: '700' },

@@ -1,6 +1,6 @@
 import { Text } from '../ui/Text';
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { type GestureResponderEvent, TouchableOpacity, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useMobilePresentation } from '../presentation/MobilePresentation';
 import { LucideIcon } from 'lucide-react-native';
@@ -10,7 +10,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dan
 
 interface ButtonProps {
   title: string;
-  onPress: () => void;
+  onPress: (event: GestureResponderEvent) => void;
   variant?: ButtonVariant;
   icon?: LucideIcon;
   loading?: boolean;

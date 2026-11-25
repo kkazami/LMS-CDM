@@ -6,7 +6,7 @@ Install Maestro separately on a supported runner. Run `maestro test tests/mobile
 
 Synthetic credentials: student@example.invalid or teacher@example.invalid / SyntheticPassword1. They are accepted only by the local fixture server; they are not real accounts. The implementing engineer owns this fixture corpus and its reset state. The browser fixture harness imports the same corpus.
 
-The flows cover native dashboard/tool navigation, joining, course reorder, appearance changes, confirmation/cancellation, account clearing and professor enrollment decisions. They are authored test assets; a flow counts as passed only after an actual Maestro run. No Maestro executable is currently installed on this Windows host.
+The flows cover native dashboard/tool navigation, joining, course reorder, appearance changes, one-tap sign-out, account clearing and professor enrollment decisions. They are authored test assets; a flow counts as passed only after an actual Maestro run. No Maestro executable is currently installed on this Windows host.
 
 Native file-picker/upload/draft-relaunch and grade-entry/return flows are authored but unexecuted; OS picker details and assertions must be validated on the runner. Cancel/retry/interruption scenarios remain a native execution gate. Existing Node tests cover identity isolation, interrupted drafts, upload cancellation/progress and receipt replay at the logic boundary. Neither those tests nor these flow files establish passed native end-to-end coverage. Record unresolved gates in `docs/quality/ics-mobile-ui-overhaul.md`.
 

@@ -4,14 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronRight, LogOut, UserRound, X, type LucideIcon } from 'lucide-react-native';
 import { Text } from '../ui/Text';
-import { Button } from '../common/Button';
 import { SurfacePressable } from '../motion/SurfacePressable';
 import { useMobilePresentation } from '../presentation/MobilePresentation';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/auth-store';
 import { useThemeStore } from '../../stores/theme-store';
 import { useReducedMotion } from '../../lib/design-system';
-import { useAnnouncement } from '../../hooks/useAnnouncement';
 import { ProfileEditModal } from '../profile/ProfileEditModal';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 
@@ -30,7 +28,6 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
   const { toolsReturnFocus } = useMobilePresentation();
   const reduced = useReducedMotion();
   const [isOpen, setOpen] = useState(false), [profile, setProfile] = useState(false);
-  const [confirm, setConfirm] = useState<'logout' | null>(null);
   const user = useAuthStore(s => s.user), logout = useAuthStore(s => s.logout);
   const toggleTheme = useThemeStore(s => s.toggleTheme);
   const title = useRef<Text>(null);
@@ -41,7 +38,6 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
   const groups = teacher ? [{ title: 'Teaching tools', items: items.filter(i => !['Archived Classes', 'Organizational Chart', 'Leaderboard Manager'].includes(i.title)) },
     { title: 'Class management', items: items.filter(i => ['Archived Classes', 'Organizational Chart', 'Leaderboard Manager'].includes(i.title)) }]
     : [{ title: 'Learning tools', items: items.filter(i => /\/(?:codelab|ohmward|knowledge-exchange|practical-labs)(?:\?|$)/.test(i.route)) }, { title: 'Study & progress', items: items.filter(i => !/\/(?:codelab|ohmward|knowledge-exchange|practical-labs)(?:\?|$)/.test(i.route)) }];
-  useAnnouncement(confirm ? 'Your saved work stays on this device. Sign out to continue.' : undefined, true);
   useEffect(() => {
     const closed = wasOpen.current && !isOpen;
     wasOpen.current = isOpen;
@@ -51,9 +47,9 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
     return () => clearTimeout(timer);
   }, [isOpen, reduced, toolsReturnFocus]);
   function open() { restoreFocus.current = true; setOpen(true); }
-  function close() { setOpen(false); setConfirm(null); }
+  function close() { setOpen(false); }
   function navigate(route: string) { restoreFocus.current = false; close(); router.push(route as never); }
-  async function leave() { restoreFocus.current = false; close(); await logout(); router.replace('/(auth)/login'); }
+  function leave() { restoreFocus.current = false; close(); void logout(); router.replace('/(auth)/login'); }
   return <Context.Provider value={{ isOpen, openMenu: open, closeMenu: close, toggleMenu: () => { if (isOpen) close(); else open(); } }}>
     <View style={{ flex: 1 }} accessibilityElementsHidden={isOpen} importantForAccessibility={isOpen ? 'no-hide-descendants' : 'auto'}>{children}</View>
     <Modal visible={isOpen} transparent animationType={reduced ? 'none' : 'slide'}
@@ -80,8 +76,7 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
               </SurfacePressable>)}</View>
             </View>)}
             <View style={[styles.account, { borderTopColor: theme.colors.border }]}>
-              <SurfacePressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={() => setConfirm('logout')} style={[styles.item, { marginTop: 12, borderRadius: 16, backgroundColor: theme.colors.dangerBg }]}><LogOut size={20} color={theme.colors.danger} /><Text style={[styles.label, { color: theme.colors.danger }]}>Sign out</Text></SurfacePressable>
-              {confirm && <View accessibilityRole="alert" style={[styles.confirmation, { borderColor: theme.colors.border }]}><Text style={[styles.label, { color: theme.colors.text }]}>Sign out of CdM LMS?</Text><Text style={[styles.detail, { color: theme.colors.textSecondary }]}>Your saved work stays on this device.</Text><Button title="Confirm sign out" variant="danger" onPress={() => { void leave(); }} /><Button title="Cancel" variant="ghost" onPress={() => setConfirm(null)} /></View>}
+              <SurfacePressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={leave} style={[styles.item, { marginTop: 12, borderRadius: 16, backgroundColor: theme.colors.dangerBg }]}><LogOut size={20} color={theme.colors.danger} /><Text style={[styles.label, { color: theme.colors.danger }]}>Sign out</Text></SurfacePressable>
             </View>
           </ScrollView>
         </View>
@@ -106,5 +101,4 @@ const styles = StyleSheet.create({
   groupTitle: { fontSize: 16, lineHeight: 24, fontWeight: '700', marginBottom: 10 },
   item: { paddingHorizontal: 14, paddingVertical: 14, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12 },
   account: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 24, paddingTop: 12 },
-  confirmation: { borderWidth: 1, borderRadius: 18, padding: 16, gap: 12, marginTop: 12 },
 });
