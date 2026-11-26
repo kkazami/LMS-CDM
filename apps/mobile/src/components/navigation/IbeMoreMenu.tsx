@@ -169,12 +169,42 @@ export function IbeMoreMenu({
       icon: Bell,
       title: 'Campus Bulletins',
       description: 'Official institute notices & updates',
-      route: teacher ? '/teacher/announcements' : '/student/announcements',
+      route: teacher ? '/teacher/(tabs)/alerts' : '/student/announcements',
+    },
+    {
+      icon: BookOpen,
+      title: 'Consultation & Scheduling',
+      description: 'Book faculty consultation slots',
+      feature: 'consultation',
     },
   ];
 
-  // Faculty tools for IBE teachers
+  // Faculty tools for IBE teachers (mirrors web IBE professor sidebar)
   const facultyTools: ToolItem[] = [
+    {
+      icon: Briefcase,
+      title: 'Add Class',
+      description: 'Create a new IBE class',
+      feature: 'create-class',
+    },
+    {
+      icon: UserCheck,
+      title: 'Consultation Management',
+      description: 'Manage student consultation availability & appointments',
+      feature: 'consultation-management',
+    },
+    {
+      icon: FileSpreadsheet,
+      title: 'Gradebooks',
+      description: 'Review and export grades across all classes',
+      feature: 'gradebooks',
+    },
+    {
+      icon: BarChart2,
+      title: 'Class Analytics',
+      description: 'Student metrics, engagement & course progress',
+      route: '/teacher/(tabs)/analytics',
+    },
     {
       icon: UserCheck,
       title: 'Attendance Management',
@@ -182,49 +212,34 @@ export function IbeMoreMenu({
       route: '/teacher/attendance',
     },
     {
-      icon: BarChart2,
-      title: 'Class Analytics',
-      description: 'Student metrics, engagement & course progress',
-      route: '/teacher/analytics',
-    },
-    {
       icon: BookOpen,
-      title: 'My Classes & Gradebook',
-      description: 'Manage enrolled students and grade coursework',
-      route: '/teacher/courses',
+      title: 'My Classes',
+      description: 'Manage enrolled students and coursework',
+      route: '/teacher/(tabs)/courses',
     },
     {
       icon: CheckSquare,
-      title: 'Schedule & Tasks',
-      description: 'Faculty agenda, tasks, and deadlines',
-      route: '/teacher/tasks',
+      title: 'Calendar & Tasks',
+      description: 'Faculty schedule, deadlines & tasks',
+      feature: 'calendar',
     },
-    {
-      icon: Bell,
-      title: 'Campus Bulletins',
-      description: 'Official institute notices & updates',
-      route: '/teacher/announcements',
-    },
-  ];
-
-  const facultyResources: ToolItem[] = [
     {
       icon: Layers,
-      title: 'Study Decks',
-      description: 'Course flashcard review sets',
-      route: '/teacher/flashcards',
+      title: 'Archived Classes',
+      description: 'Review previous and archived classes',
+      feature: 'archives',
     },
     {
       icon: Trophy,
-      title: 'Student Leaderboard',
-      description: 'Academic rankings & top performers',
-      route: '/teacher/leaderboard',
+      title: 'Manage Leaderboard',
+      description: 'Configure seasons, points & student rankings',
+      feature: 'manage-leaderboard',
     },
     {
-      icon: Award,
-      title: 'Badges & Achievements',
-      description: 'Student learning milestones & badges',
-      route: '/teacher/achievements',
+      icon: Bell,
+      title: 'Broadcasts & Bulletins',
+      description: 'Send notices & view institute updates',
+      route: '/teacher/(tabs)/alerts',
     },
   ];
 
@@ -233,10 +248,6 @@ export function IbeMoreMenu({
         {
           title: 'Faculty Suite',
           items: facultyTools,
-        },
-        {
-          title: 'Academic Resources',
-          items: facultyResources,
         },
       ]
     : [
@@ -261,25 +272,30 @@ export function IbeMoreMenu({
   function handleItemPress(item: ToolItem) {
     close();
     if (item.feature) {
+      const featurePaths: Record<string, string> = {
+        'consultation-management': '/ibe/consultation-management',
+        'consultation': '/ibe/consultation',
+        'gradebooks': '/ibe/gradebooks',
+        'archives': '/ibe/courses/archived',
+        'calendar': '/ibe/tasks',
+        'manage-leaderboard': '/ibe/manage-leaderboard',
+        'create-class': '/ibe/teachers?mobileAction=add-class',
+      };
       const baseUrl = getWebBaseUrl();
-      const url = `${baseUrl}/ibe/${item.feature}`;
+      const url = `${baseUrl}${featurePaths[item.feature] ?? `/ibe/${item.feature}`}`;
       if (Platform.OS === 'web') {
         void openSafeUrl(url);
         return;
       }
-      setTimeout(() => {
-        router.push({
-          pathname: teacher ? '/teacher/feature' : '/student/feature',
-          params: { feature: item.feature },
-        } as never);
-      }, 120);
+      router.push({
+        pathname: teacher ? '/teacher/feature' : '/student/feature',
+        params: { feature: item.feature },
+      } as never);
       return;
     }
 
     if (item.route) {
-      setTimeout(() => {
-        router.push(item.route as never);
-      }, 120);
+      router.push(item.route as never);
     }
   }
 
@@ -366,7 +382,10 @@ export function IbeMoreMenu({
                 <SurfacePressable
                   accessibilityRole="button"
                   accessibilityLabel="Edit profile"
-                  onPress={() => setProfile(true)}
+                  onPress={() => {
+                    close();
+                    setTimeout(() => setProfile(true), 250);
+                  }}
                   style={styles.profileButton}
                 >
                   <View style={[styles.avatar, { backgroundColor: goldTint, borderColor: goldBorder, borderWidth: 1 }]}>
@@ -472,9 +491,8 @@ export function IbeMoreMenu({
             </ScrollView>
           </View>
         </View>
-
-        <ProfileEditModal visible={profile} onClose={() => setProfile(false)} />
       </Modal>
+      <ProfileEditModal visible={profile} onClose={() => setProfile(false)} />
     </Context.Provider>
   );
 }
@@ -524,11 +542,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
   instituteTagText: {
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.3,
+    flexShrink: 1,
   },
   circle: {
     width: 44,

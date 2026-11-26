@@ -14,14 +14,21 @@ export async function GET(request: Request) {
   // Validate this bearer explicitly; a stale WebView cookie must never select another account.
   const session = await validateSessionToken(token);
   if (!session) return NextResponse.json({ error: 'Your session has expired. Sign in again.' }, { status: 401, headers });
-  if (session.user.institute.code.toLowerCase() !== 'ics' || !['STUDENT', 'PROFESSOR', 'TEACHER'].includes(session.user.role)
-    || await needsClassEnrollment(session.user)) {
-    return NextResponse.json({ error: 'This workspace is available to enrolled ICS students and faculty.' }, { status: 403, headers });
-  }
   const target = mobileFeaturePath(new URL(request.url).searchParams.get('returnTo'));
   if (!target) return NextResponse.json({ error: 'Invalid mobile workspace.' }, { status: 400, headers });
+  const targetInstitute = target.startsWith('/ibe/') ? 'ibe' : 'ics';
+  if (session.user.institute.code.toLowerCase() !== targetInstitute || !['STUDENT', 'PROFESSOR', 'TEACHER'].includes(session.user.role)
+    || await needsClassEnrollment(session.user)) {
+    return NextResponse.json({ error: `This workspace is available to enrolled ${targetInstitute.toUpperCase()} students and faculty.` }, { status: 403, headers });
+  }
+  const reqUrl = new URL(request.url);
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') ?? reqUrl.protocol.replace(/:$/, '');
+  const baseOrigin = forwardedHost && !forwardedHost.startsWith('0.0.0.0')
+    ? `${forwardedProto}://${forwardedHost}`
+    : reqUrl.origin;
   // Every destination still enforces its own role, institute and course access.
-  const response = NextResponse.redirect(new URL(target, request.url), 303);
+  const response = NextResponse.redirect(new URL(target, baseOrigin), 303);
   for (const [key, value] of Object.entries(headers)) response.headers.set(key, value);
   const { write } = currentSessionCookiePolicy();
   for (const name of SESSION_COOKIE_NAMES) {

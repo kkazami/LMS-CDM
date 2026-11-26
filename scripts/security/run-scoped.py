@@ -91,11 +91,16 @@ def main(label,mode='tests',network='none',fixture=None):
  name='lms-sprint2-'+uuid.uuid4().hex;labelvalue=name
  linux='/mnt/host/'+str(DEPS).replace('\\','/')[0].lower()+str(DEPS).replace('\\','/')[2:] if os.name=='nt' else str(DEPS)
  scratch_mb=4096 if mode=='web-build' else 1024
+ scratch_dir=base/'scratch' if mode=='web-build' else None
+ if scratch_dir is not None:
+  scratch_dir.mkdir();os.chmod(scratch_dir,0o777)
+ fsize_bytes=1073741824 if mode=='web-build' else 536870912
  # The capability-dropped sandbox cannot preserve the host runner's UID or GID.
  shell='cp -a --no-preserve=ownership /source /scratch/app && cp /tools/esbuild /scratch/esbuild && chmod 500 /scratch/esbuild && cd /scratch/app && ln -s /deps/node_modules node_modules && for x in web mobile desktop; do ln -s /deps/apps/$x/node_modules apps/$x/node_modules; done && exec "$@"'
  memory='6144m' if mode=='web-build' else '4096m' if mode in ['web-types','web-build','mobile-export'] else '2304m';seconds=600 if mode in ['mobile-export','web-build'] else 300 if mode in ['web-types','web-build','mobile-export','tests','desktop-package'] else 180
- env=['NODE_OPTIONS=--max-old-space-size='+('4096' if mode=='web-build' else '3072' if mode in ['web-types','web-build','mobile-export'] else '1536'),'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/scratch','TMPDIR=/scratch','NODE_ENV=test','NEXT_TELEMETRY_DISABLED=1','DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline','ESBUILD_BINARY_PATH=/scratch/esbuild','TSX_TSCONFIG_PATH=apps/web/tsconfig.json','EXPO_OFFLINE=1','EXPO_NO_TELEMETRY=1','EXPO_PUBLIC_API_URL=https://staging.example.invalid','SENTRY_DISABLE_AUTO_UPLOAD=true']
- cmd=['docker','run','--pull=never','--name',name,'--label','lms.sprint2='+labelvalue,'--network',network,'--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--memory',memory,'--cpus','2','--pids-limit','128','--ulimit','core=0:0','--ulimit','nofile=4096:4096','--ulimit','fsize=536870912:536870912','--tmpfs',f'/scratch:rw,exec,nosuid,nodev,size={scratch_mb}m,mode=1777','--mount',f'type=bind,source={source},target=/source,readonly','--mount',f'type=bind,source={DEPS},target=/deps,readonly','--mount',f'type=bind,source={DEPS},target={linux},readonly','--mount',f'type=bind,source={TOOLS},target=/tools,readonly','--entrypoint','/usr/bin/env',json.loads((ROOT/'scripts/security/tools.json').read_text())['nodeImage'],'-i',*env,'timeout','--kill-after=5s',str(seconds)+'s','sh','-c',shell,'sprint2',*argv]
+ env=['NODE_OPTIONS=--max-old-space-size='+('3584' if mode=='web-build' else '3072' if mode in ['web-types','mobile-export'] else '1536'),'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/scratch','TMPDIR=/scratch','NODE_ENV=test','NEXT_TELEMETRY_DISABLED=1','DATABASE_URL=postgresql://dummy:unused@127.0.0.1:1/sprint2_offline','ESBUILD_BINARY_PATH=/scratch/esbuild','TSX_TSCONFIG_PATH=apps/web/tsconfig.json','EXPO_OFFLINE=1','EXPO_NO_TELEMETRY=1','EXPO_PUBLIC_API_URL=https://staging.example.invalid','SENTRY_DISABLE_AUTO_UPLOAD=true']
+ scratch_mount=['--mount',f'type=bind,source={scratch_dir},target=/scratch'] if scratch_dir is not None else ['--tmpfs',f'/scratch:rw,exec,nosuid,nodev,size={scratch_mb}m,mode=1777']
+ cmd=['docker','run','--pull=never','--name',name,'--label','lms.sprint2='+labelvalue,'--network',network,'--ipc','none','--read-only','--cap-drop','ALL','--security-opt','no-new-privileges','--memory',memory,'--cpus','2','--pids-limit','128','--ulimit','core=0:0','--ulimit','nofile=4096:4096','--ulimit',f'fsize={fsize_bytes}:{fsize_bytes}',*scratch_mount,'--mount',f'type=bind,source={source},target=/source,readonly','--mount',f'type=bind,source={DEPS},target=/deps,readonly','--mount',f'type=bind,source={DEPS},target={linux},readonly','--mount',f'type=bind,source={TOOLS},target=/tools,readonly','--entrypoint','/usr/bin/env',json.loads((ROOT/'scripts/security/tools.json').read_text())['nodeImage'],'-i',*env,'timeout','--kill-after=5s',str(seconds)+'s','sh','-c',shell,'sprint2',*argv]
  if os.name == 'posix':
   # Match the install owner so Prisma detects the read-only mount instead of an ownership error.
   index=cmd.index('--entrypoint')
@@ -116,7 +121,7 @@ def main(label,mode='tests',network='none',fixture=None):
   if code==0 and testing:
    expected=2 if mode=='rls-principals' else 1 if mode in STAGING_TESTS else EXPECTED_TESTS
    assert counts.get('tests')==counts.get('pass')==expected and all(counts.get(k)==0 for k in ['fail','cancelled','skipped','todo']), 'Missing, skipped or unexpected test results'
-  receipt={'label':label,'mode':mode,'exit':code,'counts':counts,'seconds':round(time.monotonic()-start,2),'argv':argv,'tests':selected,'safe_environment':env,'limits':{'network':network,'read_only_source_and_tools':True,'scratch_bytes':scratch_mb*1024*1024,'memory_bytes':6442450944 if mode=='web-build' else 4294967296 if mode in ['web-types','web-build','mobile-export'] else 2415919104,'cpus':2,'pids':128,'file_bytes':536870912,'seconds':seconds},'lock_sha256':hashlib.sha256((DEPS/'pnpm-lock.yaml').read_bytes()).hexdigest(),'source_hashes':{str(p.relative_to(source)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()},'terminated':True}
+  receipt={'label':label,'mode':mode,'exit':code,'counts':counts,'seconds':round(time.monotonic()-start,2),'argv':argv,'tests':selected,'safe_environment':env,'limits':{'network':network,'read_only_source_and_tools':True,'scratch_bytes':scratch_mb*1024*1024,'memory_bytes':6442450944 if mode=='web-build' else 4294967296 if mode in ['web-types','web-build','mobile-export'] else 2415919104,'cpus':2,'pids':128,'file_bytes':fsize_bytes,'seconds':seconds},'lock_sha256':hashlib.sha256((DEPS/'pnpm-lock.yaml').read_bytes()).hexdigest(),'source_hashes':{str(p.relative_to(source)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()},'terminated':True}
   if mode=='sbom' and code==0:
    bom=json.loads(out)
    assert bom['bomFormat']=='CycloneDX' and bom['specVersion']=='1.6' and 0<len(bom['components'])<10000
@@ -128,5 +133,6 @@ def main(label,mode='tests',network='none',fixture=None):
  finally:
   c,owner=bounded(['docker','inspect','--format','{{index .Config.Labels "lms.sprint2"}}',name])
   if c==0 and owner.strip()==labelvalue:bounded(['docker','rm','-f',name])
+  if scratch_dir is not None:shutil.rmtree(scratch_dir,ignore_errors=True)
  return code
 if __name__=='__main__':sys.exit(main(*sys.argv[1:]))

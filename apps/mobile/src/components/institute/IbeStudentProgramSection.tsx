@@ -226,7 +226,6 @@ export function IbeStudentProgramSection() {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
     marginBottom: 24,
     gap: 14,
   },

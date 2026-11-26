@@ -42,6 +42,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const loadEnglishVoices = useCallback(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -96,12 +97,16 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      setIsSupported(false);
+      return;
+    }
     if (
-      typeof window === "undefined" ||
       !("speechSynthesis" in window) ||
       typeof window.SpeechSynthesisUtterance === "undefined"
     ) {
-      setIsSupported(false);
+      // Fallback for mobile WebViews without Web Speech API: use HTML5 Audio + dictionary audio
+      setIsSupported(typeof Audio !== "undefined");
       return;
     }
 
@@ -132,13 +137,19 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   }, [loadEnglishVoices]);
 
   const stop = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return;
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch { /* ignore */ }
+      audioRef.current = null;
     }
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      // Ignore cancel errors
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // Ignore cancel errors
+      }
     }
     utteranceRef.current = null;
     setIsPlaying(false);
@@ -147,19 +158,73 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
 
   const speak = useCallback(
     (options: SpeakTextOptions) => {
-      if (
-        typeof window === "undefined" ||
-        !("speechSynthesis" in window) ||
-        typeof window.SpeechSynthesisUtterance === "undefined"
-      ) {
-        setErrorMessage(
-          "Your current browser does not support Web Speech synthesis."
-        );
-        return;
-      }
-
       const trimmedText = options.text.trim();
       if (!trimmedText) return;
+
+      const isMobileApp = Boolean((window as unknown as { isLMSMobileApp?: boolean }).isLMSMobileApp);
+      const hasWebSpeech =
+        typeof window !== "undefined" &&
+        "speechSynthesis" in window &&
+        typeof window.SpeechSynthesisUtterance !== "undefined";
+      const hasVoices = hasWebSpeech && (window.speechSynthesis.getVoices()?.length ?? 0) > 0;
+
+      if (!hasWebSpeech || (isMobileApp && !hasVoices)) {
+        if (typeof Audio === "undefined") {
+          setErrorMessage("Audio playback is not supported in this browser.");
+          return;
+        }
+        const word = trimmedText.split(/\s+/)[0]?.replace(/[^a-zA-Z'-]/g, "").toLowerCase();
+        if (!word) return;
+        stop();
+        setErrorMessage(null);
+        setIsPlaying(true);
+        setActiveClipId(options.clipId);
+        // Instantiate Audio synchronously within the user gesture for mobile WebView
+        const audio = new Audio();
+        audio.playbackRate = (options.rateMode ?? rateMode) === "slow" ? 0.75 : 1.0;
+        audioRef.current = audio;
+        void fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`)
+          .then((r) => (r.ok ? r.json() : []))
+          .then((entries) => {
+            if (audioRef.current !== audio) return;
+            const list = Array.isArray(entries) ? entries : [];
+            const phonetics = list.flatMap((e: { phonetics?: Array<{ audio?: string }> }) => e.phonetics ?? []);
+            const rawAudio = phonetics.find((p) => p.audio && p.audio.trim().length > 0)?.audio || "";
+            const audioUrl = rawAudio.startsWith("http") ? rawAudio : rawAudio.startsWith("//") ? `https:${rawAudio}` : "";
+            if (!audioUrl) {
+              audioRef.current = null;
+              setIsPlaying(false);
+              setActiveClipId(null);
+              setErrorMessage(`No audio recording found for "${word}".`);
+              return;
+            }
+            audio.src = audioUrl;
+            audio.onended = () => {
+              if (audioRef.current === audio) audioRef.current = null;
+              setIsPlaying(false);
+              setActiveClipId(null);
+            };
+            audio.onerror = () => {
+              if (audioRef.current === audio) audioRef.current = null;
+              setIsPlaying(false);
+              setActiveClipId(null);
+              setErrorMessage("Could not play pronunciation audio.");
+            };
+            void audio.play().catch(() => {
+              if (audioRef.current === audio) audioRef.current = null;
+              setIsPlaying(false);
+              setActiveClipId(null);
+              setErrorMessage("Tap again to allow audio playback.");
+            });
+          })
+          .catch(() => {
+            if (audioRef.current === audio) audioRef.current = null;
+            setIsPlaying(false);
+            setActiveClipId(null);
+            setErrorMessage("Could not load pronunciation audio.");
+          });
+        return;
+      }
 
       setErrorMessage(null);
 

@@ -85,6 +85,12 @@ export default function WordWiseHubClient({
   // Web Speech API hook
   const speech = useSpeechSynthesis();
 
+  useEffect(() => {
+    if (speech.errorMessage) {
+      toast.error(speech.errorMessage);
+    }
+  }, [speech.errorMessage]);
+
   // Word Detail Modal state
   const [selectedWord, setSelectedWord] = useState<VocabularyWordItem | null>(
     null
