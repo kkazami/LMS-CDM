@@ -4,7 +4,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
-import { evaluateProfileDepartmentUpdate } from '@/lib/ite-programs/registration';
+import { evaluateProfileDepartmentUpdate } from '@/lib/ibe-programs/registration';
 
 export const dynamic = "force-dynamic";
 

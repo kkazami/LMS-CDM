@@ -1,15 +1,33 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ShieldAlert } from 'lucide-react-native';
 import { AppHeader, Screen } from '../../../src/components/ui';
 import { Text } from '../../../src/components/ui/Text';
 import { Button } from '../../../src/components/common/Button';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useAuthStore } from '../../../src/stores/auth-store';
+import { isIbeUser } from '../../../src/lib/ite-eligibility';
+import { IbeFeatureScreen, type IbeFeature } from '../../../src/screens/IbeFeatureScreen';
+
+const INSTRUCTOR_IBE_FEATURES: readonly string[] = [
+  'consultation-management',
+  'gradebooks',
+  'archives',
+  'calendar',
+  'manage-leaderboard',
+  'create-class',
+];
 
 export default function TeacherFeatureScreen() {
+  const { feature } = useLocalSearchParams<{ feature?: string }>();
+  const user = useAuthStore((s) => s.user);
   const router = useRouter();
   const theme = useTheme();
+
+  if (isIbeUser(user) && feature && INSTRUCTOR_IBE_FEATURES.includes(feature)) {
+    return <IbeFeatureScreen feature={feature as IbeFeature} />;
+  }
 
   return (
     <Screen>

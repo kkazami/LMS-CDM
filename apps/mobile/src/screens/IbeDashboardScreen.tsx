@@ -88,13 +88,14 @@ export function IbeDashboardScreen({
   const loadData = useCallback(async () => {
     try {
       setErrorMessage(null);
+      const courseCacheKey = isTeacher ? 'teacher_ibe_courses' : 'student_courses';
+      const announcementCacheKey = isTeacher ? 'teacher_ibe_announcements' : 'student_announcements';
 
       // Offline cache hydrate first
-      const [cachedCourses, cachedAnnouncements, cachedTasks, cachedGrades] = await Promise.all([
-        getCachedData<Course[]>('student_courses'),
-        getCachedData<Announcement[]>('student_announcements'),
-        getCachedData<TaskItem[]>('student_tasks'),
-        getCachedData<any[]>('student_grades'),
+      const [cachedCourses, cachedAnnouncements, cachedTasks] = await Promise.all([
+        getCachedData<Course[]>(courseCacheKey),
+        getCachedData<Announcement[]>(announcementCacheKey),
+        !isTeacher ? getCachedData<TaskItem[]>('student_tasks') : Promise.resolve(null),
       ]);
 
       if (cachedCourses && cachedCourses.length > 0) {
@@ -108,27 +109,27 @@ export function IbeDashboardScreen({
       const [coursesRes, announcementsRes, tasksRes, heartbeatRes, gradesRes] = await Promise.allSettled([
         api.courses.list(instituteCode),
         api.announcements.list(instituteCode),
-        api.workspace.getTasks(instituteCode),
-        api.gamification.getHeartbeat(),
-        api.grades.list(instituteCode),
+        !isTeacher ? api.workspace.getTasks(instituteCode) : Promise.resolve(null),
+        !isTeacher ? api.gamification.getHeartbeat() : Promise.resolve(null),
+        !isTeacher ? api.grades.list(instituteCode) : Promise.resolve(null),
       ]);
 
       if (coursesRes.status === 'fulfilled' && coursesRes.value?.courses) {
         setCourses(coursesRes.value.courses);
-        await setCachedData('student_courses', coursesRes.value.courses);
+        await setCachedData(courseCacheKey, coursesRes.value.courses);
       }
 
       if (announcementsRes.status === 'fulfilled' && announcementsRes.value?.announcements) {
         setAnnouncements(announcementsRes.value.announcements);
-        await setCachedData('student_announcements', announcementsRes.value.announcements);
+        await setCachedData(announcementCacheKey, announcementsRes.value.announcements);
       }
 
-      if (tasksRes.status === 'fulfilled' && tasksRes.value?.tasks) {
+      if (!isTeacher && tasksRes.status === 'fulfilled' && tasksRes.value?.tasks) {
         setTasks(tasksRes.value.tasks);
         await setCachedData('student_tasks', tasksRes.value.tasks);
       }
 
-      if (gradesRes.status === 'fulfilled' && (gradesRes.value as any)?.grades) {
+      if (!isTeacher && gradesRes.status === 'fulfilled' && (gradesRes.value as any)?.grades) {
         const gradesList = (gradesRes.value as any).grades;
         const summariesList = (gradesRes.value as any).summary;
         if (Array.isArray(gradesList) && gradesList.length > 0) {
@@ -141,7 +142,7 @@ export function IbeDashboardScreen({
         }
       }
 
-      if (heartbeatRes.status === 'fulfilled' && heartbeatRes.value) {
+      if (!isTeacher && heartbeatRes.status === 'fulfilled' && heartbeatRes.value) {
         const hbData = heartbeatRes.value as unknown as {
           profile?: { loginStreakCurrent?: number; currentStreak?: number; exp?: number };
           rewardReceipt?: { rewarded: boolean; streak: number; expEarned: number } | null;
@@ -158,7 +159,7 @@ export function IbeDashboardScreen({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [api]);
+  }, [api, isTeacher]);
 
   useEffect(() => {
     loadData();
@@ -245,49 +246,51 @@ export function IbeDashboardScreen({
       label: 'Add Class',
       desc: 'Create new class',
       icon: Plus,
-      press: () => { setJoinError(''); setJoining(true); },
+      press: () => router.push({ pathname: '/teacher/feature', params: { feature: 'create-class' } } as never),
     },
     {
-      label: 'Attendance',
-      desc: 'Session attendance',
+      label: 'Consultations',
+      desc: 'Manage appointments',
       icon: UserCheck,
-      press: () => router.push('/teacher/attendance' as never),
+      press: () => router.push({ pathname: '/teacher/feature', params: { feature: 'consultation-management' } } as never),
+    },
+    {
+      label: 'Gradebooks',
+      desc: 'Course grades & export',
+      icon: ClipboardList,
+      press: () => router.push({ pathname: '/teacher/feature', params: { feature: 'gradebooks' } } as never),
     },
     {
       label: 'Class Analytics',
       desc: 'Student metrics',
       icon: BarChart2,
-      press: () => router.push('/teacher/analytics' as never),
+      press: () => router.push('/teacher/(tabs)/analytics' as never),
     },
     {
-      label: 'Study Decks',
-      desc: 'Course flashcards',
-      icon: Layers,
-      press: () => router.push('/teacher/flashcards' as never),
+      label: 'Attendance',
+      desc: 'Session attendance',
+      icon: CheckSquare,
+      press: () => router.push('/teacher/attendance' as never),
     },
     {
       label: 'Leaderboard',
-      desc: 'Academic rankings',
+      desc: 'Manage rankings',
       icon: Trophy,
-      press: () => router.push('/teacher/leaderboard' as never),
-    },
-    {
-      label: 'Campus Bulletins',
-      desc: `${announcements.length} updates`,
-      icon: Bell,
-      press: () => router.push('/teacher/announcements' as never),
+      press: () => router.push({ pathname: '/teacher/feature', params: { feature: 'manage-leaderboard' } } as never),
     },
   ];
 
-  const actionsToRender = teacher ? teacherQuickActions : quickActions;
+  const actionsToRender = isTeacher ? teacherQuickActions : quickActions;
+  const bulletinsRoute = isTeacher ? '/teacher/(tabs)/alerts' : '/student/announcements';
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <IbeHeader teacher={teacher} title={coursesOnly ? (teacher ? 'My Classes' : 'My Courses') : undefined} />
+      <IbeHeader teacher={isTeacher} title={coursesOnly ? (isTeacher ? 'My Classes' : 'My Courses') : undefined} />
 
       <FlatList
         data={courses}
         keyExtractor={item => item.id}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.container,
           { paddingBottom: contentPaddingBottom },
@@ -330,12 +333,12 @@ export function IbeDashboardScreen({
                 <View style={[styles.heroCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
                   <View style={styles.heroTopRow}>
                     <View style={[styles.programBadge, { backgroundColor: goldBg, borderColor: goldBorder }]}>
-                      {teacher ? <GraduationCap size={12} color={goldAccent} /> : <Sparkles size={12} color={goldAccent} />}
+                      {isTeacher ? <GraduationCap size={12} color={goldAccent} /> : <Sparkles size={12} color={goldAccent} />}
                       <Text style={[styles.programBadgeText, { color: goldAccent }]}>
-                        {teacher ? 'IBE FACULTY' : programLabel.toUpperCase()}
+                        {isTeacher ? 'IBE FACULTY' : programLabel.toUpperCase()}
                       </Text>
                     </View>
-                    {!teacher && (
+                    {!isTeacher && (
                       <View style={styles.chipsRow}>
                         <View style={[styles.chip, { backgroundColor: goldBg, borderColor: goldBorder }]}>
                           <Flame size={13} color={goldAccent} />
@@ -350,12 +353,12 @@ export function IbeDashboardScreen({
                   </View>
 
                   <Text style={[styles.greeting, { color: theme.colors.text }]}>
-                    {teacher
+                    {isTeacher
                       ? `Welcome, Professor ${user?.name?.split(' ')[0] || 'Faculty'}.`
                       : `A fresh day, ${user?.name?.split(' ')[0] || 'Scholar'}.`}
                   </Text>
                   <Text style={[styles.summary, { color: theme.colors.textSecondary }]}>
-                    {teacher
+                    {isTeacher
                       ? `${courses.length} active classes · ${announcements.length} campus bulletins`
                       : `${courses.length} enrolled subjects · ${pendingTasks.length} pending tasks · GWA: ${gwa || '—'}`}
                   </Text>
@@ -364,45 +367,45 @@ export function IbeDashboardScreen({
                   <View style={[styles.statsRow, { borderColor: theme.colors.border }]}>
                     <TouchableOpacity
                       style={styles.statCol}
-                      onPress={() => router.push((teacher ? '/teacher/courses' : '/student/courses') as never)}
+                      onPress={() => router.push((isTeacher ? '/teacher/(tabs)/courses' : '/student/(tabs)/courses') as never)}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.statVal, { color: theme.colors.text }]}>{courses.length}</Text>
                       <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-                        {teacher ? 'Classes' : 'Courses'}
+                        {isTeacher ? 'Classes' : 'Courses'}
                       </Text>
                     </TouchableOpacity>
                     <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
                     <TouchableOpacity
                       style={styles.statCol}
-                      onPress={() => router.push((teacher ? '/teacher/analytics' : '/student/assignments') as never)}
+                      onPress={() => router.push((isTeacher ? '/teacher/(tabs)/analytics' : '/student/assignments') as never)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.statVal, { color: (!teacher && pendingTasks.length > 0) ? theme.colors.warning : theme.colors.text }]}>
-                        {teacher ? 'Metrics' : pendingTasks.length}
+                      <Text style={[styles.statVal, { color: (!isTeacher && pendingTasks.length > 0) ? theme.colors.warning : theme.colors.text }]}>
+                        {isTeacher ? 'Metrics' : pendingTasks.length}
                       </Text>
                       <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-                        {teacher ? 'Analytics' : 'Tasks'}
+                        {isTeacher ? 'Analytics' : 'Tasks'}
                       </Text>
                     </TouchableOpacity>
                     <View style={[styles.statDivider, { backgroundColor: theme.colors.border }]} />
                     <TouchableOpacity
                       style={styles.statCol}
-                      onPress={() => router.push((teacher ? '/teacher/announcements' : '/student/grades') as never)}
+                      onPress={() => router.push((isTeacher ? '/teacher/(tabs)/alerts' : '/student/(tabs)/grades') as never)}
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.statVal, { color: goldAccent }]}>
-                        {teacher ? announcements.length : (gwa || '—')}
+                        {isTeacher ? announcements.length : (gwa || '—')}
                       </Text>
                       <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-                        {teacher ? 'Bulletins' : 'GWA'}
+                        {isTeacher ? 'Bulletins' : 'GWA'}
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* ── Up Next Coursework (Students Only) ── */}
-                {!teacher && pendingTasks.length > 0 && (
+                {!isTeacher && pendingTasks.length > 0 && (
                   <View style={{ marginBottom: 20 }}>
                     <View style={styles.sectionHeaderRow}>
                       <Text style={[styles.sectionHeading, { color: theme.colors.text, marginBottom: 0 }]}>
@@ -451,11 +454,11 @@ export function IbeDashboardScreen({
                 )}
 
                 {/* ── Specialized Program Section (BS ENTREP or BSBA HRM - Students Only) ── */}
-                {!teacher && <IbeStudentProgramSection />}
+                {!isTeacher && <IbeStudentProgramSection />}
 
                 {/* ── Shortcuts Action Grid ── */}
                 <Text style={[styles.sectionHeading, { color: theme.colors.text, marginTop: 8 }]}>
-                  {teacher ? 'Faculty Suite' : 'Learning Shortcuts'}
+                  {isTeacher ? 'Faculty Suite' : 'Learning Shortcuts'}
                 </Text>
                 <View style={styles.actionGrid}>
                   {actionsToRender.map(action => (
@@ -484,10 +487,10 @@ export function IbeDashboardScreen({
             <View style={styles.courseHeaderRow}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
-                  {teacher ? 'My Classes' : 'My Courses'}
+                  {isTeacher ? 'My Classes' : 'My Courses'}
                 </Text>
                 <Text style={[styles.courseSub, { color: theme.colors.textSecondary }]}>
-                  {teacher ? 'Manage enrolled students and coursework.' : 'Pick up where you left off.'}
+                  {isTeacher ? 'Manage enrolled students and coursework.' : 'Pick up where you left off.'}
                 </Text>
               </View>
               <Text style={[styles.courseCountBadge, { color: goldAccent, backgroundColor: goldBg, borderColor: goldBorder }]}>
@@ -525,11 +528,11 @@ export function IbeDashboardScreen({
                 {isTeacher ? 'No classes assigned yet' : 'Your courses will appear here'}
               </Text>
               <Text style={[styles.emptySub, { color: theme.colors.textSecondary }]}>
-                {teacher ? 'Create a class to start coursework.' : 'Join a class using the code from your instructor.'}
+                {isTeacher ? 'Assigned classes will appear here once provisioned.' : 'Join a class using the code from your instructor.'}
               </Text>
               <Button
-                title={teacher ? 'Add Class' : 'Join Class'}
-                onPress={() => { setJoinError(''); setJoining(true); }}
+                title={isTeacher ? 'Refresh Classes' : 'Join Class'}
+                onPress={isTeacher ? () => { void loadData(); } : () => { setJoinError(''); setJoining(true); }}
               />
             </View>
           )
@@ -541,7 +544,7 @@ export function IbeDashboardScreen({
                 <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
                   Campus Bulletins & Notices
                 </Text>
-                <TouchableOpacity onPress={() => router.push('/student/announcements' as never)}>
+                <TouchableOpacity onPress={() => router.push(bulletinsRoute as never)}>
                   <Text style={[styles.seeAllText, { color: goldAccent }]}>View All</Text>
                 </TouchableOpacity>
               </View>
@@ -549,7 +552,7 @@ export function IbeDashboardScreen({
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.announcementCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
-                  onPress={() => router.push('/student/announcements' as never)}
+                  onPress={() => router.push(bulletinsRoute as never)}
                   activeOpacity={0.85}
                 >
                   <View style={styles.announcementTop}>
@@ -604,7 +607,7 @@ export function IbeDashboardScreen({
         />
       </FormModal>
 
-      {!teacher && (
+      {!isTeacher && (
         <LoginRewardModal
           visible={!!rewardReceipt?.rewarded}
           streak={rewardReceipt?.streak || 0}
@@ -637,8 +640,10 @@ const styles = StyleSheet.create({
   },
   heroTopRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 10,
   },
   programBadge: {
@@ -649,6 +654,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
+    flexShrink: 1,
   },
   programBadgeText: {
     fontSize: 11,

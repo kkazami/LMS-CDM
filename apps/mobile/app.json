@@ -20,6 +20,7 @@
           "NSAllowsLocalNetworking": true
         },
         "NSCameraUsageDescription": "CdM LMS uses your camera to scan attendance QR codes, take profile photos and scan documents.",
+        "NSMicrophoneUsageDescription": "CdM LMS uses your microphone for Mock Interview voice practice.",
         "NSLocationWhenInUseUsageDescription": "CdM LMS can check your nearby location during attendance when your instructor enables it. You can request instructor approval instead.",
         "NSPhotoLibraryUsageDescription": "CdM LMS needs photo library access for uploading profile photos and assignments.",
         "NSFaceIDUsageDescription": "Use Face ID for quick login to CdM LMS."
@@ -37,8 +38,8 @@
         "expo-camera",
         {
           "cameraPermission": "Allow CdM LMS to scan attendance QR codes.",
-          "recordAudioAndroid": false,
-          "microphonePermission": false
+          "recordAudioAndroid": true,
+          "microphonePermission": "Allow CdM LMS to use the microphone for Mock Interview voice practice."
         }
       ],
       [

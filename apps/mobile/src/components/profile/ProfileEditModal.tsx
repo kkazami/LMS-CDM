@@ -18,6 +18,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { TOUCH_TARGET } from '../../lib/typography';
+import { isIbeUser, isIteUser } from '../../lib/ite-eligibility';
 import type { AuthUser } from '@lms/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -53,6 +54,9 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
   // A foreground session refresh must not replace edits the student is typing.
   }, [visible, user?.id]);
 
+  const isStudent = user?.role === 'STUDENT';
+  const isProgramLocked = isStudent && (isIbeUser(user) || isIteUser(user)) && Boolean(user?.department?.trim());
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Name Required', 'Please enter your display name.');
@@ -65,7 +69,7 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
         name: name.trim(),
         bio: bio.trim(),
         phone: phone.trim(),
-        department: department.trim(),
+        ...(isProgramLocked ? {} : { department: department.trim() }),
         yearLevel: yearLevel.trim(),
       });
 
@@ -87,8 +91,6 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
       setSaving(false);
     }
   };
-
-  const isStudent = user?.role === 'STUDENT';
 
   return (
     <Modal
@@ -153,11 +155,17 @@ export function ProfileEditModal({ visible, onClose, onUpdated }: ProfileEditMod
             />
 
             <Input
-              label="Academic Department / Track"
+              label={isProgramLocked ? 'Academic Program (Locked)' : 'Academic Department / Track'}
               value={department}
               onChangeText={setDepartment}
+              editable={!saving && !isProgramLocked}
               placeholder="e.g. Computer Science, Information Tech"
             />
+            {isProgramLocked && (
+              <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
+                Your academic program is locked. Contact an administrator to request a change.
+              </Text>
+            )}
 
             {isStudent && (
               <Input
