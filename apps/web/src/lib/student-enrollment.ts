@@ -18,6 +18,7 @@ export async function enrollWithClassCode(session: { id: string; userId: string;
     if (!course || course.isArchived || course.instituteId !== current.user.instituteId) throw new AccessError(400, 'This class code is not available in your institute. Check the code with your instructor.');
     const key = { courseId: course.id, studentId: current.userId };
     const existing = await tx.enrollment.findUnique({ where: { courseId_studentId: key } });
+    if (existing?.status === 'REMOVED') throw new AccessError(403, 'You were removed from this class. Contact your instructor about re-enrollment.');
     if (existing && ['REJECTED', 'DECLINED'].includes(existing.status)) throw new AccessError(403, 'Your request was declined. Contact your instructor to join this class.');
     if (existing?.status !== 'APPROVED') await attendanceEnrollmentChanged(tx, course.id, current.userId, true);
     await tx.enrollment.upsert({ where: { courseId_studentId: key }, create: { ...key, status: 'APPROVED' }, update: { status: 'APPROVED' } });

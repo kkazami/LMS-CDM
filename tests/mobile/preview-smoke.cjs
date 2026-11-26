@@ -69,6 +69,12 @@ async function main() {
     await page.getByText('Signed in as Jamie Student', { exact: true }).waitFor({ state: 'hidden' });
     assert.equal(await page.getByRole('tab').count(), 5);
     for (const label of ['Dashboard', 'Courses', 'Grades', 'Alerts', 'More']) assert.equal(await page.getByRole('tab', { name: `${label} tab`, exact: true }).count(), 1);
+    await page.getByRole('tab', { name: 'More tab', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Learning Materials', exact: true }).click();
+    await page.waitForURL('**/student/learning-materials');
+    await page.getByRole('button', { name: 'Open Learning Materials', exact: true }).waitFor();
+    await page.goBack();
+    await page.getByText(studentGreeting, { exact: true }).waitFor();
     const calendarClass = page.getByRole('button', { name: 'ICS101 Class', exact: true }).first();
     await calendarClass.scrollIntoViewIfNeeded(); await calendarClass.click();
     await page.getByText('Event details', { exact: true }).waitFor();

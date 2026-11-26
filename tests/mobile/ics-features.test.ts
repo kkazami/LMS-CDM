@@ -7,6 +7,7 @@ import { icsFeaturePath, featureUrlIsTrusted } from '../../apps/mobile/src/lib/i
 import { mobileFeaturePath } from '../../apps/web/src/lib/mobile-feature-path';
 
 test('ICS entry points preserve the course, assignment and discussion being opened', () => {
+  assert.equal(icsFeaturePath('learning-materials'), '/ics/learning-materials');
   assert.equal(icsFeaturePath('codelab'), '/ics/activities/codelab');
   assert.equal(icsFeaturePath('ohmward'), '/ics/activities/ohmward');
   assert.equal(icsFeaturePath('knowledge-exchange', undefined, undefined, 'post_123'), '/ics/knowledge-exchange/post/post_123');
@@ -87,6 +88,9 @@ test('bootstrap validates the explicit bearer, rejects other roles/institutes an
   assert.match(response.headers.get('cache-control')!, /no-store/);
   assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
   assert.deepEqual(state.seen, [token]);
+  response = await get(icsFeaturePath('learning-materials')!);
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get('location'), 'https://lms.example.invalid/ics/learning-materials');
   for (const bearer of [null, 'invalid_or_expired_token']) {
     response = await get(undefined, bearer);
     assert.equal(response.status, 401); assert.equal(response.headers.get('set-cookie'), null);

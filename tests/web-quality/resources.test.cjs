@@ -16,6 +16,36 @@ test('notes retain semantic formatting and safe colors while removing executable
   assert.match(clean, /<strong>Study<\/strong>/); assert.match(clean, /color:#aabbcc/); assert.match(clean, /href="https:\/\/example.test"/);
   assert.doesNotMatch(clean, /script|onerror|onload|<img|<svg|javascript:|href="\/\/|position:|background-image/);
 });
+test('ICS Notes eligibility and private partial updates preserve unrelated fields and checklist state', async () => {
+  const existing = { id: 'note', creatorId: student.id, instituteId: 'ics', title: 'Lecture', category: 'Reading', color: '#dbeafe', pinned: false };
+  const state = { session: { user: student }, db: { note: { updateManyAndReturn: async ({ where, data }) =>
+    Object.entries(where).every(([key, value]) => existing[key] === value) ? [Object.assign(existing, data)] : [] } } };
+  const { PATCH, canUseNotesBoard } = await compile(`
+    export { PATCH } from './apps/web/src/app/api/workspace/notes/route';
+    export { canUseNotesBoard } from './apps/web/src/lib/workspace';`, state);
+  for (const role of ['STUDENT', 'PROFESSOR', 'TEACHER', 'INSTRUCTOR']) assert.equal(canUseNotesBoard('ICS', role), true);
+  for (const institute of ['ibe', 'ite']) assert.equal(canUseNotesBoard(institute, 'STUDENT'), false);
+  assert.equal(canUseNotesBoard('ics', 'ADMIN'), false);
+
+  const patch = data => PATCH(new Request('https://lms.test/api/workspace/notes', {
+    method: 'PATCH', headers: { origin: 'https://lms.test', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: existing.id, ...data }),
+  }));
+  const content = '<ul data-note-checklist="true"><li data-checked="true">Review</li><li data-checked="false">Practice</li><li data-checked="unexpected">Read</li></ul>';
+  assert.equal((await patch({ content })).status, 200);
+  assert.match(existing.content, /data-note-checklist="true".*data-checked="true".*data-checked="false"/);
+  assert.doesNotMatch(existing.content, /unexpected/);
+  assert.equal((await patch({ pinned: true })).status, 200);
+  assert.equal(existing.title, 'Lecture');
+  assert.equal(existing.color, '#dbeafe');
+  assert.match(existing.content, /Review/);
+
+  state.session = { user: { ...student, id: 'other' } };
+  assert.equal((await patch({ title: 'blocked' })).status, 404);
+  state.session = { user: { ...student, instituteId: 'ibe' } };
+  assert.equal((await patch({ title: 'blocked' })).status, 404);
+  assert.equal(existing.title, 'Lecture');
+});
 test('mutation protection rejects forged, sibling and opaque origins; explicit bearer clients remain supported', async () => {
   const { mutationOriginAllowed } = await compile(sources);
   const req = headers => new Request('https://lms.test/api/workspace/notes', { method: 'POST', headers });

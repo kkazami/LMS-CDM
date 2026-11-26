@@ -1,7 +1,8 @@
-export type IcsFeature = 'codelab' | 'ohmward' | 'knowledge-exchange' | 'practical-labs' | 'assessment' | 'classwork' | 'course-tools' | 'create-class' | 'archives' | 'organization' | 'seasons';
+export type IcsFeature = 'learning-materials' | 'codelab' | 'ohmward' | 'knowledge-exchange' | 'practical-labs' | 'assessment' | 'classwork' | 'course-tools' | 'create-class' | 'archives' | 'organization' | 'seasons';
 
 export function icsFeaturePath(feature: IcsFeature, courseId?: string, assignmentId?: string, postId?: string, action?: string): string | null {
   const validId = (value?: string) => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
+  if (feature === 'learning-materials') return '/ics/learning-materials';
   if (feature === 'create-class') return '/ics/teachers?mobileAction=add-class';
   if (feature === 'archives') return '/ics/courses/archived';
   if (feature === 'organization') return '/ics/organization';

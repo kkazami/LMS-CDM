@@ -8,8 +8,9 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth-session";
 import { getInstituteTheme } from "@/lib/get-institute-theme";
 import WorkspaceDashboard from "@/components/workspace/WorkspaceDashboard";
-import { serializeNote, serializeTask } from "@/lib/workspace";
+import { canUseNotesBoard, serializeNote, serializeTask } from "@/lib/workspace";
 import { safeRichText } from '@/lib/safe-rich-text';
+import NotesBoard from "@/components/workspace/NotesBoard";
 
 type PageProps = {
   searchParams: Promise<{ view?: string }>;
@@ -30,7 +31,23 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
 
   const showNotes = (await searchParams).view === "notes";
   const isInstructor = ["PROFESSOR", "TEACHER"].includes(session.user.role);
+  const hasNotesBoard = canUseNotesBoard(institute, session.user.role);
   const calendar = showNotes ? null : await getDashboardCalendar(session.user, institute);
+  const theme = getInstituteTheme(institute);
+
+  if (!showNotes || hasNotesBoard) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">{showNotes ? "Notes" : isInstructor ? "Calendar" : "Tasks & Calendar"}</h1>
+          <Link className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700" href={`/${institute}/tasks${showNotes ? "" : "?view=notes"}`}>
+            {showNotes ? "See calendar" : hasNotesBoard ? "Open Notes" : "See notes & tasks"}
+          </Link>
+        </div>
+        {calendar ? <StudentCalendar {...calendar} showClasswork={!isInstructor} userId={session.user.id} instituteCode={institute} theme={theme} today={schoolDateKey(new Date())} /> : <NotesBoard />}
+      </div>
+    );
+  }
 
   const [notes, tasks, courses] = await Promise.all([
     db.note.findMany({
@@ -49,18 +66,16 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
     }),
   ]);
 
-  const theme = getInstituteTheme(institute);
-
   return (
     <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">{isInstructor ? "Calendar" : "Tasks & Calendar"}</h1><Link className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700" href={`/${institute}/tasks${showNotes ? '' : '?view=notes'}`}>{showNotes ? 'See calendar' : 'See notes & tasks'}</Link></div>
-    {calendar ? <StudentCalendar {...calendar} showClasswork={!isInstructor} userId={session.user.id} instituteCode={institute} theme={theme} today={schoolDateKey(new Date())} /> : <WorkspaceDashboard
-      instituteCode={institute}
-      notes={notes.map(note => serializeNote({ ...note, content: safeRichText(note.content) }))}
-      tasks={tasks.map(serializeTask)}
-      courseOptions={courses}
-      theme={theme}
-    />}
+      <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">{isInstructor ? "Calendar" : "Tasks & Calendar"}</h1><Link className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700" href={`/${institute}/tasks`}>See calendar</Link></div>
+      <WorkspaceDashboard
+        instituteCode={institute}
+        notes={notes.map(note => serializeNote({ ...note, content: safeRichText(note.content) }))}
+        tasks={tasks.map(serializeTask)}
+        courseOptions={courses}
+        theme={theme}
+      />
     </div>
   );
 }

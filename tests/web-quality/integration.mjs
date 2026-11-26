@@ -248,6 +248,75 @@ try {
     assert.equal(await db.session.count({ where: { userId: first.userId } }), 0);
     assert.ok(await compare('SyntheticNewPass2!', (await db.user.findUniqueOrThrow({ where: { id: first.userId } })).password));
   });
+  await check('instructor removal revokes only this class and preserves student work', async () => {
+    const { compile } = require('./compile.cjs');
+    const { removeCourseStudent, enrollWithClassCode, requireCourseAccess } = await compile(`
+      export { removeCourseStudent } from './apps/web/src/lib/course-unenrollment.ts';
+      export { enrollWithClassCode } from './apps/web/src/lib/student-enrollment.ts';
+      export { requireCourseAccess } from './apps/web/src/lib/course-access.ts';`, { db });
+    const teacher = { id: 'teacher', role: 'PROFESSOR', instituteId: 'ics' };
+    const student = { id: 'student', role: 'STUDENT', instituteId: 'ics' };
+    const other = await db.course.create({ data: { code: 'ATT102', title: 'Other class', courseCode: 'ATTOTHER', instituteId: 'ics', instructorId: 'unrelated' } });
+    const key = { courseId: 'course', studentId: student.id };
+    const enrollment = await db.enrollment.findUniqueOrThrow({ where: { courseId_studentId: key } });
+    const otherEnrollment = await db.enrollment.create({ data: { ...key, courseId: other.id, status: 'APPROVED' } });
+    for (const courseId of ['course', other.id]) {
+      await db.studentGroup.create({ data: { courseId, groupName: 'Team', members: { create: { studentId: student.id } } } });
+    }
+    const item = await db.syllabusItem.create({ data: { courseId: 'course', title: 'Synthetic assignment' } });
+    const now = Date.now();
+    const asyncSession = await db.attendanceSession.create({ data: {
+      courseId: 'course', createdById: teacher.id, title: 'Open attendance', mode: 'ASYNCHRONOUS',
+      opensAt: new Date(now - 60_000), presentUntil: new Date(now + 600_000), closesAt: new Date(now + 3_600_000),
+      sessionDate: '2026-11-26', timezone: 'Asia/Manila',
+      records: { create: { studentId: student.id, eligibleAt: new Date(now - 60_000), presentUntil: new Date(now + 600_000) } },
+    } });
+    const submission = await db.studentSubmission.create({ data: { syllabusItemId: item.id, studentId: student.id, grade: 90 } });
+
+    await assert.rejects(removeCourseStudent(student, 'course', enrollment.id), { status: 403 });
+    await assert.rejects(removeCourseStudent({ ...teacher, id: 'unrelated' }, 'course', enrollment.id), { status: 403 });
+    await assert.rejects(removeCourseStudent({ ...teacher, instituteId: 'ibe' }, 'course', enrollment.id), { status: 404 });
+    await assert.rejects(removeCourseStudent(teacher, 'course', otherEnrollment.id), { status: 404 });
+    assert.deepEqual(await Promise.all([
+      removeCourseStudent(teacher, 'course', enrollment.id),
+      removeCourseStudent(teacher, 'course', enrollment.id),
+    ]), ['ics', 'ics']);
+
+    assert.equal((await db.enrollment.findUniqueOrThrow({ where: { id: enrollment.id } })).status, 'REMOVED');
+    await assert.rejects(requireCourseAccess(student, 'course'), { status: 403 });
+    const session = await db.session.create({ data: { userId: student.id, expiresAt: new Date(now + 3_600_000) } });
+    await assert.rejects(enrollWithClassCode(session, 'TESTJOIN'), /removed from this class/);
+    await requireCourseAccess(student, other.id);
+    assert.equal(await db.studentGroupMember.count({ where: { studentId: student.id, group: { courseId: 'course' } } }), 0);
+    assert.equal(await db.studentGroupMember.count({ where: { studentId: student.id, group: { courseId: other.id } } }), 1);
+    assert.equal((await db.studentSubmission.findUniqueOrThrow({ where: { id: submission.id } })).grade, 90);
+    assert.equal((await db.attendanceRecord.findUniqueOrThrow({ where: { sessionId_studentId: { sessionId: asyncSession.id, studentId: student.id } } })).required, false);
+
+  });
+  await check('private Notes API keeps checklist and rich text updates scoped to their owner', async () => {
+    const { compile } = require('./compile.cjs');
+    const state = { db, session: { user: student } };
+    const notes = await compile(`export * from './apps/web/src/app/api/workspace/notes/route';`, state);
+    const send = (method, data, id) => new Request(`https://lms.test/api/workspace/notes${id ? '?id=' + id : ''}`, {
+      method, headers: { origin: 'https://lms.test', 'Content-Type': 'application/json' },
+      ...(data ? { body: JSON.stringify(data) } : {}),
+    });
+    const content = '<ul data-note-checklist="true"><li data-checked="true">Review course notes</li></ul>';
+    const created = await notes.POST(send('POST', { title: 'Study plan', content, category: 'Reading' }));
+    assert.equal(created.status, 201);
+    const { id } = await created.json();
+    assert.equal((await notes.PATCH(send('PATCH', { id, pinned: true }))).status, 200);
+    const persisted = await (await notes.GET(send('GET', undefined, id))).json();
+    assert.deepEqual([persisted.title, persisted.category, persisted.color, persisted.pinned, persisted.content], ['Study plan', 'Reading', '#ffffff', true, content]);
+
+    state.session = { user: teacher };
+    assert.equal((await notes.GET(send('GET', undefined, id))).status, 404);
+    assert.equal((await notes.PATCH(send('PATCH', { id, archived: true }))).status, 404);
+    const instructorNote = await notes.POST(send('POST', { content: '<p><strong>Prepare handout</strong></p>' }));
+    assert.equal(instructorNote.status, 201);
+    const instructorNotes = await (await notes.GET(send('GET'))).json();
+    assert.deepEqual(instructorNotes.map(note => note.content), ['<p><strong>Prepare handout</strong></p>']);
+  });
   report.result = 'PASS';
 } catch (error) {
   report.result = 'FAIL'; report.errorType = error?.name || 'Error';

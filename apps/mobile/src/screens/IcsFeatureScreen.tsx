@@ -18,7 +18,7 @@ import { featureUrlIsTrusted, icsFeaturePath, type IcsFeature } from '../lib/ics
 import { PracticalLabsScreen } from './PracticalLabsScreen';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
-const TITLES: Record<IcsFeature, string> = { codelab: 'CodeLab', ohmward: 'Ohmward', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', classwork: 'Classwork', 'course-tools': 'Class Tools', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
+const TITLES: Record<IcsFeature, string> = { 'learning-materials': 'Learning Materials', codelab: 'CodeLab', ohmward: 'Ohmward', 'knowledge-exchange': 'Knowledge Exchange', 'practical-labs': 'Practical Labs', assessment: 'Assessment', classwork: 'Classwork', 'course-tools': 'Class Tools', 'create-class': 'Add Class', archives: 'Archived Classes', organization: 'Organizational Chart', seasons: 'Leaderboard Manager' };
 
 export function IcsFeatureScreen({ feature }: { feature: IcsFeature }) {
   const { courseId, assignmentId, formId, postId, view, itemId, action } = useLocalSearchParams<{ courseId?: string; assignmentId?: string; formId?: string; postId?: string; view?: string; itemId?: string; action?: string }>();

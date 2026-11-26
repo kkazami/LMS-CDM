@@ -6,6 +6,9 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth-session";
 import { enrollmentManager, flagSentiment } from "@/lib/skills";
+import { removeCourseStudent } from "@/lib/course-unenrollment";
+import { AccessError } from "@/lib/super-user-v1/actor";
+import type { Prisma } from "@prisma/client";
 
 async function ensureCourseAccess(courseId: string) {
   const session = await getSession();
@@ -30,6 +33,23 @@ async function ensureCourseAccess(courseId: string) {
 }
 
 // ─── Enrollment Actions ───
+
+export async function removeStudent(enrollmentId: string, courseId: string): Promise<{ success: true } | { success: false; error: string }> {
+  if (typeof enrollmentId !== "string" || !enrollmentId || typeof courseId !== "string" || !courseId) {
+    return { success: false, error: "Select a student to remove." };
+  }
+
+  try {
+    const actor = await requireLegacyActor("apps/web/src/app/(dashboard)/[institute]/courses/[courseId]/people/actions.ts#removeStudent", { courseId });
+    const instituteCode = await removeCourseStudent(actor, courseId, enrollmentId);
+    revalidatePath(`/${instituteCode}/courses/${courseId}/people`);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AccessError) return { success: false, error: error.message };
+    console.error("Failed to remove student:", error);
+    return { success: false, error: "Could not remove the student. Please try again." };
+  }
+}
 
 export async function approveEnrollment(
   enrollmentId: string,
@@ -253,6 +273,12 @@ export async function getPrivateComments(
 
 // ─── Student Group Actions ───
 
+async function groupRosterIsCurrent(tx: Prisma.TransactionClient, courseId: string, studentIds: string[]) {
+  await tx.$queryRaw`SELECT id FROM "Course" WHERE id = ${courseId} FOR UPDATE`;
+  const count = await tx.enrollment.count({ where: { courseId, studentId: { in: studentIds }, status: "APPROVED" } });
+  return count === new Set(studentIds).size;
+}
+
 export async function createStudentGroup(
   courseId: string,
   groupName: string,
@@ -263,15 +289,17 @@ export async function createStudentGroup(
 
   await ensureCourseAccess(courseId);
 
-  const group = await db.studentGroup.create({
-    data: {
-      courseId,
-      groupName,
-      members: {
-        create: studentIds.map((studentId) => ({ studentId })),
+  const group = await db.$transaction(async tx => {
+    if (!await groupRosterIsCurrent(tx, courseId, studentIds)) return null;
+    return tx.studentGroup.create({
+      data: {
+        courseId,
+        groupName,
+        members: { create: studentIds.map((studentId) => ({ studentId })) },
       },
-    },
+    });
   });
+  if (!group) return { success: false, error: "The class roster changed. Select students who are still enrolled." };
 
   revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/people`);
   return { success: true, groupId: group.id };
@@ -288,19 +316,18 @@ export async function updateStudentGroup(
 
   await ensureCourseAccess(courseId);
 
-  // Replace all members atomically
-  await db.$transaction([
-    db.studentGroupMember.deleteMany({ where: { groupId } }),
-    db.studentGroup.update({
-      where: { id: groupId },
+  const updated = await db.$transaction(async tx => {
+    if (!await groupRosterIsCurrent(tx, courseId, studentIds)) return null;
+    await tx.studentGroupMember.deleteMany({ where: { groupId, group: { courseId } } });
+    return tx.studentGroup.update({
+      where: { id: groupId, courseId },
       data: {
         groupName,
-        members: {
-          create: studentIds.map((studentId) => ({ studentId })),
-        },
+        members: { create: studentIds.map((studentId) => ({ studentId })) },
       },
-    }),
-  ]);
+    });
+  });
+  if (!updated) return { success: false, error: "The class roster changed. Select students who are still enrolled." };
 
   revalidatePath(`/(dashboard)/${instituteCode}/courses/${courseId}/people`);
   return { success: true };

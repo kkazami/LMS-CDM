@@ -14,6 +14,7 @@ import { ProfileEditModal } from '../profile/ProfileEditModal';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 
 type Item = { icon: LucideIcon; title: string; description: string; route: string };
+const learningToolRoute = /\/(?:learning-materials|codelab|ohmward|knowledge-exchange|practical-labs)(?:\?|$)/;
 function focus(target: React.ComponentRef<typeof View> | null) {
   if (!target) return;
   if (Platform.OS === 'web') target.focus();
@@ -37,7 +38,7 @@ export function IcsToolsMenu({ children, teacher, items, context: Context }: {
   const tint = theme.isDark ? '#382419' : '#FFF0E5';
   const groups = teacher ? [{ title: 'Teaching tools', items: items.filter(i => !['Archived Classes', 'Organizational Chart', 'Leaderboard Manager'].includes(i.title)) },
     { title: 'Class management', items: items.filter(i => ['Archived Classes', 'Organizational Chart', 'Leaderboard Manager'].includes(i.title)) }]
-    : [{ title: 'Learning tools', items: items.filter(i => /\/(?:codelab|ohmward|knowledge-exchange|practical-labs)(?:\?|$)/.test(i.route)) }, { title: 'Study & progress', items: items.filter(i => !/\/(?:codelab|ohmward|knowledge-exchange|practical-labs)(?:\?|$)/.test(i.route)) }];
+    : [{ title: 'Learning tools', items: items.filter(i => learningToolRoute.test(i.route)) }, { title: 'Study & progress', items: items.filter(i => !learningToolRoute.test(i.route)) }];
   useEffect(() => {
     const closed = wasOpen.current && !isOpen;
     wasOpen.current = isOpen;

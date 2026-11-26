@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useTransition } from "react";
 import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 import Modal from "@/components/common/Modal";
 import Badge from "@/components/common/Badge";
 import UserAvatar from "@/components/common/UserAvatar";
 import UserMiniCard from "@/components/common/UserMiniCard";
+import { toast } from "@/components/common/Toast";
 import PrivateCommentDrawer from "@/components/courses/PrivateCommentDrawer";
 import { canOpenFeedbackDrawer, getFeedbackDrawerCopy } from "@/lib/ite/people-drawer-rules";
 import {
   approveEnrollment,
   declineEnrollment,
   approveAllPending,
+  removeStudent,
   sendPrivateComment,
   getPrivateComments,
   createStudentGroup,
@@ -25,6 +28,7 @@ import {
   Users,
   Plus,
   Trash2,
+  UserMinus,
   CheckCircle2,
   Clock,
   Crown,
@@ -83,6 +87,9 @@ export default function PeopleClient({
   currentUserId: string;
 }) {
   const isIte = instituteCode?.toLowerCase() === "ite";
+  const [studentToRemove, setStudentToRemove] = useState<Student | null>(null);
+  const [removalError, setRemovalError] = useState("");
+  const [removing, startRemoval] = useTransition();
   // Private comment drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -220,6 +227,26 @@ export default function PeopleClient({
     await declineEnrollment(enrollmentId, courseId, instituteCode);
   };
 
+  const handleRemoveStudent = () => {
+    if (!studentToRemove || removing) return;
+    const student = studentToRemove;
+    setRemovalError("");
+    startRemoval(async () => {
+      try {
+        const result = await removeStudent(student.enrollmentId, courseId);
+        if (!result.success) {
+          setRemovalError(result.error);
+          return;
+        }
+        setSelectedStudentIds((ids) => new Set([...ids].filter((id) => id !== student.id)));
+        setStudentToRemove(null);
+        toast.success("Student removed", `${student.name} no longer has access to this class.`);
+      } catch {
+        setRemovalError("Could not remove the student. Please try again.");
+      }
+    });
+  };
+
   const handleApproveAll = async () => {
     if (
       confirm(
@@ -237,12 +264,17 @@ export default function PeopleClient({
       return;
     }
 
-    await createStudentGroup(
+    const result = await createStudentGroup(
       courseId,
       newGroupName.trim(),
       Array.from(selectedStudentIds),
       instituteCode
     );
+    if (!result.success) {
+      toast.error("Group could not be created", result.error);
+      setSelectedStudentIds(new Set());
+      return;
+    }
 
     setGroupModalOpen(false);
     setNewGroupName("");
@@ -446,22 +478,63 @@ export default function PeopleClient({
                 </div>
 
                 {canManage && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCommentDrawer(student);
-                    }}
-                    className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer"
-                    aria-label={`Private message ${student.name}`}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCommentDrawer(student);
+                      }}
+                      className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-[#F0F2F8] transition cursor-pointer"
+                      aria-label={`Private message ${student.name}`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRemovalError("");
+                        setStudentToRemove(student);
+                      }}
+                      className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-slate-600 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 sm:px-2.5 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                      aria-label={`Remove ${student.name} from class`}
+                      title="Remove from class"
+                    >
+                      <UserMinus className="h-4 w-4" aria-hidden="true" />
+                      <span className="hidden sm:inline">Remove</span>
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {studentToRemove && (
+        <ConfirmDialog
+          title="Remove student from class?"
+          description={`${studentToRemove.name} will lose access to this class and be removed from its groups. Their grades and submissions will be kept.`}
+          onClose={() => { if (!removing) setStudentToRemove(null); }}
+        >
+          {removalError && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-300">{removalError}</p>}
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button type="button" theme={theme} variant="secondary" disabled={removing} onClick={() => setStudentToRemove(null)}>
+              Cancel
+            </Button>
+            <button
+              type="button"
+              disabled={removing}
+              aria-busy={removing}
+              onClick={handleRemoveStudent}
+              className="min-h-11 cursor-pointer rounded-xl bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-wait disabled:opacity-60"
+            >
+              {removing ? "Removing…" : "Remove student"}
+            </button>
+          </div>
+        </ConfirmDialog>
+      )}
 
       {/* ─── Student Groups ─── */}
       {canManage && (

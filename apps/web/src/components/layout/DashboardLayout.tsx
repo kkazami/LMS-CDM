@@ -14,6 +14,10 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import type { InstituteTheme } from "@/lib/theme";
 import type { IteSidebarProgramTool } from "@/lib/ite-programs/features";
 import type { IbeStudentProgramCode } from "@/lib/ibe-programs/features";
+import NotesDock from "@/components/workspace/NotesDock";
+import { NotesProvider } from "@/components/workspace/NotesProvider";
+import notesStyles from "@/components/workspace/notes-dock.module.css";
+import { canUseNotesBoard } from "@/lib/workspace";
 
 const ChatbotWidget = dynamic(() => import("@/components/common/ChatbotWidget"));
 const BadgeToastProvider = dynamic(() => import("@/components/common/BadgeToast"));
@@ -102,6 +106,7 @@ export default function DashboardLayout({
   }, [instituteCode]);
 
   const isStudent = userRole.toUpperCase() === "STUDENT";
+  const canUseQuickNotes = canUseNotesBoard(instituteCode, userRole);
 
   const layoutContent = (
     <div
@@ -136,7 +141,7 @@ export default function DashboardLayout({
 
         <div className={`dashboard-workspace-shell min-w-0 flex-1 overflow-x-clip max-w-full transition-all duration-300 ${
           isSidebarCollapsed ? "lg:pl-18" : "lg:pl-72"
-        }`}>
+        } ${canUseQuickNotes ? notesStyles.lane : ""}`} style={canUseQuickNotes ? { "--notes-workspace-inset": isSidebarCollapsed ? "4.5rem" : "18rem" } as React.CSSProperties : undefined}>
           <Topbar
             theme={theme}
             instituteName={instituteName}
@@ -153,11 +158,16 @@ export default function DashboardLayout({
             enrolledCourses={enrolledCourses}
           />
 
-          <main className="px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
+          <main className="min-w-0 px-4 py-4 lg:px-8 lg:py-8 pb-[calc(120px+env(safe-area-inset-bottom,0px))] lg:pb-8">
             <AvatarProvider initialAvatarUrl={avatarUrl ?? null}>
               {isEligibleForOhmward && userId ? <DraftRecoveryProvider key={userId} ownerId={userId}>{children}</DraftRecoveryProvider> : children}
             </AvatarProvider>
           </main>
+          {canUseQuickNotes && nativeFeature !== true && (
+            <Suspense fallback={null}>
+              <NotesDock instituteCode={instituteCode} userId={userId} isStudent={isStudent} />
+            </Suspense>
+          )}
         </div>
       </div>
 
@@ -211,7 +221,7 @@ export default function DashboardLayout({
   return (
     <ThemeProvider>
       <ChatbotProvider userName={userName} userRole={userRole}>
-        {wrappedContent}
+        {canUseQuickNotes ? <NotesProvider key={userId} userId={userId}>{wrappedContent}</NotesProvider> : wrappedContent}
       </ChatbotProvider>
     </ThemeProvider>
   );

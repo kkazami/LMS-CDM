@@ -5,8 +5,14 @@ import type {
   TaskItem as TaskRecord,
 } from "@prisma/client";
 import type { CalendarEvent, Note, Task } from "@/lib/lms-types";
+import { canonicalRole } from "@/lib/super-user-v1/capabilities";
 
 export type WorkspaceCourse = Pick<CourseRecord, "id" | "title" | "code">;
+
+export function canUseNotesBoard(instituteCode: string, userRole: string) {
+  const role = canonicalRole(userRole);
+  return instituteCode.toLowerCase() === "ics" && (role === "STUDENT" || role === "INSTRUCTOR");
+}
 
 function toIsoString(value: Date | string) {
   return typeof value === "string" ? value : value.toISOString();

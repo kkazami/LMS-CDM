@@ -8,13 +8,17 @@ import { safeRichText } from '@/lib/safe-rich-text';
 export const dynamic = "force-dynamic";
 
 const noteSchema = z.object({
-  title: z.string().max(200).default(""),
-  content: z.string().max(100000).transform(safeRichText).default(""),
-  category: z.string().max(100).default("General"),
-  color: z.string().regex(/^#[0-9a-f]{6}$/i).default("#ffffff"),
-  pinned: z.boolean().default(false),
-  archived: z.boolean().default(false),
-  orderIndex: z.number().int().default(0),
+  title: z.string().max(200),
+  content: z.string().max(100000).transform(safeRichText),
+  category: z.string().max(100),
+  color: z.string().regex(/^#[0-9a-f]{6}$/i),
+  pinned: z.boolean(),
+  archived: z.boolean(),
+  orderIndex: z.number().int(),
+}).partial();
+
+const noteUpdateSchema = noteSchema.extend({
+  id: z.string().min(1),
 });
 
 export async function GET(request: Request) {
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
 
   if (response) return response;
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = noteSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -89,9 +93,8 @@ export async function PATCH(request: Request) {
 
   if (response) return response;
 
-  const body = await request.json();
-  const payloadSchema = noteSchema.extend({ id: z.string().min(1) });
-  const parsed = payloadSchema.safeParse(body);
+  const body = await request.json().catch(() => null);
+  const parsed = noteUpdateSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -100,24 +103,21 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const existing = await db.note.findFirst({
+  const { id, ...data } = parsed.data;
+  const [note] = await db.note.updateManyAndReturn({
     where: {
-      id: parsed.data.id,
+      id,
       creatorId: session.user.id,
       instituteId: session.user.instituteId,
     },
+    data,
   });
 
-  if (!existing) {
+  if (!note) {
     return NextResponse.json({ message: "Note not found." }, { status: 404 });
   }
 
-  const note = await db.note.update({
-    where: { id: existing.id },
-    data: parsed.data,
-  });
-
-  return NextResponse.json(note);
+  return NextResponse.json({ ...note, content: safeRichText(note.content) });
 }
 
 export async function DELETE(request: Request) {

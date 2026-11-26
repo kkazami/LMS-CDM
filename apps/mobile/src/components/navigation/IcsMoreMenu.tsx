@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Archive, BarChart2, CheckSquare, ChevronRight, Code2, CircuitBoard, FlaskConical, Layers, LogOut, MessageSquare, Moon, Network, Sun, Trophy, UserRound, X } from 'lucide-react-native';
+import { Archive, BarChart2, BookOpen, CheckSquare, ChevronRight, Code2, CircuitBoard, FlaskConical, Layers, LogOut, MessageSquare, Moon, Network, Sun, Trophy, UserRound, X } from 'lucide-react-native';
 import type { MoreMenuContextType } from './MoreMenuDrawer';
 import { useAuthStore } from '../../stores/auth-store';
 import { useThemeStore } from '../../stores/theme-store';
@@ -36,6 +36,7 @@ export function IcsMoreMenu({ children, role, context: Context }: { children: Re
     { icon: FlaskConical, title: 'Practical Labs', description: 'Assignments, evidence & feedback', route: `${base}/practical-labs` },
     { icon: Trophy, title: 'Leaderboard Manager', description: 'Manage seasons and rankings', route: `${base}/tools?tool=seasons` },
   ] : [
+    { icon: BookOpen, title: 'Learning Materials', description: 'Course handouts and lecture notes', route: '/student/learning-materials' },
     ohmward,
     { icon: Code2, title: 'CodeLab', description: 'Interactive coding labs', route: `${base}/codelab` },
     { icon: MessageSquare, title: 'Knowledge Exchange', description: 'Questions & discussions', route: `${base}/knowledge-exchange` },

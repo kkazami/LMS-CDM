@@ -119,13 +119,16 @@ export async function enrollmentManager(
           continue;
         }
 
-        await db.$transaction(async tx => {
-        await attendanceEnrollmentChanged(tx, input.courseId, enrollment.studentId, newStatus === 'APPROVED');
-        await tx.enrollment.update({
-          where: { id: enrollmentId },
-          data: { status: newStatus },
+        const updated = await db.$transaction(async tx => {
+          await tx.$queryRaw`SELECT id FROM "Course" WHERE id = ${input.courseId} FOR UPDATE`;
+          const pending = await tx.enrollment.findFirst({ where: { id: enrollmentId, courseId: input.courseId, status: 'PENDING' } });
+          if (!pending) return false;
+
+          await attendanceEnrollmentChanged(tx, input.courseId, pending.studentId, newStatus === 'APPROVED');
+          await tx.enrollment.update({ where: { id: enrollmentId }, data: { status: newStatus } });
+          return true;
         });
-        });
+        if (!updated) continue;
 
         results.push({
           enrollmentId: enrollment.id,

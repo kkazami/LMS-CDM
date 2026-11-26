@@ -394,6 +394,9 @@ export async function requestEnrollment(courseId: string, instituteCode: string)
     });
 
     if (existing) {
+      if (existing.status === "REMOVED") {
+        return { success: false, error: "You were removed from this class. Contact your instructor about re-enrollment." };
+      }
       if (existing.status === "APPROVED") {
         return { success: false, error: "You are already enrolled in this course." };
       }
@@ -496,6 +499,7 @@ export async function unenrollFromCourse(courseId: string, instituteCode: string
     await tx.enrollment.delete({
       where: {
         courseId_studentId: { courseId, studentId: session.user.id },
+        status: { not: "REMOVED" },
       },
     });
     });

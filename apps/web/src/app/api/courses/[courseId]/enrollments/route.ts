@@ -129,28 +129,25 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "Action must be 'APPROVE' or 'REJECT'." }, { status: 400 });
     }
 
-    const enrollment = await db.enrollment.findUnique({
-      where: { id: enrollmentId },
-    });
-
-    if (!enrollment || enrollment.courseId !== courseId) {
-      return NextResponse.json({ message: 'Enrollment record not found in this course.' }, { status: 404 });
-    }
-
     const updated = await db.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM "Course" WHERE id = ${courseId} FOR UPDATE`;
+      const enrollment = await tx.enrollment.findFirst({ where: { id: enrollmentId, courseId } });
+      if (!enrollment) return null;
+      if (enrollment.status === 'REMOVED') return 'REMOVED' as const;
+
       await attendanceEnrollmentChanged(tx, courseId, enrollment.studentId, normalizedAction === 'APPROVE');
       return tx.enrollment.update({
-      where: { id: enrollmentId },
-      data: {
-        status: normalizedAction === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-      },
+        where: { id: enrollmentId },
+        data: { status: normalizedAction === 'APPROVE' ? 'APPROVED' : 'REJECTED' },
+      });
     });
-    });
+    if (!updated) return NextResponse.json({ message: 'Enrollment record not found in this course.' }, { status: 404 });
+    if (updated === 'REMOVED') return NextResponse.json({ message: 'This student was removed from the class.' }, { status: 409 });
 
     // Notify student if approved
     if (normalizedAction === 'APPROVE') {
       await createNotification({
-        userId: enrollment.studentId,
+        userId: updated.studentId,
         type: 'CLASSWORK',
         title: `Enrolled in ${course.code}`,
         message: `Your enrollment request for ${course.title} has been approved.`,
