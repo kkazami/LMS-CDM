@@ -4,12 +4,8 @@ export function mobileFeaturePath(value: string | null): string | null {
   const url = new URL(value, 'https://mobile.invalid');
   if (url.origin !== 'https://mobile.invalid' || url.pathname !== value.split(/[?#]/)[0]) return null;
   const segment = '[A-Za-z0-9_-]+';
-<<<<<<< HEAD
-  const allowed = new RegExp(`^/ics/(?:learning-materials|teachers|organization|manage-leaderboard|courses/archived|activities/codelab(?:/${segment}){0,2}|activities/ohmward(?:/(?:primer|sandbox|progress|modules/${segment}|levels/${segment}|instructor(?:/students/${segment})?))?|knowledge-exchange(?:/${segment}){0,3}|courses/${segment}/(?:people|gradebook|labs(?:/${segment})?|classwork(?:/(?:forms/${segment}(?:/respond)?|${segment}))?))$`);
-  return allowed.test(url.pathname) ? url.pathname + url.search + url.hash : null;
-=======
   if (value.startsWith('/ics/')) {
-    const allowedIcs = new RegExp(`^/ics/(?:teachers|organization|manage-leaderboard|courses/archived|activities/codelab(?:/${segment}){0,2}|activities/ohmward(?:/(?:primer|sandbox|progress|modules/${segment}|levels/${segment}|instructor(?:/students/${segment})?))?|knowledge-exchange(?:/${segment}){0,3}|courses/${segment}/(?:people|gradebook|labs(?:/${segment})?|classwork(?:/(?:forms/${segment}(?:/respond)?|${segment}))?))$`);
+    const allowedIcs = new RegExp(`^/ics/(?:learning-materials|teachers|organization|manage-leaderboard|courses/archived|activities/codelab(?:/${segment}){0,2}|activities/ohmward(?:/(?:primer|sandbox|progress|modules/${segment}|levels/${segment}|instructor(?:/students/${segment})?))?|knowledge-exchange(?:/${segment}){0,3}|courses/${segment}/(?:people|gradebook|labs(?:/${segment})?|classwork(?:/(?:forms/${segment}(?:/respond)?|${segment}))?))$`);
     return allowedIcs.test(url.pathname) ? url.pathname + url.search + url.hash : null;
   }
   if (value.startsWith('/ibe/')) {
@@ -17,5 +13,4 @@ export function mobileFeaturePath(value: string | null): string | null {
     return allowedIbe.test(url.pathname) ? url.pathname + url.search + url.hash : null;
   }
   return null;
->>>>>>> c67d90f674c2ebef328e1aaae67bd1e8643c6ac6
 }

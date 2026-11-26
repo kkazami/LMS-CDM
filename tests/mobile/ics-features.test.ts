@@ -103,6 +103,9 @@ test('bootstrap validates the explicit bearer, rejects other roles/institutes an
   assert.equal((await get()).status, 303);
   state.institute = 'ibe';
   assert.equal((await get()).status, 403);
+  response = await get('/ibe/business-plan/plan_123?tab=overview#summary');
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get('location'), 'https://lms.example.invalid/ibe/business-plan/plan_123?tab=overview#summary');
   state.institute = 'ics'; state.enrolled = false;
   assert.equal((await get()).status, 403);
   state.enrolled = true;
