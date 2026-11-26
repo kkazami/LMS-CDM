@@ -465,11 +465,11 @@ export default function ManageLeaderboardClient({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 w-full sm:w-fit">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 w-full sm:w-fit max-w-full">
         <button
           type="button"
           onClick={() => setActiveTab("leaderboards")}
-          className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "leaderboards"
               ? "bg-white dark:bg-[#1E2235] text-slate-900 dark:text-[#F0F2F8] shadow-xs"
               : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
@@ -491,7 +491,7 @@ export default function ManageLeaderboardClient({
         <button
           type="button"
           onClick={() => setActiveTab("rules")}
-          className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "rules"
               ? "bg-white dark:bg-[#1E2235] text-slate-900 dark:text-[#F0F2F8] shadow-xs"
               : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"
@@ -509,7 +509,7 @@ export default function ManageLeaderboardClient({
         <button
           type="button"
           onClick={() => setActiveTab("commendations")}
-          className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "commendations"
               ? "bg-white dark:bg-[#1E2235] text-slate-900 dark:text-[#F0F2F8] shadow-xs"
               : "text-slate-500 dark:text-[#8B92A5] hover:text-slate-900 dark:hover:text-[#F0F2F8]"

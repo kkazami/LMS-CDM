@@ -65,7 +65,7 @@ export function IbeCourseCard({
         <View style={styles.metadata}>
           <Users size={15} color={theme.colors.textSecondary} />
           <Text style={[styles.detail, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-            {teacher ? `${(course as any).enrolledCount ?? 0} enrolled students` : course.instructorName || 'Instructor to be assigned'}
+            {isTeacher ? `${(course as any).enrolledCount ?? 0} enrolled students` : course.instructorName || 'Instructor to be assigned'}
           </Text>
         </View>
         {!!(course as any).room && (
@@ -87,11 +87,11 @@ export function IbeCourseCard({
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${teacher ? 'Gradebook' : 'Grades'} for ${course.title}`}
+              accessibilityLabel={`${isTeacher ? 'Gradebook' : 'Grades'} for ${course.title}`}
               style={styles.link}
-              onPress={() => open(teacher ? 'GRADEBOOK' : 'GRADES')}
+              onPress={() => open(isTeacher ? 'GRADEBOOK' : 'GRADES')}
             >
-              <Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{teacher ? 'Gradebook' : 'Grades'}</Text>
+              <Text style={[styles.detail, { color: theme.colors.textSecondary }]}>{isTeacher ? 'Gradebook' : 'Grades'}</Text>
             </Pressable>
           </View>
 
@@ -191,8 +191,10 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: 4,
