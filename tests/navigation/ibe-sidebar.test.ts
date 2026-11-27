@@ -19,19 +19,10 @@ test("IBE Sidebar separates general navigation from PROGRAM TOOLS for BSBA HRM a
     "Consultation & Scheduling must be in general navigation links"
   );
 
-  // 2. Program tools group divider and uppercase header are wired for visibleProgramTools
-  assert.ok(
-    sidebarSource.includes('aria-label="Program tools"'),
-    "Program tools section must have accessible aria-label"
-  );
-  assert.ok(
-    sidebarSource.includes("Program tools"),
-    "Program tools heading must be rendered"
-  );
-  assert.ok(
-    sidebarSource.includes("visibleProgramTools.length > 0"),
-    "Program tools section must render when visibleProgramTools has items"
-  );
+  // 2. Program tools keep their own divider below the regular links.
+  assert.match(sidebarSource, /visibleProgramTools\.map\([^\n]+section: "Program tools"/);
+  assert.match(sidebarSource, /aria-label="Program tools"/);
+  assert.match(sidebarSource, /programToolLinks\.map\(renderLink\)/);
 
   // 3. IBE student program tools are routed into visibleProgramTools (not flat general links)
   assert.ok(

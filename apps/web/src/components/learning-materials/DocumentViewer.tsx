@@ -16,6 +16,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `/pdf-runtime/${pdfjs.version}/pdf.worker.
 type LoadedPdf = Parameters<NonNullable<ComponentProps<typeof Document>["onLoadSuccess"]>>[0];
 const PDF_PAGE_PADDING = 16;
 const PDF_LOAD_ERROR = <p role="alert" className="max-w-sm p-6 text-center text-sm text-slate-600 dark:text-slate-300">The PDF preview could not load. Use Download to open the original.</p>;
+const PDF_PAGE_BUTTON = "pointer-events-auto grid size-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition-colors hover:bg-slate-50 disabled:cursor-default disabled:opacity-40 dark:border-white/10 dark:bg-[#141721] dark:text-[#F0F2F8] dark:hover:bg-[#1E2132]";
 
 interface Annotation {
   id: string;
@@ -174,6 +175,7 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   const downloadOnly = !isLink && !isImage && !isOffice && !isText && !isPdf;
 
   const showPdfControls = isPdf;
+  const showPdfNavigation = isPdf && (numPages ?? 0) > 1;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -209,10 +211,15 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
     if (isPdf) containerRef.current?.scrollTo(0, 0);
   }, [isPdf, pageNumber]);
 
-  const currentPage = pageLayout?.pdf === pdf && pageLayout.pageNumber === pageNumber ? pageLayout : null;
-  const pageScale = currentPage?.size && viewport.width > 0 && viewport.height > 0
-    ? Math.min(viewport.width / currentPage.size.width, viewport.height / currentPage.size.height) * zoom / 100
+  // Keep the arrows beside the last measured page while the next one loads.
+  const measuredPage = pageLayout?.pdf === pdf ? pageLayout : null;
+  const currentPage = measuredPage?.pageNumber === pageNumber ? measuredPage : null;
+  const measuredSize = measuredPage?.size;
+  const measuredScale = measuredSize && viewport.width > 0 && viewport.height > 0
+    ? Math.min(viewport.width / measuredSize.width, viewport.height / measuredSize.height) * zoom / 100
     : null;
+  const pageScale = currentPage ? measuredScale : null;
+  const pageWidth = measuredSize && measuredScale !== null ? measuredSize.width * measuredScale : null;
   const pdfLoading = <Loader2 aria-label="Loading PDF preview" className={`h-8 w-8 animate-spin ${isIte ? "text-blue-600" : "text-[#F97316]"}`} />;
 
   // Load text content if it's a text file
@@ -245,32 +252,14 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
   return (
     <div className="flex h-full flex-col md:flex-row gap-6">
       {/* Main Document Viewer */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 dark:border-white/5 dark:bg-[#0B0D13]">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-100 dark:border-white/5 dark:bg-[#0B0D13]">
         {/* Toolbar - Show pagination and zoom for PDFs and converted PPTXs */}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-white px-3 py-2 sm:px-4 dark:border-white/5 dark:bg-[#141721]">
           <div className="flex items-center gap-2">
             {showPdfControls && (
-              <>
-                <button
-                  aria-label="Previous page"
-                  onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
-                  disabled={pageNumber <= 1}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <span className="text-sm font-semibold text-slate-700 dark:text-[#F0F2F8]">
-                  Page {pageNumber} of {numPages || "--"}
-                </span>
-                <button
-                  aria-label="Next page"
-                  onClick={() => setPageNumber(Math.min(numPages || 1, pageNumber + 1))}
-                  disabled={pageNumber >= (numPages || 1)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-40 text-slate-700 dark:text-[#F0F2F8] cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
+              <span aria-live="polite" aria-atomic="true" className="text-sm font-semibold text-slate-700 dark:text-[#F0F2F8]">
+                Page {pageNumber} of {numPages || "--"}
+              </span>
             )}
             {!showPdfControls && (
               <span className="flex min-w-0 items-center gap-2 break-all text-sm font-bold text-slate-700 dark:text-[#F0F2F8]">
@@ -341,9 +330,39 @@ export default function DocumentViewer({ url, attachmentId, userId, type, fileNa
           </div>
         </div>
 
+        {showPdfNavigation && (
+          <div
+            role="group"
+            aria-label="Page navigation"
+            className="pointer-events-none z-10 col-start-1 row-start-2 mx-auto flex w-full max-w-[calc(100%_-_0.5rem)] justify-between self-center"
+            style={pageWidth === null ? undefined : { width: `calc(${pageWidth}px + 6.5rem)` }}
+          >
+            <button
+              type="button"
+              aria-label="Previous page"
+              title="Previous page"
+              onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
+              disabled={pageNumber <= 1}
+              className={PDF_PAGE_BUTTON}
+            >
+              <ChevronLeft aria-hidden="true" className="size-5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next page"
+              title="Next page"
+              onClick={() => setPageNumber((page) => Math.min(numPages ?? 1, page + 1))}
+              disabled={pageNumber >= (numPages ?? 1)}
+              className={PDF_PAGE_BUTTON}
+            >
+              <ChevronRight aria-hidden="true" className="size-5" />
+            </button>
+          </div>
+        )}
+
         {/* Dynamic Content Container */}
         <div 
-          className="relative flex min-h-0 flex-1 overflow-auto bg-slate-100 dark:bg-[#0B0D13]"
+          className={`relative col-start-1 row-start-2 flex min-h-0 min-w-0 overflow-auto bg-slate-100 dark:bg-[#0B0D13] ${showPdfNavigation ? "mx-12" : ""}`}
           ref={containerRef}
           onMouseUp={handleSelection}
         >

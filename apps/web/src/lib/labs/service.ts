@@ -306,7 +306,7 @@ export async function uploadEvidence(actor: LabActor, courseId: string, assignme
       const saved = await tx.labStepResponse.upsert({ where: { attemptId_stepId: { attemptId, stepId } }, create: { attemptId, stepId, versionId: context.attempt.versionId, answer: {}, revision: 1, completedAt }, update: { revision: { increment: 1 }, completedAt } });
       if (replaceEvidenceId) await tx.labEvidence.update({ where: { id: replaceEvidenceId }, data: { supersededAt: new Date() } });
       const fileName = path.basename(file.name.replace(/\\/g, '/')).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200) || 'evidence';
-      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') } });
+      const asset = await tx.privateAsset.create({ data: { id: randomUUID(), ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') }, select: { id: true } });
       await tx.labEvidence.create({ data: { responseId: saved.id, assetId: asset.id } });
       await tx.labAttempt.update({ where: { id: attemptId }, data: { revision: { increment: 1 }, lastActivityAt: new Date() } });
     });

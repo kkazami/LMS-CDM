@@ -19,6 +19,29 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const CANVAS_SIZE = 300;
 const OUTPUT_SIZE = 400;
 
+type CropOffset = { x: number; y: number };
+
+function fitScale(image: HTMLImageElement) {
+  return CANVAS_SIZE / Math.min(image.naturalWidth, image.naturalHeight);
+}
+
+function constrainOffset(image: HTMLImageElement, scale: number, offset: CropOffset): CropOffset {
+  const maxX = Math.max(0, (image.naturalWidth * scale - CANVAS_SIZE) / 2);
+  const maxY = Math.max(0, (image.naturalHeight * scale - CANVAS_SIZE) / 2);
+  return {
+    x: Math.max(-maxX, Math.min(maxX, offset.x)),
+    y: Math.max(-maxY, Math.min(maxY, offset.y)),
+  };
+}
+
+function drawAvatarCrop(ctx: CanvasRenderingContext2D, image: HTMLImageElement, scale: number, offset: CropOffset) {
+  const size = ctx.canvas.width;
+  const cropSize = Math.min(image.naturalWidth, image.naturalHeight, CANVAS_SIZE / scale);
+  const x = (image.naturalWidth - cropSize) / 2 - offset.x / scale;
+  const y = (image.naturalHeight - cropSize) / 2 - offset.y / scale;
+  ctx.drawImage(image, x, y, cropSize, cropSize, 0, 0, size, size);
+}
+
 export default function AvatarUploadModal({
   open,
   onClose,
@@ -30,10 +53,9 @@ export default function AvatarUploadModal({
   // Phases: "select" | "crop" | "uploading"
   const [phase, setPhase] = useState<"select" | "crop" | "uploading">("select");
   const [fileError, setFileError] = useState<string | null>(null);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   // Crop state
-  const [scale, setScale] = useState(1);
+  const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -43,6 +65,7 @@ export default function AvatarUploadModal({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  const scale = imageRef.current ? fitScale(imageRef.current) * zoom : 1;
 
   // Modal visibility animation
   const [mounted, setMounted] = useState(false);
@@ -67,8 +90,8 @@ export default function AvatarUploadModal({
   function resetState() {
     setPhase("select");
     setFileError(null);
-    setImageSrc(null);
-    setScale(1);
+    imageRef.current = null;
+    setZoom(1);
     setOffset({ x: 0, y: 0 });
     setIsDragging(false);
   }
@@ -95,18 +118,16 @@ export default function AvatarUploadModal({
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target?.result as string;
-      setImageSrc(src);
 
       const img = new window.Image();
       img.onload = () => {
         imageRef.current = img;
 
-        // Calculate initial scale to fit the image in the canvas
-        const fitScale = Math.max(CANVAS_SIZE / img.naturalWidth, CANVAS_SIZE / img.naturalHeight);
-        setScale(fitScale);
+        setZoom(1);
         setOffset({ x: 0, y: 0 });
         setPhase("crop");
       };
+      img.onerror = () => setFileError("This image could not be opened. Choose another photo.");
       img.src = src;
     };
     reader.readAsDataURL(file);
@@ -141,27 +162,19 @@ export default function AvatarUploadModal({
 
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    const img = imageRef.current;
-    const scaledW = img.naturalWidth * scale;
-    const scaledH = img.naturalHeight * scale;
-    const x = (CANVAS_SIZE - scaledW) / 2 + offset.x;
-    const y = (CANVAS_SIZE - scaledH) / 2 + offset.y;
+    drawAvatarCrop(ctx, imageRef.current, scale, offset);
 
-    ctx.drawImage(img, x, y, scaledW, scaledH);
-
-    // Draw dimmed overlay outside circle
-    ctx.save();
+    const radius = CANVAS_SIZE / 2;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-    ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CANVAS_SIZE / 2 - 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    ctx.rect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    ctx.moveTo(CANVAS_SIZE, radius);
+    ctx.arc(radius, radius, radius, 0, Math.PI * 2);
+    ctx.fill("evenodd");
 
     // Draw white circle border
     ctx.beginPath();
-    ctx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CANVAS_SIZE / 2 - 4, 0, Math.PI * 2);
+    ctx.arc(radius, radius, radius, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(255,255,255,0.8)";
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -187,22 +200,26 @@ export default function AvatarUploadModal({
   }
 
   useEffect(() => {
-    if (!isDragging) return;
+    const image = imageRef.current;
+    const canvas = canvasRef.current;
+    if (!isDragging || !image || !canvas) return;
+
+    const move = (clientX: number, clientY: number) => {
+      const { width, height } = canvas.getBoundingClientRect();
+      setOffset(constrainOffset(image, scale, {
+        x: offsetAtDragStart.x + (clientX - dragStart.x) * CANVAS_SIZE / width,
+        y: offsetAtDragStart.y + (clientY - dragStart.y) * CANVAS_SIZE / height,
+      }));
+    };
 
     function handleMouseMove(e: MouseEvent) {
-      setOffset({
-        x: offsetAtDragStart.x + (e.clientX - dragStart.x),
-        y: offsetAtDragStart.y + (e.clientY - dragStart.y),
-      });
+      move(e.clientX, e.clientY);
     }
 
     function handleTouchMove(e: TouchEvent) {
       const touch = e.touches[0];
       if (!touch) return;
-      setOffset({
-        x: offsetAtDragStart.x + (touch.clientX - dragStart.x),
-        y: offsetAtDragStart.y + (touch.clientY - dragStart.y),
-      });
+      move(touch.clientX, touch.clientY);
     }
 
     function handleEnd() {
@@ -220,7 +237,7 @@ export default function AvatarUploadModal({
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleEnd);
     };
-  }, [isDragging, dragStart, offsetAtDragStart]);
+  }, [isDragging, dragStart, offsetAtDragStart, scale]);
 
   // ─── Export Crop ───
   async function exportCrop(): Promise<Blob> {
@@ -230,18 +247,11 @@ export default function AvatarUploadModal({
     const ctx = offscreen.getContext("2d");
     if (!ctx || !imageRef.current) throw new Error("Canvas not ready");
 
-    const img = imageRef.current;
-    const ratio = OUTPUT_SIZE / CANVAS_SIZE;
-    const scaledW = img.naturalWidth * scale * ratio;
-    const scaledH = img.naturalHeight * scale * ratio;
-    const x = (OUTPUT_SIZE - scaledW) / 2 + offset.x * ratio;
-    const y = (OUTPUT_SIZE - scaledH) / 2 + offset.y * ratio;
-
     // Clip to circle
     ctx.beginPath();
     ctx.arc(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(img, x, y, scaledW, scaledH);
+    drawAvatarCrop(ctx, imageRef.current, scale, offset);
 
     return new Promise((resolve, reject) => {
       offscreen.toBlob(
@@ -414,10 +424,10 @@ export default function AvatarUploadModal({
                 width={CANVAS_SIZE}
                 height={CANVAS_SIZE}
                 className={cn(
-                  "rounded-2xl cursor-grab active:cursor-grabbing border border-slate-200 dark:border-white/10",
+                  "max-w-full touch-none rounded-2xl cursor-grab active:cursor-grabbing border border-slate-200 dark:border-white/10",
                   isDragging && "cursor-grabbing"
                 )}
-                style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
+                style={{ width: CANVAS_SIZE, height: "auto" }}
                 onMouseDown={handleCanvasMouseDown}
                 onTouchStart={handleCanvasTouchStart}
               />
@@ -428,11 +438,18 @@ export default function AvatarUploadModal({
               <ZoomIn className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
               <input
                 type="range"
-                min="0.5"
+                aria-label="Photo zoom"
+                min="1"
                 max="3"
                 step="0.01"
-                value={scale}
-                onChange={(e) => setScale(parseFloat(e.target.value))}
+                value={zoom}
+                onChange={(e) => {
+                  const image = imageRef.current;
+                  if (!image) return;
+                  const nextZoom = e.currentTarget.valueAsNumber;
+                  setOffset(previous => constrainOffset(image, fitScale(image) * nextZoom, previous));
+                  setZoom(nextZoom);
+                }}
                 className="w-full accent-orange-500"
                 style={{ accentColor: theme.colors.primary }}
                 disabled={phase === "uploading"}
@@ -448,9 +465,8 @@ export default function AvatarUploadModal({
               <button
                 onClick={() => {
                   setPhase("select");
-                  setImageSrc(null);
                   imageRef.current = null;
-                  setScale(1);
+                  setZoom(1);
                   setOffset({ x: 0, y: 0 });
                 }}
                 className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-[#F0F2F8] transition-colors hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"

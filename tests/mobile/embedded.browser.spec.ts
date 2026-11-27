@@ -41,6 +41,53 @@ test.beforeAll(async () => {
   await fs.writeFile(path.join(nativeFixture, 'post.json'), JSON.stringify(post));
 });
 
+test('Knowledge Exchange images load in the feed, thread and full-size preview', async ({ page }) => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aTMkAAAAASUVORK5CYII=', 'base64');
+  const fixture = {
+    ...post,
+    body: 'Here is the diagram.\n\n![Question diagram](/api/assets/question-picture)',
+    answers: [{ id: 'answer-1', postId: post.id, authorId: 'peer', body: '<p><img src="/api/assets/answer-picture" alt="Answer diagram"></p>', author, voteCount: 0, isAccepted: false, isVerified: false, createdAt: post.createdAt, comments: [] }],
+    comments: [{ ...post.comments[0], body: 'Here is my screenshot.\n\n![Comment screenshot](/api/assets/comment-picture)' }],
+  };
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('http://localhost/**', route => {
+    const url = new URL(route.request().url());
+    if (url.pathname.startsWith('/api/assets/')) {
+      return url.searchParams.get('inline') === '1'
+        ? route.fulfill({ contentType: 'image/png', headers: { 'Content-Disposition': 'inline' }, body: png })
+        : route.fulfill({ status: 404 });
+    }
+    if (url.pathname.startsWith('/api/knowledge-exchange/posts')) return route.fulfill({ json: { posts: [fixture], pagination: { totalPages: 1 } } });
+    if (url.pathname.startsWith('/api/')) return route.fulfill({ json: [] });
+    return route.fulfill({ contentType: 'text/html', body: '<meta name="viewport" content="width=device-width"><main id="root"></main>' });
+  });
+
+  for (const mode of ['feed', 'detail']) {
+    await page.goto(`http://localhost/ics/workspace?mode=${mode}`);
+    await page.addStyleTag({ content: css });
+    await page.evaluate(data => {
+      document.documentElement.dataset.nativeFeature = 'true';
+      (window as any).fixturePost = data;
+    }, fixture);
+    await page.addScriptTag({ content: script });
+    const labels = mode === 'feed' ? ['Question diagram'] : ['Question diagram', 'Answer diagram', 'Comment screenshot'];
+    for (const label of labels) {
+      const picture = page.getByRole('img', { name: label });
+      await picture.scrollIntoViewIfNeeded();
+      await expect.poll(() => picture.evaluate(node => (node as HTMLImageElement).naturalWidth)).toBe(1);
+    }
+  }
+
+  for (const label of ['Question diagram', 'Answer diagram', 'Comment screenshot']) {
+    await page.getByRole('img', { name: label }).click();
+    const preview = page.getByRole('dialog');
+    await expect(preview.getByRole('img', { name: label })).toBeVisible();
+    await expect(preview.getByRole('link')).toHaveAttribute('href', /\/api\/assets\/[^?]+\?inline=1$/);
+    await page.keyboard.press('Escape');
+    await expect(preview).toHaveCount(0);
+  }
+});
+
 for (const width of [320, 390, 768]) for (const dark of [false, true]) test(`embedded workspaces fit ${width}px in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => { errors.push(error.message); process.stderr.write('Workspace runtime: ' + error.message + '\n'); });

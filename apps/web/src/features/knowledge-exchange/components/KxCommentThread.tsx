@@ -1,6 +1,7 @@
 "use client";
 
 import { uploadKnowledgeImage } from "../upload-image";
+import { inlineKnowledgeImage, knowledgeImages } from "../images";
 
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -40,28 +41,10 @@ interface KxCommentThreadProps {
 }
 
 function parseCommentBody(body: string) {
-  const images: { alt: string; url: string }[] = [];
-
-  // 1. Match standard markdown ![alt](url)
-  const mdRegex = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
-  let mdMatch: RegExpExecArray | null;
-  while ((mdMatch = mdRegex.exec(body)) !== null) {
-    images.push({ alt: mdMatch[1] || "Attached image", url: mdMatch[2] });
-  }
-  let cleanText = body.replace(mdRegex, "");
-
-  // 2. Match HTML <img src="...">
-  const htmlImgRegex =
-    /<img[^>]*src=["']([^"']+)["'][^>]*alt=["']?([^"'>]*)["']?[^>]*>|<img[^>]*alt=["']?([^"'>]*)["']?[^>]*src=["']([^"']+)["'][^>]*>/gi;
-  let htmlMatch: RegExpExecArray | null;
-  while ((htmlMatch = htmlImgRegex.exec(cleanText)) !== null) {
-    const url = htmlMatch[1] || htmlMatch[4];
-    const alt = htmlMatch[2] || htmlMatch[3] || "Attached image";
-    if (url) images.push({ alt, url });
-  }
-  cleanText = cleanText.replace(htmlImgRegex, "").trim();
-
-  return { cleanText, images };
+  const cleanText = body
+    .replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, "")
+    .replace(/<img\b[^>]*>/gi, "").trim();
+  return { cleanText, images: knowledgeImages(body) };
 }
 
 function formatFacebookTime(dateInput: string | Date | number): string {
@@ -717,7 +700,7 @@ export default function KxCommentThread({
                   title="Click to view full size"
                 >
                   <img
-                    src={attachedImage.url}
+                    src={inlineKnowledgeImage(attachedImage.url)}
                     alt={attachedImage.name}
                     className="h-20 w-20 sm:h-24 sm:w-24 object-cover rounded-xl"
                   />
@@ -890,7 +873,7 @@ export default function KxCommentThread({
               </span>
               <div className="flex items-center gap-2">
                 <a
-                  href={lightboxImage.url}
+                  href={inlineKnowledgeImage(lightboxImage.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 rounded-full hover:bg-white/15 text-white/80 hover:text-white transition-colors cursor-pointer"
@@ -911,7 +894,7 @@ export default function KxCommentThread({
 
             {/* Enlarged Image */}
             <img
-              src={lightboxImage.url}
+              src={inlineKnowledgeImage(lightboxImage.url)}
               alt={lightboxImage.alt}
               className="max-h-[80vh] max-w-full w-auto object-contain rounded-xl shadow-2xl border border-white/10"
             />

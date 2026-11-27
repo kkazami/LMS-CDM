@@ -217,9 +217,11 @@ test('CodeLab fills the actual shell without a blank footer or document scrollin
   await fits(page);
 });
 
-test('wheel scrolling reaches the track list from the LMS sidebar', async ({page}) => {
-  await mount(page, 'html', 1366, 600, false, 'tracks');
-  await page.locator('.dashboard-sidebar').getByRole('link', {name:'CdM LMS'}).hover();
+test('wheel scrolling reaches the track list when the LMS sidebar fits', async ({page}) => {
+  await mount(page, 'html', 1366, 760, false, 'tracks');
+  const sidebar = page.locator('.dashboard-sidebar');
+  expect(await sidebar.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await sidebar.getByRole('link', {name:'CdM LMS'}).hover();
   await page.mouse.wheel(0, 700);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });

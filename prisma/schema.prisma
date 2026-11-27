@@ -2322,10 +2322,20 @@ model SupportTicket {
 
   author    User      @relation("UserSupportTickets", fields: [authorId], references: [id], onDelete: Cascade)
   institute Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  attachment SupportTicketAttachment?
 
   @@index([authorId])
   @@index([instituteId])
   @@index([status])
+}
+
+model SupportTicketAttachment {
+  ticketId  String @id
+  fileName  String
+  mimeType  String
+  content   Bytes
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 enum AccountActivationStatus {

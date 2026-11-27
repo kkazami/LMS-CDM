@@ -6,6 +6,8 @@ export const authenticatedRateLimits = {
   instructorProvisioning: { prefix: 'instructor-provisioning', requests: 20, windowMs: 5 * 60_000 },
   adminPasswordReset: { prefix: 'admin-password-reset', requests: 10, windowMs: 5 * 60_000 },
   codeLabRun: { prefix: 'codelab', requests: 30, windowMs: 5 * 60_000 },
+  supportReport: { prefix: 'support-report', requests: 10, windowMs: 60 * 60_000 },
+  helpQuestion: { prefix: 'student-help', requests: 10, windowMs: 60_000 },
 } as const;
 
 let nextCleanup = 0;

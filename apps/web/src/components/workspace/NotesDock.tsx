@@ -53,7 +53,6 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
   const unavailable = onNotesPage || (isStudent && formResponsePath.test(pathname));
   const [position, setPosition] = useState(defaultPosition);
   const [phase, setPhase] = useState<Phase>("closed");
-  const [keepDocked, setKeepDocked] = useState(false);
   const [visited, setVisited] = useState(false);
   const [desktopVisited, setDesktopVisited] = useState(false);
   const mobile = useSyncExternalStore(subscribeToMobileNotes, isMobileNotes, isServerMobileNotes);
@@ -88,7 +87,6 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
     if (unavailable) {
       drag.current = null;
       notebook.current?.style.removeProperty("--notes-travel");
-      setKeepDocked(false);
       setPhase("closed");
     }
   }, [unavailable]);
@@ -117,7 +115,6 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
     if (phase !== "opening" && phase !== "returning") return;
     const settle = () => {
       notebook.current?.style.removeProperty("--notes-travel");
-      setKeepDocked(false);
       setPhase(phase === "opening" ? "open" : "closed");
       if (phase === "returning") requestAnimationFrame(() => launcher.current?.focus({ preventScroll: true }));
     };
@@ -143,7 +140,6 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
   }
 
   function close(restoreFocus = true) {
-    setKeepDocked(restoreFocus);
     setPhase(restoreFocus ? "returning" : "closed");
   }
 
@@ -171,7 +167,6 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
       if (!gesture.sliding) {
         if (gesture.startedOpen ? inward >= 0 : inward <= 0) return;
         gesture.sliding = true;
-        if (gesture.startedOpen) setKeepDocked(true);
         setVisited(true);
         setPhase("dragging");
       }
@@ -212,7 +207,7 @@ export default function NotesDock({ instituteCode, userId, isStudent }: { instit
   }
 
   return (
-    <div ref={rail} hidden={shortcutHidden !== false || unavailable} className={styles.rail} style={location} data-side={position.side} data-docked={!unavailable && (open || keepDocked) || undefined}>
+    <div ref={rail} hidden={shortcutHidden !== false || unavailable} className={styles.rail} style={location} data-side={position.side}>
       <span id={helpId} className="sr-only">{open ? "Push the binding toward the screen edge to close Quick Notes, or activate it to close." : "Pull inward to reveal Quick Notes, or activate to open it fully. Drag along the edge to move the binding, or use the arrow keys."}</span>
       <div ref={notebook} className={styles.notebook} data-phase={phase}>
         <button

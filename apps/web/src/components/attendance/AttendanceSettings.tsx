@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import type { AttendanceMutation, AttendanceOverview } from '@lms/types';
 export const fieldClass = 'min-h-11 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 text-[var(--text-primary)] shadow-[inset_1px_2px_3px_rgba(0,0,0,0.04)]';
-const actionBase = 'min-h-11 rounded-xl border px-4 py-2 text-sm font-semibold shadow-[2px_3px_7px_rgba(0,0,0,0.06)] disabled:opacity-50';
+const actionBase = 'min-h-11 cursor-pointer rounded-xl border px-4 py-2 text-sm font-semibold shadow-[2px_3px_7px_rgba(0,0,0,0.06)] disabled:cursor-not-allowed disabled:opacity-50';
 export const actionClass = `${actionBase} border-[var(--border-color)] bg-[var(--bg-surface)]`;
 export const primaryActionClass = `${actionBase} border-transparent bg-[var(--action-bg)] text-[var(--action-ink)] hover:bg-[var(--action-hover)]`;
 export function AttendanceSettings({ data, admin, busy, act }: { data: AttendanceOverview; admin: boolean; busy: boolean; act: (input: AttendanceMutation) => Promise<void> }) {

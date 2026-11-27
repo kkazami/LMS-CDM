@@ -116,6 +116,7 @@ export async function POST(request: Request) {
               scanStatus: "UNSCANNED",
               sha256: rubric.sha256,
             },
+            select: { id: true },
           });
 
           return tx.practicumPlacement.create({

@@ -34,6 +34,11 @@ LMS monorepo. pnpm@10.32.1 workspaces + Turbo. Read `.agents/rules/current-lms-a
 - Always enforce RBAC for student vs. professor vs. admin views using `src/lib/rbac.ts` and the `(dashboard)/[institute]/layout.tsx` scoping.
 - Each API handler must verify the session itself (see src/lib/api-auth.ts). Current middleware may apply API headers and pass through; it does not authorize API resources.
 
+## GitHub push verification
+- Before pushing, review the workflows the change will trigger. When changing tests listed in `tests/sprint-*/allowed-tests.json`, verify that the manifest's `expectedTestCount` matches the executed tests. Run the Security compatibility regression command from `.github/workflows/security.yml` (`python3 scripts/security/run-scoped.py <unique-label> tests` after its setup) where the Linux container prerequisites are available.
+- If the exact workflow cannot run locally, report the gap and use GitHub checks on a pull request before merging. Follow branch protection and verify GitHub checks on the exact pushed commit. A successful push or local build alone does not establish that CI passed.
+- When Security fails, investigate the first failing job and preserve its logs. A failed regression runner can also trigger missing-artifact and aggregate errors. Keep artifact and aggregate checks fail-closed.
+
 ## Gotchas
 - Interactive activities use react-three-fiber + Monaco. CodeLab runs student code only through an authenticated, managed Judge0-compatible HTTPS API. Configure server-only `JUDGE0_RAPIDAPI_KEY` for official CE through RapidAPI, or `JUDGE0_URL` plus `JUDGE0_AUTH_TOKEN` for a reviewed compatible provider. The vulnerable self-hosted compose stack and unused local runner were retired; there is no public-demo/local execution fallback. See `docs/quality/managed-code-execution.md`.
 - Root `.env` and `apps/web/.env.local` contain live credentials and are gitignored. Never print or commit them; use `.env.example` as the template.

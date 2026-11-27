@@ -12,6 +12,7 @@ import { computeLevelInfo } from "@/lib/gamification/exp-engine";
 interface PublicUserProfile {
   id: string;
   name: string;
+  canViewFullProfile?: boolean;
   email: string;
   role: string;
   studentNumber: string | null;
@@ -40,6 +41,7 @@ interface PublicUserProfile {
 interface UserMiniCardProps {
   userId: string;
   instituteCode: string;
+  fromLeaderboard?: boolean;
   /** Position anchor rect — the popover opens relative to this */
   anchorRect?: DOMRect | null;
   /** Position anchor element — allows dynamic tracking on scroll */
@@ -51,6 +53,7 @@ interface UserMiniCardProps {
 export default function UserMiniCard({
   userId,
   instituteCode,
+  fromLeaderboard = false,
   anchorRect,
   anchorElement,
   onClose,
@@ -73,7 +76,8 @@ export default function UserMiniCard({
     let cancelled = false;
     async function fetchProfile() {
       try {
-        const res = await fetch(`/api/users/${userId}/public`);
+        const source = fromLeaderboard ? '?source=leaderboard' : '';
+        const res = await fetch(`/api/users/${encodeURIComponent(userId)}/public${source}`);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = (await res.json()) as { user: PublicUserProfile };
         if (!cancelled) {
@@ -91,7 +95,7 @@ export default function UserMiniCard({
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, fromLeaderboard]);
 
   const isFlippedRef = useRef<boolean | null>(null);
 
@@ -294,7 +298,7 @@ export default function UserMiniCard({
           <div className="px-5 pb-5 pt-0">
             {/* Header row with Avatar offset */}
             <div className="flex items-end justify-between -mt-6 mb-2.5">
-              <div className="relative p-1 rounded-full bg-white dark:bg-[#141721] ring-2 ring-[#F97316]/30">
+              <div className="grid shrink-0 place-items-center rounded-full bg-white p-1 ring-2 ring-[#F97316]/30 dark:bg-[#141721]">
                 <UserAvatar
                   name={user.name}
                   avatarUrl={user.avatarUrl}
@@ -375,32 +379,37 @@ export default function UserMiniCard({
             )}
 
             {/* Contact info */}
-            <div className="mt-3 space-y-1 text-xs text-slate-600 dark:text-[#8B92A5]">
-              <div className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
-                <span className="truncate">{user.email}</span>
+            {(user.email || user.phone) && (
+              <div className="mt-3 space-y-1 text-xs text-slate-600 dark:text-[#8B92A5]">
+                {user.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                    <span className="truncate">{user.email}</span>
+                  </div>
+                )}
+                {user.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                    <span>{user.phone}</span>
+                  </div>
+                )}
               </div>
-              {user.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
-                  <span>{user.phone}</span>
-                </div>
-              )}
-            </div>
+            )}
 
-            {/* Divider */}
-            <hr className="my-3 border-slate-100 dark:border-white/5" />
-
-            {/* View Full Profile */}
-            <Link
-              href={`/${instituteCode}/users/${user.id}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
-              style={{ color: theme.colors.primary }}
-              onClick={onClose}
-            >
-              View Full Profile
-              <span aria-hidden="true">→</span>
-            </Link>
+            {(!fromLeaderboard || user.canViewFullProfile) && (
+              <>
+                <hr className="my-3 border-slate-100 dark:border-white/5" />
+                <Link
+                  href={`/${instituteCode}/users/${user.id}`}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
+                  style={{ color: theme.colors.primary }}
+                  onClick={onClose}
+                >
+                  View Full Profile
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

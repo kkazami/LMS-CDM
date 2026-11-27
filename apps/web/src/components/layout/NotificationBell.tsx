@@ -324,8 +324,8 @@ export default function NotificationBell({ theme }: NotificationBellProps) {
           )}
         </div>
 
-        {/* Notification list */}
-        <div className="max-h-80 overflow-y-auto">
+        {/* Keep positioned descendants, including screen-reader labels, inside the scroll area. */}
+        <div className="relative max-h-80 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center px-4">
               <Inbox className="h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />

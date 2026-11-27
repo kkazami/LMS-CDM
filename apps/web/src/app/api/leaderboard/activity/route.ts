@@ -1,5 +1,6 @@
 import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
+import { leaderboardIdentity } from '@/lib/leaderboard-privacy';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
 import { leaderboardActivityWhere, leaderboardScore, rankedSubmissionWhere } from '@/lib/activity-leaderboard';
@@ -65,6 +66,7 @@ export async function GET(request: Request) {
             name: true,
             avatarUrl: true,
             department: true,
+            preferences: true,
             gamificationProfile: {
               select: {
                 exp: true,
@@ -88,15 +90,10 @@ export async function GET(request: Request) {
     let rank = 0;
     const rankings = scores.map((sub, index) => {
       if (index === 0 || sub.score !== scores[index - 1].score) rank = index + 1;
-      const isSelf = sub.student.id === session.user.id;
       const profile = sub.student.gamificationProfile;
-      const isAnon = profile?.isLeaderboardAnonymized && !isSelf;
       return {
         rank,
-        studentId: sub.student.id,
-        name: isAnon ? `Student #${sub.student.id.slice(-4).toUpperCase()}` : sub.student.name,
-        avatarUrl: isAnon ? null : sub.student.avatarUrl,
-        department: sub.student.department || '',
+        ...leaderboardIdentity(sub.student, profile, index + 1, session.user.id),
         score: sub.score,
         maxPoints: item.maxPoints ?? (item.form ? 100 : null),
         exp: profile?.exp || 0,
@@ -104,8 +101,6 @@ export async function GET(request: Request) {
         levelTier: profile?.levelTier || 'newcomer',
         streak: profile?.currentStreak || 0,
         badgeCount: profile?.badges?.length || 0,
-        isSelf,
-        isAnonymized: profile?.isLeaderboardAnonymized || false,
       };
     });
 

@@ -104,6 +104,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             scanStatus: "UNSCANNED",
             sha256: preparedRubric.sha256,
           },
+          select: { id: true },
         });
       }
 

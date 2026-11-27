@@ -93,6 +93,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           scanStatus: "UNSCANNED",
           sha256: prepared.sha256,
         },
+        select: { id: true },
       });
 
       await tx.practicumPlacement.update({

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { UserPreferences } from "@lms/types";
+import { leaderboardPhotoPreference } from '@/lib/leaderboard-privacy';
 
 export async function PATCH(req: Request) {
   const ceilingDenial = await denyLegacyApi(req, "PATCH settings/route.ts");
@@ -22,6 +23,7 @@ export async function PATCH(req: Request) {
     }
 
     if ('bannerImageUrl' in preferences) return NextResponse.json({ message: 'Update banner images from your profile.' }, { status: 400 });
+    if (leaderboardPhotoPreference in preferences) return NextResponse.json({ message: 'Change photo visibility on the leaderboard.' }, { status: 400 });
 
     // Merge existing preferences with new preferences
     const user = await db.user.findUnique({
@@ -46,7 +48,7 @@ export async function PATCH(req: Request) {
     };
 
     const updatedUser = await db.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user.id, preferences: user.preferences },
       data: {
         preferences: JSON.stringify(mergedPrefs),
       },
@@ -54,6 +56,9 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json(updatedUser);
   } catch (error) {
+    if ((error as { code?: string })?.code === 'P2025') {
+      return NextResponse.json({ message: 'Your settings changed. Try again.' }, { status: 409 });
+    }
     console.error("[SETTINGS_UPDATE]", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }

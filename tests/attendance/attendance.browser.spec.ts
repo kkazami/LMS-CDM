@@ -29,17 +29,26 @@ function fixture(student = false) {
   const record = { id: 'record', studentId: 'student', name: 'Synthetic Student', studentNumber: 'TEST-001', required: true, eligibilityReason: '', status: null, source: '', verification: 'NOT_CHECKED', markedAt: null, presentUntil: new Date(now + 600000).toISOString(), revision: 0, approvedArrangement: true };
   return { asOf: new Date(now).toISOString(), course: { id: 'class', title: 'Synthetic class', instituteCode: 'ics', archived: false }, enabled: true, phase: 3, role: student ? 'STUDENT' : 'MANAGER', policy: { rollout: 'PILOT', phase: 3, pilotCourseIds: ['class'], locationEnabled: false, timezone: 'Asia/Manila', privacyReview: '', recordDays: 365, eventDays: 365, requestDays: 30, verificationDays: 30, arrangementDays: 90 }, settings: { liveLimit: 1, asyncLimit: 1, absenceThreshold: 3, tardyThreshold: 3, latitude: null, longitude: null, locationLabel: '' }, sessions: [{ id: 'session', title: 'Morning class', instructions: 'Check in during the attendance window.', mode: 'LIVE_REMOTE', state: 'OPEN', opensAt, closesAt, presentUntil: new Date(now + 600000).toISOString(), timezone: 'Asia/Manila', sessionDate: '2026-11-01', requiresLocation: false, radius: 150, liveCodeEnabled: false, legalHold: false, records: [record], requests: student ? [] : [{ id: 'request', recordId: 'record', studentId: 'student', name: 'Synthetic Student', submittedAt: opensAt, reason: null, state: 'PENDING', verification: 'NOT_CHECKED', revision: 0, decisionReason: null, bulkEligible: true, approvedArrangement: true }] }], page: 1, hasMore: false, summaries: [], students: [{ id: 'student', name: 'Synthetic Student', approvedArrangement: true }], helpers: [], staff: [] };
 }
-async function open(page: import('@playwright/test').Page, student = false, dark = false, variant: 'default' | 'late-async' | 'qr' | 'roster' | 'tabs' | 'tabs-fit' = 'default') {
+async function open(page: import('@playwright/test').Page, student = false, dark = false, variant: 'default' | 'late-async' | 'qr' | 'qr-reconnect' | 'roster' | 'tabs' | 'tabs-fit' = 'default') {
   const data = fixture(student);
   if (variant === 'late-async') { data.sessions[0].mode = 'ASYNCHRONOUS'; data.sessions[0].presentUntil = new Date(Date.now() - 3600000).toISOString(); }
-  if (variant === 'qr') data.sessions[0].mode = 'IN_PERSON';
+  if (variant === 'qr' || variant === 'qr-reconnect') data.sessions[0].mode = 'IN_PERSON';
   if (variant === 'roster') data.sessions[0].records = Array.from({ length: 12 }, (_, i) => ({ ...data.sessions[0].records[0], id: `record-${i}`, studentId: `student-${i}`, name: `Student ${String(i + 1).padStart(2, '0')}`, studentNumber: `S${String(i + 1).padStart(3, '0')}`, revision: 7 }));
   const qrDeadline = Date.now() + 2500;
+  let codeRequests = 0;
   const posts: Array<Record<string, unknown>> = [];
   await page.route('http://attendance.test/**', async route => {
     const req = route.request();
     if (req.url().includes('/api/')) {
-      if (req.url().endsWith('/codes')) { await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ token: 'synthetic-only', qrImage, code: null, serverTime: new Date().toISOString(), expiresAt: new Date(qrDeadline).toISOString() }) }); return; }
+      if (req.url().endsWith('/codes')) {
+        if (variant === 'qr-reconnect' && ++codeRequests === 1) {
+          await route.fulfill({ status: 503, json: { message: 'Attendance QR signing is not configured.' } });
+          return;
+        }
+        const expiresAt = new Date(variant === 'qr-reconnect' ? Date.now() + 30000 : qrDeadline).toISOString();
+        await route.fulfill({ json: { token: 'synthetic-only', qrImage, code: null, serverTime: new Date().toISOString(), expiresAt } });
+        return;
+      }
       if (req.method() === 'POST') { posts.push(req.postDataJSON()); await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ message: 'Saved synthetic attendance.' }) }); }
       else await route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
     } else await route.fulfill({ contentType: 'text/html', body: `<html class="${dark ? 'dark' : ''}"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:16px;font-family:Arial;background:var(--bg-canvas);color:var(--text-primary)}main{max-width:1000px;margin:auto}main>p{font-size:13px}</style><main id="root"></main></html>` });
@@ -63,6 +72,7 @@ test('student direct check-in and camera-free request are accessible without an 
 });
 test('instructor starts an async session and explicitly acknowledges unverified bulk approval', async ({ page }, info) => {
   const { posts } = await open(page, false, info.project.name.includes('dark'));
+  await expect(page.getByRole('button', { name: 'Cancel session', exact: true })).toHaveCSS('cursor', 'pointer');
   await page.getByRole('button', { name: 'Start attendance', exact: true }).click();
   await page.getByLabel('Session title', { exact: true }).fill('Independent practice');
   await page.getByLabel('Mode', { exact: true }).selectOption('ASYNCHRONOUS');
@@ -197,4 +207,12 @@ test('instructor QR expires visibly and settings remain progressively disclosed'
   await expect(page.getByText('Code unavailable. Reconnecting…', { exact: true })).toBeVisible();
   await page.getByText('Class settings and access', { exact: true }).click();
   await expect(page.getByText('Live sessions at once', { exact: false }).first()).toBeVisible();
+});
+
+test('instructor sees the QR service error and the code returns after recovery', async ({ page }, info) => {
+  await open(page, false, info.project.name.includes('dark'), 'qr-reconnect');
+  const error = page.getByRole('alert').filter({ hasText: 'Attendance QR signing is not configured.' });
+  await expect(error).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Current attendance QR' })).toBeVisible({ timeout: 10000 });
+  await expect(error).toHaveCount(0);
 });

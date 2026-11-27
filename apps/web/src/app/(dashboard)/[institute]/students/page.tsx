@@ -161,23 +161,16 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
   const courseIds = enrolledCourses.map((c) => c.id);
   const exp = gamification?.exp ?? 0;
 
-  // 2. Classwork due within 7 days or already overdue (never submitted), the student's
-  //    submissions, calendar, and the real rank all run in parallel.
+  // 2. Load outstanding classwork, calendar, and rank.
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const [submissions, rawDueSoon, rank, calendar] = await Promise.all([
-    db.studentSubmission.findMany({
-      where: {
-        studentId,
-        syllabusItem: { courseId: { in: courseIds } },
-      },
-      select: { syllabusItemId: true, status: true },
-    }),
+  const [rawDueSoon, rank, calendar] = await Promise.all([
     db.syllabusItem.findMany({
       where: {
         courseId: { in: courseIds },
         type: { not: "MATERIAL" },
+        submissions: { none: { studentId, status: { in: ["SUBMITTED", "GRADED", "RETURNED"] } } },
         AND: [await visibleSyllabusForms(now), { OR: [
           { dueDate: { not: null, lte: sevenDaysFromNow }, ...await labsAvailable() ? { NOT: { labAssignment: { attempts: { some: { studentId, status: 'NEEDS_REVISION' as const } } } } } : {} },
           ...await labsAvailable() ? [{ labAssignment: { attempts: { some: { studentId, status: 'NEEDS_REVISION' as const, revisionDueAt: { lte: sevenDaysFromNow } } } } }] : [],
@@ -189,7 +182,11 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
           { targetGroups: { some: { group: { members: { some: { studentId } } } } } },
         ],
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        dueDate: true,
         labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
         course: {
           select: {
@@ -206,24 +203,16 @@ export default async function StudentDashboardPage({ params }: StudentDashboardP
     calendarPromise,
   ]);
 
-  const submittedIds = new Set(
-    submissions
-      .filter((s) => ["SUBMITTED", "GRADED", "RETURNED"].includes(s.status))
-      .map((s) => s.syllabusItemId)
-  );
-
-  const dueSoonItems = rawDueSoon
-    .filter((item) => !submittedIds.has(item.id))
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      type: item.type,
-      dueDate: (currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? currentLabAttempt(item.labAssignment)?.revisionDueAt! : item.dueDate!).toISOString(),
-      courseId: item.course.id,
-      courseTitle: item.course.title,
-      courseCode: item.course.code,
-      courseSection: item.course.section,
-    }));
+  const dueSoonItems = rawDueSoon.map((item) => ({
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    dueDate: (currentLabAttempt(item.labAssignment)?.status === 'NEEDS_REVISION' ? currentLabAttempt(item.labAssignment)?.revisionDueAt! : item.dueDate!).toISOString(),
+    courseId: item.course.id,
+    courseTitle: item.course.title,
+    courseCode: item.course.code,
+    courseSection: item.course.section,
+  }));
 
   const typingSessionKey = `cdm_typed_${studentId.slice(0, 8)}`;
 

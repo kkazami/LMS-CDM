@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
+import Link from "next/link";
 import type { InstituteTheme } from "@/lib/theme";
 import { HelpSearchHero } from "@/components/support/HelpSearchHero";
 import { FaqCategoryList } from "@/components/support/FaqCategoryList";
+import { IcsHelp, IcsHelpGuides } from "@/components/support/IcsHelp";
+import { getIcsHelpRole } from "@/lib/ics-help-guides";
 import { ContactSupportModal } from "@/components/support/ContactSupportModal";
 import { ViewTicketModal } from "@/components/support/ViewTicketModal";
 import Button from "@/components/common/Button";
@@ -18,6 +21,7 @@ interface Ticket {
   createdAt: string;
   adminReply: string | null;
   repliedAt: string | null;
+  attachment?: { fileName: string } | null;
 }
 
 export default function HelpDashboardClient({
@@ -28,53 +32,50 @@ export default function HelpDashboardClient({
   role: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactQuestion, setContactQuestion] = useState<string | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
+  const [ticketsUnavailable, setTicketsUnavailable] = useState(false);
+  const helpRole = getIcsHelpRole(theme.code, role);
+  const closeContact = useCallback(() => setContactQuestion(null), []);
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
+    setLoadingTickets(true);
     try {
-      const res = await fetch("/api/support-tickets");
-      if (res.ok) {
-        const data = await res.json();
-        setTickets(data.tickets || []);
-      }
-    } catch (err) {
-      console.error(err);
+      const res = await fetch("/api/support-tickets?mine=1");
+      if (!res.ok) throw new Error('Tickets unavailable.');
+      const data = await res.json();
+      setTickets(data.tickets || []);
+      setTicketsUnavailable(false);
+    } catch {
+      setTicketsUnavailable(true);
     } finally {
       setLoadingTickets(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTickets();
-  }, []);
-
-  const handleTicketSubmitted = () => {
-    setIsContactModalOpen(false);
-    fetchTickets();
-  };
+  }, [fetchTickets]);
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-6xl mx-auto">
-      <HelpSearchHero 
-        theme={theme}
-        role={role}
-        searchQuery={searchQuery} 
-        onSearchChange={setSearchQuery} 
-      />
+    <div className="mx-auto max-w-6xl flex-1 space-y-5 p-4 pt-6 md:p-8">
+      {helpRole ? (
+        <header>
+          <h1 className="text-2xl font-semibold text-primary-theme">Help Center</h1>
+          <p className="mt-1 text-sm text-secondary-theme">{helpRole === 'ADMIN' ? 'Find help with accounts, logs, reports, and the Desktop Administrator Console.' : helpRole === 'INSTRUCTOR' ? 'Find help with teaching, attendance, grading, and the mobile app.' : 'Find help with classes, study tools, and the mobile app.'}</p>
+        </header>
+      ) : <HelpSearchHero theme={theme} role={role} searchQuery={searchQuery} onSearchChange={setSearchQuery} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <FaqCategoryList 
-            theme={theme} 
-            role={role} 
-            searchQuery={searchQuery} 
-          />
+      <div className={`grid grid-cols-1 items-start gap-6 ${helpRole ? 'xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]' : 'lg:grid-cols-3'}`}>
+        <div className={`min-w-0 ${helpRole ? '' : 'lg:col-span-2'}`}>
+          {helpRole ? <IcsHelp key={helpRole} theme={theme} role={helpRole} onContact={setContactQuestion} /> : (
+            <FaqCategoryList theme={theme} role={role} searchQuery={searchQuery} />
+          )}
         </div>
 
-        <div className="space-y-6">
+        <aside aria-label="Support tickets" className={`min-w-0 space-y-6 ${helpRole ? 'xl:col-start-2 xl:row-span-2 xl:row-start-1' : ''}`}>
           <div 
             className="rounded-2xl border p-6 text-center space-y-4"
             style={{ 
@@ -84,23 +85,31 @@ export default function HelpDashboardClient({
           >
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">Still need help?</h3>
             <p className="text-slate-600 dark:text-slate-300">
-              Can't find what you're looking for? Our support team is here to assist you.
+              Send us a question or tell us what went wrong.
             </p>
             <Button 
               theme={theme} 
               className="w-full"
-              onClick={() => setIsContactModalOpen(true)}
+              onClick={() => setContactQuestion('')}
             >
-              Contact Support
+              Contact support
             </Button>
+            <Link href={`/${theme.code}/report-a-problem`} className="inline-flex min-h-11 items-center text-sm font-semibold text-(--institute-ink) underline underline-offset-4">
+              Report a problem
+            </Link>
           </div>
 
           {/* My Tickets Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">My Support Tickets</h3>
+          <div id="my-tickets" className="scroll-mt-20 space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">My tickets</h3>
             {loadingTickets ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : ticketsUnavailable ? (
+              <div className="space-y-2 rounded-2xl border border-theme bg-surface p-5">
+                <p className="text-sm text-secondary-theme">Your tickets couldn’t load.</p>
+                <Button theme={theme} type="button" variant="secondary" onClick={fetchTickets}>Try again</Button>
               </div>
             ) : tickets.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#1A1D27] p-6 text-center">
@@ -112,8 +121,7 @@ export default function HelpDashboardClient({
                 {tickets.map((ticket) => (
                   <div 
                     key={ticket.id} 
-                    onClick={() => setSelectedTicket(ticket)}
-                    className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#1A1D27] p-5 shadow-sm space-y-3 cursor-pointer hover:border-slate-300 dark:hover:border-white/10 transition-colors"
+                    className="rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#1A1D27] p-5 shadow-sm space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -130,7 +138,9 @@ export default function HelpDashboardClient({
                     </div>
                     
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{ticket.subject}</h4>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        <button type="button" className="cursor-pointer text-left wrap-anywhere hover:underline" onClick={() => setSelectedTicket(ticket)}>{ticket.subject}</button>
+                      </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{ticket.message}</p>
                     </div>
 
@@ -145,14 +155,13 @@ export default function HelpDashboardClient({
               </div>
             )}
           </div>
-        </div>
+        </aside>
+        {helpRole && <IcsHelpGuides role={helpRole} />}
       </div>
 
-      <ContactSupportModal 
-        theme={theme} 
-        isOpen={isContactModalOpen} 
-        onClose={handleTicketSubmitted} 
-      />
+      {contactQuestion !== null && (
+        <ContactSupportModal theme={theme} onClose={closeContact} onSubmitted={fetchTickets} initialMessage={contactQuestion} />
+      )}
 
       <ViewTicketModal
         theme={theme}

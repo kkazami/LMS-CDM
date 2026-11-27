@@ -78,7 +78,11 @@ test('disabled scanning saves unscanned uploads, retains file validation and per
   const db = {
     $transaction: async callback => callback({ $queryRaw: async () => [], privateAsset: {
       aggregate: async () => ({ _sum: { size: 0 } }),
-      create: async ({ data }) => { saved = data; return data; },
+      create: async ({ data, select }) => {
+        assert.deepEqual(select, { id: true });
+        saved = data;
+        return { id: data.id };
+      },
     } }),
     $queryRaw: async () => [{ tables: 0, columns: 0 }],
     privateAsset: {
@@ -177,6 +181,54 @@ test('mobile-only course images retain enrollment, institute and persisted-refer
   enrolled = true; referenced = false;
   await assert.rejects(api.readPrivateUpload(actor, 'mobile-square'), error => error.status === 404);
   assert.equal(await api.authorizeStoredUrl(db, actor, image, 'teacher'), false);
+});
+
+test('only real images shared by their owner in visible Knowledge Exchange content are available to peers', async () => {
+  const url = '/api/assets/kx-image';
+  const visiblePost = { instituteId: 'ics', institute: { code: { equals: 'ics', mode: 'insensitive' } }, isDeleted: false };
+  const reference = { authorId: 'peer', isDeleted: false, body: { contains: url } };
+  let mimeType = 'image/png';
+  let bodies = { post: '', answer: '', comment: '' };
+  const rows = (kind, filter) => async ({ where }) => {
+    assert.deepEqual(where, filter);
+    return bodies[kind] ? [{ body: bodies[kind] }] : [];
+  };
+  const empty = { findMany: async () => [] };
+  const db = {
+    $queryRaw: async () => [{ tables: 10, columns: 2 }],
+    labEvidence: { findUnique: async () => null },
+    labStep: empty,
+    privateAsset: {
+      findFirst: async ({ where }) => where.instituteId === 'ics' ? { ownerId: 'peer', mimeType } : null,
+      findUniqueOrThrow: async () => ({ content: Buffer.from('image'), fileName: 'picture.png', mimeType }),
+    },
+    attachment: empty, submissionAttachment: empty, course: empty, formAttemptAnswer: empty,
+    user: { findFirst: async () => null },
+    kxPost: { findMany: rows('post', { ...visiblePost, ...reference }) },
+    kxAnswer: { findMany: rows('answer', { ...reference, post: visiblePost }) },
+    kxComment: { findMany: rows('comment', { ...reference, OR: [{ post: visiblePost, answerId: null }, { answer: { isDeleted: false, post: visiblePost } }] }) },
+  };
+  const state = { db, session: { user: student } };
+  const api = await compile(sources + `export { GET as download } from './apps/web/src/app/api/assets/[assetId]/route';`, state);
+  const request = (inline = true) => api.download(new Request(`https://lms.test${url}${inline ? '?inline=1' : ''}`), { params: Promise.resolve({ assetId: 'kx-image' }) });
+  for (const [kind, body] of [['post', `![Diagram](${url})`], ['answer', `<img src="${url}">`], ['comment', `![Screenshot](${url}?inline=1)`]]) {
+    bodies = { post: '', answer: '', comment: '', [kind]: body };
+    const response = await request();
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-disposition'), /^inline;/);
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    assert.match((await request(false)).headers.get('content-disposition'), /^attachment;/);
+  }
+  bodies = { post: `Read [this link](${url})`, answer: `\`\`\`md\n![Example](${url})\n\`\`\``, comment: `![Other picture](${url}-different)` };
+  assert.equal((await request()).status, 404);
+  bodies.post = `![Diagram](${url})`;
+  state.session = { user: { ...student, instituteId: 'ibe' } };
+  assert.equal((await request()).status, 404);
+  state.session = { user: student };
+  mimeType = 'application/pdf';
+  assert.equal((await request()).status, 404);
+  state.session = null;
+  assert.equal((await request()).status, 401);
 });
 
 test('gradebook reads only the requested students, preserves every assignment and avoids inline file content', async () => {

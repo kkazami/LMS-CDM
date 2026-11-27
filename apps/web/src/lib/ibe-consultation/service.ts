@@ -1571,6 +1571,7 @@ export async function submitStudentConsultationRequest(
           scanStatus: "UNSCANNED",
           sha256: validatedAttachment.sha256,
         },
+        select: { id: true },
       });
 
       const attachmentId = randomUUID();

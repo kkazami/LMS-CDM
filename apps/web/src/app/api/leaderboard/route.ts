@@ -2,6 +2,7 @@ import { denyLegacyApi } from '@/lib/super-user-v1/legacy-entry-guard';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/api-auth';
+import { leaderboardIdentity, leaderboardVisibility } from '@/lib/leaderboard-privacy';
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Institute not found.' }, { status: 404 });
     }
 
-    const profiles = await db.gamificationProfile.findMany({
+    if (institute.id !== session.user.instituteId) return NextResponse.json({ message: 'Forbidden.' }, { status: 403 });
+
+    const [profiles, selfPrivacy] = await Promise.all([db.gamificationProfile.findMany({
       where: {
         student: { instituteId: institute.id, role: 'STUDENT', isActive: true },
       },
@@ -51,34 +54,33 @@ export async function GET(request: Request) {
         loginStreakCurrent: true,
         currentStreak: true,
         isLeaderboardAnonymized: true,
-        student: { select: { id: true, name: true, avatarUrl: true } },
+        student: { select: { id: true, name: true, avatarUrl: true, preferences: true } },
       },
       orderBy: { exp: 'desc' },
       take: limit,
-    });
+    }), db.gamificationProfile.findUnique({
+      where: { studentId: session.user.id },
+      select: { isLeaderboardAnonymized: true, student: { select: { preferences: true } } },
+    })]);
 
     const entries = profiles.map((p, index) => {
-      const isCurrentUser = session.user.id === p.student.id;
-      const isAnon = p.isLeaderboardAnonymized && !isCurrentUser;
-      const userName = isAnon
-        ? `Student #${p.student.id.slice(-4).toUpperCase()}`
-        : p.student.name;
+      const identity = leaderboardIdentity(p.student, p, index + 1, session.user.id);
 
       return {
         rank: index + 1,
-        userId: p.student.id,
-        userName,
+        userId: identity.studentId,
+        userName: identity.name,
         totalPoints: p.exp || p.totalPoints || 0,
         currentStreak: p.currentStreak || p.loginStreakCurrent || 0,
         level: p.level,
         levelTier: p.levelTier,
-        avatarUrl: isAnon ? null : p.student.avatarUrl,
-        isCurrentUser,
+        avatarUrl: identity.avatarUrl,
+        isCurrentUser: identity.isSelf,
       };
     });
 
     return NextResponse.json(
-      { entries },
+      { entries, visibility: leaderboardVisibility(selfPrivacy, selfPrivacy?.student.preferences) },
       {
         headers: {
           'Cache-Control': 'private, no-store',

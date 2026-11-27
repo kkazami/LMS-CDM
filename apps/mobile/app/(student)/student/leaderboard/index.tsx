@@ -77,9 +77,9 @@ export default function StudentLeaderboardScreen() {
         setEntries(list);
         hadSuccess = true;
         const selfEntry = list.find((e) => e.isCurrentUser || e.userId === user?.id);
-        if (selfEntry?.userName?.startsWith('Student #')) {
-          setIsAnonymized(true);
-        }
+        setIsAnonymized(leaderboardRes.value.visibility
+          ? leaderboardRes.value.visibility === 'anonymous'
+          : Boolean(selfEntry?.userName?.startsWith('Student #')));
       }
 
       if (badgesRes.status === 'fulfilled') {
@@ -198,7 +198,7 @@ export default function StudentLeaderboardScreen() {
             maxFontSizeMultiplier={maxFontSizeMultiplier}
           >
             {isAnonymized
-              ? 'You appear as Student #XXXX to classmates'
+              ? 'Your name and photo are hidden from classmates'
               : 'Your name is visible to peers on the leaderboard'}
           </Text>
         </View>

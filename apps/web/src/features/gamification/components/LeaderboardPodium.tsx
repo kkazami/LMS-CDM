@@ -1,10 +1,9 @@
 "use client";
 
-import UserAvatar from "@/components/common/UserAvatar";
-import LevelBadge from "@/components/common/LevelBadge";
-import CountUpNumber from "@/features/interactive-activities/codelab/components/analytics/CountUpNumber";
-import { Flame, Trophy } from "lucide-react";
-import type { InstituteTheme } from "@/lib/theme";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight, Flame, Pause, Play, UserRound } from "lucide-react";
+import styles from "./LeaderboardPodium.module.css";
 
 export interface PodiumStudent {
   rank: number;
@@ -23,175 +22,113 @@ export interface PodiumStudent {
 
 interface LeaderboardPodiumProps {
   top3: PodiumStudent[];
-  theme: InstituteTheme;
-  onSelectStudent?: (student: PodiumStudent) => void;
+  onSelectStudent: (student: PodiumStudent, anchor: HTMLButtonElement) => void;
+  profileOpen: boolean;
 }
 
-export default function LeaderboardPodium({ top3, theme, onSelectStudent }: LeaderboardPodiumProps) {
-  const first = top3.find((s) => s.rank === 1);
-  const second = top3.find((s) => s.rank === 2);
-  const third = top3.find((s) => s.rank === 3);
+export default function LeaderboardPodium({ top3, onSelectStudent, profileOpen }: LeaderboardPodiumProps) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
 
-  if (!first) return null;
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    let inView = false;
+    const sync = () => setVisible(inView && !document.hidden);
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      sync();
+    });
+    observer.observe(list);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, []);
+
+  const ordered = [2, 1, 3].flatMap(rank => top3.filter(student => student.rank === rank));
+  if (ordered.length === 0) return null;
 
   return (
-    <div className="pt-8 pb-4 px-2">
-      <div className="flex items-end justify-center gap-2 sm:gap-6 max-w-2xl mx-auto">
-        {/* ── #2 Second Place (Left) ── */}
-        {second ? (
-          <PodiumCard
-            student={second}
-            theme={theme}
-            onSelectStudent={onSelectStudent}
-            pedestalHeight="h-44 sm:h-52"
-            badgeBg="bg-slate-200 dark:bg-slate-700/60"
-            badgeText="text-slate-700 dark:text-slate-200"
-            medalEmoji="🥈"
-            pedestalBg="bg-gradient-to-t from-slate-200/90 to-slate-100/90 dark:from-[#1E2235] dark:to-[#171B2B]"
-            pedestalBorder="border-slate-300 dark:border-white/10"
-            orderClass="order-1"
-          />
-        ) : (
-          <div className="flex-1 order-1" />
-        )}
-
-        {/* ── #1 First Place (Center, Elevated) ── */}
-        {first && (
-          <PodiumCard
-            student={first}
-            theme={theme}
-            onSelectStudent={onSelectStudent}
-            pedestalHeight="h-56 sm:h-64"
-            badgeBg="bg-amber-400 text-amber-950 font-black shadow-lg shadow-amber-500/30"
-            badgeText="text-amber-950"
-            medalEmoji="👑"
-            pedestalBg="bg-gradient-to-t from-amber-500/20 via-orange-500/10 to-white dark:to-[#1A1D27]"
-            pedestalBorder="border-amber-500/40 dark:border-amber-500/30"
-            orderClass="order-2"
-            isWinner
-          />
-        )}
-
-        {/* ── #3 Third Place (Right) ── */}
-        {third ? (
-          <PodiumCard
-            student={third}
-            theme={theme}
-            onSelectStudent={onSelectStudent}
-            pedestalHeight="h-36 sm:h-44"
-            badgeBg="bg-amber-700/20 text-amber-800 dark:text-amber-400"
-            badgeText="text-amber-800 dark:text-amber-400"
-            medalEmoji="🥉"
-            pedestalBg="bg-gradient-to-t from-amber-900/10 to-slate-100/90 dark:from-[#1A1D2B] dark:to-[#141721]"
-            pedestalBorder="border-amber-700/20 dark:border-white/5"
-            orderClass="order-3"
-          />
-        ) : (
-          <div className="flex-1 order-3" />
-        )}
+    <section aria-labelledby="leaderboard-top-three">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 id="leaderboard-top-three" className="text-lg font-bold text-primary-theme">Top 3</h2>
+        <button
+          type="button"
+          className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-secondary-theme hover:bg-elevated hover:text-primary-theme motion-reduce:hidden"
+          onClick={() => setPaused(value => !value)}
+        >
+          {paused ? <Play aria-hidden="true" className="size-3.5" /> : <Pause aria-hidden="true" className="size-3.5" />}
+          {paused ? "Play motion" : "Pause motion"}
+        </button>
       </div>
-    </div>
+      <ol ref={listRef} data-floating={visible && !paused && !profileOpen} className={styles.list}>
+        {ordered.map(student => (
+          <PodiumCard key={student.studentId} student={student} onSelectStudent={onSelectStudent} />
+        ))}
+      </ol>
+    </section>
   );
 }
 
-function PodiumCard({
-  student,
-  theme,
-  pedestalHeight,
-  badgeBg,
-  medalEmoji,
-  pedestalBg,
-  pedestalBorder,
-  orderClass,
-  isWinner = false,
-  onSelectStudent,
-}: {
-  student: PodiumStudent;
-  theme: InstituteTheme;
-  pedestalHeight: string;
-  badgeBg: string;
-  badgeText: string;
-  medalEmoji: string;
-  pedestalBg: string;
-  pedestalBorder: string;
-  orderClass: string;
-  isWinner?: boolean;
-  onSelectStudent?: (student: PodiumStudent) => void;
-}) {
+function PodiumCard({ student, onSelectStudent }: { student: PodiumStudent; onSelectStudent: LeaderboardPodiumProps["onSelectStudent"] }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const photo = !student.isAnonymized && student.avatarUrl !== failedUrl ? student.avatarUrl : null;
+  const portrait = photo ? (
+    <Image
+      src={photo}
+      alt=""
+      fill
+      unoptimized
+      referrerPolicy="no-referrer"
+      sizes="(max-width: 639px) 48px, 88px"
+      className="object-cover object-center saturate-[0.85] contrast-[1.03]"
+      onError={() => setFailedUrl(photo)}
+    />
+  ) : <UserRound aria-hidden="true" className="size-[46%] text-secondary-theme" strokeWidth={1.5} />;
+  const portraitFrame = (
+    <>
+      <span className={styles.portraitRim} aria-hidden="true" />
+      <span className={styles.portraitFrame}>{portrait}</span>
+    </>
+  );
+
   return (
-    <div
-      onClick={() => onSelectStudent?.(student)}
-      className={`flex-1 flex flex-col items-center max-w-[190px] min-w-0 ${orderClass} ${onSelectStudent && (!student.isAnonymized || student.isSelf) ? "cursor-pointer" : ""}`}
-    >
-      {/* Avatar + Rank Badge */}
-      <div className="relative mb-2.5 flex flex-col items-center">
-        {isWinner && (
-          <span className="text-xl sm:text-2xl -mb-1 animate-bounce select-none">👑</span>
-        )}
-
-        <div
-          className={`relative z-10 p-1 rounded-full bg-white dark:bg-[#141721] ring-2 shadow-lg transition-transform hover:scale-105 ${
-            isWinner
-              ? "ring-amber-500 ring-offset-2 ring-offset-amber-500/20 animate-rank-glow"
-              : student.rank === 2
-              ? "ring-slate-400"
-              : "ring-amber-700"
-          }`}
+    <li value={student.rank} className={styles.card}>
+      {student.isAnonymized ? (
+        <div className={styles.portrait}>{portraitFrame}</div>
+      ) : (
+        <button
+          type="button"
+          aria-label={`View ${student.name}'s profile`}
+          aria-haspopup="dialog"
+          data-photo={photo ? "true" : undefined}
+          onClick={event => onSelectStudent(student, event.currentTarget)}
+          className={`${styles.portrait} group cursor-pointer`}
         >
-          <UserAvatar
-            name={student.name}
-            avatarUrl={student.avatarUrl}
-            size={isWinner ? "lg" : "md"}
-            color={theme.colors.primary}
-          />
+          {portraitFrame}
+          <span aria-hidden="true" className="absolute right-0 bottom-0 z-10 grid size-5 place-items-center rounded-full border border-theme bg-surface text-secondary-theme transition-colors group-hover:bg-(--action-bg) group-hover:text-(--action-ink) sm:size-6">
+            <ChevronRight className="size-3.5" />
+          </span>
+        </button>
+      )}
+      <div className="mt-5 grid w-full min-w-0 justify-items-center gap-2 text-center text-primary-theme">
+        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+          <span className={styles.rank}>
+            <span className="sr-only">Rank </span>
+            <span aria-hidden="true">#</span>{student.rank}
+          </span>
+          {student.isSelf && <span className="text-xs font-semibold text-secondary-theme">You</span>}
         </div>
-
-        {/* Rank Badge Pill: positioned with positive margin & z-index so the avatar never covers #1 #2 #3 */}
-        <span
-          className={`relative z-20 mt-1.5 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap ${badgeBg}`}
-        >
-          <span>{medalEmoji}</span>
-          <span>#{student.rank}</span>
-        </span>
+        <h3 className="line-clamp-3 w-full wrap-anywhere text-xs leading-[1.4] font-bold sm:text-base" title={student.name}>{student.name}</h3>
+        <p className="w-full wrap-anywhere text-sm leading-snug font-bold tabular-nums sm:text-lg">{student.exp.toLocaleString()} EXP</p>
+        <p className="hidden flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-xs text-secondary-theme sm:flex">
+          <span className="inline-flex items-center gap-1"><Flame aria-hidden="true" className="size-3.5" />{student.streak}d streak</span>
+          <span>{student.badgeCount} badges</span>
+        </p>
       </div>
-
-      {/* Student Details */}
-      <div className="w-full text-center space-y-1 mb-2 px-1">
-        <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-[#F0F2F8] truncate">
-          {student.name}
-        </h3>
-        <div className="flex items-center justify-center gap-1">
-          <LevelBadge exp={student.exp} size="sm" />
-        </div>
-      </div>
-
-      {/* Pedestal Block */}
-      <div
-        className={`w-full ${pedestalHeight} rounded-t-3xl border-t border-x ${pedestalBorder} ${pedestalBg} flex flex-col items-center justify-start pt-4 px-2 text-center shadow-lg transition-all ${
-          isWinner ? "animate-rank-glow" : ""
-        }`}
-      >
-        <div className="space-y-1">
-          <div
-            className="text-xs sm:text-sm font-black font-mono tabular-nums"
-            style={{ color: theme.colors.primary }}
-          >
-            <CountUpNumber value={student.exp} duration={1000} /> EXP
-          </div>
-
-          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 dark:text-[#8B92A5] font-semibold">
-            <span className="inline-flex items-center gap-0.5">
-              <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
-              {student.streak}d
-            </span>
-            <span>•</span>
-            <span className="inline-flex items-center gap-0.5">
-              <Trophy className="w-3 h-3 text-amber-500" />
-              {student.badgeCount}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+    </li>
   );
 }

@@ -7,13 +7,21 @@ const profile = (overrides = {}) => ({ id: 'profile', exp: 100, totalPoints: 30,
 
 test('public leaderboard keeps anonymous names and private avatars protected', async () => {
   let query;
-  const rows = [profile(), profile({ isLeaderboardAnonymized: true, student: { ...profile().student, name: 'Private Name', avatarUrl: 'https://example.invalid/avatar.png' } })];
+  const rows = [
+    profile({ student: { ...profile().student, preferences: '{"showLeaderboardPhoto":true}' } }),
+    profile({ isLeaderboardAnonymized: true,
+      student: { ...profile().student, id: 'private-peer', name: 'Private Name', avatarUrl: 'https://example.invalid/avatar.png', department: 'Private Program', preferences: '{"showLeaderboardPhoto":true}' } }),
+    profile({ student: { ...profile().student, id: 'name-only', avatarUrl: 'https://example.invalid/hidden.png', preferences: '{"showLeaderboardPhoto":"true"}' } }),
+  ];
   const api = await compile(source, { db: { gamificationProfile: { findMany: async input => { query = input; return rows; } } } });
   const response = await api.GET(); const body = await response.json();
   assert.equal(response.status, 200); assert.equal(query.take, 10); assert.deepEqual(query.where.student, { role: 'STUDENT', isActive: true });
+  assert.equal(query.select.student.select.preferences, true);
   assert.equal(body.entries[0].displayName, 'Synthetic Student'); assert.equal(body.entries[0].avatar, null);
-  assert.equal(body.entries[1].displayName, 'Student #5678'); assert.equal(body.entries[1].avatar, null);
-  assert.doesNotMatch(JSON.stringify(body), /Private Name|private-avatar/);
+  assert.equal(body.entries[1].displayName, 'Anonymous student'); assert.equal(body.entries[1].avatar, null);
+  assert.equal(body.entries[1].id, 'anonymous-2'); assert.equal(body.entries[1].program, '');
+  assert.equal(body.entries[2].displayName, 'Synthetic Student'); assert.equal(body.entries[2].avatar, null);
+  assert.doesNotMatch(JSON.stringify(body), /Private Name|private-peer|Private Program|private-avatar|hidden\.png/);
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 

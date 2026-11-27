@@ -49,7 +49,19 @@ export async function getDashboardCalendar(user: { id: string; instituteId: stri
           await visibleSyllabusForms(),
         ],
       },
-      include: { course: { select: { code: true, title: true, instructor: { select: { name: true } } } }, labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId: user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        maxPoints: true,
+        dueDate: true,
+        type: true,
+        courseId: true,
+        createdAt: true,
+        updatedAt: true,
+        course: { select: { code: true, title: true, instructor: { select: { name: true } } } },
+        labAssignment: await labsAvailable() ? ({ select: { attempts: { where: { studentId: user.id }, select: { status: true, revisionDueAt: true } } } } as const) : false as const,
+      },
     }) : Promise.resolve([]),
   ]);
   const assignmentEvents: CalendarEvent[] = assignments.map((item) => ({

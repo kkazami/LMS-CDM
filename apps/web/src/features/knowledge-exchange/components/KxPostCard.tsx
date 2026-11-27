@@ -17,6 +17,7 @@ import KxUserCard from "./KxUserCard";
 import KxBookmarkButton from "./KxBookmarkButton";
 import KxVoteButton from "./KxVoteButton";
 import type { KxPostItem } from "../types";
+import { knowledgeImages } from "../images";
 
 interface KxPostCardProps {
   post: KxPostItem;
@@ -47,9 +48,12 @@ export default function KxPostCard({
       ? -1
       : 0;
 
+  const previewImage = React.useMemo(() => knowledgeImages(post.body)[0], [post.body]);
+  const postHref = `/${instituteCode}/knowledge-exchange/post/${post.id}`;
+
   // Clean snippet from markdown and HTML
   const snippet = post.body
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "[Image]")
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, previewImage ? "" : "[Image]")
     .replace(/```[\s\S]*?```/g, "[Code]")
     .replace(/\$\$[\s\S]*?\$\$/g, "[Formula]")
     .replace(/<[^>]*>/g, " ")
@@ -167,7 +171,7 @@ export default function KxPostCard({
 
           {/* Title */}
           <Link
-            href={`/${instituteCode}/knowledge-exchange/post/${post.id}`}
+            href={postHref}
             className="block group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors"
           >
             <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug">
@@ -176,9 +180,12 @@ export default function KxPostCard({
           </Link>
 
           {/* Excerpt */}
-          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-            {snippet}
-          </p>
+          {snippet && <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">{snippet}</p>}
+          {previewImage && (
+            <Link href={postHref} className="block w-fit max-w-full rounded-lg" aria-label={`View image in ${post.title}`}>
+              <img src={previewImage.url} alt={previewImage.alt} loading="lazy" className="max-h-32 max-w-full rounded-lg border border-theme object-contain" />
+            </Link>
+          )}
 
           {/* Tags */}
           <div className="flex flex-wrap gap-1.5 pt-1">

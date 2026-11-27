@@ -26,6 +26,7 @@ import {
   Film,
   HardDrive,
   LifeBuoy,
+  MessageCircleWarning,
   ChevronRight,
   Code2,
   MessageSquareQuote,
@@ -91,6 +92,7 @@ export default function MobileMoreSheet({
   const role = userRole.toUpperCase();
   const isStudent = role === "STUDENT";
   const isProfessor = role === "PROFESSOR" || role === "TEACHER";
+  const isIcs = instituteCode.toLowerCase() === "ics";
 
   // Lock body scroll when sheet is open
   useEffect(() => {
@@ -149,7 +151,7 @@ export default function MobileMoreSheet({
     { label: "Audit Logs", href: `/${instituteCode}/logs`, icon: FileText, description: "System events" },
     { label: "Database Management", href: `/${instituteCode}/admin/database`, icon: HardDrive, description: "Inspect records and manage snapshots" },
     { label: "Security Tools", href: `/${instituteCode}/security`, icon: ShieldCheck, description: "Review account security" },
-    { label: "Support Tickets", href: `/${instituteCode}/admin/support-tickets`, icon: LifeBuoy, description: "Review and respond to support requests" },
+    { label: "Support Tickets", href: `/${instituteCode}/admin/support-tickets`, icon: LifeBuoy, description: isIcs ? "Review reported problems and reply to support requests" : "Review and respond to support requests" },
   ];
 
   const handleLogout = async () => {
@@ -293,6 +295,10 @@ export default function MobileMoreSheet({
       : isProfessor
         ? [...teacherItems, ...meetingsItems, ...practicumItems, ...lectureVideosItems]
         : [...adminItems, ...lectureVideosItems]),
+    ...(isIcs ? [
+      { label: "Report a problem", href: `/${instituteCode}/report-a-problem`, icon: MessageCircleWarning },
+      { label: "Help center", href: `/${instituteCode}/help`, icon: LifeBuoy },
+    ] : []),
   ];
 
   if (!isOpen) return null;
@@ -440,7 +446,7 @@ export default function MobileMoreSheet({
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className={`${isStudent ? "text-xs" : "text-sm"} font-semibold text-slate-900 dark:text-[#F0F2F8] leading-snug wrap-break-word`}>{item.label}</span>
-                      {!isStudent && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{item.description}</p>}
+                      {!isStudent && item.description && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{item.description}</p>}
                     </div>
                   </div>
                   {isStudent && item.description && (

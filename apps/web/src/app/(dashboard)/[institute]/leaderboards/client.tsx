@@ -6,8 +6,6 @@ import {
   Trophy,
   Flame,
   Search,
-  Eye,
-  EyeOff,
   Sparkles,
   BookOpen,
 } from "lucide-react";
@@ -17,7 +15,8 @@ import LevelBadge from "@/components/common/LevelBadge";
 import CountUpNumber from "@/features/interactive-activities/codelab/components/analytics/CountUpNumber";
 import LeaderboardPodium, { type PodiumStudent } from "@/features/gamification/components/LeaderboardPodium";
 import { toast } from "@/components/common/Toast";
-import StudentProfileModal from "@/components/common/StudentProfileModal";
+import UserMiniCard from "@/components/common/UserMiniCard";
+import type { LeaderboardVisibility } from "@/lib/leaderboard-privacy";
 
 interface EnrolledCourse {
   id: string;
@@ -39,49 +38,59 @@ interface LeaderboardsClientProps {
   rankings: PodiumStudent[];
   enrolledCourses: EnrolledCourse[];
   leaderboardActivities: LeaderboardActivity[];
-  currentUserId: string;
   instituteCode: string;
   theme: InstituteTheme;
-  initialSelfAnonymized: boolean;
+  initialVisibility: LeaderboardVisibility | null;
   initialCourseId?: string;
   initialActivityId?: string;
 }
 
 type TabType = "global" | "course";
+type ActivityRanking = PodiumStudent & { score: number | null; maxPoints: number | null };
+
+function withOwnVisibility<T extends PodiumStudent>(student: T, visibility: LeaderboardVisibility | null): T {
+  if (!student.isSelf || !visibility) return student;
+  return {
+    ...student,
+    isAnonymized: visibility === 'anonymous',
+    avatarUrl: visibility === 'photo' ? student.avatarUrl : null,
+  };
+}
 
 export default function LeaderboardsClient({
   rankings,
   enrolledCourses,
   leaderboardActivities,
-  currentUserId,
   instituteCode,
   theme,
-  initialSelfAnonymized,
+  initialVisibility,
   initialCourseId,
   initialActivityId,
 }: LeaderboardsClientProps) {
   const isIte = instituteCode?.toLowerCase() === "ite";
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>(initialCourseId || leaderboardActivities.length ? "course" : "global");
+  const [activeTab, setActiveTab] = useState<TabType>(initialCourseId || initialActivityId ? "course" : "global");
   const [selectedCourseId, setSelectedCourseId] = useState<string>(
     initialCourseId || leaderboardActivities[0]?.courseId || enrolledCourses[0]?.id || ""
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAnonymized, setIsAnonymized] = useState(initialSelfAnonymized);
+  const [visibility, setVisibility] = useState(initialVisibility);
   const [togglingPrivacy, setTogglingPrivacy] = useState(false);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(initialActivityId ?? null);
-  const [activityRankings, setActivityRankings] = useState<{rank:number;studentId:string;name:string;avatarUrl:string|null;department:string;score:number|null;maxPoints:number|null;exp:number;level:number;levelTier:string;streak:number;badgeCount:number;isSelf:boolean;isAnonymized:boolean}[]>([]);
+  const [activityRankings, setActivityRankings] = useState<ActivityRanking[]>([]);
   const [activityMeta, setActivityMeta] = useState<{ title: string; maxPoints: number | null; course: { code: string; title: string } } | null>(null);
   const [activityRewards, setActivityRewards] = useState<{ placement: number; rewardLabel: string; bonusExp: number }[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(Boolean(initialActivityId));
   const [activityError, setActivityError] = useState<string | null>(null);
-  const [profileModal, setProfileModal] = useState<{open:boolean;studentId:string;name:string;avatarUrl:string|null;department:string;exp:number;level:number;levelTier:string;streak:number;badgeCount:number;isSelf:boolean;isAnonymized:boolean}|null>(null);
+  const [profile, setProfile] = useState<{ studentId: string; anchor: HTMLButtonElement } | null>(null);
 
   const filteredActivities = useMemo(() => {
     return leaderboardActivities.filter(a => a.courseId === selectedCourseId);
   }, [leaderboardActivities, selectedCourseId]);
 
-  const displayedActivityRankings = activityRankings.filter(student => student.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+  const displayedActivityRankings = activityRankings
+    .filter(student => student.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .map(student => withOwnVisibility(student, visibility));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,34 +117,28 @@ export default function LeaderboardsClient({
     }
     void load();
     return () => controller.abort();
-  }, [selectedActivityId]);
+  }, [selectedActivityId, visibility]);
 
-  function openProfile(student: { studentId: string; name: string; avatarUrl: string | null; department: string; exp: number; level: number; levelTier: string; streak: number; badgeCount: number; isSelf: boolean; isAnonymized: boolean }) {
-    if (student.isAnonymized && !student.isSelf) return;
-    setProfileModal({ open: true, ...student });
+  function openProfile(student: PodiumStudent, anchor: HTMLButtonElement) {
+    if (student.isAnonymized) return;
+    setProfile(current => current?.anchor === anchor ? null : { studentId: student.studentId, anchor });
   }
 
-  async function handleTogglePrivacy() {
+  async function saveVisibility(nextVisibility: LeaderboardVisibility) {
     try {
       setTogglingPrivacy(true);
-      const nextVal = !isAnonymized;
       const res = await fetch("/api/gamification/privacy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isAnonymized: nextVal }),
+        body: JSON.stringify({ visibility: nextVisibility }),
       });
-      if (res.ok) {
-        setIsAnonymized(nextVal);
-        router.refresh();
-        toast.success(
-          nextVal ? "Private Mode Enabled" : "Public Profile Enabled",
-          nextVal
-            ? "Your name is now hidden and shown as Student #ID to peers."
-            : "Your name and avatar are now visible on the leaderboard."
-        );
-      }
+      if (!res.ok) throw new Error('Could not save leaderboard visibility.');
+      setVisibility(nextVisibility);
+      setProfile(null);
+      router.refresh();
+      toast.success('Leaderboard visibility saved.');
     } catch {
-      toast.error("Error", "Failed to update leaderboard privacy.");
+      toast.error('Could not save leaderboard visibility. Try again.');
     } finally {
       setTogglingPrivacy(false);
     }
@@ -145,20 +148,20 @@ export default function LeaderboardsClient({
   const displayedRankings = useMemo(() => {
     return rankings.filter((item) => {
       if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.trim().toLowerCase();
       return (
         item.name.toLowerCase().includes(query) ||
         item.department.toLowerCase().includes(query)
       );
-    });
-  }, [rankings, searchQuery]);
+    }).map(student => withOwnVisibility(student, visibility));
+  }, [rankings, searchQuery, visibility]);
 
   const top3 = useMemo(() => {
-    return displayedRankings.slice(0, 3);
+    return displayedRankings.filter(student => student.rank <= 3);
   }, [displayedRankings]);
 
   const restRankings = useMemo(() => {
-    return displayedRankings.slice(3);
+    return displayedRankings.filter(student => student.rank > 3);
   }, [displayedRankings]);
 
   const selfRecord = useMemo(() => {
@@ -177,32 +180,26 @@ export default function LeaderboardsClient({
           </p>
         </div>
 
-        {/* Anonymity / Privacy Toggle Button */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleTogglePrivacy}
-            disabled={togglingPrivacy}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
-              isAnonymized
-                ? "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-[#F0F2F8]"
-                : "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400"
-            }`}
-            title="Toggle whether your real name appears to classmates on leaderboards"
-          >
-            {isAnonymized ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-slate-400" />
-                <span>Leaderboard: Private</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Leaderboard: Public</span>
-              </>
-            )}
-          </button>
-        </div>
+        {visibility && (
+          <div className="grid w-full gap-1.5 sm:w-auto">
+            <label htmlFor="leaderboard-visibility" className="text-sm font-semibold text-primary-theme">Leaderboard visibility</label>
+            <select
+              id="leaderboard-visibility"
+              value={visibility}
+              onChange={event => void saveVisibility(event.target.value as LeaderboardVisibility)}
+              disabled={togglingPrivacy}
+              aria-describedby="leaderboard-visibility-help"
+              className="min-h-11 rounded-xl border border-theme bg-surface px-3 text-sm text-primary-theme disabled:opacity-60"
+            >
+              <option value="name">Name only</option>
+              <option value="photo">Name and photo</option>
+              <option value="anonymous">Anonymous</option>
+            </select>
+            <p id="leaderboard-visibility-help" className="text-xs text-secondary-theme">
+              {visibility === 'photo' ? 'Uses your profile photo. A square headshot fits best.' : 'Anonymous hides your name and photo from others.'}
+            </p>
+          </div>
+        )}
       </header>
 
       {/* Tabs */}
@@ -313,14 +310,14 @@ export default function LeaderboardsClient({
         <>
           {/* Top 3 Podium */}
           {top3.length > 0 && (
-            <LeaderboardPodium top3={top3} theme={theme} onSelectStudent={openProfile} />
+            <LeaderboardPodium top3={top3} onSelectStudent={openProfile} profileOpen={profile !== null} />
           )}
 
           {/* Ranks 4–50 Table */}
-          <div className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] overflow-hidden shadow-xs">
+          {(restRankings.length > 0 || displayedRankings.length === 0) && <div className="overflow-hidden rounded-xl border border-theme bg-surface">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
-                Rankings (Top 50)
+                Rankings
               </h2>
               <span className="text-xs text-slate-400 dark:text-[#555C72] font-mono">
                 {displayedRankings.length} Students Listed
@@ -340,14 +337,7 @@ export default function LeaderboardsClient({
                   return (
                     <div
                       key={student.studentId}
-                      onClick={() => openProfile(student)}
-                      className={`flex items-center justify-between px-6 py-3.5 transition-colors ${
-                        student.isSelf
-                          ? isIte
-                            ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
-                            : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
-                          : !student.isAnonymized ? "hover:bg-canvas" : ""
-                      } ${!student.isAnonymized || student.isSelf ? "cursor-pointer" : ""}`}
+                      className={`flex items-center justify-between gap-2 px-3 py-3.5 sm:px-6 ${student.isSelf ? "bg-canvas font-bold" : ""}`}
                     >
                       {/* Left: Rank + Avatar + Name + Level Badge */}
                       <div className="flex items-center gap-3 min-w-0">
@@ -360,6 +350,7 @@ export default function LeaderboardsClient({
                           avatarUrl={student.avatarUrl}
                           size="sm"
                           color={theme.colors.primary}
+                          onClick={student.isAnonymized ? undefined : event => openProfile(student, event.currentTarget)}
                         />
 
                         <div className="min-w-0">
@@ -409,7 +400,7 @@ export default function LeaderboardsClient({
                 })}
               </div>
             )}
-          </div>
+          </div>}
         </>
       )}
 
@@ -515,20 +506,19 @@ export default function LeaderboardsClient({
                       ) : displayedActivityRankings.map(student => (
                         <div
                           key={student.studentId}
-                          onClick={() => openProfile(student)}
-                          className={`flex items-center justify-between px-6 py-3.5 transition-colors ${
-                            student.isSelf
-                              ? isIte
-                                ? "bg-blue-500/5 dark:bg-blue-500/10 font-bold"
-                                : "bg-orange-500/5 dark:bg-orange-500/10 font-bold"
-                              : !student.isAnonymized ? "hover:bg-canvas" : ""
-                          } ${!student.isAnonymized || student.isSelf ? "cursor-pointer" : ""}`}
+                          className={`flex items-center justify-between gap-2 px-3 py-3.5 sm:px-6 ${student.isSelf ? "bg-canvas font-bold" : ""}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <span className="w-6 text-center text-xs font-black font-mono text-slate-400 dark:text-[#555C72]">
                               #{student.rank}
                             </span>
-                            <UserAvatar name={student.name} avatarUrl={student.avatarUrl} size="sm" color={theme.colors.primary} />
+                            <UserAvatar
+                              name={student.name}
+                              avatarUrl={student.avatarUrl}
+                              size="sm"
+                              color={theme.colors.primary}
+                              onClick={student.isAnonymized ? undefined : event => openProfile(student, event.currentTarget)}
+                            />
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs font-bold text-slate-900 dark:text-[#F0F2F8] truncate">{student.name}</span>
@@ -572,22 +562,15 @@ export default function LeaderboardsClient({
         </div>
       )}
 
-      {profileModal && (
-        <StudentProfileModal
-          open={profileModal.open}
-          onClose={() => setProfileModal(null)}
-          studentId={profileModal.studentId}
-          name={profileModal.name}
-          avatarUrl={profileModal.avatarUrl}
-          department={profileModal.department}
-          exp={profileModal.exp}
-          level={profileModal.level}
-          levelTier={profileModal.levelTier}
-          streak={profileModal.streak}
-          badgeCount={profileModal.badgeCount}
-          isSelf={profileModal.isSelf}
-          isAnonymized={profileModal.isAnonymized}
-          primaryColor={theme.colors.primary}
+      {profile && (
+        <UserMiniCard
+          key={profile.studentId}
+          userId={profile.studentId}
+          instituteCode={instituteCode}
+          fromLeaderboard
+          anchorElement={profile.anchor}
+          onClose={() => setProfile(null)}
+          theme={theme}
         />
       )}
     </div>

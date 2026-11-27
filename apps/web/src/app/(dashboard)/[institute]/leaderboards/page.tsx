@@ -3,6 +3,7 @@ import { getInstituteTheme } from "@/lib/get-institute-theme";
 import { db } from "@/lib/db";
 import LeaderboardsClient from "./client";
 import { leaderboardCourseWhere, leaderboardActivityWhere } from "@/lib/activity-leaderboard";
+import { leaderboardIdentity, leaderboardVisibility } from "@/lib/leaderboard-privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,8 @@ export default async function LeaderboardsPage({
   const theme = getInstituteTheme(institute);
 
   // Load institute rankings and authorized course boards together.
-  const [globalProfiles, courses, leaderboardActivities] = await Promise.all([
+  const isStudent = user.role === 'STUDENT';
+  const [globalProfiles, courses, leaderboardActivities, selfPrivacy] = await Promise.all([
     db.gamificationProfile.findMany({
       where: {
         student: {
@@ -41,9 +43,9 @@ export default async function LeaderboardsPage({
           select: {
             id: true,
             name: true,
-            studentNumber: true,
             avatarUrl: true,
             department: true,
+            preferences: true,
           },
         },
         badges: {
@@ -82,50 +84,38 @@ export default async function LeaderboardsPage({
       },
       orderBy: { createdAt: 'desc' },
     }),
+    isStudent ? db.gamificationProfile.findUnique({
+      where: { studentId: user.id },
+      select: { isLeaderboardAnonymized: true, student: { select: { preferences: true } } },
+    }) : null,
   ]);
 
   // Serialize and sanitize for client
-  const serializedRankings = globalProfiles.map((p, index) => {
-    const isSelf = p.studentId === user.id;
-    const isAnon = p.isLeaderboardAnonymized && !isSelf;
-    const displayName = isAnon
-      ? `Student #${p.student.id.slice(-4).toUpperCase()}`
-      : p.student.name;
+  const serializedRankings = globalProfiles.map((p, index) => ({
+    rank: index + 1,
+    ...leaderboardIdentity(p.student, p, index + 1, user.id),
+    exp: p.exp,
+    level: p.level,
+    levelTier: p.levelTier,
+    streak: p.loginStreakCurrent,
+    badgeCount: p.badges.length,
+  }));
 
-    return {
-      rank: index + 1,
-      studentId: p.studentId,
-      name: displayName,
-      avatarUrl: isAnon ? null : p.student.avatarUrl,
-      department: p.student.department || institute.toUpperCase(),
-      exp: p.exp,
-      level: p.level,
-      levelTier: p.levelTier,
-      streak: p.loginStreakCurrent,
-      badgeCount: p.badges.length,
-      isSelf,
-      isAnonymized: p.isLeaderboardAnonymized,
-    };
-  });
-
-  // Check self anonymity status (default to false: real names shown by default)
-  const selfProfile = globalProfiles.find((p) => p.studentId === user.id);
-  const selfAnonymized = selfProfile?.isLeaderboardAnonymized ?? false;
   const query = await searchParams;
   const initialActivity = leaderboardActivities.find(a => a.id === query.syllabusItemId);
   const initialCourseId = initialActivity?.courseId ?? courses.find(c => c.id === query.courseId)?.id;
 
   return (
     <LeaderboardsClient
+      key={initialActivity?.id ?? initialCourseId ?? "exp"}
       rankings={serializedRankings}
       enrolledCourses={courses}
       initialCourseId={initialCourseId}
       initialActivityId={initialActivity?.id}
       leaderboardActivities={leaderboardActivities}
-      currentUserId={user.id}
       instituteCode={institute}
       theme={theme}
-      initialSelfAnonymized={selfAnonymized}
+      initialVisibility={isStudent ? leaderboardVisibility(selfPrivacy, selfPrivacy?.student.preferences) : null}
     />
   );
 }

@@ -1,0 +1,165 @@
+.list {
+  --rank-step: clamp(0.75rem, 2vw, 1.25rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+  padding-block: 1.625rem 0.5rem;
+}
+
+.card {
+  --metal: #aab9cc;
+  --metal-light: color-mix(in srgb, var(--metal) 36%, white);
+  --metal-dark: color-mix(in srgb, var(--metal) 67%, var(--brand-navy));
+  --float-duration: 6.2s;
+  --float-delay: -0.8s;
+  --float-travel: clamp(1rem, 2vw, 1.625rem);
+  --motion-state: paused;
+  --height-offset: 0rem;
+  --metal-tint: color-mix(in srgb, var(--metal) 18%, var(--bg-surface));
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-inline-size: 0;
+  max-inline-size: 12rem;
+  min-block-size: calc(clamp(12.5rem, 40vw, 16.5rem) + var(--height-offset));
+  margin-block-start: var(--rank-step);
+  padding: clamp(1rem, 3vw, 1.75rem) clamp(0.4rem, 1.8vw, 1rem) 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--metal) 55%, var(--border-color));
+  --arch-height: clamp(3rem, 6.5vw, 5.25rem);
+  border-radius: 50% 50% 1.5rem 1.5rem / var(--arch-height) var(--arch-height) 1.5rem 1.5rem;
+  background: linear-gradient(170deg, var(--metal-tint), var(--bg-surface) 72%);
+  box-shadow: 0 10px 16px -14px color-mix(in srgb, var(--brand-navy) 50%, transparent);
+}
+
+.card[value="1"] {
+  --metal: var(--brand-gold);
+  --height-offset: 1.75rem;
+  --float-duration: 5.6s;
+  --float-delay: -2.3s;
+  flex-grow: 1.08;
+  max-inline-size: 12.75rem;
+  margin-block-start: 0;
+}
+
+.card[value="3"] {
+  --metal: #d4925d;
+  --height-offset: -1rem;
+  --float-duration: 6.8s;
+  --float-delay: -3.8s;
+  margin-block-start: calc(2 * var(--rank-step));
+}
+
+:global([data-theme="dark"]) .card,
+:global(.dark) .card {
+  --metal-tint: color-mix(in srgb, var(--metal) 16%, var(--bg-surface));
+}
+
+.portrait {
+  --rim-width: clamp(4px, 0.6vw, 6px);
+  position: relative;
+  flex: none;
+  inline-size: min(100%, clamp(3rem, 8vw, 5.5rem));
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.portraitRim,
+.portrait[data-photo]::after {
+  position: absolute;
+  inset: calc(-1 * var(--rim-width));
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.portraitRim {
+  border: 1px solid var(--metal-dark);
+  background: conic-gradient(from 30deg,
+    var(--metal),
+    var(--metal-dark) 31%,
+    var(--metal) 60%,
+    var(--metal-light) 84%,
+    var(--metal));
+}
+
+.portraitRim::before,
+.portraitRim::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inline-size: 22%;
+  block-size: var(--rim-width);
+  clip-path: polygon(16% 0, 84% 0, 100% 50%, 84% 100%, 16% 100%, 0 50%);
+  transform: translate(50%, -50%) rotate(45deg);
+  background: linear-gradient(var(--metal-light) 45%, var(--metal-dark) 58%);
+}
+
+.portraitRim::before {
+  inset: 14.65% 14.65% auto auto;
+}
+
+.portraitRim::after {
+  inset: 85.35% 85.35% auto auto;
+}
+
+.portrait[data-photo]::after {
+  content: "";
+  background: conic-gradient(from 12deg,
+    transparent 3%, white 6%, transparent 9%,
+    transparent 14%, rgb(255 255 255 / 60%) 15.5%, transparent 17%,
+    transparent 60%, rgb(255 255 255 / 78%) 62%, transparent 65%);
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--rim-width)), #000 0);
+}
+
+.portraitFrame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--metal-light) 48%, var(--border-color));
+  background: var(--bg-elevated);
+}
+
+.rank {
+  display: inline-block;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 999px;
+  background: var(--metal-tint);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    animation: float var(--float-duration) ease-in-out var(--float-delay) infinite var(--motion-state);
+  }
+
+  .list[data-floating="true"] .card:not(:focus-within) {
+    --motion-state: running;
+  }
+
+  .portrait[data-photo]::after {
+    animation: rimGlint 5s linear infinite var(--motion-state);
+  }
+
+  @media (hover: hover) {
+    .list[data-floating="true"] .card:has(.portrait:hover) {
+      --motion-state: paused;
+    }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(calc(-1 * var(--float-travel))); }
+  }
+
+  @keyframes rimGlint {
+    to { transform: rotate(1turn); }
+  }
+}

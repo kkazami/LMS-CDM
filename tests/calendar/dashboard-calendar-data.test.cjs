@@ -33,7 +33,7 @@ test("dashboard calendars use taught or approved enrolled courses and keep perso
     // This calendar fixture represents an installation without the optional lab schema.
     $queryRaw: async () => [{ tables: 0, columns: 0 }],
     calendarEvent: { findMany: async ({ where }) => savedEvents.filter((event) => matches(event, where)) },
-    syllabusItem: { findMany: async (query) => { queries.push(query.where); return [{ id: "quiz", title: "QUIZ1", type: "QUIZ", courseId: "enrolled", dueDate: date, createdAt: date, updatedAt: date, course: courses[1] }]; } },
+    syllabusItem: { findMany: async (query) => { queries.push(query); return [{ id: "quiz", title: "QUIZ1", type: "QUIZ", description: "Bring notes", maxPoints: 20, courseId: "enrolled", dueDate: date, createdAt: date, updatedAt: date, course: courses[1] }]; } },
     course: { findMany: async ({ where }) => courses.filter((course) => matches(course, where)).map(({ instituteId, isArchived, instructorId, enrollments, ...course }) => course) },
   };
   try {
@@ -60,8 +60,11 @@ test("dashboard calendars use taught or approved enrolled courses and keep perso
     const student = { id: "student", role: "STUDENT", instituteId: "ics" };
     const calendar = await getDashboardCalendar(student, "ics");
     assert.deepEqual(calendar.schedules.map((course) => course.id), ["enrolled"]);
-    assert.ok(JSON.stringify(queries.at(-1)).includes("targetGroups"));
+    assert.ok(JSON.stringify(queries.at(-1).where).includes("targetGroups"));
+    assert.deepEqual(Object.keys(queries.at(-1).select).sort(), ["course", "courseId", "createdAt", "description", "dueDate", "id", "labAssignment", "maxPoints", "title", "type", "updatedAt"]);
     assert.deepEqual(calendar.events.map((event) => event.id), ["event", "assignment", "exam", "quiz", "submission", "syllabus_quiz"]);
+    assert.equal(calendar.events.at(-1).description, "Bring notes");
+    assert.equal(calendar.events.at(-1).maxPoints, 20);
     const personal = { creatorId: "teacher", instituteId: "ics", courseId: null, creator: { role: "PROFESSOR" }, eventType: "personal" };
     assert.equal(matches(personal, visibleCalendarEvents(student)), false);
     assert.equal(matches(personal, visibleCalendarEvents({ id: "teacher", role: "PROFESSOR", instituteId: "ics" })), true);

@@ -50,6 +50,7 @@ export default function UserAvatar({
   const { container, text, px } = SIZE_CLASSES[size];
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const imageUrl = avatarUrl && avatarUrl !== failedUrl ? avatarUrl : null;
+  const externalImage = Boolean(imageUrl && /^(?:https?:)?\/\//i.test(imageUrl));
 
   const inner = imageUrl ? (
     <Image
@@ -57,9 +58,10 @@ export default function UserAvatar({
       alt={`${name}'s avatar`}
       width={px}
       height={px}
-      className="h-full w-full rounded-full object-cover"
-      // The optimizer does not forward the viewer's session cookie to private assets.
-      unoptimized={imageUrl.startsWith("data:") || imageUrl.startsWith('/api/assets/')}
+      className="block h-full w-full object-cover object-center"
+      // Private assets need the viewer's cookie, and older external avatars load directly.
+      unoptimized={externalImage || imageUrl.startsWith("data:") || imageUrl.startsWith("/api/assets/")}
+      referrerPolicy="no-referrer"
       onError={() => setFailedUrl(imageUrl)}
     />
   ) : (
@@ -79,7 +81,7 @@ export default function UserAvatar({
 
   if (onClick) {
     return (
-      <div className="relative inline-block">
+      <div className="relative inline-flex align-middle">
         <button
           type="button"
           onClick={onClick}
@@ -97,7 +99,7 @@ export default function UserAvatar({
   }
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-flex align-middle">
       <div className={base} style={style}>
         {inner}
       </div>

@@ -263,11 +263,6 @@
 @media (min-width: 1440px) {
   .lane { --notes-width: clamp(19rem, 21vw, 23rem); }
   .rail { --notes-height-cap: 43rem; --notes-height-reserve: 11rem; }
-  .lane:has(> .rail[data-docked]) { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--notes-width) + var(--notes-binding-width)); grid-template-rows: auto minmax(0, 1fr); }
-  .lane:has(> .rail[data-docked][data-side="left"]) { grid-template-columns: calc(var(--notes-width) + var(--notes-binding-width)) minmax(0, 1fr); }
-  .lane:has(> .rail[data-docked]) > header { grid-column: 1 / -1; grid-row: 1; }
-  .lane:has(> .rail[data-docked]) > main { grid-column: 1; grid-row: 2; }
-  .lane:has(> .rail[data-docked][data-side="left"]) > main { grid-column: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) { .notebook:is([data-phase="opening"], [data-phase="returning"]) { transition: none; } }

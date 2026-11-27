@@ -1,6 +1,7 @@
 import { getInstituteName } from "@lms/types";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { leaderboardIdentity } from "@/lib/leaderboard-privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ async function loadEntries(): Promise<PublicLeaderboardEntry[]> {
             name: true,
             avatarUrl: true,
             department: true,
+            preferences: true,
             institute: {
               select: {
                 name: true,
@@ -81,7 +83,7 @@ async function loadEntries(): Promise<PublicLeaderboardEntry[]> {
     });
 
     const entries: PublicLeaderboardEntry[] = profiles.map((p, idx) => {
-      const isAnon = p.isLeaderboardAnonymized;
+      const identity = leaderboardIdentity(p.student, p, idx + 1);
       const points = p.exp > 0 ? p.exp : p.totalPoints;
       const rawTier = p.levelTier || "newcomer";
       const tier = rawTier.charAt(0).toUpperCase() + rawTier.slice(1);
@@ -91,16 +93,14 @@ async function loadEntries(): Promise<PublicLeaderboardEntry[]> {
         "General";
 
       return {
-        id: p.student.id,
+        id: identity.studentId,
         rank: idx + 1,
-        displayName: isAnon
-          ? `Student #${p.student.id.slice(-4).toUpperCase()}`
-          : p.student.name,
-        avatar: isAnon || p.student.avatarUrl?.startsWith('/api/assets/') ? null : p.student.avatarUrl,
+        displayName: identity.name,
+        avatar: identity.avatarUrl?.startsWith('/api/assets/') ? null : identity.avatarUrl,
         points,
         exp: points,
         tier,
-        program,
+        program: identity.isAnonymized ? '' : program,
       };
     });
 

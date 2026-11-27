@@ -6,6 +6,7 @@ import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import { ExternalLink, X } from "lucide-react";
 import { sanitizeKxHtml } from "../utils";
+import { inlineKnowledgeImages } from "../images";
 
 interface KxLatexRendererProps {
   content: string;
@@ -109,7 +110,7 @@ export default function KxLatexRenderer({
     const htmlWithMath = processMath(html);
 
     // Ensure final output is sanitized against XSS
-    return sanitizeKxHtml(htmlWithMath);
+    return inlineKnowledgeImages(sanitizeKxHtml(htmlWithMath));
   }, [content]);
 
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {

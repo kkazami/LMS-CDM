@@ -166,6 +166,7 @@ export default function Topbar({
     privacy: "Privacy Settings",
     "learning-materials": "Learning Materials",
     help: "Help & Support",
+    "report-a-problem": "Help",
     "academic-operations": "Academic Operations",
     "business-plan": "Business Plan Guide",
     "learning-hub": "Learning Hub",
@@ -187,7 +188,9 @@ export default function Topbar({
   const role = userRole.toUpperCase();
   const home = `/${instituteCode}/${role === 'STUDENT' ? 'students' : role === 'SUPER_USER' ? 'academic-operations' : role === 'ADMIN' ? 'admin' : 'teachers'}`;
   const parentFeature = routeSegments.slice(1, -1).find(part => titleMap[part]);
-  const backHref = parentFeature ? `/${instituteCode}/${parentFeature}` : home;
+  const backHref = section === 'report-a-problem'
+    ? `/${instituteCode}/help`
+    : parentFeature ? `/${instituteCode}/${parentFeature}` : home;
   const showBack = pathname !== home;
 
   if (pathname.endsWith('/activities/codelab/instructor')) {

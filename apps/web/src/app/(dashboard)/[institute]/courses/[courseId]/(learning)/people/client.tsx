@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { InstituteTheme } from "@/lib/theme";
 import Button from "@/components/common/Button";
+import Input from "@/components/common/Input";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import Modal from "@/components/common/Modal";
 import Badge from "@/components/common/Badge";
@@ -65,6 +66,8 @@ interface Comment {
   sender: { id: string; name: string };
 }
 
+const studentsPerPage = 30;
+
 export default function PeopleClient({
   courseId,
   instituteCode,
@@ -87,6 +90,17 @@ export default function PeopleClient({
   currentUserId: string;
 }) {
   const isIte = instituteCode?.toLowerCase() === "ite";
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentPage, setStudentPage] = useState(1);
+  const studentsHeading = useRef<HTMLHeadingElement>(null);
+  const search = studentSearch.trim().toLowerCase();
+  const matchingStudents = search
+    ? enrolledStudents.filter(({ name, email }) => name.toLowerCase().includes(search) || email.toLowerCase().includes(search))
+    : enrolledStudents;
+  const pageCount = Math.max(1, Math.ceil(matchingStudents.length / studentsPerPage));
+  const currentPage = Math.min(studentPage, pageCount);
+  const firstStudent = (currentPage - 1) * studentsPerPage;
+  const visibleStudents = matchingStudents.slice(firstStudent, firstStudent + studentsPerPage);
   const [studentToRemove, setStudentToRemove] = useState<Student | null>(null);
   const [removalError, setRemovalError] = useState("");
   const [removing, startRemoval] = useTransition();
@@ -299,6 +313,12 @@ export default function PeopleClient({
     });
   };
 
+  const changeStudentPage = (page: number) => {
+    setStudentPage(page);
+    studentsHeading.current?.focus({ preventScroll: true });
+    studentsHeading.current?.scrollIntoView({ block: "start" });
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* ─── Instructor Section ─── */}
@@ -430,17 +450,31 @@ export default function PeopleClient({
       )}
 
       {/* ─── Enrolled Students ─── */}
-      <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5] mb-3">
+      <section aria-labelledby="class-students-heading" className="space-y-3">
+        <h2 id="class-students-heading" ref={studentsHeading} tabIndex={-1} className="scroll-mt-24 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#8B92A5]">
           Students ({enrolledStudents.length})
         </h2>
-        {enrolledStudents.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721]">
-            No students enrolled yet.
+        <div className="max-w-md">
+          <Input
+            id="class-student-search"
+            type="search"
+            label="Search students"
+            placeholder="Name or email"
+            theme={theme}
+            value={studentSearch}
+            onChange={(event) => {
+              setStudentSearch(event.target.value);
+              setStudentPage(1);
+            }}
+          />
+        </div>
+        {visibleStudents.length === 0 ? (
+          <p role="status" className="text-sm text-secondary-theme py-6 text-center rounded-2xl border border-theme bg-surface">
+            {search ? "No students match your search." : "No students enrolled yet."}
           </p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#141721] divide-y divide-slate-100 dark:divide-white/5 shadow-xs">
-            {enrolledStudents.map((student) => (
+            {visibleStudents.map((student) => (
               <div
                 key={student.id}
                 onClick={() => {
@@ -508,6 +542,24 @@ export default function PeopleClient({
                 )}
               </div>
             ))}
+          </div>
+        )}
+        {visibleStudents.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p role="status" className="text-sm text-secondary-theme">
+              Showing {firstStudent + 1}–{firstStudent + visibleStudents.length} of {matchingStudents.length} students
+            </p>
+            {pageCount > 1 && (
+              <nav aria-label="Student pages" className="flex flex-wrap items-center gap-2">
+                <Button type="button" theme={theme} variant="secondary" disabled={currentPage === 1} onClick={() => changeStudentPage(currentPage - 1)}>
+                  Previous
+                </Button>
+                <span className="px-1 text-sm text-secondary-theme">Page {currentPage} of {pageCount}</span>
+                <Button type="button" theme={theme} variant="secondary" disabled={currentPage === pageCount} onClick={() => changeStudentPage(currentPage + 1)}>
+                  Next
+                </Button>
+              </nav>
+            )}
           </div>
         )}
       </section>

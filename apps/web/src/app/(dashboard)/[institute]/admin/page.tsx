@@ -120,7 +120,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
     },
     {
       title: "Support Tickets",
-      description: "Manage and resolve user inquiries and support requests",
+      description: "Review reported problems and reply to support requests",
       href: `/${institute}/admin/support-tickets`,
       icon: LifeBuoy,
       color: "#EF4444",

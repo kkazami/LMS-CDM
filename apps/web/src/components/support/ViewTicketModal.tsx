@@ -1,5 +1,6 @@
 import { X, Clock } from "lucide-react";
 import type { InstituteTheme } from "@/lib/theme";
+import TicketAttachmentLink from "@/components/support/TicketAttachmentLink";
 
 interface Ticket {
   id: string;
@@ -10,6 +11,7 @@ interface Ticket {
   createdAt: string;
   adminReply: string | null;
   repliedAt: string | null;
+  attachment?: { fileName: string } | null;
 }
 
 export function ViewTicketModal({
@@ -37,6 +39,9 @@ export function ViewTicketModal({
           <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Ticket Details</h2>
           <button 
             onClick={onClose}
+            type="button"
+            aria-label="Close ticket details"
+            ref={element => { element?.focus(); }}
             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
           >
             <X className="w-5 h-5" />
@@ -68,10 +73,11 @@ export function ViewTicketModal({
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{ticket.subject}</h3>
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1A1D27] border border-slate-200 dark:border-white/5">
-              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap wrap-anywhere leading-relaxed">
                 {ticket.message}
               </p>
             </div>
+            {ticket.attachment && <TicketAttachmentLink ticketId={ticket.id} fileName={ticket.attachment.fileName} />}
           </div>
 
           {ticket.adminReply && (

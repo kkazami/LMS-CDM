@@ -129,6 +129,7 @@ export default function ProfileEditClient({
   const isIbeStudentLocked = isIbe && isStudent;
   const isProgramLocked = isIteStudentLocked || isIbeStudentLocked;
   const lockedProgram = lockedIteProgram ?? lockedIbeProgram;
+  const savedProgram = user.department.trim();
   const courses = isStudent
     ? user.enrollments.map((e) => e.course)
     : user.taughtCourses;
@@ -246,8 +247,14 @@ export default function ProfileEditClient({
           >
             {roleLabel}
           </span>
-          <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/20" />
+          <span aria-hidden="true" className="size-1 shrink-0 rounded-full bg-slate-300 dark:bg-white/20" />
           <span>{getInstituteName(user.institute.code, user.institute.name)}</span>
+          {savedProgram && (
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <span aria-hidden="true" className="size-1 shrink-0 rounded-full bg-slate-300 dark:bg-white/20" />
+              <span className="min-w-0 wrap-break-word">{savedProgram}</span>
+            </span>
+          )}
         </div>
       </div>
 

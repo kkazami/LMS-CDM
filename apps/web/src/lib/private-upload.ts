@@ -12,6 +12,7 @@ import { canonicalRole } from '@/lib/super-user-v1/capabilities';
 
 export const UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
 const assetPattern = /^\/api\/assets\/([a-zA-Z0-9-]{1,100})$/;
+const knowledgeImageTypes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 const types: Record<string, string[]> = {
   'application/pdf': ['.pdf'], 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'],
   'image/gif': ['.gif'], 'image/webp': ['.webp'], 'application/zip': ['.zip'],
@@ -112,7 +113,7 @@ export async function savePrivateUpload(actor: CourseActor, file: File) {
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${`uploads:${actor.id}`}, 0))`;
     const used = await tx.privateAsset.aggregate({ where: { ownerId: actor.id, instituteId: actor.instituteId }, _sum: { size: true } });
     if ((used._sum.size || 0) + bytes.length > 250 * 1024 * 1024) throw new AccessError(413, 'Your 250 MB upload allowance is full. Contact your administrator.');
-    await tx.privateAsset.create({ data: { id, ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') } });
+    await tx.privateAsset.create({ data: { id, ownerId: actor.id, instituteId: actor.instituteId, fileName, mimeType, size: bytes.length, content: bytes, scanStatus, sha256: createHash('sha256').update(bytes).digest('hex') }, select: { id: true } });
   });
   return { url: `/api/assets/${id}`, fileName, fileSize: bytes.length };
 }
@@ -130,7 +131,7 @@ export async function readPrivateUpload(actor: CourseActor, id: string) {
   const { authorizeLabAsset } = await import('@/lib/labs/service');
   const labFile = await labsAvailable() ? await authorizeLabAsset(actor, id) : null;
   if (labFile) return labFile;
-  const meta = await db.privateAsset.findFirst({ where: { id, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } }, select: { id: true, ownerId: true } });
+  const meta = await db.privateAsset.findFirst({ where: { id, instituteId: actor.instituteId, scanStatus: { in: ['CLEAN', 'UNSCANNED'] } }, select: { id: true, ownerId: true, mimeType: true } });
   if (!meta) throw new AccessError(404, 'File not found.');
   const url = `/api/assets/${id}`;
   let allowed = meta.ownerId === actor.id;
@@ -150,6 +151,10 @@ export async function readPrivateUpload(actor: CourseActor, id: string) {
     for (const courseId of new Set(candidates)) {
       try { await requireCourseAccess(actor, courseId); allowed = true; break; }
       catch (error) { if (!(error instanceof AccessError) || ![403, 404].includes(error.status)) throw error; }
+    }
+    if (!allowed && knowledgeImageTypes.has(meta.mimeType)) {
+      const { isSharedKnowledgeImage } = await import('@/features/knowledge-exchange/image-access');
+      allowed = await isSharedKnowledgeImage(actor.instituteId, meta.ownerId, url);
     }
   }
   if (!allowed) throw new AccessError(404, 'File not found.');

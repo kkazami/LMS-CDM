@@ -1,4 +1,4 @@
-import { Menu, BrowserWindow, app, shell, dialog } from 'electron';
+import { Menu, BrowserWindow, app, dialog } from 'electron';
 import * as fs from 'fs';
 
 export function setupMenu(mainWindow: BrowserWindow, WEB_URL: string) {
@@ -123,6 +123,15 @@ export function setupMenu(mainWindow: BrowserWindow, WEB_URL: string) {
       label: 'Help',
       submenu: [
         {
+          label: 'Help Center',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/help'),
+        },
+        {
+          label: 'Report a problem',
+          click: () => mainWindow.loadURL(WEB_URL + '/ics/report-a-problem'),
+        },
+        { type: 'separator' },
+        {
           label: 'About CdM LMS Admin Console',
           click: () => {
             dialog.showMessageBox(mainWindow, {
@@ -132,11 +141,6 @@ export function setupMenu(mainWindow: BrowserWindow, WEB_URL: string) {
               detail: 'Version ' + app.getVersion() + '\n\nThe administrator\'s dedicated desktop console for managing CdM LMS.\n\nFeatures: Course Management, Account Administration, RBAC Permissions, Audit Logs, Backup & Recovery, Security Tools.',
             });
           },
-        },
-        { type: 'separator' },
-        {
-          label: 'Report Issue',
-          click: () => shell.openExternal('https://github.com/your-org/cdm-lms/issues'),
         },
       ],
     },

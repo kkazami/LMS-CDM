@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { GamificationDashboard } from "@/features/interactive-activities/gamification/components/GamificationDashboard";
 import { LeaderboardUI } from "@/features/interactive-activities/gamification/components/LeaderboardUI";
 import { WeeklyChallengeCard } from "@/features/interactive-activities/gamification/components/WeeklyChallengeCard";
-import { getInstituteTheme } from "@/lib/get-institute-theme";
+import { leaderboardIdentity } from "@/lib/leaderboard-privacy";
+import { z } from "zod";
+
+const cachedRankings = z.array(z.object({ studentId: z.string(), points: z.number() }));
 
 export default async function LeaderboardPage({
   params
@@ -40,6 +43,22 @@ export default async function LeaderboardPage({
       }
     }
   });
+  let scores: z.infer<typeof cachedRankings> = [];
+  try {
+    const cached = cachedRankings.safeParse(JSON.parse(leaderboardCache?.rankings || '[]'));
+    if (cached.success) scores = cached.data;
+  } catch { /* Malformed cached rankings can be rebuilt by the next activity. */ }
+  const students = scores.length ? await db.user.findMany({
+    where: { id: { in: scores.map(({ studentId }) => studentId) }, instituteId: session.user.instituteId, isActive: true },
+    select: { id: true, name: true, gamificationProfile: { select: { isLeaderboardAnonymized: true } } },
+  }) : [];
+  const byId = new Map(students.map(student => [student.id, student]));
+  const rankings = scores.flatMap(({ studentId, points }, index) => {
+    const student = byId.get(studentId);
+    if (!student) return [];
+    const identity = leaderboardIdentity(student, student.gamificationProfile, index + 1, session.user.id);
+    return [{ studentId: identity.studentId, displayName: identity.name, points }];
+  });
 
   // Fetch Weekly Challenge (Active)
   const challenge = await db.weeklyChallenge.findFirst({
@@ -69,7 +88,7 @@ export default async function LeaderboardPage({
         
         <div className="lg:col-span-1">
           <LeaderboardUI 
-            rankingsJson={leaderboardCache ? leaderboardCache.rankings : "[]"} 
+            rankings={rankings}
             currentStudentId={session.user.id} 
           />
         </div>

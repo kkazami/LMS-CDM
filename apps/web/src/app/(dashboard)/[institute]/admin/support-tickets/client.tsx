@@ -17,7 +17,6 @@ import {
   User, 
   Tag, 
   RefreshCw,
-  Sparkles,
   Pencil,
   X,
   Check,
@@ -29,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/common/Toast";
 import { ReplyTicketModal } from "@/components/support/ReplyTicketModal";
+import TicketAttachmentLink from "@/components/support/TicketAttachmentLink";
 
 interface Ticket {
   id: string;
@@ -41,6 +41,7 @@ interface Ticket {
   resolvedAt: string | null;
   adminReply: string | null;
   repliedAt: string | null;
+  attachment?: { fileName: string } | null;
   author: {
     id: string;
     name: string;
@@ -83,6 +84,7 @@ export default function SupportTicketsClient({ theme, instituteCode }: { theme: 
     setLoading(true);
     try {
       const res = await fetch("/api/support-tickets");
+      if (!res.ok) throw new Error("Could not load support tickets.");
       const data = await res.json();
       setTickets(data.tickets || []);
     } catch (err) {
@@ -295,10 +297,11 @@ export default function SupportTicketsClient({ theme, instituteCode }: { theme: 
             {ticket.subject}
           </h3>
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#181B26] border border-slate-100 dark:border-white/5">
-            <p className="text-xs sm:text-sm text-slate-700 dark:text-[#C5CEE0] whitespace-pre-wrap leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-[#C5CEE0] whitespace-pre-wrap wrap-anywhere leading-relaxed">
               {ticket.message}
             </p>
           </div>
+          {ticket.attachment && <TicketAttachmentLink ticketId={ticket.id} fileName={ticket.attachment.fileName} />}
         </div>
 
         {/* 3. Author Row */}
@@ -429,18 +432,12 @@ export default function SupportTicketsClient({ theme, instituteCode }: { theme: 
       {/* ── 1. Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
-            style={{ backgroundColor: `${theme.colors.primary}1A`, color: theme.colors.primary }}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Institute Helpdesk Governance</span>
-          </div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-[#F0F2F8] flex items-center gap-3">
             <LifeBuoy className="h-8 w-8 text-rose-500" />
             Support Tickets
           </h1>
           <p className="text-slate-500 dark:text-[#8B92A5] mt-1 text-sm">
-            Categorized issue triage, user feedback channels, and resolution tracking.
+            Reports from <strong>Report a problem</strong> show up here with other support requests.
           </p>
         </div>
 
@@ -601,7 +598,7 @@ export default function SupportTicketsClient({ theme, instituteCode }: { theme: 
             {statusFilter === "ALL" ? "No Tickets Found" : `No ${statusFilter === "OPEN" ? "Open" : "Resolved"} Tickets`}
           </h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            {search ? `No tickets match "${search}". Try adjusting your filters.` : "All inquiries in this category have been attended to!"}
+            {search ? `No tickets match "${search}". Try adjusting your filters.` : "No tickets in this view."}
           </p>
         </div>
       ) : viewMode === "list" ? (

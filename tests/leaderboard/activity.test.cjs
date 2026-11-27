@@ -52,6 +52,7 @@ function fixture(role = "STUDENT", id = "alice") {
   const students = ["alice", "bob", "zero", "hidden", "dropped", "inactive"].map((id, index) => ({
     id, name: id, avatarUrl: "/avatar", department: "ICS", instituteId: "ics", role: "STUDENT", isActive: id !== "inactive",
     enrollments: [enroll(id, "class-a", id === "dropped" ? "PENDING" : "APPROVED")],
+    preferences: JSON.stringify({ showLeaderboardPhoto: id === "alice" }),
     gamificationProfile: { exp: index * 1000, level: 1, levelTier: "newcomer", currentStreak: 0, badges: [], isLeaderboardAnonymized: id === "bob" },
   }));
   const courses = [
@@ -92,7 +93,13 @@ function fixture(role = "STUDENT", id = "alice") {
         return { ...item, leaderboardEnabled: args.data.leaderboardEnabled ?? item.leaderboardEnabled, leaderboardRewards: args.data.leaderboardRewards?.create ?? item.leaderboardRewards }; },
     },
     studentSubmission: { findMany: async ({ where }) => submissions.filter(s => matches(s, where)) },
-    gamificationProfile: { findMany: async () => [] },
+    gamificationProfile: {
+      findMany: async () => [],
+      findUnique: async ({ where }) => {
+        const student = students.find(student => student.id === where.studentId);
+        return student ? { ...student.gamificationProfile, student } : null;
+      },
+    },
     enrollment: { findMany: async ({ where }) => students.flatMap(student => student.enrollments.map(e => ({ ...e, student, course: courses.find(c => c.id === e.courseId) }))).filter(e => matches(e, where)) },
     gradeIncentiveRule: { findMany: async () => [] }, expTransaction: { findMany: async () => [] },
   };
@@ -108,10 +115,14 @@ test("quiz scores include released auto-grades and zero, use points, and share r
   assert.equal(response.headers.get("cache-control"), "private, no-store");
   const data = await response.json();
   assert.equal(data.item.courseId, "class-a"); assert.equal(data.item.maxPoints, 20);
-  assert.deepEqual(data.rankings.map(r => [r.studentId, r.rank, r.score]), [["alice", 1, 16], ["bob", 1, 16], ["zero", 3, 0]]);
-  assert.match(data.rankings[1].name, /^Student #/); assert.equal(data.rankings[1].avatarUrl, null);
+  assert.deepEqual(data.rankings.map(r => [r.studentId, r.rank, r.score]), [["alice", 1, 16], ["anonymous-2", 1, 16], ["zero", 3, 0]]);
+  assert.equal(data.rankings[0].avatarUrl, '/avatar');
+  assert.equal(data.rankings[1].name, 'Anonymous student');
+  assert.equal(data.rankings[1].avatarUrl, null);
+  assert.equal(data.rankings[1].department, '');
+  assert.equal(data.rankings[2].avatarUrl, null);
   const assignment = await (await api.GET(request("assignment"))).json();
-  assert.deepEqual(assignment.rankings.map(r => [r.studentId, r.score]), [["bob", 18]]);
+  assert.deepEqual(assignment.rankings.map(r => [r.studentId, r.score]), [["anonymous-1", 18]]);
 });
 
 test("only approved classmates, the course instructor, and same-institute administrators can read a board", async () => {

@@ -1,20 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import type { NextConfig } from 'next';
-
-function repairBrokenTurbopackJunctions() {
-  if (process.platform !== 'win32') return;
-  try {
-    const devNodeModules = path.join(process.cwd(), '.next', 'dev', 'node_modules');
-    if (fs.existsSync(devNodeModules)) {
-      fs.rmSync(devNodeModules, { recursive: true, force: true });
-    }
-  } catch {
-    // Ignore cleanup errors in read-only or concurrent environments
-  }
-}
-
-repairBrokenTurbopackJunctions();
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["officeparser", "pdfjs-dist", "pg", "@prisma/adapter-pg", "@node-rs/argon2"],

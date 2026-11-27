@@ -381,7 +381,7 @@ export function createApiClient(config: ApiClientConfig) {
 
     leaderboard: {
       get: (instituteCode: string) =>
-        request<{ entries: LeaderboardEntry[] }>(`/api/leaderboard?institute=${instituteCode}`),
+        request<{ entries: LeaderboardEntry[]; visibility?: 'name' | 'photo' | 'anonymous' }>(`/api/leaderboard?institute=${instituteCode}`),
     },
 
     flashcards: {

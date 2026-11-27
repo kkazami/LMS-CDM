@@ -90,15 +90,45 @@ function RecordRow({ record: r, session, writable, busy, act }: { record: Attend
   return <div className="py-4"><div className="flex flex-wrap items-baseline justify-between gap-2"><span className="font-semibold">{r.name}</span><span className="text-sm">{r.status ? attendanceLabel(r.status) : r.required ? 'Not marked' : 'Not required'}</span></div><p className="mt-1 text-sm text-[var(--text-secondary)]">{r.source && `${attendanceLabel(r.source)} · `}{attendanceLabel(r.verification)}{r.approvedArrangement ? ' · Approved arrangement' : ''}</p>{writable && <details className="mt-3"><summary className="inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-[var(--border-color)] px-4 text-sm font-semibold">Mark attendance</summary><form className="mt-3 flex flex-wrap gap-2" onSubmit={e => { e.preventDefault(); void act({ action: 'MARK', sessionId: session.id, recordId: r.id, status, reason, revision: r.revision }); }}><label className="sr-only" htmlFor={`status-${r.id}`}>Status for {r.name}</label><select id={`status-${r.id}`} className={`${fieldClass} w-auto`} value={status} onChange={e => setStatus(e.target.value as AttendanceStatus)}>{(['PRESENT', 'TARDY', 'ABSENT', 'EXCUSED'] as const).map(value => <option key={value} value={value}>{attendanceLabel(value)}</option>)}</select><label className="sr-only" htmlFor={`reason-${r.id}`}>Reason for marking {r.name}</label><input id={`reason-${r.id}`} className={`${fieldClass} min-w-0 flex-1`} required maxLength={500} placeholder="Reason for this mark" value={reason} onChange={e => setReason(e.target.value)} /><button className={actionClass} disabled={busy}>Save</button></form></details>}</div>;
 }
 function CodeDisplay({ root, session }: { root: string; session: AttendanceSession }) {
-  const container = useRef<HTMLDivElement>(null); const [code, setCode] = useState<AttendanceCode>(); const [failed, setFailed] = useState(false);
+  const container = useRef<HTMLDivElement>(null); const [code, setCode] = useState<AttendanceCode>(); const [error, setError] = useState('');
+  const usesCode = session.mode === 'IN_PERSON' || session.liveCodeEnabled;
   const [clock, setClock] = useState(Date.now()); const offset = useRef(0);
   useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
-  useEffect(() => { let active = true; const load = async () => { if (document.hidden) { setCode(undefined); return; } try { const result = await json<AttendanceCode>(`${root}/${session.id}/codes`); if (active) { offset.current = Date.now() - Date.parse(result.serverTime); setCode(result); setFailed(false); } } catch { if (active) { setCode(undefined); setFailed(true); } } }; void load(); const timer = setInterval(() => void load(), 5000); return () => { active = false; clearInterval(timer); }; }, [root, session.id]);
+  useEffect(() => {
+    if (!usesCode) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const load = async () => {
+      try {
+        if (document.hidden) {
+          setCode(undefined);
+          return;
+        }
+        const result = await json<AttendanceCode>(`${root}/${session.id}/codes`, {
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]),
+        });
+        if (controller.signal.aborted) return;
+        const receivedAt = Date.now();
+        offset.current = receivedAt - Date.parse(result.serverTime);
+        setClock(receivedAt);
+        setCode(result);
+        setError('');
+      } catch (cause) {
+        if (controller.signal.aborted) return;
+        setCode(undefined);
+        setError(cause instanceof Error && cause.name === 'Error' ? cause.message : 'Code unavailable. Reconnecting…');
+      } finally {
+        if (!controller.signal.aborted) timer = setTimeout(() => void load(), 5000);
+      }
+    };
+    void load();
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, [root, session.id, usesCode]);
   const fresh = code && clock - offset.current < Date.parse(code.expiresAt);
   const seconds = Math.max(0, Math.ceil((Date.parse(session.closesAt) - (clock - offset.current)) / 1000));
-  if (session.mode !== 'IN_PERSON' && !session.liveCodeEnabled) return <p className="mt-3 text-sm">Students can check in directly during this window. Attendance is self-reported.</p>;
+  if (!usesCode) return <p className="mt-3 text-sm">Students can check in directly during this window. Attendance is self-reported.</p>;
   return <div ref={container} className="mt-4 flex flex-col items-center gap-3 rounded-xl bg-[var(--bg-surface)] p-4 text-[var(--text-primary)] fullscreen:justify-center fullscreen:[&_img]:max-w-[min(70vh,70vw)]">
-    {failed || code && !fresh ? <p role="alert">Code unavailable. Reconnecting…</p> : code ? <>{code.qrImage && <img src={code.qrImage} width={224} height={224} alt="Current attendance QR" className="h-auto w-full max-w-56 rounded-lg bg-white" />}{code.code && <p className="font-mono text-3xl font-bold tracking-widest">{code.code}</p>}<p className="text-center text-sm">{session.title} · Codes refresh automatically.<br />Closes in {Math.floor(seconds / 60)}m {seconds % 60}s · {date(session.closesAt, session.timezone)}</p><button className={actionClass} onClick={() => document.fullscreenElement ? void document.exitFullscreen() : void container.current?.requestFullscreen()}>Toggle fullscreen</button></> : <p role="status">Loading code…</p>}
+    {error || code && !fresh ? <p role="alert">{error || 'Code unavailable. Reconnecting…'}</p> : code ? <>{code.qrImage && <img src={code.qrImage} width={224} height={224} alt="Current attendance QR" className="h-auto w-full max-w-56 rounded-lg bg-white" />}{code.code && <p className="font-mono text-3xl font-bold tracking-widest">{code.code}</p>}<p className="text-center text-sm">{session.title} · Codes refresh automatically.<br />Closes in {Math.floor(seconds / 60)}m {seconds % 60}s · {date(session.closesAt, session.timezone)}</p><button className={actionClass} onClick={() => document.fullscreenElement ? void document.exitFullscreen() : void container.current?.requestFullscreen()}>Toggle fullscreen</button></> : <p role="status">Loading code…</p>}
   </div>;
 }
 function CreateSession({ busy, locationEnabled, timezone, onCreate }: { busy: boolean; locationEnabled: boolean; timezone: string; onCreate: (input: CreateAttendanceSession) => Promise<void> }) {

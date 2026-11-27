@@ -10,18 +10,11 @@ interface Ranking {
 }
 
 interface LeaderboardUIProps {
-  rankingsJson: string; // From ActivityLeaderboardCache
+  rankings: Ranking[];
   currentStudentId: string;
 }
 
-export function LeaderboardUI({ rankingsJson, currentStudentId }: LeaderboardUIProps) {
-  let rankings: Ranking[] = [];
-  try {
-    rankings = JSON.parse(rankingsJson);
-  } catch (e) {
-    console.error("Failed to parse leaderboard rankings", e);
-  }
-
+export function LeaderboardUI({ rankings, currentStudentId }: LeaderboardUIProps) {
   if (rankings.length === 0) {
     return (
       <div className="p-6 bg-white rounded-xl border border-gray-200 text-center text-gray-500">
