@@ -8,7 +8,7 @@ import PageTransition from "@/components/common/PageTransition";
 import InAppBrowserPrompt from "@/components/common/InAppBrowserPrompt";
 
 const manrope = localFont({
-  src: "../fonts/Manrope.ttf",
+  src: "../fonts/Manrope.woff2",
   weight: "200 800",
   style: "normal",
   display: "swap",

@@ -13,41 +13,58 @@ async function actor(request: Request) {
   return user?.institute.code.toLowerCase() === 'ics' && ['STUDENT', 'PROFESSOR', 'TEACHER'].includes(user.role) ? user : null;
 }
 
+async function loadDashboardCourses(user: { id: string; role: string; instituteId: string }) {
+  const student = user.role === 'STUDENT';
+  const scope = { instituteId: user.instituteId, isArchived: false,
+    ...(student ? { enrollments: { some: { studentId: user.id, status: 'APPROVED' } } } : { instructorId: user.id }) };
+  const courses = await db.course.findMany({ where: scope, orderBy: { createdAt: 'desc' }, select: {
+    id: true, code: true, courseCode: true, title: true, description: true, section: true, subject: true,
+    room: true, coverImage: true, mobileCoverImage: true, instructor: { select: { name: true } },
+    _count: { select: { enrollments: { where: { status: 'APPROVED' } } } },
+    enrollments: student ? { where: { studentId: user.id, status: 'APPROVED' }, select: { displayOrderIndex: true } } : false,
+    dashboardLayouts: student ? false : { where: { userId: user.id }, select: { displayOrderIndex: true } },
+  } });
+  if (!courses.length) return { courses: [], submissions: [] };
+
+  const ids = courses.map(course => course.id);
+  const [pendingEnrollments, pendingWork, submissions] = await Promise.all([
+    student ? [] : db.enrollment.groupBy({ by: ['courseId'], where: { courseId: { in: ids }, status: 'PENDING' }, _count: { _all: true } }),
+    student ? [] : db.syllabusItem.findMany({ where: { courseId: { in: ids }, submissions: { some: { status: 'SUBMITTED', grade: null } } }, select: { courseId: true, _count: { select: { submissions: { where: { status: 'SUBMITTED', grade: null } } } } } }),
+    student ? db.studentSubmission.findMany({ where: { studentId: user.id, syllabusItem: { courseId: { in: ids } }, status: { in: ['SUBMITTED', 'GRADED', 'RETURNED'] } }, select: { syllabusItemId: true } }) : [],
+  ]);
+  const pendingByCourse = new Map(pendingEnrollments.map(item => [item.courseId, item._count._all]));
+  const workByCourse = new Map<string, number>();
+  for (const item of pendingWork) {
+    workByCourse.set(item.courseId, (workByCourse.get(item.courseId) ?? 0) + item._count.submissions);
+  }
+  const position = (course: typeof courses[number]) =>
+    (student ? course.enrollments?.[0] : course.dashboardLayouts?.[0])?.displayOrderIndex ?? Number.MAX_SAFE_INTEGER;
+  return {
+    courses: courses.sort((a, b) => position(a) - position(b)).map(({ _count, instructor, enrollments, dashboardLayouts, ...course }) => ({
+      ...course, isArchived: false,
+      instructorName: instructor?.name ?? null, enrolledCount: _count.enrollments, studentCount: _count.enrollments,
+      pendingCount: pendingByCourse.get(course.id) ?? 0,
+      pendingWorkCount: workByCourse.get(course.id) ?? 0,
+    })),
+    submissions,
+  };
+}
+
 export async function GET(request: Request) {
   const denial = await denyLegacyApi(request, 'GET mobile/dashboard');
   if (denial) return denial;
   const user = await actor(request);
   if (!user) return NextResponse.json({ message: 'Sign in with an ICS student or faculty account.' }, { status: 403 });
   try {
-    const student = user.role === 'STUDENT';
-    const scope = { instituteId: user.instituteId, isArchived: false,
-      ...(student ? { enrollments: { some: { studentId: user.id, status: 'APPROVED' } } } : { instructorId: user.id }) };
-    const [courses, calendar] = await Promise.all([
-      db.course.findMany({ where: scope, orderBy: { createdAt: 'desc' }, select: {
-        id: true, code: true, courseCode: true, title: true, description: true, section: true, subject: true,
-        room: true, coverImage: true, mobileCoverImage: true, instructor: { select: { name: true } },
-        _count: { select: { enrollments: { where: { status: 'APPROVED' } } } },
-      } }),
+    const [{ courses, submissions }, calendar] = await Promise.all([
+      loadDashboardCourses(user),
       getDashboardCalendar(user, 'ics'),
     ]);
-    const ids = courses.map(course => course.id);
-    const [order, pendingEnrollments, pendingWork, submissions] = await Promise.all([
-      student ? db.enrollment.findMany({ where: { studentId: user.id, courseId: { in: ids }, status: 'APPROVED' }, select: { courseId: true, displayOrderIndex: true } })
-        : db.dashboardLayout.findMany({ where: { userId: user.id, courseId: { in: ids } }, select: { courseId: true, displayOrderIndex: true } }),
-      student ? [] : db.enrollment.groupBy({ by: ['courseId'], where: { courseId: { in: ids }, status: 'PENDING' }, _count: { _all: true } }),
-      student ? [] : db.syllabusItem.findMany({ where: { courseId: { in: ids }, submissions: { some: { status: 'SUBMITTED', grade: null } } }, select: { courseId: true, _count: { select: { submissions: { where: { status: 'SUBMITTED', grade: null } } } } } }),
-      student ? db.studentSubmission.findMany({ where: { studentId: user.id, syllabusItem: { courseId: { in: ids } }, status: { in: ['SUBMITTED', 'GRADED', 'RETURNED'] } }, select: { syllabusItemId: true } }) : [],
-    ]);
-    const positions = new Map(order.map(item => [item.courseId, item.displayOrderIndex]));
     const submitted = new Set(submissions.map(item => `syllabus_${item.syllabusItemId}`));
     const deadlines = calendar.events.filter(event => event.source === 'classwork' && !submitted.has(event.id));
     const now = Date.now(), nextWeek = now + 7 * 86400000;
     return NextResponse.json({
-      courses: courses.map(({ _count, instructor, ...course }) => ({ ...course, isArchived: false,
-        instructorName: instructor?.name ?? null, enrolledCount: _count.enrollments, studentCount: _count.enrollments,
-        pendingCount: pendingEnrollments.find(item => item.courseId === course.id)?._count._all ?? 0,
-        pendingWorkCount: pendingWork.filter(item => item.courseId === course.id).reduce((sum, item) => sum + item._count.submissions, 0),
-      })).sort((a, b) => (positions.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (positions.get(b.id) ?? Number.MAX_SAFE_INTEGER)),
+      courses,
       calendar,
       pendingAssignments: deadlines,
       overdue: deadlines.filter(event => Date.parse(event.eventDate) < now).length,

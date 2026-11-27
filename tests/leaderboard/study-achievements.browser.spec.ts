@@ -59,8 +59,8 @@ test.beforeAll(async () => {
   script = built.outputFiles[0].text;
   const globals = path.resolve('apps/web/src/app/globals.css');
   css = (await web('postcss')([web('@tailwindcss/postcss')({ base: path.resolve('apps/web') })]).process(await readFile(globals, 'utf8'), { from: globals })).css;
-  css += '@font-face{font-family:Manrope;src:url(/manrope.ttf);font-weight:200 800}:root{--font-cdm-body:Manrope}';
-  font = await readFile('apps/web/src/fonts/Manrope.ttf');
+  css += '@font-face{font-family:Manrope;src:url(/manrope.woff2);font-weight:200 800}:root{--font-cdm-body:Manrope}';
+  font = await readFile('apps/web/src/fonts/Manrope.woff2');
 });
 
 test('analytics lists each student once and expands every at-risk subject in scope', async ({ page }) => {
@@ -145,7 +145,7 @@ test.beforeEach(async ({ page }) => {
     const { pathname } = new URL(route.request().url());
     if (pathname === '/fixture.js') return route.fulfill({ contentType: 'text/javascript', body: script });
     if (pathname === '/fixture.css') return route.fulfill({ contentType: 'text/css', body: css });
-    if (pathname === '/manrope.ttf') return route.fulfill({ contentType: 'font/ttf', body: font });
+    if (pathname === '/manrope.woff2') return route.fulfill({ contentType: 'font/woff2', body: font });
     if (pathname === '/missing-avatar.png') return route.fulfill({ status: 404 });
     return route.fulfill({ contentType: 'text/html', body: '<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/fixture.css"><div id="root"></div><script src="/fixture.js"></script>' });
   });

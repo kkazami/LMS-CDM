@@ -54,18 +54,28 @@ test('dashboard endpoint scopes data, excludes submitted deadlines, and saves au
   };
   const db = {
     course: {
-      findMany: async ({ where }: { where: Record<string, unknown> }) => {
+      findMany: async ({ where, select }: { where: Record<string, unknown>; select: Record<string, unknown> }) => {
         state.reads++;
         assert.equal(where.instituteId, 'institute-ics'); assert.equal(where.isArchived, false);
-        if (state.user?.role === 'STUDENT') assert.deepEqual(JSON.parse(JSON.stringify(where.enrollments)), { some: { studentId: 'student', status: 'APPROVED' } });
-        else assert.equal(where.instructorId, 'professor');
-        return state.courses;
+        const student = state.user?.role === 'STUDENT';
+        if (student) {
+          assert.deepEqual(JSON.parse(JSON.stringify(where.enrollments)), { some: { studentId: 'student', status: 'APPROVED' } });
+          assert.deepEqual(JSON.parse(JSON.stringify(select.enrollments)), { where: { studentId: 'student', status: 'APPROVED' }, select: { displayOrderIndex: true } });
+          assert.equal(select.dashboardLayouts, false);
+        } else {
+          assert.equal(where.instructorId, 'professor');
+          assert.deepEqual(JSON.parse(JSON.stringify(select.dashboardLayouts)), { where: { userId: 'professor' }, select: { displayOrderIndex: true } });
+          assert.equal(select.enrollments, false);
+        }
+        return state.courses.map(course => ({ ...course, ...(student
+          ? { enrollments: [{ displayOrderIndex: course.id === 'first' ? 1 : 0 }] }
+          : { dashboardLayouts: course.id === 'second' ? [{ displayOrderIndex: 0 }] : [] }) }));
       },
       count: async ({ where }: { where: Record<string, unknown> }) => { assert.equal(where.instituteId, 'institute-ics'); return state.allowed; },
     },
-    dashboardLayout: { findMany: async () => [{ courseId: 'second', displayOrderIndex: 0 }, { courseId: 'first', displayOrderIndex: 1 }], upsert: (input: unknown) => ({ kind: 'faculty', input }) },
-    enrollment: { findMany: async () => [], groupBy: async () => [{ courseId: 'first', _count: { _all: 2 } }], updateMany: (input: unknown) => ({ kind: 'student', input }) },
-    syllabusItem: { findMany: async () => [{ courseId: 'second', _count: { submissions: 5 } }] },
+    dashboardLayout: { upsert: (input: unknown) => ({ kind: 'faculty', input }) },
+    enrollment: { groupBy: async () => [{ courseId: 'first', _count: { _all: 2 } }], updateMany: (input: unknown) => ({ kind: 'student', input }) },
+    syllabusItem: { findMany: async () => [{ courseId: 'second', _count: { submissions: 2 } }, { courseId: 'second', _count: { submissions: 3 } }] },
     studentSubmission: { findMany: async () => [{ syllabusItemId: 'submitted' }] },
     $transaction: async (writes: unknown[]) => { state.writes.push(writes); return writes; },
   };
@@ -86,6 +96,7 @@ test('dashboard endpoint scopes data, excludes submitted deadlines, and saves au
   let response = await get(), payload = await response.json();
   assert.equal(response.status, 200); assert.match(response.headers.get('cache-control')!, /no-store/);
   assert.deepEqual(payload.courses.map((course: { id: string }) => course.id), ['second', 'first']);
+  assert.ok(payload.courses.every((course: Record<string, unknown>) => !('dashboardLayouts' in course) && !('enrollments' in course)));
   assert.equal(payload.courses[0].pendingWorkCount, 5);
   assert.equal(payload.courses[1].pendingCount, 2);
   assert.equal(payload.courses[0].enrolledCount, 18);
@@ -93,6 +104,7 @@ test('dashboard endpoint scopes data, excludes submitted deadlines, and saves au
   assert.equal(state.writes.length, 1);
   state.user = { id: 'student', role: 'STUDENT', instituteId: 'institute-ics', institute: { code: 'ics' } };
   payload = await (await get()).json();
+  assert.deepEqual(payload.courses.map((course: { id: string }) => course.id), ['second', 'first']);
   assert.equal(payload.overdue, 1); assert.equal(payload.dueSoon, 1);
   assert.equal(payload.pendingAssignments.length, 3);
   assert.equal((await patch(['first', 'second'])).status, 200);

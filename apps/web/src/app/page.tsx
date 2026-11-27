@@ -1325,18 +1325,37 @@ export default function HomePage() {
     };
   }, [shouldReduceMotion]);
 
-  // Hydration-safe video playback handling for reduced motion preferences
+  // Let the poster and sign-in controls load before fetching the decorative video.
   useEffect(() => {
-    if (!videoRef.current) return;
-    if (reducedMotion) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    } else {
-      videoRef.current.play().catch(() => {
-        // Autoplay policy: safely ignored since muted & playsInline are set
+    const video = videoRef.current;
+    if (!video) return;
+
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPlayback = () => {
+      if (motionPreference.matches) {
+        if (video.hasAttribute("src")) {
+          video.pause();
+          video.removeAttribute("src");
+          video.load();
+        }
+        return;
+      }
+      if (document.readyState !== "complete" || video.hasAttribute("src")) return;
+
+      video.src = "/videos/hero-bg.mp4";
+      void video.play().catch(() => {
+        // Browsers that block autoplay can keep displaying the poster.
       });
-    }
-  }, [reducedMotion]);
+    };
+
+    window.addEventListener("load", syncPlayback);
+    motionPreference.addEventListener("change", syncPlayback);
+    syncPlayback();
+    return () => {
+      window.removeEventListener("load", syncPlayback);
+      motionPreference.removeEventListener("change", syncPlayback);
+    };
+  }, []);
 
   // Active program department state (for Coverflow 3D deck)
   const [activeDepartmentIndex, setActiveDepartmentIndex] = useState(0);
@@ -1750,16 +1769,13 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <video
             ref={videoRef}
-            autoPlay
             loop
             muted
             playsInline
-            preload="auto"
+            preload="none"
             poster="/images/cdm-background.jpg"
             className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="/videos/hero-bg.mp4" type="video/mp4" />
-          </video>
+          />
           <div
             className="absolute inset-0"
             style={{

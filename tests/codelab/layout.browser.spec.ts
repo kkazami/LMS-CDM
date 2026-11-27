@@ -36,7 +36,7 @@ test.beforeAll(async () => {
     plugins:[{name:'browser-adapters',setup(b:any){
       b.onResolve({filter:/^next\/(link|image|dynamic|navigation)$|^@monaco-editor\/react$|^\.\/particle-field$|MonacoInit$|common\/(Toast|ChatbotWidget|BadgeToast|LoginRewardModal|FloatingStudyTimer)$|^@\/components\/layout\/(Topbar|NavigationProgress|MobileBottomNav)$|^@\/lib\/(theme-context|chatbot-context)$|FocusModeProvider$|DraftRecovery$/},({path:name}:{path:string})=>({path:name,namespace:'fixture'}));
       b.onLoad({filter:/.*/,namespace:'fixture'},({path:name}:{path:string})=>({loader:'tsx',resolveDir:path.resolve('apps/web'),contents:
-        name==='next/navigation' ? 'export const usePathname=()=>location.pathname;' :
+        name==='next/navigation' ? 'export const usePathname=()=>location.pathname; export const useSearchParams=()=>new URLSearchParams(location.search);' :
         name==='next/image' ? 'export default function Image(){return null}' :
         name==='./particle-field' ? `export function createParticleField(host) { const canvas = document.createElement('canvas'); host.appendChild(canvas); return { setTheme(){}, dispose(){ canvas.remove(); } }; }` :
         name.endsWith('/Topbar') ? `export default function Topbar(){return <header className='sticky top-0 z-50 h-16 shrink-0 border-b border-slate-200 bg-white p-5 dark:bg-slate-950'>ICS / CodeLab</header>}` :

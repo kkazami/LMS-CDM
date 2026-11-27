@@ -8,6 +8,7 @@ async function load(f) {
   globalThis.__navigationTest = f;
   const built = await build({
     stdin: { contents: `
+      export {default as layout} from './apps/web/src/app/(dashboard)/[institute]/layout';
       export {default as analytics} from './apps/web/src/app/(dashboard)/[institute]/analytics/page';
       export {default as manage} from './apps/web/src/app/(dashboard)/[institute]/manage-leaderboard/page';
       export {default as leaderboards} from './apps/web/src/app/(dashboard)/[institute]/leaderboards/page';
@@ -16,15 +17,16 @@ async function load(f) {
     bundle: true, write: false, platform: 'node', format: 'cjs', jsx: 'automatic',
     tsconfig: 'apps/web/tsconfig.json', nodePaths: [path.resolve('apps/web/node_modules')],
     plugins: [{ name: 'service-boundaries', setup(b) {
-      b.onResolve({ filter: /^next\/(server|navigation)$|^@\/lib\/(db|auth-session|api-auth|get-institute-theme|super-user-v1\/legacy-entry-guard)$|^\.\/client$/ }, ({ path }) => ({ path, namespace: 'mock' }));
+      b.onResolve({ filter: /^next\/(server|navigation)$|^@\/lib\/(db|auth-session|api-auth|get-institute-theme|gamification\/login-rewards|super-user-v1\/legacy-entry-guard)$|^@\/components\/(layout\/DashboardLayout|super-user-v1\/SuperUserShell)$|^\.\/(client|db)$/ }, ({ path }) => ({ path, namespace: 'mock' }));
       b.onLoad({ filter: /.*/, namespace: 'mock' }, ({ path: name }) => ({ contents:
         name === 'next/server' ? 'export const NextResponse=Response;' :
-        name === 'next/navigation' ? 'export function redirect(url){throw new Error("REDIRECT:"+url)}' :
+        name === 'next/navigation' ? 'export function redirect(url){throw new Error("REDIRECT:"+url)} export function notFound(){throw new Error("NOT_FOUND")}' :
         name.endsWith('/db') ? 'export const db=globalThis.__navigationTest.db;' :
-        name.endsWith('/auth-session') ? 'export async function getSession(){throw new Error("DUPLICATE_AUTH_READ")}' :
+        name.endsWith('/auth-session') ? 'export async function getSession(){if(globalThis.__navigationTest.session)return globalThis.__navigationTest.session;throw new Error("DUPLICATE_AUTH_READ")}' :
         name.endsWith('/api-auth') ? 'export async function getSessionFromRequest(){return {user:globalThis.__navigationTest.user}}' :
         name.endsWith('legacy-entry-guard') ? 'export async function denyLegacyApi(){return null} export async function requireLegacyActor(){globalThis.__navigationTest.authReads++;return globalThis.__navigationTest.user}' :
         name.endsWith('get-institute-theme') ? 'export function getInstituteTheme(){return {code:"ics"}}' :
+        name.endsWith('login-rewards') ? 'export const getPHTDateString=date=>date?.toISOString() ?? "today";export const getPHTMidnight=()=>new Date(0);export const processLoginReward=()=>globalThis.__navigationTest.reward()' :
         'export default function Client(){return null}'
       }));
     } }],
@@ -38,6 +40,54 @@ const user = () => ({ id: 'teacher', instituteId: 'ics', role: 'PROFESSOR', inst
 const params = () => ({ params: Promise.resolve({ institute: 'ics' }), searchParams: Promise.resolve({}) });
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
 const tick = () => new Promise(resolve => setImmediate(resolve));
+
+test('dashboard starts sidebar reads alongside rewards and lets rewards finish even if the sidebar fails', async () => {
+  const reads = [];
+  let grant = deferred(), failSidebar = false;
+  const student = { ...user(), id: 'student', role: 'STUDENT' };
+  const f = { session: { user: student }, reward: async () => { reads.push('grant'); await grant.promise; }, db: {
+    enrollment: {
+      findFirst: async () => ({ id: 'approved' }),
+      findMany: async () => {
+        reads.push('sidebar');
+        if (failSidebar) throw new Error('Sidebar unavailable');
+        return [{ course: { id: 'course', code: 'CS101', title: 'Computing' } }];
+      },
+    },
+    gamificationProfile: { findUnique: async () => {
+      const refreshed = reads.includes('grant');
+      reads.push('profile');
+      return { exp: refreshed ? 20 : 0, loginStreakCurrent: refreshed ? 1 : 0, lastDailyRewardAt: null };
+    } },
+    expTransaction: { aggregate: async () => { reads.push('daily-exp'); return { _sum: { amount: 20 } }; } },
+  } };
+  const api = await load(f), rendering = api.layout(params());
+  try {
+    await tick();
+    assert.deepEqual([...reads].sort(), ['grant', 'profile', 'sidebar']);
+  } finally {
+    grant.resolve();
+  }
+  const result = await rendering;
+  assert.equal(reads.at(-1), 'daily-exp');
+  assert.equal(result.props.exp, 20);
+  assert.equal(result.props.loginRewardExp, 20);
+  assert.equal(result.props.enrolledCourses[0].id, 'course');
+
+  grant = deferred();
+  failSidebar = true;
+  reads.length = 0;
+  let settled = false;
+  const rejection = assert.rejects(api.layout(params()).finally(() => { settled = true; }), /Sidebar unavailable/);
+  try {
+    await tick();
+    assert.equal(settled, false);
+  } finally {
+    grant.resolve();
+  }
+  await rejection;
+  assert.equal(reads.at(-1), 'daily-exp');
+});
 
 test('analytics reuses the authenticated instructor and institute, and rejects another portal', async () => {
   const f = { user: user(), authReads: 0, db: { course: { findMany: async ({ where }) => {

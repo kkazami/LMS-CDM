@@ -73,58 +73,46 @@ export default async function InstituteLayout({
   // Focus Mode is ITE-students-only; hidden everywhere else.
   const focusModeEligible = isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute);
 
-  // ITE per-program student sidebar tools ("Program tools" group): only for ITE students, only "available" features for their program.
-  const [resolvedIteProgram, resolvedIbeProgram] = await Promise.all([
-    isStudent && isIteInstituteCode(userInstituteCode) && isIteInstituteCode(institute)
-      ? resolveIteStudentProgram(session.user.id)
-      : Promise.resolve(null),
-    isStudent && userInstituteCode === "ibe" && institute.toLowerCase() === "ibe"
-      ? resolveIbeStudentProgram(session.user.id)
-      : Promise.resolve(null),
-  ]);
-  const iteProgramTools = getAvailableSidebarToolsForIteProgram(
-    resolvedIteProgram?.programCode
-  );
-  const ibeProgramCode = resolvedIbeProgram?.programCode ?? null;
-
   // Use the institute id already loaded with the session when this is the user's own institute
   // (no extra query); only look it up when it is a different one.
   const sessionInstituteId =
     institute.toLowerCase() === userInstituteCode && user.institute?.id ? user.institute.id : null;
 
-  // Students only: the gamification profile. The institute lookup (if needed) runs alongside it.
-  const profileSelect = { exp: true, loginStreakCurrent: true, lastDailyRewardAt: true } as const;
-  const [targetInstituteId, initialProfile] = await Promise.all([
-    sessionInstituteId
-      ? Promise.resolve(sessionInstituteId)
-      : getInstituteByCode(institute).then((record) => record?.id ?? null),
-    isStudent
-      ? db.gamificationProfile.findUnique({ where: { studentId: session.user.id }, select: profileSelect })
-      : Promise.resolve(null),
-  ]);
+  const loadStudentRewards = async () => {
+    if (!isStudent) return null;
 
-  // Only run processLoginReward when today's reward is still due (cheap pre-check on
-  // lastDailyRewardAt). It is awaited so the streak and EXP shown below already include it.
-  let gamification = initialProfile;
-  if (isStudent) {
+    const profileSelect = { exp: true, loginStreakCurrent: true, lastDailyRewardAt: true } as const;
+    const readProfile = () => db.gamificationProfile.findUnique({
+      where: { studentId: session.user.id }, select: profileSelect,
+    });
+    const initialProfile = await readProfile();
+    let gamification = initialProfile;
     const rewardedToday = initialProfile?.lastDailyRewardAt
       ? getPHTDateString(initialProfile.lastDailyRewardAt) === getPHTDateString()
       : false;
 
+    // Today's EXP must be read after any new reward is granted.
     if (!rewardedToday) {
       try {
         await processLoginReward(session.user.id);
-        gamification = await db.gamificationProfile.findUnique({
-          where: { studentId: session.user.id },
-          select: profileSelect,
-        });
+        gamification = await readProfile();
       } catch (err) {
         console.error("Failed to process login reward on layout load:", err);
       }
     }
-  }
+    const loginExpToday = await db.expTransaction.aggregate({
+      where: {
+        userId: session.user.id,
+        source: "daily_login",
+        createdAt: { gte: getPHTMidnight() },
+      },
+      _sum: { amount: true },
+    });
+    return { gamification, loginExpToday };
+  };
 
   const loadSidebarCourses = async (): Promise<{ id: string; title: string; code: string }[]> => {
+    const targetInstituteId = sessionInstituteId ?? (await getInstituteByCode(institute))?.id;
     if (!targetInstituteId) return [];
     if (isStudent) {
       // Shared with the student dashboard page via React cache (one query per request).
@@ -145,20 +133,19 @@ export default async function InstituteLayout({
     return [];
   };
 
-  // Sidebar courses and today's real daily-login EXP (so the modal shows what was granted).
-  const [enrolledCourses, loginExpToday] = await Promise.all([
-    loadSidebarCourses(),
-    isStudent
-      ? db.expTransaction.aggregate({
-          where: {
-            userId: session.user.id,
-            source: "daily_login",
-            createdAt: { gte: getPHTMidnight() },
-          },
-          _sum: { amount: true },
-        })
-      : Promise.resolve(null),
+  // If navigation data fails, let any daily reward write finish before returning the error.
+  const [navigation, studentRewards] = await Promise.allSettled([
+    Promise.all([
+      loadSidebarCourses(),
+      focusModeEligible ? resolveIteStudentProgram(session.user.id) : null,
+      isStudent && userInstituteCode === "ibe" ? resolveIbeStudentProgram(session.user.id) : null,
+    ]),
+    loadStudentRewards(),
   ]);
+  if (studentRewards.status === "rejected") throw studentRewards.reason;
+  if (navigation.status === "rejected") throw navigation.reason;
+  const [enrolledCourses, resolvedIteProgram, resolvedIbeProgram] = navigation.value;
+  const rewards = studentRewards.value;
 
   return (
     <DashboardLayout
@@ -175,12 +162,12 @@ export default async function InstituteLayout({
       isEligibleForPracticum={practicumEligible}
       isEligibleForMeetings={meetingsEligible}
       isEligibleForFocusMode={focusModeEligible}
-      iteProgramTools={iteProgramTools}
-      ibeProgramCode={ibeProgramCode}
+      iteProgramTools={getAvailableSidebarToolsForIteProgram(resolvedIteProgram?.programCode)}
+      ibeProgramCode={resolvedIbeProgram?.programCode ?? null}
       enrolledCourses={enrolledCourses}
-      exp={gamification?.exp ?? 0}
-      streakCurrent={gamification?.loginStreakCurrent ?? 0}
-      loginRewardExp={loginExpToday?._sum.amount ?? 0}
+      exp={rewards?.gamification?.exp ?? 0}
+      streakCurrent={rewards?.gamification?.loginStreakCurrent ?? 0}
+      loginRewardExp={rewards?.loginExpToday._sum.amount ?? 0}
       userId={session.user.id}
     >
       {children}
