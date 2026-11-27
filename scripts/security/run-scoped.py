@@ -120,7 +120,9 @@ def main(label,mode='tests',network='none',fixture=None):
   counts={key:int(value) for key,value in re.findall(r'^# (tests|pass|fail|cancelled|skipped|todo) (\d+)$',out,re.M)} if testing else {}
   if code==0 and testing:
    expected=2 if mode=='rls-principals' else 1 if mode in STAGING_TESTS else EXPECTED_TESTS
-   assert counts.get('tests')==counts.get('pass')==expected and all(counts.get(k)==0 for k in ['fail','cancelled','skipped','todo']), 'Missing, skipped or unexpected test results'
+   if counts.get('tests')!=expected or counts.get('pass')!=expected or any(counts.get(k)!=0 for k in ['fail','cancelled','skipped','todo']):
+    code=1
+    out+=f'\nMissing, skipped or unexpected test results. Expected {expected} passing tests; observed {counts}.\n'
   receipt={'label':label,'mode':mode,'exit':code,'counts':counts,'seconds':round(time.monotonic()-start,2),'argv':argv,'tests':selected,'safe_environment':env,'limits':{'network':network,'read_only_source_and_tools':True,'scratch_bytes':scratch_mb*1024*1024,'memory_bytes':6442450944 if mode=='web-build' else 4294967296 if mode in ['web-types','web-build','mobile-export'] else 2415919104,'cpus':2,'pids':128,'file_bytes':fsize_bytes,'seconds':seconds},'lock_sha256':hashlib.sha256((DEPS/'pnpm-lock.yaml').read_bytes()).hexdigest(),'source_hashes':{str(p.relative_to(source)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()},'terminated':True}
   if mode=='sbom' and code==0:
    bom=json.loads(out)
